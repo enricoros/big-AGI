@@ -1,7 +1,5 @@
-import { backendCaps } from '~/modules/backend/state-backend';
-
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
-import { apiAsync, apiQuery } from '~/common/util/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
@@ -18,7 +16,7 @@ export const FALLBACK_LLM_TEMPERATURE = 0.5;
 
 
 // special symbols
-export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
+// export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 export interface SourceSetupOpenAI {
   oaiKey: string;
@@ -40,7 +38,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
   rank: 10,
   location: 'cloud',
   instanceLimit: 5,
-  hasBackendCap: () => backendCaps().hasLlmOpenAI,
+  hasBackendCapKey: 'hasLlmOpenAI',
 
   // components
   Icon: OpenAIIcon,
@@ -59,14 +57,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
   }),
 
   // List Models
-  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
-    return apiQuery.llmOpenAI.listModels.useQuery({ access }, {
-      enabled: enabled,
-      onSuccess: onSuccess,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    });
-  },
+  rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmOpenAI.listModels.query({ access }),
 
   // Chat Generate (non-streaming) with Functions
   rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {

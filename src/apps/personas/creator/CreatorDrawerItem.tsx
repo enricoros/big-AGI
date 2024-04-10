@@ -2,7 +2,7 @@ import * as React from 'react';
 import TimeAgo from 'react-timeago';
 
 import { Box, Checkbox, IconButton, ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -91,7 +91,7 @@ export function CreatorDrawerItem(props: {
           <DeleteOutlineIcon />
         </IconButton>
         <IconButton size='sm' variant='solid' color='neutral' onClick={() => setDeleteArmed(false)}>
-          <CloseIcon />
+          <CloseRoundedIcon />
         </IconButton>
       </>}
 

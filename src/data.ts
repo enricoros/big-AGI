@@ -21,6 +21,7 @@ export type SystemPurposeData = {
   title: string;
   description: string | React.JSX.Element;
   systemMessage: string;
+  systemMessageNotes?: string;
   symbol: string;
   imageUri?: string;
   examples?: string[];
@@ -31,20 +32,22 @@ export type SystemPurposeData = {
 
 // @update defifofum add custom SystemPurposeIds
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
-  Developer: {
-    title: 'Developer',
-    description: 'Helps you code',
-    systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant', // skilled, detail-oriented
-    symbol: '👨‍💻',
-    examples: [
-      'hello world in 10 languages',
-      'translate python to typescript',
-      'find and fix a bug in my code',
-      'add a mic feature to my NextJS app',
-      'automate tasks in React',
-    ],
-    call: { starters: ['Dev here. Got code?', "Developer on call. What's the issue?", 'Ready to code.', 'Hello.'] },
-    voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
+  Generic: {
+    title: 'Default',
+    description: 'Start here',
+    systemMessage: `You are an AI assistant.
+Knowledge cutoff: {{Cutoff}}
+Current date: {{LocaleNow}}
+
+{{RenderMermaid}}
+{{RenderPlantUML}}
+{{RenderSVG}}
+{{PreferTables}}
+`,
+    symbol: '🧠',
+    examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
+    call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
+    voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
   },
   FrontendDeveloper: {
     title: 'Frontend Developer (Typescript)',
@@ -91,29 +94,33 @@ export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
     examples: ['write a Django view', 'create a Flask route', 'write a NumPy computation', 'create a Conda environment', 'write a requirements.txt file'],
   },
   DeveloperPreview: {
-    title: 'Developer2',
-    description: 'Preview of an extended capabilities Developer',
+    title: 'Developer',
+    description: 'Extended-capabilities Developer',
+    // systemMessageNotes: 'Knowledge cutoff is set to "Current" instead of "{{Cutoff}}" to lower push backs',
     systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
 Knowledge cutoff: {{Cutoff}}
-Current date: {{Today}}
+Current date: {{LocaleNow}}
 
-{{RenderMermaid}}
 {{RenderPlantUML}}
+{{RenderMermaid}}
 {{RenderSVG}}
-{{InputImage0}}
-{{ToolBrowser0}}
-`,
+{{PreferTables}}
+`, // {{InputImage0}} {{ToolBrowser0}}
     symbol: '👨‍💻',
     imageUri: '/images/personas/dev_preview_icon_120x120.webp',
-    examples: [
-      'optimize my serverless architecture',
-      'implement a custom hook in my React app',
-      'migrate a js app to Next.js',
-      'optimize my AI model for energy efficiency',
-    ],
-    call: { starters: ['Dev here. Got code?', "Developer on call. What's the issue?", 'Ready to code.', 'Hello.'] },
+    examples: ['show me an OAuth2 diagram', 'draw a capybara as svg code', 'implement a custom hook in my React app', 'migrate a React app to Next.js', 'optimize my AI model for energy efficiency', 'optimize serverless architectures'],
+    call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
-    highlighted: true,
+    // highlighted: true,
+  },
+  Developer: {
+    title: 'Dev',
+    description: 'Helps you code',
+    systemMessage: 'You are a sophisticated, accurate, and modern AI programming assistant', // skilled, detail-oriented
+    symbol: '👨‍💻',
+    examples: ['hello world in 10 languages', 'translate python to typescript', 'find and fix a bug in my code', 'add a mic feature to my NextJS app', 'automate tasks in React'],
+    call: { starters: ['Dev here. Got code?', 'Developer on call. What\'s the issue?', 'Ready to code.', 'Hello.'] },
+    voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
   },
   Scientist: {
     title: 'Scientist',
@@ -163,22 +170,12 @@ Current date: {{Today}}
     call: { starters: ["Hey! What's the vision?", "Designer on call. What's the project?", 'Ready for design talk.', 'Hey.'] },
     voices: { elevenLabs: { voiceId: 'MF3mGyEYCl7XYWbV9V6O' } },
   },
-  Generic: {
-    title: 'Default',
-    description: 'Helps you think',
-    systemMessage:
-      'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nKnowledge cutoff: {{Cutoff}}\nCurrent date: {{Today}}\n',
-    symbol: '🧠',
-    examples: ['help me plan a trip to Japan', 'what is the meaning of life?', 'how do I get a job at OpenAI?', 'what are some healthy meal ideas?'],
-    call: { starters: ['Hey, how can I assist?', 'AI assistant ready. What do you need?', 'Ready to assist.', 'Hello.'] },
-    voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
-  },
   Custom: {
     title: 'Custom',
-    description: 'User-defined identity:',
+    description: 'Define the persona, or task:',
     systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
-    symbol: '✨',
-    call: { starters: ["What's the task?", 'What can I do?', 'Ready for your task.', 'Yes?'] },
+    symbol: '⚡',
+    call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
     voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
   },
 };

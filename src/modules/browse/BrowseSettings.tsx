@@ -26,12 +26,12 @@ export function BrowseSettings() {
 
     <FormHelperText sx={{ display: 'block' }}>
       Configure a browsing service to enable loading links and pages. See the <Link
-      href='https://github.com/enricoros/big-agi/blob/main/docs/config-browse.md' target='_blank' noLinkStyle>
+      href='https://github.com/enricoros/big-agi/blob/main/docs/config-feature-browse.md' target='_blank' noLinkStyle>
       browse configuration guide</Link> for more information.
     </FormHelperText>
 
     <FormInputKey
-      id='browse-wss' label='Puppeteer Endpoint' noKey
+      autoCompleteId='browse-wss' label='Puppeteer Endpoint' noKey
       value={wssEndpoint} onChange={setWssEndpoint}
       rightLabel={!isServerConfig ? 'required' : '✔️ already set in server'}
       required={!isServerConfig} isError={!isClientValid && !isServerConfig}

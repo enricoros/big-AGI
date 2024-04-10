@@ -27,4 +27,4 @@ export const Brand = {
     // Twitter: 'https://www.twitter.com/enricoros',
     PrivacyPolicy: 'https://big-agi.com/privacy',
   },
-};
+} as const;

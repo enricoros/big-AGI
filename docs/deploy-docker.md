@@ -9,7 +9,7 @@ Docker ensures faster development cycles, easier collaboration, and seamless env
    ```bash
    git clone https://github.com/enricoros/big-agi.git
    cd big-agi
-   ``` 
+   ```
 2. **Build the Docker Image**: Build a local docker image from the provided Dockerfile:
    ```bash
    docker build -t big-agi .
@@ -50,7 +50,7 @@ docker-compose up -d
 ### Make Local Services Visible to Docker 🌐
 
 To make local services running on your host machine accessible to a Docker container, such as a
-[Browseless](./config-browse.md) service or a local API, you can follow this simplified guide:
+[Browseless](./config-feature-browse.md) service or a local API, you can follow this simplified guide:
 
 | Operating System  | Steps to Make Local Services Visible to Docker                                                                                                                                                                                                                                                                                                                                               |
 |:------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

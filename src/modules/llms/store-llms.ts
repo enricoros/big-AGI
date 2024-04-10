@@ -47,8 +47,9 @@ export type DLLMId = string;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat = 'oai-chat';
-export const LLM_IF_OAI_Vision = 'oai-vision';
-export const LLM_IF_OAI_Fn = 'oai-fn';
+export const LLM_IF_OAI_Json = 'oai-chat-json';
+export const LLM_IF_OAI_Vision = 'oai-chat-vision';
+export const LLM_IF_OAI_Fn = 'oai-chat-fn';
 export const LLM_IF_OAI_Complete = 'oai-complete';
 
 
@@ -80,7 +81,7 @@ interface ModelsData {
 }
 
 interface ModelsActions {
-  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) => void;
+  setLLMs: (llms: DLLM[], sourceId: DModelSourceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
@@ -119,12 +120,25 @@ export const useModelsStore = create<LlmsStore>()(
         set(state => updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, id)),
 
       // NOTE: make sure to the _source links (sId foreign) are already set before calling this
-      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, preserveExpired?: boolean) =>
+      setLLMs: (llms: DLLM[], sourceId: DModelSourceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) =>
         set(state => {
 
-          const otherLlms = preserveExpired === true
-            ? state.llms
-            : state.llms.filter(llm => llm.sId !== sourceId);
+          // keep existing model customizations
+          if (keepUserEdits) {
+            llms = llms.map(llm => {
+              const existing = state.llms.find(m => m.id === llm.id);
+              return !existing ? llm : {
+                ...llm,
+                label: existing.label, // keep label
+                hidden: existing.hidden, // keep hidden
+                options: { ...existing.options, ...llm.options }, // keep custom configurations, but overwrite as the new could have massively improved params
+              };
+            });
+          }
+
+          const otherLlms = deleteExpiredVendorLlms
+            ? state.llms.filter(llm => llm.sId !== sourceId)
+            : state.llms;
 
           // replace existing llms with the same id
           const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
@@ -272,7 +286,8 @@ export function findSourceOrThrow<TSourceSetup>(sourceId: DModelSourceId) {
 
 
 const modelsKnowledgeMap: { contains: string[], cutoff: string }[] = [
-  { contains: ['4-0125', '4-turbo', '4-1106', '4-vision'], cutoff: '2023-04' },
+  { contains: ['4-0125', '4-turbo'], cutoff: '2023-12' },
+  { contains: ['4-1106', '4-vision'], cutoff: '2023-04' },
   { contains: ['4-0613', '4-0314', '4-32k', '3.5-turbo'], cutoff: '2021-09' },
 ] as const;
 
@@ -328,4 +343,9 @@ export function useChatLLM() {
     const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
     return { chatLLM };
   }, shallow);
+}
+
+export function getLLMsDebugInfo() {
+  const { llms, sources, chatLLMId, fastLLMId, funcLLMId } = useModelsStore.getState();
+  return { sources: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId, funcId: funcLLMId };
 }

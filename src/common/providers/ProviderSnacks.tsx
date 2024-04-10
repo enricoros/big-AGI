@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { IconButton, Snackbar, SnackbarTypeMap } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { SNACKBAR_ANIMATION_DURATION, SnackbarMessage, useSnackbarsStore } from '../components/useSnackbarsStore';
 
@@ -34,6 +35,16 @@ const defaultTypeConfig: {
     closeButton: false,
     anchorOrigin: { vertical: 'top', horizontal: 'center' },
   },
+};
+
+const titleSx: SxProps = {
+  '--Snackbar-inset': '64px',
+  borderRadius: 'md',
+  boxShadow: 'md',
+  backgroundColor: 'background.popup',
+  // bgcolor: `rgba(${theme.vars.palette.background.popup} / 0.5)`,
+  // backdropFilter: 'blur(6px)',
+  // '--Snackbar-padding': config.closeButton ? '0.5rem' : '1rem',
 };
 
 
@@ -80,19 +91,10 @@ export const ProviderSnacks = (props: { children: React.ReactNode }) => {
             size='sm'
             sx={{ my: '-0.4rem' }}
           >
-            <CloseIcon />
+            <CloseRoundedIcon />
           </IconButton>
         )}
-        sx={theme => ({
-          ...(type === 'title' && {
-            '--Snackbar-inset': '64px',
-            borderRadius: 'md',
-            boxShadow: 'md',
-            bgcolor: `rgba(${theme.vars.palette.neutral.lightChannel} / 0.1)`,
-            backdropFilter: 'blur(6px)',
-          }),
-          // '--Snackbar-padding': config.closeButton ? '0.5rem' : '1rem',
-        })}
+        sx={type === 'title' ? titleSx : undefined}
       >
         {message}
       </Snackbar>

@@ -35,6 +35,9 @@
       "~/server/*": ["src/server/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts",
+    // this is here only because otherwise, during standalone build the process would update this file
+    "dist/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "electron"]
 }

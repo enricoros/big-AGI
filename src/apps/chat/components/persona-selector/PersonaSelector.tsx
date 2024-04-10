@@ -2,10 +2,11 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import DoneIcon from '@mui/icons-material/Done';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -14,7 +15,7 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import { lineHeightTextarea } from '~/common/app.theme';
+import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -25,9 +26,10 @@ import { usePurposeStore } from './store-purposes';
 
 // 'special' purpose IDs, for tile hiding purposes
 const PURPOSE_ID_PERSONA_CREATOR = '__persona-creator__';
+const TILE_ACTIVE_COLOR = 'primary' as const;
 
 // defined looks
-const tileSize = 7.5; // rem
+const tileSize = 7; // rem
 const tileGap = 0.5; // rem
 
 
@@ -45,29 +47,36 @@ function Tile(props: {
   return (
     <Button
       variant={(!props.isEditMode && props.isActive) ? 'solid' : props.isHighlighted ? 'soft' : 'soft'}
-      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'primary' : 'neutral'}
+      color={(!props.isEditMode && props.isActive) ? 'primary' : props.isHighlighted ? 'primary' : TILE_ACTIVE_COLOR}
       onClick={props.onClick}
       sx={{
         aspectRatio: 1,
         height: `${tileSize}rem`,
-        fontWeight: 500,
+        fontWeight: 'md',
+        lineHeight: 'xs',
         ...((props.isEditMode || !props.isActive) ? {
-          boxShadow: props.isHighlighted ? '0 2px 8px -2px rgb(var(--joy-palette-primary-mainChannel) / 50%)' : 'sm',
-          backgroundColor: props.isHighlighted ? undefined : 'background.surface',
-          ...(props.imageUrl && {
-            backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
-            backgroundPosition: 'center',
-            backgroundSize: 'cover',
-          }),
+          boxShadow: `0 2px 8px -3px rgb(var(--joy-palette-${TILE_ACTIVE_COLOR}-darkChannel) / 30%)`,
+          // boxShadow: props.isHighlighted
+          //   ? '0 2px 8px -2px rgb(var(--joy-palette-primary-darkChannel) / 30%)'
+          //   : 'sm',
+          backgroundColor: props.isHighlighted ? undefined : 'background.popup',
+          // ...(props.imageUrl && {
+          //   backgroundImage: `linear-gradient(rgba(255 255 255 /0.85), rgba(255 255 255 /1)), url(${props.imageUrl})`,
+          //   backgroundPosition: 'center',
+          //   backgroundSize: 'cover',
+          //   '&:hover': {
+          //     backgroundImage: 'none',
+          //   },
+          // }),
         } : {}),
-        flexDirection: 'column', gap: 1,
+        flexDirection: 'column', gap: props.symbol === '🎭' ? 0.5 : 1.25, pt: 1.25,
         ...props.sx,
       }}
     >
       {/* [Edit mode checkbox] */}
       {props.isEditMode && (
         <Checkbox
-          variant='soft' color='neutral'
+          variant='soft' color={TILE_ACTIVE_COLOR}
           checked={!props.isHidden}
           // label={<Typography level='body-xs'>show</Typography>}
           sx={{ position: 'absolute', left: `${tileGap}rem`, top: `${tileGap}rem` }}
@@ -125,6 +134,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // derived state
 
+  const isCustomPurpose = systemPurposeId === 'Custom';
+
   const { selectedPurpose, fourExamples } = React.useMemo(() => {
     const selectedPurpose: SystemPurposeData | null = systemPurposeId ? (SystemPurposes[systemPurposeId] ?? null) : null;
     // const selectedExample = selectedPurpose?.examples?.length
@@ -152,6 +163,13 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
     //       maybe we shall have a "save" button just save on a state to persist between sessions
     SystemPurposes['Custom'].systemMessage = v.target.value;
   }, []);
+
+  const handleSwitchToCustom = React.useCallback((customText: string) => {
+    if (setSystemPurposeId) {
+      SystemPurposes['Custom'].systemMessage = customText;
+      setSystemPurposeId(props.conversationId, 'Custom');
+    }
+  }, [props.conversationId, setSystemPurposeId]);
 
   const toggleEditMode = React.useCallback(() => setEditMode(on => !on), []);
 
@@ -246,7 +264,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
           </Typography>
           <Tooltip disableInteractive title={editMode ? 'Done Editing' : 'Edit Tiles'}>
             <IconButton size='sm' onClick={toggleEditMode} sx={{ my: '-0.25rem' /* absorb the button padding */ }}>
-              {editMode ? <DoneIcon /> : <EditIcon />}
+              {editMode ? <DoneIcon /> : <EditRoundedIcon />}
             </IconButton>
           </Tooltip>
         </Box>
@@ -280,6 +298,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             isHidden={hidePersonaCreator}
             onClick={() => editMode ? toggleHiddenPurposeId(PURPOSE_ID_PERSONA_CREATOR) : void navigateToPersonas()}
             sx={{
+              fontSize: 'xs',
               boxShadow: 'xs',
               backgroundColor: 'neutral.softDisabledBg',
             }}
@@ -298,37 +317,39 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               : selectedPurpose?.description || 'No description available'}
           </Typography>
           {/* Examples Toggle */}
+          {/*<Box sx={{ display: 'flex', flexFlow: 'row wrap', flexShrink: 1 }}>*/}
           {fourExamples && showExamplescomponent}
-          {showPromptComponent}
+          {!isCustomPurpose && showPromptComponent}
+          {/*</Box>*/}
         </Box>
 
         {/* [row -3] Example incipits */}
         {systemPurposeId !== 'Custom' && (
-          <ExpanderControlledBox expanded={showExamples || showPrompt} sx={{ gridColumn: '1 / -1', pt: 1 }}>
+          <ExpanderControlledBox expanded={showExamples || (!isCustomPurpose && showPrompt)} sx={{ gridColumn: '1 / -1', pt: 1 }}>
             {showExamples && (
               <List
                 aria-label='Persona Conversation Starters'
                 sx={{
                   // example items 2-col layout
                   display: 'grid',
-                  gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 2 + 1}rem, 1fr))`,
+                  gridTemplateColumns: `repeat(auto-fit, minmax(${tileSize * 3 + 1}rem, 1fr))`,
                   gap: 1,
                 }}
               >
                 {fourExamples?.map((example, idx) => (
                   <ListItem
                     key={idx}
-                    variant='soft'
+                    variant='outlined'
                     sx={{
+                      // padding: '0.25rem 0.5rem',
+                      backgroundColor: 'background.popup',
                       borderRadius: 'md',
-                      // boxShadow: 'xs',
-                      padding: '0.25rem 0.5rem',
-                      backgroundColor: 'background.surface',
+                      boxShadow: 'xs',
                       '& svg': { opacity: 0.1, transition: 'opacity 0.2s' },
                       '&:hover svg': { opacity: 1 },
                     }}
                   >
-                    <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between' }}>
+                    <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between', borderRadius: 'md' }}>
                       <Typography level='body-sm'>
                         {example}
                       </Typography>
@@ -338,15 +359,32 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                 ))}
               </List>
             )}
-            {showPrompt && (
+            {(!isCustomPurpose && showPrompt) && (
               <Card>
                 <CardContent>
-                  <Typography level='title-sm'>
-                    System Prompt
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography level='title-sm'>
+                      System Prompt
+                    </Typography>
+                    <Button
+                      variant='plain' color='neutral' size='sm'
+                      endDecorator={<EditNoteIcon />}
+                      onClick={() => handleSwitchToCustom(bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id))}
+                      sx={{ ml: 'auto', my: '-0.25rem' /* absorb the button padding */ }}
+                    >
+                      Custom
+                    </Button>
+                  </Box>
                   <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
                     {bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id)}
                   </Typography>
+                  {!!selectedPurpose?.systemMessageNotes && (
+                    <Alert sx={{ m: -1, mt: 1, p: 1 }}>
+                      <Typography level='body-xs'>
+                        Prompt notes: {selectedPurpose.systemMessageNotes}
+                      </Typography>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -363,9 +401,11 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
             defaultValue={SystemPurposes['Custom']?.systemMessage}
             onChange={handleCustomSystemMessageChange}
             endDecorator={
-              <Typography level='body-sm' sx={{ px: 0.75 }}>
-                Just start chatting when done.
-              </Typography>
+              <Alert sx={{ flex: 1, p: 1 }}>
+                <Typography level='body-xs'>
+                  Just start chatting when done.
+                </Typography>
+              </Alert>
             }
             sx={{
               gridColumn: '1 / -1',
@@ -373,7 +413,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               '&:focus-within': {
                 backgroundColor: 'background.popup',
               },
-              lineHeight: lineHeightTextarea,
+              lineHeight: lineHeightTextareaMd,
             }}
           />
         )}

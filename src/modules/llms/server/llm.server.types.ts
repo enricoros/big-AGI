@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../store-llms';
 
 
 // Model Description: a superset of LLM model descriptors
 
 const pricingSchema = z.object({
-  cpmPrompt: z.number().optional(), // Cost per thousand prompt tokens
-  cpmCompletion: z.number().optional(), // Cost per thousand completion tokens
+  chatIn: z.number().optional(), // Cost per Million input tokens
+  chatOut: z.number().optional(), // Cost per Million output tokens
 });
 
 // const rateLimitsSchema = z.object({
@@ -21,9 +21,10 @@ const modelDescriptionSchema = z.object({
   description: z.string(),
   contextWindow: z.number().nullable(),
   maxCompletionTokens: z.number().optional(),
-  pricing: pricingSchema.optional(),
   // rateLimits: rateLimitsSchema.optional(),
-  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
+  trainingDataCutoff: z.string().optional(),
+  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision, LLM_IF_OAI_Json])),
+  pricing: pricingSchema.optional(),
   hidden: z.boolean().optional(),
 });
 

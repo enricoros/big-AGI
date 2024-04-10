@@ -49,7 +49,7 @@ export function ActilePopup(props: {
           const labelNormal = item.label.slice(props.activePrefixLength);
           return (
             <ListItem
-              key={item.id}
+              key={item.key}
               variant={isActive ? 'soft' : undefined}
               color={isActive ? 'primary' : undefined}
               onClick={() => props.onItemClick(item)}
@@ -64,7 +64,7 @@ export function ActilePopup(props: {
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography level='title-sm' color={isActive ? 'primary' : undefined}>
-                      <span style={{ fontWeight: 600, textDecoration: 'underline' }}>{labelBold}</span>{labelNormal}
+                      <span style={{ textDecoration: 'underline' }}><b>{labelBold}</b></span>{labelNormal}
                     </Typography>
                     {item.argument && <Typography level='body-sm'>
                       {item.argument}

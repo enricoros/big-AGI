@@ -18,6 +18,7 @@ interface FolderState {
 }
 
 interface FolderActions {
+  importFoldersAppend: (folders: DFolder[], enableFolders: boolean) => void;
   createFolder: (title: string, color?: string) => void;
   deleteFolder: (folderId: string) => void;
   moveFolder: (fromIndex: number, toIndex: number) => void;
@@ -37,6 +38,16 @@ export const useFolderStore = create<FolderStore>()(devtools(
       // Initial state
       folders: [],
       enableFolders: false,
+
+      // Actions
+      importFoldersAppend: (folders: DFolder[], enableFolders: boolean) =>
+        set(state => ({
+          folders: [
+            ...state.folders.filter(f => !folders.find(f2 => f2.id === f.id)),
+            ...folders,
+          ],
+          enableFolders: enableFolders || state.enableFolders,
+        })),
 
       createFolder: (title: string, color?: string) => {
         const newFolder: DFolder = {

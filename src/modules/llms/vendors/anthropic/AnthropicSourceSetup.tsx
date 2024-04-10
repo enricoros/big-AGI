@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
@@ -22,13 +23,12 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
   const advanced = useToggleableBoolean();
 
   // external state
-  const { source, sourceHasLLMs, access, updateSetup } =
+  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorAnthropic);
 
   // derived state
   const { anthropicKey, anthropicHost, heliconeKey } = access;
 
-  const needsUserKey = !ModelVendorAnthropic.hasBackendCap?.();
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);
@@ -39,8 +39,14 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   return <>
 
+    <Alert variant='soft' color='success'>
+      <div>
+        Enjoy <b>Opus</b>, <b>Sonnet</b> and <b>Haiku</b>. Anthropic <ExternalLink level='body-sm' href='https://status.anthropic.com/'>server status</ExternalLink>.
+      </div>
+    </Alert>
+
     <FormInputKey
-      id='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
+      autoCompleteId='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
         : '✔️ already set in server'
@@ -52,6 +58,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     {advanced.on && <FormTextField
+      autoCompleteId='anthropic-host'
       title='API Host'
       description={<>e.g., <Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-aws-bedrock.md' target='_blank'>bedrock-claude</Link></>}
       placeholder='deployment.service.region.amazonaws.com'
@@ -61,6 +68,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     />}
 
     {advanced.on && <FormTextField
+      autoCompleteId='anthropic-helicone-key'
       title='Helicone Key' disabled={!!anthropicHost}
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'

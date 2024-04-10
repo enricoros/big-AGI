@@ -6,6 +6,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
+import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -73,6 +74,7 @@ const converterTypeToIconMap: { [key in AttachmentConverterType]: React.Componen
   'pdf-images': PictureAsPdfIcon,
   'image': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
+  'ego-message-md': TelegramIcon,
   'unhandled': TextureIcon,
 };
 
@@ -126,7 +128,7 @@ export function AttachmentItem(props: {
 
 
   const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.stopPropagation();
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     onItemMenuToggle(attachment.id, event.currentTarget);
   }, [attachment, onItemMenuToggle]);
 
@@ -179,12 +181,12 @@ export function AttachmentItem(props: {
             size='sm'
             variant={variant} color={color}
             onClick={handleToggleMenu}
+            onContextMenu={handleToggleMenu}
             sx={{
               backgroundColor: props.menuShown ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
               border: variant === 'soft' ? '1px solid' : undefined,
               borderColor: variant === 'soft' ? `${color}.solidBg` : undefined,
               borderRadius: 'sm',
-              fontWeight: 'normal',
               ...ATTACHMENT_MIN_STYLE,
               px: 1, py: 0.5,
               display: 'flex', flexDirection: 'row', gap: 1,

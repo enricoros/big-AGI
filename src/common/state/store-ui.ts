@@ -1,12 +1,12 @@
 import * as React from 'react';
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import type { ContentScaling } from '~/common/app.theme';
+import { browserLangOrUS } from '~/common/util/pwaUtils';
+
 
 // UI Preferences
-
-export type UIMessageTextSize = 'xs' | 'sm' | 'md';
 
 interface UIPreferencesStore {
 
@@ -18,16 +18,16 @@ interface UIPreferencesStore {
   centerMode: 'narrow' | 'wide' | 'full';
   setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
 
+  contentScaling: ContentScaling;
+  setContentScaling: (contentScaling: ContentScaling) => void;
+  increaseContentScaling: () => void;
+  decreaseContentScaling: () => void;
+
   doubleClickToEdit: boolean;
   setDoubleClickToEdit: (doubleClickToEdit: boolean) => void;
 
   enterIsNewline: boolean;
   setEnterIsNewline: (enterIsNewline: boolean) => void;
-
-  messageTextSize: UIMessageTextSize;
-  setMessageTextSize: (messageTextSize: UIMessageTextSize) => void;
-  incrementMessageTextSize: () => void;
-  decrementMessageTextSize: () => void;
 
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
@@ -45,6 +45,7 @@ interface UIPreferencesStore {
 
   actionCounters: Record<string, number>;
   incrementActionCounter: (key: string) => void;
+  resetActionCounter: (key: string) => void;
 
 }
 
@@ -54,28 +55,22 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       // UI Features
 
-      preferredLanguage: (typeof navigator !== 'undefined') && navigator.language || 'en-US',
+      preferredLanguage: browserLangOrUS,
       setPreferredLanguage: (preferredLanguage: string) => set({ preferredLanguage }),
 
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
+
+      contentScaling: 'md',
+      setContentScaling: (contentScaling: ContentScaling) => set({ contentScaling: contentScaling }),
+      increaseContentScaling: () => set((state) => state.contentScaling === 'md' ? state : { contentScaling: state.contentScaling === 'xs' ? 'sm' : 'md' }),
+      decreaseContentScaling: () => set((state) => state.contentScaling === 'xs' ? state : { contentScaling: state.contentScaling === 'md' ? 'sm' : 'xs' }),
 
       doubleClickToEdit: true,
       setDoubleClickToEdit: (doubleClickToEdit: boolean) => set({ doubleClickToEdit }),
 
       enterIsNewline: false,
       setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
-
-      messageTextSize: 'md',
-      setMessageTextSize: (messageTextSize: UIMessageTextSize) => set({ messageTextSize }),
-      incrementMessageTextSize: () => set((state) => {
-        if (state.messageTextSize === 'md') return state;
-        return { messageTextSize: state.messageTextSize === 'xs' ? 'sm' : 'md' };
-      }),
-      decrementMessageTextSize: () => set((state) => {
-        if (state.messageTextSize === 'xs') return state;
-        return { messageTextSize: state.messageTextSize === 'md' ? 'sm' : 'xs' };
-      }),
 
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
@@ -97,6 +92,10 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
         set((state) => ({
           actionCounters: { ...state.actionCounters, [key]: (state.actionCounters[key] || 0) + 1 },
         })),
+      resetActionCounter: (key: string) =>
+        set((state) => ({
+          actionCounters: { ...state.actionCounters, [key]: 0 },
+        })),
 
     }),
     {
@@ -117,18 +116,30 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
   ),
 );
 
-// formerly:
-//  - export-share: badge on the 'share' button in the Chat Menu
-export function useUICounter(key: 'share-chat-link' | 'call-wizard' | 'composer-shift-enter') {
+
+// former:
+//  'export-share'                    // used the export function
+//  'share-chat-link'                 // not shared a Chat Link yet
+type KnownKeys =
+  | 'acknowledge-translation-warning' // displayed if Chrome is translating the page (may crash)
+  | 'beam-wizard'                     // first Beam
+  | 'call-wizard'                     // first Call
+  | 'composer-shift-enter'            // not used Shift + Enter in the Composer yet
+  | 'composer-alt-enter'              // not used Alt + Enter in the Composer yet
+  | 'composer-ctrl-enter'             // not used Ctrl + Enter in the Composer yet
+  ;
+
+export function useUICounter(key: KnownKeys, novelty: number = 1) {
   const value = useUIPreferencesStore((state) => state.actionCounters[key] || 0);
 
-  const touch = React.useCallback(() =>
-      useUIPreferencesStore.getState().incrementActionCounter(key)
-    , [key]);
+  const touch = React.useCallback(() => useUIPreferencesStore.getState().incrementActionCounter(key), [key]);
+
+  const forget = React.useCallback(() => useUIPreferencesStore.getState().resetActionCounter(key), [key]);
 
   return {
     // value,
-    novel: !value,
+    novel: value < novelty,
     touch,
+    forget,
   };
 }

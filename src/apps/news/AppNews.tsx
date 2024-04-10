@@ -1,35 +1,55 @@
 import * as React from 'react';
-import { keyframes } from '@emotion/react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, IconButton, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, IconButton, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
+import { animationColorBlues, animationColorRainbow } from '~/common/util/animUtils';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
 
-import { NewsItems, newsRoadmapCallout } from './news.data';
+import { NewsItems } from './news.data';
+import { beamNewsCallout } from './beam.data';
+
 
 // number of news items to show by default, before the expander
-const DEFAULT_NEWS_COUNT = 3;
+const DEFAULT_NEWS_COUNT = 4;
 
-export const cssColorKeyframes = keyframes`
-    0%, 100% {
-        color: #636B74; /* Neutral main color (500) */
-    }
-    25% {
-        color: #12467B; /* Primary darker shade (700) */
-    }
-    50% {
-        color: #0B6BCB; /* Primary main color (500) */
-    }
-    75% {
-        color: #083e75; /* Primary lighter shade (300) */
-    }`;
+
+export const newsRoadmapCallout =
+  <Card variant='solid' invertedColors>
+    <CardContent sx={{ gap: 2 }}>
+      <Typography level='title-lg'>
+        Open Roadmap
+      </Typography>
+      <Typography level='body-sm'>
+        Take a peek at our roadmap to see what&apos;s in the pipeline.
+        Discover upcoming features and let us know what excites you the most!
+      </Typography>
+      <Grid container spacing={1}>
+        <Grid xs={12} sm={7}>
+          <Button
+            fullWidth variant='soft' color='primary' endDecorator={<LaunchIcon />}
+            component={Link} href={Brand.URIs.OpenProject} noLinkStyle target='_blank'
+          >
+            Explore
+          </Button>
+        </Grid>
+        <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
+          <Button
+            fullWidth variant='plain' color='primary' endDecorator={<LaunchIcon />}
+            component={Link} href={Brand.URIs.OpenRepo + '/issues/new?template=roadmap-request.md&title=%5BSuggestion%5D'} noLinkStyle target='_blank'
+          >
+            Suggest a Feature
+          </Button>
+        </Grid>
+      </Grid>
+    </CardContent>
+  </Card>;
 
 
 export function AppNews() {
@@ -55,7 +75,7 @@ export function AppNews() {
       }}>
 
         <Typography level='h1' sx={{ fontSize: '2.9rem', mb: 4 }}>
-          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${cssColorKeyframes} 10s infinite`, zIndex: 1 }}>{firstNews?.versionCode}</Box>!
+          Welcome to {Brand.Title.Base} <Box component='span' sx={{ animation: `${animationColorBlues} 10s infinite`, zIndex: 1 /* perf-opt */ }}>{firstNews?.versionCode}</Box>!
         </Typography>
 
         <Typography sx={{ mb: 2 }} level='title-sm'>
@@ -88,18 +108,25 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
+              {/* Inject the Beam item here*/}
+              {idx === 0 && (
+                <Box sx={{ mb: 3 }}>
+                  {beamNewsCallout}
+                </Box>
+              )}
+
               {/* News Item */}
               <Card key={'news-' + idx} sx={{ mb: 3, minHeight: 32, gap: 1 }}>
                 <CardContent sx={{ position: 'relative', pr: addPadding ? 4 : 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography level='title-sm' component='div'>
-                      {ni.text ? ni.text : ni.versionName ? <><span style={{ fontWeight: 600 }}>{ni.versionCode}</span> · </> : `Version ${ni.versionCode}:`}
+                      {ni.text ? ni.text : ni.versionName ? <><b>{ni.versionCode}</b> · </> : `Version ${ni.versionCode}:`}
                       <Box
                         component='span'
                         sx={idx ? {} : {
-                          animation: `${cssRainbowColorKeyframes} 5s infinite`,
-                          fontWeight: 600,
-                          zIndex: 1,
+                          animation: `${animationColorRainbow} 5s infinite`,
+                          fontWeight: 'lg',
+                          zIndex: 1, /* perf-opt */
                         }}
                       >
                         {ni.versionName}
@@ -111,12 +138,15 @@ export function AppNews() {
                   </Box>
 
                   {!!ni.items && (ni.items.length > 0) && (
-                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem' }}>
-                      {ni.items.filter(item => item.dev !== true).map((item, idx) => <li key={idx}>
-                        < Typography component='div' level='body-sm'>
-                          {item.text}
-                        </Typography>
-                      </li>)}
+                    <ul style={{ marginTop: 8, marginBottom: 8, paddingInlineStart: '1.5rem', listStyleType: '"-  "' }}>
+                      {ni.items.filter(item => item.dev !== true).map((item, idx) => (
+                        <li key={idx} style={{ listStyle: (item.icon || item.noBullet) ? '" "' : '"-  "', marginLeft: item.icon ? '-1.125rem' : undefined }}>
+                          <Typography component='div' sx={{ fontSize: 'sm' }}>
+                            {item.icon && <item.icon sx={{ fontSize: 'xs', mr: 0.75 }} />}
+                            {item.text}
+                          </Typography>
+                        </li>
+                      ))}
                     </ul>
                   )}
 
@@ -146,6 +176,7 @@ export function AppNews() {
                         // commented: we scale the images to 600px wide (>300 px tall)
                         // sizes='(max-width: 1200px) 100vw, 50vw'
                         priority={idx === 0}
+                        quality={90}
                       />
                     </AspectRatio>
                   </CardOverflow>
@@ -153,7 +184,7 @@ export function AppNews() {
               </Card>
 
               {/* Inject the roadmap item here*/}
-              {idx === 0 && (
+              {idx === 3 && (
                 <Box sx={{ mb: 3 }}>
                   {newsRoadmapCallout}
                 </Box>

@@ -1,22 +1,26 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, List } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
+import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
+import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useEphemerals } from '~/common/chats/EphemeralsStore';
+import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
-import { ChatMessageMemo } from './message/ChatMessage';
+import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
+import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages } from '../store-app-chat';
-import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
 
 
 /**
@@ -24,12 +28,13 @@ import { useScrollToBottom } from './scroll-to-bottom/useScrollToBottom';
  */
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
+  conversationHandler: ConversationHandler | null,
   capabilityHasT2I: boolean,
   chatLLMContextTokens: number | null,
+  fitScreen: boolean,
   isMessageSelectionMode: boolean,
-  isMobile: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[], chatEffectBestOf: boolean) => Promise<void>,
+  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
@@ -46,7 +51,8 @@ export function ChatMessageList(props: {
   const { notifyBooting } = useScrollToBottom();
   const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
-  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(state => {
+  const optionalTranslationWarning = useBrowserTranslationWarning();
+  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
@@ -55,7 +61,8 @@ export function ChatMessageList(props: {
       editMessage: state.editMessage,
       setMessages: state.setMessages,
     };
-  }, shallow);
+  }));
+  const ephemerals = useEphemerals(props.conversationHandler);
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
@@ -64,26 +71,50 @@ export function ChatMessageList(props: {
 
   // text actions
 
-  const handleRunExample = React.useCallback(async (text: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', text)], false);
+  const handleRunExample = React.useCallback(async (examplePrompt: string) => {
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', examplePrompt)]);
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
   // message menu methods proxy
 
-  const handleConversationBranch = React.useCallback((messageId: string) => {
-    conversationId && onConversationBranch(conversationId, messageId);
-  }, [conversationId, onConversationBranch]);
-
-  const handleConversationRestartFrom = React.useCallback(async (messageId: string, offset: number, chatEffectBestOf: boolean) => {
+  const handleMessageAssistantFrom = React.useCallback(async (messageId: string, offset: number) => {
     const messages = getConversation(conversationId)?.messages;
     if (messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory, chatEffectBestOf);
+      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory);
     }
   }, [conversationId, onConversationExecuteHistory]);
 
-  const handleConversationTruncate = React.useCallback((messageId: string) => {
+  const handleMessageBeam = React.useCallback(async (messageId: string) => {
+    // Right-click menu Beam
+    if (!conversationId || !props.conversationHandler) return;
+    const messages = getConversation(conversationId)?.messages;
+    if (messages?.length) {
+      const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
+      const lastMessage = truncatedHistory[truncatedHistory.length - 1];
+      if (lastMessage) {
+        // assistant: do an in-place beam
+        if (lastMessage.role === 'assistant') {
+          if (truncatedHistory.length >= 2)
+            props.conversationHandler.beamInvoke(truncatedHistory.slice(0, -1), [lastMessage], lastMessage.id);
+        } else {
+          // user: truncate and append (but if the next message is an assistant message, import it)
+          const nextMessage = messages[truncatedHistory.length];
+          if (nextMessage?.role === 'assistant')
+            props.conversationHandler.beamInvoke(truncatedHistory, [nextMessage], null);
+          else
+            props.conversationHandler.beamInvoke(truncatedHistory, [], null);
+        }
+      }
+    }
+  }, [conversationId, props.conversationHandler]);
+
+  const handleMessageBranch = React.useCallback((messageId: string) => {
+    conversationId && onConversationBranch(conversationId, messageId);
+  }, [conversationId, onConversationBranch]);
+
+  const handleMessageTruncate = React.useCallback((messageId: string) => {
     const messages = getConversation(conversationId)?.messages;
     if (conversationId && messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
@@ -97,6 +128,12 @@ export function ChatMessageList(props: {
 
   const handleMessageEdit = React.useCallback((messageId: string, newText: string) => {
     conversationId && editMessage(conversationId, messageId, { text: newText }, true);
+  }, [conversationId, editMessage]);
+
+  const handleMessageToggleUserFlag = React.useCallback((messageId: string, userFlag: DMessageUserFlag) => {
+    conversationId && editMessage(conversationId, messageId, (message) => ({
+      userFlags: messageToggleUserFlag(message, userFlag),
+    }), false);
   }, [conversationId, editMessage]);
 
   const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
@@ -196,6 +233,8 @@ export function ChatMessageList(props: {
       // marginBottom: '-1px',
     }}>
 
+      {optionalTranslationWarning}
+
       {props.isMessageSelectionMode && (
         <MessagesSelectionHeader
           hasSelected={selectedMessages.size > 0}
@@ -206,37 +245,56 @@ export function ChatMessageList(props: {
         />
       )}
 
-      {filteredMessages.map((message, idx, { length: count }) =>
-        props.isMessageSelectionMode ? (
+      {filteredMessages.map((message, idx, { length: count }) => {
 
-          <CleanerMessage
-            key={'sel-' + message.id}
-            message={message}
-            remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
-            selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
-          />
+          // Optimization: if the component is going to change (e.g. the message is typing), we don't want to memoize it to not throw garbage in memory
+          const ChatMessageMemoOrNot = message.typing ? ChatMessage : ChatMessageMemo;
 
-        ) : (
+          return props.isMessageSelectionMode ? (
 
-          <ChatMessageMemo
-            key={'msg-' + message.id}
-            message={message}
-            diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
-            isBottom={idx === count - 1}
-            isImagining={isImagining}
-            isMobile={props.isMobile}
-            isSpeaking={isSpeaking}
-            onConversationBranch={handleConversationBranch}
-            onConversationRestartFrom={handleConversationRestartFrom}
-            onConversationTruncate={handleConversationTruncate}
-            onMessageDelete={handleMessageDelete}
-            onMessageEdit={handleMessageEdit}
-            onTextDiagram={handleTextDiagram}
-            onTextImagine={handleTextImagine}
-            onTextSpeak={handleTextSpeak}
-          />
+            <CleanerMessage
+              key={'sel-' + message.id}
+              message={message}
+              remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
+              selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
+            />
 
-        ),
+          ) : (
+
+            <ChatMessageMemoOrNot
+              key={'msg-' + message.id}
+              message={message}
+              diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
+              fitScreen={props.fitScreen}
+              isBottom={idx === count - 1}
+              isImagining={isImagining}
+              isSpeaking={isSpeaking}
+              onMessageAssistantFrom={handleMessageAssistantFrom}
+              onMessageBeam={handleMessageBeam}
+              onMessageBranch={handleMessageBranch}
+              onMessageDelete={handleMessageDelete}
+              onMessageEdit={handleMessageEdit}
+              onMessageToggleUserFlag={handleMessageToggleUserFlag}
+              onMessageTruncate={handleMessageTruncate}
+              onTextDiagram={handleTextDiagram}
+              onTextImagine={handleTextImagine}
+              onTextSpeak={handleTextSpeak}
+            />
+
+          );
+        },
+      )}
+
+      {!!ephemerals.length && (
+        <Ephemerals
+          ephemerals={ephemerals}
+          conversationId={props.conversationId}
+          sx={{
+            mt: 'auto',
+            overflowY: 'auto',
+            minHeight: 64,
+          }}
+        />
       )}
 
     </List>

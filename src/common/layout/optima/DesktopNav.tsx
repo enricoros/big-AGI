@@ -2,8 +2,9 @@ import * as React from 'react';
 import Router from 'next/router';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Divider, Tooltip } from '@mui/joy';
+import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
@@ -47,29 +48,68 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
 
   // App items
   const navAppItems = React.useMemo(() => {
-    return navItems.apps
-      .filter(_app => checkVisibileIcon(_app, false, props.currentApp))
-      .map((app, appIdx) => {
-        const isActive = app === props.currentApp;
-        const isDrawerable = isActive && !app.hideDrawer;
-        const isPaneOpen = isDrawerable && isDrawerOpen;
 
-        if (checkDivider(app))
-          return <Divider key={'div-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
+    // group apps into visible (rendered as of now) and overflow (rendered with a dropdown menu)
+    let crossedDivider = false;
+    const visibleApps: NavItemApp[] = [];
+    const overflowApps: NavItemApp[] = [];
 
-        return (
-          <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name}>
-            <DesktopNavIcon
-              variant={isActive ? 'solid' : undefined}
-              onClick={isDrawerable ? toggleDrawer : () => Router.push(app.landingRoute || app.route)}
-              className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''}`}
-            >
-              {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
-              <app.icon />
-            </DesktopNavIcon>
+    navItems.apps.forEach((app, index) => {
+      if (checkVisibileIcon(app, false, props.currentApp)) {
+        if (!crossedDivider || app === props.currentApp)
+          visibleApps.push(app);
+        else
+          overflowApps.push(app);
+        crossedDivider = crossedDivider || checkDivider(app);
+      }
+    });
+
+    // Application buttons (and group sepearator)
+    const components: React.JSX.Element[] = visibleApps.map((app, appIdx) => {
+      const isActive = app === props.currentApp;
+      const isDrawerable = isActive && !app.hideDrawer;
+      const isPaneOpen = isDrawerable && isDrawerOpen;
+
+      if (checkDivider(app))
+        return <Divider key={'app-sep-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
+
+      return (
+        <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name + (app.isDev ? ' [DEV]' : '')}>
+          <DesktopNavIcon
+            variant={isActive ? 'solid' : undefined}
+            onClick={isDrawerable ? toggleDrawer : () => Router.push(app.landingRoute || app.route)}
+            className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''} ${app.isDev ? navItemClasses.dev : ''}`}
+          >
+            {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
+            <app.icon />
+          </DesktopNavIcon>
+        </Tooltip>
+      );
+    });
+
+    // Overflow dropdown menu
+    if (overflowApps.length) {
+      components.push(
+        <Dropdown key='n-app-overflow'>
+          <Tooltip disableInteractive enterDelay={600} title='More Apps'>
+            <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
+              <MoreHorizRoundedIcon />
+            </MenuButton>
           </Tooltip>
-        );
-      });
+          <Menu variant='solid' invertedColors placement='right-start'>
+            {overflowApps.map((app, appIdx) =>
+              <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
+                <ListItemDecorator sx={{ ml: 1 }}>
+                  <app.icon />
+                </ListItemDecorator>
+                {app.name + (app.isDev ? ' [DEV]' : '')}
+              </MenuItem>,
+            )}
+          </Menu>
+        </Dropdown>,
+      );
+    }
+    return components;
   }, [isDrawerOpen, props.currentApp, toggleDrawer]);
 
 

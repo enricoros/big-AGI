@@ -6,6 +6,8 @@ import { ChatMulticastOnIcon } from '~/common/components/icons/ChatMulticastOnIc
 import { ChatMulticastOffIcon } from '~/common/components/icons/ChatMulticastOffIcon';
 
 
+export const ButtonMultiChatMemo = React.memo(ButtonMultiChat);
+
 export function ButtonMultiChat(props: { isMobile?: boolean, multiChat: boolean, onSetMultiChat: (multiChat: boolean) => void }) {
   const { multiChat } = props;
   return props.isMobile ? (
@@ -20,7 +22,7 @@ export function ButtonMultiChat(props: { isMobile?: boolean, multiChat: boolean,
     <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between' }}>
       <FormLabel sx={{ gap: 1, flexFlow: 'row nowrap' }}>
         <Box sx={{ display: { xs: 'none', lg: 'inline-block' } }}>
-          {multiChat ? <ChatMulticastOnIcon sx={{ color: 'warning.solidBg' }} /> : <ChatMulticastOffIcon />}
+          {multiChat ? <ChatMulticastOnIcon color='primary' /> : <ChatMulticastOffIcon />}
         </Box>
         {multiChat ? 'Multichat · On' : 'Multichat'}
       </FormLabel>

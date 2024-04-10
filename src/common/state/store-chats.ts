@@ -8,7 +8,6 @@ import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
 import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
-import { useFolderStore } from './store-folders';
 
 
 export type DConversationId = string;
@@ -17,7 +16,7 @@ export type DConversationId = string;
  * Conversation, a list of messages between humans and bots
  * Future:
  * - draftUserMessage?: { text: string; attachments: any[] };
- * - isMuted: boolean; isArchived: boolean; isStarred: boolean; participants: string[];
+ * - isMuted: boolean; isArchived: boolean; Starred: boolean; participants: string[];
  */
 export interface DConversation {
   id: DConversationId;
@@ -26,11 +25,10 @@ export interface DConversation {
   userTitle?: string;
   autoTitle?: string;
   tokenCount: number;                 // f(messages, llmId)
-  created: number;                    // created timestamp
-  updated: number | null;             // updated timestamp
+  created: number;                    // created timestamp (Date.now())
+  updated: number | null;             // updated timestamp (Date.now())
   // Not persisted, used while in-memory, or temporarily by the UI
   abortController: AbortController | null;
-  ephemerals: DEphemeral[];
 }
 
 export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
@@ -42,7 +40,6 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
     created: Date.now(),
     updated: Date.now(),
     abortController: null,
-    ephemerals: [],
   };
 }
 
@@ -68,11 +65,16 @@ export interface DMessage {
   purposeId?: SystemPurposeId;      // only assistant/system
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
+  userFlags?: DMessageUserFlag[];       // user-set per-message flags
+
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
   created: number;                  // created timestamp
   updated: number | null;           // updated timestamp
 }
+
+export type DMessageUserFlag =
+  | 'starred'; // user starred this
 
 export function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
@@ -88,23 +90,23 @@ export function createDMessage(role: DMessage['role'], text: string): DMessage {
   };
 }
 
-/**
- * InterimStep, a place side-channel information is displayed
- */
-export interface DEphemeral {
-  id: string;
-  title: string;
-  text: string;
-  state: object;
+export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {
+  return message.userFlags?.includes(flag) ?? false;
 }
 
-export function createDEphemeral(title: string, initialText: string): DEphemeral {
-  return {
-    id: uuidv4(),
-    title: title,
-    text: initialText,
-    state: {},
-  };
+export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag): DMessageUserFlag[] {
+  if (message.userFlags?.includes(flag))
+    return message.userFlags.filter(_f => _f !== flag);
+  else
+    return [...(message.userFlags || []), flag];
+}
+
+const dMessageUserFlagToEmojiMap: Record<DMessageUserFlag, string> = {
+  starred: '⭐️',
+};
+
+export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
+  return dMessageUserFlagToEmojiMap[flag] || '❓';
 }
 
 
@@ -114,29 +116,23 @@ interface ChatState {
   conversations: DConversation[];
 }
 
-interface ChatActions {
+export interface ChatActions {
   // store setters
   prependNewConversation: (personaId: SystemPurposeId | undefined) => DConversationId;
   importConversation: (conversation: DConversation, preventClash: boolean) => DConversationId;
   branchConversation: (conversationId: DConversationId, messageId: string | null) => DConversationId | null;
-  deleteConversation: (conversationId: DConversationId, newConversationPersonaId?: SystemPurposeId) => DConversationId;
-  wipeAllConversations: (folderId: string | null, newConversationPersonaId?: SystemPurposeId) => DConversationId;
+  deleteConversations: (conversationIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
-  startTyping: (conversationId: string, abortController: AbortController | null) => void;
+  setAbortController: (conversationId: string, abortController: AbortController | null) => void;
   stopTyping: (conversationId: string) => void;
   setMessages: (conversationId: string, messages: DMessage[]) => void;
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
-  editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, touch: boolean) => void;
+  editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
-
-  appendEphemeral: (conversationId: string, devTool: DEphemeral) => void;
-  deleteEphemeral: (conversationId: string, ephemeralId: string) => void;
-  updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) => void;
-  updateEphemeralState: (conversationId: string, ephemeralId: string, state: object) => void;
 
   // utility function
   _editConversation: (conversationId: string, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -219,9 +215,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           updated: Date.now(),
           // Set the new title for the branched conversation
           autoTitle: newTitle,
-          // reset ephemerals
+          // reset transient
           abortController: null,
-          ephemerals: [],
           // TODO: set references to parent conversation & message?
         };
 
@@ -235,16 +230,17 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         return branched.id;
       },
 
-      deleteConversation: (conversationId: DConversationId, newConversationPersonaId?: SystemPurposeId): DConversationId => {
+      deleteConversations: (conversationIds: DConversationId[], newConversationPersonaId?: SystemPurposeId): DConversationId => {
         let { conversations } = _get();
 
-        // abort pending requests on this conversation
-        const cIndex = conversations.findIndex((conversation: DConversation): boolean => conversation.id === conversationId);
-        if (cIndex >= 0)
-          conversations[cIndex].abortController?.abort();
+        // find the index of first conversation to delete
+        const cIndex = conversationIds.length > 0 ? conversations.findIndex(_c => _c.id === conversationIds[0]) : -1;
+
+        // abort all pending requests
+        conversationIds.forEach(conversationId => conversations.find(_c => _c.id === conversationId)?.abortController?.abort());
 
         // remove from the list
-        conversations = conversations.filter(_c => _c.id !== conversationId);
+        conversations = conversations.filter(_c => !conversationIds.includes(_c.id));
 
         // create a new conversation if there are no more
         if (!conversations.length)
@@ -255,32 +251,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         });
 
         // return the next conversation Id in line, if valid
-        return conversations[(cIndex >= 0 && cIndex < conversations.length) ? cIndex : conversations.length - 1].id;
-      },
-
-      wipeAllConversations: (onlyInFolderId: string | null, newConversationPersonaId?: SystemPurposeId): DConversationId => {
-        let { conversations } = _get();
-
-        // abort any pending requests on all conversations
-        conversations.forEach(conversation => conversation.abortController?.abort());
-
-        // If a folder is selected, only delete conversations in that folder
-        if (onlyInFolderId) {
-          const { folders, removeConversationFromFolder } = useFolderStore.getState();
-          const folderConversations = folders.find(folder => folder.id === onlyInFolderId)?.conversationIds || [];
-          conversations = conversations.filter(conversation => !folderConversations.includes(conversation.id));
-
-          // Update the folder to remove the deleted conversation IDs
-          folderConversations.forEach(conversationId => removeConversationFromFolder(onlyInFolderId, conversationId));
-        }
-
-        const conversation = createDConversation(newConversationPersonaId);
-
-        _set({
-          conversations: onlyInFolderId ? conversations : [conversation],
-        });
-
-        return conversation.id;
+        return conversations[(cIndex >= 0 && cIndex < conversations.length) ? cIndex : 0].id;
       },
 
 
@@ -297,7 +268,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               : conversation),
         })),
 
-      startTyping: (conversationId: string, abortController: AbortController | null) =>
+      setAbortController: (conversationId: string, abortController: AbortController | null) =>
         _get()._editConversation(conversationId, () =>
           ({
             abortController: abortController,
@@ -322,7 +293,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             tokenCount: updateTokenCounts(newMessages, false, 'setMessages'),
             updated: Date.now(),
             abortController: null,
-            ephemerals: [],
           };
         }),
 
@@ -353,26 +323,29 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           };
         }),
 
-      editMessage: (conversationId: string, messageId: string, updatedMessage: Partial<DMessage>, setUpdated: boolean) =>
+      editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) =>
         _get()._editConversation(conversationId, conversation => {
 
           const chatLLMId = getChatLLMId();
-          const messages = conversation.messages.map((message: DMessage): DMessage =>
-            message.id === messageId
-              ? {
+          const messages = conversation.messages.map((message: DMessage): DMessage => {
+            if (message.id === messageId) {
+              const updatedMessage = typeof update === 'function' ? update(message) : update;
+              return {
                 ...message,
                 ...updatedMessage,
-                ...(setUpdated && { updated: Date.now() }),
+                ...(touchUpdated && { updated: Date.now() }),
                 ...(((updatedMessage.typing === false || !message.typing) && chatLLMId && {
                   tokenCount: countModelTokens(updatedMessage.text || message.text, chatLLMId, 'editMessage(typing=false)') ?? 0,
                 })),
-              }
-              : message);
+              };
+            }
+            return message;
+          });
 
           return {
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
-            ...(setUpdated && { updated: Date.now() }),
+            ...(touchUpdated && { updated: Date.now() }),
           };
         }),
 
@@ -393,44 +366,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           {
             userTitle,
           }),
-
-      appendEphemeral: (conversationId: string, ephemeral: DEphemeral) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = [...conversation.ephemerals, ephemeral];
-          return {
-            ephemerals,
-          };
-        }),
-
-      deleteEphemeral: (conversationId: string, ephemeralId: string) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = conversation.ephemerals?.filter((e: DEphemeral): boolean => e.id !== ephemeralId) || [];
-          return {
-            ephemerals,
-          };
-        }),
-
-      updateEphemeralText: (conversationId: string, ephemeralId: string, text: string) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
-            e.id === ephemeralId
-              ? { ...e, text }
-              : e) || [];
-          return {
-            ephemerals,
-          };
-        }),
-
-      updateEphemeralState: (conversationId: string, ephemeralId: string, state: object) =>
-        _get()._editConversation(conversationId, conversation => {
-          const ephemerals = conversation.ephemerals?.map((e: DEphemeral): DEphemeral =>
-            e.id === ephemeralId
-              ? { ...e, state: state }
-              : e) || [];
-          return {
-            ephemerals,
-          };
-        }),
 
     }),
     {
@@ -459,7 +394,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         ...state,
         conversations: state.conversations.map((conversation: DConversation) => {
           const {
-            abortController, ephemerals,
+            abortController,
             ...rest
           } = conversation;
           return rest;
@@ -478,7 +413,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
 
           // rehydrate the transient properties
           conversation.abortController = null;
-          conversation.ephemerals = [];
         }
       },
 
@@ -551,32 +485,31 @@ function updateTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom
 export const getConversation = (conversationId: DConversationId | null): DConversation | null =>
   conversationId ? useChatStore.getState().conversations.find(_c => _c.id === conversationId) ?? null : null;
 
+export const getConversationSystemPurposeId = (conversationId: DConversationId | null): SystemPurposeId | null =>
+  getConversation(conversationId)?.systemPurposeId || null;
+
 export const useConversation = (conversationId: DConversationId | null) => useChatStore(state => {
   const { conversations } = state;
 
   // this object will change if any sub-prop changes as well
   const conversation = conversationId ? conversations.find(_c => _c.id === conversationId) ?? null : null;
   const title = conversation ? conversationTitle(conversation) : null;
-  const chatIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
-  const isNoChat = chatIdx === -1;
-  const isChatEmpty = conversation ? !conversation.messages.length : true;
-  const areChatsEmpty = isChatEmpty && conversations.length < 2;
-  const newConversationId: DConversationId | null = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
-  const conversationsLength = conversations.length;
+  const isEmpty = conversation ? !conversation.messages.length : true;
+  const isDeveloper = conversation?.systemPurposeId === 'Developer';
+  const conversationIdx = conversation ? conversations.findIndex(_c => _c.id === conversation.id) : -1;
+
+  const hasConversations = conversations.length > 1 || (conversations.length === 1 && !!conversations[0].messages.length);
+  const recycleNewConversationId = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
 
   return {
     title,
-    chatIdx,
-    isNoChat,
-    isChatEmpty,
-    areChatsEmpty,
-    newConversationId,
-    conversationsLength,
-    _remove_systemPurposeId: conversation?.systemPurposeId ?? null,
+    isEmpty,
+    isDeveloper,
+    conversationIdx,
+    hasConversations,
+    recycleNewConversationId,
     prependNewConversation: state.prependNewConversation,
     branchConversation: state.branchConversation,
-    deleteConversation: state.deleteConversation,
-    wipeAllConversations: state.wipeAllConversations,
-    setMessages: state.setMessages,
+    deleteConversations: state.deleteConversations,
   };
 }, shallow);

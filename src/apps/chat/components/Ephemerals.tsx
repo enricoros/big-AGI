@@ -1,12 +1,13 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-import { DConversationId, DEphemeral, useChatStore } from '~/common/state/store-chats';
-import { lineHeightChatText } from '~/common/app.theme';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { DConversationId } from '~/common/state/store-chats';
+import { DEphemeral } from '~/common/chats/EphemeralsStore';
+import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
 const StateLine = styled(Typography)(({ theme }) => ({
@@ -16,7 +17,7 @@ const StateLine = styled(Typography)(({ theme }) => ({
   fontSize: theme.fontSize.xs,
   fontFamily: theme.fontFamily.code,
   marginLeft: theme.spacing(1),
-  lineHeight: lineHeightChatText,
+  lineHeight: lineHeightChatTextMd,
 }));
 
 function isPrimitive(value: any): boolean {
@@ -75,6 +76,11 @@ function StateRenderer(props: { state: object }) {
 
 
 function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
+
+  const handleDelete = React.useCallback(() => {
+    ConversationsManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
+  }, [conversationId, ephemeral.id]);
+
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
@@ -93,7 +99,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 
       {/* Left pane (console) */}
       <Grid xs={12} md={ephemeral.state ? 6 : 12}>
-        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: lineHeightChatText }}>
+        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: lineHeightChatTextMd }}>
           {ephemeral.text}
         </Typography>
       </Grid>
@@ -112,12 +118,12 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     {/* Close button (right of title) */}
     <IconButton
       size='sm'
-      onClick={() => useChatStore.getState().deleteEphemeral(conversationId, ephemeral.id)}
+      onClick={handleDelete}
       sx={{
         position: 'absolute', top: 8, right: 8,
         opacity: { xs: 1, sm: 0.5 }, transition: 'opacity 0.3s',
       }}>
-      <CloseIcon />
+      <CloseRoundedIcon />
     </IconButton>
 
   </Box>;
@@ -130,19 +136,22 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 // `);
 
 
-export function Ephemerals(props: { conversationId: DConversationId | null, sx?: SxProps }) {
+export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId | null, sx?: SxProps }) {
   // global state
-  const ephemerals = useChatStore(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-    return conversation ? conversation.ephemerals : [];
-  }, shallow);
+  // const ephemerals = useChatStore(state => {
+  //   const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+  //   return conversation ? conversation.ephemerals : [];
+  // }, shallow);
 
-  if (!ephemerals?.length) return null;
+  const ephemerals = props.ephemerals;
+  // if (!ephemerals?.length) return null;
 
   return (
     <Sheet
       variant='soft' color='success' invertedColors
       sx={{
+        borderTop: '1px solid',
+        borderTopColor: 'divider',
         // backgroundImage: `url("data:image/svg+xml,${dashedBorderSVG.replace('currentColor', '%23A1E8A1')}")`,
         // backgroundSize: '100% 100%',
         // backgroundRepeat: 'no-repeat',

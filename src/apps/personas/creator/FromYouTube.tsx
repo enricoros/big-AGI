@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Card, IconButton, Input, Typography } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
@@ -60,7 +60,7 @@ function YouTubeVideoTranscriptCard(props: { transcript: YTVideoTranscript, onCl
             position: 'absolute', top: -8, right: -8,
             borderRadius: 'md',
           }}>
-          <CloseIcon />
+          <CloseRoundedIcon />
         </IconButton>
       </Box>
     </Card>
@@ -132,7 +132,7 @@ export function FromYouTube(props: {
         placeholder='YouTube Video URL'
         value={videoURL}
         onChange={handleVideoURLChange}
-        sx={{ mb: 1.5 }}
+        sx={{ mb: 1.5, backgroundColor: 'background.popup' }}
       />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

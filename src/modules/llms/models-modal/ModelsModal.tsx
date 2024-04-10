@@ -42,7 +42,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
-  const selectedSourceId = _selectedSourceId ?? modelSources[0]?.id ?? null;
+  const selectedSourceId = _selectedSourceId ?? modelSources[modelSources.length - 1]?.id ?? null;
 
   const activeSource = modelSources.find(source => source.id === selectedSourceId);
 
@@ -103,6 +103,18 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
             // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
             minHeight: '6rem',
             overflowY: 'auto',
+
+            // style (list variant=outlined)
+            '--ListItem-paddingY': '0rem',
+            '--ListItem-paddingRight': '0.5rem', // instead of 0.75
+            backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
+            borderRadius: 'md',
+
+            // [mobile] a bit less padding
+            '@media (max-width: 900px)': {
+              '--ListItem-paddingLeft': '0.5rem',
+              '--ListItem-paddingRight': '0.25rem',
+            },
           }}
         />
       )}

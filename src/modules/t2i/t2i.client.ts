@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { backendCaps } from '~/modules/backend/state-backend';
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 
@@ -12,26 +14,35 @@ import { useProdiaStore } from './prodia/store-module-prodia';
 import { useTextToImageStore } from './store-module-t2i';
 
 
+// configuration
+// Note: LocalAI t2i integration is experimental
+const T2I_ENABLE_LOCALAI = false;
+
+
 // Capabilities API - used by Settings, and whomever wants to check if this is available
 
 export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // external state
-  const { activeProviderId, setActiveProviderId } = useTextToImageStore(state => ({
+
+  const { activeProviderId, setActiveProviderId } = useTextToImageStore(useShallow(state => ({
     activeProviderId: state.activeProviderId,
     setActiveProviderId: state.setActiveProviderId,
-  }), shallow);
-  const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
-  const openAIModelSourceIds: OpenAIModelSource[] = useModelsStore(
-    ({ llms, sources }) => getOpenAIModelSources(llms, sources),
+  })));
+
+  const llmsModelSources: LlmsModelSources[] = useModelsStore(
+    ({ llms, sources }) => getLlmsModelSources(llms, sources),
     (a, b) => a.length === b.length && a.every((_a, i) => shallow(_a, b[i])),
   );
 
+  const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
+
 
   // derived state
+
   const providers = React.useMemo(() => {
-    return getTextToImageProviders(openAIModelSourceIds, hasProdiaModels);
-  }, [hasProdiaModels, openAIModelSourceIds]);
+    return getTextToImageProviders(llmsModelSources, hasProdiaModels);
+  }, [hasProdiaModels, llmsModelSources]);
 
 
   // [Effect] Auto-select the first correctly configured provider
@@ -63,15 +74,15 @@ export function getActiveTextToImageProviderOrThrow() {
   if (!activeProviderId)
     throw new Error('No TextToImage Provider selected');
 
-  // get all providers
+  // [immediate] get all providers
   const { llms, sources } = useModelsStore.getState();
-  const openAIModelSourceIds = getOpenAIModelSources(llms, sources);
+  const openAIModelSourceIds = getLlmsModelSources(llms, sources);
   const providers = getTextToImageProviders(openAIModelSourceIds, !!useProdiaStore.getState().prodiaModelId);
 
   // find the active provider
   const activeProvider = providers.find(p => p.id === activeProviderId);
   if (!activeProvider)
-    throw new Error('No TextToImage Provider found');
+    throw new Error('Text-to-image is not configured correctly');
 
   return activeProvider;
 }
@@ -84,8 +95,14 @@ export async function t2iGenerateImageOrThrow(provider: TextToImageProvider, pro
         throw new Error('No OpenAI model source configured for TextToImage');
       return await openAIGenerateImagesOrThrow(provider.id, prompt, count);
 
+    case 'localai':
+      throw new Error('LocalAI t2i integration is not yet available');
+      // if (!provider.id)
+      //   throw new Error('No LocalAI model source configured for TextToImage');
+      // return await localaiGenerateImages(provider.id, prompt, count);
+
     case 'prodia':
-      const hasProdiaServer = backendCaps().hasImagingProdia;
+      const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
       const hasProdiaClientModels = !!useProdiaStore.getState().prodiaModelId;
       if (!hasProdiaServer && !hasProdiaClientModels)
         throw new Error('No Prodia configuration found for TextToImage');
@@ -97,37 +114,58 @@ export async function t2iGenerateImageOrThrow(provider: TextToImageProvider, pro
 
 /// Private
 
-interface OpenAIModelSource {
+interface LlmsModelSources {
   label: string;
+  modelVendorId: ModelVendorId;
   modelSourceId: DModelSourceId;
-  hasModels: boolean;
+  hasAnyModels: boolean;
 }
 
-function getOpenAIModelSources(llms: DLLM[], sources: DModelSource[]) {
-  return sources.filter(s => s.vId === 'openai').map((s): OpenAIModelSource => ({
+function getLlmsModelSources(llms: DLLM[], sources: DModelSource[]) {
+  return sources.filter(s => (s.vId === 'openai' || (T2I_ENABLE_LOCALAI && s.vId === 'localai'))).map((s): LlmsModelSources => ({
     label: s.label,
+    modelVendorId: s.vId,
     modelSourceId: s.id,
-    hasModels: !!llms.find(m => m.sId === s.id),
+    hasAnyModels: llms.some(m => m.sId === s.id),
   }));
 }
 
-function getTextToImageProviders(openAIModelSources: OpenAIModelSource[], hasProdiaClientModels: boolean) {
+function getTextToImageProviders(llmsModelSources: LlmsModelSources[], hasProdiaClientModels: boolean) {
   const providers: TextToImageProvider[] = [];
 
-  // add all OpenAI providers
-  for (const { modelSourceId, label, hasModels } of openAIModelSources) {
-    providers.push({
-      id: modelSourceId,
-      label: label,
-      painter: 'DALL·E',
-      description: 'OpenAI\'s DALL·E models',
-      configured: hasModels,
-      vendor: 'openai',
-    });
+  // add OpenAI and/or LocalAI providers
+  for (const { modelVendorId, modelSourceId, label, hasAnyModels } of llmsModelSources) {
+    switch (modelVendorId) {
+      case 'localai':
+        providers.push({
+          id: modelSourceId,
+          label: label,
+          painter: 'LocalAI',
+          description: 'LocalAI\'s models',
+          configured: hasAnyModels,
+          vendor: 'localai',
+        });
+        break;
+
+      case 'openai':
+        providers.push({
+          id: modelSourceId,
+          label: label,
+          painter: 'DALL·E',
+          description: 'OpenAI\'s DALL·E models',
+          configured: hasAnyModels,
+          vendor: 'openai',
+        });
+        break;
+
+      default:
+        console.error('Unknown model vendor', modelVendorId);
+        break;
+    }
   }
 
-  // add Prodia
-  const hasProdiaServer = backendCaps().hasImagingProdia;
+  // add Prodia provider
+  const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
   providers.push({
     id: 'prodia',
     label: 'Prodia',

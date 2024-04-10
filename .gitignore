@@ -2,6 +2,9 @@
 # notes
 __*
 
+# Frontend Build: ignore API files disabled for this build
+/app/**/*.backup
+
 # dependencies
 /node_modules
 /.pnp
@@ -12,6 +15,7 @@ __*
 
 # next.js
 /.next/
+/dist/
 /out/
 
 # production

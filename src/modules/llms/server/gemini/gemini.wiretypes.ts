@@ -10,30 +10,34 @@ export const geminiModelsStreamGenerateContentPath = '/v1beta/{model=models/*}:s
 
 // models.list = /v1beta/models
 
+const geminiModelSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  inputTokenLimit: z.number().int().min(1),
+  outputTokenLimit: z.number().int().min(1),
+  supportedGenerationMethods: z.array(z.enum([
+    'countMessageTokens',
+    'countTextTokens',
+    'countTokens',
+    'createTunedModel',
+    'createTunedTextModel',
+    'embedContent',
+    'embedText',
+    'generateAnswer',
+    'generateContent',
+    'generateMessage',
+    'generateText',
+  ])),
+  temperature: z.number().optional(),
+  topP: z.number().optional(),
+  topK: z.number().optional(),
+});
+export type GeminiModelSchema = z.infer<typeof geminiModelSchema>;
+
 export const geminiModelsListOutputSchema = z.object({
-  models: z.array(z.object({
-    name: z.string(),
-    version: z.string(),
-    displayName: z.string(),
-    description: z.string(),
-    inputTokenLimit: z.number().int().min(1),
-    outputTokenLimit: z.number().int().min(1),
-    supportedGenerationMethods: z.array(z.enum([
-      'countMessageTokens',
-      'countTextTokens',
-      'countTokens',
-      'createTunedTextModel',
-      'embedContent',
-      'embedText',
-      'generateAnswer',
-      'generateContent',
-      'generateMessage',
-      'generateText',
-    ])),
-    temperature: z.number().optional(),
-    topP: z.number().optional(),
-    topK: z.number().optional(),
-  })),
+  models: z.array(geminiModelSchema),
 });
 
 
@@ -168,9 +172,9 @@ export const geminiGeneratedContentResponseSchema = z.object({
   // no candidates are returned only if there was something wrong with the prompt (see promptFeedback)
   candidates: z.array(z.object({
     index: z.number(),
-    content: geminiContentSchema,
+    content: geminiContentSchema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     finishReason: geminiFinishReasonSchema.optional(),
-    safetyRatings: z.array(geminiSafetyRatingSchema),
+    safetyRatings: z.array(geminiSafetyRatingSchema).optional(), // undefined when finishReason is 'RECITATION'
     citationMetadata: z.object({
       startIndex: z.number().optional(),
       endIndex: z.number().optional(),

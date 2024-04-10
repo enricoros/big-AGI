@@ -1,7 +1,14 @@
 import { shallow } from 'zustand/shallow';
 
+import { type BackendCapabilities, getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+
 import type { IModelVendor } from './IModelVendor';
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
+
+
+export function vendorHasBackendCap<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(vendor: IModelVendor<TSourceSetup, TAccess, TLLMOptions>, backendCaps: BackendCapabilities) {
+  return vendor.hasBackendCapFn ? vendor.hasBackendCapFn(backendCaps) : vendor.hasBackendCapKey ? !!backendCaps[vendor.hasBackendCapKey] : false;
+}
 
 
 /**
@@ -21,6 +28,7 @@ export function useSourceSetup<TSourceSetup, TAccess, TLLMOptions>(sourceId: DMo
     const access = vendor.getTransportAccess(source?.setup);
 
     return {
+      hasNoBackendCap: !vendorHasBackendCap(vendor, getBackendCapabilities()),
       source,
       partialSetup: source?.setup ?? null, // NOTE: do not use - prefer ACCESS; only used in 1 edge case now
       access,

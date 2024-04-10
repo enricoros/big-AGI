@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { IconButton, Sheet, Typography } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 
 export const PageDrawerHeader = (props: {
@@ -37,8 +37,8 @@ export const PageDrawerHeader = (props: {
       {props.title}
     </Typography>
 
-    <IconButton aria-label='Close Drawer' onClick={props.onClose}>
-      <CloseIcon />
+    <IconButton aria-label='Close Drawer' size='sm' onClick={props.onClose}>
+      <CloseRoundedIcon />
     </IconButton>
 
   </Sheet>;

@@ -2,6 +2,11 @@ import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
 export const env = createEnv({
+
+  /*
+   * Serverside Environment variables, not available on the client.
+   * Will throw if you access these variables on the client.
+   */
   server: {
 
     // Backend Postgres, for optional storage via Prisma
@@ -26,6 +31,13 @@ export const env = createEnv({
     // LLM: Google AI's Gemini
     GEMINI_API_KEY: z.string().optional(),
 
+    // LLM: Groq
+    GROQ_API_KEY: z.string().optional(),
+
+    // LLM: LocalAI
+    LOCALAI_API_HOST: z.string().url().optional(),
+    LOCALAI_API_KEY: z.string().optional(),
+
     // LLM: Mistral
     MISTRAL_API_KEY: z.string().optional(),
 
@@ -34,6 +46,9 @@ export const env = createEnv({
 
     // LLM: OpenRouter
     OPENROUTER_API_KEY: z.string().optional(),
+
+    // LLM: Perplexity
+    PERPLEXITY_API_KEY: z.string().optional(),
 
     // LLM: Toghether AI
     TOGETHERAI_API_KEY: z.string().optional(),
@@ -63,6 +78,25 @@ export const env = createEnv({
     HTTP_BASIC_AUTH_USERNAME: z.string().optional(),
     HTTP_BASIC_AUTH_PASSWORD: z.string().optional(),
 
+    // Build-time configuration
+    BIG_AGI_BUILD: z.enum(['standalone', 'static']).optional(),
+
+  },
+
+  /*
+   * Environment variables available on the client (and server).
+   * You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
+   *
+   * NOTE: they must be set at build time, not runtime(!)
+   */
+  client: {
+
+    // Frontend: Google Analytics GA4 Measurement ID
+    NEXT_PUBLIC_GA4_MEASUREMENT_ID: z.string().optional(),
+
+    // Frontend: server to use for PlantUML rendering
+    NEXT_PUBLIC_PLANTUML_SERVER_URL: z.string().url().optional(),
+
   },
 
   onValidationError: error => {
@@ -74,5 +108,8 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
 
   // with Noext.JS >= 13.4.4 we'd only need to destructure client variables
-  experimental__runtimeEnv: {},
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
+    NEXT_PUBLIC_PLANTUML_SERVER_URL: process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL,
+  },
 });

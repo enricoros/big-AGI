@@ -8,7 +8,7 @@ import { SxProps } from '@mui/joy/styles/types';
  * Base for our Modal components (Preferences, Models Setup, etc.)
  */
 export function GoodModal(props: {
-  title?: string | React.JSX.Element,
+  title?: React.ReactNode,
   titleStartDecorator?: React.JSX.Element,
   strongerTitle?: boolean,
   noTitleBar?: boolean,
@@ -25,7 +25,14 @@ export function GoodModal(props: {
     <Modal
       open={props.open}
       onClose={props.onClose}
-      // slotProps={{ backdrop: { sx: { backdropFilter: 'blur(6px)' } } }}
+      // slotProps={{
+      //   backdrop: {
+      //     sx: {
+      //       animation: `${cssBackgroundFadeIn} 0.2s ease-in-out`,
+      //       backdropFilter: 'blur(6px)',
+      //     },
+      //   },
+      // }}
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog

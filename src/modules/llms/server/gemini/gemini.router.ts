@@ -5,16 +5,15 @@ import { env } from '~/server/env.mjs';
 import packageJson from '../../../../../package.json';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.serverutils';
+import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
-
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '../../store-llms';
-import { llmsListModelsOutputSchema, ModelDescriptionSchema, llmsChatGenerateOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema } from '../llm.server.types';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
 import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelSchema, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
+import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from '~/modules/llms/server/gemini/gemini.models';
 
 
 // Default hosts
@@ -146,40 +145,13 @@ export const llmGeminiRouter = createTRPCRouter({
       //       as the List API already all the info on all the models
 
       // map to our output schema
+      const models = detailedModels
+        .filter(geminiFilterModels)
+        .map(geminiModel => geminiModelToModelDescription(geminiModel, detailedModels))
+        .sort(geminiSortModels);
+
       return {
-        models: detailedModels.map((geminiModel) => {
-          const { description, displayName, inputTokenLimit, name, outputTokenLimit, supportedGenerationMethods } = geminiModel;
-
-          const contextWindow = inputTokenLimit + outputTokenLimit;
-          const hidden = !supportedGenerationMethods.includes('generateContent');
-
-          const { version, topK, topP, temperature } = geminiModel;
-          const descriptionLong = description + ` (Version: ${version}, Defaults: temperature=${temperature}, topP=${topP}, topK=${topK}, interfaces=[${supportedGenerationMethods.join(',')}])`;
-
-          // const isGeminiPro = name.includes('gemini-pro');
-          const isGeminiProVision = name.includes('gemini-pro-vision');
-
-          const interfaces: ModelDescriptionSchema['interfaces'] = [];
-          if (supportedGenerationMethods.includes('generateContent')) {
-            interfaces.push(LLM_IF_OAI_Chat);
-            if (isGeminiProVision)
-              interfaces.push(LLM_IF_OAI_Vision);
-          }
-
-          return {
-            id: name,
-            label: displayName,
-            // created: ...
-            // updated: ...
-            description: descriptionLong,
-            contextWindow: contextWindow,
-            maxCompletionTokens: outputTokenLimit,
-            // pricing: isGeminiPro ? { needs per-character and per-image pricing } : undefined,
-            // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
-            interfaces: supportedGenerationMethods.includes('generateContent') ? [LLM_IF_OAI_Chat] : [],
-            hidden,
-          } satisfies ModelDescriptionSchema;
-        }),
+        models: models,
       };
     }),
 

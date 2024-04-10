@@ -7,6 +7,8 @@ import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { usePurposeStore } from './persona-selector/store-purposes';
+
 
 function PersonaDropdown(props: {
   systemPurposeId: SystemPurposeId | null,
@@ -14,9 +16,21 @@ function PersonaDropdown(props: {
 }) {
 
   // external state
+  const hiddenPurposeIDs = usePurposeStore(state => state.hiddenPurposeIDs);
   const { zenMode } = useUIPreferencesStore(state => ({
     zenMode: state.zenMode,
   }), shallow);
+
+
+  // filter by key in the object - must be missing the system purpose ids hidden by the user, or be the currently active one
+  const visibleSystemPurposes = React.useMemo(() => {
+    return Object.keys(SystemPurposes)
+      .filter(key => !hiddenPurposeIDs.includes(key as SystemPurposeId) || key === props.systemPurposeId)
+      .reduce((obj, key) => {
+        obj[key as SystemPurposeId] = SystemPurposes[key as SystemPurposeId];
+        return obj;
+      }, {} as typeof SystemPurposes);
+  }, [hiddenPurposeIDs, props.systemPurposeId]);
 
 
   const { setSystemPurposeId } = props;
@@ -28,7 +42,7 @@ function PersonaDropdown(props: {
 
   return (
     <PageBarDropdownMemo
-      items={SystemPurposes}
+      items={visibleSystemPurposes}
       value={props.systemPurposeId}
       onChange={handleSystemPurposeChange}
       showSymbols={zenMode !== 'cleaner'}

@@ -7,10 +7,10 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
 import MicIcon from '@mui/icons-material/Mic';
 import MicNoneIcon from '@mui/icons-material/MicNone';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
-import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
-import { ScrollToBottomButton } from '../chat/components/scroll-to-bottom/ScrollToBottomButton';
+import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
+import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/useLLMDropdown';
 
 import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
@@ -57,7 +57,7 @@ function CallMenuItems(props: {
     </MenuItem>
 
     <MenuItem onClick={handleChangeVoiceToggle}>
-      <ListItemDecorator><RecordVoiceOverIcon /></ListItemDecorator>
+      <ListItemDecorator><RecordVoiceOverTwoToneIcon /></ListItemDecorator>
       Change Voice
       <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
@@ -224,8 +224,9 @@ export function Telephone(props: {
     responseAbortController.current = new AbortController();
     let finalText = '';
     let error: any | null = null;
-    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, (updatedMessage: Partial<DMessage>) => {
-      const text = updatedMessage.text?.trim();
+    setPersonaTextInterim('💭...');
+    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
+      const text = textSoFar?.trim();
       if (text) {
         finalText = text;
         setPersonaTextInterim(text);
@@ -330,22 +331,9 @@ export function Telephone(props: {
         padding: 0, // move this to the ScrollToBottom component
       }}>
 
-        <ScrollToBottom
-          // bootToBottom
-          stickToBottom
-          sx={{
-            // allows the content to be scrolled (all browsers)
-            overflowY: 'auto',
-            // actually make sure this scrolls & fills
-            height: '100%',
+        <ScrollToBottom stickToBottomInitial>
 
-            // content
-            display: 'grid',
-            padding: 1,
-          }}
-        >
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ minHeight: '100%', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
             {/* Call Messages [] */}
             {callMessages.map((message) =>
@@ -354,7 +342,8 @@ export function Telephone(props: {
                 text={message.text}
                 variant={message.role === 'assistant' ? 'solid' : 'soft'}
                 color={message.role === 'assistant' ? 'neutral' : 'primary'}
-                role={message.role} />,
+                role={message.role}
+              />,
             )}
 
             {/* Persona streaming text... */}

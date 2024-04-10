@@ -8,6 +8,7 @@ import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
 import { ProviderSelect } from './ProviderSelect';
 
@@ -74,13 +75,15 @@ export function ProviderConfigure(props: {
       </Box>
 
       {/* Service-Specific Configuration */}
-      {open && (
-        <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
-          <CardContent sx={{ gap: 2 }}>
-            <ProviderConfig />
-          </CardContent>
-        </Card>
-      )}
+      <ExpanderControlledBox expanded={open}>
+        {!!ProviderConfig && (
+          <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
+            <CardContent sx={{ gap: 2 }}>
+              <ProviderConfig />
+            </CardContent>
+          </Card>
+        )}
+      </ExpanderControlledBox>
 
     </Box>
 

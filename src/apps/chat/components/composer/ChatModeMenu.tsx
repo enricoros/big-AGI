@@ -3,16 +3,19 @@ import * as React from 'react';
 import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { KeyStroke } from '~/common/components/KeyStroke';
+import { KeyStroke, platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatModeId } from '../../AppChat';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
 interface ChatModeDescription {
   label: string;
   description: string | React.JSX.Element;
+  highlight?: boolean;
   shortcut?: string;
+  hideOnDesktop?: boolean;
   requiresTTI?: boolean;
 }
 
@@ -21,9 +24,15 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     label: 'Chat',
     description: 'Persona replies',
   },
+  'generate-text-beam': {
+    label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
+    description: 'Combine multiple models', // Smarter: combine...
+    shortcut: 'Ctrl + Enter',
+    hideOnDesktop: true,
+  },
   'append-user': {
     label: 'Write',
-    description: 'Appends a message',
+    description: 'Append a message',
     shortcut: 'Alt + Enter',
   },
   'generate-image': {
@@ -31,13 +40,9 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     description: 'AI Image Generation',
     requiresTTI: true,
   },
-  'generate-best-of': {
-    label: 'Best-Of', // Best of, Auto-Prime, Top Pick, Select Best
-    description: 'Smarter: best of multiple replies',
-  },
   'generate-react': {
     label: 'Reason + Act', //  · α
-    description: 'Answers questions in multiple steps',
+    description: 'Answer questions in multiple steps',
   },
 };
 
@@ -49,12 +54,16 @@ function fixNewLineShortcut(shortcut: string, enterIsNewLine: boolean) {
 }
 
 export function ChatModeMenu(props: {
-  anchorEl: HTMLAnchorElement | null, onClose: () => void,
-  chatModeId: ChatModeId, onSetChatModeId: (chatMode: ChatModeId) => void
+  isMobile: boolean,
+  anchorEl: HTMLAnchorElement | null,
+  onClose: () => void,
+  chatModeId: ChatModeId,
+  onSetChatModeId: (chatMode: ChatModeId) => void,
   capabilityHasTTI: boolean,
 }) {
 
   // external state
+  const labsBeam = useUXLabsStore(state => state.labsBeam);
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
 
   return (
@@ -72,16 +81,18 @@ export function ChatModeMenu(props: {
 
       {/* ChatMode items */}
       {Object.entries(ChatModeItems)
+        .filter(([key, _data]) => key !== 'generate-text-beam' || labsBeam)
+        .filter(([_key, data]) => !data.hideOnDesktop || props.isMobile)
         .map(([key, data]) =>
           <MenuItem key={'chat-mode-' + key} onClick={() => props.onSetChatModeId(key as ChatModeId)}>
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Radio checked={key === props.chatModeId} />
+              <Radio color={data.highlight ? 'success' : undefined} checked={key === props.chatModeId} />
               <Box sx={{ flexGrow: 1 }}>
                 <Typography>{data.label}</Typography>
                 <Typography level='body-xs'>{data.description}{(data.requiresTTI && !props.capabilityHasTTI) ? 'Unconfigured' : ''}</Typography>
               </Box>
               {(key === props.chatModeId || !!data.shortcut) && (
-                <KeyStroke combo={fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline)} />
+                <KeyStroke combo={platformAwareKeystrokes(fixNewLineShortcut((key === props.chatModeId) ? 'ENTER' : data.shortcut ? data.shortcut : 'ENTER', enterIsNewline))} />
               )}
             </Box>
           </MenuItem>)}

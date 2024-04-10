@@ -65,6 +65,8 @@ export function AppCall() {
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: hasIntent ? 'space-evenly' : undefined,
           gap: hasIntent ? 1 : undefined,
+          // shall force the contacts or telephone to stay within the container
+          overflowY: hasIntent ? 'hidden' : undefined,
         }}>
 
         {!hasIntent ? (

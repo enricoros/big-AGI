@@ -9,13 +9,17 @@ import { useRouterRoute } from '~/common/app.routes';
 /**
  * https://github.com/enricoros/big-AGI/issues/299
  */
-export function AppPlaceholder(props: { text?: string }) {
+export function AppPlaceholder(props: {
+  title?: string | null,
+  text?: React.ReactNode,
+  children?: React.ReactNode,
+}) {
 
   // external state
   const route = useRouterRoute();
 
   // derived state
-  const placeholderAppName = capitalizeFirstLetter(route.replace('/', '') || 'Home');
+  const placeholderAppName = props.title || capitalizeFirstLetter(route.replace('/', '') || 'Home');
 
   return (
     <Box sx={{
@@ -25,21 +29,27 @@ export function AppPlaceholder(props: { text?: string }) {
       border: '1px solid blue',
     }}>
 
-      <Box sx={{
-        my: 'auto',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 4,
-        border: '1px solid red',
-      }}>
+      {(props.title !== null || !!props.text) && (
+        <Box sx={{
+          my: 'auto',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 4,
+          border: '1px solid red',
+        }}>
 
-        <Typography level='h1'>
-          {placeholderAppName}
-        </Typography>
-        <Typography>
-          {props.text || 'Intelligent applications to help you learn, think, and do'}
-        </Typography>
+          <Typography level='h1'>
+            {placeholderAppName}
+          </Typography>
+          {!!props.text && (
+            <Typography>
+              {props.text}
+            </Typography>
+          )}
 
-      </Box>
+        </Box>
+      )}
+
+      {props.children}
 
     </Box>
   );

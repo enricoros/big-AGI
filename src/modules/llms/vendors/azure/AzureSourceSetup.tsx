@@ -17,13 +17,12 @@ import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { source, sourceHasLLMs, access, updateSetup } =
+  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorAzure);
 
   // derived state
   const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
 
-  const needsUserKey = !ModelVendorAzure.hasBackendCap?.();
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
   const hostValid = !!asValidURL(azureEndpoint);
@@ -37,6 +36,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
   return <>
 
     <FormTextField
+      autoCompleteId='azure-endpoint'
       title='Azure Endpoint'
       description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>configuration</Link>}
       placeholder='https://your-resource-name.openai.azure.com/'
@@ -46,7 +46,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     <FormInputKey
-      id='azure-key' label='Azure Key'
+      autoCompleteId='azure-key' label='Azure Key'
       rightLabel={<>{needsUserKey
         ? !azureKey && <Link level='body-sm' href='https://azure.microsoft.com/en-us/products/ai-services/openai-service' target='_blank'>request Key</Link>
         : '✔️ already set in server'}
