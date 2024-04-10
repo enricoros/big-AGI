@@ -5,8 +5,8 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, L
 // Model Description: a superset of LLM model descriptors
 
 const pricingSchema = z.object({
-  cpmPrompt: z.number().optional(), // Cost per thousand prompt tokens
-  cpmCompletion: z.number().optional(), // Cost per thousand completion tokens
+  chatIn: z.number().optional(), // Cost per Million input tokens
+  chatOut: z.number().optional(), // Cost per Million output tokens
 });
 
 // const rateLimitsSchema = z.object({
