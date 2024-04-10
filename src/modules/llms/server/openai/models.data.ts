@@ -23,6 +23,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 10, chatOut: 30 },
   },
   {
     isLatest: true,
@@ -33,6 +34,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 10, chatOut: 30 },
   },
 
   // GPT4 Turbo Previews
@@ -48,6 +50,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 10, chatOut: 30 },
   },
   {
     idPrefix: 'gpt-4-0125-preview', // GPT-4 Turbo preview model
@@ -58,6 +61,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 10, chatOut: 30 },
   },
   {
     idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
@@ -68,6 +72,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 10, chatOut: 30 },
     hidden: true,
   },
 
@@ -83,6 +88,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 10, chatOut: 30 },
     hidden: true, // Deprecated in favor of gpt-4-turbo
   },
   {
@@ -94,6 +100,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 10, chatOut: 30 },
     hidden: true, // Deprecated in favor of gpt-4-turbo
   },
 
@@ -108,6 +115,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 60, chatOut: 120 },
     hidden: true,
   },
   {
@@ -117,6 +125,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 60, chatOut: 120 },
     hidden: true,
   },
   {
@@ -126,6 +135,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 60, chatOut: 120 },
     hidden: true,
   },
 
@@ -139,6 +149,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 30, chatOut: 60 },
   },
   {
     idPrefix: 'gpt-4-0314',
@@ -147,6 +158,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 30, chatOut: 60 },
     hidden: true,
   },
   {
@@ -159,6 +171,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 30, chatOut: 60 },
   },
 
 
@@ -170,6 +183,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 4097,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [/* NO: LLM_IF_OAI_Chat,*/ LLM_IF_OAI_Complete],
+    pricing: { chatIn: 1.5, chatOut: 2 },
     hidden: true,
   },
 
@@ -184,6 +198,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 0.5, chatOut: 1.5 },
   },
   {
     idPrefix: 'gpt-3.5-turbo-1106',
@@ -193,6 +208,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 1, chatOut: 2 },
     hidden: true,
   },
   {
@@ -206,6 +222,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 0.5, chatOut: 1.5 },
   },
 
 
@@ -558,11 +575,11 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const model = wireOpenrouterModelsListOutputSchema.parse(wireModel);
 
   // parse pricing
-  const pricing = {
-    cpmPrompt: parseFloat(model.pricing.prompt),
-    cpmCompletion: parseFloat(model.pricing.completion),
+  const pricing: ModelDescriptionSchema['pricing'] = {
+    chatIn: parseFloat(model.pricing.prompt) * 1000,
+    chatOut: parseFloat(model.pricing.completion),
   };
-  const isFree = pricing.cpmPrompt === 0 && pricing.cpmCompletion === 0;
+  const isFree = pricing.chatIn === 0 && pricing.chatOut === 0;
 
   // openrouter provides the fields we need as part of the model object
   let label = model.name || model.id.replace('/', ' · ');
@@ -596,10 +613,6 @@ const _knownTogetherAIChatModels: ManualMappings = [
     label: 'Nous Hermes 2 - Mixtral 8x7B-DPO',
     description: 'Nous Hermes 2 Mixtral 7bx8 DPO is the new flagship Nous Research model trained over the Mixtral 7bx8 MoE LLM. The model was trained on over 1,000,000 entries of primarily GPT-4 generated data, as well as other high quality data from open datasets across the AI landscape, achieving state of the art performance on a variety of tasks.',
     contextWindow: 32768,
-    pricing: {
-      cpmPrompt: 0.0006,
-      cpmCompletion: 0.0006,
-    },
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
@@ -607,10 +620,6 @@ const _knownTogetherAIChatModels: ManualMappings = [
     label: 'Nous Hermes 2 - Mixtral 8x7B-SFT',
     description: 'Nous Hermes 2 Mixtral 7bx8 SFT is the new flagship Nous Research model trained over the Mixtral 7bx8 MoE LLM. The model was trained on over 1,000,000 entries of primarily GPT-4 generated data, as well as other high quality data from open datasets across the AI landscape, achieving state of the art performance on a variety of tasks.',
     contextWindow: 32768,
-    pricing: {
-      cpmPrompt: 0.0006,
-      cpmCompletion: 0.0006,
-    },
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
@@ -618,10 +627,6 @@ const _knownTogetherAIChatModels: ManualMappings = [
     label: 'Mixtral-8x7B Instruct',
     description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
     contextWindow: 32768,
-    pricing: {
-      cpmPrompt: 0.0006,
-      cpmCompletion: 0.0006,
-    },
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
@@ -629,10 +634,6 @@ const _knownTogetherAIChatModels: ManualMappings = [
     label: 'Mistral (7B) Instruct v0.2',
     description: 'The Mistral-7B-Instruct-v0.2 Large Language Model (LLM) is an improved instruct fine-tuned version of Mistral-7B-Instruct-v0.1.',
     contextWindow: 32768,
-    pricing: {
-      cpmPrompt: 0.0002,
-      cpmCompletion: 0.0002,
-    },
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
@@ -640,10 +641,6 @@ const _knownTogetherAIChatModels: ManualMappings = [
     label: 'Nous Hermes-2 Yi (34B)',
     description: 'Nous Hermes 2 - Yi-34B is a state of the art Yi Fine-tune',
     contextWindow: 4097,
-    pricing: {
-      cpmPrompt: 0.0008,
-      cpmCompletion: 0.0008,
-    },
     interfaces: [LLM_IF_OAI_Chat],
   },
 ] as const;

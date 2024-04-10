@@ -64,7 +64,7 @@ function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: M
     maxOutputTokens,
     hidden: !!model.hidden,
 
-    isFree: model.pricing?.cpmPrompt === 0 && model.pricing?.cpmCompletion === 0,
+    isFree: model.pricing?.chatIn === 0 && model.pricing?.chatOut === 0,
 
     sId: source.id,
     _source: source,
