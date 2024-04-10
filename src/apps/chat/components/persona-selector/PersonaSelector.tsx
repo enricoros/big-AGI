@@ -19,6 +19,7 @@ import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { YouTubeURLInput } from './YouTubeURLInput';
 
 import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
@@ -116,6 +117,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
+  const [isYouTubeTranscriberActive, setIsYouTubeTranscriberActive] = React.useState(false);
+
 
   // external state
   const showFinder = useUIPreferencesStore(state => state.showPersonaFinder);
@@ -153,10 +156,20 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // Handlers
 
-  const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
-    if (purposeId && setSystemPurposeId)
+// Modify the handlePurposeChanged function to check for the YouTube Transcriber
+const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
+  if (purposeId) {
+    if (purposeId === 'YouTubeTranscriber') {
+      // If the YouTube Transcriber tile is clicked, set the state accordingly
+      setIsYouTubeTranscriberActive(true);
+    } else {
+      setIsYouTubeTranscriberActive(false);
+    }
+    if (setSystemPurposeId) {
       setSystemPurposeId(props.conversationId, purposeId);
-  }, [props.conversationId, setSystemPurposeId]);
+    }
+  }
+}, [props.conversationId, setSystemPurposeId]);
 
   const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
     // TODO: persist this change? Right now it's reset every time.
@@ -203,6 +216,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
     // if (ids.length && systemPurposeId && !ids.includes(systemPurposeId))
     //   handlePurposeChanged(ids[0] as SystemPurposeId);
   }, [handleSearchClear]);
+
+    // Add a handler for when the YouTube Transcriber tile is clicked
+    const handleYouTubeTranscriberClick = () => {
+      setIsYouTubeTranscriberActive(true);
+      // Set the system purpose to custom or a new purpose for YouTube if you have one
+      setSystemPurposeId?.(props.conversationId, 'Custom');
+    };
+  
 
   const handleSearchOnKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key == 'Escape')
@@ -419,6 +440,12 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         )}
 
       </Box>
+
+      {/* Check if the YouTube Transcriber persona is active */}
+      {isYouTubeTranscriberActive ? (
+        // Render the YouTubeURLInput component
+        <YouTubeURLInput onSubmit={(url) => console.log(url)} isFetching={false} />
+      ) : null}
 
     </Box>
   );
