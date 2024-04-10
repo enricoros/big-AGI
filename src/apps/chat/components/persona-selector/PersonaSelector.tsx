@@ -217,13 +217,6 @@ const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | nul
     //   handlePurposeChanged(ids[0] as SystemPurposeId);
   }, [handleSearchClear]);
 
-    // Add a handler for when the YouTube Transcriber tile is clicked
-    const handleYouTubeTranscriberClick = () => {
-      setIsYouTubeTranscriberActive(true);
-      // Set the system purpose to custom or a new purpose for YouTube if you have one
-      setSystemPurposeId?.(props.conversationId, 'Custom');
-    };
-  
 
   const handleSearchOnKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key == 'Escape')
