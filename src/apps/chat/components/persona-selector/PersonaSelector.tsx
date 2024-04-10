@@ -13,7 +13,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
@@ -23,6 +23,7 @@ import { YouTubeURLInput } from './YouTubeURLInput';
 
 import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
+import { v4 as uuidv4 } from 'uuid';
 
 
 // 'special' purpose IDs, for tile hiding purposes
@@ -170,6 +171,33 @@ const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | nul
     }
   }
 }, [props.conversationId, setSystemPurposeId]);
+
+// Implement handleAddMessage function
+const handleAddMessage = (messageText: string) => {
+  // Retrieve the appendMessage action from the useChatStore
+  const { appendMessage } = useChatStore.getState();
+
+  // Assuming props.conversationId is the ID of the current conversation
+  const conversationId = props.conversationId;
+
+  // Create a new message object
+  const newMessage: DMessage = {
+    id: uuidv4(), // Assuming uuidv4() is imported or available in scope
+    text: messageText,
+    sender: 'Bot', // Assuming the transcription is considered as sent by the Bot
+    avatar: null, // Set avatar to null or provide a relevant avatar URL
+    typing: false, // Transcription message is not typing
+    role: 'assistant' as 'assistant', // Explicitly setting the role with a type assertion
+    tokenCount: 0, // Initial token count, will be updated based on the message text
+    created: Date.now(), // Current timestamp
+    updated: null, // No update timestamp for a new message
+};
+
+  // Append the new message to the conversation
+  appendMessage(conversationId, newMessage);
+};
+
+
 
   const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
     // TODO: persist this change? Right now it's reset every time.
@@ -437,7 +465,7 @@ const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | nul
       {/* Check if the YouTube Transcriber persona is active */}
       {isYouTubeTranscriberActive ? (
         // Render the YouTubeURLInput component
-        <YouTubeURLInput onSubmit={(url) => console.log(url)} isFetching={false} />
+        <YouTubeURLInput onSubmit={(url) => handleAddMessage(url)        } isFetching={false} />
       ) : null}
 
     </Box>
