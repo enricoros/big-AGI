@@ -11,7 +11,7 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -200,7 +200,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           models = openAIModels
 
             // limit to only 'gpt' and 'non instruct' models
-            .filter(model => model.id.includes('gpt') && !model.id.includes('-instruct'))
+            .filter(openAIModelFilter)
 
             // to model description
             .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
@@ -211,11 +211,17 @@ export const llmOpenAIRouter = createTRPCRouter({
               // fix the OpenAI model names to be chronologically sorted
               function remapReleaseDate(id: string): string {
                 return id
-                  .replace('0314', '230314')
-                  .replace('0613', '230613')
-                  .replace('1106', '231106')
-                  .replace('0125', '240125');
+                  .replace('0314', '2023-03-14')
+                  .replace('0613', '2023-06-13')
+                  .replace('1106', '2023-11-06')
+                  .replace('0125', '2024-01-25');
               }
+
+              // stuff with '[legacy]' at the bottom
+              const aLegacy = a.label.includes('[legacy]');
+              const bLegacy = b.label.includes('[legacy]');
+              if (aLegacy !== bLegacy)
+                return aLegacy ? 1 : -1;
 
               // due to using by-label, sorting doesn't require special cases anymore
               return remapReleaseDate(b.label).localeCompare(remapReleaseDate(a.label));
