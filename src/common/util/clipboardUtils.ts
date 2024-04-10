@@ -4,6 +4,10 @@ import { isBrowser, isFirefox } from './pwaUtils';
 export function copyToClipboard(text: string, typeLabel: string) {
   if (!isBrowser)
     return;
+  if (!window.navigator.clipboard?.writeText) {
+    alert('Clipboard access is blocked. Please enable it in your browser settings.');
+    return;
+  }
   window.navigator.clipboard.writeText(text)
     .then(() => {
       addSnackbar({
