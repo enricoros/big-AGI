@@ -817,7 +817,10 @@ type ManualMappings = ManualMapping[];
 function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping): ModelDescriptionSchema {
 
   // find the closest known model, or fall back, or take the last
-  const known = mappings.find(base => id.startsWith(base.idPrefix)) || fallback || mappings[mappings.length - 1];
+  const known = mappings.find(base => id === base.idPrefix)
+    || mappings.find(base => id.startsWith(base.idPrefix))
+    || fallback
+    || mappings[mappings.length - 1];
 
   // label for symlinks
   let label = known.label;
