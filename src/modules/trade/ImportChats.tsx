@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
 import { Box, Button, FormControl, Input, Sheet, Textarea, Typography } from '@mui/joy';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
@@ -13,7 +12,7 @@ import { createDConversation, createDMessage, DConversationId, DMessage, useChat
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
 import type { ChatGptSharedChatSchema } from './server/chatgpt';
-import { loadAllConversationsFromJson } from './trade.client';
+import { openAndLoadConversations } from './trade.client';
 
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
 
@@ -47,36 +46,11 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
 
   const handleImportFromFiles = async () => {
-    // pick file(s)
-    let blobs: FileWithHandle[];
-    try {
-      blobs = await fileOpen({ description: `${Brand.Title.Base} JSON`, mimeTypes: ['application/json'], multiple: true, startIn: 'downloads' });
-    } catch (error) {
-      return;
-    }
+    const outcome = await openAndLoadConversations(true);
 
-    // begin
-    const outcome: ImportedOutcome = { conversations: [] };
-
-    // unroll files to conversations
-    for (const blob of blobs) {
-      const fileName = blob.name || 'unknown file';
-      try {
-        const fileString = await blob.text();
-        const fileObject = JSON.parse(fileString);
-        loadAllConversationsFromJson(fileName, fileObject, outcome);
-      } catch (error: any) {
-        outcome.conversations.push({ success: false, fileName, error: `Invalid file: ${error?.message || error?.toString() || 'unknown error'}` });
-      }
-    }
-
-    // import conversations (warning - will overwrite things)
-    for (const conversation of [...outcome.conversations].reverse()) {
-      if (conversation.success) {
-        const conversationId: DConversationId = useChatStore.getState().importConversation(conversation.conversation, false);
-        props.onConversationActivate(conversationId);
-      }
-    }
+    // activate the last (most recent) imported conversation
+    if (outcome?.activateConversationId)
+      props.onConversationActivate(outcome.activateConversationId);
 
     // show the outcome of the import
     setImportOutcome(outcome);
@@ -90,7 +64,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
     if ((isUrl && !chatGptUrlValid) || (isSource && !chatGptSource))
       return;
 
-    const outcome: ImportedOutcome = { conversations: [] };
+    const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
 
     // load the conversation
     let conversationId: DConversationId, data: ChatGptSharedChatSchema;
