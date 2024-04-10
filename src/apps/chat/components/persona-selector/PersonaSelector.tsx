@@ -172,6 +172,12 @@ const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | nul
   }
 }, [props.conversationId, setSystemPurposeId]);
 
+React.useEffect(() => {
+  const isTranscriberActive = systemPurposeId === 'YouTubeTranscriber';
+  setIsYouTubeTranscriberActive(isTranscriberActive);
+}, [systemPurposeId]);
+
+
 // Implement handleAddMessage function
 const handleAddMessage = (messageText: string) => {
   // Retrieve the appendMessage action from the useChatStore
