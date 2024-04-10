@@ -7,6 +7,8 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import { DConversationId, getConversation } from '~/common/state/store-chats';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { KeyStroke } from '~/common/components/KeyStroke';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
@@ -80,15 +82,17 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             </Typography>
           )}
 
-          <Button
-            variant='soft' disabled={!hasConversation}
-            color={downloadedJSONState === 'ok' ? 'success' : downloadedJSONState === 'fail' ? 'warning' : 'primary'}
-            endDecorator={downloadedJSONState === 'ok' ? <DoneIcon /> : downloadedJSONState === 'fail' ? '✘' : <FileDownloadIcon />}
-            sx={{ minWidth: 240, justifyContent: 'space-between' }}
-            onClick={handleDownloadConversationJSON}
-          >
-            Download · JSON
-          </Button>
+          <GoodTooltip title={<KeyStroke dark combo='Ctrl + S' />}>
+            <Button
+              variant='soft' disabled={!hasConversation}
+              color={downloadedJSONState === 'ok' ? 'success' : downloadedJSONState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedJSONState === 'ok' ? <DoneIcon /> : downloadedJSONState === 'fail' ? '✘' : <FileDownloadIcon />}
+              sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              onClick={handleDownloadConversationJSON}
+            >
+              Download · JSON
+            </Button>
+          </GoodTooltip>
 
           <Button
             variant='soft' disabled={!hasConversation}

@@ -2,8 +2,9 @@ import * as React from 'react';
 
 import { IconButton, Tooltip } from '@mui/joy';
 
-import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
 import { Brand } from '~/common/app.config';
+import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
 
 // CodePen is a web-based HTML, CSS, and JavaScript code editor
@@ -25,7 +26,7 @@ const handleOpenInCodePen = (code: string, language: string) => {
   form.target = '_blank';
 
   const payload = {
-    title: `${Brand.Title.Base} Code - ${new Date().toISOString()}`, // eg "GPT 2021-08-31T15:00:00.000Z"
+    title: `${Brand.Title.Base} Code - ${prettyTimestampForFilenames()}`,
     css: hasCSS ? code : '',
     html: hasHTML ? code : '',
     js: hasJS ? code : '',

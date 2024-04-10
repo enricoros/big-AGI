@@ -2,8 +2,9 @@ import * as React from 'react';
 
 import { IconButton, Tooltip } from '@mui/joy';
 
-import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { Brand } from '~/common/app.config';
+import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
 
 const _languages = [
@@ -42,7 +43,7 @@ const handleOpenInStackBlitz = (code: string, language: string, title?: string) 
   const projectDetails = {
     files: { [fileName]: code },
     template: template,
-    description: `${Brand.Title.Common} file created on ${new Date().toISOString()}`,
+    description: `${Brand.Title.Common} file created on ${prettyTimestampForFilenames()}`,
     title: language == 'python' ? 'Python Starter' : title,
   } as const;
 

@@ -4,6 +4,8 @@
  * Functions to deal with HTML5Video elements.
  */
 
+import { prettyTimestampForFilenames } from './timeUtils';
+
 export function downloadVideoFrameAsPNG(videoElement: HTMLVideoElement, prefixName: string) {
   // current video frame -> canvas -> dataURL PNG
   const renderedFrame = _renderVideoFrameToCanvas(videoElement);
@@ -30,9 +32,8 @@ export async function renderVideoFrameAsPNGFile(videoElement: HTMLVideoElement, 
 }
 
 function _prettyFileName(prefixName: string, renderedFrame: HTMLCanvasElement) {
-  const prettyDate = new Date().toISOString().replace(/[:-]/g, '').replace('T', '-').replace('Z', '');
   const prettyResolution = `${renderedFrame.width}x${renderedFrame.height}`;
-  return `${prefixName}-${prettyDate}-${prettyResolution}.png`;
+  return `${prefixName}_${prettyTimestampForFilenames()}_${prettyResolution}.png`;
 }
 
 function _renderVideoFrameToCanvas(videoElement: HTMLVideoElement): HTMLCanvasElement {

@@ -5,7 +5,9 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { Brand } from '~/common/app.config';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
+import { KeyStroke } from '~/common/components/KeyStroke';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
@@ -126,12 +128,14 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         Select where to <strong>import from</strong>:
       </Typography>
 
-      <Button
-        variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
-        onClick={handleImportFromFiles}
-      >
-        {Brand.Title.Base} · JSON
-      </Button>
+      <GoodTooltip title={<KeyStroke dark combo='Ctrl + O' />}>
+        <Button
+          variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
+          onClick={handleImportFromFiles}
+        >
+          {Brand.Title.Base} · JSON
+        </Button>
+      </GoodTooltip>
 
       {!chatGptEdit && (
         <Button

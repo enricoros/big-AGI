@@ -32,6 +32,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 // utils access
 import { clientHostName, isChromeDesktop, isFirefox, isIPhoneUser, isMacUser, isPwa, isVercelFromFrontend } from '~/common/util/pwaUtils';
 import { getGA4MeasurementId } from '~/common/components/GoogleAnalytics';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 
@@ -127,7 +128,7 @@ function AppDebug() {
   const handleDownload = async () => {
     fileSave(
       new Blob([JSON.stringify({ client: cClient, agi: cProduct, backend: cBackend }, null, 2)], { type: 'application/json' }),
-      { fileName: `big-agi-debug-${new Date().toISOString().replace(/:/g, '-')}.json`, extensions: ['.json'] },
+      { fileName: `big-agi_debug_${prettyTimestampForFilenames()}.json`, extensions: ['.json'] },
     )
       .then(() => setSaved(true))
       .catch(e => console.error('Error saving debug.json', e));
