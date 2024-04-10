@@ -10,31 +10,34 @@ export const geminiModelsStreamGenerateContentPath = '/v1beta/{model=models/*}:s
 
 // models.list = /v1beta/models
 
+const geminiModelSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  inputTokenLimit: z.number().int().min(1),
+  outputTokenLimit: z.number().int().min(1),
+  supportedGenerationMethods: z.array(z.enum([
+    'countMessageTokens',
+    'countTextTokens',
+    'countTokens',
+    'createTunedModel',
+    'createTunedTextModel',
+    'embedContent',
+    'embedText',
+    'generateAnswer',
+    'generateContent',
+    'generateMessage',
+    'generateText',
+  ])),
+  temperature: z.number().optional(),
+  topP: z.number().optional(),
+  topK: z.number().optional(),
+});
+export type GeminiModelSchema = z.infer<typeof geminiModelSchema>;
+
 export const geminiModelsListOutputSchema = z.object({
-  models: z.array(z.object({
-    name: z.string(),
-    version: z.string(),
-    displayName: z.string(),
-    description: z.string(),
-    inputTokenLimit: z.number().int().min(1),
-    outputTokenLimit: z.number().int().min(1),
-    supportedGenerationMethods: z.array(z.enum([
-      'countMessageTokens',
-      'countTextTokens',
-      'countTokens',
-      'createTunedModel',
-      'createTunedTextModel',
-      'embedContent',
-      'embedText',
-      'generateAnswer',
-      'generateContent',
-      'generateMessage',
-      'generateText',
-    ])),
-    temperature: z.number().optional(),
-    topP: z.number().optional(),
-    topK: z.number().optional(),
-  })),
+  models: z.array(geminiModelSchema),
 });
 
 
