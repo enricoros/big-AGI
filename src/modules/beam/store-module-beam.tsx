@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
+import type { FFactoryId } from './gather/instructions/beam.gather.factories';
 
 
 /// Presets (persistes as zustand store) ///
@@ -11,6 +12,9 @@ interface BeamScatterPreset {
   id: string;
   name: string;
   rayLlmIds: DLLMId[];
+  // added post v1, some presets may not have this
+  gatherLlmId?: DLLMId;
+  gatherFactoryId?: FFactoryId;
 }
 
 
@@ -22,7 +26,7 @@ interface ModuleBeamStore {
   gatherShowPrompts: boolean;
 
   // actions
-  addScatterPreset: (name: string, rayLlmIds: DLLMId[]) => void;
+  addScatterPreset: (name: string, rayLlmIds: DLLMId[], gatherLlmId: DLLMId | null, gatherFactoryId: FFactoryId | null) => void;
   deleteScatterPreset: (id: string) => void;
   renameScatterPreset: (id: string, name: string) => void;
 
@@ -41,8 +45,14 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     gatherShowPrompts: false,
 
 
-    addScatterPreset: (name, rayLlmIds) => _set(state => ({
-      scatterPresets: [...state.scatterPresets, { id: uuidv4(), name, rayLlmIds }],
+    addScatterPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
+      scatterPresets: [...state.scatterPresets, {
+        id: uuidv4(),
+        name,
+        rayLlmIds,
+        gatherLlmId: gatherLlmId ?? undefined,
+        gatherFactoryId: gatherFactoryId ?? undefined,
+      }],
     })),
 
     deleteScatterPreset: (id) => _set(state => ({
