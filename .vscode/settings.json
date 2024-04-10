@@ -9,10 +9,15 @@
         "appbar",
         "dqbd",
         "ELEVENLABS",
+        "ephemerals",
         "helicone",
+        "llms",
         "OPENAI",
+        "partialize",
         "Prodia",
         "tiktoken",
+        "TRPC",
+        "uuidv",
         "zustand"
     ]
 }
