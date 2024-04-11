@@ -43,8 +43,7 @@ const renderBlocksSx: SxProps = {
 } as const;
 
 
-export function BlocksRenderer(props: {
-
+type BlocksRendererProps = {
   // required
   text: string;
   fromRole: DMessage['role'];
@@ -63,12 +62,15 @@ export function BlocksRenderer(props: {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
+  onMouseUp?: (event: React.MouseEvent) => void;
   onImageRegenerate?: () => void;
 
   // optimization: allow memo
   optiAllowMemo?: boolean;
+};
 
-}) {
+
+export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 
   // state
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
@@ -166,8 +168,10 @@ export function BlocksRenderer(props: {
 
   return (
     <Box
+      ref={ref}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
+      onMouseUp={props.onMouseUp}
       sx={renderBlocksSx}
     >
 
@@ -228,4 +232,6 @@ export function BlocksRenderer(props: {
 
     </Box>
   );
-}
+});
+
+BlocksRenderer.displayName = 'BlocksRenderer';
