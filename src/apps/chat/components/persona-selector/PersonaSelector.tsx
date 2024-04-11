@@ -13,15 +13,17 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { YouTubeURLInput } from './YouTubeURLInput';
 
 import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
 import { usePurposeStore } from './store-purposes';
+import { v4 as uuidv4 } from 'uuid';
 
 
 // 'special' purpose IDs, for tile hiding purposes
@@ -116,6 +118,8 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
+  const [isYouTubeTranscriberActive, setIsYouTubeTranscriberActive] = React.useState(false);
+
 
   // external state
   const showFinder = useUIPreferencesStore(state => state.showPersonaFinder);
@@ -153,10 +157,52 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // Handlers
 
-  const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
-    if (purposeId && setSystemPurposeId)
+// Modify the handlePurposeChanged function to check for the YouTube Transcriber
+const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
+  if (purposeId) {
+    if (purposeId === 'YouTubeTranscriber') {
+      // If the YouTube Transcriber tile is clicked, set the state accordingly
+      setIsYouTubeTranscriberActive(true);
+    } else {
+      setIsYouTubeTranscriberActive(false);
+    }
+    if (setSystemPurposeId) {
       setSystemPurposeId(props.conversationId, purposeId);
-  }, [props.conversationId, setSystemPurposeId]);
+    }
+  }
+}, [props.conversationId, setSystemPurposeId]);
+
+React.useEffect(() => {
+  const isTranscriberActive = systemPurposeId === 'YouTubeTranscriber';
+  setIsYouTubeTranscriberActive(isTranscriberActive);
+}, [systemPurposeId]);
+
+
+// Implement handleAddMessage function
+const handleAddMessage = (messageText: string) => {
+  // Retrieve the appendMessage action from the useChatStore
+  const { appendMessage } = useChatStore.getState();
+
+  const conversationId = props.conversationId;
+
+  // Create a new message object
+  const newMessage: DMessage = {
+    id: uuidv4(), 
+    text: messageText,
+    sender: 'Bot',
+    avatar: null,
+    typing: false,
+    role: 'assistant' as 'assistant',
+    tokenCount: 0,
+    created: Date.now(),
+    updated: null,
+};
+
+  // Append the new message to the conversation
+  appendMessage(conversationId, newMessage);
+};
+
+
 
   const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
     // TODO: persist this change? Right now it's reset every time.
@@ -419,6 +465,11 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         )}
 
       </Box>
+
+      {/* Check if the YouTube Transcriber persona is active */}
+      {isYouTubeTranscriberActive ? (
+        <YouTubeURLInput onSubmit={(url) => handleAddMessage(url)        } isFetching={false} />
+      ) : null}
 
     </Box>
   );
