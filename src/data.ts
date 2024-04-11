@@ -113,7 +113,7 @@ Current date: {{LocaleNow}}
   YouTubeTranscriber: {
     title: 'YouTube Transcriber',
     description: 'Enter a YouTube URL to get the transcript and chat about the content.',
-    systemMessage: 'You can now enter a YouTube URL to retrieve and discuss the video transcript.',
+    systemMessage: 'You are an expert in understanding video transcripts and answering questions about video content.',
     symbol: '📺',
     examples: ['Analyze the sentiment of this video', 'Summarize the key points of the lecture'],
     call: { starters: ['Enter a YouTube URL to begin.', 'Ready to transcribe YouTube content.', 'Paste the YouTube link here.'] },
