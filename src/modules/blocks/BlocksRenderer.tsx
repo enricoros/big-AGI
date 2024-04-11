@@ -40,6 +40,10 @@ const renderBlocksSx: SxProps = {
   ...blocksSx,
   flexGrow: 0,
   overflowX: 'auto',
+  // extends the v-padding of the object, for the purpose of capturing the
+  // mouseUp event (and thus potential overlays)
+  py: 1.5,
+  my: -1.5,
 } as const;
 
 
