@@ -183,20 +183,19 @@ const handleAddMessage = (messageText: string) => {
   // Retrieve the appendMessage action from the useChatStore
   const { appendMessage } = useChatStore.getState();
 
-  // Assuming props.conversationId is the ID of the current conversation
   const conversationId = props.conversationId;
 
   // Create a new message object
   const newMessage: DMessage = {
-    id: uuidv4(), // Assuming uuidv4() is imported or available in scope
+    id: uuidv4(), 
     text: messageText,
-    sender: 'Bot', // Assuming the transcription is considered as sent by the Bot
-    avatar: null, // Set avatar to null or provide a relevant avatar URL
-    typing: false, // Transcription message is not typing
-    role: 'assistant' as 'assistant', // Explicitly setting the role with a type assertion
-    tokenCount: 0, // Initial token count, will be updated based on the message text
-    created: Date.now(), // Current timestamp
-    updated: null, // No update timestamp for a new message
+    sender: 'Bot',
+    avatar: null,
+    typing: false,
+    role: 'assistant' as 'assistant',
+    tokenCount: 0,
+    created: Date.now(),
+    updated: null,
 };
 
   // Append the new message to the conversation
@@ -470,7 +469,6 @@ const handleAddMessage = (messageText: string) => {
 
       {/* Check if the YouTube Transcriber persona is active */}
       {isYouTubeTranscriberActive ? (
-        // Render the YouTubeURLInput component
         <YouTubeURLInput onSubmit={(url) => handleAddMessage(url)        } isFetching={false} />
       ) : null}
 
