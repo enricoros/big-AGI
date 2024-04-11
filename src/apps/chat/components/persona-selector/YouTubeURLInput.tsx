@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button, Input } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
-import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript'; // Adjust the import path as necessary
+import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
 
 interface YouTubeURLInputProps {
   onSubmit: (transcript: string) => void;
