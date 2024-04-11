@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { v4 as uuidv4 } from 'uuid';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
@@ -10,6 +11,8 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
+
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
@@ -19,11 +22,9 @@ import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { YouTubeURLInput } from './YouTubeURLInput';
 
-import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
+import { YouTubeURLInput } from './YouTubeURLInput';
 import { usePurposeStore } from './store-purposes';
-import { v4 as uuidv4 } from 'uuid';
 
 
 // 'special' purpose IDs, for tile hiding purposes
@@ -158,50 +159,49 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   // Handlers
 
 // Modify the handlePurposeChanged function to check for the YouTube Transcriber
-const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
-  if (purposeId) {
-    if (purposeId === 'YouTubeTranscriber') {
-      // If the YouTube Transcriber tile is clicked, set the state accordingly
-      setIsYouTubeTranscriberActive(true);
-    } else {
-      setIsYouTubeTranscriberActive(false);
+  const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
+    if (purposeId) {
+      if (purposeId === 'YouTubeTranscriber') {
+        // If the YouTube Transcriber tile is clicked, set the state accordingly
+        setIsYouTubeTranscriberActive(true);
+      } else {
+        setIsYouTubeTranscriberActive(false);
+      }
+      if (setSystemPurposeId) {
+        setSystemPurposeId(props.conversationId, purposeId);
+      }
     }
-    if (setSystemPurposeId) {
-      setSystemPurposeId(props.conversationId, purposeId);
-    }
-  }
-}, [props.conversationId, setSystemPurposeId]);
+  }, [props.conversationId, setSystemPurposeId]);
 
-React.useEffect(() => {
-  const isTranscriberActive = systemPurposeId === 'YouTubeTranscriber';
-  setIsYouTubeTranscriberActive(isTranscriberActive);
-}, [systemPurposeId]);
+  React.useEffect(() => {
+    const isTranscriberActive = systemPurposeId === 'YouTubeTranscriber';
+    setIsYouTubeTranscriberActive(isTranscriberActive);
+  }, [systemPurposeId]);
 
 
 // Implement handleAddMessage function
-const handleAddMessage = (messageText: string) => {
-  // Retrieve the appendMessage action from the useChatStore
-  const { appendMessage } = useChatStore.getState();
+  const handleAddMessage = (messageText: string) => {
+    // Retrieve the appendMessage action from the useChatStore
+    const { appendMessage } = useChatStore.getState();
 
-  const conversationId = props.conversationId;
+    const conversationId = props.conversationId;
 
-  // Create a new message object
-  const newMessage: DMessage = {
-    id: uuidv4(), 
-    text: messageText,
-    sender: 'Bot',
-    avatar: null,
-    typing: false,
-    role: 'assistant' as 'assistant',
-    tokenCount: 0,
-    created: Date.now(),
-    updated: null,
-};
+    // Create a new message object
+    const newMessage: DMessage = {
+      id: uuidv4(),
+      text: messageText,
+      sender: 'Bot',
+      avatar: null,
+      typing: false,
+      role: 'assistant' as 'assistant',
+      tokenCount: 0,
+      created: Date.now(),
+      updated: null,
+    };
 
-  // Append the new message to the conversation
-  appendMessage(conversationId, newMessage);
-};
-
+    // Append the new message to the conversation
+    appendMessage(conversationId, newMessage);
+  };
 
 
   const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -464,12 +464,18 @@ const handleAddMessage = (messageText: string) => {
           />
         )}
 
-      </Box>
+        {/* [row -1] YouTube URL */}
+        {isYouTubeTranscriberActive && (
+          <YouTubeURLInput
+            onSubmit={(url) => handleAddMessage(url)}
+            isFetching={false}
+            sx={{
+              gridColumn: '1 / -1',
+            }}
+          />
+        )}
 
-      {/* Check if the YouTube Transcriber persona is active */}
-      {isYouTubeTranscriberActive ? (
-        <YouTubeURLInput onSubmit={(url) => handleAddMessage(url)        } isFetching={false} />
-      ) : null}
+      </Box>
 
     </Box>
   );
