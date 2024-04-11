@@ -250,7 +250,6 @@ const handleAddMessage = (messageText: string) => {
     //   handlePurposeChanged(ids[0] as SystemPurposeId);
   }, [handleSearchClear]);
 
-
   const handleSearchOnKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key == 'Escape')
       handleSearchClear();
