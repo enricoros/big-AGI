@@ -1,14 +1,19 @@
 import * as React from 'react';
-import { Button, Input } from '@mui/joy';
+
+import { Box, Button, Input } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
+
+import type { SxProps } from '@mui/joy/styles/types';
 import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
+
 
 interface YouTubeURLInputProps {
   onSubmit: (transcript: string) => void;
   isFetching: boolean;
+  sx?: SxProps;
 }
 
-export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFetching }) => {
+export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFetching, sx }) => {
   const [url, setUrl] = React.useState('');
   const [submitFlag, setSubmitFlag] = React.useState(false);
 
@@ -39,29 +44,31 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFe
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: '16px' }}>
-      <Input
-        required
-        type='url'
-        fullWidth
-        disabled={isFetching || isTranscriptFetching}
-        variant='outlined'
-        placeholder='Enter YouTube Video URL'
-        value={url}
-        onChange={handleChange}
-        startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />}
-        sx={{ mb: 1.5, backgroundColor: 'background.popup' }}
-      />
-      <Button
-        type='submit'
-        variant='solid'
-        disabled={isFetching || isTranscriptFetching || !url}
-        loading={isFetching || isTranscriptFetching}
-        sx={{ minWidth: 140 }}
-      >
-        Get Transcript
-      </Button>
-      {isError && <div>Error fetching transcript. Please try again.</div>}
-    </form>
+    <Box sx={{ mb: 1, ...sx }}>
+      <form onSubmit={handleSubmit}>
+        <Input
+          required
+          type='url'
+          fullWidth
+          disabled={isFetching || isTranscriptFetching}
+          variant='outlined'
+          placeholder='Enter YouTube Video URL'
+          value={url}
+          onChange={handleChange}
+          startDecorator={<YouTubeIcon sx={{ color: '#f00' }} />}
+          sx={{ mb: 1.5, backgroundColor: 'background.popup' }}
+        />
+        <Button
+          type='submit'
+          variant='solid'
+          disabled={isFetching || isTranscriptFetching || !url}
+          loading={isFetching || isTranscriptFetching}
+          sx={{ minWidth: 140 }}
+        >
+          Get Transcript
+        </Button>
+        {isError && <div>Error fetching transcript. Please try again.</div>}
+      </form>
+    </Box>
   );
 };
