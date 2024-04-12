@@ -40,6 +40,11 @@ const renderBlocksSx: SxProps = {
   ...blocksSx,
   flexGrow: 0,
   overflowX: 'auto',
+  '& *::selection': {
+    // backgroundColor: '#fc70c3',
+    backgroundColor: 'primary.solidBg',
+    color: 'primary.solidColor',
+  },
 } as const;
 
 
