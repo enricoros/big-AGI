@@ -61,7 +61,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   getRateLimitDelay: (llm) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
-    const wait = llm.isFree
+    const wait = llm.tmpIsFree
       ? 5000 + 100 /* 5 seconds for free call, plus some safety margin */
       : 100;
 

@@ -1,7 +1,7 @@
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
-import { DLLM, DLLMId, DModelSource, DModelSourceId, useModelsStore } from './store-llms';
+import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, useModelsStore } from './store-llms';
 import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { findAccessForSourceOrThrow, findVendorForLlmOrThrow } from './vendors/vendors.registry';
 
@@ -62,16 +62,26 @@ function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: M
   return {
     id: `${source.id}-${model.id}`,
 
+    // editable properties
     label: model.label,
     created: model.created || 0,
     updated: model.updated || 0,
     description: model.description,
-    tags: [], // ['stream', 'chat'],
+    hidden: !!model.hidden,
+    // isEdited: false, // NOTE: this is set by the store on user edits
+
+    // hard properties
     contextTokens,
     maxOutputTokens,
-    hidden: !!model.hidden,
+    trainingDataCutoff: model.trainingDataCutoff,
+    interfaces: model.interfaces?.length ? model.interfaces : [LLM_IF_OAI_Chat],
+    // inputTypes: ...
+    benchmark: model.benchmark,
+    pricing: model.pricing,
 
-    isFree: model.pricing?.chatIn === 0 && model.pricing?.chatOut === 0,
+    // derived properties
+    tmpIsFree: model.pricing?.chatIn === 0 && model.pricing?.chatOut === 0,
+    tmpIsVision: model.interfaces?.includes(LLM_IF_OAI_Chat) === true,
 
     sId: source.id,
     _source: source,
