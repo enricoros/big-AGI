@@ -607,11 +607,11 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     chatIn: parseFloat(model.pricing.prompt) * 1000,
     chatOut: parseFloat(model.pricing.completion),
   };
-  const isFree = pricing.chatIn === 0 && pricing.chatOut === 0;
+  const seemsFree = pricing.chatIn === 0 && pricing.chatOut === 0;
 
   // openrouter provides the fields we need as part of the model object
   let label = model.name || model.id.replace('/', ' · ');
-  if (isFree)
+  if (seemsFree)
     label += ' · 🎁'; // Free? Discounted?
 
   // hidden: hide by default older models or models not in known families
@@ -626,8 +626,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     description: model.description,
     contextWindow: model.context_length || 4096,
     maxCompletionTokens: model.top_provider.max_completion_tokens || undefined,
-    pricing,
+    // trainingDataCutoff: ...
     interfaces: [LLM_IF_OAI_Chat],
+    // benchmark: ...
+    pricing,
     hidden,
   });
 }
@@ -905,8 +907,10 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
     description: known.description,
     contextWindow: known.contextWindow,
     ...(!!known.maxCompletionTokens && { maxCompletionTokens: known.maxCompletionTokens }),
-    ...(!!known.pricing && { pricing: known.pricing }),
+    ...(!!known.trainingDataCutoff && { trainingDataCutoff: known.trainingDataCutoff }),
     interfaces: known.interfaces,
+    ...(!!known.benchmark && { benchmark: known.benchmark }),
+    ...(!!known.pricing && { pricing: known.pricing }),
     ...(!!known.hidden && { hidden: known.hidden }),
   };
 }

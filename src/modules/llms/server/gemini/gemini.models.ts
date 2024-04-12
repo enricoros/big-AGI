@@ -61,9 +61,11 @@ export function geminiModelToModelDescription(geminiModel: GeminiModelSchema, al
     description: descriptionLong,
     contextWindow: contextWindow,
     maxCompletionTokens: outputTokenLimit,
-    // pricing: isGeminiPro ? { needs per-character and per-image pricing } : undefined,
-    // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
+    // trainingDataCutoff: '...',
     interfaces,
+    // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
+    // benchmarks: ...
+    // pricing: isGeminiPro ? { needs per-character and per-image pricing } : undefined,
     hidden,
   };
 }
