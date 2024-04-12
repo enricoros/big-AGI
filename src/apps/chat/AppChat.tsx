@@ -326,13 +326,13 @@ export function AppChat() {
     const userText = multiPartMessage[0].text;
 
     // multicast: send the message to all the panes
-    const uniqueIds = new Set([conversationId]);
+    const uniqueConversationIds = new Set([conversationId]);
     if (willMulticast)
-      chatPanes.forEach(pane => pane.conversationId && uniqueIds.add(pane.conversationId));
+      chatPanes.forEach(pane => pane.conversationId && uniqueConversationIds.add(pane.conversationId));
 
     // we loop to handle both the normal and multicast modes
     let enqueued = false;
-    for (const _cId of uniqueIds) {
+    for (const _cId of uniqueConversationIds) {
       const _conversation = getConversation(_cId);
       if (_conversation) {
         // start execution fire/forget
