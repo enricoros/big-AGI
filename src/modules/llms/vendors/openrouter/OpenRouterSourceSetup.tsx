@@ -9,7 +9,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { getCallbackUrl } from '~/common/app.routes';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
@@ -30,7 +30,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorOpenRouter, access, !sourceHasLLMs && shallFetchSucceed, source, true);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source, true);
 
 
   const handleOpenRouterLogin = () => {

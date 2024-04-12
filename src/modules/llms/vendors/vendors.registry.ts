@@ -73,7 +73,7 @@ export function findAccessForSourceOrThrow<TSourceSetup = unknown, TAccess = unk
   const source = findSourceOrThrow<TSourceSetup>(sourceId);
   const vendor = findVendorById<TSourceSetup, TAccess>(source.vId);
   if (!vendor) throw new Error(`ModelSource ${sourceId} has no vendor`);
-  return vendor.getTransportAccess(source.setup);
+  return { source, vendor, transportAccess: vendor.getTransportAccess(source.setup) };
 }
 
 export function createModelSourceForVendor(vendorId: ModelVendorId, otherSources: DModelSource[]): DModelSource {

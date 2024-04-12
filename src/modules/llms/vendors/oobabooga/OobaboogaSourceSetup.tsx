@@ -8,7 +8,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorOoobabooga } from './oobabooga.vendor';
@@ -25,7 +25,7 @@ export function OobaboogaSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorOoobabooga, access, false /* use button only (we don't have server-side conf) */, source);
+    useLlmUpdateModels(false /* use button only (we don't have server-side conf) */, source);
 
   return <>
 

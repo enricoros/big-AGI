@@ -1,6 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { DModelSourceId } from '../../llms/store-llms';
+import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
 import { findAccessForSourceOrThrow } from '../../llms/vendors/vendors.registry';
 
 import { useDalleStore } from './store-module-dalle';
@@ -33,7 +34,7 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
     const perRequestCount = Math.min(_count, isD3 ? 1 : 10);
 
     const imageRefPromise = apiAsync.llmOpenAI.createImages.mutate({
-      access: findAccessForSourceOrThrow(modelSourceId),
+      access: findAccessForSourceOrThrow<unknown, OpenAIAccessSchema>(modelSourceId).transportAccess,
       config: {
         prompt: prompt,
         count: perRequestCount,

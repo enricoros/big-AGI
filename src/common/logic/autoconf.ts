@@ -2,9 +2,9 @@ import { createStore } from 'zustand/vanilla';
 import { persist } from 'zustand/middleware';
 
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForVendor, findAccessForSourceOrThrow, findAllVendors } from '~/modules/llms/vendors/vendors.registry';
+import { createModelSourceForVendor, findAllVendors } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
-import { updateModelsForSource } from '~/modules/llms/vendors/useLlmUpdateModels';
+import { llmsUpdateModelsForSourceOrThrow } from '~/modules/llms/llm.client';
 
 
 interface AutoConfStore {
@@ -65,12 +65,8 @@ const autoConfVanillaStore = createStore<AutoConfStore>()(persist((_set, _get) =
             source = useModelsStore.getState().sources.find(_s => _s.id === source.id)!;
           }
 
-          // get the access, assuming there's no client config and the server will do all
-          const transportAcess = findAccessForSourceOrThrow(source.id);
-
-          // fetch models
-          const data = await vendor.rpcUpdateModelsOrThrow(transportAcess);
-          return updateModelsForSource(data, source, true);
+          // auto-configure this source
+          await llmsUpdateModelsForSourceOrThrow(source.id, true);
         })
         .catch(error => {
           // catches errors and logs them, but does not stop the chain
