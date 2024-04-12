@@ -232,6 +232,7 @@ export function ChatMessage(props: {
   onMessageEdit?: (messageId: string, text: string) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
+  onReplyTo?: (messageId: string, selectedText: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
   onTextSpeak?: (text: string) => Promise<void>
@@ -352,6 +353,16 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextImagine) {
       await props.onTextImagine(textSel);
+      closeOpsMenu();
+      closeSelectionMenu();
+      closeToolbar();
+    }
+  };
+
+  const handleOpsReplyTo = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (props.onReplyTo && textSel.trim().length >= SELECTION_TOOLBAR_MIN_LENGTH) {
+      props.onReplyTo(messageId, textSel.trim());
       closeOpsMenu();
       closeSelectionMenu();
       closeToolbar();
@@ -789,8 +800,8 @@ export function ChatMessage(props: {
                 },
               }}
             >
-              {!!props.onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Reply'>
-                <IconButton color='primary'>
+              {!!props.onReplyTo && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Reply'>
+                <IconButton color='primary' onClick={handleOpsReplyTo}>
                   <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />
                 </IconButton>
               </Tooltip>}
@@ -799,7 +810,7 @@ export function ChatMessage(props: {
               {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
               {/*  </IconButton>*/}
               {/*</Tooltip>}*/}
-              {(!!props.onMessageBeam && fromAssistant) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+              {!!props.onReplyTo && fromAssistant && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
               <Tooltip disableInteractive arrow placement='top' title='Copy'>
                 <IconButton onClick={handleOpsCopy}>
                   <ContentCopyIcon />
