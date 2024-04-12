@@ -279,10 +279,9 @@ export const useModelsStore = create<LlmsStore>()(
             llm.interfaces = [LLM_IF_OAI_Chat];
             // llm.inputTypes = { 'text': {} };
           }
-          // const autoPickModels = updateSelectedIds(state.llms, null, null, null);
-          state.chatLLMId = null; // autoPickModels.chatLLMId;
-          state.fastLLMId = null; // ...
-          state.funcLLMId = null; // ...
+          state.chatLLMId = null;
+          state.fastLLMId = null;
+          state.funcLLMId = null;
         }
 
         return state;
@@ -297,7 +296,7 @@ export const useModelsStore = create<LlmsStore>()(
         }),
       }),
 
-      // Post-loading: re-link the memory references on rehydration
+      // Post-loading: re-link the memory references on rehydration, and auto-select the best LLMs if not set
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
@@ -306,6 +305,13 @@ export const useModelsStore = create<LlmsStore>()(
           if (!source) return null;
           return { ...llm, _source: source };
         }).filter(llm => !!llm) as DLLM[];
+
+        try {
+          if (!state.chatLLMId || !state.fastLLMId || !state.funcLLMId)
+            Object.assign(state, updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, state.funcLLMId));
+        } catch (error) {
+          console.error('Error in autoPickModels', error);
+        }
       },
     }),
 );
