@@ -841,6 +841,7 @@ export function Composer(props: {
               {labsBeam && isDesktop && showChatExtras && !assistantAbortible && (
                 <ButtonBeamMemo
                   disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
+                  hasContent={!!composeText}
                   onClick={handleSendTextBeamClicked}
                 />
               )}
