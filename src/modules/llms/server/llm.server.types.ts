@@ -9,6 +9,11 @@ const pricingSchema = z.object({
   chatOut: z.number().optional(), // Cost per Million output tokens
 });
 
+const benchmarkSchema = z.object({
+  cbaElo: z.number().optional(),
+  cbaMmlu: z.number().optional(),
+});
+
 // const rateLimitsSchema = z.object({
 //   reqPerMinute: z.number().optional(),
 // });
@@ -25,6 +30,7 @@ const modelDescriptionSchema = z.object({
   trainingDataCutoff: z.string().optional(),
   interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision, LLM_IF_OAI_Json])),
   pricing: pricingSchema.optional(),
+  benchmark: benchmarkSchema.optional(),
   hidden: z.boolean().optional(),
 });
 
