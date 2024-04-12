@@ -41,6 +41,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   );
 
   // clear to send, again
+  // FIXME: race condition?
   cHandler.setAbortController(null);
 
   if (autoTitleChat) {
