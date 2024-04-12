@@ -425,6 +425,7 @@ export function ChatMessage(props: {
   // Selection Toolbar
 
   const handleCloseToolbar = React.useCallback((anchorEl: HTMLElement) => {
+    window.getSelection()?.removeAllRanges?.();
     try {
       document.body.removeChild(anchorEl);
     } catch (e) {
