@@ -24,6 +24,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
+    benchmark: { cbaElo: 1261 },
   },
   {
     isLatest: true,
@@ -35,6 +36,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
+    benchmark: { cbaElo: 1261 },
   },
 
   // GPT4 Turbo Previews
@@ -51,6 +53,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
+    benchmark: { cbaElo: 1251 },
   },
   {
     idPrefix: 'gpt-4-0125-preview', // GPT-4 Turbo preview model
@@ -62,6 +65,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
+    benchmark: { cbaElo: 1251 },
   },
   {
     idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
@@ -73,6 +77,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 10, chatOut: 30 },
+    benchmark: { cbaElo: 1255 },
     hidden: true,
   },
 
@@ -150,6 +155,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 30, chatOut: 60 },
+    benchmark: { cbaElo: 1164 },
   },
   {
     idPrefix: 'gpt-4-0314',
@@ -159,6 +165,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 30, chatOut: 60 },
+    benchmark: { cbaElo: 1189 },
     hidden: true,
   },
   {
@@ -172,6 +179,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 30, chatOut: 60 },
+    benchmark: { cbaElo: 1164 },
   },
 
 
@@ -199,6 +207,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 0.5, chatOut: 1.5 },
+    benchmark: { cbaElo: 1104 },
   },
   {
     idPrefix: 'gpt-3.5-turbo-1106',
@@ -209,6 +218,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 1, chatOut: 2 },
+    benchmark: { cbaElo: 1072 },
     hidden: true,
   },
   {
@@ -223,6 +233,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 0.5, chatOut: 1.5 },
+    benchmark: { cbaElo: 1104 },
   },
 
 
@@ -348,6 +359,8 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Top-tier reasoning for high-complexity tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 8, chatOut: 24 },
+    benchmark: { cbaElo: 1159 },
     isLatest: true,
   },
   {
@@ -359,6 +372,8 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Top-tier reasoning for high-complexity tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 8, chatOut: 24 },
+    benchmark: { cbaElo: 1159 },
   },
   {
     idPrefix: 'mistral-large',
@@ -376,6 +391,8 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mistral internal prototype model.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 2.7, chatOut: 8.1 },
+    benchmark: { cbaElo: 1148 },
   },
   {
     idPrefix: 'mistral-medium-latest',
@@ -386,6 +403,8 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mistral internal prototype model.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 2.7, chatOut: 8.1 },
+    benchmark: { cbaElo: 1148 },
   },
   {
     idPrefix: 'mistral-medium',
@@ -393,6 +412,8 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mistral internal prototype model.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 2.7, chatOut: 8.1 },
+    benchmark: { cbaElo: 1148 },
     hidden: true,
   },
 
@@ -403,6 +424,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Optimized endpoint. Cost-efficient reasoning for low-latency workloads. Mistral Small outperforms Mixtral 8x7B and has lower latency',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 2, chatOut: 6 },
     isLatest: true,
   },
   {
@@ -411,6 +433,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Aka open-mixtral-8x7b. Cost-efficient reasoning for low-latency workloads. Mistral Small outperforms Mixtral 8x7B and has lower latency',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 2, chatOut: 6 },
     hidden: true,
   },
   {
@@ -422,6 +445,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Cost-efficient reasoning for low-latency workloads. Mistral Small outperforms Mixtral 8x7B and has lower latency',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    pricing: { chatIn: 2, chatOut: 6 },
   },
   {
     idPrefix: 'mistral-small',
@@ -429,8 +453,10 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Cost-efficient reasoning for low-latency workloads.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 2, chatOut: 6 },
     hidden: true,
   },
+
   // Open Mixtral (8x7B)
   {
     idPrefix: 'open-mixtral-8x7b',
@@ -440,6 +466,7 @@ const _knownMistralChatModels: ManualMappings = [
     // copied
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 0.7, chatOut: 0.7 },
   },
 
   // Tiny (7B)
@@ -468,6 +495,7 @@ const _knownMistralChatModels: ManualMappings = [
     // copied
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 0.25, chatOut: 0.25 },
   },
 
 
