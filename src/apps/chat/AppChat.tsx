@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { useTheme } from '@mui/joy';
 
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
@@ -66,6 +67,19 @@ export type ChatModeId =
 export interface AppChatIntent {
   initialConversationId: string | null;
 }
+
+
+const composerOpenSx: SxProps = {
+  zIndex: 21, // just to allocate a surface, and potentially have a shadow
+  backgroundColor: themeBgAppChatComposer,
+  borderTop: `1px solid`,
+  borderTopColor: 'divider',
+  p: { xs: 1, md: 2 },
+};
+
+const composerClosedSx: SxProps = {
+  display: 'none',
+};
 
 
 export function AppChat() {
@@ -675,15 +689,7 @@ export function AppChat() {
       onAction={handleComposerAction}
       onTextImagine={handleTextImagine}
       setIsMulticast={setIsComposerMulticast}
-      sx={beamOpenStoreInFocusedPane ? {
-        display: 'none',
-      } : {
-        zIndex: 21, // just to allocate a surface, and potentially have a shadow
-        backgroundColor: themeBgAppChatComposer,
-        borderTop: `1px solid`,
-        borderTopColor: 'divider',
-        p: { xs: 1, md: 2 },
-      }}
+      sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
     />
 
     {/* Diagrams */}
