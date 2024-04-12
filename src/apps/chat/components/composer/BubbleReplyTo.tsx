@@ -14,11 +14,11 @@ export function BubbleReplyTo(props: { replyToText: string | null, onClick: () =
       pr: 0.5,
       border: '1px solid',
       borderColor: 'neutral.outlinedBorder',
-      borderRadius: 'md',
+      borderRadius: 'xl',
       borderTopLeftRadius: 0,
       display: 'flex', alignItems: 'start',
     }}>
-      <Tooltip disableInteractive arrow title='Replying to this selection' placement='top'>
+      <Tooltip disableInteractive arrow title='Replying to the assistant text' placement='top'>
         <ReplyRoundedIcon sx={{ color: 'primary.solidBg', fontSize: 'xl' }} />
       </Tooltip>
       <Typography level='body-sm' sx={{
@@ -28,7 +28,7 @@ export function BubbleReplyTo(props: { replyToText: string | null, onClick: () =
         maxHeight: '7.5rem',
         lineHeight: 'xl',
         color: 'text.secondary',
-        whiteSpace: 'break-spaces',
+        whiteSpace: 'break-spaces', // 'balance'
       }}>
         {props.replyToText}
       </Typography>
