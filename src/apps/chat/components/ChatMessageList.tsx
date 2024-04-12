@@ -136,6 +136,10 @@ export function ChatMessageList(props: {
     }), false);
   }, [conversationId, editMessage]);
 
+  const handleReplyTo = React.useCallback((_messageId: string, text: string) => {
+    props.conversationHandler?.getOverlayStore().getState().setReplyToText(text);
+  }, [props.conversationHandler]);
+
   const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
     conversationId && onTextDiagram({ conversationId: conversationId, messageId, text });
   }, [conversationId, onTextDiagram]);
@@ -276,6 +280,7 @@ export function ChatMessageList(props: {
               onMessageEdit={handleMessageEdit}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
+              onReplyTo={handleReplyTo}
               onTextDiagram={handleTextDiagram}
               onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
               onTextSpeak={isSpeakable ? handleTextSpeak : undefined}
