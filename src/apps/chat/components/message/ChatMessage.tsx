@@ -34,7 +34,7 @@ import { DMessage, DMessageUserFlag, messageHasUserFlag } from '~/common/state/s
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
-import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
@@ -46,7 +46,7 @@ import { useChatShowTextDiff } from '../../store-app-chat';
 
 // Enable the menu on text selection
 const ENABLE_SELECTION_RIGHT_CLICK_MENU = false;
-const ENABLE_SELECTION_TOOLBAR = false;
+const ENABLE_SELECTION_TOOLBAR = true;
 const SELECTION_TOOLBAR_MIN_LENGTH = 3;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
@@ -457,6 +457,7 @@ export function ChatMessage(props: {
     anchorEl.style.left = `${firstRect.left + window.scrollX}px`;
     anchorEl.style.top = `${firstRect.top + window.scrollY}px`;
     document.body.appendChild(anchorEl);
+    anchorEl.setAttribute('role', 'dialog');
 
     // auto-close logic on unselect
     const closeOnUnselect = () => {
@@ -758,44 +759,46 @@ export function ChatMessage(props: {
 
 
       {/* Selection Toolbar */}
-      {ENABLE_SELECTION_TOOLBAR && !!selToolbarAnchor && !!props.onMessageBeam && (
-        <Popper placement='top-start' open anchorEl={selToolbarAnchor} disablePortal>
+      {ENABLE_SELECTION_TOOLBAR && !!selToolbarAnchor && (
+        <Popper placement='top-start' open anchorEl={selToolbarAnchor} slotProps={{
+          root: { style: { zIndex: themeZIndexPageBar + 1 } },
+        }}>
           <ClickAwayListener onClickAway={() => handleCloseToolbar(selToolbarAnchor)}>
             <ButtonGroup
-              size='md'
               variant='plain'
-              color='primary'
               sx={{
                 '--ButtonGroup-separatorColor': 'none !important',
+                // borderRadius: 'md',
                 backgroundColor: 'background.popup',
                 border: '1px solid',
-                borderColor: 'primary.outlinedBorder',
-                borderRadius: 'lg',
-                boxShadow: 'lg',
+                borderColor: 'neutral.outlinedBorder',
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2)',
+                mb: 0.25,
+                ml: -1,
                 alignItems: 'center',
                 '& > button': {
                   '--Icon-fontSize': '1rem',
-                  minWidth: '3rem',
+                  minWidth: '2.5rem',
                 },
               }}
             >
-              {fromAssistant ? (
+              {(!!props.onMessageBeam && fromAssistant) ? (
                 <Tooltip disableInteractive arrow placement='top' title='Reply'>
                   <IconButton>
-                    <ReplyRoundedIcon />
+                    <ReplyRoundedIcon sx={{ fontSize: '1.25rem' }} />
                   </IconButton>
                 </Tooltip>
               ) : undefined}
 
-              {fromAssistant ? (
-                <Tooltip disableInteractive arrow placement='top' title='Reply'>
-                  <IconButton>
-                    <ChatBeamIcon />
-                  </IconButton>
-                </Tooltip>
-              ) : undefined}
+              {/*{fromAssistant ? (*/}
+              {/*  <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
+              {/*    <IconButton>*/}
+              {/*      <ChatBeamIcon />*/}
+              {/*    </IconButton>*/}
+              {/*  </Tooltip>*/}
+              {/*) : undefined}*/}
 
-              <MoreVertIcon sx={{ fontSize: 'md', opacity: 0.5 }} />
+              {(!!props.onMessageBeam && fromAssistant) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
 
               <Tooltip disableInteractive arrow placement='top' title='Copy'>
                 <IconButton onClick={handleOpsCopy}>
@@ -803,17 +806,19 @@ export function ChatMessage(props: {
                 </IconButton>
               </Tooltip>
 
-              {!!props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title='Auto-Diagram ...'>
-                <IconButton onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
-                  <AccountTreeTwoToneIcon />
-                </IconButton>
-              </Tooltip>}
+              {!!props.onTextSpeak && <MoreVertIcon sx={{ fontSize: 'md', opacity: 0.5 }} />}
 
-              {!!props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>
-                <IconButton onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-                  {props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}
-                </IconButton>
-              </Tooltip>}
+              {/*{!!props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title='Auto-Diagram ...'>*/}
+              {/*  <IconButton onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>*/}
+              {/*    <AccountTreeTwoToneIcon />*/}
+              {/*  </IconButton>*/}
+              {/*</Tooltip>}*/}
+
+              {/*{!!props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>*/}
+              {/*  <IconButton onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>*/}
+              {/*    {props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}*/}
+              {/*  </IconButton>*/}
+              {/*</Tooltip>}*/}
 
               {!!props.onTextSpeak && <Tooltip disableInteractive arrow placement='top' title='Speak'>
                 <IconButton onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
