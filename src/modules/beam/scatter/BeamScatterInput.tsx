@@ -8,6 +8,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 import type { DMessage } from '~/common/state/store-chats';
 
 import { BEAM_INVERT_BACKGROUND } from '../beam.config';
+import { useModuleBeamStore } from '../store-module-beam';
 
 
 const userMessageWrapperSx: SxProps = {
@@ -53,6 +54,8 @@ export function BeamScatterInput(props: {
   // state
   const [showHistoryMessage, setShowHistoryMessage] = React.useState(true);
 
+  // external state
+  const gatherShowPrompts = useModuleBeamStore(state => state.gatherShowPrompts);
 
   // derived state
 
@@ -66,14 +69,14 @@ export function BeamScatterInput(props: {
   // user message decorator
 
   const userMessageDecorator = React.useMemo(() => {
-    return (showHistoryMessage && otherHistoryCount >= 1) ? (
+    return (showHistoryMessage && otherHistoryCount >= 1 && gatherShowPrompts) ? (
       // <Chip color='primary' variant='outlined' endDecorator={<ChipDelete />} sx={{ my: 1 }}>
       <Typography level='body-xs' sx={{ my: 1.5, opacity: 0.9 }} onClick={() => setShowHistoryMessage(on => !on)}>
         ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before this input ...
       </Typography>
       // </Chip>
     ) : null;
-  }, [isFirstMessageSystem, otherHistoryCount, showHistoryMessage]);
+  }, [gatherShowPrompts, isFirstMessageSystem, otherHistoryCount, showHistoryMessage]);
 
 
   // skip rendering if no message
