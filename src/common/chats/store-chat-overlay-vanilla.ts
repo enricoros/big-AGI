@@ -47,5 +47,8 @@ export const createChatOverlayVanillaStore = () => createStore<OverlayStore>()((
 
 }));
 
-export const useChatOverlayStore = <T, >(vanillaStore: OverlayStoreApi, selector: (store: OverlayStore) => T): T =>
-  useStore(vanillaStore, selector);
+
+const fallbackOverlayStore = createChatOverlayVanillaStore();
+
+export const useChatOverlayStore = <T, >(vanillaStore: OverlayStoreApi | null, selector: (store: OverlayStore) => T): T =>
+  useStore(vanillaStore || fallbackOverlayStore, selector);
