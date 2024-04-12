@@ -15,6 +15,7 @@ import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
+import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
@@ -774,11 +775,11 @@ export function ChatMessage(props: {
               sx={{
                 '--ButtonGroup-separatorColor': 'none !important',
                 '--ButtonGroup-separatorSize': 0,
-                // borderRadius: '0',
+                borderRadius: '0',
                 backgroundColor: 'background.popup',
                 border: '1px solid',
                 borderColor: 'primary.outlinedBorder',
-                boxShadow: 'sm',
+                boxShadow: '0px 4px 12px -4px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
                 mb: 1,
                 ml: -1,
                 alignItems: 'center',
@@ -788,29 +789,23 @@ export function ChatMessage(props: {
                 },
               }}
             >
-              {/*{!!props.onMessageBeam && fromAssistant && (*/}
-              {/*  <Tooltip disableInteractive arrow placement='top' title='Reply'>*/}
-              {/*    <IconButton>*/}
-              {/*      <ReplyRoundedIcon />*/}
-              {/*    </IconButton>*/}
-              {/*  </Tooltip>*/}
-              {/*)}*/}
-              {/*{!!props.onMessageBeam && fromAssistant && (*/}
-              {/*  <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
-              {/*    <IconButton>*/}
-              {/*      <ChatBeamIcon />*/}
-              {/*    </IconButton>*/}
-              {/*  </Tooltip>*/}
-              {/*)}*/}
-
-              {/*{!!props.onTextDiagram && <MoreVertIcon sx={{ color: 'transparent', fontSize: 'md', opacity: 0.5 }} />}*/}
+              {!!props.onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Reply'>
+                <IconButton color='primary'>
+                  <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />
+                </IconButton>
+              </Tooltip>}
+              {/*{!!props.onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
+              {/*  <IconButton color='primary'>*/}
+              {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
+              {/*  </IconButton>*/}
+              {/*</Tooltip>}*/}
+              {(!!props.onMessageBeam && fromAssistant) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
               <Tooltip disableInteractive arrow placement='top' title='Copy'>
                 <IconButton onClick={handleOpsCopy}>
                   <ContentCopyIcon />
                 </IconButton>
               </Tooltip>
-
-              {!!props.onTextDiagram && couldDiagram && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'sm' }} />}
+              {((!!props.onTextDiagram && couldDiagram) || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
               {!!props.onTextDiagram && couldDiagram && <Tooltip disableInteractive arrow placement='top' title='Auto-Diagram ...'>
                 <IconButton onClick={handleOpsDiagram} disabled={!couldDiagram}>
                   <AccountTreeOutlinedIcon />
@@ -826,7 +821,6 @@ export function ChatMessage(props: {
                   {!props.isSpeaking ? <RecordVoiceOverOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
                 </IconButton>
               </Tooltip>}
-
             </ButtonGroup>
           </ClickAwayListener>
         </Popper>
