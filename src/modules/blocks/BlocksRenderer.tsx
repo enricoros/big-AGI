@@ -40,10 +40,6 @@ const renderBlocksSx: SxProps = {
   ...blocksSx,
   flexGrow: 0,
   overflowX: 'auto',
-  // extends the v-padding of the object, for the purpose of capturing the
-  // mouseUp event (and thus potential overlays)
-  py: 1.5,
-  my: -1.5,
 } as const;
 
 
@@ -66,7 +62,6 @@ type BlocksRendererProps = {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
-  onMouseUp?: (event: React.MouseEvent) => void;
   onImageRegenerate?: () => void;
 
   // optimization: allow memo
@@ -175,7 +170,6 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       ref={ref}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
-      onMouseUp={props.onMouseUp}
       sx={renderBlocksSx}
     >
 
