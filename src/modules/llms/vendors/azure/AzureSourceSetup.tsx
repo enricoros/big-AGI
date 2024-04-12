@@ -8,7 +8,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { asValidURL } from '~/common/util/urlUtils';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
@@ -31,7 +31,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorAzure, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

@@ -11,7 +11,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
@@ -35,7 +35,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorAnthropic, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

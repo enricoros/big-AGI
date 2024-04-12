@@ -1,7 +1,9 @@
-import type { DLLMId } from './store-llms';
+import type { ModelDescriptionSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
-import { findVendorForLlmOrThrow } from './vendors/vendors.registry';
+import { DLLM, DLLMId, DModelSource, DModelSourceId, useModelsStore } from './store-llms';
+import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
+import { findAccessForSourceOrThrow, findVendorForLlmOrThrow } from './vendors/vendors.registry';
 
 
 // LLM Client Types
@@ -28,6 +30,61 @@ export interface VChatMessageOrFunctionCallOut extends VChatMessageOut {
 
 
 // LLM Client Functions
+
+export async function llmsUpdateModelsForSourceOrThrow(sourceId: DModelSourceId, keepUserEdits: boolean): Promise<{ models: ModelDescriptionSchema[] }> {
+
+  // get the access, assuming there's no client config and the server will do all
+  const { source, vendor, transportAccess } = findAccessForSourceOrThrow(sourceId);
+
+  // fetch models
+  const data = await vendor.rpcUpdateModelsOrThrow(transportAccess);
+
+  // update the global models store
+  useModelsStore.getState().setLLMs(
+    data.models.map(model => modelDescriptionToDLLMOpenAIOptions(model, source)),
+    source.id,
+    true,
+    keepUserEdits,
+  );
+
+  // return the fetched models
+  return data;
+}
+
+function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: ModelDescriptionSchema, source: DModelSource<TSourceSetup>): DLLM<TSourceSetup, TLLMOptions> {
+
+  // null means unknown contenxt/output tokens
+  const contextTokens = model.contextWindow || null;
+  const maxOutputTokens = model.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null);
+  const llmResponseTokensRatio = model.maxCompletionTokens ? 1 / 2 : 1 / 4;
+  const llmResponseTokens = maxOutputTokens ? Math.round(maxOutputTokens * llmResponseTokensRatio) : null;
+
+  return {
+    id: `${source.id}-${model.id}`,
+
+    label: model.label,
+    created: model.created || 0,
+    updated: model.updated || 0,
+    description: model.description,
+    tags: [], // ['stream', 'chat'],
+    contextTokens,
+    maxOutputTokens,
+    hidden: !!model.hidden,
+
+    isFree: model.pricing?.chatIn === 0 && model.pricing?.chatOut === 0,
+
+    sId: source.id,
+    _source: source,
+
+    options: {
+      llmRef: model.id,
+      // @ts-ignore FIXME: large assumption that this is LLMOptionsOpenAI object
+      llmTemperature: FALLBACK_LLM_TEMPERATURE,
+      llmResponseTokens,
+    },
+  };
+}
+
 
 export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(
   llmId: DLLMId,
