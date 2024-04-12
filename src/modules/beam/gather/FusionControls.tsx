@@ -30,7 +30,7 @@ function FusionControls(props: {
 
       {/* LLM Icon */}
       {!!props.llmVendorIcon && (
-        <GoodTooltip title={props.llmLabel}>
+        <GoodTooltip placement='top' arrow title={props.llmLabel}>
           <Box sx={{ display: 'flex' }}>
             <props.llmVendorIcon sx={{ fontSize: 'lg', my: 'auto' }} />
           </Box>
