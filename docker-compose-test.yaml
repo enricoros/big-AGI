@@ -1,0 +1,9 @@
+# For starting up a test docker type ``docker compose -f ./docker-compose-test.yaml -d --build``
+services:
+  big-agi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    command: [ "next", "start", "-p", "3000" ]

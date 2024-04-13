@@ -4,6 +4,7 @@ import { ModelVendorGemini } from './gemini/gemini.vendor';
 import { ModelVendorGroq } from './groq/groq.vendor';
 import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
+import { ModelVendorMidoriAI } from './midoriai/midoriai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
 import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
@@ -22,6 +23,7 @@ export type ModelVendorId =
   | 'groq'
   | 'lmstudio'
   | 'localai'
+  | 'midoriai'
   | 'mistral'
   | 'ollama'
   | 'oobabooga'
@@ -38,6 +40,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   groq: ModelVendorGroq,
   lmstudio: ModelVendorLMStudio,
   localai: ModelVendorLocalAI,
+  midoriai: ModelVendorMidoriAI,
   mistral: ModelVendorMistral,
   ollama: ModelVendorOllama,
   oobabooga: ModelVendorOoobabooga,
