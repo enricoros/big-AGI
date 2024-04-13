@@ -335,7 +335,7 @@ const _knownLocalAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'gpt-14b-carly',
-    label: 'Midori AI Carly Diffusion Uncensored',
+    label: 'Midori AI Carly Diffusion 2x7b Uncensored',
     description: 'Carly Diffusion model fully unconsored, based on Mix 2x7b + SDXL',
     contextWindow: 32000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],

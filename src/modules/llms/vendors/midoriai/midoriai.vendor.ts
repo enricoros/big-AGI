@@ -1,4 +1,4 @@
-import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
+import { MidoriAIIcon } from '~/common/components/icons/vendors/MidoriAIIcon';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
@@ -27,7 +27,7 @@ export const ModelVendorMidoriAI: IModelVendor<SourceSetupLocalAI, OpenAIAccessS
   },
 
   // components
-  Icon: LocalAIIcon,
+  Icon: MidoriAIIcon,
   SourceSetupComponent: MidoriAISourceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
