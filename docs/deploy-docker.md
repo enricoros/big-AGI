@@ -9,7 +9,7 @@ Docker ensures faster development cycles, easier collaboration, and seamless env
    ```bash
    git clone https://github.com/enricoros/big-agi.git
    cd big-agi
-   ``` 
+   ```
 2. **Build the Docker Image**: Build a local docker image from the provided Dockerfile:
    ```bash
    docker build -t big-agi .

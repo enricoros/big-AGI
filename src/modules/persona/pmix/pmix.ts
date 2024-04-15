@@ -1,4 +1,4 @@
-import { DLLMId, getKnowledgeMapCutoff } from '~/modules/llms/store-llms';
+import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 
 import { browserLangOrUS } from '~/common/util/pwaUtils';
 
@@ -78,7 +78,13 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   mixed = mixed.replace('{{ToolBrowser0}}', 'Web browsing capabilities: Disabled');
 
   // {{Cutoff}} or remove the line
-  const varCutoff = getKnowledgeMapCutoff(assistantLlmId);
+  let varCutoff: string | undefined;
+  try {
+    if (assistantLlmId)
+      varCutoff = findLLMOrThrow(assistantLlmId).trainingDataCutoff;
+  } catch (e) {
+    // ignore...
+  }
   if (varCutoff)
     mixed = mixed.replaceAll('{{Cutoff}}', varCutoff);
   else

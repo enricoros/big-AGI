@@ -76,16 +76,21 @@ export function BeamScatterDropdown(props: {
   const handleClosePresetNaming = React.useCallback(() => setNamingOpened(false), []);
 
   const handlePresetSave = React.useCallback((presetName: string) => {
-    const { rays } = props.beamStore.getState();
-    addScatterPreset(presetName, rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[]);
+    const { rays, currentGatherLlmId, currentFactoryId } = props.beamStore.getState();
+    const rayLlmIds = rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[];
+    addScatterPreset(presetName, rayLlmIds, currentGatherLlmId, currentFactoryId);
     handleClosePresetNaming();
   }, [addScatterPreset, handleClosePresetNaming, props.beamStore]);
 
   const handlePresetLoad = React.useCallback((presetId: string) => {
     const { scatterPresets } = useModuleBeamStore.getState();
     const preset = scatterPresets.find(preset => preset.id === presetId);
-    if (preset && preset.rayLlmIds?.length)
-      props.beamStore.getState().setRayLlmIds(preset.rayLlmIds);
+    if (preset && preset.rayLlmIds?.length) {
+      const { setRayLlmIds, setCurrentGatherLlmId, setCurrentFactoryId } = props.beamStore.getState();
+      setRayLlmIds(preset.rayLlmIds);
+      preset.gatherLlmId && setCurrentGatherLlmId(preset.gatherLlmId);
+      preset.gatherFactoryId && setCurrentFactoryId(preset.gatherFactoryId);
+    }
   }, [props.beamStore]);
 
 

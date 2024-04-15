@@ -12,7 +12,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { VideoPlayer } from '~/common/components/VideoPlayer';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorLMStudio } from './lmstudio.vendor';
@@ -34,7 +34,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorLMStudio, access, false /* use button only (we don't have server-side conf) */, source);
+    useLlmUpdateModels(false /* use button only (we don't have server-side conf) */, source);
 
   return <>
 
@@ -55,7 +55,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     <FormInputKey
-      id='lmstudio-url' label='LM Studio API'
+      autoCompleteId='lmstudio-url' label='LM Studio API'
       required noKey
       rightLabel={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-lmstudio.md' target='_blank'>Learn more</Link>}
       placeholder='e.g., http://127.0.0.1:1234'

@@ -31,7 +31,7 @@ export function BrowseSettings() {
     </FormHelperText>
 
     <FormInputKey
-      id='browse-wss' label='Puppeteer Endpoint' noKey
+      autoCompleteId='browse-wss' label='Puppeteer Endpoint' noKey
       value={wssEndpoint} onChange={setWssEndpoint}
       rightLabel={!isServerConfig ? 'required' : '✔️ already set in server'}
       required={!isServerConfig} isError={!isClientValid && !isServerConfig}

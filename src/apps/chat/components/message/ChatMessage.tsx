@@ -2,18 +2,20 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
-import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
+import { Avatar, Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { ClickAwayListener, Popper } from '@mui/base';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
-import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
+import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
+import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
+import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
@@ -32,7 +34,7 @@ import { DMessage, DMessageUserFlag, messageHasUserFlag } from '~/common/state/s
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
-import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
@@ -43,18 +45,20 @@ import { useChatShowTextDiff } from '../../store-app-chat';
 
 
 // Enable the menu on text selection
-const ENABLE_SELECTION_RIGHT_CLICK_MENU: boolean = true;
+const ENABLE_SELECTION_RIGHT_CLICK_MENU = false;
+const ENABLE_SELECTION_TOOLBAR = true;
+const SELECTION_TOOLBAR_MIN_LENGTH = 3;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
 
-export function messageBackground(messageRole: DMessage['role'] | string, wasEdited: boolean, unknownAssistantIssue: boolean): string {
+export function messageBackground(messageRole: DMessage['role'] | string, wasEdited: boolean, isAssistantIssue: boolean): string {
   switch (messageRole) {
     case 'user':
       return 'primary.plainHoverBg'; // was .background.level1
     case 'assistant':
-      return unknownAssistantIssue ? 'danger.softBg' : 'background.surface';
+      return isAssistantIssue ? 'danger.softBg' : 'background.surface';
     case 'system':
       return wasEdited ? 'warning.softHoverBg' : 'neutral.softBg';
     default:
@@ -114,7 +118,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
 
       // icon: text-to-image
       if (isTextToImage)
-        return <FormatPaintTwoToneIcon sx={{
+        return <FormatPaintOutlinedIcon sx={{
           ...avatarIconSx,
           animation: `${animationColorRainbow} 1s linear 2.66`,
         }} />;
@@ -228,6 +232,7 @@ export function ChatMessage(props: {
   onMessageEdit?: (messageId: string, text: string) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
+  onReplyTo?: (messageId: string, selectedText: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>
   onTextImagine?: (text: string) => Promise<void>
   onTextSpeak?: (text: string) => Promise<void>
@@ -235,10 +240,12 @@ export function ChatMessage(props: {
 }) {
 
   // state
+  const blocksRendererRef = React.useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = React.useState(false);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [selMenuText, setSelMenuText] = React.useState<string | null>(null);
+  const [selToolbarAnchor, setSelToolbarAnchor] = React.useState<HTMLElement | null>(null);
+  const [selText, setSelText] = React.useState<string | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
@@ -272,10 +279,10 @@ export function ChatMessage(props: {
   const fromSystem = messageRole === 'system';
   const wasEdited = !!messageUpdated;
 
-  const textSel = selMenuText ? selMenuText : messageText;
+  const textSel = selText ? selText : messageText;
   const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
-  const couldDiagram = textSel?.length >= 100 && !isSpecialT2I;
-  const couldImagine = textSel?.length >= 2 && !isSpecialT2I;
+  const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
+  const couldImagine = textSel.length >= 3 && !isSpecialT2I;
   const couldSpeak = couldImagine;
 
 
@@ -297,6 +304,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     closeOpsMenu();
     closeSelectionMenu();
+    closeToolbar();
   };
 
   const handleOpsEdit = React.useCallback((e: React.MouseEvent) => {
@@ -337,6 +345,7 @@ export function ChatMessage(props: {
       await props.onTextDiagram(messageId, textSel);
       closeOpsMenu();
       closeSelectionMenu();
+      closeToolbar();
     }
   };
 
@@ -346,6 +355,17 @@ export function ChatMessage(props: {
       await props.onTextImagine(textSel);
       closeOpsMenu();
       closeSelectionMenu();
+      closeToolbar();
+    }
+  };
+
+  const handleOpsReplyTo = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (props.onReplyTo && textSel.trim().length >= SELECTION_TOOLBAR_MIN_LENGTH) {
+      props.onReplyTo(messageId, textSel.trim());
+      closeOpsMenu();
+      closeSelectionMenu();
+      closeToolbar();
     }
   };
 
@@ -355,6 +375,7 @@ export function ChatMessage(props: {
       await props.onTextSpeak(textSel);
       closeOpsMenu();
       closeSelectionMenu();
+      closeToolbar();
     }
   };
 
@@ -395,17 +416,17 @@ export function ChatMessage(props: {
     document.body.appendChild(anchorEl);
 
     setSelMenuAnchor(anchorEl);
-    setSelMenuText(selectedText);
+    setSelText(selectedText);
   }, [removeSelectionAnchor]);
 
   const closeSelectionMenu = React.useCallback(() => {
     // window.getSelection()?.removeAllRanges?.();
     removeSelectionAnchor();
     setSelMenuAnchor(null);
-    setSelMenuText(null);
+    setSelText(null);
   }, [removeSelectionAnchor]);
 
-  const handleMouseUp = React.useCallback((event: MouseEvent) => {
+  const handleContextMenu = React.useCallback((event: MouseEvent) => {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -416,15 +437,73 @@ export function ChatMessage(props: {
   }, [openSelectionMenu]);
 
 
+  // Selection Toolbar
+
+  const closeToolbar = React.useCallback((anchorEl?: HTMLElement) => {
+    window.getSelection()?.removeAllRanges?.();
+    try {
+      const anchor = anchorEl || selToolbarAnchor;
+      anchor && document.body.removeChild(anchor);
+    } catch (e) {
+      // ignore...
+    }
+    setSelToolbarAnchor(null);
+    setSelText(null);
+  }, [selToolbarAnchor]);
+
+  const handleOpenToolbar = React.useCallback((_event: MouseEvent) => {
+    // check for selection
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount <= 0) return;
+
+    // check for enought selection
+    const selectionText = selection.toString().trim();
+    if (selectionText.length < SELECTION_TOOLBAR_MIN_LENGTH) return;
+
+    // check for the selection being inside the blocks renderer (core of the message)
+    const selectionRange = selection.getRangeAt(0);
+    const blocksElement = blocksRendererRef.current;
+    if (!blocksElement || !blocksElement.contains(selectionRange.commonAncestorContainer)) return;
+
+    const rangeRects = selectionRange.getClientRects();
+    if (rangeRects.length <= 0) return;
+
+    const firstRect = rangeRects[0];
+    const anchorEl = document.createElement('div');
+    anchorEl.style.position = 'fixed';
+    anchorEl.style.left = `${firstRect.left + window.scrollX}px`;
+    anchorEl.style.top = `${firstRect.top + window.scrollY}px`;
+    document.body.appendChild(anchorEl);
+    anchorEl.setAttribute('role', 'dialog');
+
+    // auto-close logic on unselect
+    const closeOnUnselect = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.toString().trim() === '') {
+        closeToolbar(anchorEl);
+        document.removeEventListener('selectionchange', closeOnUnselect);
+      }
+    };
+    document.addEventListener('selectionchange', closeOnUnselect);
+
+    setSelToolbarAnchor(anchorEl);
+    setSelText(selectionText);
+  }, [closeToolbar]);
+
+
   // Blocks renderer
 
   const handleBlocksContextMenu = React.useCallback((event: React.MouseEvent) => {
-    handleMouseUp(event.nativeEvent);
-  }, [handleMouseUp]);
+    handleContextMenu(event.nativeEvent);
+  }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
     doubleClickToEdit && props.onMessageEdit && handleOpsEdit(event);
   }, [doubleClickToEdit, handleOpsEdit, props.onMessageEdit]);
+
+  const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
+    handleOpenToolbar(event.nativeEvent);
+  }, [handleOpenToolbar]);
 
 
   // prettier upstream errors
@@ -446,6 +525,7 @@ export function ChatMessage(props: {
   return (
     <ListItem
       role='chat-message'
+      onMouseUp={(ENABLE_SELECTION_TOOLBAR && !fromSystem && !isAssistantError) ? handleBlocksMouseUp : undefined}
       sx={{
         // style
         backgroundColor: backgroundColor,
@@ -537,6 +617,7 @@ export function ChatMessage(props: {
       ) : (
 
         <BlocksRenderer
+          ref={blocksRendererRef}
           text={messageText}
           fromRole={messageRole}
           contentScaling={contentScaling}
@@ -650,19 +731,19 @@ export function ChatMessage(props: {
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && (
             <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram}>
-              <ListItemDecorator><AccountTreeTwoToneIcon /></ListItemDecorator>
+              <ListItemDecorator><AccountTreeOutlinedIcon /></ListItemDecorator>
               Auto-Diagram ...
             </MenuItem>
           )}
           {!!props.onTextImagine && (
             <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}</ListItemDecorator>
+              <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintOutlinedIcon />}</ListItemDecorator>
               Auto-Draw
             </MenuItem>
           )}
           {!!props.onTextSpeak && (
             <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverTwoToneIcon />}</ListItemDecorator>
+              <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverOutlinedIcon />}</ListItemDecorator>
               Speak
             </MenuItem>
           )}
@@ -693,6 +774,70 @@ export function ChatMessage(props: {
         </CloseableMenu>
       )}
 
+
+      {/* Selection Toolbar */}
+      {ENABLE_SELECTION_TOOLBAR && !!selToolbarAnchor && (
+        <Popper placement='top-start' open anchorEl={selToolbarAnchor} slotProps={{
+          root: { style: { zIndex: themeZIndexPageBar + 1 } },
+        }}>
+          <ClickAwayListener onClickAway={() => closeToolbar()}>
+            <ButtonGroup
+              variant='plain'
+              sx={{
+                '--ButtonGroup-separatorColor': 'none !important',
+                '--ButtonGroup-separatorSize': 0,
+                borderRadius: '0',
+                backgroundColor: 'background.popup',
+                border: '1px solid',
+                borderColor: 'primary.outlinedBorder',
+                boxShadow: '0px 4px 12px -4px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+                mb: 1,
+                ml: -1,
+                alignItems: 'center',
+                '& > button': {
+                  '--Icon-fontSize': '1rem',
+                  minWidth: '2.5rem',
+                },
+              }}
+            >
+              {!!props.onReplyTo && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Reply'>
+                <IconButton color='primary' onClick={handleOpsReplyTo}>
+                  <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />
+                </IconButton>
+              </Tooltip>}
+              {/*{!!props.onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
+              {/*  <IconButton color='primary'>*/}
+              {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
+              {/*  </IconButton>*/}
+              {/*</Tooltip>}*/}
+              {!!props.onReplyTo && fromAssistant && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+              <Tooltip disableInteractive arrow placement='top' title='Copy'>
+                <IconButton onClick={handleOpsCopy}>
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+              {((!!props.onTextDiagram && couldDiagram) || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+              {!!props.onTextDiagram && couldDiagram && <Tooltip disableInteractive arrow placement='top' title='Auto-Diagram ...'>
+                <IconButton onClick={handleOpsDiagram} disabled={!couldDiagram}>
+                  <AccountTreeOutlinedIcon />
+                </IconButton>
+              </Tooltip>}
+              {/*{!!props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>*/}
+              {/*  <IconButton onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>*/}
+              {/*    {!props.isImagining ? <FormatPaintOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}*/}
+              {/*  </IconButton>*/}
+              {/*</Tooltip>}*/}
+              {!!props.onTextSpeak && <Tooltip disableInteractive arrow placement='top' title='Speak'>
+                <IconButton onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
+                  {!props.isSpeaking ? <RecordVoiceOverOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
+                </IconButton>
+              </Tooltip>}
+            </ButtonGroup>
+          </ClickAwayListener>
+        </Popper>
+      )}
+
+
       {/* Selection (Contextual) Menu */}
       {!!selMenuAnchor && (
         <CloseableMenu
@@ -706,15 +851,15 @@ export function ChatMessage(props: {
           </MenuItem>
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && <MenuItem onClick={handleOpsDiagram} disabled={!couldDiagram || props.isImagining}>
-            <ListItemDecorator><AccountTreeTwoToneIcon /></ListItemDecorator>
+            <ListItemDecorator><AccountTreeOutlinedIcon /></ListItemDecorator>
             Auto-Diagram ...
           </MenuItem>}
           {!!props.onTextImagine && <MenuItem onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
-            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintTwoToneIcon />}</ListItemDecorator>
+            <ListItemDecorator>{props.isImagining ? <CircularProgress size='sm' /> : <FormatPaintOutlinedIcon />}</ListItemDecorator>
             Auto-Draw
           </MenuItem>}
           {!!props.onTextSpeak && <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
-            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverTwoToneIcon />}</ListItemDecorator>
+            <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverOutlinedIcon />}</ListItemDecorator>
             Speak
           </MenuItem>}
         </CloseableMenu>

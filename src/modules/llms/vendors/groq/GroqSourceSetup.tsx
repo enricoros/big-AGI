@@ -9,7 +9,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 
 import type { DModelSourceId } from '../../store-llms';
 import { ModelVendorGroq } from './groq.vendor';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 
@@ -33,13 +33,13 @@ export function GroqSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorGroq, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
 
   return <>
 
     <FormInputKey
-      id='groq-key' label='Groq API Key'
+      autoCompleteId='groq-key' label='Groq API Key'
       rightLabel={<>{needsUserKey
         ? !groqKey && <Link level='body-sm' href={GROQ_REG_LINK} target='_blank'>API keys</Link>
         : '✔️ already set in server'}

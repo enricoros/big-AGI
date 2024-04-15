@@ -19,6 +19,15 @@ Or fork & run on Vercel
 
 [//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
 
+#### What's New in 1.15.1 · April 10, 2024 (minor release, models support)
+
+- Support for the newly released Gemini Pro 1.5 models
+- Support for the new OpenAI 2024-04-09 Turbo models
+- Ctrl+S and Ctrl+O to save/load chats on desktop
+- Resilience fixes after the large success of 1.15.0
+
+> Note: Beam-2 and new larger features are being cooked outside of `main`.
+
 ### 3,000 Commits Milestone · April 7, 2024
 
 ![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)

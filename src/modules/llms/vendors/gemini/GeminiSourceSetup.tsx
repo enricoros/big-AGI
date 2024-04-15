@@ -11,7 +11,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 
 import type { DModelSourceId } from '../../store-llms';
 import type { GeminiBlockSafetyLevel } from '../../server/gemini/gemini.wiretypes';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorGemini } from './gemini.vendor';
@@ -42,12 +42,12 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorGemini, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 
     <FormInputKey
-      id='gemini-key' label='Gemini API Key'
+      autoCompleteId='gemini-key' label='Gemini API Key'
       rightLabel={<>{needsUserKey
         ? !geminiKey && <Link level='body-sm' href={GEMINI_API_KEY_LINK} target='_blank'>request Key</Link>
         : '✔️ already set in server'}

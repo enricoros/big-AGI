@@ -37,6 +37,9 @@ Check the URL and modify if different.
 2. Enter the API URL: `http://localhost:1234` (modify if different)
 3. Refresh by clicking on the `Models` button to load models from LM Studio
 
+In addition to using the UI, configuration can also be done using
+[environment variables](environment-variables.md).
+
 ## Troubleshooting
 
 - **Missing @mui/material**: Execute `npm install @mui/material` or `yarn add @mui/material`

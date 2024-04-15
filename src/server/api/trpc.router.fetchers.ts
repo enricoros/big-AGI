@@ -30,12 +30,18 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
     try {
       if (SERVER_DEBUG_WIRE)
         console.log('-> tRPC', debugGenerateCurlCommand(method, url, headers, body as any));
+
       response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     } catch (error: any) {
-      console.error(`${moduleName} error (fetch):`, error);
+      const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
+      console.error(`[${method}] ${moduleName} error (fetch):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
+      // HTTP 400
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `**[Issue] ${moduleName}: (network):** ${safeErrorString(error) || 'Unknown fetch error'} - ${error?.cause}`,
+        message: `[Issue] ${moduleName}: (network): ${safeErrorString(error) || 'unknown fetch error'}`
+          + (errorCause ? ` - ${errorCause?.toString()}` : '')
+          + ((errorCause && (errorCause as any)?.code === 'ECONNREFUSED') ? ` - is "${url}" accessible by the server?` : ''),
+        cause: errorCause,
       });
     }
 
@@ -47,12 +53,14 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       let payload: any | null = await response.json().catch(() => null);
       if (payload === null)
         payload = await response.text().catch(() => null);
-      console.error(`${moduleName} error (upstream):`, response.status, response.statusText, payload);
+      console.error(`[${method}] ${moduleName} error (upstream):`, response.status, response.statusText, payload);
+      // HTTP 400
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `**[Issue] ${moduleName}**: ${response.statusText}` // (${response.status})`
+        message: `[Issue] ${moduleName}: ${response.statusText}` // (${response.status})`
           + (payload ? ` - ${safeErrorString(payload)}` : '')
           + (response.status === 403 ? ` - is "${url}" accessible by the server?` : '')
+          + (response.status === 404 ? ` - "${url}" cannot be found by the server` : '')
           + (response.status === 502 ? ` - is "${url}" not available?` : ''),
       });
     }
@@ -61,10 +69,11 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
     try {
       return await parser(response);
     } catch (error: any) {
-      console.error(`${moduleName} error (parse):`, error);
+      console.error(`[${method}] ${moduleName} error (parse):`, error);
+      // HTTP 422
       throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: `**[Issue] ${moduleName}: (parsing):** ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
+        code: 'UNPROCESSABLE_CONTENT',
+        message: `[Issue] ${moduleName}: (parsing): ${safeErrorString(error) || `Unknown ${parserName} parsing error`}`,
       });
     }
   };

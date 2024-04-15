@@ -53,7 +53,7 @@ As of Feb 27, 2024, this feature is in development.
 
 ## Configurations
 
-| Scope                                                                                   | Default          | Description / Instructions                                                                                              | 
+| Scope                                                                                   | Default          | Description / Instructions                                                                                              |
 |-----------------------------------------------------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------|
 | Your source builds of big-AGI                                                           | None             | **Vercel**: enable Vercel Analytics from the dashboard. · **Google Analytics**: set environment variable at build time. |
 | Your docker builds of big-AGI                                                           | None             | **Vercel**: n/a. · **Google Analytics**: set environment variable at `docker build` time.                               |
