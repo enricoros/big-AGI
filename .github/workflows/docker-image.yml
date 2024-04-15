@@ -56,6 +56,7 @@ jobs:
             type=raw,value=stable,enable=${{ github.ref == 'refs/heads/main-stable' }}
             type=ref,event=tag  # Use the tag name as a tag for tag builds
             type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
+            type=sha # Just in case none of the above applies
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
