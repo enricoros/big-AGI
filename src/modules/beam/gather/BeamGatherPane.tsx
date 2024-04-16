@@ -81,7 +81,7 @@ export function BeamGatherPane(props: {
     setCurrentGatherLlmId: state.setCurrentGatherLlmId,
   })));
   const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(
-    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true,
+    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true, !props.canGather,
   );
 
   // derived state
@@ -116,7 +116,7 @@ export function BeamGatherPane(props: {
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
-            {props.canGather ? `Combine the ${props.raysReady} replies` : 'Two replies or more'}
+            {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ ''}
           </Typography>
         </div>
         <ScrollToBottomButton inline />
@@ -128,6 +128,7 @@ export function BeamGatherPane(props: {
         <ButtonGroup
           variant='outlined'
           size='md'
+          disabled={!props.canGather}
           // sx={{ boxShadow: isNoFactorySelected ? 'xs' : undefined }}
         >
           {FUSION_FACTORIES.map(factory => {

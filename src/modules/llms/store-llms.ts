@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 
 import type { ModelVendorId } from './vendors/vendors.registry';
@@ -11,18 +10,36 @@ import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vend
  */
 export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
   id: DLLMId;
+
+  // editable properties (kept on update, if isEdited)
   label: string;
   created: number | 0;
   updated?: number | 0;
   description: string;
-  tags: string[]; // UNUSED for now
-  // modelcaps: DModelCapability[];
+  hidden: boolean;                  // hidden from UI selectors
+  isEdited?: boolean;               // user has edited the soft properties
+
+  // hard properties (overwritten on update)
   contextTokens: number | null;     // null: must assume it's unknown
   maxOutputTokens: number | null;   // null: must assume it's unknown
-  hidden: boolean; // hidden from Chat model UI selectors
+  trainingDataCutoff?: string;      // [v2] 'Apr 2029'
+  interfaces: DModelInterfaceV1[];  // [v2] if set, meaning this is the known and comprehensive set of interfaces
+  // inputTypes: {                     // [v2] the supported input formats
+  //   [key in DModelPartKind]?: {
+  //     // maxItemsPerInput?: number;
+  //     // maxFileSize?: number; // in bytes
+  //     // maxDurationPerInput?: number; // in seconds, for audio and video
+  //     // maxPagesPerInput?: number; // for PDF
+  //     // encodings?: ('base64' | 'utf-8')[];
+  //     mimeTypes?: string[];
+  //   }
+  // };
+  benchmark?: { cbaElo?: number, cbaMmlu?: number }; // [v2] benchmark values
+  pricing?: { chatIn?: number, chatOut?: number }; // [v2] cost per million tokens
 
-  // temporary special flags - not graduated yet
-  isFree: boolean; // model is free to use
+  // derived properties
+  tmpIsFree?: boolean; // model is free to use [temporary, for now], this is a derived property from the pricing
+  tmpIsVision?: boolean; // model can take image inputs
 
   // llm -> source
   sId: DModelSourceId;
@@ -34,6 +51,25 @@ export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
 
 export type DLLMId = string;
 
+// export type DModelPartKind = 'text' | 'image' | 'audio' | 'video' | 'pdf';
+
+export type DModelInterfaceV1 =
+// do not change anything below! those will be persisted in data
+  | 'oai-chat'
+  | 'oai-chat-json'
+  | 'oai-chat-vision'
+  | 'oai-chat-fn'
+  | 'oai-complete'
+// only append below this line
+  ;
+
+// Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
+export const LLM_IF_OAI_Chat: DModelInterfaceV1 = 'oai-chat';
+export const LLM_IF_OAI_Json: DModelInterfaceV1 = 'oai-chat-json';
+export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
+export const LLM_IF_OAI_Fn: DModelInterfaceV1 = 'oai-chat-fn';
+export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
+
 // export type DModelCapability =
 //   | 'input-text'
 //   | 'input-image-data'
@@ -44,12 +80,7 @@ export type DLLMId = string;
 //   | 'if-chat'
 //   | 'if-fast-chat'
 //   ;
-
-// Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
-export const LLM_IF_OAI_Chat = 'oai-chat';
-export const LLM_IF_OAI_Vision = 'oai-vision';
-export const LLM_IF_OAI_Fn = 'oai-fn';
-export const LLM_IF_OAI_Complete = 'oai-complete';
+// modelcaps: DModelCapability[];
 
 
 /**
@@ -230,8 +261,9 @@ export const useModelsStore = create<LlmsStore>()(
 
       /* versioning:
        *  1: adds maxOutputTokens (default to half of contextTokens)
+       *  2: large changes on all LLMs, and reset chat/fast/func LLMs
        */
-      version: 1,
+      version: 2,
       migrate: (state: any, fromVersion: number): LlmsStore => {
 
         // 0 -> 1: add 'maxOutputTokens' where missing
@@ -239,6 +271,18 @@ export const useModelsStore = create<LlmsStore>()(
           for (const llm of state.llms)
             if (llm.maxOutputTokens === undefined)
               llm.maxOutputTokens = llm.contextTokens ? Math.round(llm.contextTokens / 2) : null;
+
+        // 1 -> 2: large changes
+        if (state && fromVersion < 2) {
+          for (const llm of state.llms) {
+            delete llm['tags'];
+            llm.interfaces = [LLM_IF_OAI_Chat];
+            // llm.inputTypes = { 'text': {} };
+          }
+          state.chatLLMId = null;
+          state.fastLLMId = null;
+          state.funcLLMId = null;
+        }
 
         return state;
       },
@@ -252,7 +296,7 @@ export const useModelsStore = create<LlmsStore>()(
         }),
       }),
 
-      // Post-loading: re-link the memory references on rehydration
+      // Post-loading: re-link the memory references on rehydration, and auto-select the best LLMs if not set
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
@@ -261,6 +305,13 @@ export const useModelsStore = create<LlmsStore>()(
           if (!source) return null;
           return { ...llm, _source: source };
         }).filter(llm => !!llm) as DLLM[];
+
+        try {
+          if (!state.chatLLMId || !state.fastLLMId || !state.funcLLMId)
+            Object.assign(state, updateSelectedIds(state.llms, state.chatLLMId, state.fastLLMId, state.funcLLMId));
+        } catch (error) {
+          console.error('Error in autoPickModels', error);
+        }
       },
     }),
 );
@@ -284,52 +335,57 @@ export function findSourceOrThrow<TSourceSetup>(sourceId: DModelSourceId) {
 }
 
 
-const modelsKnowledgeMap: { contains: string[], cutoff: string }[] = [
-  { contains: ['4-0125', '4-turbo'], cutoff: '2023-12' },
-  { contains: ['4-1106', '4-vision'], cutoff: '2023-04' },
-  { contains: ['4-0613', '4-0314', '4-32k', '3.5-turbo'], cutoff: '2021-09' },
-] as const;
+function groupLlmsByVendor(llms: DLLM[]): { vendorId: ModelVendorId, llmsByElo: { id: DLLMId, cbaElo: number | undefined }[] }[] {
+  // group all LLMs by vendor
+  const grouped = llms.reduce((acc, llm) => {
+    if (llm.hidden) return acc;
+    const vendorId = llm._source.vId;
+    const vendor = acc.find(v => v.vendorId === vendorId);
+    if (!vendor) acc.push({ vendorId, llmsByElo: [{ id: llm.id, cbaElo: llm.benchmark?.cbaElo }] });
+    else vendor.llmsByElo.push({ id: llm.id, cbaElo: llm.benchmark?.cbaElo });
+    return acc;
+  }, [] as { vendorId: ModelVendorId, llmsByElo: { id: DLLMId, cbaElo: number | undefined }[] }[]);
 
-export function getKnowledgeMapCutoff(llmId?: DLLMId): string | null {
-  if (llmId)
-    for (const { contains, cutoff } of modelsKnowledgeMap)
-      if (contains.some(c => llmId.includes(c)))
-        return cutoff;
-  return null;
+  // sort each vendor's LLMs by elo, decreasing
+  for (const vendor of grouped)
+    vendor.llmsByElo.sort((a, b) => (b.cbaElo ?? -1) - (a.cbaElo ?? -1));
+
+  // sort all vendors by their highest elo, decreasing
+  grouped.sort((a, b) => (b.llmsByElo[0].cbaElo ?? -1) - (a.llmsByElo[0].cbaElo ?? -1));
+  return grouped;
 }
 
-const defaultChatSuffixPreference = ['gpt-4-0125-preview', 'gpt-4-1106-preview', 'gpt-4-0613', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo'];
-const defaultFastSuffixPreference = ['gpt-3.5-turbo-0125', 'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo'];
-const defaultFuncSuffixPreference = ['gpt-4-0125-preview', 'gpt-4-1106-preview', 'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-4-0613'];
 
-function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null): Partial<ModelsData> {
-  if (chatLlmId && !allLlms.find(llm => llm.id === chatLlmId)) chatLlmId = null;
-  if (!chatLlmId) chatLlmId = findLlmIdBySuffix(allLlms, defaultChatSuffixPreference, true);
+export function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null) {
 
-  if (fastLlmId && !allLlms.find(llm => llm.id === fastLlmId)) fastLlmId = null;
-  if (!fastLlmId) fastLlmId = findLlmIdBySuffix(allLlms, defaultFastSuffixPreference, true);
+  // the output of groupLlmsByVendor
+  let grouped: ReturnType<typeof groupLlmsByVendor> | null = null;
 
-  if (funcLlmId && !allLlms.find(llm => llm.id === funcLlmId)) funcLlmId = null;
-  if (!funcLlmId) funcLlmId = findLlmIdBySuffix(allLlms, defaultFuncSuffixPreference, false);
+  function cachedGrouped() {
+    if (!grouped) grouped = groupLlmsByVendor(allLlms);
+    return grouped;
+  }
+
+  // the best llm
+  if (!chatLlmId || !allLlms.find(llm => llm.id === chatLlmId)) {
+    const vendors = cachedGrouped();
+    chatLlmId = vendors.length ? vendors[0].llmsByElo[0].id : null;
+  }
+
+  // a fast llm (bottom elo of the top vendor ~~ not really a proxy, but not sure which heuristic to use here)
+  if (!fastLlmId && !allLlms.find(llm => llm.id === fastLlmId)) {
+    const vendors = cachedGrouped();
+    fastLlmId = vendors.length
+      ? vendors[0].llmsByElo.findLast(llm => llm.cbaElo)?.id // last with ELO
+      ?? vendors[0].llmsByElo[vendors[0].llmsByElo.length - 1].id ?? null // last
+      : null;
+  }
+
+  // a func llm (
+  if (!funcLlmId || !allLlms.find(llm => llm.id === funcLlmId))
+    funcLlmId = chatLlmId;
 
   return { chatLLMId: chatLlmId, fastLLMId: fastLlmId, funcLLMId: funcLlmId };
-}
-
-function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: boolean): DLLMId | null {
-  if (!llms?.length) return null;
-  for (const suffix of suffixes)
-    for (const llm of llms)
-      if (llm.id.endsWith(suffix))
-        return llm.id;
-  if (!fallbackToFirst) return null;
-
-  // otherwise return first that's not hidden
-  for (const llm of llms)
-    if (!llm.hidden)
-      return llm.id;
-
-  // otherwise return first id
-  return llms[0].id;
 }
 
 
@@ -337,11 +393,8 @@ function findLlmIdBySuffix(llms: DLLM[], suffixes: string[], fallbackToFirst: bo
  * Current 'Chat' LLM, or null
  */
 export function useChatLLM() {
-  return useModelsStore(state => {
-    const { chatLLMId } = state;
-    const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
-    return { chatLLM };
-  }, shallow);
+  const chatLLM = useModelsStore(state => state.chatLLMId ? state.llms.find(llm => llm.id === state.chatLLMId) ?? null : null);
+  return { chatLLM };
 }
 
 export function getLLMsDebugInfo() {

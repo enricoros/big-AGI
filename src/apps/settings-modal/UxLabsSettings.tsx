@@ -32,28 +32,30 @@ export function UxLabsSettings() {
 
   return <>
 
+    {/* 'v1.15 · ' + .. */}
+
     <FormSwitchControl
-      title={<><ChatBeamIcon color={labsBeam ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Beam</>} description={'v1.15 · ' + (labsBeam ? 'Active' : 'Off')}
+      title={<><ChatBeamIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Chat Beam</>} description={labsBeam ? 'Active' : 'Off'}
       checked={labsBeam} onChange={setLabsBeam}
     />
 
     <FormSwitchControl
-      title={<><SpeedIcon color={labsHighPerformance ? 'primary' : undefined} sx={{ mr: 0.25 }} />Performance</>} description={'v1.14 · ' + (labsHighPerformance ? 'Unlocked' : 'Default')}
+      title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Performance</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
       checked={labsHighPerformance} onChange={setLabsHighPerformance}
     />
 
     {DEV_MODE_SETTINGS && <FormSwitchControl
-      title={<><TitleIcon color={labsChatBarAlt ? 'primary' : undefined} sx={{ mr: 0.25 }} />Chat Title</>} description={'v1.14 · ' + (labsChatBarAlt === 'title' ? 'Show Title' : 'Show Models')}
+      title={<><TitleIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Chat Title</>} description={labsChatBarAlt === 'title' ? 'Show Title' : 'Show Models'}
       checked={labsChatBarAlt === 'title'} onChange={(on) => setLabsChatBarAlt(on ? 'title' : false)}
     />}
 
     {!isMobile && <FormSwitchControl
-      title={<><ScreenshotMonitorIcon color={labsAttachScreenCapture ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Screen Capture</>} description={'v1.13 · ' + (labsAttachScreenCapture ? 'Enabled' : 'Disabled')}
+      title={<><ScreenshotMonitorIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} /> Screen Capture</>} description={labsAttachScreenCapture ? 'Enabled' : 'Disabled'}
       checked={labsAttachScreenCapture} onChange={setLabsAttachScreenCapture}
     />}
 
     {!isMobile && <FormSwitchControl
-      title={<><AddAPhotoIcon color={labsCameraDesktop ? 'primary' : undefined} sx={{ mr: 0.25 }} /> Webcam</>} description={/*'v1.8 · ' +*/ (labsCameraDesktop ? 'Enabled' : 'Disabled')}
+      title={<><AddAPhotoIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} /> Webcam Capture</>} description={/*'v1.8 · ' +*/ (labsCameraDesktop ? 'Enabled' : 'Disabled')}
       checked={labsCameraDesktop} onChange={setLabsCameraDesktop}
     />}
 

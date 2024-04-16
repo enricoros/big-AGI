@@ -40,11 +40,15 @@ const renderBlocksSx: SxProps = {
   ...blocksSx,
   flexGrow: 0,
   overflowX: 'auto',
+  '& *::selection': {
+    // backgroundColor: '#fc70c3',
+    backgroundColor: 'primary.solidBg',
+    color: 'primary.solidColor',
+  },
 } as const;
 
 
-export function BlocksRenderer(props: {
-
+type BlocksRendererProps = {
   // required
   text: string;
   fromRole: DMessage['role'];
@@ -67,8 +71,10 @@ export function BlocksRenderer(props: {
 
   // optimization: allow memo
   optiAllowMemo?: boolean;
+};
 
-}) {
+
+export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 
   // state
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
@@ -166,6 +172,7 @@ export function BlocksRenderer(props: {
 
   return (
     <Box
+      ref={ref}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
       sx={renderBlocksSx}
@@ -228,4 +235,6 @@ export function BlocksRenderer(props: {
 
     </Box>
   );
-}
+});
+
+BlocksRenderer.displayName = 'BlocksRenderer';

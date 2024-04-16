@@ -146,7 +146,8 @@ export function BeamFusionGrid(props: {
 
           </Box> : (
             <Typography level='body-sm'>
-              You need two or more replies for a {currentFactory?.shortLabel?.toLocaleLowerCase() ?? ''} merge.
+              {/*You need two or more replies for a {currentFactory?.shortLabel?.toLocaleLowerCase() ?? ''} merge.*/}
+              Waiting for multiple Beams.
             </Typography>
           )}
         </BeamCard>

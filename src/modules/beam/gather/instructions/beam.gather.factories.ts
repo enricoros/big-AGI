@@ -147,7 +147,7 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
     createInstructions: () => [
       {
         type: 'chat-generate',
-        label: 'Executing Your Merge Strategy',
+        label: 'Executing Your Merge',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
 Synthesize a cohesive response based on the original system message, conversation history, user query, and {{N}} answers. Integrate insights from these alternatives into a single, coherent response that addresses the user's needs.`.trim(),

@@ -39,6 +39,7 @@ const FormLabelStartBase = (props: {
     {!!props.description && (
       <FormHelperText
         sx={{
+          fontSize: 'xs',
           display: 'block',
         }}
       >

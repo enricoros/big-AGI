@@ -1,18 +1,26 @@
 import { z } from 'zod';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../store-llms';
 
 
 // Model Description: a superset of LLM model descriptors
 
 const pricingSchema = z.object({
-  cpmPrompt: z.number().optional(), // Cost per thousand prompt tokens
-  cpmCompletion: z.number().optional(), // Cost per thousand completion tokens
+  chatIn: z.number().optional(), // Cost per Million input tokens
+  chatOut: z.number().optional(), // Cost per Million output tokens
+});
+
+const benchmarkSchema = z.object({
+  cbaElo: z.number().optional(),
+  cbaMmlu: z.number().optional(),
 });
 
 // const rateLimitsSchema = z.object({
 //   reqPerMinute: z.number().optional(),
 // });
 
+const interfaceSchema = z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision, LLM_IF_OAI_Json]);
+
+// NOTE: update the `fromManualMapping` function if you add new fields
 const modelDescriptionSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -21,11 +29,13 @@ const modelDescriptionSchema = z.object({
   description: z.string(),
   contextWindow: z.number().nullable(),
   maxCompletionTokens: z.number().optional(),
-  pricing: pricingSchema.optional(),
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
-  interfaces: z.array(z.enum([LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Complete, LLM_IF_OAI_Vision])),
+  interfaces: z.array(interfaceSchema),
+  benchmark: benchmarkSchema.optional(),
+  pricing: pricingSchema.optional(),
   hidden: z.boolean().optional(),
+  // TODO: add inputTypes/Kinds..
 });
 
 // this is also used by the Client

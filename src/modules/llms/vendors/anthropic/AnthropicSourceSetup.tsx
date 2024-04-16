@@ -11,7 +11,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
@@ -35,7 +35,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorAnthropic, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 
@@ -46,7 +46,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     </Alert>
 
     <FormInputKey
-      id='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
+      autoCompleteId='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
         : '✔️ already set in server'
@@ -58,6 +58,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     {advanced.on && <FormTextField
+      autoCompleteId='anthropic-host'
       title='API Host'
       description={<>e.g., <Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-aws-bedrock.md' target='_blank'>bedrock-claude</Link></>}
       placeholder='deployment.service.region.amazonaws.com'
@@ -67,6 +68,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     />}
 
     {advanced.on && <FormTextField
+      autoCompleteId='anthropic-helicone-key'
       title='Helicone Key' disabled={!!anthropicHost}
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'

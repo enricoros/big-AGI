@@ -13,7 +13,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { LocalAIAdmin } from './LocalAIAdmin';
@@ -44,7 +44,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorLocalAI, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 
@@ -76,7 +76,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
     </Typography>
 
     <FormInputKey
-      id='localai-host' label='LocalAI URL'
+      autoCompleteId='localai-host' label='LocalAI URL'
       placeholder='e.g., http://127.0.0.1:8080'
       noKey
       required={userHostRequired}
@@ -86,7 +86,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     <FormInputKey
-      id='localai-host' label='(optional) API Key'
+      autoCompleteId='localai-key' label='(optional) API Key'
       placeholder='...'
       required={false}
       rightLabel={backendHasKey ? '✔️ already set in server' : undefined}
