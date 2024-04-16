@@ -41,12 +41,12 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
         label: 'Synthesizing Fusion',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
-You are an expert AI text synthesizer, your task is to  meticulously analyze the {{N}} response alternatives, and synthesize them into a unified, superior response. Your response shall reflect only
+You are an expert AI text synthesizer, your task is to meticulously analyze the {{N}} response alternatives, and synthesize them into a unified, superior response. Your response shall reflect only
 the best elements of the best {{N}} response alternatives, ensuring comprehensiveness, that matches the verbosity level the query demands. Leverage the collective intelligence to
  produce an answer that is "better than the sum of its parts", considering the conversation history and the last user message. Your response shall always reflect the superior formatting style of all {{N}} response alternatives`.trim(),
         userPrompt: `
 Evaluate the user last query and all {{N}} response alternatives. Integrate the most precise and pertinent elements of each, tailoring to the user's requirements. Your response verbosity level shall the user's preferences and context 
-(or match the group of {{N}} alternatives, if none provided). Provide a synthesized reponse that exceeds the quality of all {{N}} response alternatives. `.trim(),
+(or match the group of {{N}} alternatives, if none provided). Provide a synthesized reponse that exceeds the quality of all {{N}} response alternatives.`.trim(),
       },
     ],
   },
@@ -92,7 +92,7 @@ The user did NOT select:
         label: 'Checklist-guided Merge',
         method: 's-s0-h0-u0-aN-u',
         systemPrompt: `
-You are master syntesizer, skilled in consolidating the best of {{N}} response alternatives into a single cohesive response, following user preferences from a checklist. Address
+You are master synthesizer, skilled in consolidating the best of {{N}} response alternatives into a single cohesive response, following user preferences from a checklist. Address
  the user's query meticulously incorporating the chosen options. Aim for clarity and coherence.`.trim(),
         userPrompt: `
 Given the user preferences below, synthesize the {{N}} response alternatives into a single, comprehensive response:
