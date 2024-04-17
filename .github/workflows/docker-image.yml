@@ -13,13 +13,6 @@ on:
   push:
     branches:
       - main
-      #- main-stable  # Disabled as the v* tag is used for stable releases
-    tags:
-      - 'v*'  # Trigger on version tags (e.g., v1.7.0)
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push-image:
@@ -37,28 +30,29 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        
+      - name: Log in to Docker Hub
+        uses: docker/login-action@master
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        uses: docker/metadata-action@master
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=development,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=stable,enable=${{ github.ref == 'refs/heads/main-stable' }}
-            type=ref,event=tag  # Use the tag name as a tag for tag builds
-            type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
-            type=sha # Just in case none of the above applies
+          images: lunamidori5/big-agi
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+      - name: Make Sha Tags (tags, labels) for Docker
+        id: sha
+        uses: docker/metadata-action@master
+        with:
+          images: lunamidori5/big-agi
+          tags: |
+            type=sha,enable=true,priority=100,prefix=sha-,suffix=,format=short
+
+      - name: Build and push Big-AGI (Main) Docker image
+        uses: docker/build-push-action@master
         with:
           context: .
           file: Dockerfile
@@ -66,4 +60,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
+
+      - name: Build and push Big-AGI (Sha) Docker image
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.sha.outputs.tags }}
+          labels: ${{ steps.sha.outputs.labels }}
