@@ -1,0 +1,21 @@
+name: Auto Sync with Master Repo
+
+on:
+  schedule:
+    - cron:   '0 10,14 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync_with_upstream:
+    runs-on: ubuntu-latest
+    name: Sync main with upstream latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Synce upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v2.1
+        with:
+          upstream_repository: enricoros/big-AGI
+          upstream_branch: main
+          target_branch: main
