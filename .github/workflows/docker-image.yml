@@ -49,7 +49,7 @@ jobs:
         with:
           images: lunamidori5/big-agi
           tags: |
-            type=sha,enable=true,priority=100,prefix=sha-,suffix=,format=short
+            type=sha,enable=true,priority=100,prefix=sha-,suffix=,format=long
 
       - name: Build and push Big-AGI (Main) Docker image
         uses: docker/build-push-action@master
