@@ -7,7 +7,7 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Create and publish Docker images
+name: Make Big AGI Docker Image
 
 on:
   push:
