@@ -51,15 +51,15 @@ export const MidoriAIItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '4.19.0',
-    versionName: 'Midori AI',
-    versionDate: new Date('2024-04-10T08:00:00Z'),
+    versionCode: 'Red Satinbird',
+    versionName: 'Big-AGI x Midori AI Subsystem',
+    versionDate: new Date('2024-04-18T08:00:00Z'),
     versionCoverImage: midoriaicoverV1,
     items: [
       { 
         text: (
           <>
-            Midori AI Subsystem: Introducing the Midori AI Docker Subsystem
+            Midori AI Subsystem: Big AGI meet Midori AI
           </>
         ),
         issue: 443, 
@@ -68,9 +68,11 @@ export const MidoriAIItems: NewsItem[] = [
       { 
         text: (
           <>
-            Experience seamless AI deployment and management with the Midori AI Docker Subsystem. 
-            This image of Big AGI includes a free remote 14b SD Carly model api key for testing, 
+            Witness the transformative power of Big AGI ~~BEAM~~ unfolding before your very eyes! 
+            Midori AI Docker Subsystem empowers you with an unparalleled level of seamless AI deployment and management. 
+            This image of Big AGI includes a free remote Carly Diffusion 2x7b Uncensored model api key for testing, 
             baked right into the system!
+            Embrace the future of innovation today!
           </>
         ),
         noBullet: true 
