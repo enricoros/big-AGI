@@ -82,8 +82,7 @@ export function AppNews() {
         </Typography>
 
         <Typography sx={{ mb: 2 }} level='title-sm'>
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode}
-          You are running Big-AGI in the Midori AI Subsystem! Thank you!
+          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {firstNews?.versionCode} - You are running Big-AGI in the Midori AI Subsystem! Thank you!
         </Typography>
 
         <Box sx={{ mb: 5 }}>

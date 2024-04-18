@@ -21,7 +21,6 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 // Cover Images
 // (not exactly) Imagine a futuristic, holographically bounded space. Inside this space, four capybaras stand. Three of them are in various stages of materialization, their forms made up of thousands of tiny, vibrant particles of electric blues, purples, and greens. These particles represent the merging of different intelligent inputs, symbolizing the concept of 'Beaming'. Positioned slightly towards the center and ahead of the others, the fourth capybara is fully materialized and composed of shimmering golden cotton candy, representing the optimal solution the 'Beam' feature seeks to achieve. The golden capybara gazes forward confidently, embodying a target achieved. Illuminated grid lines softly glow on the floor and walls of the setting, amplifying the futuristic aspect. In front of the golden capybara, floating, holographic interfaces depict complex networks of points and lines symbolizing the solution space 'Beaming' explores. The capybara interacts with these interfaces, implying the user's ability to control and navigate towards the best outcomes.
 import midoriaicoverV1 from '../../../public/images/covers/midori-ai-cover-1.png';
-import { beamBlogUrl } from './beam.data';
 
 
 interface NewsItem {
@@ -62,8 +61,6 @@ export const MidoriAIItems: NewsItem[] = [
             Midori AI Subsystem: Big AGI meet Midori AI
           </>
         ),
-        issue: 443, 
-        icon: ChatBeamIcon 
       },
       { 
         text: (
