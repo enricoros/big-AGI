@@ -19,3 +19,4 @@ jobs:
           upstream_repository: enricoros/big-AGI
           upstream_branch: main
           target_branch: main
+          git_pull_args: --ff-only
