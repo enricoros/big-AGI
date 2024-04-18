@@ -59,9 +59,7 @@ export const MidoriAIItems: NewsItem[] = [
       { 
         text: (
           <>
-            <B href={beamBlogUrl} wow>
-              Midori AI Subsystem: Introducing the Midori AI Docker Subsystem
-            </B>
+            Midori AI Subsystem: Introducing the Midori AI Docker Subsystem
           </>
         ),
         issue: 443, 
