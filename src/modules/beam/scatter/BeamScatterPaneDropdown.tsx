@@ -65,7 +65,7 @@ export function BeamScatterDropdown(props: {
 
   // external state
   const {
-    scatterPresets, addScatterPreset, deleteScatterPreset,
+    presets, addPreset, deletePreset,
     cardScrolling, toggleCardScrolling,
     scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
@@ -80,19 +80,13 @@ export function BeamScatterDropdown(props: {
   const handlePresetSave = React.useCallback((presetName: string) => {
     const { rays, currentGatherLlmId, currentFactoryId } = props.beamStore.getState();
     const rayLlmIds = rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[];
-    addScatterPreset(presetName, rayLlmIds, currentGatherLlmId, currentFactoryId);
+    addPreset(presetName, rayLlmIds, currentGatherLlmId, currentFactoryId);
     handleClosePresetNaming();
-  }, [addScatterPreset, handleClosePresetNaming, props.beamStore]);
+  }, [addPreset, handleClosePresetNaming, props.beamStore]);
 
   const handlePresetLoad = React.useCallback((presetId: string) => {
-    const { scatterPresets } = useModuleBeamStore.getState();
-    const preset = scatterPresets.find(preset => preset.id === presetId);
-    if (preset && preset.rayLlmIds?.length) {
-      const { setRayLlmIds, setCurrentGatherLlmId, setCurrentFactoryId } = props.beamStore.getState();
-      setRayLlmIds(preset.rayLlmIds);
-      preset.gatherLlmId && setCurrentGatherLlmId(preset.gatherLlmId);
-      preset.gatherFactoryId && setCurrentFactoryId(preset.gatherFactoryId);
-    }
+    const preset = useModuleBeamStore.getState().presets.find(preset => preset.id === presetId);
+    preset && props.beamStore.getState().loadBeamConfig(preset);
   }, [props.beamStore]);
 
 
@@ -122,7 +116,7 @@ export function BeamScatterDropdown(props: {
         </MenuItem>
 
         {/* Load any preset */}
-        {scatterPresets.map(preset =>
+        {presets.map(preset =>
           <MenuItem key={preset.id}>
             <ListItemDecorator />
             <Typography onClick={() => handlePresetLoad(preset.id)}>
@@ -133,7 +127,7 @@ export function BeamScatterDropdown(props: {
               variant='outlined'
               onClick={(event) => {
                 event.stopPropagation();
-                deleteScatterPreset(preset.id);
+                deletePreset(preset.id);
               }}
               sx={{ ml: 'auto' }}
             >

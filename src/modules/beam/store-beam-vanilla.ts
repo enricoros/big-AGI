@@ -4,6 +4,7 @@ import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
+import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
 import { SCATTER_RAY_DEF } from './beam.config';
 import { createGatherSlice, GatherStoreSlice, reInitGatherStateSlice } from './gather/beam.gather';
 import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from './scatter/beam.scatter';
@@ -54,6 +55,7 @@ export interface RootStoreSlice extends RootStateSlice {
   // lifecycle
   open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
   terminateKeepingSettings: () => void;
+  loadBeamConfig: (preset: BeamConfigSnapshot | null) => void;
 
   setIsMaximized: (maximized: boolean) => void;
   editInputHistoryMessage: (messageId: string, newText: string) => void;
@@ -68,7 +70,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
 
   open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
-    const { isOpen: wasAlreadyOpen, terminateKeepingSettings, setRayLlmIds } = _get();
+    const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, setRayLlmIds, setCurrentGatherLlmId } = _get();
 
     // reset pending operations
     terminateKeepingSettings();
@@ -94,15 +96,20 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       } satisfies Partial<GatherStoreSlice>),
     });
 
-    // initialize rays
-    const hasNoRays = _get().rays.length === 0;
-    if (hasNoRays) {
-      // TODO: apply the lastPreset if available
+    // if not empty (recycle an existing open beam for this chat), we're done
+    if (_get().rays.length)
+      return;
 
-      // Heuristic: auto-pick the best models for the user, based on their ELO and variety
-      const autoLlmIds = getDiverseTopLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId);
-      if (autoLlmIds.length > 0)
-        setRayLlmIds(autoLlmIds);
+    // if empty, initialize from the persisted config, if any
+    loadBeamConfig(useModuleBeamStore.getState().lastConfig);
+    if (_get().rays.length)
+      return;
+
+    // it no config (first-time): Heuristic: auto-pick the best models for the user, based on their ELO and variety
+    const autoLlmIds = getDiverseTopLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId);
+    if (autoLlmIds.length > 0) {
+      setRayLlmIds(autoLlmIds);
+      setCurrentGatherLlmId(autoLlmIds[0]);
     }
   },
 
@@ -112,6 +119,16 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       ...reInitScatterStateSlice(state.rays),
       ...reInitGatherStateSlice(state.fusions, state.currentGatherLlmId),  // remember after termination
     })),
+
+
+  loadBeamConfig: (preset: BeamConfigSnapshot | null) => {
+    if (preset) {
+      const { setRayLlmIds, setCurrentGatherLlmId, setCurrentFactoryId } = _get();
+      preset.rayLlmIds?.length && setRayLlmIds(preset.rayLlmIds);
+      preset.gatherLlmId && setCurrentGatherLlmId(preset.gatherLlmId);
+      preset.gatherFactoryId && setCurrentFactoryId(preset.gatherFactoryId);
+    }
+  },
 
 
   setIsMaximized: (maximized: boolean) =>

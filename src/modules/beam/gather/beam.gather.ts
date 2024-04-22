@@ -11,6 +11,7 @@ import { GATHER_PLACEHOLDER } from '../beam.config';
 import { RootStoreSlice } from '../store-beam-vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
+import { updateBeamLastConfig } from '../store-module-beam';
 
 
 /// Gather Store > BFusion ///
@@ -144,15 +145,19 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
   ...reInitGatherStateSlice([], null),
 
 
-  setCurrentFactoryId: (factoryId: FFactoryId | null) =>
+  setCurrentFactoryId: (factoryId: FFactoryId | null) => {
     _set({
       currentFactoryId: factoryId,
-    }),
+    });
+    updateBeamLastConfig({ gatherFactoryId: factoryId });
+  },
 
-  setCurrentGatherLlmId: (llmId: DLLMId | null) =>
+  setCurrentGatherLlmId: (llmId: DLLMId | null) => {
     _set({
       currentGatherLlmId: llmId,
-    }),
+    });
+    updateBeamLastConfig({ gatherLlmId: llmId });
+  },
 
 
   _fusionUpdate: (fusionId: BFusionId, update: FusionUpdateOrFn) => {

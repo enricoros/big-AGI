@@ -8,28 +8,30 @@ import type { FFactoryId } from './gather/instructions/beam.gather.factories';
 
 /// Presets (persistes as zustand store) ///
 
-interface BeamScatterPreset {
+export interface BeamConfigSnapshot {
   id: string;
   name: string;
   rayLlmIds: DLLMId[];
-  // added post v1, some presets may not have this
-  gatherLlmId?: DLLMId;
-  gatherFactoryId?: FFactoryId;
+  gatherFactoryId?: FFactoryId | null;  // added post launch
+  gatherLlmId?: DLLMId | null;          // added post launch
 }
 
 
-interface ModuleBeamStore {
-  // state
-  scatterPresets: BeamScatterPreset[];
+interface ModuleBeamState {
+  presets: BeamConfigSnapshot[];
+  lastConfig: BeamConfigSnapshot | null;
   cardScrolling: boolean;
   scatterShowLettering: boolean;
   scatterShowPrevMessages: boolean;
   gatherShowAllPrompts: boolean;
+}
 
-  // actions
-  addScatterPreset: (name: string, rayLlmIds: DLLMId[], gatherLlmId: DLLMId | null, gatherFactoryId: FFactoryId | null) => void;
-  deleteScatterPreset: (id: string) => void;
-  renameScatterPreset: (id: string, name: string) => void;
+interface ModuleBeamStore extends ModuleBeamState {
+  addPreset: (name: string, rayLlmIds: DLLMId[], gatherLlmId: DLLMId | null, gatherFactoryId: FFactoryId | null) => void;
+  deletePreset: (id: string) => void;
+  renamePreset: (id: string, name: string) => void;
+
+  updateLastConfig: (update: Partial<BeamConfigSnapshot>) => void;
 
   toggleCardScrolling: () => void;
   toggleScatterShowLettering: () => void;
@@ -41,15 +43,16 @@ interface ModuleBeamStore {
 export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
   (_set, _get) => ({
 
-    scatterPresets: [],
+    presets: [],
+    lastConfig: null,
     cardScrolling: false,
     scatterShowLettering: false,
     scatterShowPrevMessages: false,
     gatherShowAllPrompts: false,
 
 
-    addScatterPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
-      scatterPresets: [...state.scatterPresets, {
+    addPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
+      presets: [...state.presets, {
         id: uuidv4(),
         name,
         rayLlmIds,
@@ -58,12 +61,19 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
       }],
     })),
 
-    deleteScatterPreset: (id) => _set(state => ({
-      scatterPresets: state.scatterPresets.filter(preset => preset.id !== id),
+    deletePreset: (id) => _set(state => ({
+      presets: state.presets.filter(preset => preset.id !== id),
     })),
 
-    renameScatterPreset: (id, name) => _set(state => ({
-      scatterPresets: state.scatterPresets.map(preset => preset.id === id ? { ...preset, name } : preset),
+    renamePreset: (id, name) => _set(state => ({
+      presets: state.presets.map(preset => preset.id === id ? { ...preset, name } : preset),
+    })),
+
+
+    updateLastConfig: (update) => _set(({ lastConfig }) => ({
+      lastConfig: !lastConfig
+        ? { id: 'current', name: '', rayLlmIds: [], ...update }
+        : { ...lastConfig, ...update },
     })),
 
 
@@ -77,6 +87,14 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
   }), {
     name: 'app-module-beam',
+    version: 1,
+
+    migrate: (state: any, fromVersion: number): ModuleBeamState => {
+      // 0 -> 1: rename 'scatterPresets' to 'presets'
+      if (state && fromVersion === 0 && !state.presets)
+        return { ...state, presets: state.scatterPresets || [] };
+      return state;
+    },
   },
 ));
 
@@ -91,4 +109,8 @@ export function useBeamCardScrolling() {
 
 export function useBeamScatterShowLettering() {
   return useModuleBeamStore((state) => state.scatterShowLettering);
+}
+
+export function updateBeamLastConfig(update: Partial<BeamConfigSnapshot>) {
+  useModuleBeamStore.getState().updateLastConfig(update);
 }
