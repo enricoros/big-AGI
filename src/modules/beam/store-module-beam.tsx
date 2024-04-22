@@ -32,6 +32,7 @@ interface ModuleBeamStore extends ModuleBeamState {
   renamePreset: (id: string, name: string) => void;
 
   updateLastConfig: (update: Partial<BeamConfigSnapshot>) => void;
+  deleteLastConfig: () => void;
 
   toggleCardScrolling: () => void;
   toggleScatterShowLettering: () => void;
@@ -75,6 +76,8 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
         ? { id: 'current', name: '', rayLlmIds: [], ...update }
         : { ...lastConfig, ...update },
     })),
+
+    deleteLastConfig: () => _set({ lastConfig: null }),
 
 
     toggleCardScrolling: () => _set(state => ({ cardScrolling: !state.cardScrolling })),

@@ -89,6 +89,12 @@ export function BeamScatterDropdown(props: {
     preset && props.beamStore.getState().loadBeamConfig(preset);
   }, [props.beamStore]);
 
+  // NOTE: DEVS only - DEBUG only
+  const handleClearLastConfig = React.useCallback(() => {
+    // this is used to debug the heuristics for model selection
+    useModuleBeamStore.getState().deleteLastConfig();
+  }, []);
+
 
   return <>
 
