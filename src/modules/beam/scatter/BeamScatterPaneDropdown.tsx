@@ -123,9 +123,9 @@ export function BeamScatterDropdown(props: {
 
         {/* Load any preset */}
         {presets.map(preset =>
-          <MenuItem key={preset.id}>
+          <MenuItem key={preset.id} onClick={() => handlePresetLoad(preset.id)}>
             <ListItemDecorator />
-            <Typography onClick={() => handlePresetLoad(preset.id)}>
+            <Typography>
               Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.rayLlmIds?.length}</span>
             </Typography>
             <IconButton
@@ -163,7 +163,7 @@ export function BeamScatterDropdown(props: {
           Response Numbers
         </MenuItem>
 
-        <ListItem>
+        <ListItem onClick={() => handleClearLastConfig()}>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
 
