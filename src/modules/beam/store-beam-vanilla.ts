@@ -42,7 +42,6 @@ const initRootStateSlice = (): RootStateSlice => ({
 
   isOpen: false,
   isMaximized: false,
-  fallbackLlmId: null,
   inputHistory: null,
   inputIssues: null,
   inputReady: false,
@@ -68,7 +67,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, fallbackLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
     const { isOpen: wasAlreadyOpen, terminateKeepingSettings, setRayLlmIds } = _get();
 
     // reset pending operations
@@ -82,7 +81,6 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       // input
       isOpen: true,
-      fallbackLlmId: fallbackLlmId,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid history',
       inputReady: isValidHistory,
@@ -91,8 +89,8 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // rays already reset
 
       // update the model only if the dialog was not already open
-      ...(!wasAlreadyOpen && fallbackLlmId && {
-        currentGatherLlmId: fallbackLlmId,
+      ...(!wasAlreadyOpen && initialChatLlmId && {
+        currentGatherLlmId: initialChatLlmId,
       } satisfies Partial<GatherStoreSlice>),
     });
   },

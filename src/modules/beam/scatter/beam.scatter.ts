@@ -178,7 +178,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
 
   setRayCount: (count: number) => {
-    const { rays, fallbackLlmId, _syncRaysStateToScatter } = _get();
+    const { rays, _syncRaysStateToScatter } = _get();
     if (count < rays.length) {
       // Terminate exceeding rays
       rays.slice(count).forEach(rayScatterStop);
@@ -189,7 +189,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       _set({
         rays: [...rays, ...Array(count - rays.length).fill(null)
           // Create missing rays, copying the llmId of the former Ray, or using the fallback
-          .map(() => createBRay(rays[rays.length - 1]?.rayLlmId || fallbackLlmId)),
+          .map(() => createBRay(rays[rays.length - 1]?.rayLlmId || null)),
         ],
       });
     }
