@@ -52,7 +52,7 @@ export function AppBeam() {
 
 
   const handleClose = React.useCallback(() => {
-    beamStoreApi.getState().terminate();
+    beamStoreApi.getState().terminateKeepingSettings();
   }, [beamStoreApi]);
 
 
