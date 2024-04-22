@@ -354,14 +354,11 @@ export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallback
     for (const group of groupedLlms) {
       if (groupLevel < group.llmsByElo.length) {
         const llmEntry = group.llmsByElo[groupLevel];
-        if (requireElo && llmEntry.cbaElo === undefined) continue;
-        const llmId = llmEntry.id;
-        const llm = llms.find(llm => llm.id === llmId);
-        if (llm) {
-          llmIDs.push(llmId);
-          added = true;
-          if (llmIDs.length === count) break; // fast exit
-        }
+        if (!llmEntry.id || (requireElo && llmEntry.cbaElo === undefined))
+          continue;
+        llmIDs.push(llmEntry.id);
+        added = true;
+        if (llmIDs.length === count) break; // fast exit
       }
     }
 
