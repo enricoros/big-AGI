@@ -104,21 +104,19 @@ export function BeamGatherPane(props: {
     >
 
       {/* Title */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
-        <div>
-          <Typography
-            level='h4' component='h2'
-            // endDecorator={<BeamGatherDropdown />}
-            // sx={{ my: 0.25 }}
-          >
-            <MainLlmIcon sx={{ fontSize: '1rem', animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
-          </Typography>
-          <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
-            {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
-            {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ ''}
-          </Typography>
-        </div>
-        <ScrollToBottomButton inline />
+      <Box>
+        <Typography
+          level='h4' component='h2'
+          endDecorator={<ScrollToBottomButton inline />}
+          // sx={{ my: 0.25 }}
+        >
+          {isGatheringAny && <MainLlmIcon sx={{ fontSize: '1rem', mr: 0.625, animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />}
+          Merge
+        </Typography>
+        <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
+          {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
+          {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ ''}
+        </Typography>
       </Box>
 
       {/* Method */}
