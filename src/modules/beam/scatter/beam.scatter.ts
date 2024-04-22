@@ -158,7 +158,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   // ray actions
   setRayCount: (count: number) => void;
   removeRay: (rayId: BRayId) => void;
-  importRays: (messages: DMessage[]) => void;
+  importRays: (messages: DMessage[], raysLlmId: DLLMId | null) => void;
   setRayLlmIds: (rayLlmIds: DLLMId[]) => void;
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
@@ -208,27 +208,31 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     _get()._syncRaysStateToScatter();
   },
 
-  importRays: (messages: DMessage[]) => {
-    _set(state => ({
-      rays: [
-        // prepend the imported rays
-        ...messages.map((message) => {
-            // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
-            const ray = createBRay(/*null ||*/ state.inputChatLlmId);
-            // pre-fill the ray status with the message and to a successful state
-            if (message.text.trim()) {
-              ray.status = 'success';
-              ray.message.text = message.text;
-              ray.message.updated = Date.now();
-              ray.imported = true;
-            }
-            return ray;
-          },
-        ),
-        // trim the back if too many empties
-        ...state.rays.filter((ray) => ray.status !== 'empty'),
-      ],
-    }));
+  importRays: (messages: DMessage[], raysLlmId: DLLMId | null) => {
+    _set(({ rays }) => {
+      // remove the empty rays that will be replaced by the imported messages
+      const raysToRemove = rays.filter((ray) => ray.status === 'empty' && ray.rayLlmId === raysLlmId).slice(0, messages.length);
+      return {
+        rays: [
+          // prepend the imported rays
+          ...messages.map((message) => {
+              // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
+              const ray = createBRay(raysLlmId);
+              // pre-fill the ray status with the message and to a successful state
+              if (message.text.trim()) {
+                ray.status = 'success';
+                ray.message.text = message.text;
+                ray.message.updated = Date.now();
+                ray.imported = true;
+              }
+              return ray;
+            },
+          ),
+          // append the other rays (excluding the ones to remove)
+          ...rays.filter((ray) => !raysToRemove.includes(ray)),
+        ],
+      };
+    });
     _get()._syncRaysStateToScatter();
   },
 

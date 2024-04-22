@@ -122,7 +122,7 @@ export class ConversationHandler {
     };
 
     beamOpen(viewHistory, useModelsStore.getState().chatLLMId, onBeamSuccess);
-    importMessages.length && beamImportRays(importMessages);
+    importMessages.length && beamImportRays(importMessages, useModelsStore.getState().chatLLMId);
   }
 
 
