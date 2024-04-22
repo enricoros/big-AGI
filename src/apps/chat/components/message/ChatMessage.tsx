@@ -295,12 +295,17 @@ export function ChatMessage(props: {
 
   const { onMessageToggleUserFlag } = props;
 
-  const closeOpsMenu = () => setOpsMenuAnchor(null);
+  const handleOpsMenuToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    setOpsMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  }, []);
+
+  const handleCloseOpsMenu = React.useCallback(() => setOpsMenuAnchor(null), []);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
     copyToClipboard(textSel, 'Text');
     e.preventDefault();
-    closeOpsMenu();
+    handleCloseOpsMenu();
     closeSelectionMenu();
     closeToolbar();
   };
@@ -309,8 +314,8 @@ export function ChatMessage(props: {
     if (messageTyping && !isEditing) return; // don't allow editing while typing
     setIsEditing(!isEditing);
     e.preventDefault();
-    closeOpsMenu();
-  }, [isEditing, messageTyping]);
+    handleCloseOpsMenu();
+  }, [handleCloseOpsMenu, isEditing, messageTyping]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, 'starred');
@@ -318,13 +323,13 @@ export function ChatMessage(props: {
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
-    closeOpsMenu();
+    handleCloseOpsMenu();
     await props.onMessageAssistantFrom?.(messageId, fromAssistant ? -1 : 0);
   };
 
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    closeOpsMenu();
+    handleCloseOpsMenu();
     await props.onMessageBeam?.(messageId);
   };
 
@@ -332,7 +337,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     e.stopPropagation(); // to try to not steal the focus from the banched conversation
     props.onMessageBranch?.(messageId);
-    closeOpsMenu();
+    handleCloseOpsMenu();
   };
 
   const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
@@ -341,7 +346,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextDiagram) {
       await props.onTextDiagram(messageId, textSel);
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -351,7 +356,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextImagine) {
       await props.onTextImagine(textSel);
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -361,7 +366,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onReplyTo && textSel.trim().length >= SELECTION_TOOLBAR_MIN_LENGTH) {
       props.onReplyTo(messageId, textSel.trim());
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -371,7 +376,7 @@ export function ChatMessage(props: {
     e.preventDefault();
     if (props.onTextSpeak) {
       await props.onTextSpeak(textSel);
-      closeOpsMenu();
+      handleCloseOpsMenu();
       closeSelectionMenu();
       closeToolbar();
     }
@@ -379,7 +384,7 @@ export function ChatMessage(props: {
 
   const handleOpsTruncate = (_e: React.MouseEvent) => {
     props.onMessageTruncate?.(messageId);
-    closeOpsMenu();
+    handleCloseOpsMenu();
   };
 
   const handleOpsDelete = (_e: React.MouseEvent) => {
@@ -574,7 +579,8 @@ export function ChatMessage(props: {
 
           {/* Persona Avatar or Menu Button */}
           <Box
-            onClick={event => setOpsMenuAnchor(event.currentTarget)}
+            onClick={handleOpsMenuToggle}
+            onContextMenu={handleOpsMenuToggle}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             sx={{ display: 'flex' }}
@@ -654,7 +660,7 @@ export function ChatMessage(props: {
       {!!opsMenuAnchor && (
         <CloseableMenu
           dense placement='bottom-end'
-          open anchorEl={opsMenuAnchor} onClose={closeOpsMenu}
+          open anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
           sx={{ minWidth: 280 }}
         >
 
