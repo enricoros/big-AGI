@@ -1,11 +1,12 @@
 import { createStore, StateCreator } from 'zustand/vanilla';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
+import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/state/store-chats';
 
-import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from './scatter/beam.scatter';
+import { SCATTER_RAY_DEF } from './beam.config';
 import { createGatherSlice, GatherStoreSlice, reInitGatherStateSlice } from './gather/beam.gather';
+import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from './scatter/beam.scatter';
 
 
 /// Beam Store (vanilla, creator function) ///
@@ -30,7 +31,6 @@ interface RootStateSlice {
 
   isOpen: boolean;
   isMaximized: boolean;
-  fallbackLlmId: DLLMId | null;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
   inputReady: boolean;
@@ -93,6 +93,17 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
         currentGatherLlmId: initialChatLlmId,
       } satisfies Partial<GatherStoreSlice>),
     });
+
+    // initialize rays
+    const hasNoRays = _get().rays.length === 0;
+    if (hasNoRays) {
+      // TODO: apply the lastPreset if available
+
+      // Heuristic: auto-pick the best models for the user, based on their ELO and variety
+      const autoLlmIds = getDiverseTopLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId);
+      if (autoLlmIds.length > 0)
+        setRayLlmIds(autoLlmIds);
+    }
   },
 
   terminateKeepingSettings: () =>
