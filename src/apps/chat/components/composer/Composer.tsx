@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 import { useShallow } from 'zustand/react/shallow';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
@@ -118,11 +117,10 @@ export function Composer(props: {
 
   // external state
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
-  const { labsAttachScreenCapture, labsBeam, labsCameraDesktop } = useUXLabsStore(state => ({
+  const { labsAttachScreenCapture, labsCameraDesktop } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
-    labsBeam: state.labsBeam,
     labsCameraDesktop: state.labsCameraDesktop,
-  }), shallow);
+  })));
   const timeToShowTips = useAppStateStore(state => state.usageCount > 2);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
   const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
@@ -130,7 +128,7 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(state => {
+  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       assistantAbortible: conversation ? !!conversation.abortController : false,
@@ -138,7 +136,7 @@ export function Composer(props: {
       tokenCount: conversation ? conversation.tokenCount : 0,
       stopTyping: state.stopTyping,
     };
-  }, shallow);
+  }));
   const { inComposer: browsingInComposer } = useBrowseCapability();
   const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
     useAttachments(browsingInComposer && !composeText.startsWith('/'));
@@ -213,8 +211,8 @@ export function Composer(props: {
   }, [chatModeId, composeText, handleSendAction]);
 
   const handleSendTextBeamClicked = React.useCallback(() => {
-    labsBeam && handleSendAction('generate-text-beam', composeText);
-  }, [composeText, handleSendAction, labsBeam]);
+    handleSendAction('generate-text-beam', composeText);
+  }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
     !!props.conversationId && stopTyping(props.conversationId);
@@ -333,7 +331,7 @@ export function Composer(props: {
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
-      if (labsBeam && ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey))) {
+      if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
         touchCtrlEnter();
         handleSendAction('generate-text-beam', composeText);
         return e.preventDefault();
@@ -349,7 +347,7 @@ export function Composer(props: {
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction, labsBeam, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -557,7 +555,7 @@ export function Composer(props: {
       textPlaceholder += !enterIsNewline ? '\n\n💡 Shift + Enter to add a new line' : '\n\n💡 Shift + Enter to send';
     else if (explainAltEnter)
       textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Alt + Enter to just append the message');
-    else if (labsBeam && explainCtrlEnter)
+    else if (explainCtrlEnter)
       textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Ctrl + Enter to beam');
   }
 
@@ -838,7 +836,7 @@ export function Composer(props: {
               </ButtonGroup>
 
               {/* [desktop] secondary-top buttons */}
-              {labsBeam && isDesktop && showChatExtras && !assistantAbortible && (
+              {isDesktop && showChatExtras && !assistantAbortible && (
                 <ButtonBeamMemo
                   disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
                   hasContent={!!composeText}

@@ -6,7 +6,6 @@ import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TitleIcon from '@mui/icons-material/Title';
 
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
@@ -24,7 +23,6 @@ export function UxLabsSettings() {
   const isMobile = useIsMobile();
   const {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
-    labsBeam, setLabsBeam,
     labsCameraDesktop, setLabsCameraDesktop,
     labsChatBarAlt, setLabsChatBarAlt,
     labsHighPerformance, setLabsHighPerformance,
@@ -33,11 +31,6 @@ export function UxLabsSettings() {
   return <>
 
     {/* 'v1.15 · ' + .. */}
-
-    <FormSwitchControl
-      title={<><ChatBeamIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Chat Beam</>} description={labsBeam ? 'Active' : 'Off'}
-      checked={labsBeam} onChange={setLabsBeam}
-    />
 
     <FormSwitchControl
       title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Performance</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
@@ -59,15 +52,22 @@ export function UxLabsSettings() {
       checked={labsCameraDesktop} onChange={setLabsCameraDesktop}
     />}
 
+    {/*
+      Other Graduated (removed or backlog):
+        - <Link href='https://github.com/enricoros/big-AGI/issues/359' target='_blank'>Draw App</Link>
+        - Text Tools: dinamically shown where applicable (e.g. Diff)
+        - Chat Mode: follow-ups; moved to Chat Advanced UI
+    */}
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Graduated' description='Ex-labs' />
       <Typography level='body-xs'>
-        <Link href='https://github.com/enricoros/big-AGI/issues/208' target='_blank'>Split Chats</Link>
-        {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/359' target='_blank'>Draw App</Link>
+        <Link href='https://big-agi.com/blog/beam-multi-model-ai-reasoning' target='_blank'>Beam</Link>
+        {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/208' target='_blank'>Split Chats</Link>
         {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/354' target='_blank'>Call AGI</Link>
         {' · '}<Link href='https://github.com/enricoros/big-AGI/issues/282' target='_blank'>Persona Creator</Link>
         {' · '}<Link href='https://github.com/enricoros/big-agi/issues/192' target='_blank'>Auto Diagrams</Link>
-        {' · '}Imagine · Relative chat size · Text Tools · LLM Overheat
+        {' · '}Imagine · Chat Search · Text Tools · LLM Overheat
       </Typography>
     </FormControl>
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
@@ -39,7 +39,6 @@ import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -249,13 +248,12 @@ export function ChatMessage(props: {
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
-  const labsBeam = useUXLabsStore(state => state.labsBeam);
-  const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(state => ({
+  const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
     showAvatar: props.showAvatar !== undefined ? props.showAvatar : state.zenMode !== 'cleaner',
     contentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
     doubleClickToEdit: state.doubleClickToEdit,
     renderMarkdown: state.renderMarkdown,
-  }), shallow);
+  })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
   const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
 
@@ -327,7 +325,7 @@ export function ChatMessage(props: {
   const handleOpsBeamFrom = async (e: React.MouseEvent) => {
     e.stopPropagation();
     closeOpsMenu();
-    labsBeam && await props.onMessageBeam?.(messageId);
+    await props.onMessageBeam?.(messageId);
   };
 
   const handleOpsBranch = (e: React.MouseEvent) => {
@@ -759,7 +757,7 @@ export function ChatMessage(props: {
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
             </MenuItem>
           )}
-          {!!props.onMessageBeam && labsBeam && (
+          {!!props.onMessageBeam && (
             <MenuItem disabled={fromSystem} onClick={handleOpsBeamFrom}>
               <ListItemDecorator>
                 <ChatBeamIcon color={fromSystem ? undefined : 'primary'} />
