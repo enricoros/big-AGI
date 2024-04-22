@@ -14,7 +14,6 @@ import { InlineError } from '~/common/components/InlineError';
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
-import { RenderLatex } from './RenderLatex';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderChatText } from './RenderChatText';
 import { RenderTextDiff } from './RenderTextDiff';
@@ -210,13 +209,11 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
                 ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
-                  : block.type === 'latex'
-                    ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={scaledTypographySx} />
-                    : block.type === 'diff'
-                      ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={scaledTypographySx} />
-                      : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                        ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                        : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+                  : block.type === 'diff'
+                    ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
+                    : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
+                      ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
+                      : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
           })
 
       )}

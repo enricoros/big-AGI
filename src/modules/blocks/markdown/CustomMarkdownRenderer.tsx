@@ -2,7 +2,9 @@ import * as React from 'react';
 
 import { CSVLink } from 'react-csv';
 import { default as ReactMarkdown } from 'react-markdown';
+import { default as rehypeKatex } from 'rehype-katex';
 import { default as remarkGfm } from 'remark-gfm';
+import { default as remarkMath } from 'remark-math';
 
 import { Button } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -98,16 +100,33 @@ const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
 const reactMarkdownComponents = {
   a: LinkRenderer, // override the link renderer to add target="_blank"
   table: TableRenderer, // override the table renderer to show the download CSV links
+  // math/inlineMath components are not needed, rehype-katex handles this automatically
 };
 
 
-// Custom plugins: GFM (GitHub Flavored Markdown)
+/*
+ * Convert OpenAI-style markdown with LaTeX to 'remark-math' compatible format.
+ * Note that inline or block will both be converted to $$...$$ format, and we
+ * disable on purpose the single dollar sign for inline math, as it can clash
+ * with other markdown syntax.
+ */
+const preprocessMarkdown = (markdownText: string) => markdownText
+  .replace(/\s\\\((.*?)\\\)/gs, (_match, p1) => ` $$${p1}$$`) // Replace inline LaTeX delimiters \( and \) with $$
+  .replace(/\s\\\[(.*?)\\]/gs, (_match, p1) => ` $$${p1}$$`); // Replace block LaTeX delimiters \[ and \] with $$
 
-const remarkPlugins = [
-  remarkGfm,
-];
-
-
-export default function CustomMarkdownRenderer(props: any) {
-  return <ReactMarkdown components={reactMarkdownComponents} remarkPlugins={remarkPlugins} {...props} />;
+export default function CustomMarkdownRenderer(props: { content: string }) {
+  return (
+    <ReactMarkdown
+      components={reactMarkdownComponents as any}
+      remarkPlugins={[
+        remarkGfm, // GitHub Flavored Markdown
+        [remarkMath, { singleDollarTextMath: false }], // Math
+      ]}
+      rehypePlugins={[
+        rehypeKatex, // KaTeX
+      ]}
+    >
+      {preprocessMarkdown(props.content)}
+    </ReactMarkdown>
+  );
 }
