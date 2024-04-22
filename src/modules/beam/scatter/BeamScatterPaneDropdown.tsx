@@ -169,7 +169,7 @@ export function BeamScatterDropdown(props: {
 
         <MenuItem onClick={toggleGatherShowPrompts}>
           <ListItemDecorator>{gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
-          Detailed Custom Merges
+          Detailed Custom Merge
         </MenuItem>
 
         <ListDivider inset='gutter' />
