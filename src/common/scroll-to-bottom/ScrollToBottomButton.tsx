@@ -11,6 +11,9 @@ const inlineButtonSx: SxProps = {
   // style it
   // NOTE: just an IconButton when inline
 
+  // for usage inside BeamGatherPane, to not enlarge the row
+  my: -0.25,
+
   // fade it in when hovering
   // transition: 'all 0.15s',
   // '&:hover': {
@@ -57,6 +60,7 @@ export function ScrollToBottomButton(props: { inline?: boolean }) {
       aria-label='Scroll To Bottom'
       variant='plain'
       onClick={handleStickToBottom}
+      size={props.inline ? 'sm' : undefined}
       sx={props.inline ? inlineButtonSx : absoluteButtonSx}
     >
       <KeyboardDoubleArrowDownIcon sx={{ fontSize: 'xl' }} />
