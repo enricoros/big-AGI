@@ -4,7 +4,7 @@ import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLab
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRenameOutlineRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
@@ -105,7 +105,7 @@ export function BeamScatterDropdown(props: {
         slots={{ root: IconButton }}
         slotProps={{ root: { size: 'sm', sx: { my: -0.25 } } }}
       >
-        <MoreVertRoundedIcon />
+        <MoreVertIcon />
       </MenuButton>
 
       <Menu placement='right-end' sx={{ minWidth: 200, zIndex: 'var(--joy-zIndex-modal)' /* on top of its own modal in FS */ }}>
