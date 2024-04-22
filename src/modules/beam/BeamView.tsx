@@ -15,7 +15,6 @@ import { BeamRayGrid } from './scatter/BeamRayGrid';
 import { BeamScatterInput } from './scatter/BeamScatterInput';
 import { BeamScatterPane } from './scatter/BeamScatterPane';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
-import { SCATTER_RAY_DEF } from './beam.config';
 
 
 export function BeamView(props: {
@@ -90,10 +89,10 @@ export function BeamView(props: {
   // runnning
 
   // [effect] pre-populate a default number of rays
-  const bootup = raysCount < SCATTER_RAY_DEF;
-  React.useEffect(() => {
-    bootup && handleRaySetCount(SCATTER_RAY_DEF);
-  }, [bootup, handleRaySetCount]);
+  // const bootup = raysCount < SCATTER_RAY_DEF;
+  // React.useEffect(() => {
+  //   bootup && handleRaySetCount(SCATTER_RAY_DEF);
+  // }, [bootup, handleRaySetCount]);
 
 
   // Explainer, if unseen
