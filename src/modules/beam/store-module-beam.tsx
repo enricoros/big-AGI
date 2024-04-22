@@ -24,7 +24,7 @@ interface ModuleBeamStore {
   cardScrolling: boolean;
   scatterShowLettering: boolean;
   scatterShowPrevMessages: boolean;
-  gatherShowPrompts: boolean;
+  gatherShowAllPrompts: boolean;
 
   // actions
   addScatterPreset: (name: string, rayLlmIds: DLLMId[], gatherLlmId: DLLMId | null, gatherFactoryId: FFactoryId | null) => void;
@@ -34,7 +34,7 @@ interface ModuleBeamStore {
   toggleCardScrolling: () => void;
   toggleScatterShowLettering: () => void;
   toggleScatterShowPrevMessages: () => void;
-  toggleGatherShowPrompts: () => void;
+  toggleGatherShowAllPrompts: () => void;
 }
 
 
@@ -45,7 +45,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     cardScrolling: false,
     scatterShowLettering: false,
     scatterShowPrevMessages: false,
-    gatherShowPrompts: false,
+    gatherShowAllPrompts: false,
 
 
     addScatterPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
@@ -73,7 +73,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     toggleScatterShowPrevMessages: () => _set(state => ({ scatterShowPrevMessages: !state.scatterShowPrevMessages })),
 
-    toggleGatherShowPrompts: () => _set(state => ({ gatherShowPrompts: !state.gatherShowPrompts })),
+    toggleGatherShowAllPrompts: () => _set(state => ({ gatherShowAllPrompts: !state.gatherShowAllPrompts })),
 
   }), {
     name: 'app-module-beam',

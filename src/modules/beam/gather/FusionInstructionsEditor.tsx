@@ -88,7 +88,7 @@ function EditableInstruction(props: {
 }) {
 
   // external state
-  const gatherShowPrompts = useModuleBeamStore(state => state.gatherShowPrompts);
+  const gatherShowAllPrompts = useModuleBeamStore(state => state.gatherShowAllPrompts);
 
   // derived state
   const { instruction, instructionIndex, onInstructionEdit } = props;
@@ -101,7 +101,7 @@ function EditableInstruction(props: {
 
   return (instruction.type === 'chat-generate') ? (
     <>
-      {gatherShowPrompts && (
+      {gatherShowAllPrompts && (
         <EditableChatInstructionPrompt
           isEditable={props.isEditable}
           itemKey='systemPrompt'

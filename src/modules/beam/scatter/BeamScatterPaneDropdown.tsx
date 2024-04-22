@@ -69,7 +69,7 @@ export function BeamScatterDropdown(props: {
     cardScrolling, toggleCardScrolling,
     scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
-    gatherShowPrompts, toggleGatherShowPrompts,
+    gatherShowAllPrompts, toggleGatherShowAllPrompts,
   } = useModuleBeamStore();
 
 
@@ -167,8 +167,8 @@ export function BeamScatterDropdown(props: {
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
 
-        <MenuItem onClick={toggleGatherShowPrompts}>
-          <ListItemDecorator>{gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
+        <MenuItem onClick={toggleGatherShowAllPrompts}>
+          <ListItemDecorator>{gatherShowAllPrompts && <CheckRoundedIcon />}</ListItemDecorator>
           Detailed Custom Merge
         </MenuItem>
 
