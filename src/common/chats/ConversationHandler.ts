@@ -118,7 +118,7 @@ export class ConversationHandler {
       }
 
       // close beam
-      this.beamStore.getState().terminate();
+      beamTerminate();
     };
 
     beamOpen(viewHistory, useModelsStore.getState().chatLLMId, onBeamSuccess);
