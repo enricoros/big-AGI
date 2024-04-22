@@ -30,7 +30,7 @@ interface RootStateSlice {
 
   isOpen: boolean;
   isMaximized: boolean;
-  inputChatLlmId: DLLMId | null;
+  fallbackLlmId: DLLMId | null;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
   inputReady: boolean;
@@ -42,7 +42,7 @@ const initRootStateSlice = (): RootStateSlice => ({
 
   isOpen: false,
   isMaximized: false,
-  inputChatLlmId: null,
+  fallbackLlmId: null,
   inputHistory: null,
   inputIssues: null,
   inputReady: false,
@@ -68,7 +68,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, initialChatLLMId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, fallbackLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
     const { isOpen: wasOpen, terminate } = _get();
 
     // reset pending operations
@@ -80,7 +80,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       // input
       isOpen: true,
-      inputChatLlmId: initialChatLLMId,
+      fallbackLlmId: fallbackLlmId,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid history',
       inputReady: isValidHistory,
@@ -89,8 +89,8 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // rays already reset
 
       // update the model only if the dialog was not already open
-      ...((!wasOpen && initialChatLLMId) && {
-        currentGatherLlmId: initialChatLLMId,
+      ...((!wasOpen && fallbackLlmId) && {
+        currentGatherLlmId: fallbackLlmId,
       } satisfies Partial<GatherStoreSlice>),
     });
   },
@@ -98,8 +98,8 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   terminate: () =>
     _set(state => ({
       ...initRootStateSlice(),
-      ...reInitGatherStateSlice(state.fusions, state.currentGatherLlmId),  // remember after termination
       ...reInitScatterStateSlice(state.rays),
+      ...reInitGatherStateSlice(state.fusions, state.currentGatherLlmId),  // remember after termination
     })),
 
 
