@@ -381,7 +381,7 @@ export function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fas
       : null;
   }
 
-  // a func llm (
+  // a func llm (same as chat for now, hoping the highest grade also has function calling)
   if (!funcLlmId || !allLlms.find(llm => llm.id === funcLlmId))
     funcLlmId = chatLlmId;
 
