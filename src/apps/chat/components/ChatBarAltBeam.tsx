@@ -31,7 +31,7 @@ export function ChatBarAltBeam(props: {
     requiresConfirmation: store.isScattering || store.isGatheringAny || store.raysReady > 0,
     // actions
     setIsMaximized: store.setIsMaximized,
-    terminateBeam: store.terminate,
+    terminateBeam: store.terminateKeepingSettings,
   })));
 
 

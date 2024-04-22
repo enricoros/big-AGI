@@ -54,7 +54,7 @@ export interface RootStoreSlice extends RootStateSlice {
 
   // lifecycle
   open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
-  terminate: () => void;
+  terminateKeepingSettings: () => void;
 
   setIsMaximized: (maximized: boolean) => void;
   editInputHistoryMessage: (messageId: string, newText: string) => void;
@@ -69,14 +69,16 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
 
   open: (chatHistory: Readonly<DMessage[]>, fallbackLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
-    const { isOpen: wasOpen, terminate } = _get();
+    const { isOpen: wasAlreadyOpen, terminateKeepingSettings, setRayLlmIds } = _get();
 
     // reset pending operations
-    terminate();
+    terminateKeepingSettings();
 
     // validate history
     const history = [...chatHistory];
     const isValidHistory = history.length >= 1 && history[history.length - 1].role === 'user';
+
+    // show and set input
     _set({
       // input
       isOpen: true,
@@ -89,13 +91,13 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // rays already reset
 
       // update the model only if the dialog was not already open
-      ...((!wasOpen && fallbackLlmId) && {
+      ...(!wasAlreadyOpen && fallbackLlmId && {
         currentGatherLlmId: fallbackLlmId,
       } satisfies Partial<GatherStoreSlice>),
     });
   },
 
-  terminate: () =>
+  terminateKeepingSettings: () =>
     _set(state => ({
       ...initRootStateSlice(),
       ...reInitScatterStateSlice(state.rays),
