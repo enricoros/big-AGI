@@ -10,7 +10,6 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { GATHER_COLOR } from '../beam.config';
@@ -109,14 +108,14 @@ export function BeamGatherPane(props: {
         <div>
           <Typography
             level='h4' component='h2'
-            endDecorator={<BeamGatherDropdown />}
+            // endDecorator={<BeamGatherDropdown />}
             // sx={{ my: 0.25 }}
           >
             <MainLlmIcon sx={{ fontSize: '1rem', animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
           </Typography>
           <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
             {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
-            {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ ''}
+            {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ 'Combine replies'}
           </Typography>
         </div>
         <ScrollToBottomButton inline />

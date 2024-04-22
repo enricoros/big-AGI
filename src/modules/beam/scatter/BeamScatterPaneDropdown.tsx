@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
+import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRenameOutlineRounded';
@@ -67,7 +67,9 @@ export function BeamScatterDropdown(props: {
   const {
     scatterPresets, addScatterPreset, deleteScatterPreset,
     cardScrolling, toggleCardScrolling,
+    scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
+    gatherShowPrompts, toggleGatherShowPrompts,
   } = useModuleBeamStore();
 
 
@@ -146,15 +148,31 @@ export function BeamScatterDropdown(props: {
           <Typography level='body-sm'>View</Typography>
         </ListItem>
 
+        <MenuItem onClick={toggleScatterShowPrevMessages}>
+          <ListItemDecorator>{scatterShowPrevMessages && <CheckRoundedIcon />}</ListItemDecorator>
+          History
+        </MenuItem>
+
         <MenuItem onClick={toggleCardScrolling}>
           <ListItemDecorator>{cardScrolling && <CheckRoundedIcon />}</ListItemDecorator>
-          Fit Messages
+          Resize Beams
         </MenuItem>
 
         <MenuItem onClick={toggleScatterShowLettering}>
           <ListItemDecorator>{scatterShowLettering && <CheckRoundedIcon />}</ListItemDecorator>
           Response Numbers
         </MenuItem>
+
+        <ListItem>
+          <Typography level='body-sm'>Advanced</Typography>
+        </ListItem>
+
+        <MenuItem onClick={toggleGatherShowPrompts}>
+          <ListItemDecorator>{gatherShowPrompts && <CheckRoundedIcon />}</ListItemDecorator>
+          Detailed Custom Merges
+        </MenuItem>
+
+        <ListDivider inset='gutter' />
 
         <MenuItem onClick={props.onExplainerShow}>
           <ListItemDecorator>
