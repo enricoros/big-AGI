@@ -84,7 +84,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       // input
       isOpen: true,
       inputHistory: isValidHistory ? history : null,
-      inputIssues: isValidHistory ? null : 'Invalid history',
+      inputIssues: isValidHistory ? null : 'Invalid conversation history: missing user message',
       inputReady: isValidHistory,
       onSuccessCallback: callback,
 
