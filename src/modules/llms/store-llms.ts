@@ -336,12 +336,12 @@ export function findSourceOrThrow<TSourceSetup>(sourceId: DModelSourceId) {
 
 /**
  * Heuristic to returns the top LLMs from different vendors (diverse), based on their elo,
- * until there are vendors, otherwise loops, and pads with the fallbackLlmId.
+ * until there are vendors, otherwise loops, and pads with the fallback.
  * @param count returns up to this number of LLMs
  * @param requireElo if true, only LLMs with elo are returned
- * @param fallbackLlmId the LLM to use if there are not enough LLMs
+ * @param fallback the LLM to use if there are not enough LLMs
  */
-export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallbackLlmId: DLLMId | null): DLLMId[] {
+export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallback: DLLMId | null): DLLMId[] {
   const llmIDs: DLLMId[] = [];
 
   // iterate through the groups, and top to bottom
@@ -367,9 +367,9 @@ export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallback
     groupLevel++;
   }
 
-  // pad with the fallbackLlmId
-  while (llmIDs.length < count && fallbackLlmId)
-    llmIDs.push(fallbackLlmId);
+  // pad with the fallback
+  while (llmIDs.length < count && fallback)
+    llmIDs.push(fallback);
 
   return llmIDs;
 }
