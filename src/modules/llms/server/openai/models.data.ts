@@ -842,21 +842,46 @@ export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescrip
   return b.label.localeCompare(a.label);
 }
 
-// Groq
+
+// Groq - https://console.groq.com/docs/models
 
 const _knownGroqModels: ManualMappings = [
-  // {
-  //   id: 'lama2-70b-4096',
-  //   label: 'Llama 2 70B Chat',
-  //   description: 'Llama 2 is a collection of pretrained and fine-tuned generative text models.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  // },
+  {
+    isLatest: true,
+    idPrefix: 'llama3-70b-8192',
+    label: 'Llama 3 · 70B',
+    description: 'LLaMA3 70b developed by Meta with a context window of 8,192 tokens.',
+    contextWindow: 8192,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    // isLatest: true,
+    idPrefix: 'llama3-8b-8192',
+    label: 'Llama 3 · 8B',
+    description: 'LLaMA3 8b developed by Meta with a context window of 8,192 tokens.',
+    contextWindow: 8192,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'llama2-70b-4096',
+    label: 'Llama 2 · 70B',
+    description: 'LLaMA2 70b developed by Meta with a context window of 4,096 tokens.',
+    contextWindow: 4096,
+    interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
+  },
   {
     idPrefix: 'mixtral-8x7b-32768',
-    label: 'Mixtral 8x7B Instruct v0.1',
-    description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
+    label: 'Mixtral 8x7B',
+    description: 'Mixtral 8x7b developed by Mistral with a context window of 32,768 tokens.',
     contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'gemma-7b-it',
+    label: 'Gemma 1.1 · 7B Instruct',
+    description: 'Gemma 7b developed by Google with a context window of 8,192 tokens.',
+    contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat],
   },
 ];
@@ -871,6 +896,15 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });
+}
+
+export function groqModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+  // sort as per their order in the known models
+  const aIndex = _knownGroqModels.findIndex(base => a.id.startsWith(base.idPrefix));
+  const bIndex = _knownGroqModels.findIndex(base => b.id.startsWith(base.idPrefix));
+  if (aIndex !== -1 && bIndex !== -1)
+    return aIndex - bIndex;
+  return a.id.localeCompare(b.id);
 }
 
 
