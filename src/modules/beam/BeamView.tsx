@@ -21,6 +21,7 @@ export function BeamView(props: {
   beamStore: BeamStoreApi,
   isMobile: boolean,
   showExplainer?: boolean,
+  // sx?: SxProps,
 }) {
 
   // state
@@ -118,6 +119,7 @@ export function BeamView(props: {
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--Pad)',
+        // ...props.sx,
       }}>
 
         {/* Config Issues */}
