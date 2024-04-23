@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Typography } from '@mui/joy';
+import { Box } from '@mui/joy';
 
 import { ExplainerCarousel, ExplainerPage } from '~/common/components/ExplainerCarousel';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
@@ -11,59 +11,52 @@ const beamSteps: ExplainerPage[] = [
   {
     stepDigits: '',
     stepName: 'Welcome',
-    titlePrefix: 'Welcome to',
-    // titleSquircle: true,
-    titleSpark: 'Beam',
+    // titlePrefix: 'Welcome to Beam.', //  Better answers, faster.
+    titlePrefix: 'Welcome to ', titleSpark: 'Beam',
     // titleSpark: 'B E A M',
     // titleSuffix: ' azing',
+    // titleSquircle: true,
     mdContent: `
-**Hello, we just launched Beam for you.**
-
-Beam is a new Big-AGI chat modality that allows you to engage multiple AI models in parallel. 
+**Beam** is a chat modality in Big-AGI to engage multiple AI models, [together](https://big-agi.com/blog/beam-multi-model-ai-reasoning). 
  
 It's like having a brainstorm session with several smart people,
-only they are AI models. And as with people,
-each AI model has its own unique perspective.
-And Beam lets you make the best of them.
+each adding their own unique perspective.
+Beam lets you make the best of them all.
 
 ![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-scatter-1200px-alpha.png)
 
-Let&apos;s get you to **better chat answers, faster**.
-`,
+`, // Let&apos;s get you to better chat answers, faster.
   },
   {
     stepDigits: '01',
     stepName: 'Beam',
-    titleSpark: 'Beaming',
-    titleSuffix: ': Exploration',
+    titlePrefix: 'Explore with ', titleSpark: 'Beam', titleSuffix: '.',
+    // titleSpark: 'Beaming', titleSuffix: ': Exploration',
     mdContent: `
-**Beaming is the exploration phase, it's where you get the AI models to generate ideas.**
+**Beaming is the exploration phase**, where AI models generate ideas.
 
-To Beam, pick the AI models you want to use (you can also load/save combos), and start them all at once or one by one.
-Keep the responses you like and delete the ones that aren't helpful.
+Simply pick the AI models you want to use (you can load/save combos) and start them. 
+You can then select a single response to continue the chat,
+or keep the responses you like and do a Merge.
 
-**Important**: 💰 Beware of the token usage of Beaming and Merging.
-Being multiple and high-intensity operations,
-they can consume more tokens than regular chats.
-It is better to _use them in early/shorter chats_.
+**Important:** _Best used in earlier / shorter chats_. 💰 Beware of the token usage of Beaming and Merging;
+being parallel and lengthy operations, they will use more tokens than regular chats. 
 
-Use a mix of different AI models to get a diverse set of ideas and perspectives.
-
-**Once you see a response you love, send it back to the chat**, otherwise move to the Merge step.
-`,
+Use a mix of different AI models to get a diverse set of ideas and perspectives. 
+`, // and delete the ones that aren't helpful
   },
   {
     stepDigits: '02',
     stepName: 'Merge',
-    titleSpark: 'Merging',
-    titleSuffix: ': Convergence', // Synthesis, Convergence
+    titlePrefix: 'Combine with ', titleSpark: 'Merge', titleSuffix: '.',
+    // titleSpark: 'Merging', titleSuffix: ': Synthesis', // Synthesis, Convergence
     mdContent: `
-**Merging is the consolidation phase**, where AI combines the best parts of the responses into a great, coherent answer.
+Merging is **combining the best parts of each response** into a great, coherent answer.
+
+You can choose from various merge options, including **Fusion**, **Checklist**, **Compare**, and **Custom**.
+Experiment with different options to find the one that works best for your chat.
 
 ![big-AGI BEAM Rays](https://raw.githubusercontent.com/enricoros/big-AGI/main/public/images/explainers/explainer-beam-gather-1600px-alpha.png)
-
-You can choose from various merge options, including Fusion, Checklist, Compare, and Custom.
-Feel free to experiment with different options to find the one that works best for you.
     `, // > Merge until you have a single, high-quality response. Or choose the final response manually, skipping merge.
   },
 //   {
@@ -96,7 +89,7 @@ const beamExplainerSx: SxProps = {
   height: '100%',
 
   // style
-  padding: { xs: '1rem', md: '1.5rem' },
+  padding: 3, // { xs: 3, md: 3 },
   animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
 
   // layout
@@ -118,14 +111,14 @@ export function BeamExplainer(props: {
       <ExplainerCarousel
         explainerId='beam-onboard'
         steps={beamSteps}
-        footer={
-          <Typography level='body-xs' sx={{ textAlign: 'center', maxWidth: '400px', mx: 'auto' }}>
-            {/*Unlock beaming, combine AI wisdom, achieve clarity.*/}
-            {/*Discover, Design and Dream.*/}
-            {/*The journey from exploration to refinement is iterative.*/}
-            {/*Each cycle sharpens your ideas, bringing you closer to innovation.*/}
-          </Typography>
-        }
+        // footer={
+        //   <Typography level='body-xs' sx={{ textAlign: 'center', maxWidth: '400px', mx: 'auto' }}>
+        //     {/*Unlock beaming, combine AI wisdom, achieve clarity.*/}
+        //     {/*Discover, Design and Dream.*/}
+        //     {/*The journey from exploration to refinement is iterative.*/}
+        //     {/*Each cycle sharpens your ideas, bringing you closer to innovation.*/}
+        //   </Typography>
+        // }
         onFinished={props.onWizardComplete}
       />
 
