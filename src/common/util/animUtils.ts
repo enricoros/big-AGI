@@ -250,20 +250,20 @@ export const animationShadowLimey = keyframes`
         box-shadow: 2px 2px 12px -6px rgb(255, 153, 0);
     }`;
 
-/*export const animationTextShadowLimey = keyframes`
+export const animationTextShadowLimey = keyframes`
     100%, 0% {
-        text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(183, 255, 0);
+        text-shadow: 2px 2px 0 rgba(183, 255, 0, 0.5);
     }
     25% {
-        text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(255, 251, 0);
+        text-shadow: 2px 2px 0 rgba(255, 251, 0, 0.5);
     }
     50% {
-        text-shadow: 2px 2px 0 white, 4px 4px 0 rgba(0, 255, 81);
+        text-shadow: 2px 2px 0 rgba(0, 255, 81, 0.5);
     }
     75% {
-        text-shadow: 2px 2px 0 white, 4px 4px 0 rgb(255, 153, 0);
+        text-shadow: 2px 2px 0 rgba(255, 153, 0, 0.5);
     }`;
-*/
+
 // export const animationShadowBlueDarker = keyframes`
 //     0%, 100% {
 //         box-shadow: 3px 3px 0 rgb(135, 206, 235), /* Sky Blue */ 6px 6px 0 rgb(70, 130, 180), /* Steel Blue */ 9px 9px 0 rgb(0, 128, 128); /* Teal */
