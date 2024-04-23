@@ -3,18 +3,24 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Step, stepClasses, StepIndicator, stepIndicatorClasses, Stepper, Typography } from '@mui/joy';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 
-import { ChatMessageMemo } from '../../apps/chat/components/message/ChatMessage';
+import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
-import { createDMessage } from '~/common/state/store-chats';
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { animationTextShadowLimey } from '~/common/util/animUtils';
+
+
+// configuration
+const colorButtons = 'neutral' as const;
+const colorStepper = 'neutral' as const;
 
 
 // Steps - the top stepper
@@ -27,18 +33,30 @@ interface ExplainerStep {
 const stepSequenceSx: SxProps = {
   // width: '100%',
   [`& .${stepClasses.completed}::after`]: {
-    bgcolor: 'primary.500',
+    bgcolor: `${colorStepper}.500`,
   },
   [`& .${stepClasses.active} .${stepIndicatorClasses.root}`]: {
-    borderColor: 'primary.500',
+    borderColor: `${colorStepper}.500`,
   },
   [`& .${stepClasses.root}:has(+ .${stepClasses.active})::after`]: {
-    color: 'primary.500',
+    color: `${colorStepper}.500`,
     backgroundColor: 'transparent',
     backgroundImage: 'radial-gradient(currentColor 2px, transparent 2px)',
     backgroundSize: '7px 7px',
     backgroundPosition: 'center left',
   },
+};
+
+const buttonBaseSx: SxProps = {
+  justifyContent: 'space-between',
+  minHeight: '2.5rem',
+  minWidth: 120,
+};
+
+const buttonNextSx: SxProps = {
+  ...buttonBaseSx,
+  boxShadow: `0 8px 24px -4px rgb(var(--joy-palette-${colorButtons}-mainChannel) / 20%)`,
+  minWidth: 180,
 };
 
 
@@ -59,10 +77,14 @@ function AllStepsStepper(props: {
             orientation='vertical'
             completed={completed}
             active={active}
-            onClick={() => props.onStepClicked(stepIndex)}
             indicator={
-              <StepIndicator variant={(completed || active) ? 'solid' : 'outlined'} color='primary'>
-                {completed ? <CheckRoundedIcon /> : active ? <KeyboardArrowDownRoundedIcon /> : undefined}
+              <StepIndicator
+                variant={(completed || active) ? 'solid' : 'outlined'}
+                color={colorStepper}
+                onClick={() => props.onStepClicked(stepIndex)}
+                sx={{ cursor: 'pointer' }}
+              >
+                {completed ? <CheckRoundedIcon sx={{ fontSize: 'md' }} /> : active ? <KeyboardArrowDownRoundedIcon sx={{ fontSize: 'lg' }} /> : undefined}
               </StepIndicator>
             }
           >
@@ -95,6 +117,7 @@ export function ExplainerCarousel(props: {
   explainerId: string,
   steps: ExplainerPage[],
   footer?: React.ReactNode,
+  noStepper?: boolean,
   onFinished: () => any,
 }) {
 
@@ -106,15 +129,13 @@ export function ExplainerCarousel(props: {
 
   // derived state
   const { onFinished } = props;
+  const isFirstPage = stepIndex === 0;
   const isLastPage = stepIndex === props.steps.length - 1;
   const activeStep = props.steps[stepIndex] ?? null;
 
   // handlers
 
   const mdText = activeStep?.mdContent ?? null;
-  const mdMessage = React.useMemo(() => {
-    return mdText ? createDMessage('assistant', mdText) : null;
-  }, [mdText]);
 
   const handlePrevPage = React.useCallback(() => {
     setStepIndex(step => step > 0 ? step - 1 : step);
@@ -161,7 +182,7 @@ export function ExplainerCarousel(props: {
       // content
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-around',
+      justifyContent: 'space-evenly',
       gap: 2,
     }}>
 
@@ -171,83 +192,89 @@ export function ExplainerCarousel(props: {
         level='h1'
         component='h1'
         sx={{
-          fontSize: isMobile ? '2rem' : '2.75rem',
+          fontSize: isMobile ? '2rem' : '2.5rem',
           fontWeight: 'md',
           textAlign: 'center',
+          whiteSpace: 'balance',
         }}>
         {activeStep?.titlePrefix}{' '}
         {!!activeStep?.titleSquircle && <AgiSquircleIcon inverted sx={{ color: 'white', fontSize: isMobile ? '1.55rem' : '2.04rem', borderRadius: 'md' }} />}
         {!!activeStep?.titleSquircle && '-'}
-        {!!activeStep?.titleSpark && <Box component='span' sx={{ fontWeight: 'lg', /*animation: `${animationTextShadowLimey} 15s linear infinite`*/ color: 'primary.softColor' }}>
+        {!!activeStep?.titleSpark && <Box component='span' sx={{
+          fontWeight: 'lg',
+          color: 'neutral.softColor',
+          animation: `${animationTextShadowLimey} 5s infinite`,
+          /*, animation: `${animationTextShadowLimey} 15s linear infinite`*/
+        }}>
           {activeStep.titleSpark}
         </Box>}{activeStep?.titleSuffix}
       </Typography>
 
 
-      {/* All Steps */}
-      <Box>
-        <AllStepsStepper
-          steps={props.steps}
-          activeIndex={stepIndex}
-          isMobile={isMobile}
-          onStepClicked={setStepIndex}
-        />
-      </Box>
-
-
       {/* Page Message */}
-      {!!mdMessage && (
-        <ChatMessageMemo
-          message={mdMessage}
-          fitScreen={isMobile}
-          showAvatar={false}
-          adjustContentScaling={isMobile ? 0 : undefined}
-          sx={{
-            minHeight: '19rem', // 256px
-            py: 2,
-            border: 'none',
-            bordreRadius: 0,
-            borderRadius: 'xl',
-            // boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-darkChannel) / 0.12)',
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+
+        {/* Main Card with the markdown body */}
+        {!!mdText && (
+          <Box sx={{
+            minHeight: '24rem',
+            backgroundColor: 'background.popup',
+            borderRadius: 'lg',
             boxShadow: '0 60px 32px -60px rgb(var(--joy-palette-primary-darkChannel) / 0.14)',
+            mb: 2,
+            px: { xs: 1, md: 2 },
+            py: 2,
 
             // customize the embedded GitHub Markdown for transparent images
             ['.markdown-body img']: {
               '--color-canvas-default': 'transparent!important',
             },
-          }}
-        />
-      )}
+          }}>
+            <BlocksRenderer
+              text={mdText}
+              fromRole='assistant'
+              contentScaling='md'
+              fitScreen={isMobile}
+              renderTextAsMarkdown
+            />
+          </Box>
+        )}
 
-
-      {/* Buttons */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
         {/* Advance Button */}
         <Button
           variant='solid'
-          size='lg'
-          endDecorator={isLastPage ? <ChatBeamIcon /> : <ArrowForwardRoundedIcon />}
+          color={colorButtons}
           onClick={handleNextPage}
-          sx={{
-            boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
-            minWidth: 180,
-          }}
+          endDecorator={isLastPage ? <ChatBeamIcon /> : <ArrowForwardRoundedIcon />}
+          sx={buttonNextSx}
         >
           {isLastPage ? 'Start' : 'Next'}
         </Button>
 
         {/* Back Button */}
         <Button
-          variant='outlined'
-          color='neutral'
+          variant='plain'
+          color={colorButtons}
+          disabled={isFirstPage}
           onClick={handlePrevPage}
-          sx={{
-            minWidth: 140,
-          }}
+          startDecorator={<ArrowBackRoundedIcon />}
+          sx={buttonBaseSx}
         >
           Previous
         </Button>
+
       </Box>
+
+
+      {/* All Steps */}
+      {props.noStepper ? null : (
+        <AllStepsStepper
+          steps={props.steps}
+          activeIndex={stepIndex}
+          isMobile={isMobile}
+          onStepClicked={setStepIndex}
+        />
+      )}
 
 
       {/* Final words of wisdom (also perfect for centering the other components) */}
