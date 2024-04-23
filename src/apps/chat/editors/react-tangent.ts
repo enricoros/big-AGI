@@ -19,7 +19,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
   }
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
-  const assistantModelLabel = 'react-' + assistantLlmId.slice(4, 7); // HACK: this is used to change the Avatar animation
+  const assistantModelLabel = 'react-' + assistantLlmId; //.slice(4, 7); // HACK: this is used to change the Avatar animation
   const assistantMessageId = cHandler.messageAppendAssistant(STREAM_TEXT_INDICATOR, undefined, assistantModelLabel, true);
   const { enableReactTool: enableBrowse } = useBrowseStore.getState();
 
