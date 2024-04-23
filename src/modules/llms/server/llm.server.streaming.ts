@@ -54,10 +54,18 @@ const chatStreamingInputSchema = z.object({
 });
 export type ChatStreamingInputSchema = z.infer<typeof chatStreamingInputSchema>;
 
+// the purpose is to send something out even before the upstream stream starts, so that we keep the connection up
+const chatStreamingStartOutputPacketSchema = z.object({
+  type: z.enum(['start']),
+});
+export type ChatStreamingPreambleStartSchema = z.infer<typeof chatStreamingStartOutputPacketSchema>;
+
+// the purpose is to have a first packet that contains the model name, so that the client can display it
+// this is a hack until we have a better streaming format
 const chatStreamingFirstOutputPacketSchema = z.object({
   model: z.string(),
 });
-export type ChatStreamingFirstOutputPacketSchema = z.infer<typeof chatStreamingFirstOutputPacketSchema>;
+export type ChatStreamingPreambleModelSchema = z.infer<typeof chatStreamingFirstOutputPacketSchema>;
 
 
 export async function llmStreamingRelayHandler(req: NextRequest): Promise<Response> {
@@ -147,6 +155,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
   const transformUpstreamToBigAgiClient = createEventStreamTransformer(
     muxingFormat, vendorStreamParser, access.dialect,
   );
+
   const chatResponseStream =
     (upstreamResponse.body || createEmptyReadableStream())
       .pipeThrough(transformUpstreamToBigAgiClient);
@@ -205,6 +214,10 @@ function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextPars
 
   return new TransformStream({
     start: async (controller): Promise<void> => {
+
+      // Send initial packet indicating the start of the stream
+      const startPacket: ChatStreamingPreambleStartSchema = { type: 'start' };
+      controller.enqueue(textEncoder.encode(JSON.stringify(startPacket)));
 
       // only used for debugging
       let debugLastMs: number | null = null;
@@ -293,7 +306,7 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
         responseMessage = anthropicWireMessagesResponseSchema.parse(message);
         // hack: prepend the model name to the first packet
         if (firstMessage) {
-          const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: responseMessage.model };
+          const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };
           text = JSON.stringify(firstPacket);
         }
         break;
@@ -408,7 +421,7 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: modelName };
+      const firstPacket: ChatStreamingPreambleModelSchema = { model: modelName };
       text = JSON.stringify(firstPacket) + text;
     }
 
@@ -444,7 +457,7 @@ function createStreamParserOllama(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun && chunk.model) {
       hasBegun = true;
-      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: chunk.model };
+      const firstPacket: ChatStreamingPreambleModelSchema = { model: chunk.model };
       text = JSON.stringify(firstPacket) + text;
     }
 
@@ -485,7 +498,7 @@ function createStreamParserOpenAI(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: json.model };
+      const firstPacket: ChatStreamingPreambleModelSchema = { model: json.model };
       text = JSON.stringify(firstPacket) + text;
     }
 

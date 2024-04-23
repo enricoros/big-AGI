@@ -1,7 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
-import type { ChatStreamingFirstOutputPacketSchema, ChatStreamingInputSchema } from '../server/llm.server.streaming';
+import type { ChatStreamingInputSchema, ChatStreamingPreambleModelSchema, ChatStreamingPreambleStartSchema } from '../server/llm.server.streaming';
 import type { DLLMId } from '../store-llms';
 import type { VChatFunctionIn, VChatMessageIn } from '../llm.client';
 
@@ -58,6 +58,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
   };
 
   // connect to the server-side streaming endpoint
+  const timeFetch = performance.now();
   const response = await frontendSideFetch('/api/llms/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -75,7 +76,8 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
 
   // loop forever until the read is done, or the abort controller is triggered
   let incrementalText = '';
-  let parsedFirstPacket = false;
+  let parsedPreambleStart = false;
+  let parsedPreableModel = false;
   while (true) {
     const { value, done } = await responseReader.read();
 
@@ -88,21 +90,39 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
 
     incrementalText += textDecoder.decode(value, { stream: true });
 
-    // (streaming workaround) there may be a JSON object at the beginning of the message,
-    // injected by us to transmit the model name
-    if (!parsedFirstPacket && incrementalText.startsWith('{')) {
+    // we have two packets with a serialized flat json object at the start; this is side data, before the text flow starts
+    while ((!parsedPreambleStart || !parsedPreableModel) && incrementalText.startsWith('{')) {
+
+      // extract a complete JSON object, if present
       const endOfJson = incrementalText.indexOf('}');
-      if (endOfJson === -1)
-        continue;
-      const json = incrementalText.substring(0, endOfJson + 1);
+      if (endOfJson === -1) break;
+      const jsonString = incrementalText.substring(0, endOfJson + 1);
       incrementalText = incrementalText.substring(endOfJson + 1);
-      parsedFirstPacket = true;
-      try {
-        const parsed: ChatStreamingFirstOutputPacketSchema = JSON.parse(json);
-        onUpdate({ originLLM: parsed.model }, false);
-      } catch (e) {
-        // error parsing JSON, ignore
-        console.log('unifiedStreamingClient: error parsing JSON:', e);
+
+      // first packet: preamble to let the Vercel edge function go over time
+      if (!parsedPreambleStart) {
+        parsedPreambleStart = true;
+        try {
+          const parsed: ChatStreamingPreambleStartSchema = JSON.parse(jsonString);
+          if (parsed.type !== 'start')
+            console.log('unifiedStreamingClient: unexpected preamble type:', parsed?.type, 'time:', performance.now() - timeFetch);
+        } catch (e) {
+          // error parsing JSON, ignore
+          console.log('unifiedStreamingClient: error parsing start JSON:', e);
+        }
+        continue;
+      }
+
+      // second packet: the model name
+      if (!parsedPreableModel) {
+        parsedPreableModel = true;
+        try {
+          const parsed: ChatStreamingPreambleModelSchema = JSON.parse(jsonString);
+          onUpdate({ originLLM: parsed.model }, false);
+        } catch (e) {
+          // error parsing JSON, ignore
+          console.log('unifiedStreamingClient: error parsing model JSON:', e);
+        }
       }
     }
 
