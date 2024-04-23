@@ -626,6 +626,9 @@ export function AppChat() {
               sx={_paneChatBeamIsOpen ? { display: 'none' } : undefined}
             >
 
+              {/* This is here as an experiemnt to make Beam inline */}
+              {/*<Box sx={{ minHeight: '100%', // ensures filling of the blank space on newer chats display: 'flex', flexDirection: 'column', }}>*/}
+
               <ChatMessageList
                 conversationId={_paneConversationId}
                 conversationHandler={_paneChatHandler}
@@ -641,19 +644,22 @@ export function AppChat() {
                 onTextSpeak={handleTextSpeak}
                 sx={{
                   minHeight: '100%', // ensures filling of the blank space on newer chats
+                  // flexGrow: 0,
                 }}
               />
 
-              {/*<Ephemerals*/}
-              {/*  conversationId={_paneConversationId}*/}
-              {/*  sx={{*/}
-              {/*    // TODO: Fixme post panels?*/}
-              {/*    // flexGrow: 0.1,*/}
-              {/*    flexShrink: 0.5,*/}
-              {/*    overflowY: 'auto',*/}
-              {/*    minHeight: 64,*/}
-              {/*  }}*/}
-              {/*/>*/}
+              {/*{_paneChatBeamIsOpen && !!_paneChatBeamStore && (*/}
+              {/*  <BeamView*/}
+              {/*    beamStore={_paneChatBeamStore}*/}
+              {/*    isMobile={isMobile}*/}
+              {/*    showExplainer*/}
+              {/*    sx={{*/}
+              {/*      flexGrow: 1,*/}
+              {/*      minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',*/}
+              {/*    }}*/}
+              {/*  />*/}
+              {/*)}*/}
+              {/*</Box>*/}
 
               {/* Visibility and actions are handled via Context */}
               <ScrollToBottomButton />
