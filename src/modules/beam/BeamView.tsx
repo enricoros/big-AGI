@@ -4,7 +4,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { Alert, Box, CircularProgress } from '@mui/joy';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useUICounter } from '~/common/state/store-ui';
 
@@ -100,109 +99,105 @@ export function BeamView(props: {
   if (props.showExplainer && explainerUnseen)
     return <BeamExplainer onWizardComplete={explainerCompleted} />;
 
-  return (
-    <ScrollToBottom disableAutoStick>
+  return <>
 
-      {/* Main V-Layout */}
-      <Box sx={{
-        // scroller fill
-        minHeight: '100%',
+    <Box sx={{
+      // scroller fill
+      minHeight: '100%',
+      // ...props.sx,
 
-        // enter animation
-        animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
+      // enter animation
+      animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
 
-        // config
-        '--Pad': { xs: '1rem', md: '1.5rem' },
-        '--Pad_2': 'calc(var(--Pad) / 2)',
+      // config
+      '--Pad': { xs: '1rem', md: '1.5rem' },
+      '--Pad_2': 'calc(var(--Pad) / 2)',
 
-        // layout
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--Pad)',
-        // ...props.sx,
-      }}>
+      // layout
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 'var(--Pad)',
+    }}>
 
-        {/* Config Issues */}
-        {!!inputIssues && <Alert>{inputIssues}</Alert>}
+      {/* Config Issues */}
+      {!!inputIssues && <Alert>{inputIssues}</Alert>}
 
 
-        {/* User Message */}
-        <BeamScatterInput
-          isMobile={props.isMobile}
-          history={inputHistory}
-          editHistory={editInputHistoryMessage}
-        />
+      {/* User Message */}
+      <BeamScatterInput
+        isMobile={props.isMobile}
+        history={inputHistory}
+        editHistory={editInputHistoryMessage}
+      />
 
-        {/* Scatter Controls */}
-        <BeamScatterPane
-          beamStore={props.beamStore}
-          isMobile={props.isMobile}
-          rayCount={raysCount}
-          setRayCount={handleRaySetCount}
-          startEnabled={inputReady}
-          startBusy={isScattering}
-          onStart={startScatteringAll}
-          onStop={stopScatteringAll}
-          onExplainerShow={explainerShow}
-        />
-
-
-        {/* Rays Grid */}
-        <BeamRayGrid
-          beamStore={props.beamStore}
-          isMobile={props.isMobile}
-          rayIds={rayIds}
-          onIncreaseRayCount={handleRayIncreaseCount}
-          // linkedLlmId={currentGatherLlmId}
-        />
+      {/* Scatter Controls */}
+      <BeamScatterPane
+        beamStore={props.beamStore}
+        isMobile={props.isMobile}
+        rayCount={raysCount}
+        setRayCount={handleRaySetCount}
+        startEnabled={inputReady}
+        startBusy={isScattering}
+        onStart={startScatteringAll}
+        onStop={stopScatteringAll}
+        onExplainerShow={explainerShow}
+      />
 
 
-        {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
-        <Box />
+      {/* Rays Grid */}
+      <BeamRayGrid
+        beamStore={props.beamStore}
+        isMobile={props.isMobile}
+        rayIds={rayIds}
+        onIncreaseRayCount={handleRayIncreaseCount}
+        // linkedLlmId={currentGatherLlmId}
+      />
 
 
-        {/* Gather Controls */}
-        <BeamGatherPane
-          beamStore={props.beamStore}
-          canGather={canGather}
-          isMobile={props.isMobile}
-          onAddFusion={handleCreateFusion}
-          raysReady={raysReady}
-        />
-
-        {/* Fusion Grid */}
-        <BeamFusionGrid
-          beamStore={props.beamStore}
-          canGather={canGather}
-          fusionIds={fusionIds}
-          isMobile={props.isMobile}
-          onAddFusion={handleCreateFusion}
-          raysCount={raysCount}
-        />
-
-      </Box>
+      {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
+      <Box />
 
 
-      {/* Confirm Stop Scattering */}
-      {warnIsScattering && (
-        <ConfirmationModal
-          open
-          onClose={handleStopScatterDenial}
-          onPositive={handleStopScatterConfirmation}
-          // lowStakes
-          noTitleBar
-          confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
-          positiveActionText='Proceed with Merge'
-          negativeActionText='Wait for All Responses'
-          negativeActionStartDecorator={
-            <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
-          }
-        />
-      )}
+      {/* Gather Controls */}
+      <BeamGatherPane
+        beamStore={props.beamStore}
+        canGather={canGather}
+        isMobile={props.isMobile}
+        onAddFusion={handleCreateFusion}
+        raysReady={raysReady}
+      />
+
+      {/* Fusion Grid */}
+      <BeamFusionGrid
+        beamStore={props.beamStore}
+        canGather={canGather}
+        fusionIds={fusionIds}
+        isMobile={props.isMobile}
+        onAddFusion={handleCreateFusion}
+        raysCount={raysCount}
+      />
+
+    </Box>
 
 
-    </ScrollToBottom>
-  );
+    {/* Confirm Stop Scattering */}
+    {warnIsScattering && (
+      <ConfirmationModal
+        open
+        onClose={handleStopScatterDenial}
+        onPositive={handleStopScatterConfirmation}
+        // lowStakes
+        noTitleBar
+        confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
+        positiveActionText='Proceed with Merge'
+        negativeActionText='Wait for All Responses'
+        negativeActionStartDecorator={
+          <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
+        }
+      />
+    )}
+
+  </>;
 }
 
 

@@ -229,12 +229,15 @@ export function ChatMessageList(props: {
 
   return (
     <List sx={{
-      p: 0, ...(props.sx || {}),
-      // this makes sure that the the window is scrolled to the bottom (column-reverse)
-      display: 'flex',
-      flexDirection: 'column',
+      p: 0,
+      ...(props.sx || {}),
+
       // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
       // marginBottom: '-1px',
+
+      // layout
+      display: 'flex',
+      flexDirection: 'column',
     }}>
 
       {optionalTranslationWarning}
