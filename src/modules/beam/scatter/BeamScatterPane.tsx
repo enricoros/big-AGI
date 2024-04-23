@@ -63,7 +63,7 @@ export function BeamScatterPane(props: {
       {/* Title */}
       <Box>
         <Typography
-          level='h4' component='h2'
+          level='h4' component='h3'
           endDecorator={dropdownMemo}
           // sx={{ my: 0.25 }}
         >
