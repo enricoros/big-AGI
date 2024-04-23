@@ -94,10 +94,10 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
     while ((!parsedPreambleStart || !parsedPreableModel) && incrementalText.startsWith('{')) {
 
       // extract a complete JSON object, if present
-      const endOfJson = incrementalText.indexOf('}');
+      const endOfJson = incrementalText.indexOf('}\n');
       if (endOfJson === -1) break;
       const jsonString = incrementalText.substring(0, endOfJson + 1);
-      incrementalText = incrementalText.substring(endOfJson + 1);
+      incrementalText = incrementalText.substring(endOfJson + 2);
 
       // first packet: preamble to let the Vercel edge function go over time
       if (!parsedPreambleStart) {
