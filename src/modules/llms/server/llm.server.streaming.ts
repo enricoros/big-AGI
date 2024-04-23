@@ -217,7 +217,8 @@ function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextPars
 
       // Send initial packet indicating the start of the stream
       const startPacket: ChatStreamingPreambleStartSchema = { type: 'start' };
-      controller.enqueue(textEncoder.encode(JSON.stringify(startPacket)));
+      const preambleStart = JSON.stringify(startPacket) + '\n';
+      controller.enqueue(textEncoder.encode(preambleStart));
 
       // only used for debugging
       let debugLastMs: number | null = null;
@@ -306,8 +307,8 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
         responseMessage = anthropicWireMessagesResponseSchema.parse(message);
         // hack: prepend the model name to the first packet
         if (firstMessage) {
-          const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };
-          text = JSON.stringify(firstPacket);
+          const preambleModel: ChatStreamingPreambleModelSchema = { model: responseMessage.model };
+          text = JSON.stringify(preambleModel) + '\n';
         }
         break;
 
@@ -421,8 +422,8 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: ChatStreamingPreambleModelSchema = { model: modelName };
-      text = JSON.stringify(firstPacket) + text;
+      const preambleModel: ChatStreamingPreambleModelSchema = { model: modelName };
+      text = JSON.stringify(preambleModel) + '\n' + text;
     }
 
     return { text, close: false };
@@ -457,8 +458,8 @@ function createStreamParserOllama(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun && chunk.model) {
       hasBegun = true;
-      const firstPacket: ChatStreamingPreambleModelSchema = { model: chunk.model };
-      text = JSON.stringify(firstPacket) + text;
+      const preambleModel: ChatStreamingPreambleModelSchema = { model: chunk.model };
+      text = JSON.stringify(preambleModel) + '\n' + text;
     }
 
     return { text, close: chunk.done };
@@ -498,8 +499,8 @@ function createStreamParserOpenAI(): AIStreamParser {
     // hack: prepend the model name to the first packet
     if (!hasBegun) {
       hasBegun = true;
-      const firstPacket: ChatStreamingPreambleModelSchema = { model: json.model };
-      text = JSON.stringify(firstPacket) + text;
+      const preambleModel: ChatStreamingPreambleModelSchema = { model: json.model };
+      text = JSON.stringify(preambleModel) + '\n' + text;
     }
 
     // [LocalAI] workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
