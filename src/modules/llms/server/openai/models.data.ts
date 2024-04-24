@@ -147,7 +147,6 @@ const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT4's
   {
-    isLatest: true,
     idPrefix: 'gpt-4-0613',
     label: 'GPT-4 (0613)',
     description: 'Snapshot of gpt-4 from June 13th 2023 with improved function calling support. Data up to Sep 2021.',
@@ -198,7 +197,6 @@ const _knownOpenAIChatModels: ManualMappings = [
 
   // 3.5-Turbo-16k's
   {
-    isLatest: true,
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (0125)',
     description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls. Returns a maximum of 4,096 output tokens.',
@@ -361,7 +359,6 @@ const _knownMistralChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 8, chatOut: 24 },
     benchmark: { cbaElo: 1159 },
-    isLatest: true,
   },
   {
     idPrefix: 'mistral-large-latest',
@@ -425,7 +422,6 @@ const _knownMistralChatModels: ManualMappings = [
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 2, chatOut: 6 },
-    isLatest: true,
   },
   {
     idPrefix: 'mistral-small-2312',
