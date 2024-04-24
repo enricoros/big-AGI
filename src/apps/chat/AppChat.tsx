@@ -4,6 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import type { SxProps } from '@mui/joy/styles/types';
 import { useTheme } from '@mui/joy';
 
+import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
@@ -22,13 +23,13 @@ import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
-import { getUXLabsHighPerformance, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatBarAltBeam } from './components/ChatBarAltBeam';
@@ -39,14 +40,9 @@ import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
-import { getInstantAppChatPanesCount, usePanesManager } from './components/panes/usePanesManager';
+import { usePanesManager } from './components/panes/usePanesManager';
 
-import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
-import { extractChatCommand, findAllChatCommands } from './commands/commands.registry';
-import { runAssistantUpdatingState } from './editors/chat-stream';
-import { runBrowseGetPageUpdatingState } from './editors/browse-load';
-import { runImageGenerationUpdatingState } from './editors/image-generate';
-import { runReActUpdatingState } from './editors/react-tangent';
+import { _handleExecute } from './editors/_handleExecute';
 
 
 // what to say when a chat is new and has no title
@@ -201,115 +197,6 @@ export function AppChat() {
 
   // Execution
 
-  const _handleExecute = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]): Promise<void> => {
-    const chatLLMId = getChatLLMId();
-    if (!chatModeId || !conversationId || !chatLLMId) return;
-
-    // Update the system message from the active persona to the history
-    // NOTE: this does NOT call setMessages anymore (optimization). make sure to:
-    //       1. all the callers need to pass a new array
-    //       2. all the exit points need to call setMessages
-    const cHandler = ConversationsManager.getHandler(conversationId);
-    cHandler.inlineUpdatePurposeInHistory(history, chatLLMId);
-
-    // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
-    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
-    if (lastMessage?.role === 'user') {
-      const chatCommand = extractChatCommand(lastMessage.text)[0];
-      if (chatCommand && chatCommand.type === 'cmd') {
-        switch (chatCommand.providerId) {
-          case 'ass-browse':
-            cHandler.messagesReplace(history); // show command
-            return await runBrowseGetPageUpdatingState(cHandler, chatCommand.params);
-
-          case 'ass-t2i':
-            cHandler.messagesReplace(history); // show command
-            return await runImageGenerationUpdatingState(cHandler, chatCommand.params);
-
-          case 'ass-react':
-            cHandler.messagesReplace(history); // show command
-            return await runReActUpdatingState(cHandler, chatCommand.params, chatLLMId);
-
-          case 'chat-alter':
-            // /clear
-            if (chatCommand.command === '/clear') {
-              if (chatCommand.params === 'all')
-                return cHandler.messagesReplace([]);
-              cHandler.messagesReplace(history);
-              cHandler.messageAppendAssistant('Issue: this command requires the \'all\' parameter to confirm the operation.', undefined, 'issue', false);
-              return;
-            }
-            // /assistant, /system
-            Object.assign(lastMessage, {
-              role: chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user',
-              sender: 'Bot',
-              text: chatCommand.params || '',
-            } satisfies Partial<DMessage>);
-            return cHandler.messagesReplace(history);
-
-          case 'cmd-help':
-            const chatCommandsText = findAllChatCommands()
-              .map(cmd => ` - ${cmd.primary}` + (cmd.alternatives?.length ? ` (${cmd.alternatives.join(', ')})` : '') + `: ${cmd.description}`)
-              .join('\n');
-            cHandler.messagesReplace(history);
-            cHandler.messageAppendAssistant('Available Chat Commands:\n' + chatCommandsText, undefined, 'help', false);
-            return;
-
-          case 'mode-beam':
-            if (chatCommand.isError)
-              return cHandler.messagesReplace(history);
-            // remove '/beam ', as we want to be a user chat message
-            Object.assign(lastMessage, { text: chatCommand.params || '' });
-            cHandler.messagesReplace(history);
-            return ConversationsManager.getHandler(conversationId).beamInvoke(history, [], null);
-
-          default:
-            return cHandler.messagesReplace([...history, createDMessage('assistant', 'This command is not supported.')]);
-        }
-      }
-    }
-
-
-    // get the system purpose (note: we don't react to it, or it would invalidate half UI components..)
-    if (!getConversationSystemPurposeId(conversationId)) {
-      cHandler.messagesReplace(history);
-      cHandler.messageAppendAssistant('Issue: no Persona selected.', undefined, 'issue', false);
-      return;
-    }
-
-    // synchronous long-duration tasks, which update the state as they go
-    switch (chatModeId) {
-      case 'generate-text':
-        cHandler.messagesReplace(history);
-        return await runAssistantUpdatingState(conversationId, history, chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
-
-      case 'generate-text-beam':
-        cHandler.messagesReplace(history);
-        return cHandler.beamInvoke(history, [], null);
-
-      case 'append-user':
-        return cHandler.messagesReplace(history);
-
-      case 'generate-image':
-        if (!lastMessage?.text) break;
-        // also add a 'fake' user message with the '/draw' command
-        cHandler.messagesReplace(history.map(message => (message.id !== lastMessage.id) ? message : {
-          ...message,
-          text: `/draw ${lastMessage.text}`,
-        }));
-        return await runImageGenerationUpdatingState(cHandler, lastMessage.text);
-
-      case 'generate-react':
-        if (!lastMessage?.text) break;
-        cHandler.messagesReplace(history);
-        return await runReActUpdatingState(cHandler, lastMessage.text, chatLLMId);
-    }
-
-    // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
-    console.log('Chat execute: issue running', chatModeId, conversationId, lastMessage);
-    cHandler.messagesReplace(history);
-  }, []);
-
   const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart): boolean => {
     // validate inputs
     if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
@@ -341,11 +228,11 @@ export function AppChat() {
       }
     }
     return enqueued;
-  }, [chatPanes, willMulticast, _handleExecute]);
+  }, [chatPanes, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
     await _handleExecute('generate-text', conversationId, history);
-  }, [_handleExecute]);
+  }, []);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedPaneConversationId);
@@ -354,7 +241,7 @@ export function AppChat() {
       const history = lastMessage.role === 'assistant' ? focusedConversation.messages.slice(0, -1) : [...focusedConversation.messages];
       return await _handleExecute('generate-text', focusedConversation.id, history);
     }
-  }, [_handleExecute, focusedPaneConversationId]);
+  }, [focusedPaneConversationId]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
     // Ctrl + Shift + B
@@ -379,7 +266,7 @@ export function AppChat() {
       ...conversation.messages,
       createDMessage('user', imaginedPrompt),
     ]);
-  }, [_handleExecute]);
+  }, []);
 
   const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
     await speakText(text);
