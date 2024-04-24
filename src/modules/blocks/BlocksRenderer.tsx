@@ -110,7 +110,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
 
   const scaledCodeSx: SxProps = React.useMemo(() => (
     {
-      my: themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
+      my: props.specialDiagramMode ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
       backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
       boxShadow: props.specialDiagramMode ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
       borderRadius: 'sm',
