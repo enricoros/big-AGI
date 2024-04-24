@@ -169,6 +169,7 @@ export function adjustContentScaling(scaling: ContentScaling, offset?: number) {
 interface ContentScalingOptions {
   // BlocksRenderer
   blockCodeFontSize: string;
+  blockCodeMarginY: number;
   blockFontSize: string;
   blockImageGap: number;
   blockLineHeight: string | number;
@@ -182,6 +183,7 @@ interface ContentScalingOptions {
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   xs: {
     blockCodeFontSize: '0.75rem',
+    blockCodeMarginY: 0.5,
     blockFontSize: 'xs',
     blockImageGap: 1,
     blockLineHeight: 1.666667,
@@ -191,6 +193,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   },
   sm: {
     blockCodeFontSize: '0.75rem',
+    blockCodeMarginY: 1,
     blockFontSize: 'sm',
     blockImageGap: 1.5,
     blockLineHeight: 1.714286,
@@ -200,6 +203,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   },
   md: {
     blockCodeFontSize: '0.875rem',
+    blockCodeMarginY: 1.5,
     blockFontSize: 'md',
     blockImageGap: 2,
     blockLineHeight: 1.75,
