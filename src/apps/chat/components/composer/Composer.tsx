@@ -144,8 +144,8 @@ export function Composer(props: {
   // external overlay state (extra conversationId-dependent state)
   const conversationHandler = props.conversationId ? ConversationsManager.getHandler(props.conversationId) : null;
   const conversationOverlayStore = conversationHandler?.getOverlayStore() ?? null;
-  const { replyToText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToText: chatModeId === 'generate-text' ? store.replyToText : null,
+  const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
+    replyToGenerateText: chatModeId === 'generate-text' ? store.replyToText : null,
   })));
 
 
@@ -244,9 +244,9 @@ export function Composer(props: {
   }, [conversationOverlayStore]);
 
   React.useEffect(() => {
-    if (replyToText)
+    if (replyToGenerateText)
       setTimeout(() => props.composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
-  }, [replyToText, props.composerTextAreaRef]);
+  }, [replyToGenerateText, props.composerTextAreaRef]);
 
 
   // Mode menu
@@ -516,7 +516,8 @@ export function Composer(props: {
   const isReAct = chatModeId === 'generate-react';
   const isDraw = chatModeId === 'generate-image';
 
-  const showChatExtras = isText;
+  const showChatReplyTo = !!replyToGenerateText;
+  const showChatExtras = isText && !showChatReplyTo;
 
   const buttonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
@@ -546,7 +547,7 @@ export function Composer(props: {
     isDraw ? 'Describe an idea or a drawing...'
       : isReAct ? 'Multi-step reasoning question...'
         : isTextBeam ? 'Beam: combine the smarts of models...'
-          : replyToText ? 'Chat about this...'
+          : showChatReplyTo ? 'Chat about this'
             : props.isDeveloperMode ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
               : props.capabilityHasT2I ? 'Chat · /beam · /draw · drop files...'
                 : 'Chat · /react · drop files...';
@@ -640,7 +641,7 @@ export function Composer(props: {
                   variant='outlined'
                   color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
                   autoFocus
-                  minRows={isMobile ? 4 : 5}
+                  minRows={isMobile ? 4 : showChatReplyTo ? 4 : 5}
                   maxRows={isMobile ? 8 : 10}
                   placeholder={textPlaceholder}
                   value={composeText}
@@ -651,7 +652,7 @@ export function Composer(props: {
                   onPasteCapture={handleAttachCtrlV}
                   // onFocusCapture={handleFocusModeOn}
                   // onBlurCapture={handleFocusModeOff}
-                  endDecorator={showReplyTo && <BubbleReplyTo replyToText={replyToGenerateText} onClear={handleReplyToCleared} className='reply-to-bubble' />}
+                  endDecorator={showChatReplyTo && <BubbleReplyTo replyToText={replyToGenerateText} onClear={handleReplyToCleared} className='reply-to-bubble' />}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
@@ -668,11 +669,11 @@ export function Composer(props: {
                     lineHeight: lineHeightTextareaMd,
                   }} />
 
-                {tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
+                {!showChatReplyTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
                   <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} />
                 )}
 
-                {!!tokenLimit && (
+                {!showChatReplyTo && !!tokenLimit && (
                   <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} showExcess absoluteBottomRight />
                 )}
 
