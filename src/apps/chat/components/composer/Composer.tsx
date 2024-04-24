@@ -50,7 +50,7 @@ import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentId } from './attachments/store-attachments';
 import { Attachments } from './attachments/Attachments';
-import { getTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
+import { getSingleTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
@@ -191,8 +191,8 @@ export function Composer(props: {
     if (!conversationId)
       return false;
 
-    // get attachments
-    const multiPartMessage = llmAttachments.getAttachmentsOutputs(composerText || null);
+    // get the multipart output including all attachments
+    const multiPartMessage = llmAttachments.collapseWithAttachments(composerText || null);
     if (!multiPartMessage.length)
       return false;
 
@@ -448,8 +448,8 @@ export function Composer(props: {
 
   const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
     setComposeText(currentText => {
-      const attachmentOutputs = llmAttachments.getAttachmentOutputs(currentText, attachmentId);
-      const inlinedText = getTextBlockText(attachmentOutputs) || '';
+      const inlinedMultiPart = llmAttachments.collapseWithAttachment(currentText, attachmentId);
+      const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
       removeAttachment(attachmentId);
       return inlinedText;
     });
@@ -457,8 +457,8 @@ export function Composer(props: {
 
   const handleAttachmentsInlineText = React.useCallback(() => {
     setComposeText(currentText => {
-      const attachmentsOutputs = llmAttachments.getAttachmentsOutputs(currentText);
-      const inlinedText = getTextBlockText(attachmentsOutputs) || '';
+      const inlinedMultiPart = llmAttachments.collapseWithAttachments(currentText);
+      const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
       clearAttachments();
       return inlinedText;
     });
