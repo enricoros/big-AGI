@@ -43,7 +43,10 @@ function hotFixDiagramCode(llmCode: string): string {
     llmCode = '```\n' + llmCode + '\n```';
   // fix generation mistakes
   return llmCode
-    .replaceAll('@endmindmap\n@enduml', '@endmindmap')
+    .replaceAll('@startumd', '@startuml') // haiku
+    .replaceAll('@endutml', '@enduml') // haiku
+    .replaceAll('@endmindmap\n@enduml', '@endmindmap') // gpt-3.5
+    .replaceAll('@endmindmap\n@end', '@endmindmap') // gpt-3.5
     .replaceAll('```\n```', '```');
 }
 
