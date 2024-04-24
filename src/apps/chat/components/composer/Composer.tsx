@@ -54,7 +54,6 @@ import { getSingleTextBlockText, useLLMAttachments } from './attachments/useLLMA
 import { useAttachments } from './attachments/useAttachments';
 
 import type { ComposerOutputMultiPart } from './composer.types';
-import { BubbleReplyTo } from './BubbleReplyTo';
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
@@ -66,6 +65,7 @@ import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ChatModeMenu } from './ChatModeMenu';
+import { ReplyToBubble } from '../message/ReplyToBubble';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
@@ -666,7 +666,7 @@ export function Composer(props: {
                   onPasteCapture={handleAttachCtrlV}
                   // onFocusCapture={handleFocusModeOn}
                   // onBlurCapture={handleFocusModeOff}
-                  endDecorator={showChatReplyTo && <BubbleReplyTo replyToText={replyToGenerateText} onClear={handleReplyToCleared} className='reply-to-bubble' />}
+                  endDecorator={showChatReplyTo && <ReplyToBubble replyToText={replyToGenerateText} onClear={handleReplyToCleared} className='reply-to-bubble' />}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
