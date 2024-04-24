@@ -325,15 +325,15 @@ export function Composer(props: {
 
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey) {
-        touchAltEnter();
-        handleSendAction('append-user', composeText);
+        if (handleSendAction('append-user', composeText))
+          touchAltEnter();
         return e.preventDefault();
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
-        touchCtrlEnter();
-        handleSendAction('generate-text-beam', composeText);
+        if (handleSendAction('generate-text-beam', composeText))
+          touchCtrlEnter();
         return e.preventDefault();
       }
 
