@@ -56,8 +56,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // state
   const [showOptions, setShowOptions] = React.useState(true);
   const [diagramCode, setDiagramCode] = React.useState<string | null>(null);
-  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Diagram');
-  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Syntax');
+  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('mind', diagramTypes, 'Diagram');
+  const [diagramLanguage, languageComponent, setDiagramLanguage] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Syntax');
   const [customInstruction, setCustomInstruction] = React.useState<string>('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
@@ -137,7 +137,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   }, []);
 
 
-  const handleInsertAndClose = React.useCallback(() => {
+  // done
+
+  const handleAppendMessageAndClose = React.useCallback(() => {
     if (!diagramCode)
       return setErrorMessage('Nothing to add to the conversation.');
 
@@ -148,6 +150,12 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     useChatStore.getState().appendMessage(conversationId, diagramMessage);
     props.onClose();
   }, [conversationId, diagramCode, diagramLlmId, props]);
+
+
+  // [effect] Auto-switch language to match diagram type
+  React.useEffect(() => {
+    setDiagramLanguage(diagramType === 'mind' ? 'mermaid' : 'plantuml');
+  }, [diagramType, setDiagramLanguage]);
 
 
   return (
@@ -230,7 +238,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between' }}>
 
         {/* Add Message to Chat (once complete) */}
-        <Button variant='soft' color='success' disabled={!diagramCode || !!abortController} endDecorator={<TelegramIcon />} onClick={handleInsertAndClose}>
+        <Button variant='soft' color='success' disabled={!diagramCode || !!abortController} endDecorator={<TelegramIcon />} onClick={handleAppendMessageAndClose}>
           Add To Chat
         </Button>
 

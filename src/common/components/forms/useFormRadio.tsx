@@ -8,7 +8,7 @@ import { FormRadioOption } from './FormRadioControl';
 /**
  * Warning: this must be a constant to avoid re-rendering the radio group
  */
-export function useFormRadio<T extends string>(initialValue: T, options: FormRadioOption<T>[], label?: string, hidden?: boolean): [T | null, React.JSX.Element | null] {
+export function useFormRadio<T extends string>(initialValue: T, options: FormRadioOption<T>[], label?: string, hidden?: boolean): [T | null, React.JSX.Element | null, React.Dispatch<React.SetStateAction<T | null>>] {
 
   // state
   const [value, setValue] = React.useState<T | null>(initialValue);
@@ -33,5 +33,5 @@ export function useFormRadio<T extends string>(initialValue: T, options: FormRad
     [handleChange, hidden, label, options, value],
   );
 
-  return [value, component];
+  return [value, component, setValue];
 }
