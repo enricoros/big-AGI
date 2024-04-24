@@ -166,6 +166,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
           display: 'flex',
+          flexDirection: 'column',
           // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
           overflowX: 'auto',
           minWidth: 160,
