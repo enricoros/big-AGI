@@ -630,9 +630,6 @@ export function Composer(props: {
             minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachments)
           }}>
 
-            {/* Reply-to */}
-            {!!replyToText && <BubbleReplyTo replyToText={replyToText} onClick={handleReplyToCleared} />}
-
             {/* Textarea + Mic buttons + Mic/Drag overlay */}
             <Box sx={{ position: 'relative' }}>
 
@@ -654,6 +651,7 @@ export function Composer(props: {
                   onPasteCapture={handleAttachCtrlV}
                   // onFocusCapture={handleFocusModeOn}
                   // onBlurCapture={handleFocusModeOff}
+                  endDecorator={showReplyTo && <BubbleReplyTo replyToText={replyToGenerateText} onClear={handleReplyToCleared} className='reply-to-bubble' />}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
@@ -666,7 +664,7 @@ export function Composer(props: {
                   }}
                   sx={{
                     backgroundColor: 'background.level1',
-                    '&:focus-within': { backgroundColor: 'background.popup' },
+                    '&:focus-within': { backgroundColor: 'background.popup', '.reply-to-bubble': { backgroundColor: 'background.popup' } },
                     lineHeight: lineHeightTextareaMd,
                   }} />
 
