@@ -90,6 +90,11 @@ const dropppedCardDraggingSx: SxProps = {
 } as const;
 
 
+export interface ComposerActionMetadata {
+  inReplyTo: string | null;
+}
+
+
 /**
  * A React component for composing messages, with attachments and different modes.
  */
@@ -101,7 +106,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata: ComposerActionMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -146,7 +151,7 @@ export function Composer(props: {
   const conversationHandler = props.conversationId ? ConversationsManager.getHandler(props.conversationId) : null;
   const conversationOverlayStore = conversationHandler?.getOverlayStore() ?? null;
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToGenerateText: chatModeId === 'generate-text' ? store.replyToText : null,
+    replyToGenerateText: chatModeId === 'generate-text' ? store.replyToText?.trim() || null : null,
   })));
 
 
@@ -186,6 +191,18 @@ export function Composer(props: {
   }, [setComposeText, setStartupText, startupText]);
 
 
+  // Overlay actions
+
+  const handleReplyToCleared = React.useCallback(() => {
+    conversationOverlayStore?.getState().setReplyToText(null);
+  }, [conversationOverlayStore]);
+
+  React.useEffect(() => {
+    if (replyToGenerateText)
+      setTimeout(() => props.composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
+  }, [replyToGenerateText, props.composerTextAreaRef]);
+
+
   // Primary button
 
   const { conversationId, onAction } = props;
@@ -199,15 +216,21 @@ export function Composer(props: {
     if (!multiPartMessage.length)
       return false;
 
+    // metadata
+    const metadata: ComposerActionMetadata = {
+      inReplyTo: replyToGenerateText || null,
+    };
+
     // send the message
-    const enqueued = onAction(conversationId, _chatModeId, multiPartMessage);
+    const enqueued = onAction(conversationId, _chatModeId, multiPartMessage, metadata);
     if (enqueued) {
       clearAttachments();
+      handleReplyToCleared();
       setComposeText('');
     }
 
     return enqueued;
-  }, [clearAttachments, conversationId, llmAttachments, onAction, setComposeText]);
+  }, [clearAttachments, conversationId, handleReplyToCleared, llmAttachments, onAction, replyToGenerateText, setComposeText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -238,18 +261,6 @@ export function Composer(props: {
     props.onTextImagine(props.conversationId, composeText);
     setComposeText('');
   }, [composeText, props, setComposeText]);
-
-
-  // Overlay actions
-
-  const handleReplyToCleared = React.useCallback(() => {
-    conversationOverlayStore?.getState().setReplyToText(null);
-  }, [conversationOverlayStore]);
-
-  React.useEffect(() => {
-    if (replyToGenerateText)
-      setTimeout(() => props.composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
-  }, [replyToGenerateText, props.composerTextAreaRef]);
 
 
   // Mode menu
