@@ -25,7 +25,7 @@ const bubbleComposerSx: SxProps = {
 };
 
 
-export function BubbleReplyTo(props: {
+export function ReplyToBubble(props: {
   replyToText: string | null,
   onClear: () => void
   className?: string,

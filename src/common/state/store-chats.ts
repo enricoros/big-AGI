@@ -66,7 +66,7 @@ export interface DMessage {
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
   metadata?: DMessageMetadata;      // metadata, mainly at creation and for UI
-  userFlags?: DMessageUserFlag[];       // (UI) user-set per-message flags
+  userFlags?: DMessageUserFlag[];   // (UI) user-set per-message flags
 
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
