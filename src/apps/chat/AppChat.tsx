@@ -39,7 +39,7 @@ import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
-import { Composer } from './components/composer/Composer';
+import { Composer, ComposerActionMetadata } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import { _handleExecute } from './editors/_handleExecute';
@@ -210,7 +210,7 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata: ComposerActionMetadata): boolean => {
     // validate inputs
     if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
       addSnackbar({
@@ -231,16 +231,27 @@ export function AppChat() {
       chatPanes.forEach(pane => pane.conversationId && uniqueConversationIds.add(pane.conversationId));
 
     // we loop to handle both the normal and multicast modes
-    let enqueued = false;
+    let enqueuedAny = false;
     for (const _cId of uniqueConversationIds) {
-      const _conversation = getConversation(_cId);
-      if (_conversation) {
-        // start execution fire/forget
-        void handleExecuteAndOutcome(chatModeId, _cId, [..._conversation.messages, createDMessage('user', userText)]);
-        enqueued = true;
-      }
+      const history = getConversation(_cId)?.messages;
+      if (!history) continue;
+
+      const newHistory = [
+        ...history,
+        createDMessage('user', userText),
+      ];
+
+      // FIXME: HACK - this is a temporary solution to pass the metadata to the execution
+      // Only works with OpenAI right now - shall be passed as higher level metadata, so that
+      // each LLM vendor can encode this the way they like
+      if (metadata.inReplyTo)
+        newHistory.push(createDMessage('system', `The user is referring to this in particular:\n${metadata.inReplyTo}`));
+
+      // fire/forget
+      void handleExecuteAndOutcome(chatModeId, _cId, newHistory);
+      enqueuedAny = true;
     }
-    return enqueued;
+    return enqueuedAny;
   }, [chatPanes, handleExecuteAndOutcome, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]) => {
