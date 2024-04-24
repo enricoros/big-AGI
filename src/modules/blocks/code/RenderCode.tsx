@@ -166,7 +166,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
           display: 'flex',
-          justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
+          // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
           overflowX: 'auto',
           minWidth: 160,
           '&:hover > .overlay-buttons': { opacity: 1 },
@@ -199,7 +199,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
                    }}
                    sx={{
                      ...(renderSVG ? { lineHeight: 0 } : {}),
-                     ...(renderPlantUML ? { textAlign: 'center' } : {}),
+                     ...(renderPlantUML ? { textAlign: 'center', mx: 'auto' } : {}),
                    }}
             />}
 
