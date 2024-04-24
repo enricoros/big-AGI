@@ -101,7 +101,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (chatModeId: ChatModeId, conversationId: DConversationId, multiPartMessage: ComposerOutputMultiPart) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -197,7 +197,7 @@ export function Composer(props: {
       return false;
 
     // send the message
-    const enqueued = onAction(_chatModeId, conversationId, multiPartMessage);
+    const enqueued = onAction(conversationId, _chatModeId, multiPartMessage);
     if (enqueued) {
       clearAttachments();
       setComposeText('');
