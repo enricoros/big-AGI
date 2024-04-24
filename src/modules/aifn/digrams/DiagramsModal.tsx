@@ -69,6 +69,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
   // derived state
   const { conversationId, text: subject } = props.config;
+  const diagramLlmId = diagramLlm?.id;
 
 
   /**
@@ -122,17 +123,31 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   }, [abortController]);
 
 
-  const handleInsertAndClose = () => {
+  // custom instruction
+
+  const handleCustomInstructionKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void handleGenerateNew();
+    }
+  }, [handleGenerateNew]);
+
+  const handleCustomInstructionChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomInstruction(event.target.value);
+  }, []);
+
+
+  const handleInsertAndClose = React.useCallback(() => {
     if (!diagramCode)
       return setErrorMessage('Nothing to add to the conversation.');
 
     const diagramMessage = createDMessage('assistant', diagramCode);
     // diagramMessage.purposeId = conversation.systemPurposeId;
-    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlm?.id ? `-${diagramLlm.id}` : '');
+    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '');
 
     useChatStore.getState().appendMessage(conversationId, diagramMessage);
     props.onClose();
-  };
+  }, [conversationId, diagramCode, diagramLlmId, props]);
 
 
   return (
@@ -170,7 +185,14 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           <Grid xs={12} md={6}>
             <FormControl>
               <FormLabel>Customize</FormLabel>
-              <Input title='Custom Instruction' placeholder='e.g. visualize as state' value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} />
+              <Input
+                title='Custom Instruction'
+                placeholder='e.g. visualize as state'
+                value={customInstruction}
+                onKeyDown={handleCustomInstructionKeyDown}
+                onChange={handleCustomInstructionChange}
+                endDecorator={(abortController && customInstruction) ? <CircularProgress size='sm' /> : undefined}
+              />
             </FormControl>
           </Grid>
         </Grid>
