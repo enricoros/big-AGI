@@ -165,7 +165,8 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         sx={{
           whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
-          display: 'block',
+          display: 'flex',
+          justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
           overflowX: 'auto',
           minWidth: 160,
           '&:hover > .overlay-buttons': { opacity: 1 },
