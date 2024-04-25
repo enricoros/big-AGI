@@ -6,6 +6,10 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 
 
+// configuration
+const INLINE_COLOR = 'primary';
+
+
 const bubbleComposerSx: SxProps = {
   // contained
   width: '100%',
@@ -24,16 +28,39 @@ const bubbleComposerSx: SxProps = {
   alignItems: 'start',
 };
 
+const inlineMessageSx: SxProps = {
+  ...bubbleComposerSx,
+
+  // redefine
+  // border: 'none',
+  mt: 1,
+  borderColor: `${INLINE_COLOR}.outlinedColor`,
+  borderRadius: 'sm',
+  boxShadow: 'xs',
+  width: undefined,
+  padding: '0.375rem 0.25rem 0.375rem 0.5rem',
+
+  // self-layout (parent: 'grid')
+  ml: 'auto',
+  mr: { xs: 7.75, md: 10.5 }, // personaSx.minWidth + gap (md: 1) + 1.5 (text margin)
+
+};
+
 
 export function ReplyToBubble(props: {
   replyToText: string | null,
-  onClear: () => void
+  inlineMessage?: boolean
+  onClear?: () => void,
   className?: string,
 }) {
   return (
-    <Box className={props.className} sx={bubbleComposerSx}>
-      <Tooltip disableInteractive arrow title='Replying to the assistant text' placement='top'>
-        <ReplyRoundedIcon sx={{ color: 'primary.solidBg', fontSize: 'xl', mt: 0.125 }} />
+    <Box className={props.className} sx={!props.inlineMessage ? bubbleComposerSx : inlineMessageSx}>
+      <Tooltip disableInteractive arrow title='Referring to this assistant text' placement='top'>
+        <ReplyRoundedIcon sx={{
+          color: props.inlineMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',
+          fontSize: 'xl',
+          mt: 0.125,
+        }} />
       </Tooltip>
       <Typography level='body-sm' sx={{
         flex: 1,
@@ -42,14 +69,16 @@ export function ReplyToBubble(props: {
         overflow: 'auto',
         maxHeight: '5.75rem',
         lineHeight: 'xl',
-        color: 'text.secondary',
+        color: /*props.inlineMessage ? 'text.tertiary' :*/ 'text.secondary',
         whiteSpace: 'break-spaces', // 'balance'
       }}>
         {props.replyToText}
       </Typography>
-      <IconButton size='sm' onClick={props.onClear} sx={{ my: -0.5, background: 'none' }}>
-        <CloseRoundedIcon />
-      </IconButton>
+      {!!props.onClear && (
+        <IconButton size='sm' onClick={props.onClear} sx={{ my: -0.5, background: 'none' }}>
+          <CloseRoundedIcon />
+        </IconButton>
+      )}
     </Box>
   );
 }
