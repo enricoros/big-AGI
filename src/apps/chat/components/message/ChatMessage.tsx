@@ -722,15 +722,6 @@ export function ChatMessage(props: {
               <span style={{ opacity: 0.5 }}>after this</span>
             </MenuItem>
           )}
-          {/* Diff Viewer */}
-          {!!props.diffPreviousText && <ListDivider />}
-          {!!props.diffPreviousText && (
-            <MenuItem onClick={handleOpsToggleShowDiff}>
-              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
-              Show difference
-              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
-            </MenuItem>
-          )}
           {/* Diagram / Draw / Speak */}
           {!!props.onTextDiagram && <ListDivider />}
           {!!props.onTextDiagram && (
@@ -749,6 +740,15 @@ export function ChatMessage(props: {
             <MenuItem onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
               <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverOutlinedIcon />}</ListItemDecorator>
               Speak
+            </MenuItem>
+          )}
+          {/* Diff Viewer */}
+          {!!props.diffPreviousText && <ListDivider />}
+          {!!props.diffPreviousText && (
+            <MenuItem onClick={handleOpsToggleShowDiff}>
+              <ListItemDecorator><DifferenceIcon /></ListItemDecorator>
+              Show difference
+              <Switch checked={showDiff} onChange={handleOpsToggleShowDiff} sx={{ ml: 'auto' }} />
             </MenuItem>
           )}
           {/* Beam/Restart */}
