@@ -176,8 +176,8 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 
         {/* Markdown Title (File/Type) */}
         {blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://')) && (
-          <Sheet sx={{ boxShadow: 'sm', borderRadius: 'sm', mb: 1 }}>
-            <Typography level='title-sm' sx={{ px: 1, py: 0.5 }}>
+          <Sheet sx={{ backgroundColor: 'background.surface', boxShadow: 'xs', borderRadius: 'xs', m: -0.5, mb: 1.5 }}>
+            <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }}>
               {blockTitle}
               {/*{inferredCodeLanguage}*/}
             </Typography>
