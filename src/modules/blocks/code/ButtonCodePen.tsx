@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import { IconButton, Tooltip } from '@mui/joy';
+import { Tooltip } from '@mui/joy';
 
 import { Brand } from '~/common/app.config';
 import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+
+import { OverlayButton } from './RenderCode';
 
 
 // CodePen is a web-based HTML, CSS, and JavaScript code editor
@@ -48,9 +50,9 @@ const handleOpenInCodePen = (code: string, language: string) => {
 export function ButtonCodePen(props: { code: string, language: string }): React.JSX.Element {
   return (
     <Tooltip title='Open in CodePen' variant='solid'>
-      <IconButton variant='outlined' color='neutral' onClick={() => handleOpenInCodePen(props.code, props.language)}>
+      <OverlayButton variant='outlined' onClick={() => handleOpenInCodePen(props.code, props.language)}>
         <CodePenIcon />
-      </IconButton>
+      </OverlayButton>
     </Tooltip>
   );
 }
