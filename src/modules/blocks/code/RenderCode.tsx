@@ -8,6 +8,7 @@ import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
+import WrapTextIcon from '@mui/icons-material/WrapText';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
@@ -106,6 +107,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
+  const [softWrap, setSoftWrap] = React.useState(false);
 
   // derived props
   const {
@@ -171,7 +173,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
-          whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
+          whiteSpace: softWrap ? 'break-spaces' : 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
           display: 'flex',
           flexDirection: 'column',
@@ -263,6 +265,15 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
               {canCodePen && <ButtonCodePen code={blockCode} language={inferredCodeLanguage!} />}
               {canStackBlitz && <ButtonStackBlitz code={blockCode} title={blockTitle} language={inferredCodeLanguage!} />}
             </ButtonGroup>
+          )}
+
+          {/* Soft Wrap toggle */}
+          {(!renderHTML && !renderMermaid && !renderPlantUML && !renderSVG) && (
+            <Tooltip title='Toggle Soft Wrap'>
+              <OverlayButton variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(on => !on)}>
+                <WrapTextIcon />
+              </OverlayButton>
+            </Tooltip>
           )}
 
           {/* Copy */}
