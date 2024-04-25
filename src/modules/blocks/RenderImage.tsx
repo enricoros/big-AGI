@@ -12,7 +12,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
 import type { ImageBlock } from './blocks';
-import { overlayButtonsSx } from './code/RenderCode';
+import { OverlayButton, overlayButtonsSx } from './code/RenderCode';
 
 
 const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;
@@ -128,24 +128,24 @@ export const RenderImage = (props: {
         <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, pt: 0.5, px: 0.5, gap: 0.5 }}>
           {!!props.onRunAgain && (
             <GoodTooltip title='Draw again'>
-              <IconButton variant='outlined' onClick={props.onRunAgain}>
+              <OverlayButton variant='outlined' onClick={props.onRunAgain}>
                 <ReplayIcon />
-              </IconButton>
+              </OverlayButton>
             </GoodTooltip>
           )}
 
           {!!alt && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
-              <IconButton variant={infoOpen ? 'solid' : 'soft'} onClick={() => setInfoOpen(open => !open)}>
+              <OverlayButton variant={infoOpen ? 'solid' : 'outlined'} onClick={() => setInfoOpen(open => !open)}>
                 <InfoOutlinedIcon />
-              </IconButton>
+              </OverlayButton>
             </GoodTooltip>
           )}
 
           <GoodTooltip title='Open in new tab'>
-            <IconButton variant='soft' component={Link} href={url} download={alt || 'image'} target='_blank'>
+            <OverlayButton variant='outlined' component={Link} href={url} download={alt || 'image'} target='_blank'>
               <OpenInNewIcon />
-            </IconButton>
+            </OverlayButton>
           </GoodTooltip>
         </Box>
       </Sheet>
