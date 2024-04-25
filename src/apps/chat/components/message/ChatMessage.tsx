@@ -800,7 +800,8 @@ export function ChatMessage(props: {
                 alignItems: 'center',
                 '& > button': {
                   '--Icon-fontSize': '1rem',
-                  minWidth: '2.5rem',
+                  minHeight: '2.5rem',
+                  minWidth: '2.75rem',
                 },
               }}
             >
