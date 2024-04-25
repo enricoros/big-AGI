@@ -556,8 +556,7 @@ export function ChatMessage(props: {
         '&:hover > button': { opacity: 1 },
 
         // layout
-        display: 'grid',
-        gap: 1,
+        display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
         ...props.sx,
       }}
