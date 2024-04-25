@@ -4,8 +4,8 @@ import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Tooltip, Typography } from '@mui/joy';
-import UnfoldLessRoundedIcon from '@mui/icons-material/UnfoldLessRounded';
-import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import type { DMessage } from '~/common/state/store-chats';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
@@ -220,9 +220,9 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       )}
 
       {isTextCollapsed ? (
-        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<UnfoldMoreRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Expand</Button></Box>
+        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<ExpandMoreIcon />} sx={{ minWidth: 120 }}>Expand</Button></Box>
       ) : forceUserExpanded && (
-        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<UnfoldLessRoundedIcon />} sx={{ minWidth: 100, mt: 0.5 }}>Collapse</Button></Box>
+        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<ExpandLessIcon />} sx={{ minWidth: 120 }}>Collapse</Button></Box>
       )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
