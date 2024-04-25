@@ -23,7 +23,7 @@ import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/com
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DConversationId, DMessage, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
+import { createDMessage, DConversationId, DMessage, DMessageMetadata, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -39,7 +39,7 @@ import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/ChatPageMenuItems';
-import { Composer, ComposerActionMetadata } from './components/composer/Composer';
+import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import { _handleExecute } from './editors/_handleExecute';
@@ -210,7 +210,7 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata: ComposerActionMetadata): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata?: DMessageMetadata): boolean => {
     // validate inputs
     if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
       addSnackbar({
@@ -236,19 +236,11 @@ export function AppChat() {
       const history = getConversation(_cId)?.messages;
       if (!history) continue;
 
-      const newHistory = [
-        ...history,
-        createDMessage('user', userText),
-      ];
-
-      // FIXME: HACK - this is a temporary solution to pass the metadata to the execution
-      // Only works with OpenAI right now - shall be passed as higher level metadata, so that
-      // each LLM vendor can encode this the way they like
-      if (metadata.inReplyTo)
-        newHistory.push(createDMessage('system', `The user is referring to this in particular:\n${metadata.inReplyTo}`));
+      const newUserMessage = createDMessage('user', userText);
+      if (metadata) newUserMessage.metadata = metadata;
 
       // fire/forget
-      void handleExecuteAndOutcome(chatModeId, _cId, newHistory);
+      void handleExecuteAndOutcome(chatModeId, _cId, [...history, newUserMessage]);
       enqueuedAny = true;
     }
     return enqueuedAny;

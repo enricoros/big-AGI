@@ -27,7 +27,7 @@ import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { conversationTitle, DConversationId, getConversation, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversationId, DMessageMetadata, getConversation, useChatStore } from '~/common/state/store-chats';
 import { countModelTokens } from '~/common/util/token-counter';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
@@ -90,11 +90,6 @@ const dropppedCardDraggingSx: SxProps = {
 } as const;
 
 
-export interface ComposerActionMetadata {
-  inReplyTo: string | null;
-}
-
-
 /**
  * A React component for composing messages, with attachments and different modes.
  */
@@ -106,7 +101,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata: ComposerActionMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -217,9 +212,7 @@ export function Composer(props: {
       return false;
 
     // metadata
-    const metadata: ComposerActionMetadata = {
-      inReplyTo: replyToGenerateText || null,
-    };
+    const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
 
     // send the message
     const enqueued = onAction(conversationId, _chatModeId, multiPartMessage, metadata);

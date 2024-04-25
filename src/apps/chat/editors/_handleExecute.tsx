@@ -1,4 +1,5 @@
 import { getChatLLMId } from '~/modules/llms/store-llms';
+import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { createDMessage, DConversationId, DMessage, getConversationSystemPurposeId } from '~/common/state/store-chats';
@@ -29,6 +30,10 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   //       2. all the exit points need to call setMessages
   const cHandler = ConversationsManager.getHandler(conversationId);
   cHandler.inlineUpdatePurposeInHistory(history, chatLLMId || undefined);
+
+  // FIXME: shouldn't do this for all the code paths. The advantage for having it here (vs Composer output only) is re-executing history
+  // TODO: move this to the server side after transferring metadata?
+  updateHistoryForReplyTo(history);
 
   // Handle unconfigured
   if (!chatLLMId || !chatModeId) {
