@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, ListItemButton, ListItemDecorator, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, IconButton, ListItemDecorator, Sheet, Tooltip } from '@mui/joy';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -136,17 +136,28 @@ export function CreatorDrawer(props: {
         </Sheet>
       ) : (
         // Create Button
-        <ListItemButton
+        <Button
           variant={props.selectedSimplePersonaId ? 'plain' : 'soft'}
           onClick={handleSimplePersonaUnselect}
+          sx={{
+            m: 2,
+
+            // ...PageDrawerTallItemSx,
+            justifyContent: 'flex-start',
+            padding: '0px 0.75rem',
+
+            // style
+            border: '1px solid',
+            borderColor: 'neutral.outlinedBorder',
+            borderRadius: 'sm',
+            '--ListItemDecorator-size': 'calc(2.5rem - 1px)', // compensate for the border
+          }}
         >
-          <ListItemDecorator>
-            <Diversity2Icon />
-          </ListItemDecorator>
-          <Typography level='title-sm' sx={!props.selectedSimplePersonaId ? { fontWeight: 'lg' } : undefined}>
-            Create
-          </Typography>
-        </ListItemButton>
+          <ListItemDecorator><Diversity2Icon /></ListItemDecorator>
+          {/*<Typography level='title-sm' sx={!props.selectedSimplePersonaId ? { fontWeight: 'lg' } : undefined}>*/}
+          Create
+          {/*</Typography>*/}
+        </Button>
       )}
 
       {/* Personas [] */}
