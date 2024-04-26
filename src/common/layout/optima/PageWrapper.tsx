@@ -57,8 +57,8 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
         sx={{
           boxShadow: {
             xs: 'none',
-            md: amplitude === 'narrow' ? '1px 2px 6px 0 rgba(50 56 62 / 0.12)' : 'none',
-            xl: amplitude !== 'full' ? '1px 2px 6px 0 rgba(50 56 62 / 0.12)' : 'none',
+            md: amplitude === 'narrow' ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
+            xl: amplitude !== 'full' ? '0px 0px 4px 0 rgba(50 56 62 / 0.12)' : 'none',
           },
         }}
       >
