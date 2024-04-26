@@ -16,7 +16,7 @@ export const FALLBACK_LLM_TEMPERATURE = 0.5;
 
 
 // special symbols
-export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
+// export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
 export interface SourceSetupOpenAI {
   oaiKey: string;

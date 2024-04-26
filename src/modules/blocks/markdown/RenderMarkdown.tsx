@@ -32,9 +32,7 @@ export function RenderMarkdown(props: { textBlock: TextBlock; sx?: SxProps; }) {
       sx={props.sx}
     >
       <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer>
-          {props.textBlock.content}
-        </DynamicMarkdownRenderer>
+        <DynamicMarkdownRenderer content={props.textBlock.content} />
       </React.Suspense>
     </RenderMarkdownBox>
   );

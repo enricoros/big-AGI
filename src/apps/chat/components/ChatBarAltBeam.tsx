@@ -31,7 +31,7 @@ export function ChatBarAltBeam(props: {
     requiresConfirmation: store.isScattering || store.isGatheringAny || store.raysReady > 0,
     // actions
     setIsMaximized: store.setIsMaximized,
-    terminateBeam: store.terminate,
+    terminateBeam: store.terminateKeepingSettings,
   })));
 
 
@@ -63,16 +63,7 @@ export function ChatBarAltBeam(props: {
 
 
   return (
-    <Box sx={{ display: 'flex', gap: { xs: 1, md: 3 }, alignItems: 'center' }}>
-
-      {/* [desktop] maximize button, or a disabled spacer  */}
-      {props.isMobile ? null : (
-        <GoodTooltip title='Maximize'>
-          <IconButton size='sm' onClick={handleMaximizeBeam}>
-            <FullscreenRoundedIcon />
-          </IconButton>
-        </GoodTooltip>
-      )}
+    <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'center' }}>
 
       {/* Title & Status */}
       <Typography level='title-md'>
@@ -89,11 +80,24 @@ export function ChatBarAltBeam(props: {
       </Typography>
 
       {/* Right Close Icon */}
-      <GoodTooltip usePlain title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Close Beam Mode <KeyStroke combo='Esc' /></Box>}>
-        <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
-          <CloseRoundedIcon />
-        </IconButton>
-      </GoodTooltip>
+      <Box sx={{ display: 'flex' }}>
+
+        {/* [desktop] maximize button, or a disabled spacer  */}
+        {!props.isMobile && (
+          <GoodTooltip usePlain title={<Box sx={{ p: 1 }}>Maximize</Box>}>
+            <IconButton size='sm' onClick={handleMaximizeBeam}>
+              <FullscreenRoundedIcon />
+            </IconButton>
+          </GoodTooltip>
+        )}
+
+        <GoodTooltip usePlain title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke combo='Esc' /></Box>}>
+          <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </GoodTooltip>
+
+      </Box>
 
 
       {/* Confirmation Modal */}

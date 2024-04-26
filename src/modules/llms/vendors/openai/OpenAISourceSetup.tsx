@@ -12,10 +12,10 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
-import { isValidOpenAIApiKey, ModelVendorOpenAI } from './openai.vendor';
+import { ModelVendorOpenAI } from './openai.vendor';
 
 
 // avoid repeating it all over
@@ -34,13 +34,13 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
 
-  const keyValid = isValidOpenAIApiKey(oaiKey);
+  const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorOpenAI, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 

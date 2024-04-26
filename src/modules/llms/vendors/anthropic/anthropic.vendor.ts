@@ -13,7 +13,7 @@ import { AnthropicSourceSetup } from './AnthropicSourceSetup';
 
 
 // special symbols
-export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length >= 40);
+export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length > 1);
 
 export interface SourceSetupAnthropic {
   anthropicKey: string;

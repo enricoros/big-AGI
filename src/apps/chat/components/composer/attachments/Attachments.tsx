@@ -153,7 +153,7 @@ export function Attachments(props: {
         </MenuItem>
         <MenuItem onClick={handleClearAttachments}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
-          Clear
+          Clear{attachments.length > 5 ? <span style={{ opacity: 0.5 }}> {attachments.length} attachments</span> : null}
         </MenuItem>
       </CloseableMenu>
     )}

@@ -65,7 +65,8 @@ export interface DMessage {
   purposeId?: SystemPurposeId;      // only assistant/system
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
-  userFlags?: DMessageUserFlag[];       // user-set per-message flags
+  metadata?: DMessageMetadata;      // metadata, mainly at creation and for UI
+  userFlags?: DMessageUserFlag[];       // (UI) user-set per-message flags
 
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
@@ -75,6 +76,10 @@ export interface DMessage {
 
 export type DMessageUserFlag =
   | 'starred'; // user starred this
+
+export interface DMessageMetadata {
+  inReplyToText?: string;           // text this was in reply to
+}
 
 export function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
@@ -130,6 +135,7 @@ export interface ChatActions {
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
+  updateMetadata: (conversationId: string, messageId: string, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
@@ -345,9 +351,30 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           return {
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
-            ...(touchUpdated && { updated: Date.now() }),
+            updated: touchUpdated ? Date.now() : conversation.updated,
           };
         }),
+
+      updateMetadata: (conversationId: string, messageId: string, metadataDelta: Partial<DMessageMetadata>, touchUpdated: boolean = true) => {
+        _get()._editConversation(conversationId, conversation => {
+          const messages = conversation.messages.map(message =>
+            message.id !== messageId ? message
+              : {
+                ...message,
+                metadata: {
+                  ...message.metadata,
+                  ...metadataDelta,
+                },
+                updated: touchUpdated ? Date.now() : message.updated,
+              },
+          );
+
+          return {
+            messages,
+            updated: touchUpdated ? Date.now() : conversation.updated,
+          };
+        });
+      },
 
       setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) =>
         _get()._editConversation(conversationId,

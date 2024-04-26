@@ -19,12 +19,14 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + Shift + V    | Attach clipboard (better than Ctrl + V)         |
 | Ctrl + M            | Microphone (voice typing)                       |
 | **Chats**           |                                                 | 
-| Ctrl + Alt + Left   | **Previous** chat (in history)                  |
-| Ctrl + Alt + Right  | **Next** chat (in history)                      |
+| Ctrl + O            | Open Chat ...                                   |
+| Ctrl + S            | Save Chat ...                                   |
 | Ctrl + Alt + N      | **New** chat                                    |
 | Ctrl + Alt + X      | **Reset** chat                                  |
 | Ctrl + Alt + D      | **Delete** chat                                 |
 | Ctrl + Alt + B      | **Branch** chat                                 |
+| Ctrl + Alt + Left   | **Previous** chat (in history)                  |
+| Ctrl + Alt + Right  | **Next** chat (in history)                      |
 | **Settings**        |                                                 |
 | Ctrl + Shift + P    | ⚙️ Preferences                                  |
 | Ctrl + Shift + M    | 🧠 Models                                       |
