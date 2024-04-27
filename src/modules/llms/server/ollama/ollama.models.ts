@@ -79,7 +79,7 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { description: string, pulls: 
   'tinydolphin': { description: 'An experimental 1.1B parameter model trained on the new Dolphin 2.8 dataset by Eric Hartford and based on TinyLlama.', pulls: 735, added: '20240126' },
   'stablelm2': { description: 'Stable LM 2 1.6B is a state-of-the-art 1.6 billion parameter small language model trained on multilingual data in English, Spanish, German, Italian, French, Portuguese, and Dutch.', pulls: 45, added: '20240126' },
   'duckdb-nsql': { description: '7B parameter text-to-SQL model made by MotherDuck and Numbers Station.', pulls: 42, added: '20240126' },
-  'command-r-plus': { description: 'Command R+ is a powerful, scalable large language model purpose-built to excel at real-world enterprise use cases.', pulls: 226000, parameters: {num_ctx: 128000} },
+  'command-r-plus': { description: 'Command R+ is a powerful, scalable large language model purpose-built to excel at real-world enterprise use cases.', pulls: 226000, parameters: 'num_ctx 128000' },
 };
 // export const OLLAMA_LAST_UPDATE: string = '20240126';
 export const OLLAMA_PREV_UPDATE: string = '20231220';

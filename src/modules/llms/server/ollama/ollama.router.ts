@@ -218,9 +218,14 @@ export const llmOllamaRouter = createTRPCRouter({
           let contextWindow = 4096;
           if (model.parameters) {
             // split the parameters into lines, and find one called "num_ctx ...spaces... number"
-            const paramsNumCtx = model.parameters.num_ctx;
+            const paramsNumCtx = model.parameters.split('\n').find(line => line.startsWith('num_ctx '));
             if (paramsNumCtx) {
-              contextWindow = parseInt(paramsNumCtx);
+              const numCtxValue: string = paramsNumCtx.split(/\s+/)[1];
+              if (numCtxValue) {
+                const numCtxNumber: number = parseInt(numCtxValue);
+                if (!isNaN(numCtxNumber))
+                  contextWindow = numCtxNumber;
+              }
             }
           }
 
