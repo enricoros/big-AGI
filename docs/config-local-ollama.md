@@ -80,6 +80,11 @@ Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and a
         chunked_transfer_encoding off;
         proxy_buffering off;
         proxy_cache off;
+        
+        # Longer timeouts
+        proxy_read_timeout 3600;
+        proxy_connect_timeout 3600;
+        proxy_send_timeout 3600;
     }
 ```
 
