@@ -182,6 +182,10 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           minWidth: 160,
           '&:hover > .overlay-buttons': { opacity: 1 },
           ...(props.sx || {}),
+          // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
+          '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? {
+            backgroundColor: 'neutral.300',
+          } : {},
         }}>
 
         {/* Markdown Title (File/Type) */}
