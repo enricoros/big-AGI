@@ -49,7 +49,7 @@ the same steps 1 and 2 as for [local development](#local-development).
    ```
 4. Start the production server:
    ```bash
-    next start --port 3000
+    npx next start --port 3000
     ```
    Your big-AGI production instance is on `http://localhost:3000`.
 
