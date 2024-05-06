@@ -43,6 +43,7 @@ import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import { _handleExecute } from './editors/_handleExecute';
+import { isMacUser } from '~/common/util/pwaUtils';
 
 
 // what to say when a chat is new and has no title
@@ -385,12 +386,12 @@ export function AppChat() {
     // focused conversation
     ['b', true, true, false, handleMessageBeamLastInFocusedPane],
     ['r', true, true, false, handleMessageRegenerateLastInFocusedPane],
-    ['n', true, false, true, handleConversationNewInFocusedPane],
+    ['n', true, false, isMacUser ? false : true, handleConversationNewInFocusedPane],
     ['o', true, false, false, handleFileOpenConversation],
     ['s', true, false, false, () => handleFileSaveConversation(focusedPaneConversationId)],
-    ['b', true, false, true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationBranch(focusedPaneConversationId, null))],
-    ['x', true, false, true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId))],
-    ['d', true, false, true, () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false)],
+    ['b', true, false, isMacUser ? false : true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationBranch(focusedPaneConversationId, null))],
+    ['x', true, false, isMacUser ? false : true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId))],
+    ['d', true, false, isMacUser ? false : true, () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false)],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistoryInFocusedPane('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistoryInFocusedPane('forward')],
     // global
