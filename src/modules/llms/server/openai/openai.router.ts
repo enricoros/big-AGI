@@ -616,7 +616,7 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
     model: model.id,
     messages: history,
     ...(functions && { functions: functions, function_call: forceFunctionName ? { name: forceFunctionName } : 'auto' }),
-    ...(model.temperature && { temperature: model.temperature }),
+    ...(model.temperature !== undefined && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
     ...(n > 1 && { n }),
     stream,

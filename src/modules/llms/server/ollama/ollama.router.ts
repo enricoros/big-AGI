@@ -44,7 +44,7 @@ export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: O
   model: model.id,
   messages: history,
   options: {
-    ...(model.temperature && { temperature: model.temperature }),
+    ...(model.temperature !== undefined && { temperature: model.temperature }),
   },
   // n: ...
   // functions: ...
@@ -78,7 +78,7 @@ export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenA
     model: model.id,
     prompt,
     options: {
-      ...(model.temperature && { temperature: model.temperature }),
+      ...(model.temperature !== undefined && { temperature: model.temperature }),
     },
     ...(systemPrompt && { system: systemPrompt }),
     stream,
