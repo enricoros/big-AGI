@@ -50,7 +50,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
         : '✔️ already set in server'
-      } {anthropicKey && keyValid && <Link level='body-sm' href='https://console.anthropic.com/' target='_blank'>check usage</Link>}
+      } {anthropicKey && keyValid && <Link level='body-sm' href='https://console.anthropic.com/settings/usage' target='_blank'>show tokens usage</Link>}
       </>}
       value={anthropicKey} onChange={value => updateSetup({ anthropicKey: value })}
       required={needsUserKey} isError={keyError}
