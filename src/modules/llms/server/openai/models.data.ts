@@ -600,8 +600,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // parse pricing
   const pricing: ModelDescriptionSchema['pricing'] = {
-    chatIn: parseFloat(model.pricing.prompt) * 1000,
-    chatOut: parseFloat(model.pricing.completion),
+    chatIn: parseFloat(model.pricing.prompt) * 1000 * 1000,
+    chatOut: parseFloat(model.pricing.completion) * 1000 * 1000,
+    // image...
+    // request...
   };
   const seemsFree = pricing.chatIn === 0 && pricing.chatOut === 0;
 
