@@ -10,7 +10,7 @@ import type { TextToImageProvider } from '~/common/components/useCapabilities';
 export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText?: string) {
   if (!imageText) {
     cHandler.messageAppendAssistant('Issue: no image description provided.', undefined, 'issue', false);
-    return;
+    return false;
   }
 
   // Acquire the active TextToImageProvider
@@ -19,7 +19,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
     t2iProvider = getActiveTextToImageProviderOrThrow();
   } catch (error: any) {
     cHandler.messageAppendAssistant(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, undefined, 'issue', false);
-    return;
+    return 'err-t2i-unconfigured';
   }
 
   // if the imageText ends with " xN" or " [N]" (where N is a number), then we'll generate N images
@@ -36,8 +36,10 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   try {
     const imageUrls = await t2iGenerateImageOrThrow(t2iProvider, imageText, repeat);
     cHandler.messageEdit(assistantMessageId, { text: imageUrls.join('\n'), typing: false }, true);
+    return true;
   } catch (error: any) {
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
     cHandler.messageEdit(assistantMessageId, { text: `[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`, typing: false }, false);
+    return false;
   }
 }

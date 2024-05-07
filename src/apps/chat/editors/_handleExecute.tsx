@@ -15,16 +15,27 @@ import { runReActUpdatingState } from './react-tangent';
 import type { ChatModeId } from '../AppChat';
 
 
-export async function _handleExecute(chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]): Promise<void> {
+export async function _handleExecute(chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) {
+
+  // Handle missing conversation
+  if (!conversationId)
+    return 'err-no-conversation';
+
   const chatLLMId = getChatLLMId();
-  if (!chatModeId || !conversationId || !chatLLMId) return;
 
   // Update the system message from the active persona to the history
   // NOTE: this does NOT call setMessages anymore (optimization). make sure to:
   //       1. all the callers need to pass a new array
   //       2. all the exit points need to call setMessages
   const cHandler = ConversationsManager.getHandler(conversationId);
-  cHandler.inlineUpdatePurposeInHistory(history, chatLLMId);
+  cHandler.inlineUpdatePurposeInHistory(history, chatLLMId || undefined);
+
+  // Handle unconfigured
+  if (!chatLLMId || !chatModeId) {
+    // set the history (e.g. the updated system prompt and the user prompt) at least, see #523
+    cHandler.messagesReplace(history);
+    return !chatLLMId ? 'err-no-chatllm' : 'err-no-chatmode';
+  }
 
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
   const lastMessage = history.length > 0 ? history[history.length - 1] : null;
@@ -47,11 +58,13 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
         case 'chat-alter':
           // /clear
           if (chatCommand.command === '/clear') {
-            if (chatCommand.params === 'all')
-              return cHandler.messagesReplace([]);
-            cHandler.messagesReplace(history);
-            cHandler.messageAppendAssistant('Issue: this command requires the \'all\' parameter to confirm the operation.', undefined, 'issue', false);
-            return;
+            if (chatCommand.params === 'all') {
+              cHandler.messagesReplace([]);
+            } else {
+              cHandler.messagesReplace(history);
+              cHandler.messageAppendAssistant('Issue: this command requires the \'all\' parameter to confirm the operation.', undefined, 'issue', false);
+            }
+            return true;
           }
           // /assistant, /system
           Object.assign(lastMessage, {
@@ -59,7 +72,8 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
             sender: 'Bot',
             text: chatCommand.params || '',
           } satisfies Partial<DMessage>);
-          return cHandler.messagesReplace(history);
+          cHandler.messagesReplace(history);
+          return true;
 
         case 'cmd-help':
           const chatCommandsText = findAllChatCommands()
@@ -67,18 +81,22 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
             .join('\n');
           cHandler.messagesReplace(history);
           cHandler.messageAppendAssistant('Available Chat Commands:\n' + chatCommandsText, undefined, 'help', false);
-          return;
+          return true;
 
         case 'mode-beam':
-          if (chatCommand.isError)
-            return cHandler.messagesReplace(history);
+          if (chatCommand.isError) {
+            cHandler.messagesReplace(history);
+            return false;
+          }
           // remove '/beam ', as we want to be a user chat message
           Object.assign(lastMessage, { text: chatCommand.params || '' });
           cHandler.messagesReplace(history);
-          return ConversationsManager.getHandler(conversationId).beamInvoke(history, [], null);
+          ConversationsManager.getHandler(conversationId).beamInvoke(history, [], null);
+          return true;
 
         default:
-          return cHandler.messagesReplace([...history, createDMessage('assistant', 'This command is not supported.')]);
+          cHandler.messagesReplace([...history, createDMessage('assistant', 'This command is not supported.')]);
+          return false;
       }
     }
   }
@@ -88,7 +106,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   if (!getConversationSystemPurposeId(conversationId)) {
     cHandler.messagesReplace(history);
     cHandler.messageAppendAssistant('Issue: no Persona selected.', undefined, 'issue', false);
-    return;
+    return 'err-no-persona';
   }
 
   // synchronous long-duration tasks, which update the state as they go
@@ -99,10 +117,12 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
     case 'generate-text-beam':
       cHandler.messagesReplace(history);
-      return cHandler.beamInvoke(history, [], null);
+      cHandler.beamInvoke(history, [], null);
+      return true;
 
     case 'append-user':
-      return cHandler.messagesReplace(history);
+      cHandler.messagesReplace(history);
+      return true;
 
     case 'generate-image':
       if (!lastMessage?.text) break;
@@ -122,4 +142,5 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
   console.log('Chat execute: issue running', chatModeId, conversationId, lastMessage);
   cHandler.messagesReplace(history);
+  return false;
 }

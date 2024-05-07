@@ -19,6 +19,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
+import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
@@ -26,7 +27,6 @@ import { createDMessage, DConversationId, DMessage, getConversation, getConversa
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -101,7 +101,7 @@ export function AppChat() {
 
   const showAltTitleBar = useUXLabsStore(state => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
 
-  const { openLlmOptions } = useOptimaLayout();
+  const { openLlmOptions, openModelsSetup, openPreferencesTab } = useOptimaLayout();
 
   const { chatLLM } = useChatLLM();
 
@@ -197,6 +197,19 @@ export function AppChat() {
 
   // Execution
 
+  const handleExecuteAndOutcome = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
+    const outcome = await _handleExecute(chatModeId, conversationId, history);
+    if (outcome === 'err-no-chatllm')
+      openModelsSetup();
+    else if (outcome === 'err-t2i-unconfigured')
+      openPreferencesTab(PreferencesTab.Draw);
+    else if (outcome === 'err-no-persona')
+      addSnackbar({ key: 'chat-no-persona', message: 'No persona selected.', type: 'issue' });
+    else if (outcome === 'err-no-conversation')
+      addSnackbar({ key: 'chat-no-conversation', message: 'No active conversation.', type: 'issue' });
+    return outcome === true;
+  }, [openModelsSetup, openPreferencesTab]);
+
   const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart): boolean => {
     // validate inputs
     if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
@@ -223,25 +236,25 @@ export function AppChat() {
       const _conversation = getConversation(_cId);
       if (_conversation) {
         // start execution fire/forget
-        void _handleExecute(chatModeId, _cId, [..._conversation.messages, createDMessage('user', userText)]);
+        void handleExecuteAndOutcome(chatModeId, _cId, [..._conversation.messages, createDMessage('user', userText)]);
         enqueued = true;
       }
     }
     return enqueued;
-  }, [chatPanes, willMulticast]);
+  }, [chatPanes, handleExecuteAndOutcome, willMulticast]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]): Promise<void> => {
-    await _handleExecute('generate-text', conversationId, history);
-  }, []);
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]) => {
+    await handleExecuteAndOutcome('generate-text', conversationId, history);
+  }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedPaneConversationId);
     if (focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
       const history = lastMessage.role === 'assistant' ? focusedConversation.messages.slice(0, -1) : [...focusedConversation.messages];
-      return await _handleExecute('generate-text', focusedConversation.id, history);
+      await handleExecuteAndOutcome('generate-text', focusedConversation.id, history);
     }
-  }, [focusedPaneConversationId]);
+  }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
     // Ctrl + Shift + B
@@ -257,16 +270,16 @@ export function AppChat() {
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
-  const handleTextImagine = React.useCallback(async (conversationId: DConversationId, messageText: string): Promise<void> => {
+  const handleTextImagine = React.useCallback(async (conversationId: DConversationId, messageText: string) => {
     const conversation = getConversation(conversationId);
     if (!conversation)
       return;
     const imaginedPrompt = await imaginePromptFromText(messageText) || 'An error sign.';
-    return await _handleExecute('generate-image', conversationId, [
+    await handleExecuteAndOutcome('generate-image', conversationId, [
       ...conversation.messages,
       createDMessage('user', imaginedPrompt),
     ]);
-  }, []);
+  }, [handleExecuteAndOutcome]);
 
   const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
     await speakText(text);
