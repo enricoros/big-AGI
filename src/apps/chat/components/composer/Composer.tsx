@@ -172,6 +172,8 @@ export function Composer(props: {
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (props.chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
+  const tokenPriceIn = props.chatLLM?.pricing?.chatIn;
+  const tokenPriceOut = props.chatLLM?.pricing?.chatOut;
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targe)
@@ -670,11 +672,11 @@ export function Composer(props: {
                   }} />
 
                 {!showChatReplyTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
-                  <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} />
+                  <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} />
                 )}
 
                 {!showChatReplyTo && !!tokenLimit && (
-                  <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} showExcess absoluteBottomRight />
+                  <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} showExcess absoluteBottomRight />
                 )}
 
               </Box>
