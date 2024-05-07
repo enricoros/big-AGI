@@ -8,14 +8,18 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
   pricing: z.object({
     prompt: z.string(),
     completion: z.string(),
+    image: z.string(),
+    request: z.string(),
   }),
   context_length: z.number(),
   architecture: z.object({
-    tokenizer: z.string(),
+    modality: z.string(), // z.enum(['text', 'multimodal']),
+    tokenizer: z.string(), // e.g. 'Mistral'
     instruct_type: z.string().nullable(),
   }),
   top_provider: z.object({
     max_completion_tokens: z.number().nullable(),
+    is_moderated: z.boolean(), // false means that the user will need to do moderation, and likely this has lower latency
   }),
 
   // when logged in
