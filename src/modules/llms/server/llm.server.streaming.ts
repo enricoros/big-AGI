@@ -513,7 +513,7 @@ function _prepareRequestData(access: ChatStreamingInputSchema['access'], model: 
     case 'ollama':
       return {
         ...ollamaAccess(access, OLLAMA_PATH_CHAT),
-        body: ollamaChatCompletionPayload(model, history, true),
+        body: ollamaChatCompletionPayload(model, history, access.ollamaJson, true),
         vendorMuxingFormat: 'json-nl',
         vendorStreamParser: createStreamParserOllama(),
       };

@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Button } from '@mui/joy';
 
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -26,7 +27,7 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
     useSourceSetup(props.sourceId, ModelVendorOllama);
 
   // derived state
-  const { ollamaHost } = access;
+  const { ollamaHost, ollamaJson } = access;
 
   const hostValid = !!asValidURL(ollamaHost);
   const hostError = !!ollamaHost && !hostValid;
@@ -41,11 +42,21 @@ export function OllamaSourceSetup(props: { sourceId: DModelSourceId }) {
     <FormTextField
       autoCompleteId='ollama-host'
       title='Ollama Host'
-      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-ollama.md' target='_blank'>information</Link>}
+      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-ollama.md' target='_blank'>Information</Link>}
       placeholder='http://127.0.0.1:11434'
       isError={hostError}
       value={ollamaHost || ''}
       onChange={text => updateSetup({ ollamaHost: text })}
+    />
+
+    <FormSwitchControl
+      title='JSON Output' on='Enabled' fullWidth
+      description={<Link level='body-sm' href='https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion' target='_blank'>Information</Link>}
+      checked={ollamaJson}
+      onChange={on => {
+        updateSetup({ ollamaJson: on });
+        refetch();
+      }}
     />
 
     <SetupFormRefetchButton

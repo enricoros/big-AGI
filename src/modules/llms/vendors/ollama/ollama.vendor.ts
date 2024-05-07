@@ -1,5 +1,5 @@
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
-import { apiAsync, apiQuery } from '~/common/util/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
@@ -14,6 +14,7 @@ import { OllamaSourceSetup } from './OllamaSourceSetup';
 
 export interface SourceSetupOllama {
   ollamaHost: string;
+  ollamaJson: boolean;
 }
 
 
@@ -34,6 +35,7 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({
     dialect: 'ollama',
     ollamaHost: partialSetup?.ollamaHost || '',
+    ollamaJson: partialSetup?.ollamaJson || false,
   }),
 
   // List Models
