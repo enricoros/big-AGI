@@ -12,8 +12,9 @@
  >>>
  *
  * from: https://ollama.ai/library?sort=featured
+ * Note: the default contextWindow in code is 8192, so we do not redefine that
  */
-export const OLLAMA_BASE_MODELS: { [key: string]: { description: string, pulls: number, added?: string } } = {
+export const OLLAMA_BASE_MODELS: { [key: string]: { description: string, pulls: number, added?: string, contextWindow?: number } } = {
   'llama3': { description: 'Meta Llama 3: The most capable openly available LLM to date', pulls: 562300, added: '20240501' },
   'phi3': { description: 'Phi-3 Mini is a 3.8B parameters, lightweight, state-of-the-art open model by Microsoft.', pulls: 61800, added: '20240501' },
   'wizardlm2': { description: 'State of the art large language model from Microsoft AI with improved performance on complex chat, multilingual, reasoning and agent use cases.', pulls: 34400, added: '20240501' },
@@ -23,7 +24,7 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { description: string, pulls: 
   'llama2': { description: 'Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters.', pulls: 1400000 },
   'codegemma': { description: 'CodeGemma is a collection of powerful, lightweight models that can perform a variety of coding tasks like fill-in-the-middle code completion, code generation, natural language understanding, mathematical reasoning, and instruction following.', pulls: 35000, added: '20240501' },
   'command-r': { description: 'Command R is a Large Language Model optimized for conversational interaction and long context tasks.', pulls: 28500, added: '20240501' },
-  'command-r-plus': { description: 'Command R+ is a powerful, scalable large language model purpose-built to excel at real-world enterprise use cases.', pulls: 23800, added: '20240501' },
+  'command-r-plus': { description: 'Command R+ is a powerful, scalable large language model purpose-built to excel at real-world enterprise use cases.', pulls: 23800, added: '20240501', contextWindow: 128000 },
   'llava': { description: '🌋 LLaVA is a novel end-to-end trained large multimodal model that combines a vision encoder and Vicuna for general-purpose visual and language understanding. Updated to version 1.6.', pulls: 166600 },
   'dbrx': { description: 'DBRX is an open, general-purpose LLM created by Databricks.', pulls: 4034, added: '20240501' },
   'codellama': { description: 'A large language model that can use text prompts to generate and discuss code.', pulls: 381200 },
@@ -56,7 +57,7 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { description: string, pulls: 
   'wizard-math': { description: 'Model focused on math and logic problems', pulls: 21000 },
   'mxbai-embed-large': { description: 'State-of-the-art large embedding model from mixedbread.ai', pulls: 20800, added: '20240501' },
   'falcon': { description: 'A large language model built by the Technology Innovation Institute (TII) for use in summarization, text generation, and chat bots.', pulls: 20200 },
-  'orca2': { description: 'Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta\'s Llama 2 models. The model is designed to excel particularly in reasoning.', pulls: 19900 },
+  'orca2': { description: 'Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta\'s Llama 2 models.The model is designed to excel particularly in reasoning.', pulls: 19900 },
   'dolphin-phi': { description: '2.7B uncensored Dolphin model by Eric Hartford, based on the Phi language model by Microsoft Research.', pulls: 19700 },
   'dolphin-llama3': { description: 'Dolphin 2.9 is a new model with 8B and 70B sizes by Eric Hartford based on Llama 3 that has a variety of instruction, conversational, and coding skills.', pulls: 19700, added: '20240501' },
   'dolphincoder': { description: 'A 7B and 15B uncensored variant of the Dolphin model family that excels at coding, based on StarCoder2.', pulls: 17800, added: '20240501' },
@@ -72,7 +73,7 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { description: string, pulls: 
   'all-minilm': { description: 'Embedding models on very large sentence level datasets.', pulls: 11700, added: '20240501' },
   'everythinglm': { description: 'Uncensored Llama2 based model with support for a 16K context window.', pulls: 11700 },
   'samantha-mistral': { description: 'A companion assistant trained in philosophy, psychology, and personal relationships. Based on Mistral.', pulls: 11000 },
-  'yarn-llama2': { description: 'An extension of Llama 2 that supports a context of up to 128k tokens.', pulls: 10600 },
+  'yarn-llama2': { description: 'An extension of Llama 2 that supports a context of up to 128k tokens.', pulls: 10600, contextWindow: 128000 },
   'deepseek-llm': { description: 'An advanced language model crafted with 2 trillion bilingual tokens.', pulls: 10500 },
   'stable-beluga': { description: 'Llama 2 based model fine tuned on an Orca-style dataset. Originally called Free Willy.', pulls: 10300 },
   'yarn-mistral': { description: 'An extension of Mistral to support context windows of 64K or 128K.', pulls: 10200 },
