@@ -31,7 +31,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   cHandler.setAbortController(abortController);
 
   // stream the assistant's messages
-  await streamAssistantMessage(
+  const messageStatus = await streamAssistantMessage(
     assistantLlmId,
     history.map((m): VChatMessageIn => ({ role: m.role, content: m.text })),
     parallelViewCount,
@@ -51,6 +51,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
     autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
+
+  return messageStatus.outcome === 'success';
 }
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
