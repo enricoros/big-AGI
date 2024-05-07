@@ -27,7 +27,7 @@ export async function executeUserInputChecklist(
     let options = parseTextToChecklist(previousResult, false);
     const relaxMatch = options.length < 2;
     if (relaxMatch)
-      options = parseTextToChecklist(_i.outputPrompt, relaxMatch);
+      options = parseTextToChecklist(previousResult, true);
 
     // if no options, there's an error
     if (options.length < 2) {
