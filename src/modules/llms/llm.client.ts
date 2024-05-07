@@ -1,3 +1,7 @@
+import { sendGAEvent } from '@next/third-parties/google';
+
+import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
@@ -46,6 +50,15 @@ export async function llmsUpdateModelsForSourceOrThrow(sourceId: DModelSourceId,
     true,
     keepUserEdits,
   );
+
+  // figure out which vendors are actually used and useful
+  hasGoogleAnalytics && sendGAEvent('event', 'app_models_updated', {
+    app_models_source_id: source.id,
+    app_models_source_label: source.label,
+    app_models_updated_count: data.models.length || 0,
+    app_models_vendor_id: vendor.id,
+    app_models_vendor_label: vendor.name,
+  });
 
   // return the fetched models
   return data;
