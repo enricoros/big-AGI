@@ -5,6 +5,7 @@ import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 import { GoodModal } from '~/common/components/GoodModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { isMacUser } from '~/common/util/pwaUtils';
 
 
 const shortcutsMd = platformAwareKeystrokes(`
@@ -21,10 +22,10 @@ const shortcutsMd = platformAwareKeystrokes(`
 | **Chats**           |                                                 | 
 | Ctrl + O            | Open Chat ...                                   |
 | Ctrl + S            | Save Chat ...                                   |
-| Ctrl + Alt + N      | **New** chat                                    |
-| Ctrl + Alt + X      | **Reset** chat                                  |
-| Ctrl + Alt + D      | **Delete** chat                                 |
-| Ctrl + Alt + B      | **Branch** chat                                 |
+| Ctrl + ${isMacUser ? '' : 'Alt +'} N      | **New** chat                                    |
+| Ctrl + ${isMacUser ? '' : 'Alt +'} X      | **Reset** chat                                  |
+| Ctrl + ${isMacUser ? '' : 'Alt +'} D      | **Delete** chat                                 |
+| Ctrl + ${isMacUser ? '' : 'Alt +'} B      | **Branch** chat                                 |
 | Ctrl + Alt + Left   | **Previous** chat (in history)                  |
 | Ctrl + Alt + Right  | **Next** chat (in history)                      |
 | **Settings**        |                                                 |
