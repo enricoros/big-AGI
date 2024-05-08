@@ -60,7 +60,7 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.16.0',
+    versionCode: '1.16',
     versionName: 'Crystal Clear',
     versionDate: new Date('2024-05-09T00:00:00Z'),
     versionCoverImage: coverV116,
@@ -77,7 +77,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.15.1',
+    versionCode: '1.15',
     versionName: 'Beam',
     versionDate: new Date('2024-04-10T08:00:00Z'),
     versionCoverImage: coverV115,
@@ -93,7 +93,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.14.1',
+    versionCode: '1.14',
     versionName: 'Modelmorphic',
     versionCoverImage: coverV114,
     versionDate: new Date('2024-03-07T08:00:00Z'),
@@ -112,7 +112,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.13.0',
+    versionCode: '1.13',
     versionName: 'Multi + Mind',
     versionMoji: '🧠🔀',
     versionDate: new Date('2024-02-08T07:47:00Z'),
@@ -128,7 +128,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.12.0',
+    versionCode: '1.12',
     versionName: 'AGI Hotline',
     versionMoji: '✨🗣️',
     versionDate: new Date('2024-01-26T12:30:00Z'),
@@ -147,7 +147,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.11.0',
+    versionCode: '1.11',
     versionName: 'Singularity',
     versionMoji: '🌌🌠',
     versionDate: new Date('2024-01-16T06:30:00Z'),
@@ -161,7 +161,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.10.0',
+    versionCode: '1.10',
     versionName: 'The Year of AGI',
     // versionMoji: '🎊✨',
     versionDate: new Date('2024-01-06T08:00:00Z'),
@@ -175,7 +175,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.9.0',
+    versionCode: '1.9',
     versionName: 'Creative Horizons',
     // versionMoji: '🎨🌌',
     versionDate: new Date('2023-12-28T22:30:00Z'),
@@ -190,7 +190,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.8.0',
+    versionCode: '1.8',
     versionName: 'To The Moon And Back',
     // versionMoji: '🚀🌕🔙❤️',
     versionDate: new Date('2023-12-20T09:30:00Z'),
@@ -207,7 +207,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.7.0',
+    versionCode: '1.7',
     versionName: 'Attachment Theory',
     // versionDate: new Date('2023-12-11T06:00:00Z'), // 1.7.3
     versionDate: new Date('2023-12-10T12:00:00Z'), // 1.7.0
@@ -223,7 +223,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.6.0',
+    versionCode: '1.6',
     versionName: 'Surf\'s Up',
     versionDate: new Date('2023-11-28T21:00:00Z'),
     items: [
@@ -238,7 +238,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.5.0',
+    versionCode: '1.5',
     versionName: 'Loaded!',
     versionDate: new Date('2023-11-19T21:00:00Z'),
     items: [
@@ -254,7 +254,7 @@ export const NewsItems: NewsItem[] = [
     ],
   },
   {
-    versionCode: '1.4.0',
+    versionCode: '1.4',
     items: [
       { text: <><B>Share and clone</B> conversations, with public links</> },
       { text: <><B code='/docs/config-azure-openai.md'>Azure</B> models, incl. gpt-4-32k</> },
