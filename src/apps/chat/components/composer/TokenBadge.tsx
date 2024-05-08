@@ -8,8 +8,20 @@ function alignRight(value: number, columnSize: number = 8) {
   return str.padStart(columnSize);
 }
 
+function formatCost(cost: number) {
+  return cost < 1
+    ? (cost * 100).toFixed(cost < 0.010 ? 2 : 1) + ' ¢'
+    : '$ ' + cost.toFixed(2);
+}
 
-export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, tokenPriceIn?: number, tokenPriceOut?: number): { color: ColorPaletteProp; message: string; remainingTokens: number } {
+
+export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, tokenPriceIn?: number, tokenPriceOut?: number): {
+  color: ColorPaletteProp,
+  message: string,
+  remainingTokens: number,
+  costMax?: number,
+  costMin?: number,
+} {
   const usedInputTokens = directTokens + (historyTokens || 0);
   const usedMaxTokens = usedInputTokens + (responseMaxTokens || 0);
   const remainingTokens = tokenLimit - usedMaxTokens;
@@ -17,6 +29,10 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, h
 
   // message
   let message: string = gteLimit ? '⚠️ ' : '';
+
+  // costs
+  let costMax: number | undefined = undefined;
+  let costMin: number | undefined = undefined;
 
   // no limit: show used tokens only
   if (!tokenLimit) {
@@ -33,24 +49,26 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, h
 
     // add the price, if available
     if (tokenPriceIn || tokenPriceOut) {
-      const costIn = tokenPriceIn ? usedInputTokens * tokenPriceIn / 1E6 : undefined;
+      costMin = tokenPriceIn ? usedInputTokens * tokenPriceIn / 1E6 : undefined;
       const costOutMax = (tokenPriceOut && responseMaxTokens) ? responseMaxTokens * tokenPriceOut / 1E6 : undefined;
-      if (costIn || costOutMax) {
+      if (costMin || costOutMax) {
         message += `\n\n\n▶ Chat Turn Cost (max, approximate)\n`;
 
-        if (costIn) message += '\n' +
+        if (costMin) message += '\n' +
           `       Input tokens: ${alignRight(usedInputTokens)}\n` +
           `    Input Price $/M: ${tokenPriceIn!.toFixed(2).padStart(8)}\n` +
-          `         Input cost: ${('$' + costIn!.toFixed(3)).padStart(8)}\n`;
+          `         Input cost: ${('$' + costMin!.toFixed(4)).padStart(8)}\n`;
 
         if (costOutMax) message += '\n' +
           `  Max output tokens: ${alignRight(responseMaxTokens!)}\n` +
           `   Output Price $/M: ${tokenPriceOut!.toFixed(2).padStart(8)}\n` +
-          `    Max output cost: ${('$' + costOutMax!.toFixed(3)).padStart(8)}\n`;
+          `    Max output cost: ${('$' + costOutMax!.toFixed(4)).padStart(8)}\n`;
 
-        const costMax = costIn && costOutMax ? costIn + costOutMax : undefined;
+        if (costMin) message += '\n' +
+          `    > Min turn cost: ${formatCost(costMin).padStart(8)}`;
+        costMax = (costMin && costOutMax) ? costMin + costOutMax : undefined;
         if (costMax) message += '\n' +
-          `    = Max turn cost: ${('$' + costMax.toFixed(4)).padStart(8)}`;
+          `    < Max turn cost: ${formatCost(costMax).padStart(8)}`;
       }
     }
   }
@@ -69,11 +87,11 @@ export function tokensPrettyMath(tokenLimit: number | 0, directTokens: number, h
         ? 'warning'
         : 'primary';
 
-  return { color, message, remainingTokens };
+  return { color, message, remainingTokens, costMax, costMin };
 }
 
 
-export const TokenTooltip = (props: { message: string | null, color: ColorPaletteProp, placement?: 'top' | 'top-end', children: React.JSX.Element }) =>
+export const TokenTooltip = (props: { message: string | null, color: ColorPaletteProp, placement?: 'top' | 'top-end', children: React.ReactElement }) =>
   <Tooltip
     placement={props.placement}
     variant={props.color !== 'primary' ? 'solid' : 'soft'} color={props.color}
@@ -104,41 +122,57 @@ function TokenBadge(props: {
   tokenPriceIn?: number,
   tokenPriceOut?: number,
 
+  showCost?: boolean
   showExcess?: boolean,
   absoluteBottomRight?: boolean,
   inline?: boolean,
 }) {
 
-  const { message, color, remainingTokens } = tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax, props.tokenPriceIn, props.tokenPriceOut);
+  const { message, color, remainingTokens, costMax, costMin } =
+    tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax, props.tokenPriceIn, props.tokenPriceOut);
 
-  // show the direct tokens, unless we exceed the limit and 'showExcess' is enabled
-  const value = (props.showExcess && (props.limit && remainingTokens <= 0))
-    ? Math.abs(remainingTokens)
-    : props.direct;
+  let badgeValue: string;
+
+  const showAltCosts = !!props.showCost && !!costMax && costMin !== undefined;
+  if (showAltCosts) {
+    badgeValue = '< ' + formatCost(costMax);
+  } else {
+
+    // show the direct tokens, unless we exceed the limit and 'showExcess' is enabled
+    const value = (props.showExcess && (props.limit && remainingTokens <= 0))
+      ? Math.abs(remainingTokens)
+      : props.direct;
+
+    badgeValue = value.toLocaleString();
+  }
+
+  const shallHide = !props.direct && remainingTokens >= 0 && !showAltCosts;
+  if (shallHide) return null;
 
   return (
-    <Badge
-      variant='solid' color={color} max={100000}
-      invisible={!props.direct && remainingTokens >= 0}
-      badgeContent={
-        <TokenTooltip color={color} message={message} placement='top-end'>
-          <span>{value.toLocaleString()}</span>
-        </TokenTooltip>
-      }
-      sx={{
-        ...((props.absoluteBottomRight) && { position: 'absolute', bottom: 8, right: 8 }),
-        cursor: 'help',
-      }}
-      slotProps={{
-        badge: {
-          sx: {
-            // the badge (not the tooltip)
-            fontFamily: 'code',
-            fontSize: 'sm',
-            ...((props.absoluteBottomRight || props.inline) && { position: 'static', transform: 'none' }),
+    <TokenTooltip color={color} message={message} placement='top-end'>
+      <Badge
+        variant='soft' color={color} max={1000000}
+        // invisible={shallHide}
+        badgeContent={badgeValue}
+        slotProps={{
+          root: {
+            sx: {
+              ...((props.absoluteBottomRight) && { position: 'absolute', bottom: 8, right: 8 }),
+              cursor: 'help',
+            },
           },
-        },
-      }}
-    />
+          badge: {
+            sx: {
+              // the badge (not the tooltip)
+              // boxShadow: 'sm',
+              fontFamily: 'code',
+              fontSize: 'xs',
+              ...((props.absoluteBottomRight || props.inline) && { position: 'static', transform: 'none' }),
+            },
+          },
+        }}
+      />
+    </TokenTooltip>
   );
 }
