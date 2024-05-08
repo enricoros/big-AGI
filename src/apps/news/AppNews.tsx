@@ -111,7 +111,7 @@ export function AppNews() {
             return <React.Fragment key={idx}>
 
               {/* Inject the Beam item here*/}
-              {idx === 0 && (
+              {idx === 2 && (
                 <Box sx={{ mb: 3 }}>
                   {beamNewsCallout}
                 </Box>
@@ -191,7 +191,7 @@ export function AppNews() {
               onClick={() => setLastNewsIdx(index => index + NEWS_LOAD_STEP)}
               endDecorator={<ExpandMoreIcon />}
             >
-              Load Previous News
+              Previous News
             </Button>
           )}
 

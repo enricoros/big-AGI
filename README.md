@@ -17,18 +17,23 @@ Or fork & run on Vercel
 
 ## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
+> Note: bigger better features (incl. Beam-2) are being cooked outside of `main`.
+
 [//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
 
-#### What's New in 1.15.1 · April 10, 2024 (minor release, models support)
+### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
 
-- Support for the newly released Gemini Pro 1.5 models
-- Support for the new OpenAI 2024-04-09 Turbo models
-- Ctrl+S and Ctrl+O to save/load chats on desktop
-- Resilience fixes after the large success of 1.15.0
+- [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
+- Chat cost estimation 💰 (enable it in Labs / hover the token counter)
+- Major enhancements to the Auto-Diagrams tool
+- Save/load chat files with Ctrl+S / Ctrl+O on desktop
+- YouTube Transcriber Persona for chatting with video content, [#500](https://github.com/enricoros/big-AGI/pull/500)
+- Improved formula rendering (LaTeX), and dark-mode diagrams, [#508](https://github.com/enricoros/big-AGI/issues/508), [#520](https://github.com/enricoros/big-AGI/issues/520)
+- More: code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
+- Update Anthropic, Groq, Ollama, OpenAI, OpenRouter, Perplexity models
+- Developers: update the LLMs data structures
 
-> Note: Beam-2 and new larger features are being cooked outside of `main`.
-
-### 3,000 Commits Milestone · April 7, 2024
+#### 3,000 Commits Milestone · April 7, 2024
 
 ![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
 
@@ -42,6 +47,7 @@ Or fork & run on Vercel
 - Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
 - Enhanced the default Persona
 - Fixes to Gemini models and SVGs, improvements to UI and icons
+- 1.15.1: Support for Gemini Pro 1.5 and OpenAI Turbo models
 - Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
 
 ### What's New in 1.14.1 · March 7, 2024 · Modelmorphic

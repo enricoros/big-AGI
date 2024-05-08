@@ -117,9 +117,10 @@ export function Composer(props: {
 
   // external state
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
-  const { labsAttachScreenCapture, labsCameraDesktop } = useUXLabsStore(useShallow(state => ({
+  const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
+    labsShowCost: state.labsShowCost,
   })));
   const timeToShowTips = useAppStateStore(state => state.usageCount > 2);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
@@ -675,8 +676,8 @@ export function Composer(props: {
                   <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} />
                 )}
 
-                {!showChatReplyTo && !!tokenLimit && (
-                  <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} showExcess absoluteBottomRight />
+                {!showChatReplyTo && tokenLimit > 0 && (
+                  <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} showCost={labsShowCost} showExcess absoluteBottomRight />
                 )}
 
               </Box>
