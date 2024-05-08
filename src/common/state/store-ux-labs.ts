@@ -42,7 +42,7 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
 
-      labsShowCost: false,
+      labsShowCost: true, // release 1.16.0 with this enabled by default
       setLabsShowCost: (labsShowCost: boolean) => set({ labsShowCost }),
 
     }),
