@@ -72,7 +72,7 @@ export const NewsItems: NewsItem[] = [
       { text: <><B issue={500}>YouTube Transcriber</B> persona: chat with videos</>, issue: 500 },
       { text: <>Improved <B issue={508}>formula render</B>, dark-mode diagrams</>, issue: 508 },
       { text: <>More: <B issue={517}>code soft-wrap</B>, selection toolbar, <B issue={507}>3x faster</B> on Apple silicon</>, issue: 507 },
-      { text: <>Update <B>Anthropic</B>, <B>Groq</B>, <B>Ollama</B>, <B>OpenAI</B>, <B>OpenRouter</B>, <B>Perplexity</B> models</> },
+      { text: <>Updated <B>Anthropic</B>, <B>Groq</B>, <B>Ollama</B>, <B>OpenAI</B>, <B>OpenRouter</B>, <B>Perplexity</B> models</> },
       { text: <>Developers: update LLMs data structures</>, dev: true },
     ],
   },
