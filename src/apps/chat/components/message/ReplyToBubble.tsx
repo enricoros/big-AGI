@@ -40,8 +40,9 @@ const inlineMessageSx: SxProps = {
   width: undefined,
   padding: '0.375rem 0.25rem 0.375rem 0.5rem',
 
-  // self-layout (parent: 'grid')
-  ml: 'auto',
+  // self-layout (parent: 'block', as 'grid' was not working and the user would scroll the app on the x-axis on mobile)
+  // ml: 'auto',
+  float: 'inline-end',
   mr: { xs: 7.75, md: 10.5 }, // personaSx.minWidth + gap (md: 1) + 1.5 (text margin)
 
 };
