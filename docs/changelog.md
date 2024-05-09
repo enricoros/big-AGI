@@ -5,21 +5,21 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.16.0 - Mar 2024
+### 1.17.0 - Jun 2024
 
-- milestone: [1.16.0](https://github.com/enricoros/big-agi/milestone/16)
+- milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
 ### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
 
 - [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
 - Chat cost estimation 💰 (enable it in Labs / hover the token counter)
-- Major enhancements to the Auto-Diagrams tool
 - Save/load chat files with Ctrl+S / Ctrl+O on desktop
+- Major enhancements to the Auto-Diagrams tool
 - YouTube Transcriber Persona for chatting with video content, [#500](https://github.com/enricoros/big-AGI/pull/500)
 - Improved formula rendering (LaTeX), and dark-mode diagrams, [#508](https://github.com/enricoros/big-AGI/issues/508), [#520](https://github.com/enricoros/big-AGI/issues/520)
-- More: code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
-- Update Anthropic, Groq, Ollama, OpenAI, OpenRouter, Perplexity models
+- Models update: **Anthropic**, **Groq**, **Ollama**, **OpenAI**, **OpenRouter**, **Perplexity**
+- Code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, and more [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
 - Developers: update the LLMs data structures
 
 ### What's New in 1.15.1 · April 10, 2024 (minor release, models support)
