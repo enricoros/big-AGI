@@ -10,12 +10,7 @@
  * @param pdfBuffer The content of a PDF file
  */
 export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
-  // Dynamically import the 'pdfjs-dist' library [nextjs]
-  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
-
-  // Set the worker script path
-  GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
-
+  const { getDocument } = await dynamicImportPdfJs();
   const pdf = await getDocument(pdfBuffer).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages
 
@@ -50,6 +45,56 @@ export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
     }, ''));
   }
   return textPages.join('\n\n'); // Join all the page texts at the end
+}
+
+
+type PdfPageImage = { base64Url: string, scale: number, width: number, height: number };
+
+/**
+ * Renders all pages of a PDF to images
+ *
+ * @param pdfBuffer The content of a PDF file
+ * @param scale The scale factor for the image resolution (default 1.5 for moderate quality)
+ */
+export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, scale = 1.5): Promise<PdfPageImage[]> {
+  const { getDocument } = await dynamicImportPdfJs();
+  const pdf = await getDocument({ data: pdfBuffer }).promise;
+  const images: PdfPageImage[] = [];
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    await page.render({
+      canvasContext: context!,
+      viewport,
+    }).promise;
+
+    images.push({
+      base64Url: canvas.toDataURL('image/jpeg'),
+      scale,
+      width: viewport.width,
+      height: viewport.height,
+    });
+  }
+
+  return images;
+}
+
+
+// Dynamically import the 'pdfjs-dist' library
+async function dynamicImportPdfJs() {
+  // Dynamically import the 'pdfjs-dist' library [nextjs]
+  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
+
+  // Set the worker script path
+  GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
+
+  return { getDocument };
 }
 
 // Type guard to check if an item has a 'str' property
