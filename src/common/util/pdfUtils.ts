@@ -25,10 +25,31 @@ export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
     const strings = content.items
       .filter(isTextItem) // Use the type guard to filter out items with the 'str' property
       .map((item) => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
-    textPages.push(strings.join(' ') + '\n'); // Add the joined strings to the array
-  }
 
-  return textPages.join(''); // Join all the page texts at the end
+    // textPages.push(strings.join(' ')); // Add the joined strings to the array
+    // New way: join the strings to form a page text. treat empty lines as newlines, otherwise join with a space (or not if the line is just 1 space)
+    textPages.push(strings.reduce((acc, str) => {
+      // empty line -> newline
+      if (str === '')
+        return acc + '\n';
+
+      // single space
+      if (str === ' ')
+        return acc + str;
+
+      // trick: de-hyphenation of consecutive lines
+      if (/\w-$/.test(acc) && /^\w/.test(str))
+        return acc.slice(0, -1) + str;
+
+      // add a space if the last char is not a space or return (regex)
+      if (/\S$/.test(acc))
+        return acc + ' ' + str;
+
+      // otherwise just concatenate
+      return acc + str;
+    }, ''));
+  }
+  return textPages.join('\n\n'); // Join all the page texts at the end
 }
 
 // Type guard to check if an item has a 'str' property
