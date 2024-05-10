@@ -12,6 +12,7 @@ import WrapTextIcon from '@mui/icons-material/WrapText';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { CodeBlock } from '../blocks';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
@@ -107,7 +108,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
-  const [softWrap, setSoftWrap] = React.useState(false);
+  const [softWrap, setSoftWrap] = useUIPreferencesStore(state => [state.renderCodeSoftWrap, state.setRenderCodeSoftWrap]);
 
   // derived props
   const {
@@ -274,7 +275,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           {/* Soft Wrap toggle */}
           {(!renderHTML && !renderMermaid && !renderPlantUML && !renderSVG) && (
             <Tooltip title='Toggle Soft Wrap'>
-              <OverlayButton variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(on => !on)}>
+              <OverlayButton variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(!softWrap)}>
                 <WrapTextIcon />
               </OverlayButton>
             </Tooltip>
