@@ -42,7 +42,7 @@
     "idb-keyval": "^6.2.1",
     "next": "~14.1.4",
     "nprogress": "^0.2.0",
-    "pdfjs-dist": "4.1.392",
+    "pdfjs-dist": "4.2.67",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
