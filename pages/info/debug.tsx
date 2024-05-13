@@ -17,7 +17,7 @@ import { Brand } from '~/common/app.config';
 import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
 
 // apps access
-import { incrementalNewsVersion } from '../../src/apps/news/news.version';
+import { incrementalNewsVersion, useAppNewsStateStore } from '../../src/apps/news/news.version';
 
 // capabilities access
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapabilityTextToImage } from '~/common/components/useCapabilities';
@@ -81,7 +81,8 @@ function AppDebug() {
   const chatsCount = useChatStore.getState().conversations?.length;
   const uxLabsExperiments = Object.entries(useUXLabsStore.getState()).filter(([_k, v]) => v === true).map(([k, _]) => k).join(', ');
   const { folders, enableFolders } = useFolderStore.getState();
-  const { lastSeenNewsVersion, usageCount } = useAppStateStore.getState();
+  const { lastSeenNewsVersion } = useAppNewsStateStore.getState();
+  const { usageCount } = useAppStateStore.getState();
 
 
   // derived state
