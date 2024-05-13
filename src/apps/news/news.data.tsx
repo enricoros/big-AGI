@@ -60,9 +60,10 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.16',
+    versionCode: '1.16.1',
     versionName: 'Crystal Clear',
-    versionDate: new Date('2024-05-09T00:00:00Z'),
+    versionDate: new Date('2024-05-13T19:00:00Z'),
+    // versionDate: new Date('2024-05-09T00:00:00Z'),
     versionCoverImage: coverV116,
     items: [
       { text: <><B href={beamBlogUrl} wow>Beam</B> core and UX improvements based on user feedback</>, issue: 470, icon: ChatBeamIcon },
@@ -74,6 +75,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>More: <B issue={517}>code soft-wrap</B>, selection toolbar, <B issue={507}>3x faster</B> on Apple silicon</>, issue: 507 },
       { text: <>Updated <B>Anthropic</B>*, <B>Groq</B>, <B>Ollama</B>, <B>OpenAI</B>*, <B>OpenRouter</B>*, and <B>Perplexity</B></> },
       { text: <>Developers: update LLMs data structures</>, dev: true },
+      { text: <>1.16.1: Support for <B>OpenAI GPT-4o</B></> },
     ],
   },
   {
