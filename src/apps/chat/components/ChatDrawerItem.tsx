@@ -42,7 +42,7 @@ export const ChatDrawerItemMemo = React.memo(ChatDrawerItem, (prev, next) =>
   prev.bottomBarBasis === next.bottomBarBasis &&
   prev.onConversationActivate === next.onConversationActivate &&
   prev.onConversationBranch === next.onConversationBranch &&
-  prev.onConversationDelete === next.onConversationDelete &&
+  prev.onConversationDeleteNoConfirmation === next.onConversationDeleteNoConfirmation &&
   prev.onConversationExport === next.onConversationExport &&
   prev.onConversationFolderChange === next.onConversationFolderChange,
 );
@@ -76,7 +76,7 @@ function ChatDrawerItem(props: {
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
-  onConversationDelete: (conversationId: DConversationId) => void,
+  onConversationDeleteNoConfirmation: (conversationId: DConversationId) => void,
   onConversationExport: (conversationId: DConversationId, exportAll: boolean) => void,
   onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
 }) {
@@ -155,7 +155,16 @@ function ChatDrawerItem(props: {
 
   // Delete
 
-  const handleDeleteButtonShow = React.useCallback(() => setDeleteArmed(true), []);
+  const { onConversationDeleteNoConfirmation } = props;
+  const handleDeleteButtonShow = React.useCallback((event: React.MouseEvent) => {
+    // special case: if 'Shift' is pressed, delete immediately
+    if (event.shiftKey) {
+      event.stopPropagation();
+      onConversationDeleteNoConfirmation(conversationId);
+      return;
+    }
+    setDeleteArmed(true);
+  }, [conversationId, onConversationDeleteNoConfirmation]);
 
   const handleDeleteButtonHide = React.useCallback(() => setDeleteArmed(false), []);
 
@@ -163,9 +172,9 @@ function ChatDrawerItem(props: {
     if (deleteArmed) {
       setDeleteArmed(false);
       event.stopPropagation();
-      props.onConversationDelete(conversationId);
+      onConversationDeleteNoConfirmation(conversationId);
     }
-  }, [conversationId, deleteArmed, props]);
+  }, [conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
 
 
   const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';

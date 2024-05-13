@@ -310,7 +310,7 @@ function ChatDrawer(props: {
               bottomBarBasis={filteredChatsBarBasis}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
-              onConversationDelete={handleConversationDeleteNoConfirmation}
+              onConversationDeleteNoConfirmation={handleConversationDeleteNoConfirmation}
               onConversationExport={onConversationsExportDialog}
               onConversationFolderChange={handleConversationFolderChange}
             />
