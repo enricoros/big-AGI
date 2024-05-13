@@ -11,11 +11,39 @@ import { wireTogetherAIListOutputSchema } from './togetherai.wiretypes';
 // [Azure] / [OpenAI]
 const _knownOpenAIChatModels: ManualMappings = [
 
+  // GPT-4o -> 2024-05-13
+  {
+    idPrefix: 'gpt-4o',
+    label: 'GPT-4o',
+    description: 'Currently points to gpt-4o-2024-05-13.',
+    symLink: 'gpt-4o-2024-05-13',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 5, chatOut: 15 },
+    benchmark: { cbaElo: 1310 },
+  },
+  {
+    isLatest: true,
+    idPrefix: 'gpt-4o-2024-05-13',
+    label: 'GPT-4o (2024-05-13)',
+    description: 'Advanced, multimodal flagship model that’s cheaper and faster than GPT-4 Turbo.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 5, chatOut: 15 },
+    benchmark: { cbaElo: 1310 },
+  },
+
   // GPT4 Turbo with Vision -> 2024-04-09
   {
     idPrefix: 'gpt-4-turbo',
     label: 'GPT-4 Turbo',
-    description: 'GPT-4 Turbo with Vision. The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling. Currently points to gpt-4-turbo-2024-04-09.',
+    description: 'New GPT-4 Turbo with Vision. The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling. Currently points to gpt-4-turbo-2024-04-09.',
     symLink: 'gpt-4-turbo-2024-04-09',
     hidden: true,
     // copied from symlinked
