@@ -93,6 +93,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
     benchmark: { cbaElo: 1251 },
+    hidden: true,
   },
   {
     idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
