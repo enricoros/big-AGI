@@ -52,11 +52,12 @@ interface NewsItem {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   /*{
-    versionCode: '1.16.0',
+    versionCode: '1.17.0',
     items: [
+      Screen Capture (when removed from labs)
+      Auto-Merge
       Draw
       ...
-      Screen Capture (when removed from labs)
     ]
   }*/
   {
