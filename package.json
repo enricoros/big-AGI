@@ -38,6 +38,7 @@
     "@vercel/analytics": "^1.2.2",
     "@vercel/speed-insights": "^1.0.10",
     "browser-fs-access": "^0.35.0",
+    "cheerio": "^1.0.0-rc.12",
     "eventsource-parser": "^1.1.2",
     "idb-keyval": "^6.2.1",
     "next": "~14.1.4",

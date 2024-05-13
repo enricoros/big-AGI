@@ -2,11 +2,8 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
 import { BrowserContext, connect, ScreenshotOptions, TimeoutError } from '@cloudflare/puppeteer';
-
-/**
- * Puppeteer implementation of the worker
- */
-import TurndownService from 'turndown';
+import { default as TurndownService } from 'turndown';
+import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -155,15 +152,9 @@ async function workerPuppeteer(
           result.content = await page.evaluate(() => document.body.innerText || document.textContent || '');
           break;
         case 'markdown':
-          await page.evaluate(() => {
-            // Remove unnecessary elements
-            document.querySelectorAll('script, style, nav, footer, aside, header, .ads, .comments')
-              .forEach(el => el.remove());
-          });
-          const cleanedHtml = await page.content();
-          const turndownService = new TurndownService({
-            headingStyle: 'atx',
-          });
+          const html = await page.content();
+          const cleanedHtml = cleanHtml(html);
+          const turndownService = new TurndownService({ headingStyle: 'atx' });
           result.content = turndownService.turndown(cleanedHtml);
           break;
       }
@@ -225,4 +216,36 @@ async function workerPuppeteer(
   }
 
   return result;
+}
+
+
+function cleanHtml(html: string) {
+  const $ = cheerioLoad(html);
+
+  // Remove standard unwanted elements
+  $('script, style, nav, aside, noscript, iframe, svg, canvas, .ads, .comments, link[rel="stylesheet"]').remove();
+
+  // Remove elements that might be specific to proxy services or injected by them
+  $('[id^="brightdata-"], [class^="brightdata-"]').remove();
+
+  // Remove comments
+  $('*').contents().filter(function() {
+    return this.type === 'comment';
+  }).remove();
+
+  // Remove empty elements
+  $('p, div, span').each(function() {
+    if ($(this).text().trim() === '' && $(this).children().length === 0) {
+      $(this).remove();
+    }
+  });
+
+  // Merge consecutive paragraphs
+  $('p + p').each(function() {
+    $(this).prev().append(' ' + $(this).text());
+    $(this).remove();
+  });
+
+  // Return the cleaned HTML
+  return $.html();
 }
