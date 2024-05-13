@@ -9,8 +9,8 @@ interface ModuleSupabaseSyncStore {
   supabaseUrl: string;
   setSupabaseUrl: (supaUrl: string) => void;
 
-  supabaseAnonKey: string;
-  setSupabaseAnonKey: (anonKey: string) => void;
+  supabaseKey: string;
+  setSupabaseKey: (key: string) => void;
 
 }
 
@@ -23,8 +23,8 @@ export const useSupabaseSyncStore = create<ModuleSupabaseSyncStore>()(
       supabaseUrl: '',
       setSupabaseUrl: (supaUrl: string) => set({ supabaseUrl: supaUrl }),
 
-      supabaseAnonKey: '',
-      setSupabaseAnonKey: (anonKey: string) => set({ supabaseAnonKey: anonKey }),
+      supabaseKey: '',
+      setSupabaseKey: (key: string) => set({ supabaseKey: key }),
 
     }),
     {

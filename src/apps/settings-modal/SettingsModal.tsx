@@ -10,6 +10,7 @@ import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
 import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
+import { SupabaseSyncSettings } from '~/modules/supabasesync/SupabaseSyncSettings';
 import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
@@ -205,6 +206,9 @@ export function SettingsModal(props: {
             </Topic>
             <Topic icon={<SearchIcon />} title='Google Search API' startCollapsed>
               <GoogleSearchSettings />
+            </Topic>
+            <Topic icon={<SearchIcon />} title='Supabase Sync' startCollapsed>
+              <SupabaseSyncSettings />
             </Topic>
             {/*<Topic icon='🛠' title='Other tools...' />*/}
           </Topics>

@@ -18,14 +18,14 @@ export function SupabaseSyncSettings() {
 
   // external state
   const backendHasSupabaseSync = getBackendCapabilities().hasSupabaseSync;
-  const { supabaseUrl, setSupabaseUrl, supabaseAnonKey, setSupabaseAnonKey } = useSupabaseSyncStore(state => ({
+  const { supabaseUrl, setSupabaseUrl, supabaseAnonKey: supabaseKey, setSupabaseAnonKey } = useSupabaseSyncStore(state => ({
     supabaseUrl: state.supabaseUrl, setSupabaseUrl: state.setSupabaseUrl,
-    supabaseAnonKey: state.supabaseAnonKey, setSupabaseAnonKey: state.setSupabaseAnonKey,
+    supabaseAnonKey: state.supabaseKey, setSupabaseAnonKey: state.setSupabaseKey,
   }), shallow);
 
 
   // derived state
-  const isValueUrl = supabaseUrl ? isValidSupabaseConnection(supabaseUrl, supabaseAnonKey) : backendHasSupabaseSync;
+  const isValueUrl = supabaseUrl ? isValidSupabaseConnection(supabaseUrl, supabaseKey) : backendHasSupabaseSync;
   const isValidAnonKey = isValueUrl;
 
   const handleSupabaseSyncChange = (e: React.ChangeEvent<HTMLInputElement>) => setSupabaseUrl(e.target.value);
@@ -53,12 +53,12 @@ export function SupabaseSyncSettings() {
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Anon Key'
-                      description={<>Get it <Link href='https://supabase.com/' noLinkStyle target='_blank'>here</Link></>}
-                      tooltip='Your database connections Anon Key' />
+      <FormLabelStart title='Key'
+                      description=''
+                      tooltip='Your database connection Key' />
       <Input
         variant='outlined' placeholder={backendHasSupabaseSync ? '...' : 'missing'} error={!isValidAnonKey}
-        value={supabaseAnonKey} onChange={handleSupabaseAnonKeyChane}
+        value={supabaseKey} onChange={handleSupabaseAnonKeyChane}
         startDecorator={<SearchIcon />}
         slotProps={{ input: { sx: { width: '100%' } } }}
         sx={{ width: '100%' }}
