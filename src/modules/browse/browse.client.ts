@@ -26,7 +26,10 @@ export async function callBrowseFetchPage(url: string) {
       dialect: 'browse-wss',
       ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
     },
-    subjects: [{ url }],
+    subjects: [{
+      url,
+      transform: 'markdown',
+    }],
     screenshot: DEBUG_SHOW_SCREENSHOT ? {
       width: 512,
       height: 512,

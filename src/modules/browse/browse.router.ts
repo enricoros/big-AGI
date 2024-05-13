@@ -17,10 +17,14 @@ const browseAccessSchema = z.object({
   wssEndpoint: z.string().trim().optional(),
 });
 
+const pageTransformSchema = z.enum(['html', 'text', 'markdown']);
+type PageTransformSchema = z.infer<typeof pageTransformSchema>;
+
 const fetchPageInputSchema = z.object({
   access: browseAccessSchema,
   subjects: z.array(z.object({
     url: z.string().url(),
+    transform: pageTransformSchema,
   })),
   screenshot: z.object({
     width: z.number(),
@@ -60,7 +64,7 @@ export const browseRouter = createTRPCRouter({
 
       for (const subject of subjects) {
         try {
-          pages.push(await workerPuppeteer(access, subject.url, screenshot?.width, screenshot?.height, screenshot?.quality));
+          pages.push(await workerPuppeteer(access, subject.url, subject.transform, screenshot?.width, screenshot?.height, screenshot?.quality));
         } catch (error: any) {
           pages.push({
             url: subject.url,
@@ -80,7 +84,11 @@ export const browseRouter = createTRPCRouter({
 type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
 type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
 
-async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ssWidth: number | undefined, ssHeight: number | undefined, ssQuality: number | undefined): Promise<FetchPageWorkerOutputSchema> {
+
+/**
+ * Puppeteer implementation of the worker
+ */
+async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, transform: PageTransformSchema, ssWidth: number | undefined, ssHeight: number | undefined, ssQuality: number | undefined): Promise<FetchPageWorkerOutputSchema> {
 
   // access
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
