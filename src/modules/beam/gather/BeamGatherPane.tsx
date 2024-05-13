@@ -57,7 +57,7 @@ export function BeamGatherPane(props: {
   beamStore: BeamStoreApi,
   canGather: boolean,
   isMobile: boolean,
-  onAddFusion: () => void,
+  // onAddFusion: () => void,
   raysReady: number,
 }) {
 

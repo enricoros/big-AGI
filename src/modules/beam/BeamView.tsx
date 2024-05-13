@@ -14,6 +14,7 @@ import { BeamRayGrid } from './scatter/BeamRayGrid';
 import { BeamScatterInput } from './scatter/BeamScatterInput';
 import { BeamScatterPane } from './scatter/BeamScatterPane';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
+import { useModuleBeamStore } from './store-module-beam';
 
 
 export function BeamView(props: {
@@ -24,6 +25,7 @@ export function BeamView(props: {
 }) {
 
   // state
+  const [hasAutoMerged, setHasAutoMerged] = React.useState(false);
   const [warnIsScattering, setWarnIsScattering] = React.useState(false);
 
   // external state
@@ -36,7 +38,9 @@ export function BeamView(props: {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
     /* gather (composite) */ canGather,
+    /* IDs */ rayIds, fusionIds,
   } = useBeamStore(props.beamStore, useShallow(state => ({
+    // input
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
     inputReady: state.inputReady,
@@ -45,9 +49,13 @@ export function BeamView(props: {
     raysReady: state.raysReady,
     // gather (composite)
     canGather: state.raysReady >= 2 && state.currentFactoryId !== null && state.currentGatherLlmId !== null,
+    // IDs
+    rayIds: state.rays.map(ray => ray.rayId),
+    fusionIds: state.fusions.map(fusion => fusion.fusionId),
   })));
-  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
-  const fusionIds = useBeamStore(props.beamStore, useShallow(state => state.fusions.map(fusion => fusion.fusionId)));
+  const { gatherAutoStartAfterScatter } = useModuleBeamStore(useShallow(state => ({
+    gatherAutoStartAfterScatter: state.gatherAutoStartAfterScatter,
+  })));
 
   // derived state
   const raysCount = rayIds.length;
@@ -58,6 +66,11 @@ export function BeamView(props: {
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
   const handleRayIncreaseCount = React.useCallback(() => setRayCount(raysCount + 1), [setRayCount, raysCount]);
+
+  const handleScatterStart = React.useCallback(() => {
+    setHasAutoMerged(false);
+    startScatteringAll();
+  }, [startScatteringAll]);
 
 
   const handleCreateFusion = React.useCallback(() => {
@@ -70,20 +83,31 @@ export function BeamView(props: {
   }, [isScattering, props.beamStore]);
 
 
-  const handleStopScatterConfirmation = React.useCallback(() => {
+  const handleStartMergeConfirmation = React.useCallback(() => {
     setWarnIsScattering(false);
     stopScatteringAll();
     handleCreateFusion();
   }, [handleCreateFusion, stopScatteringAll]);
 
-  const handleStopScatterDenial = React.useCallback(() => setWarnIsScattering(false), []);
+  const handleStartMergeDenial = React.useCallback(() => setWarnIsScattering(false), []);
 
 
-  // (this is great ux) scatter freed up while we were asking the question, proceed
+  // auto-merge
+  const shallAutoMerge = gatherAutoStartAfterScatter && canGather && !isScattering && !hasAutoMerged;
   React.useEffect(() => {
-    if (warnIsScattering && !isScattering)
-      handleStopScatterConfirmation();
-  }, [handleStopScatterConfirmation, isScattering, warnIsScattering]);
+    if (shallAutoMerge) {
+      setHasAutoMerged(true);
+      handleStartMergeConfirmation();
+    }
+  }, [handleStartMergeConfirmation, shallAutoMerge]);
+
+  // (great ux) scatter finished while the "start merge" (warning) dialog is up: dismiss dialog and proceed
+  // here we assume that 'warnIsScattering' shows the intention of the user to proceed with a merge asap
+  const shallResumeMerge = warnIsScattering && !isScattering && !gatherAutoStartAfterScatter;
+  React.useEffect(() => {
+    if (shallResumeMerge)
+      handleStartMergeConfirmation();
+  }, [handleStartMergeConfirmation, shallResumeMerge]);
 
 
   // runnning
@@ -138,7 +162,7 @@ export function BeamView(props: {
         setRayCount={handleRaySetCount}
         startEnabled={inputReady}
         startBusy={isScattering}
-        onStart={startScatteringAll}
+        onStart={handleScatterStart}
         onStop={stopScatteringAll}
         onExplainerShow={explainerShow}
       />
@@ -163,7 +187,7 @@ export function BeamView(props: {
         beamStore={props.beamStore}
         canGather={canGather}
         isMobile={props.isMobile}
-        onAddFusion={handleCreateFusion}
+        // onAddFusion={handleCreateFusion}
         raysReady={raysReady}
       />
 
@@ -184,8 +208,8 @@ export function BeamView(props: {
     {warnIsScattering && (
       <ConfirmationModal
         open
-        onClose={handleStopScatterDenial}
-        onPositive={handleStopScatterConfirmation}
+        onClose={handleStartMergeDenial}
+        onPositive={handleStartMergeConfirmation}
         // lowStakes
         noTitleBar
         confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
