@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+
 import { BrowserContext, connect, ScreenshotOptions, TimeoutError } from '@cloudflare/puppeteer';
+
+import TurndownService from 'turndown';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -125,8 +128,9 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, tr
     if (!isWebPage) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(`Invalid content-type: ${contentType}`);
-    } else
+    } else {
       result.stopReason = 'end';
+    }
   } catch (error: any) {
     const isTimeout: boolean = error instanceof TimeoutError;
     result.stopReason = isTimeout ? 'timeout' : 'error';
@@ -137,12 +141,22 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, tr
   // transform the content of the page as text
   try {
     if (result.stopReason !== 'error') {
-      result.content = await page.evaluate(() => {
-        const content = document.body.innerText || document.textContent;
-        if (!content)
-          throw new Error('No content');
-        return content;
-      });
+      switch (transform) {
+        case 'html':
+          result.content = await page.evaluate(() => document.documentElement.innerHTML);
+          break;
+        case 'markdown':
+          const html = await page.evaluate(() => document.documentElement.innerHTML);
+          const turndownService = new TurndownService();
+          result.content = turndownService.turndown(html);
+          break;
+        case 'text':
+        default:
+          result.content = await page.evaluate(() => document.body.innerText || document.textContent || '');
+          break;
+      }
+      if (!result.content)
+        result.error = '[Puppeteer] Empty content';
     }
   } catch (error: any) {
     result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
