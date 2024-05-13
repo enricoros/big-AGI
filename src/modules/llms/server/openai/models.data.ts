@@ -55,7 +55,6 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1261 },
   },
   {
-    isLatest: true,
     idPrefix: 'gpt-4-turbo-2024-04-09',
     label: 'GPT-4 Turbo (2024-04-09)',
     description: 'GPT-4 Turbo with Vision model. Vision requests can now use JSON mode and function calling. gpt-4-turbo currently points to this version.',
