@@ -13,6 +13,7 @@ import '~/common/styles/GithubMarkdown.css';
 import '~/common/styles/NProgress.css';
 import '~/common/styles/app.styles.css';
 
+import { ProviderAuth } from '~/common/providers/ProviderAuth';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
 import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
@@ -32,18 +33,20 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     </Head>
 
     <ProviderTheming emotionCache={emotionCache}>
-      <ProviderSingleTab>
-        <ProviderTRPCQuerySettings>
-          <ProviderBackendCapabilities>
-            {/* ^ SSR boundary */}
-            <ProviderBootstrapLogic>
-              <ProviderSnacks>
-                <Component {...pageProps} />
-              </ProviderSnacks>
-            </ProviderBootstrapLogic>
-          </ProviderBackendCapabilities>
-        </ProviderTRPCQuerySettings>
-      </ProviderSingleTab>
+      <ProviderAuth>
+        <ProviderSingleTab>
+          <ProviderTRPCQuerySettings>
+            <ProviderBackendCapabilities>
+              {/* ^ SSR boundary */}
+              <ProviderBootstrapLogic>
+                <ProviderSnacks>
+                  <Component {...pageProps} />
+                </ProviderSnacks>
+              </ProviderBootstrapLogic>
+            </ProviderBackendCapabilities>
+          </ProviderTRPCQuerySettings>
+        </ProviderSingleTab>
+      </ProviderAuth>
     </ProviderTheming>
 
     {isVercelFromFrontend && <VercelAnalytics debug={false} />}

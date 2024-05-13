@@ -9,6 +9,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+import { authUserButton } from '~/common/providers/ProviderAuth';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 
@@ -184,6 +185,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       <DesktopNavGroupBox sx={{ mb: 'calc(2 * var(--GroupMarginY))' }}>
         {navExtLinkItems}
         {navModalItems}
+        {authUserButton}
       </DesktopNavGroupBox>
 
     </InvertedBar>
