@@ -24,6 +24,7 @@ export interface BackendCapabilities {
   hasLlmPerplexity: boolean;
   hasLlmTogetherAI: boolean;
   hasVoiceElevenLabs: boolean;
+  hasSupabaseSync: boolean;
   llmConfigHash: string;
 }
 
