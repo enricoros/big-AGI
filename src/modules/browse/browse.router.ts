@@ -3,6 +3,9 @@ import { TRPCError } from '@trpc/server';
 
 import { BrowserContext, connect, ScreenshotOptions, TimeoutError } from '@cloudflare/puppeteer';
 
+/**
+ * Puppeteer implementation of the worker
+ */
 import TurndownService from 'turndown';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
@@ -88,12 +91,14 @@ type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
 type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
 
 
-/**
- * Puppeteer implementation of the worker
- */
-async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, transform: PageTransformSchema, ssWidth: number | undefined, ssHeight: number | undefined, ssQuality: number | undefined): Promise<FetchPageWorkerOutputSchema> {
-
-  // access
+async function workerPuppeteer(
+  access: BrowseAccessSchema,
+  targetUrl: string,
+  transform: PageTransformSchema,
+  ssWidth: number | undefined,
+  ssHeight: number | undefined,
+  ssQuality: number | undefined,
+): Promise<FetchPageWorkerOutputSchema> {
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
   const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
   if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
@@ -132,10 +137,11 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, tr
       result.stopReason = 'end';
     }
   } catch (error: any) {
-    const isTimeout: boolean = error instanceof TimeoutError;
+    const isTimeout = error instanceof TimeoutError;
     result.stopReason = isTimeout ? 'timeout' : 'error';
-    if (!isTimeout)
-      result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown goto error';
+    if (!isTimeout) {
+      result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown goto error');
+    }
   }
 
   // transform the content of the page as text
@@ -143,23 +149,29 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, tr
     if (result.stopReason !== 'error') {
       switch (transform) {
         case 'html':
-          result.content = await page.evaluate(() => document.documentElement.innerHTML);
-          break;
-        case 'markdown':
-          const html = await page.evaluate(() => document.documentElement.innerHTML);
-          const turndownService = new TurndownService();
-          result.content = turndownService.turndown(html);
+          result.content = await page.content();
           break;
         case 'text':
-        default:
           result.content = await page.evaluate(() => document.body.innerText || document.textContent || '');
+          break;
+        case 'markdown':
+          await page.evaluate(() => {
+            // Remove unnecessary elements
+            document.querySelectorAll('script, style, nav, footer, aside, header, .ads, .comments')
+              .forEach(el => el.remove());
+          });
+          const cleanedHtml = await page.content();
+          const turndownService = new TurndownService({
+            headingStyle: 'atx',
+          });
+          result.content = turndownService.turndown(cleanedHtml);
           break;
       }
       if (!result.content)
         result.error = '[Puppeteer] Empty content';
     }
   } catch (error: any) {
-    result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
+    result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown evaluate error');
   }
 
   // get a screenshot of the page
