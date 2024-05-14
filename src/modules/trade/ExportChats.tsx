@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, Grid, Typography } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import SyncIcon from '@mui/icons-material/Sync';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
@@ -13,6 +14,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
 import { downloadAllConversationsJson, downloadConversation } from './trade.client';
+//import { syncAllConversations } from './' //TODO: implement somewhere
 
 
 export type ExportConfig = {
@@ -64,6 +66,12 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       .then(() => setDownloadedAllState('ok'))
       .catch(() => setDownloadedAllState('fail'));
   };
+
+  const handleSyncAllConversations = () => {
+    syncAllConversations()
+      .then(() => setDownloadedAllState('ok'))
+      .catch(() => setDownloadedAllState('fail'));
+  }
 
 
   const hasConversation = !!props.config.conversationId;
@@ -145,6 +153,16 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               onClick={handleDownloadAllConversationsJSON}
             >
               Download All · JSON
+            </Button>
+
+            <Button
+              variant='soft'
+              color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={downloadedAllState === 'ok' ? <DoneIcon /> : downloadedAllState === 'fail' ? '✘' : <SyncIcon />}
+              sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              onClick={handleSyncAllConversations}
+            >
+              Sync
             </Button>
 
           </Box>

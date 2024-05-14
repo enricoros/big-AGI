@@ -13,7 +13,6 @@ import { Link } from '~/common/components/Link';
 import { isValidGoogleCloudApiKey, isValidGoogleCseId } from './search.client';
 import { useGoogleSearchStore } from './store-module-google';
 
-
 export function GoogleSearchSettings() {
 
   // external state
@@ -22,7 +21,6 @@ export function GoogleSearchSettings() {
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,
   }), shallow);
-
 
   // derived state
   const isValidKey = googleCloudApiKey ? isValidGoogleCloudApiKey(googleCloudApiKey) : backendHasGoogle;
