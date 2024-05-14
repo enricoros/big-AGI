@@ -8,6 +8,7 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 
+import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
 import { prodiaGenerateImages } from './prodia/prodiaGenerateImages';
 import { useProdiaStore } from './prodia/store-module-prodia';
@@ -87,7 +88,7 @@ export function getActiveTextToImageProviderOrThrow() {
   return activeProvider;
 }
 
-export async function t2iGenerateImageOrThrow(provider: TextToImageProvider, prompt: string, count: number): Promise<string[]> {
+export async function t2iGenerateImagesOrThrow(provider: TextToImageProvider, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
   switch (provider.vendor) {
 
     case 'openai':
