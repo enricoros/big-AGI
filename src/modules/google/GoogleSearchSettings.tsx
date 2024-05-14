@@ -28,11 +28,9 @@ export function GoogleSearchSettings() {
   const isValidKey = googleCloudApiKey ? isValidGoogleCloudApiKey(googleCloudApiKey) : backendHasGoogle;
   const isValidId = googleCSEId ? isValidGoogleCseId(googleCSEId) : backendHasGoogle;
 
-
   const handleGoogleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCloudApiKey(e.target.value);
 
   const handleCseIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCSEId(e.target.value);
-
 
   return <>
 

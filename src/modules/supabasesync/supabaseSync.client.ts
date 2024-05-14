@@ -1,7 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
-import { createClient } from '@supabase/supabase-js'
-import { Database } from './types/supabase' // Import the generated Supabase types
+import { createClient } from "@supabase/supabase-js";
+//import { Database } from './types/supabase' // Import the generated Supabase types
 
 import { useSupabaseSyncStore } from "./store-module-supabase-sync";
 
@@ -19,8 +19,11 @@ export async function testSupabaseConnection(url: string, key: string): Promise<
     const { supabaseUrl, supabaseKey } = useSupabaseSyncStore.getState();
     
     try {
-        const supabase = createClient<Database>(supabaseUrl, supabaseKey)
-        await supabase.auth.api.getUser();
+        console.log('test Connection');
+        //const supabase = createClient(supabaseUrl, supabaseKey);
+        //supabase.
+        //await supabase.auth.api.getUser();
+        //const { data: todos } = await supabase.from('todos').select();
         return true;
     } catch (error: any) {
         console.error(`testSupabaseConnection: ${error}`);
