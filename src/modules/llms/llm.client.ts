@@ -1,3 +1,7 @@
+import { sendGAEvent } from '@next/third-parties/google';
+
+import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
@@ -47,6 +51,15 @@ export async function llmsUpdateModelsForSourceOrThrow(sourceId: DModelSourceId,
     keepUserEdits,
   );
 
+  // figure out which vendors are actually used and useful
+  hasGoogleAnalytics && sendGAEvent('event', 'app_models_updated', {
+    app_models_source_id: source.id,
+    app_models_source_label: source.label,
+    app_models_updated_count: data.models.length || 0,
+    app_models_vendor_id: vendor.id,
+    app_models_vendor_label: vendor.name,
+  });
+
   // return the fetched models
   return data;
 }
@@ -56,7 +69,7 @@ function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: M
   // null means unknown contenxt/output tokens
   const contextTokens = model.contextWindow || null;
   const maxOutputTokens = model.maxCompletionTokens || (contextTokens ? Math.round(contextTokens / 2) : null);
-  const llmResponseTokensRatio = model.maxCompletionTokens ? 1 / 2 : 1 / 4;
+  const llmResponseTokensRatio = model.maxCompletionTokens ? 1 : 1 / 4;
   const llmResponseTokens = maxOutputTokens ? Math.round(maxOutputTokens * llmResponseTokensRatio) : null;
 
   return {

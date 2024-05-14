@@ -11,11 +11,39 @@ import { wireTogetherAIListOutputSchema } from './togetherai.wiretypes';
 // [Azure] / [OpenAI]
 const _knownOpenAIChatModels: ManualMappings = [
 
+  // GPT-4o -> 2024-05-13
+  {
+    idPrefix: 'gpt-4o',
+    label: 'GPT-4o',
+    description: 'Currently points to gpt-4o-2024-05-13.',
+    symLink: 'gpt-4o-2024-05-13',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 5, chatOut: 15 },
+    benchmark: { cbaElo: 1310 },
+  },
+  {
+    isLatest: true,
+    idPrefix: 'gpt-4o-2024-05-13',
+    label: 'GPT-4o (2024-05-13)',
+    description: 'Advanced, multimodal flagship model that’s cheaper and faster than GPT-4 Turbo.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 5, chatOut: 15 },
+    benchmark: { cbaElo: 1310 },
+  },
+
   // GPT4 Turbo with Vision -> 2024-04-09
   {
     idPrefix: 'gpt-4-turbo',
     label: 'GPT-4 Turbo',
-    description: 'GPT-4 Turbo with Vision. The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling. Currently points to gpt-4-turbo-2024-04-09.',
+    description: 'New GPT-4 Turbo with Vision. The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling. Currently points to gpt-4-turbo-2024-04-09.',
     symLink: 'gpt-4-turbo-2024-04-09',
     hidden: true,
     // copied from symlinked
@@ -27,7 +55,6 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1261 },
   },
   {
-    isLatest: true,
     idPrefix: 'gpt-4-turbo-2024-04-09',
     label: 'GPT-4 Turbo (2024-04-09)',
     description: 'GPT-4 Turbo with Vision model. Vision requests can now use JSON mode and function calling. gpt-4-turbo currently points to this version.',
@@ -66,6 +93,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
     benchmark: { cbaElo: 1251 },
+    hidden: true,
   },
   {
     idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
@@ -600,8 +628,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // parse pricing
   const pricing: ModelDescriptionSchema['pricing'] = {
-    chatIn: parseFloat(model.pricing.prompt) * 1000,
-    chatOut: parseFloat(model.pricing.completion),
+    chatIn: parseFloat(model.pricing.prompt) * 1000 * 1000,
+    chatOut: parseFloat(model.pricing.completion) * 1000 * 1000,
+    // image...
+    // request...
   };
   const seemsFree = pricing.chatIn === 0 && pricing.chatOut === 0;
 
@@ -703,123 +733,62 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
 // Perplexity
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
-  // {
-  //   id: 'codellama-34b-instruct',
-  //   label: 'Codellama 34B Instruct (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Codellama 70B Instruct as a replacement.',
-  //   contextWindow: 16384,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
+  // perplexity models
   {
-    id: 'codellama-70b-instruct',
-    label: 'Codellama 70B Instruct',
-    description: 'Code Llama is a collection of pretrained and fine-tuned generative text models. This model is designed for general code synthesis and understanding.',
-    contextWindow: 16384,
+    id: 'llama-3-sonar-small-32k-chat',
+    label: 'Sonar Small Chat',
+    description: 'Llama 3 Sonar Small 32k Chat',
+    contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
   },
-  // {
-  //   id: 'llama-2-70b-chat',
-  //   label: 'Llama 2 70B Chat (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try mixtral-8x7b-instruct as a replacement.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
   {
-    id: 'mistral-7b-instruct',
-    label: 'Mistral 7B Instruct',
-    description: 'The Mistral-7B-Instruct-v0.1 Large Language Model (LLM) is a instruct fine-tuned version of the Mistral-7B-v0.1 generative text model using a variety of publicly available conversation datasets.',
-    contextWindow: 16384,
+    id: 'llama-3-sonar-small-32k-online',
+    label: 'Sonar Small Online 🌐',
+    description: 'Llama 3 Sonar Small 32k Online',
+    contextWindow: 28000,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'llama-3-sonar-large-32k-chat',
+    label: 'Sonar Large Chat',
+    description: 'Llama 3 Sonar Large 32k Chat',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'llama-3-sonar-large-32k-online',
+    label: 'Sonar Large Online 🌐',
+    description: 'Llama 3 Sonar Large 32k Online',
+    contextWindow: 28000,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+
+  // opensource models
+  {
+    id: 'llama-3-8b-instruct',
+    label: 'Llama 3 8B Instruct',
+    description: 'Llama 3 8B Instruct',
+    contextWindow: 8192,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    id: 'llama-3-70b-instruct',
+    label: 'Llama 3 70B Instruct',
+    description: 'Llama 3 70B Instruct',
+    contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'mixtral-8x7b-instruct',
     label: 'Mixtral 8x7B Instruct',
-    description: 'The Mixtral-8x7B Large Language Model (LLM) is a pretrained generative Sparse Mixture of Experts.',
+    description: 'Mixtral 8x7B Instruct',
     contextWindow: 16384,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  // {
-  //   id: 'pplx-7b-online',
-  //   label: 'Perplexity 7B Online (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Sonar Small Online as a replacement.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
-  // {
-  //   id: 'pplx-70b-online',
-  //   label: 'Perplexity 70B Online (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Sonar Medium Online as a replacement.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
-  // {
-  //   id: 'pplx-8x7b-online',
-  //   label: 'Perplexity 8x7B Online (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Sonar Medium Online as a replacement.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
-  // {
-  //   id: 'pplx-7b-chat',
-  //   label: 'Perplexity 7B Chat (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Sonar Small Chat as a replacement.',
-  //   contextWindow: 8192,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
-  // {
-  //   id: 'pplx-70b-chat',
-  //   label: 'Perplexity 70B Chat (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Sonar Medium Chat as a replacement.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
-  // {
-  //   id: 'pplx-8x7b-chat',
-  //   label: 'Perplexity 8x7B Chat (deprecated)',
-  //   description: 'Will be removed on March 15th, 2024. Try Sonar Medium Chat as a replacement.',
-  //   contextWindow: 4096,
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  // },
-  {
-    id: 'sonar-small-chat',
-    label: 'Sonar Small Chat',
-    description: 'Sonar Small Chat',
-    contextWindow: 16384,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'sonar-medium-chat',
-    label: 'Sonar Medium Chat',
-    description: 'Sonar Medium Chat',
-    contextWindow: 16384,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'sonar-small-online',
-    label: 'Sonar Small Online 🌐',
-    description: 'Sonar Small Online',
-    contextWindow: 12000,
-    interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'sonar-medium-online',
-    label: 'Sonar Medium Online 🌐',
-    description: 'Sonar Medium Online',
-    contextWindow: 12000,
     interfaces: [LLM_IF_OAI_Chat],
   },
 ];
 
 const perplexityAIModelFamilyOrder = [
-  'sonar-medium', 'sonar-small', 'mixtral', 'mistral', 'codellama', 'llama-2', '',
+  'llama-3-sonar-large', 'llama-3-sonar-small', 'llama-3', 'mixtral', '',
 ];
 
 export function perplexityAIModelDescriptions() {

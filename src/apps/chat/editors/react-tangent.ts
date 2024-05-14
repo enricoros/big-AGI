@@ -15,7 +15,7 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId) {
   if (!question) {
     cHandler.messageAppendAssistant('Issue: no question provided.', undefined, 'issue', false);
-    return;
+    return false;
   }
 
   // create a blank and 'typing' message for the assistant - to be filled when we're done
@@ -42,9 +42,11 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     cHandler.messageEdit(assistantMessageId, { text: reactResult, typing: false }, false);
     setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
 
+    return true;
   } catch (error: any) {
     console.error(error);
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
     cHandler.messageEdit(assistantMessageId, { text: 'Issue: ReAct did not produce an answer.', typing: false }, false);
+    return false;
   }
 }

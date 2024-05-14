@@ -40,12 +40,13 @@ export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { hea
 }
 
 
-export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): WireOllamaChatCompletionInput => ({
+export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, jsonOutput: boolean, stream: boolean): WireOllamaChatCompletionInput => ({
   model: model.id,
   messages: history,
   options: {
-    ...(model.temperature && { temperature: model.temperature }),
+    ...(model.temperature !== undefined && { temperature: model.temperature }),
   },
+  ...(jsonOutput && { format: 'json' }),
   // n: ...
   // functions: ...
   // function_call: ...
@@ -78,7 +79,7 @@ export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenA
     model: model.id,
     prompt,
     options: {
-      ...(model.temperature && { temperature: model.temperature }),
+      ...(model.temperature !== undefined && { temperature: model.temperature }),
     },
     ...(systemPrompt && { system: systemPrompt }),
     stream,
@@ -101,6 +102,7 @@ async function ollamaPOST<TOut extends object, TPostBody extends object>(access:
 export const ollamaAccessSchema = z.object({
   dialect: z.enum(['ollama']),
   ollamaHost: z.string().trim(),
+  ollamaJson: z.boolean(),
 });
 export type OllamaAccessSchema = z.infer<typeof ollamaAccessSchema>;
 
@@ -215,7 +217,7 @@ export const llmOllamaRouter = createTRPCRouter({
            *  - Note: as of 2024-01-26 the num_ctx line is present in 50% of the models, and in most cases set to 4096
            *  - We are tracking the Upstream issue https://github.com/ollama/ollama/issues/1473 for better ways to do this in the future
            */
-          let contextWindow = 4096;
+          let contextWindow = OLLAMA_BASE_MODELS[modelName]?.contextWindow || 8192;
           if (model.parameters) {
             // split the parameters into lines, and find one called "num_ctx ...spaces... number"
             const paramsNumCtx = model.parameters.split('\n').find(line => line.startsWith('num_ctx '));
@@ -250,7 +252,7 @@ export const llmOllamaRouter = createTRPCRouter({
     .output(llmsChatGenerateOutputSchema)
     .mutation(async ({ input: { access, history, model } }) => {
 
-      const wireGeneration = await ollamaPOST(access, ollamaChatCompletionPayload(model, history, false), OLLAMA_PATH_CHAT);
+      const wireGeneration = await ollamaPOST(access, ollamaChatCompletionPayload(model, history, access.ollamaJson, false), OLLAMA_PATH_CHAT);
       const generation = wireOllamaChunkedOutputSchema.parse(wireGeneration);
 
       if ('error' in generation)

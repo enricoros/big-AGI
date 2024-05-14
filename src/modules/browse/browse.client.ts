@@ -1,4 +1,4 @@
-import { useBrowseStore } from '~/modules/browse/store-module-browsing';
+import { BrowsePageTransform, useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { apiAsyncNode } from '~/common/util/trpc.client';
 
@@ -7,7 +7,7 @@ import { apiAsyncNode } from '~/common/util/trpc.client';
 const DEBUG_SHOW_SCREENSHOT = false;
 
 
-export async function callBrowseFetchPage(url: string) {
+export async function callBrowseFetchPage(url: string, forceTransform?: BrowsePageTransform) {
 
   // thow if no URL is provided
   url = url?.trim() || '';
@@ -19,14 +19,17 @@ export async function callBrowseFetchPage(url: string) {
   if (!url.startsWith('http://') && !url.startsWith('https://'))
     url = 'https://' + url;
 
-  const clientWssEndpoint = useBrowseStore.getState().wssEndpoint;
+  const { wssEndpoint: clientWssEndpoint, pageTransform } = useBrowseStore.getState();
 
   const { pages } = await apiAsyncNode.browse.fetchPages.mutate({
     access: {
       dialect: 'browse-wss',
       ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
     },
-    subjects: [{ url }],
+    subjects: [{
+      url,
+      transform: pageTransform || 'text',
+    }],
     screenshot: DEBUG_SHOW_SCREENSHOT ? {
       width: 512,
       height: 512,

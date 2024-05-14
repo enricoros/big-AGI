@@ -46,12 +46,13 @@ const wireOllamaChatCompletionInputSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['assistant', 'system', 'user']),
     content: z.string(),
+    images: z.array(z.string()).optional(), // base64 encoded images
   })),
 
   // optional
   format: z.enum(['json']).optional(),
   options: z.object({
-    // https://github.com/jmorganca/ollama/blob/main/docs/modelfile.md
+    // https://github.com/ollama/ollama/blob/main/docs/modelfile.md
     // Maximum number of tokens to predict when generating text.
     num_predict: z.number().int().optional(),
     // Sets the random number seed to use for generation
@@ -63,8 +64,11 @@ const wireOllamaChatCompletionInputSchema = z.object({
     // Works together with top-k. A higher value (e.g., 0.95) will lead to more diverse text. (Default 0.9)
     top_p: z.number().positive().optional(),
   }).optional(),
-  template: z.string().optional(), // overrides what is defined in the Modelfile
   stream: z.boolean().optional(), // default: true
+  keep_alive: z.string().optional(), // e.g. '5m'
+
+  // Note: not used anymore as of 2024-05-07?
+  // template: z.string().optional(), // overrides what is defined in the Modelfile
 
   // Future Improvements?
   // n: z.number().int().optional(), // number of completions to generate

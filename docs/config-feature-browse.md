@@ -68,7 +68,7 @@ The chat agent won't be able to access the web sites if the browserless containe
       - MAX_CONCURRENT_SESSIONS=10
 ```
 
-You can then add the proyy lines to your `.env` file.
+You can then add the proxy lines to your `.env` file.
 
 ```
 https_proxy=http://PROXY-IP:PROXY-PORT

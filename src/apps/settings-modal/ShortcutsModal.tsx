@@ -19,8 +19,8 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + Shift + V    | Attach clipboard (better than Ctrl + V)         |
 | Ctrl + M            | Microphone (voice typing)                       |
 | **Chats**           |                                                 | 
-| Ctrl + O            | Open Chat ...                                   |
-| Ctrl + S            | Save Chat ...                                   |
+| Ctrl + O            | Open Chat File ...                              |
+| Ctrl + S            | Save Chat File ...                              |
 | Ctrl + Alt + N      | **New** chat                                    |
 | Ctrl + Alt + X      | **Reset** chat                                  |
 | Ctrl + Alt + D      | **Delete** chat                                 |
