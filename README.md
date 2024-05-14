@@ -21,6 +21,10 @@ Or fork & run on Vercel
 
 [//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
 
+### What's New in 1.16.1 · May 13, 2024 (minor release, models support)
+
+- Support for the new OpenAI GPT-4o 2024-05-13 model
+
 ### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
 
 - [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
