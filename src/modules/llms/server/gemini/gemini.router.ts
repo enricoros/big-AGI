@@ -147,7 +147,7 @@ export const llmGeminiRouter = createTRPCRouter({
       // map to our output schema
       const models = detailedModels
         .filter(geminiFilterModels)
-        .map(geminiModel => geminiModelToModelDescription(geminiModel, detailedModels))
+        .map(geminiModel => geminiModelToModelDescription(geminiModel))
         .sort(geminiSortModels);
 
       return {
