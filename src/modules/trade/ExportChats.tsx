@@ -14,8 +14,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
 import { downloadAllConversationsJson, downloadConversation } from './trade.client';
-//import { syncAllConversations } from './' //TODO: implement somewhere
-
+import { syncAllConversations } from '~/modules/supabasesync/supabaseSync.client';
 
 export type ExportConfig = {
   dir: 'export',
