@@ -3,9 +3,20 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { useSupabaseSyncStore } from "./store-module-supabase-sync";
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 import { conversationToJsonV1 } from '~/modules/trade/trade.client';
-import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore, createDConversation } from '~/common/state/store-chats';
 //import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { shallow } from 'zustand/shallow';
+import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../data';
+
+type SupabaseConversation = {
+    id: string;
+    messages: DMessage[];
+    systemPurposeId: SystemPurposeId;
+    userTitle?: string;
+    autoTitle?: string;
+    created: number;
+    updated: number | null;
+  }
 
 export const isValidSupabaseConnection = (url?: string, key?: string) => !!url && !!key;
 
@@ -93,6 +104,7 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
     console.log(`Fetching conversations from server > ${lastSyncTime}`);
 
     const { data, error } = await supabase
+        //.from<SupabaseConversation,"public", SupabaseConversation>('conversation')
         .from('conversation')
         .select("*")
         .gt('updated', lastSyncTime);
@@ -108,49 +120,42 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
     // if the conversation does not exist then we need to add
 
     if (data && data.length > 0) {
-        console.log(`Found ${data.length} conversations from server`);
-        const conversationsFromServer = data.map(conversationFromServer => {
-            const conversation = conversations.find(conversation => conversation.id === conversationFromServer.id);
-            if (conversation) {
-                return {
-                   ...conversation,
-                    updated: conversationFromServer.updated,
-                };
-            } else {
-                return conversationFromServer;
-            }
-        });
-        console.log(`Found ${conversationsFromServer.length} conversations from server`);
-
-        if (conversationsFromServer.length > 0) {
-            console.warn("update ui still to do...");
-        }
+        console.debug(`Found ${data.length} conversations from server`);
+        const conversationsFromServer: SupabaseConversation[] = data.map(record => { return {...record}}); // Cross my fingers and hope they map
         
-        //useChatStore.getState().setConversations(conversationsFromServer);
-        //cOutcome.importedConversationId = useChatStore.getState().importConversation(cOutcome.conversation, preventClash);
-    } else {
-        console.log('No conversations from server');
-    }
+        const importConversation = useChatStore.getState().importConversation;
 
+        // add or update the conversations
+        conversationsFromServer.forEach(conversationFromServer => {
+            let conversation = conversations.find(conversation => conversation.id === conversationFromServer.id);
+            // create a new conversation if existing one not found
+            if (conversation === null || conversation === undefined) {
+                conversation = createDConversation();
+                conversation.id = conversationFromServer.id; // user id from server
+                conversation.created = conversationFromServer.created; // use creation date from server
+            }
+
+            conversation.updated = conversationFromServer.updated;
+            conversation.autoTitle = conversationFromServer.autoTitle;
+            conversation.userTitle = conversationFromServer.userTitle;
+            conversation.messages = conversationFromServer.messages;
+            // do we need to sync the messages individually? No for now
+
+            importConversation(conversation, false);
+        });
+
+    } else {
+        console.debug('No conversations from server');
+    }
 
 }
 
 export async function syncAllConversations() {
-    //console.log('syncAllConversations');
-
     const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore.getState();
 
-    // const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore(state => ({
-    //     lastSyncTime: state.lastSyncTime, setLastSyncTime: state.setLastSyncTime,
-    //   }), shallow);
-
-      //useChatStore.getState().setUserTitle(conversationId, text.trim());
-
-    //const { folders, enableFolders } = useFolderStore.getState();
+    //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
     const conversations = useChatStore.getState().conversations; //.map(conversationToJsonV1);
     const supabase = createSupabase();
-    // find the max `updated` value from all conversations (must do this before we sync with server)
-    //const maxConversationTime = Math.max(...conversations.map(conversation => conversation.updated || 0));
 
     await syncToServer(supabase, conversations);
     
@@ -158,5 +163,4 @@ export async function syncAllConversations() {
     await syncFromServerToClient(supabase, conversations, lastSyncTime);
 
     setLastSyncTime(updatedSyncTime);
-
 }
