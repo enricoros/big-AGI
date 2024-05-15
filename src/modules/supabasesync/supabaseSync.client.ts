@@ -38,9 +38,9 @@ function createSupabase(): SupabaseClient {
     return supabase;
 }
 
-async function getLastSyncTime(supabase: SupabaseClient): Promise<number> {
+async function getServersLastSyncTime(supabase: SupabaseClient): Promise<number> {
     const { data, error } = await supabase
-        .from('Conversation')
+        .from('conversation')
         .select('updated')
         .order('updated', { ascending: false })
         .limit(1);
@@ -57,19 +57,14 @@ async function getLastSyncTime(supabase: SupabaseClient): Promise<number> {
     }
 }
 
-export async function syncAllConversations() {
-    console.log('syncAllConversations');
-
-    const { folders, enableFolders } = useFolderStore.getState();
-    const conversations = useChatStore.getState().conversations; //.map(conversationToJsonV1);
-
-    const supabase = createSupabase();
-    const lastSyncTime = await getLastSyncTime(supabase);
-
+async function syncToServer(supabase: SupabaseClient, conversations: DConversation[]): Promise<void> {
     // find all conversations that have been updated since the last sync
+
+    const lastSyncTime = await getServersLastSyncTime(supabase);
+
     const updatedConversations = conversations
        .filter(conversation => conversation.updated && conversation.updated > lastSyncTime)
-       .map(conversationToJsonV1);
+       .map(conversationToJsonV1); // this removes some of the fields we want to sync
 
     if (updatedConversations.length === 0) {
         console.log('No conversations to sync');
@@ -79,8 +74,8 @@ export async function syncAllConversations() {
     console.log(`Syncing ${updatedConversations.length} conversations`);
 
     const { data, error } = await supabase
-       .from('Conversation')
-       .upsert(updatedConversations, { returning:'minimal' });
+       .from('conversation')
+       .upsert(updatedConversations);
 
     if (error) {
         console.error('Error syncing conversations:', error);
@@ -88,5 +83,63 @@ export async function syncAllConversations() {
     }
 
     console.log(`Synced ${updatedConversations.length} conversations`);
+
+}
+
+async function syncFromServerToClient(supabase: SupabaseClient, conversations: DConversation[], maxConversationTime: number): Promise<void> {
+
+    // Find all conversations from the server where the updated field is greater than maxConversationTime
+    console.log(`Fetching conversations from server > ${maxConversationTime}`);
+
+    const { data, error } = await supabase
+        .from('conversation')
+        .select("*")
+        .gt('updated', maxConversationTime);
+    
+    if (error) {
+        console.error('Error fetching conversations from Server:', error);
+        return;
+    }
+
+    // map server data into conversations, this will need to be saved back into state
+
+    // if the conversation.id exists then replace  it with the value from the data
+    // if the conversation does not exist then we need to add
+
+    if (data && data.length > 0) {
+        console.log(`Found ${data.length} conversations from server`);
+        const conversationsFromServer = data.map(conversationFromServer => {
+            const conversation = conversations.find(conversation => conversation.id === conversationFromServer.id);
+            if (conversation) {
+                return {
+                   ...conversation,
+                    updated: conversationFromServer.updated,
+                };
+            } else {
+                return conversationFromServer;
+            }
+        });
+        console.log(`Found ${conversationsFromServer.length} conversations from server`);
+        console.warn("update ui still to do...");
+        //useChatStore.getState().setConversations(conversationsFromServer);
+        //cOutcome.importedConversationId = useChatStore.getState().importConversation(cOutcome.conversation, preventClash);
+    } else {
+        console.log('No conversations from server');
+    }
+
+
+}
+
+export async function syncAllConversations() {
+    console.log('syncAllConversations');
+
+    //const { folders, enableFolders } = useFolderStore.getState();
+    const conversations = useChatStore.getState().conversations; //.map(conversationToJsonV1);
+    const supabase = createSupabase();
+    // find the max `updated` value from all conversations (must do this before we sync with server)
+    const maxConversationTime = Math.max(...conversations.map(conversation => conversation.updated || 0));
+    await syncToServer(supabase, conversations);
+    
+    //await syncFromServerToClient(supabase, conversations);
 
 }

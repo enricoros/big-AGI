@@ -32,6 +32,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const [downloadedJSONState, setDownloadedJSONState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedMarkdownState, setDownloadedMarkdownState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
+  const [syncAllState, setSyncAllState] = React.useState<'ok' | 'fail' | null>(null);
 
   // external state
   const enableSharing = getBackendCapabilities().hasDB;
@@ -68,8 +69,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
   const handleSyncAllConversations = () => {
     syncAllConversations()
-      .then(() => setDownloadedAllState('ok'))
-      .catch(() => setDownloadedAllState('fail'));
+      .then(() => setSyncAllState('ok'))
+      .catch(() => setSyncAllState('fail'));
   }
 
 
@@ -156,8 +157,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
             <Button
               variant='soft'
-              color={downloadedAllState === 'ok' ? 'success' : downloadedAllState === 'fail' ? 'warning' : 'primary'}
-              endDecorator={downloadedAllState === 'ok' ? <DoneIcon /> : downloadedAllState === 'fail' ? '✘' : <SyncIcon />}
+              color={syncAllState === 'ok' ? 'success' : syncAllState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={syncAllState === 'ok' ? <DoneIcon /> : syncAllState === 'fail' ? '✘' : <SyncIcon />}
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handleSyncAllConversations}
             >

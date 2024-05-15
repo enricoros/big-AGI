@@ -382,16 +382,18 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             systemPurposeId,
           }),
 
-      setAutoTitle: (conversationId: string, autoTitle: string) =>
+      setAutoTitle: (conversationId: string, autoTitle: string, touchUpdated: boolean = true) =>
         _get()._editConversation(conversationId,
           {
             autoTitle,
+            updated: Date.now(),
           }),
 
       setUserTitle: (conversationId: string, userTitle: string) =>
         _get()._editConversation(conversationId,
           {
             userTitle,
+            updated: Date.now(),
           }),
 
     }),
