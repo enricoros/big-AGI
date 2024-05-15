@@ -1,10 +1,6 @@
 import type { StateStorage } from 'zustand/middleware';
 import { del as idbDel, get as idbGet, set as idbSet } from 'idb-keyval';
 
-// used by the state storage middleware to detect data migration from the old state storage (localStorage)
-// NOTE: remove past 2024-03-19 (6 months past release of this utility conversion)
-export const IDB_MIGRATION_INITIAL = -1;
-
 
 // set to true to enable debugging
 const DEBUG_SCHEDULER = false;
@@ -130,17 +126,6 @@ export const idbStateStorage: StateStorage = {
     if (DEBUG_SCHEDULER)
       console.warn('   (read bytes:', value?.length?.toLocaleString(), ')');
 
-    /* IMPORTANT!
-     * We modify the default behavior of `getItem` to return a {version: -1} object if a key is not found.
-     * This is to trigger the migration across state storage implementations, as Zustand would not call the
-     * 'migrate' function otherwise.
-     * See 'https://github.com/enricoros/big-agi/pull/158' for more details
-     */
-    if (value === undefined) {
-      return JSON.stringify({
-        version: IDB_MIGRATION_INITIAL,
-      });
-    }
     return value || null;
   },
   setItem: (name: string, value: string): void => {
