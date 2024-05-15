@@ -5,11 +5,12 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import { getChatShowSystemMessages } from '../../../apps/chat/store-app-chat';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { DConversationId, getConversation } from '~/common/state/store-chats';
 import { Link } from '~/common/components/Link';
 import { apiAsyncNode } from '~/common/util/trpc.client';
+import { getConversation } from '~/common/stores/chat/store-chats';
 import { isBrowser } from '~/common/util/pwaUtils';
 
 import type { PublishedSchema } from '../server/pastegg';

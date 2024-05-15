@@ -6,11 +6,13 @@ import { Box, List } from '@mui/joy';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import { DMessage, DMessageUserFlag, contentPartsReplaceText, createDMessage, messageToggleUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
+import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -127,7 +129,9 @@ export function ChatMessageList(props: {
   }, [conversationId, deleteMessage]);
 
   const handleMessageEdit = React.useCallback((messageId: string, newText: string) => {
-    conversationId && editMessage(conversationId, messageId, { text: newText }, true);
+    conversationId && editMessage(conversationId, messageId, (message): Partial<DMessage> => ({
+      content: contentPartsReplaceText(message, newText),
+    }), true);
   }, [conversationId, editMessage]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: string, userFlag: DMessageUserFlag) => {
@@ -195,8 +199,9 @@ export function ChatMessageList(props: {
 
   const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
     const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
-    if (msgB?.text && msgA?.text && !msgB?.typing) {
-      const textA = msgA.text, textB = msgB.text;
+    const textB = msgB ? singleTextOrThrow(msgB) : undefined;
+    const textA = msgA ? singleTextOrThrow(msgA) : undefined;
+    if (textB && textA && !msgB?.typing) {
       const lenA = textA.length, lenB = textB.length;
       if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
         return { diffTargetMessage: msgB, diffPrevText: textA };

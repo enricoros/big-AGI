@@ -12,7 +12,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { DebounceInputMemo } from '~/common/components/DebounceInput';

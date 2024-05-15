@@ -1,0 +1,122 @@
+import { v4 as uuidv4 } from 'uuid';
+
+import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
+
+import { DMessage, DMessageId, convertDMessage_V3_V4, duplicateDMessage } from './chat.message';
+
+
+/// Conversation
+
+export interface DConversation {
+  id: DConversationId;                // unique identifier for this conversation
+
+  messages: DMessage[];               // linear list of messages in this conversation
+
+  // editable
+  userTitle?: string;
+  autoTitle?: string;
+
+  // TODO: @deprecated - this should be the system purpose of current head of the conversation
+  // there should be the concept of the audience of the current head
+  systemPurposeId: SystemPurposeId;   // system purpose of this conversation
+
+  // TODO: @deprecated - should be a view-related cache
+  tokenCount: number;                 // f(messages, llmId)
+
+  // when updated is null, we don't have messages yet (timestamps as Date.now())
+  created: number;                    // creation timestamp
+  updated: number | null;             // last update timestamp
+
+  // Not persisted, used while in-memory, or temporarily by the UI
+  // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
+  abortController: AbortController | null;
+
+  // future additions:
+  // draftUserMessage?: { text: string; attachments: any[] };
+  // isMuted: boolean; isArchived: boolean; isStarred: boolean;
+  // participants: personaIds...[];
+}
+
+export type DConversationId = string;
+
+
+// helpers - creation
+
+export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
+  return {
+    id: uuidv4(),
+
+    messages: [],
+
+    // absent
+    // userTitle: undefined,
+    // autoTitle: undefined,
+
+    // @deprecated
+    systemPurposeId: systemPurposeId || defaultSystemPurposeId,
+    // @deprecated
+    tokenCount: 0,
+
+    created: Date.now(),
+    updated: Date.now(),
+
+    abortController: null,
+  };
+}
+
+export function duplicateCConversation(conversation: DConversation, lastMessageId?: DMessageId): DConversation {
+
+  // cut short messages, if requested
+  let messagesToKeep = conversation.messages.length; // By default, include all messages if messageId is null
+  if (lastMessageId) {
+    const messageIndex = conversation.messages.findIndex(_m => _m.id === lastMessageId);
+    if (messageIndex >= 0)
+      messagesToKeep = messageIndex + 1;
+  }
+
+  // auto-increment title (1)
+  const newTitle = getNextBranchTitle(conversationTitle(conversation));
+
+  return {
+    id: uuidv4(),
+
+    messages: conversation.messages
+      .slice(0, messagesToKeep)
+      .map(duplicateDMessage),
+
+    // userTitle: conversation.userTitle,
+    autoTitle: newTitle,
+
+    systemPurposeId: conversation.systemPurposeId,
+    tokenCount: conversation.tokenCount,
+
+    created: conversation.created,
+    updated: Date.now(),
+
+    abortController: null,
+  };
+}
+
+
+// helpers - conversion
+
+export function convertCConversation_V3_V4(conversation: DConversation) {
+  conversation.messages.forEach(message => convertDMessage_V3_V4(message));
+}
+
+
+// helpers - title
+
+export const conversationTitle = (conversation: DConversation, fallback?: string): string =>
+  conversation.userTitle || conversation.autoTitle || fallback || ''; // 👋💬🗨️
+
+function getNextBranchTitle(currentTitle: string): string {
+  const numberPrefixRegex = /^\((\d+)\)\s+/; // Regex to find "(number) " at the beginning of the title
+  const match = currentTitle.match(numberPrefixRegex);
+
+  if (match) {
+    const number = parseInt(match[1], 10) + 1;
+    return currentTitle.replace(numberPrefixRegex, `(${number}) `);
+  } else
+    return `(1) ${currentTitle}`;
+}

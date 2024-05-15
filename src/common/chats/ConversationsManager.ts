@@ -1,6 +1,7 @@
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 
 import { ConversationHandler } from './ConversationHandler';
+
 
 /**
  * Singleton to get a global instance related to a conversationId. Note we don't have reference counting, and mainly because we cannot

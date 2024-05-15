@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { DConversationId } from './store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 
 
 export interface DFolder {

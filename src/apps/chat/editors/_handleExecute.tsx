@@ -2,7 +2,9 @@ import { getChatLLMId } from '~/modules/llms/store-llms';
 import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { createDMessage, DConversationId, DMessage, getConversationSystemPurposeId } from '~/common/state/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DMessage, createDMessage, createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { extractChatCommand, findAllChatCommands } from '../commands/commands.registry';
@@ -44,8 +46,9 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
   const lastMessage = history.length > 0 ? history[history.length - 1] : null;
+  const lastMessageText = lastMessage ? singleTextOrThrow(lastMessage) : '';
   if (lastMessage?.role === 'user') {
-    const chatCommand = extractChatCommand(lastMessage.text)[0];
+    const chatCommand = extractChatCommand(lastMessageText)[0];
     if (chatCommand && chatCommand.type === 'cmd') {
       switch (chatCommand.providerId) {
         case 'ass-browse':
@@ -75,7 +78,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
           Object.assign(lastMessage, {
             role: chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user',
             sender: 'Bot',
-            text: chatCommand.params || '',
+            content: [createTextPart(chatCommand.params || '')],
           } satisfies Partial<DMessage>);
           cHandler.messagesReplace(history);
           return true;
@@ -130,18 +133,18 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
       return true;
 
     case 'generate-image':
-      if (!lastMessage?.text) break;
+      if (!lastMessage || !lastMessageText) break;
       // also add a 'fake' user message with the '/draw' command
       cHandler.messagesReplace(history.map(message => (message.id !== lastMessage.id) ? message : {
         ...message,
-        text: `/draw ${lastMessage.text}`,
+        text: `/draw ${lastMessageText}`,
       }));
-      return await runImageGenerationUpdatingState(cHandler, lastMessage.text);
+      return await runImageGenerationUpdatingState(cHandler, lastMessageText);
 
     case 'generate-react':
-      if (!lastMessage?.text) break;
+      if (!lastMessage || !lastMessageText) break;
       cHandler.messagesReplace(history);
-      return await runReActUpdatingState(cHandler, lastMessage.text, chatLLMId);
+      return await runReActUpdatingState(cHandler, lastMessageText, chatLLMId);
   }
 
   // ISSUE: if we're here, it means we couldn't do the job, at least sync the history

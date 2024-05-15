@@ -24,11 +24,13 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { DAttachmentPart, DMessageMetadata, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { conversationTitle, DConversationId, DMessageMetadata, getConversation, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { countModelTokens } from '~/common/util/token-counter';
+import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
@@ -53,7 +55,6 @@ import { Attachments } from './attachments/Attachments';
 import { getSingleTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
 import { useAttachments } from './attachments/useAttachments';
 
-import type { ComposerOutputMultiPart } from './composer.types';
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
@@ -101,7 +102,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: DAttachmentPart[], metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -129,13 +130,13 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(useShallow(state => {
+  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortTyping } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       assistantAbortible: conversation ? !!conversation.abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
-      stopTyping: state.stopTyping,
+      abortTyping: state.abortTyping,
     };
   }));
   const { inComposer: browsingInComposer } = useBrowseCapability();
@@ -234,8 +235,8 @@ export function Composer(props: {
   }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
-    !!props.conversationId && stopTyping(props.conversationId);
-  }, [props.conversationId, stopTyping]);
+    !!props.conversationId && abortTyping(props.conversationId);
+  }, [abortTyping, props.conversationId]);
 
 
   // Secondary buttons
@@ -299,12 +300,13 @@ export function Composer(props: {
     // get the message
     const conversation = getConversation(item.conversationId);
     const messageToAttach = conversation?.messages.find(m => m.id === item.messageId);
-    if (conversation && messageToAttach && messageToAttach.text) {
+    const messageText = messageToAttach ? singleTextOrThrow(messageToAttach) : null;
+    if (conversation && messageToAttach && messageText) {
       // Testing with this serialization for LLM. Note it will still be within a multi-part message,
       // this could be in a titled markdown block. Don't know yet how this fares with different LLMs.
       const chatTitle = conversationTitle(conversation);
-      const textPlain = `---\nitem id: ${messageToAttach.id}\ncontext title: ${chatTitle}\n---\n${messageToAttach.text.trim()}\n`;
-      void attachAppendEgoMessage('context-item', textPlain, `${chatTitle} > ${messageToAttach.text.slice(0, 10)}...`);
+      const textPlain = `---\nitem id: ${messageToAttach.id}\ncontext title: ${chatTitle}\n---\n${messageText.trim()}\n`;
+      void attachAppendEgoMessage('context-item', textPlain, `${chatTitle} > ${messageText.slice(0, 10)}...`);
     }
   }, [attachAppendEgoMessage]);
 

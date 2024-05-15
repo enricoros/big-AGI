@@ -3,7 +3,7 @@ import * as React from 'react';
 import ClearIcon from '@mui/icons-material/Clear';
 import FolderIcon from '@mui/icons-material/Folder';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { useFolderStore } from '~/common/state/store-folders';
 

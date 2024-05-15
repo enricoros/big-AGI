@@ -6,9 +6,10 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
-import { DConversationId, getConversation } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { getConversation } from '~/common/stores/chat/store-chats';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Alert, Box, Divider, IconButton, List, ListItem, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-import type { DConversation, DConversationId } from '~/common/state/store-chats';
+import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 

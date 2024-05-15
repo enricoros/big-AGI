@@ -13,17 +13,17 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle } from '~/common/state/store-chats';
+import { conversationTitle } from '~/common/stores/chat/chat.conversation';
+import { navigateToChatLinkList } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { LinkChatDrawer } from './LinkChatDrawer';
 import { LinkChatPageMenuItems } from './LinkChatPageMenuItems';
 import { LinkChatViewer } from './LinkChatViewer';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
-import { navigateToChatLinkList } from '~/common/app.routes';
 
 
 const SPECIAL_LIST_PAGE_ID = 'list';

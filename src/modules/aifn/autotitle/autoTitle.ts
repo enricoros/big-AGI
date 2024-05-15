@@ -1,7 +1,8 @@
 import { getFastLLMId } from '~/modules/llms/store-llms';
 import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
 
-import { useChatStore } from '~/common/state/store-chats';
+import { singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
 /**
@@ -26,7 +27,8 @@ export async function conversationAutoTitle(conversationId: string, forceReplace
 
   // first line of the last 5 messages
   const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
-    let text = m.text.split('\n')[0];
+    const messageText = singleTextOrThrow(m);
+    let text = messageText.split('\n')[0];
     text = text.length > 50 ? text.substring(0, 50) + '...' : text;
     text = `${m.role === 'user' ? 'You' : 'Assistant'}: ${text}`;
     return `- ${text}`;

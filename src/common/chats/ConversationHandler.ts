@@ -3,9 +3,11 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
-import { ChatActions, createDMessage, DConversationId, DMessage, getConversationSystemPurposeId, useChatStore } from '../state/store-chats';
-
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
+
+import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { createDMessage, createTextPart, DMessage, fixmeThisReplacesAllParts } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createChatOverlayVanillaStore } from './store-chat-overlay-vanilla';
@@ -40,7 +42,8 @@ export class ConversationHandler {
     let systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
-      systemMessage.text = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
+      const systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
+      systemMessage.content = [createTextPart(systemMessageText)];
 
       // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)
       if (purposeId === 'Custom')
@@ -68,7 +71,7 @@ export class ConversationHandler {
    * @param purposeId purpose that supposedly triggered this message
    * @param typing whether the assistant is typing at the onset
    */
-  messageAppendAssistant(text: string, purposeId: SystemPurposeId | undefined, llmLabel: DLLMId | string, typing: boolean): string {
+  messageAppendAssistant(text: string, purposeId: SystemPurposeId | string | undefined, llmLabel: DLLMId | string, typing: boolean): string {
     const assistantMessage: DMessage = createDMessage('assistant', text);
     assistantMessage.typing = typing;
     assistantMessage.purposeId = purposeId ?? undefined;
@@ -108,7 +111,7 @@ export class ConversationHandler {
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { text: messageText, originLLM: llmId }, true);
+        this.messageEdit(destReplaceMessageId, { content: fixmeThisReplacesAllParts(messageText), originLLM: llmId }, true);
       } else {
         // replace (may truncate) the conversation history and append a message
         const newMessage = createDMessage('assistant', messageText);

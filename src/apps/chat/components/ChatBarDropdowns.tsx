@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';

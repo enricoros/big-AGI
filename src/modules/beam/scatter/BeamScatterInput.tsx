@@ -5,7 +5,7 @@ import { Box, Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import type { DMessage } from '~/common/state/store-chats';
+import type { DMessage } from '~/common/stores/chat/chat.message';
 
 import { BEAM_INVERT_BACKGROUND } from '../beam.config';
 import { useModuleBeamStore } from '../store-module-beam';

@@ -5,7 +5,7 @@ import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
-import type { DMessage } from '~/common/state/store-chats';
+import { DMessage, createTextPart, singleTextOrThrow, singleTextOrThrow2 } from '~/common/stores/chat/chat.message';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
@@ -33,7 +33,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // stream the assistant's messages
   const messageStatus = await streamAssistantMessage(
     assistantLlmId,
-    history.map((m): VChatMessageIn => ({ role: m.role, content: m.text })),
+    history.map((m): VChatMessageIn => ({ role: m.role, content: singleTextOrThrow(m) })),
     parallelViewCount,
     autoSpeak,
     (update) => cHandler.messageEdit(assistantMessageId, update, false),
@@ -89,7 +89,7 @@ export async function streamAssistantMessage(
     }
   }
 
-  const incrementalAnswer: Partial<DMessage> = { text: '' };
+  const incrementalAnswer: Partial<DMessage> = { content: [createTextPart('')] };
 
   try {
     await llmStreamingChatGenerate(llmId, messagesHistory, null, null, abortSignal, (update: StreamingClientUpdate) => {
@@ -97,7 +97,7 @@ export async function streamAssistantMessage(
 
       // grow the incremental message
       if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-      if (textSoFar) incrementalAnswer.text = textSoFar;
+      if (textSoFar) incrementalAnswer.content = [createTextPart(textSoFar)];
       if (update.typing !== undefined) incrementalAnswer.typing = update.typing;
 
       // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
@@ -121,7 +121,8 @@ export async function streamAssistantMessage(
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-      incrementalAnswer.text = (incrementalAnswer.text || '') + errorText;
+      const incrementalText = singleTextOrThrow2(incrementalAnswer.content);
+      incrementalAnswer.content = [createTextPart(incrementalText + errorText)];
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
     } else
@@ -134,8 +135,11 @@ export async function streamAssistantMessage(
   editMessage({ ...incrementalAnswer, typing: false });
 
   // 📢 TTS: all
-  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && incrementalAnswer.text && !spokenLine && !abortSignal.aborted)
-    void speakText(incrementalAnswer.text);
+  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
+    const incrementalText = singleTextOrThrow2(incrementalAnswer.content);
+    if (incrementalText.length > 0)
+      void speakText(incrementalText);
+  }
 
   return returnStatus;
 }

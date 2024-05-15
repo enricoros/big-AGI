@@ -25,7 +25,7 @@ import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapa
 // stores access
 import { getLLMsDebugInfo } from '~/modules/llms/store-llms';
 import { useAppStateStore } from '~/common/state/store-appstate';
-import { useChatStore } from '~/common/state/store-chats';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 

@@ -15,10 +15,11 @@ import { SystemPurposeId, SystemPurposes } from '../../../data';
 
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/state/store-folders';
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/jsUtils';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { CHAT_NOVEL_TITLE } from '../AppChat';
 import { STREAM_TEXT_INDICATOR } from '../editors/chat-stream';

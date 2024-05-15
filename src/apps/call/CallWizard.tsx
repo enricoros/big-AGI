@@ -13,7 +13,7 @@ import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptim
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useChatStore } from '~/common/state/store-chats';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
 

@@ -3,7 +3,7 @@ import { Typography } from '@mui/joy';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { createDMessage, type DMessage } from '~/common/state/store-chats';
+import { DMessage, createDMessage } from '~/common/stores/chat/chat.message';
 
 import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
 import { ChatGenerateInstruction, executeChatGenerate } from './ChatGenerateInstruction';

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Card, ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -20,9 +20,11 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
-import { conversationTitle, createDMessage, DMessage, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle } from '~/common/stores/chat/chat.conversation';
+import { createDMessage, DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import type { AppCallIntent } from './AppCall';
@@ -99,7 +101,7 @@ export function Telephone(props: {
 
   // external state
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
-  const { chatTitle, reMessages } = useChatStore(state => {
+  const { chatTitle, reMessages } = useChatStore(useShallow(state => {
     const conversation = props.callIntent.conversationId
       ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
       : null;
@@ -107,7 +109,7 @@ export function Telephone(props: {
       chatTitle: conversation ? conversationTitle(conversation) : null,
       reMessages: conversation ? conversation.messages : null,
     };
-  }, shallow);
+  }));
   const persona = SystemPurposes[props.callIntent.personaId as SystemPurposeId] ?? undefined;
   const personaCallStarters = persona?.call?.starters ?? undefined;
   const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
@@ -181,7 +183,7 @@ export function Telephone(props: {
     // only act when we have a new user message
     if (!isConnected || callMessages.length < 1 || callMessages[callMessages.length - 1].role !== 'user')
       return;
-    switch (callMessages[callMessages.length - 1].text) {
+    switch (singleTextOrThrow(callMessages[callMessages.length - 1])) {
       // do not respond
       case 'Stop.':
         return;
@@ -206,7 +208,7 @@ export function Telephone(props: {
 
     // temp fix: when the chat has no messages, only assume a single system message
     const chatMessages: { role: VChatMessageIn['role'], text: string }[] = (reMessages && reMessages.length > 0)
-      ? reMessages
+      ? reMessages.map(message => ({ role: message.role, text: singleTextOrThrow(message) }))
       : personaSystemMessage
         ? [{ role: 'system', text: personaSystemMessage }]
         : [];
@@ -217,7 +219,7 @@ export function Telephone(props: {
       { role: 'system', content: 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.' },
       ...chatMessages.map(message => ({ role: message.role, content: message.text })),
       { role: 'system', content: 'You are now on the phone call related to the chat above. Respect your personality and answer with short, friendly and accurate thoughtful lines.' },
-      ...callMessages.map(message => ({ role: message.role, content: message.text })),
+      ...callMessages.map(message => ({ role: message.role, content: singleTextOrThrow(message) })),
     ];
 
     // perform completion
@@ -339,7 +341,7 @@ export function Telephone(props: {
             {callMessages.map((message) =>
               <CallMessage
                 key={message.id}
-                text={message.text}
+                text={singleTextOrThrow(message)}
                 variant={message.role === 'assistant' ? 'solid' : 'soft'}
                 color={message.role === 'assistant' ? 'neutral' : 'primary'}
                 role={message.role}
