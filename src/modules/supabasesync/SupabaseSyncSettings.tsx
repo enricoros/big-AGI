@@ -45,7 +45,7 @@ export function SupabaseSyncSettings() {
   return <>
 
     <FormHelperText sx={{ display: 'block' }}>
-      Configure the Supabase Chat Sync, if you don't have a Supabase account you will need to create one.
+      Configure the Supabase Chat Sync, if you do not have a Supabase account you will need to create one.
     </FormHelperText>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>

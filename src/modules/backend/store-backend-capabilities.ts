@@ -54,6 +54,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmPerplexity: false,
     hasLlmTogetherAI: false,
     hasVoiceElevenLabs: false,
+    hasSupabaseSync: false,
     llmConfigHash: '',
 
     loadedCapabilities: false,

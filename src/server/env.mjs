@@ -68,6 +68,10 @@ export const env = createEnv({
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),
 
+    // Supabase Sync
+    SUPABASE_SYNC_URL: z.string().url().optional(),
+    SUPABASE_SYNC_KEY: z.string().optional(),
+
     // Browsing Service
     PUPPETEER_WSS_ENDPOINT: z.string().url().optional(),
 
