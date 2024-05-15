@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
 
-import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
+import { idbStateStorage } from '../util/idbUtils';
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 
@@ -407,10 +407,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       storage: createJSONStorage(() => idbStateStorage),
 
       // Migrations
-      migrate: (persistedState: unknown, fromVersion: number): ConversationsStore => {
-        // -1 -> 3: migration loading from localStorage to IndexedDB
-        if (fromVersion === IDB_MIGRATION_INITIAL)
-          return _migrateLocalStorageData() as any;
+      migrate: (persistedState: unknown, _fromVersion: number): ConversationsStore => {
 
         // other: just proceed
         return persistedState as any;
@@ -465,32 +462,6 @@ function getNextBranchTitle(currentTitle: string): string {
     return `(1) ${currentTitle}`;
 }
 
-/**
- * Returns the chats stored in the localStorage, and rename the key for
- * backup/data loss prevention purposes
- */
-function _migrateLocalStorageData(): ChatState | {} {
-  const key = 'app-chats';
-  const value = localStorage.getItem(key);
-  if (!value) return {};
-  try {
-    // parse the localStorage state
-    const localStorageState = JSON.parse(value)?.state;
-
-    // backup and delete the localStorage key
-    const backupKey = `${key}-v2`;
-    localStorage.setItem(backupKey, value);
-    localStorage.removeItem(key);
-
-    // match the state from localstorage
-    return {
-      conversations: localStorageState?.conversations ?? [],
-    };
-  } catch (error) {
-    console.error('LocalStorage migration error', error);
-    return {};
-  }
-}
 
 /**
  * Convenience function to count the tokens in a DMessage object
