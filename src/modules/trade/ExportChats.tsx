@@ -33,6 +33,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const [downloadedMarkdownState, setDownloadedMarkdownState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
   const [syncAllState, setSyncAllState] = React.useState<'ok' | 'fail' | null>(null);
+  const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
 
   // external state
   const enableSharing = getBackendCapabilities().hasDB;
@@ -67,10 +68,13 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       .catch(() => setDownloadedAllState('fail'));
   };
 
-  const handleSyncAllConversations = () => {
-    syncAllConversations()
-      .then(() => setSyncAllState('ok'))
-      .catch(() => setSyncAllState('fail'));
+  const handleSyncAllConversations = async () => {
+    try {
+      const syncedCount = await syncAllConversations(setSyncMessage);
+      setSyncAllState('ok');
+    } catch {
+      setSyncAllState('fail');
+    }
   }
 
 
@@ -164,6 +168,12 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             >
               Sync
             </Button>
+
+            {syncMessage && (
+              <Typography level='body-sm'>
+                {syncMessage}
+              </Typography>
+            )}
 
           </Box>
         </Grid>

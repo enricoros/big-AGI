@@ -20,6 +20,14 @@ type SupabaseConversation = {
 
 export const isValidSupabaseConnection = (url?: string, key?: string) => !!url && !!key;
 
+function logInfo(message: string) {
+    console.log(`[INFO]: ${message}`);
+}
+
+function logError(message: string, error: any) {
+    console.error(`[ERROR]: ${message}`, error);
+}
+
 /**
  * This function tests the Supabase connection
  * @param url 
@@ -69,7 +77,7 @@ async function getServersLastSyncTime(supabase: SupabaseClient): Promise<number>
     }
 }
 
-async function syncToServer(supabase: SupabaseClient, conversations: DConversation[]): Promise<void> {
+async function syncToServer(supabase: SupabaseClient, conversations: DConversation[]): Promise<number> {
     // find all conversations that have been updated since the last sync
 
     const lastSyncTime = await getServersLastSyncTime(supabase);
@@ -79,8 +87,7 @@ async function syncToServer(supabase: SupabaseClient, conversations: DConversati
        .map(conversationToJsonV1); // this removes some of the fields we want to sync
 
     if (updatedConversations.length === 0) {
-        console.log('No conversations to sync');
-        return;
+        return 0;
     }
 
     console.log(`Syncing ${updatedConversations.length} conversations`);
@@ -91,76 +98,86 @@ async function syncToServer(supabase: SupabaseClient, conversations: DConversati
 
     if (error) {
         console.error('Error syncing conversations:', error);
-        return;
+        return 0;
     }
 
-    console.log(`Synced ${updatedConversations.length} conversations`);
-
+    //console.log(`Synced ${updatedConversations.length} conversations`);
+    return updatedConversations.length;
 }
 
-async function syncFromServerToClient(supabase: SupabaseClient, conversations: DConversation[], lastSyncTime: number): Promise<void> {
-
-    // Find all conversations from the server where the updated field is greater than maxConversationTime
+async function syncFromServerToClient(supabase: SupabaseClient, conversations: DConversation[], lastSyncTime: number): Promise<number> {
     console.log(`Fetching conversations from server > ${lastSyncTime}`);
 
     const { data, error } = await supabase
-        //.from<SupabaseConversation,"public", SupabaseConversation>('conversation')
         .from('conversation')
         .select("*")
         .gt('updated', lastSyncTime);
     
     if (error) {
         console.error('Error fetching conversations from Server:', error);
-        return;
+        return 0;
     }
-
-    // map server data into conversations, this will need to be saved back into state
-
-    // if the conversation.id exists then replace  it with the value from the data
-    // if the conversation does not exist then we need to add
 
     if (data && data.length > 0) {
         console.debug(`Found ${data.length} conversations from server`);
-        const conversationsFromServer: SupabaseConversation[] = data.map(record => { return {...record}}); // Cross my fingers and hope they map
+        const conversationsFromServer: SupabaseConversation[] = data.map(record => ({ ...record }));
         
         const importConversation = useChatStore.getState().importConversation;
 
-        // add or update the conversations
         conversationsFromServer.forEach(conversationFromServer => {
             let conversation = conversations.find(conversation => conversation.id === conversationFromServer.id);
-            // create a new conversation if existing one not found
-            if (conversation === null || conversation === undefined) {
+            if (conversation) {
+                // is it already updated (e.g. did we just push that to the server?)
+                if (conversation.updated && conversation.updated > (conversationFromServer.updated ?? 0)) {
+                    return; // the same, don't touch
+                }
+            } else {
                 conversation = createDConversation();
-                conversation.id = conversationFromServer.id; // user id from server
-                conversation.created = conversationFromServer.created; // use creation date from server
+                conversation.id = conversationFromServer.id;
+                conversation.created = conversationFromServer.created;
             }
 
             conversation.updated = conversationFromServer.updated;
             conversation.autoTitle = conversationFromServer.autoTitle;
             conversation.userTitle = conversationFromServer.userTitle;
             conversation.messages = conversationFromServer.messages;
-            // do we need to sync the messages individually? No for now
 
             importConversation(conversation, false);
         });
 
+        return conversationsFromServer.length;
     } else {
         console.debug('No conversations from server');
     }
 
+    return 0;
 }
 
-export async function syncAllConversations() {
+export async function syncAllConversations(setMessage?: (message: string | null) => void): Promise<number> {
     const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore.getState();
-
-    //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
-    const conversations = useChatStore.getState().conversations; //.map(conversationToJsonV1);
+    const conversations = useChatStore.getState().conversations;
     const supabase = createSupabase();
 
-    await syncToServer(supabase, conversations);
-    
-    const updatedSyncTime = Date.now(); // save time now before we sync to allow grace time for another browser syncing while we are reading in
-    await syncFromServerToClient(supabase, conversations, lastSyncTime);
+    //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
+    try {
+        logInfo('Starting sync to server...');
+        const pushedCount = await syncToServer(supabase, conversations);
+        logInfo('Sync to server completed.');
 
-    setLastSyncTime(updatedSyncTime);
+        const updatedSyncTime = Date.now();
+        logInfo('Starting sync from server to client...');
+        const pulledCount = await syncFromServerToClient(supabase, conversations, lastSyncTime);
+        logInfo('Sync from server to client completed.');
+
+        setLastSyncTime(updatedSyncTime);
+        logInfo(`Sync completed. Last sync time updated to ${updatedSyncTime}.`);
+        setMessage?.(`Sync Successful, ${pushedCount} pushed, ${pulledCount} pulled`);
+
+        // Return the number of conversations synced
+        return pushedCount + pulledCount;
+    } catch (error) {
+        logError('Error during syncAllConversations', error);
+        setMessage?.(`Failed to sync conversations: ${error}`);
+        return 0;
+    }
 }
