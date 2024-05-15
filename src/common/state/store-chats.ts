@@ -382,7 +382,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             systemPurposeId,
           }),
 
-      setAutoTitle: (conversationId: string, autoTitle: string, touchUpdated: boolean = true) =>
+      setAutoTitle: (conversationId: string, autoTitle: string) =>
         _get()._editConversation(conversationId,
           {
             autoTitle,
