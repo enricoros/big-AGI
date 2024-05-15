@@ -12,6 +12,9 @@ interface ModuleSupabaseSyncStore {
   supabaseKey: string;
   setSupabaseKey: (key: string) => void;
 
+  lastSyncTime: number;
+  setLastSyncTime: (lastSyncTime: number) => void;
+
 }
 
 export const useSupabaseSyncStore = create<ModuleSupabaseSyncStore>()(
@@ -25,6 +28,9 @@ export const useSupabaseSyncStore = create<ModuleSupabaseSyncStore>()(
 
       supabaseKey: '',
       setSupabaseKey: (key: string) => set({ supabaseKey: key }),
+
+      lastSyncTime: 0,
+      setLastSyncTime: (lastSyncTime: number) => set({ lastSyncTime: lastSyncTime }),
 
     }),
     {

@@ -18,9 +18,10 @@ export function SupabaseSyncSettings() {
 
   // external state
   const backendHasSupabaseSync = getBackendCapabilities().hasSupabaseSync;
-  const { supabaseUrl, setSupabaseUrl, supabaseAnonKey: supabaseKey, setSupabaseAnonKey } = useSupabaseSyncStore(state => ({
+  const { supabaseUrl, setSupabaseUrl, supabaseAnonKey: supabaseKey, setSupabaseAnonKey, lastSyncTime, setLastSyncTime } = useSupabaseSyncStore(state => ({
     supabaseUrl: state.supabaseUrl, setSupabaseUrl: state.setSupabaseUrl,
     supabaseAnonKey: state.supabaseKey, setSupabaseAnonKey: state.setSupabaseKey,
+    lastSyncTime: state.lastSyncTime, setLastSyncTime: state.setLastSyncTime,
   }), shallow);
 
 
@@ -30,8 +31,16 @@ export function SupabaseSyncSettings() {
 
   const handleSupabaseSyncChange = (e: React.ChangeEvent<HTMLInputElement>) => setSupabaseUrl(e.target.value);
 
-  const handleSupabaseAnonKeyChane = (e: React.ChangeEvent<HTMLInputElement>) => setSupabaseAnonKey(e.target.value);
+  const handleSupabaseAnonKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setSupabaseAnonKey(e.target.value);
 
+  // set sync time from input
+  const handleLastSyncTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // need to convert e.target.value to a number or 0 if empty or nan
+    let value = e.target.value? Number(e.target.value) : 0;
+    if (isNaN(value))
+      value = 0;
+    setLastSyncTime(value);
+  }
 
   return <>
 
@@ -58,7 +67,20 @@ export function SupabaseSyncSettings() {
                       tooltip='Your database connection Key' />
       <Input
         variant='outlined' placeholder={backendHasSupabaseSync ? '...' : 'missing'} error={!isValidAnonKey}
-        value={supabaseKey} onChange={handleSupabaseAnonKeyChane}
+        value={supabaseKey} onChange={handleSupabaseAnonKeyChange}
+        startDecorator={<SearchIcon />}
+        slotProps={{ input: { sx: { width: '100%' } } }}
+        sx={{ width: '100%' }}
+      />
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Last Synced'
+                      description=''
+                      tooltip='Last Time you synced with the server from this browser' />
+      <Input
+        variant='outlined' placeholder={backendHasSupabaseSync ? '...' : 'missing'} error={!isValidAnonKey}
+        value={lastSyncTime} onChange={handleLastSyncTimeChange}
         startDecorator={<SearchIcon />}
         slotProps={{ input: { sx: { width: '100%' } } }}
         sx={{ width: '100%' }}

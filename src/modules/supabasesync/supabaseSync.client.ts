@@ -1,10 +1,11 @@
-import { apiAsync } from '~/common/util/trpc.client';
+//import { apiAsync } from '~/common/util/trpc.client';
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { useSupabaseSyncStore } from "./store-module-supabase-sync";
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 import { conversationToJsonV1 } from '~/modules/trade/trade.client';
 import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
-import { DFolder, useFolderStore } from '~/common/state/store-folders';
+//import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { shallow } from 'zustand/shallow';
 
 export const isValidSupabaseConnection = (url?: string, key?: string) => !!url && !!key;
 
@@ -86,15 +87,15 @@ async function syncToServer(supabase: SupabaseClient, conversations: DConversati
 
 }
 
-async function syncFromServerToClient(supabase: SupabaseClient, conversations: DConversation[], maxConversationTime: number): Promise<void> {
+async function syncFromServerToClient(supabase: SupabaseClient, conversations: DConversation[], lastSyncTime: number): Promise<void> {
 
     // Find all conversations from the server where the updated field is greater than maxConversationTime
-    console.log(`Fetching conversations from server > ${maxConversationTime}`);
+    console.log(`Fetching conversations from server > ${lastSyncTime}`);
 
     const { data, error } = await supabase
         .from('conversation')
         .select("*")
-        .gt('updated', maxConversationTime);
+        .gt('updated', lastSyncTime);
     
     if (error) {
         console.error('Error fetching conversations from Server:', error);
@@ -120,7 +121,11 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
             }
         });
         console.log(`Found ${conversationsFromServer.length} conversations from server`);
-        console.warn("update ui still to do...");
+
+        if (conversationsFromServer.length > 0) {
+            console.warn("update ui still to do...");
+        }
+        
         //useChatStore.getState().setConversations(conversationsFromServer);
         //cOutcome.importedConversationId = useChatStore.getState().importConversation(cOutcome.conversation, preventClash);
     } else {
@@ -131,15 +136,27 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
 }
 
 export async function syncAllConversations() {
-    console.log('syncAllConversations');
+    //console.log('syncAllConversations');
+
+    const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore.getState();
+
+    // const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore(state => ({
+    //     lastSyncTime: state.lastSyncTime, setLastSyncTime: state.setLastSyncTime,
+    //   }), shallow);
+
+      //useChatStore.getState().setUserTitle(conversationId, text.trim());
 
     //const { folders, enableFolders } = useFolderStore.getState();
     const conversations = useChatStore.getState().conversations; //.map(conversationToJsonV1);
     const supabase = createSupabase();
     // find the max `updated` value from all conversations (must do this before we sync with server)
-    const maxConversationTime = Math.max(...conversations.map(conversation => conversation.updated || 0));
+    //const maxConversationTime = Math.max(...conversations.map(conversation => conversation.updated || 0));
+
     await syncToServer(supabase, conversations);
     
-    //await syncFromServerToClient(supabase, conversations);
+    const updatedSyncTime = Date.now(); // save time now before we sync to allow grace time for another browser syncing while we are reading in
+    await syncFromServerToClient(supabase, conversations, lastSyncTime);
+
+    setLastSyncTime(updatedSyncTime);
 
 }
