@@ -875,7 +875,13 @@ export function groqModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSc
 
 // Helpers
 
-type ManualMapping = ({ idPrefix: string, isLatest?: boolean, isPreview?: boolean, isLegacy?: boolean, symLink?: string } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
+type ManualMapping = ({
+  idPrefix: string,
+  isLatest?: boolean,
+  isPreview?: boolean,
+  isLegacy?: boolean,
+  symLink?: string
+} & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
 type ManualMappings = ManualMapping[];
 
 function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping): ModelDescriptionSchema {
