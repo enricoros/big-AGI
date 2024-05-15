@@ -5,7 +5,7 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { CHAT_NOVEL_TITLE } from '../AppChat';

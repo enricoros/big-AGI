@@ -30,7 +30,7 @@ import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageUserFlag, messageHasUserFlag } from '~/common/state/store-chats';
+import { DMessage, DMessageRole, DMessageUserFlag, messageHasUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
@@ -53,7 +53,7 @@ const SELECTION_TOOLBAR_MIN_LENGTH = 3;
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
 
-export function messageBackground(messageRole: DMessage['role'] | string, wasEdited: boolean, isAssistantIssue: boolean): string {
+export function messageBackground(messageRole: DMessageRole | string, wasEdited: boolean, isAssistantIssue: boolean): string {
   switch (messageRole) {
     case 'user':
       return 'primary.plainHoverBg'; // was .background.level1
@@ -87,7 +87,7 @@ const personaSx: SxProps = {
 };
 
 
-export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['role'] | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
+export function makeAvatar(messageAvatar: string | null, messageRole: DMessageRole | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | string | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
   if (typeof messageAvatar === 'string' && messageAvatar)
     return <Avatar alt={messageSender} src={messageAvatar} />;
 
@@ -124,7 +124,7 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessage['
         }} />;
 
       // purpose symbol (if present)
-      const symbol = SystemPurposes[messagePurposeId!]?.symbol;
+      const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
       if (symbol)
         return <Box sx={{
           fontSize: '24px',
@@ -256,12 +256,14 @@ export function ChatMessage(props: {
     renderMarkdown: state.renderMarkdown,
   })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
-  const textDiffs = useSanityTextDiffs(props.message.text, props.diffPreviousText, showDiff);
+
+  const messageText = singleTextOrThrow(props.message);
+
+  const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
   // derived state
   const {
     id: messageId,
-    text: messageText,
     sender: messageSender,
     avatar: messageAvatar,
     typing: messageTyping,

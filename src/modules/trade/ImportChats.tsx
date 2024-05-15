@@ -4,13 +4,15 @@ import { Box, Button, FormControl, Input, Sheet, Textarea, Typography } from '@m
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { Brand } from '~/common/app.config';
+import { DConversationId, createDConversation } from '~/common/stores/chat/chat.conversation';
+import { DMessage, createDMessage } from '~/common/stores/chat/chat.message';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
 import type { ChatGptSharedChatSchema } from './server/chatgpt';

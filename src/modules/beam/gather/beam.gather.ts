@@ -4,7 +4,7 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import type { DMessage } from '~/common/state/store-chats';
+import type { DMessage } from '~/common/stores/chat/chat.message';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
 import { GATHER_PLACEHOLDER } from '../beam.config';

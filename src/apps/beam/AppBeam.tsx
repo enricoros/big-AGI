@@ -8,7 +8,8 @@ import { BeamView } from '~/modules/beam/BeamView';
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
+import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
+import { createDMessage, DMessage } from '~/common/stores/chat/chat.message';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 

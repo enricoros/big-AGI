@@ -1,7 +1,8 @@
 import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { useChatStore } from '~/common/state/store-chats';
+import { useChatStore } from '~/common/stores/chat/store-chats';
+import { createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 
 /*const suggestUserFollowUpFn: VChatFunctionIn = {
@@ -67,7 +68,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Execute the following follow-ups in parallel
   // const assistantMessageId = assistantMessage.id;
-  let assistantMessageText = assistantMessage.text;
+  let assistantMessageText = singleTextOrThrow(assistantMessage);
 
   // Follow-up: Question
   if (suggestQuestions) {
@@ -84,8 +85,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
     void llmChatGenerateOrThrow(funcLLMId, [
-        { role: 'system', content: systemMessage.text },
-        { role: 'user', content: userMessage.text },
+        { role: 'system', content: singleTextOrThrow(systemMessage) },
+        { role: 'user', content: singleTextOrThrow(userMessage) },
         { role: 'assistant', content: assistantMessageText },
       ], [suggestPlantUMLFn], 'draw_plantuml_diagram',
     ).then(chatResponse => {
@@ -105,7 +106,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // append the PlantUML diagram to the assistant response
           editMessage(conversationId, assistantMessageId, {
-            text: assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`,
+            content: [createTextPart(assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`)],
           }, false);
         }
       }

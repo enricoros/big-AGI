@@ -4,7 +4,7 @@ import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography } from '
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { DMessage } from '~/common/state/store-chats';
+import { DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 import { TokenBadgeMemo } from '../composer/TokenBadge';
 import { makeAvatar, messageBackground } from './ChatMessage';
@@ -44,7 +44,6 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   // derived state
   const {
     id: messageId,
-    text: messageText,
     sender: messageSender,
     avatar: messageAvatar,
     typing: messageTyping,
@@ -54,6 +53,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
     tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
+
+  const messageText = singleTextOrThrow(props.message);
 
   const fromAssistant = messageRole === 'assistant';
 

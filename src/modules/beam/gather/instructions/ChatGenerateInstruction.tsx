@@ -8,7 +8,7 @@ import { streamAssistantMessage } from '../../../../apps/chat/editors/chat-strea
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { DMessage } from '~/common/state/store-chats';
+import { DMessage, createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
@@ -48,17 +48,17 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     // s0-h0-u0
     ...inputs.chatMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant'))
-      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: m.text })),
+      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: singleTextOrThrow(m) })),
     // aN
     ...inputs.rayMessages
-      .map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
+      .map((m): VChatMessageIn => ({ role: 'assistant', content: singleTextOrThrow(m) })),
     // u
     { role: 'user', content: _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput) },
   ];
 
   // reset the intermediate message
   Object.assign(inputs.intermediateDMessage, {
-    text: GATHER_PLACEHOLDER,
+    content: [createTextPart(GATHER_PLACEHOLDER)],
     updated: undefined,
   } satisfies Partial<DMessage>);
 
@@ -66,8 +66,8 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   const onMessageUpdate = (update: Partial<DMessage>) => {
     // in-place update of the intermediate message
     Object.assign(inputs.intermediateDMessage, update);
-    if (update.text)
-      inputs.intermediateDMessage.updated = Date.now();
+    // if (update.text) // TODO: port to contents
+    inputs.intermediateDMessage.updated = Date.now();
 
     switch (_i.display) {
       case 'mute':
@@ -75,7 +75,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
       case 'character-count':
         inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{update.text?.length || 0} characters</Typography>,
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{singleTextOrThrow(update as any)?.length || 0} characters</Typography>,
         );
         return;
 
@@ -107,7 +107,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
         throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
 
       // Proceed to the next step
-      return inputs.intermediateDMessage.text;
+      return singleTextOrThrow(inputs.intermediateDMessage);
     });
 }
 

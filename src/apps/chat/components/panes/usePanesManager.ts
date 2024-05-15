@@ -4,7 +4,8 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
 // change this to increase/decrease the number history steps per pane

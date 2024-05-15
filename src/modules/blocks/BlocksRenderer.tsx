@@ -7,7 +7,7 @@ import { Box, Button, Tooltip, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import type { DMessage } from '~/common/state/store-chats';
+import { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
 import { InlineError } from '~/common/components/InlineError';
 
@@ -50,7 +50,7 @@ const renderBlocksSx: SxProps = {
 type BlocksRendererProps = {
   // required
   text: string;
-  fromRole: DMessage['role'];
+  fromRole: DMessageRole;
   contentScaling: ContentScaling;
   renderTextAsMarkdown: boolean;
   renderTextDiff?: TextDiff[];

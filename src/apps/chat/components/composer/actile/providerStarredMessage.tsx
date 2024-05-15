@@ -1,4 +1,6 @@
-import { conversationTitle, DConversationId, messageHasUserFlag, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { messageHasUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ActileItem, ActileProvider } from './ActileProvider';
 
@@ -27,7 +29,7 @@ export function providerStarredMessage(onMessageSeelect: (item: StarredMessageIt
             messageId: message.id,
             // looks
             key: message.id,
-            label: conversationTitle(conversation) + ' - ' + message.text.slice(0, 32) + '...',
+            label: conversationTitle(conversation) + ' - ' + singleTextOrThrow(message).slice(0, 32) + '...',
             // description: message.text.slice(32, 100),
             Icon: undefined,
           } satisfies StarredMessageItem);

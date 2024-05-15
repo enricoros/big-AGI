@@ -1,7 +1,9 @@
 import { shallow } from 'zustand/shallow';
 
 import type { DFolder } from '~/common/state/store-folders';
-import { conversationTitle, DConversationId, DMessageUserFlag, messageHasUserFlag, messageUserFlagToEmoji, useChatStore } from '~/common/state/store-chats';
+import { DMessageUserFlag, messageHasUserFlag, messageUserFlagToEmoji, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';
 
@@ -119,7 +121,7 @@ export function useChatDrawerRenderItems(
           let searchFrequency: number = 0;
           if (isSearching) {
             const titleFrequency = title.toLowerCase().split(lcTextQuery).length - 1;
-            const messageFrequency = _c.messages.reduce((count, message) => count + (message.text.toLowerCase().split(lcTextQuery).length - 1), 0);
+            const messageFrequency = _c.messages.reduce((count, message) => count + (singleTextOrThrow(message).toLowerCase().split(lcTextQuery).length - 1), 0);
             searchFrequency = titleFrequency + messageFrequency;
           }
 

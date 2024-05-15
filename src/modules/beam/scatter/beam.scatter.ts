@@ -6,7 +6,7 @@ import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
-import { createDMessage, DMessage } from '~/common/state/store-chats';
+import { createDMessage, DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
@@ -228,9 +228,9 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
             // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
             const ray = createBRay(raysLlmId);
             // pre-fill the ray status with the message and to a successful state
-            if (message.text.trim()) {
+            if (singleTextOrThrow(message).trim()) {
               ray.status = 'success';
-              ray.message.text = message.text;
+              ray.message.content = [...message.content];
               ray.message.updated = Date.now();
               ray.imported = true;
             }

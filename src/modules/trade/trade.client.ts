@@ -5,11 +5,13 @@ import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../d
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 
 import { Brand } from '~/common/app.config';
+import { DConversation, DConversationId, conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ImportedOutcome } from './ImportOutcomeModal';
 
@@ -205,7 +207,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     : '';
   return mdTitle + conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
     let sender: string = message.sender;
-    let text = message.text;
+    let text = singleTextOrThrow(message);
     switch (message.role) {
       case 'system':
         sender = '✨ System message';
@@ -215,7 +217,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
         const purpose = message.purposeId || conversation.systemPurposeId || null;
         sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || '')}*`.trim();
         if (purpose && purpose in SystemPurposes)
-          sender = `${SystemPurposes[purpose]?.symbol || ''} ${sender}`.trim();
+          sender = `${SystemPurposes[purpose as SystemPurposeId]?.symbol || ''} ${sender}`.trim();
         break;
       case 'user':
         sender = '👤 You';

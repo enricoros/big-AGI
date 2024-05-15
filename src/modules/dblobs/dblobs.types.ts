@@ -81,7 +81,7 @@ type ItemDataOrigin = UploadOrigin | GeneratedOrigin;
 // Item Base type
 
 interface DBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
-  id: string; // Unique identifier
+  id: DBlobId; // Unique identifier
   type: TType; // Type of item, used for discrimination
 
   label: string; // Textual representation
@@ -94,6 +94,8 @@ interface DBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType
   metadata: TMeta; // Flexible metadata for specific .type(s)
   cache: Record<string, DBlobData<DBlobMimeType>>; // Cached conversions as BlobData objects
 }
+
+export type DBlobId = string;
 
 export function createDBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(type: TType, label: string, data: DBlobData<TMime>, origin: ItemDataOrigin, metadata: TMeta): DBlobBase<TType, TMime, TMeta> {
   return {

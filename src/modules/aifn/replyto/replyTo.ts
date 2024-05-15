@@ -1,4 +1,4 @@
-import { createDMessage, DMessage } from '~/common/state/store-chats';
+import { DMessage, createDMessage } from '~/common/stores/chat/chat.message';
 
 
 const replyToSystemPrompt = `The user is referring to this in particular:

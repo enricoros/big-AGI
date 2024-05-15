@@ -7,9 +7,11 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DMessage, createDMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { createDMessage, DConversationId, DMessage, getConversation, useChatStore } from '~/common/state/store-chats';
+import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
@@ -68,7 +70,8 @@ function encodeConversationAsUserMessage(userPrompt: string, messages: DMessage[
   for (const message of messages) {
     if (message.role === 'system') continue;
     const author = message.role === 'user' ? 'User' : 'Assistant';
-    const text = message.text.replace(/\n/g, '\n\n');
+    const messageText = singleTextOrThrow(message);
+    const text = messageText.replace(/\n/g, '\n\n');
     encodedMessages += `---${author}---\n${text}\n\n`;
   }
 
