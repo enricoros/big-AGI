@@ -6,6 +6,7 @@ import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
@@ -81,7 +82,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
       noKey
       required={userHostRequired}
       isError={userHostError}
-      rightLabel={backendHasHost ? '✔️ already set in server' : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
+      rightLabel={backendHasHost ? <AlreadySet /> : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
       value={localAIHost} onChange={value => updateSetup({ localAIHost: value })}
     />
 
