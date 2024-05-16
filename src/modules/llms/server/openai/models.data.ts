@@ -376,6 +376,8 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 
 
 // [Mistral]
+// updated from the models on: https://docs.mistral.ai/getting-started/models/
+// and the pricing available on: https://mistral.ai/technology/#pricing
 
 const _knownMistralChatModels: ManualMappings = [
   // Large
@@ -385,7 +387,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Top-tier reasoning for high-complexity tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 8, chatOut: 24 },
+    pricing: { chatIn: 4, chatOut: 12 },
     benchmark: { cbaElo: 1159 },
   },
   {
@@ -397,16 +399,8 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Top-tier reasoning for high-complexity tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 8, chatOut: 24 },
+    pricing: { chatIn: 4, chatOut: 12 },
     benchmark: { cbaElo: 1159 },
-  },
-  {
-    idPrefix: 'mistral-large',
-    label: 'Mistral Large (?)',
-    description: 'Top-tier reasoning for high-complexity tasks.',
-    contextWindow: 32768,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
   },
 
   // Open Mixtral (8x22B)
@@ -416,7 +410,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mixtral 8x22B model',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 1.5, chatOut: 4.5 },
+    pricing: { chatIn: 2, chatOut: 6 },
   },
   {
     idPrefix: 'open-mixtral-8x22b',
@@ -427,7 +421,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mixtral 8x22B model',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 1.5, chatOut: 4.5 },
+    pricing: { chatIn: 2, chatOut: 6 },
   },
   // Medium (Deprecated)
   {
@@ -468,7 +462,7 @@ const _knownMistralChatModels: ManualMappings = [
     hidden: true,
   },
 
-  // Open Mixtral (8x7B) -> currenty points to `mistral-small-2312` (as per the docs)
+  // Open Mixtral (8x7B) -> currently points to `mistral-small-2312` (as per the docs)
   {
     idPrefix: 'open-mixtral-8x7b',
     label: 'Open Mixtral (8x7B)',
@@ -484,7 +478,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 2, chatOut: 6 },
+    pricing: { chatIn: 1, chatOut: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -496,7 +490,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 2, chatOut: 6 },
+    pricing: { chatIn: 1, chatOut: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -506,7 +500,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Aka open-mixtral-8x7b. Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 2, chatOut: 6 },
+    pricing: { chatIn: 1, chatOut: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -518,7 +512,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Aka open-mixtral-8x7b. Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 2, chatOut: 6 },
+    pricing: { chatIn: 1, chatOut: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -555,7 +549,6 @@ const _knownMistralChatModels: ManualMappings = [
     isLegacy: true,
   },
 
-
   {
     idPrefix: 'mistral-embed',
     label: 'Mistral Embed',
@@ -563,6 +556,7 @@ const _knownMistralChatModels: ManualMappings = [
     maxCompletionTokens: 1024, // HACK - it's 1024 dimensions, but those are not 'completion tokens'
     contextWindow: 8192, // Updated context window
     interfaces: [],
+    pricing: { chatIn: 0.1, chatOut: 0.1 },
     hidden: true,
   },
 ];
