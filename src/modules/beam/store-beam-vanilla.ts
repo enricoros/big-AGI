@@ -70,7 +70,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
 
 
   open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
-    const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, setRayLlmIds, setCurrentGatherLlmId } = _get();
+    const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, hadImportedRays, setRayLlmIds, setCurrentGatherLlmId } = _get();
 
     // reset pending operations
     terminateKeepingSettings();
@@ -89,6 +89,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       onSuccessCallback: callback,
 
       // rays already reset
+      hadImportedRays,
 
       // update the model only if the dialog was not already open
       ...(!wasAlreadyOpen && initialChatLlmId && {
