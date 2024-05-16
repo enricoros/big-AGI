@@ -30,6 +30,7 @@ export function BeamView(props: {
 
   // external state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
+  const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
   const {
     /* root */ editInputHistoryMessage,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
@@ -38,24 +39,21 @@ export function BeamView(props: {
     /* root */ inputHistory, inputIssues, inputReady,
     /* scatter */ isScattering, raysReady,
     /* gather (composite) */ canGather,
-    /* IDs */ rayIds, fusionIds,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     // input
     inputHistory: state.inputHistory,
     inputIssues: state.inputIssues,
     inputReady: state.inputReady,
     // scatter
+    hadImportedRays: state.hadImportedRays,
     isScattering: state.isScattering,
     raysReady: state.raysReady,
     // gather (composite)
     canGather: state.raysReady >= 2 && state.currentFactoryId !== null && state.currentGatherLlmId !== null,
-    // IDs
-    rayIds: state.rays.map(ray => ray.rayId),
-    fusionIds: state.fusions.map(fusion => fusion.fusionId),
   })));
-  const { gatherAutoStartAfterScatter } = useModuleBeamStore(useShallow(state => ({
-    gatherAutoStartAfterScatter: state.gatherAutoStartAfterScatter,
-  })));
+  // the following are independent because of useShallow, which would break in the above call
+  const rayIds = useBeamStore(props.beamStore, useShallow(state => state.rays.map(ray => ray.rayId)));
+  const fusionIds = useBeamStore(props.beamStore, useShallow(state => state.fusions.map(fusion => fusion.fusionId)));
 
   // derived state
   const raysCount = rayIds.length;
