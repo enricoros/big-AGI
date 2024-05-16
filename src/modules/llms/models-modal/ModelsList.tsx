@@ -50,8 +50,8 @@ function ModelItem(props: {
 
   let tooltip = llm._source.label;
   if (llm.description)
-    tooltip += ' - ' + llm.description;
-  tooltip += ' - ';
+    tooltip += ' · ' + llm.description;
+  tooltip += ' · ';
   if (llm.contextTokens) {
     tooltip += llm.contextTokens.toLocaleString() + ' tokens';
     if (llm.maxOutputTokens)
