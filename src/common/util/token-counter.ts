@@ -6,6 +6,9 @@ import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 // Do not set this to true in production, it's very verbose
 const DEBUG_TOKEN_COUNT = false;
 
+// Globals
+// const tokenEncodings: string[] = ['gpt2', 'r50k_base', 'p50k_base', 'p50k_edit', 'cl100k_base', 'o200k_base'] satisfies TiktokenEncoding[];
+
 // Global symbols to dynamically load the Tiktoken library
 let get_encoding: ((encoding: TiktokenEncoding) => Tiktoken) | null = null;
 let encoding_for_model: ((model: TiktokenModel) => Tiktoken) | null = null;
