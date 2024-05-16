@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -42,7 +43,7 @@ export function GroqSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='groq-key' label='Groq API Key'
       rightLabel={<>{needsUserKey
         ? !groqKey && <Link level='body-sm' href={GROQ_REG_LINK} target='_blank'>API keys</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={groqKey} onChange={value => updateSetup({ groqKey: value })}
       required={needsUserKey} isError={showKeyError}
