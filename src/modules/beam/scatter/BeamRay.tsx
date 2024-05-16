@@ -109,7 +109,8 @@ function RayControls(props: {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  isRemovable: boolean
+  hadImportedRays: boolean
+  isRemovable: boolean,
   rayId: string,
   rayIndexWeak: number,
   // linkedLlmId: DLLMId | null,

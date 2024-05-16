@@ -37,7 +37,7 @@ export function BeamView(props: {
   } = props.beamStore.getState();
   const {
     /* root */ inputHistory, inputIssues, inputReady,
-    /* scatter */ isScattering, raysReady,
+    /* scatter */ hadImportedRays, isScattering, raysReady,
     /* gather (composite) */ canGather,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     // input
@@ -171,6 +171,7 @@ export function BeamView(props: {
         beamStore={props.beamStore}
         isMobile={props.isMobile}
         rayIds={rayIds}
+        hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
         // linkedLlmId={currentGatherLlmId}
       />
