@@ -15,7 +15,8 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
 
   try {
     const page = await callBrowseFetchPage(url);
-    cHandler.messageEdit(assistantMessageId, { text: page.content || 'Issue: page load did not produce an answer: no text found', typing: false }, true);
+    const pageContent = page.content.markdown || page.content.text || page.content.html || 'Issue: page load did not produce an answer: no text found';
+    cHandler.messageEdit(assistantMessageId, { text: pageContent, typing: false }, true);
     return true;
   } catch (error: any) {
     console.error(error);

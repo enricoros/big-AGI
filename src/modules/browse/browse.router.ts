@@ -19,21 +19,22 @@ const browseAccessSchema = z.object({
   dialect: z.enum(['browse-wss']),
   wssEndpoint: z.string().trim().optional(),
 });
+type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
 
 const pageTransformSchema = z.enum(['html', 'text', 'markdown']);
 type PageTransformSchema = z.infer<typeof pageTransformSchema>;
 
 const fetchPageInputSchema = z.object({
   access: browseAccessSchema,
-  subjects: z.array(z.object({
+  requests: z.array(z.object({
     url: z.string().url(),
-    transform: pageTransformSchema,
+    transforms: z.array(pageTransformSchema),
+    screenshot: z.object({
+      width: z.number(),
+      height: z.number(),
+      quality: z.number().optional(),
+    }).optional(),
   })),
-  screenshot: z.object({
-    width: z.number(),
-    height: z.number(),
-    quality: z.number().optional(),
-  }).optional(),
 });
 
 
@@ -41,16 +42,18 @@ const fetchPageInputSchema = z.object({
 
 const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
-  content: z.string(),
+  content: z.record(pageTransformSchema, z.string()),
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
   screenshot: z.object({
-    imageDataUrl: z.string().startsWith('data:image/'),
+    webpDataUrl: z.string().startsWith('data:image/webp'),
     mimeType: z.string().startsWith('image/'),
     width: z.number(),
     height: z.number(),
   }).optional(),
 });
+type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
+
 
 const fetchPagesOutputSchema = z.object({
   pages: z.array(fetchPageWorkerOutputSchema),
@@ -62,21 +65,23 @@ export const browseRouter = createTRPCRouter({
   fetchPages: publicProcedure
     .input(fetchPageInputSchema)
     .output(fetchPagesOutputSchema)
-    .mutation(async ({ input: { access, subjects, screenshot } }) => {
-      const pages: FetchPageWorkerOutputSchema[] = [];
+    .mutation(async ({ input: { access, requests } }) => {
 
-      for (const subject of subjects) {
-        try {
-          pages.push(await workerPuppeteer(access, subject.url, subject.transform, screenshot?.width, screenshot?.height, screenshot?.quality));
-        } catch (error: any) {
-          pages.push({
-            url: subject.url,
-            content: '',
-            error: error?.message || JSON.stringify(error) || 'Unknown fetch error',
+      const pagePromises = requests.map(request =>
+        workerPuppeteer(access, request.url, request.transforms, request.screenshot));
+
+      const results = await Promise.allSettled(pagePromises);
+
+      const pages: FetchPageWorkerOutputSchema[] = results.map((result, index) =>
+        result.status === 'fulfilled'
+          ? result.value
+          : {
+            url: requests[index].url,
+            content: {},
+            error: result.reason?.message || 'Unknown fetch error',
             stopReason: 'error',
-          });
-        }
-      }
+          },
+      );
 
       return { pages };
     }),
@@ -84,18 +89,13 @@ export const browseRouter = createTRPCRouter({
 });
 
 
-type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
-type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
-
-
 async function workerPuppeteer(
   access: BrowseAccessSchema,
   targetUrl: string,
-  transform: PageTransformSchema,
-  ssWidth: number | undefined,
-  ssHeight: number | undefined,
-  ssQuality: number | undefined,
+  transforms: PageTransformSchema[],
+  screenshotOptions?: { width: number, height: number, quality?: number },
 ): Promise<FetchPageWorkerOutputSchema> {
+
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
   const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
   if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
@@ -106,7 +106,7 @@ async function workerPuppeteer(
 
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
-    content: '',
+    content: {},
     error: undefined,
     stopReason: 'error',
     screenshot: undefined,
@@ -144,21 +144,23 @@ async function workerPuppeteer(
   // transform the content of the page as text
   try {
     if (result.stopReason !== 'error') {
-      switch (transform) {
-        case 'html':
-          result.content = await page.content();
-          break;
-        case 'text':
-          result.content = await page.evaluate(() => document.body.innerText || document.textContent || '');
-          break;
-        case 'markdown':
-          const html = await page.content();
-          const cleanedHtml = cleanHtml(html);
-          const turndownService = new TurndownService({ headingStyle: 'atx' });
-          result.content = turndownService.turndown(cleanedHtml);
-          break;
+      for (const transform of transforms) {
+        switch (transform) {
+          case 'html':
+            result.content.html = cleanHtml(await page.content());
+            break;
+          case 'text':
+            result.content.text = await page.evaluate(() => document.body.innerText || document.textContent || '');
+            break;
+          case 'markdown':
+            const html = await page.content();
+            const cleanedHtml = cleanHtml(html);
+            const turndownService = new TurndownService({ headingStyle: 'atx' });
+            result.content.markdown = turndownService.turndown(cleanedHtml);
+            break;
+        }
       }
-      if (!result.content)
+      if (!Object.keys(result.content).length)
         result.error = '[Puppeteer] Empty content';
     }
   } catch (error: any) {
@@ -167,10 +169,9 @@ async function workerPuppeteer(
 
   // get a screenshot of the page
   try {
-    if (ssWidth && ssHeight) {
-      const width = ssWidth;
-      const height = ssHeight;
-      const scale = Math.round(100 * ssWidth / 1024) / 100;
+    if (screenshotOptions?.width && screenshotOptions?.height) {
+      const { width, height, quality } = screenshotOptions;
+      const scale = Math.round(100 * width / 1024) / 100;
 
       await page.setViewport({ width: width / scale, height: height / scale, deviceScaleFactor: scale });
 
@@ -181,10 +182,10 @@ async function workerPuppeteer(
         type: imageType,
         encoding: 'base64',
         clip: { x: 0, y: 0, width: width / scale, height: height / scale },
-        ...(ssQuality && { quality: ssQuality }),
+        ...(quality && { quality }),
       }) as string;
 
-      result.screenshot = { imageDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
+      result.screenshot = { webpDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
     }
   } catch (error: any) {
     console.error('workerPuppeteer: page.screenshot', error);
