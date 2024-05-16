@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert, Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
@@ -48,7 +49,7 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='togetherai-key' label='Together AI Key'
       rightLabel={<>{needsUserKey
         ? !togetherKey && <Link level='body-sm' href={TOGETHERAI_REG_LINK} target='_blank'>request Key</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={togetherKey} onChange={value => updateSetup({ togetherKey: value })}
       required={needsUserKey} isError={showKeyError}

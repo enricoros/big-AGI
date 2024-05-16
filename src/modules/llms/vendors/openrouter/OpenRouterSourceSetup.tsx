@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Button, Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -56,7 +57,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='openrouter-key' label='OpenRouter API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <Link level='body-sm' href='https://openrouter.ai/keys' target='_blank'>your keys</Link>
-        : '✔️ already set in server'
+        : <AlreadySet />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://openrouter.ai/activity' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}

@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { Brand } from '~/common/app.config';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -48,7 +49,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='openai-key' label='API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <><Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create key</Link> and <Link level='body-sm' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request access to GPT-4</Link></>
-        : '✔️ already set in server'
+        : <AlreadySet />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
