@@ -1,11 +1,13 @@
 import * as React from 'react';
 
-import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
+import { Box, Button, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, IconButton, Input, ListDivider, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRenameOutlineRounded';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+
+import { DEV_MODE_SETTINGS } from '../../../apps/settings-modal/UxLabsSettings';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
@@ -65,9 +67,12 @@ export function BeamScatterDropdown(props: {
 
   // external state
   const {
-    scatterPresets, addScatterPreset, deleteScatterPreset,
+    presets, addPreset, deletePreset,
     cardScrolling, toggleCardScrolling,
+    scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
+    gatherAutoStartAfterScatter, toggleGatherAutoStartAfterScatter,
+    gatherShowAllPrompts, toggleGatherShowAllPrompts,
   } = useModuleBeamStore();
 
 
@@ -76,17 +81,22 @@ export function BeamScatterDropdown(props: {
   const handleClosePresetNaming = React.useCallback(() => setNamingOpened(false), []);
 
   const handlePresetSave = React.useCallback((presetName: string) => {
-    const { rays } = props.beamStore.getState();
-    addScatterPreset(presetName, rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[]);
+    const { rays, currentGatherLlmId, currentFactoryId } = props.beamStore.getState();
+    const rayLlmIds = rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[];
+    addPreset(presetName, rayLlmIds, currentGatherLlmId, currentFactoryId);
     handleClosePresetNaming();
-  }, [addScatterPreset, handleClosePresetNaming, props.beamStore]);
+  }, [addPreset, handleClosePresetNaming, props.beamStore]);
 
   const handlePresetLoad = React.useCallback((presetId: string) => {
-    const { scatterPresets } = useModuleBeamStore.getState();
-    const preset = scatterPresets.find(preset => preset.id === presetId);
-    if (preset && preset.rayLlmIds?.length)
-      props.beamStore.getState().setRayLlmIds(preset.rayLlmIds);
+    const preset = useModuleBeamStore.getState().presets.find(preset => preset.id === presetId);
+    preset && props.beamStore.getState().loadBeamConfig(preset);
   }, [props.beamStore]);
+
+  // NOTE: DEVS only - DEBUG only
+  const handleClearLastConfig = React.useCallback(() => {
+    // this is used to debug the heuristics for model selection
+    useModuleBeamStore.getState().deleteLastConfig();
+  }, []);
 
 
   return <>
@@ -96,9 +106,9 @@ export function BeamScatterDropdown(props: {
       <MenuButton
         aria-label='Beam Options'
         slots={{ root: IconButton }}
-        slotProps={{ root: { size: 'sm', sx: { my: -0.5 } } }}
+        slotProps={{ root: { size: 'sm', sx: { my: -0.25 } } }}
       >
-        <MoreHorizRoundedIcon />
+        <MoreVertIcon />
       </MenuButton>
 
       <Menu placement='right-end' sx={{ minWidth: 200, zIndex: 'var(--joy-zIndex-modal)' /* on top of its own modal in FS */ }}>
@@ -115,10 +125,10 @@ export function BeamScatterDropdown(props: {
         </MenuItem>
 
         {/* Load any preset */}
-        {scatterPresets.map(preset =>
-          <MenuItem key={preset.id}>
+        {presets.map(preset =>
+          <MenuItem key={preset.id} onClick={() => handlePresetLoad(preset.id)}>
             <ListItemDecorator />
-            <Typography onClick={() => handlePresetLoad(preset.id)}>
+            <Typography>
               Load &quot;{preset.name}&quot; &nbsp;<span style={{ opacity: 0.5, marginRight: '2rem' }}>x{preset.rayLlmIds?.length}</span>
             </Typography>
             <IconButton
@@ -126,7 +136,7 @@ export function BeamScatterDropdown(props: {
               variant='outlined'
               onClick={(event) => {
                 event.stopPropagation();
-                deleteScatterPreset(preset.id);
+                deletePreset(preset.id);
               }}
               sx={{ ml: 'auto' }}
             >
@@ -141,15 +151,36 @@ export function BeamScatterDropdown(props: {
           <Typography level='body-sm'>View</Typography>
         </ListItem>
 
+        <MenuItem onClick={toggleScatterShowPrevMessages}>
+          <ListItemDecorator>{scatterShowPrevMessages && <CheckRoundedIcon />}</ListItemDecorator>
+          History
+        </MenuItem>
+
         <MenuItem onClick={toggleCardScrolling}>
           <ListItemDecorator>{cardScrolling && <CheckRoundedIcon />}</ListItemDecorator>
-          Fit Messages
+          Resize Beams
         </MenuItem>
 
         <MenuItem onClick={toggleScatterShowLettering}>
           <ListItemDecorator>{scatterShowLettering && <CheckRoundedIcon />}</ListItemDecorator>
           Response Numbers
         </MenuItem>
+
+        <ListItem onClick={DEV_MODE_SETTINGS ? () => handleClearLastConfig() : undefined}>
+          <Typography level='body-sm'>Advanced</Typography>
+        </ListItem>
+
+        <MenuItem onClick={toggleGatherAutoStartAfterScatter}>
+          <ListItemDecorator>{gatherAutoStartAfterScatter && <CheckRoundedIcon />}</ListItemDecorator>
+          Auto-Merge
+        </MenuItem>
+
+        <MenuItem onClick={toggleGatherShowAllPrompts}>
+          <ListItemDecorator>{gatherShowAllPrompts && <CheckRoundedIcon />}</ListItemDecorator>
+          Detailed Custom Merge
+        </MenuItem>
+
+        <ListDivider inset='gutter' />
 
         <MenuItem onClick={props.onExplainerShow}>
           <ListItemDecorator>

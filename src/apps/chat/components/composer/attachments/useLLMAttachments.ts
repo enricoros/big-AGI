@@ -10,8 +10,8 @@ import type { ComposerOutputMultiPart, ComposerOutputPartType } from '../compose
 
 export interface LLMAttachments {
   attachments: LLMAttachment[];
-  getAttachmentOutputs: (initialTextBlockText: string | null, attachmentId: AttachmentId) => ComposerOutputMultiPart;
-  getAttachmentsOutputs: (initialTextBlockText: string | null) => ComposerOutputMultiPart;
+  collapseWithAttachment: (initialTextBlockText: string | null, attachmentId: AttachmentId) => ComposerOutputMultiPart;
+  collapseWithAttachments: (initialTextBlockText: string | null) => ComposerOutputMultiPart;
   isOutputAttacheable: boolean;
   isOutputTextInlineable: boolean;
   tokenCountApprox: number;
@@ -37,13 +37,13 @@ export function useLLMAttachments(attachments: Attachment[], chatLLMId: DLLMId |
 
     const llmAttachments = attachments.map(attachment => toLLMAttachment(attachment, supportedOutputPartTypes, chatLLMId));
 
-    const getAttachmentOutputs = (initialTextBlockText: string | null, attachmentId: AttachmentId): ComposerOutputMultiPart => {
+    const collapseWithAttachment = (initialTextBlockText: string | null, attachmentId: AttachmentId): ComposerOutputMultiPart => {
       // get outputs of a specific attachment
       const outputs = attachments.find(a => a.id === attachmentId)?.outputs || [];
       return attachmentCollapseOutputs(initialTextBlockText, outputs);
     };
 
-    const getAttachmentsOutputs = (initialTextBlockText: string | null): ComposerOutputMultiPart => {
+    const collapseWithAttachments = (initialTextBlockText: string | null): ComposerOutputMultiPart => {
       // accumulate all outputs of all attachments
       const allOutputs = llmAttachments.reduce((acc, a) => acc.concat(a.attachment.outputs), [] as ComposerOutputMultiPart);
       return attachmentCollapseOutputs(initialTextBlockText, allOutputs);
@@ -51,8 +51,8 @@ export function useLLMAttachments(attachments: Attachment[], chatLLMId: DLLMId |
 
     return {
       attachments: llmAttachments,
-      getAttachmentOutputs,
-      getAttachmentsOutputs,
+      collapseWithAttachment,
+      collapseWithAttachments,
       isOutputAttacheable: llmAttachments.every(a => a.isOutputAttachable),
       isOutputTextInlineable: llmAttachments.every(a => a.isOutputTextInlineable),
       tokenCountApprox: llmAttachments.reduce((acc, a) => acc + (a.tokenCountApprox || 0), 0),
@@ -60,7 +60,7 @@ export function useLLMAttachments(attachments: Attachment[], chatLLMId: DLLMId |
   }, [attachments, chatLLMId]);
 }
 
-export function getTextBlockText(outputs: ComposerOutputMultiPart): string | null {
+export function getSingleTextBlockText(outputs: ComposerOutputMultiPart): string | null {
   const textOutputs = outputs.filter(part => part.type === 'text-block');
   return (textOutputs.length === 1 && textOutputs[0].type === 'text-block') ? textOutputs[0].text : null;
 }

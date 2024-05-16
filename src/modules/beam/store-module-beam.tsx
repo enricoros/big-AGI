@@ -3,65 +3,106 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
+import type { FFactoryId } from './gather/instructions/beam.gather.factories';
 
 
 /// Presets (persistes as zustand store) ///
 
-interface BeamScatterPreset {
+export interface BeamConfigSnapshot {
   id: string;
   name: string;
   rayLlmIds: DLLMId[];
+  gatherFactoryId?: FFactoryId | null;  // added post launch
+  gatherLlmId?: DLLMId | null;          // added post launch
 }
 
 
-interface ModuleBeamStore {
-  // state
-  scatterPresets: BeamScatterPreset[];
+interface ModuleBeamState {
+  presets: BeamConfigSnapshot[];
+  lastConfig: BeamConfigSnapshot | null;
   cardScrolling: boolean;
   scatterShowLettering: boolean;
-  gatherShowPrompts: boolean;
+  scatterShowPrevMessages: boolean;
+  gatherAutoStartAfterScatter: boolean;
+  gatherShowAllPrompts: boolean;
+}
 
-  // actions
-  addScatterPreset: (name: string, rayLlmIds: DLLMId[]) => void;
-  deleteScatterPreset: (id: string) => void;
-  renameScatterPreset: (id: string, name: string) => void;
+interface ModuleBeamStore extends ModuleBeamState {
+  addPreset: (name: string, rayLlmIds: DLLMId[], gatherLlmId: DLLMId | null, gatherFactoryId: FFactoryId | null) => void;
+  deletePreset: (id: string) => void;
+  renamePreset: (id: string, name: string) => void;
+
+  updateLastConfig: (update: Partial<BeamConfigSnapshot>) => void;
+  deleteLastConfig: () => void;
 
   toggleCardScrolling: () => void;
   toggleScatterShowLettering: () => void;
-  toggleGatherShowPrompts: () => void;
+  toggleScatterShowPrevMessages: () => void;
+  toggleGatherAutoStartAfterScatter: () => void;
+  toggleGatherShowAllPrompts: () => void;
 }
 
 
 export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
   (_set, _get) => ({
 
-    scatterPresets: [],
+    presets: [],
+    lastConfig: null,
     cardScrolling: false,
     scatterShowLettering: false,
-    gatherShowPrompts: false,
+    scatterShowPrevMessages: false,
+    gatherShowAllPrompts: false,
+    gatherAutoStartAfterScatter: false,
 
 
-    addScatterPreset: (name, rayLlmIds) => _set(state => ({
-      scatterPresets: [...state.scatterPresets, { id: uuidv4(), name, rayLlmIds }],
+    addPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
+      presets: [...state.presets, {
+        id: uuidv4(),
+        name,
+        rayLlmIds,
+        gatherLlmId: gatherLlmId ?? undefined,
+        gatherFactoryId: gatherFactoryId ?? undefined,
+      }],
     })),
 
-    deleteScatterPreset: (id) => _set(state => ({
-      scatterPresets: state.scatterPresets.filter(preset => preset.id !== id),
+    deletePreset: (id) => _set(state => ({
+      presets: state.presets.filter(preset => preset.id !== id),
     })),
 
-    renameScatterPreset: (id, name) => _set(state => ({
-      scatterPresets: state.scatterPresets.map(preset => preset.id === id ? { ...preset, name } : preset),
+    renamePreset: (id, name) => _set(state => ({
+      presets: state.presets.map(preset => preset.id === id ? { ...preset, name } : preset),
     })),
+
+
+    updateLastConfig: (update) => _set(({ lastConfig }) => ({
+      lastConfig: !lastConfig
+        ? { id: 'current', name: '', rayLlmIds: [], ...update }
+        : { ...lastConfig, ...update },
+    })),
+
+    deleteLastConfig: () => _set({ lastConfig: null }),
 
 
     toggleCardScrolling: () => _set(state => ({ cardScrolling: !state.cardScrolling })),
 
     toggleScatterShowLettering: () => _set(state => ({ scatterShowLettering: !state.scatterShowLettering })),
 
-    toggleGatherShowPrompts: () => _set(state => ({ gatherShowPrompts: !state.gatherShowPrompts })),
+    toggleScatterShowPrevMessages: () => _set(state => ({ scatterShowPrevMessages: !state.scatterShowPrevMessages })),
+
+    toggleGatherAutoStartAfterScatter: () => _set(state => ({ gatherAutoStartAfterScatter: !state.gatherAutoStartAfterScatter })),
+
+    toggleGatherShowAllPrompts: () => _set(state => ({ gatherShowAllPrompts: !state.gatherShowAllPrompts })),
 
   }), {
     name: 'app-module-beam',
+    version: 1,
+
+    migrate: (state: any, fromVersion: number): ModuleBeamState => {
+      // 0 -> 1: rename 'scatterPresets' to 'presets'
+      if (state && fromVersion === 0 && !state.presets)
+        return { ...state, presets: state.scatterPresets || [] };
+      return state;
+    },
   },
 ));
 
@@ -76,4 +117,8 @@ export function useBeamCardScrolling() {
 
 export function useBeamScatterShowLettering() {
   return useModuleBeamStore((state) => state.scatterShowLettering);
+}
+
+export function updateBeamLastConfig(update: Partial<BeamConfigSnapshot>) {
+  useModuleBeamStore.getState().updateLastConfig(update);
 }

@@ -11,7 +11,7 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -168,7 +168,8 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         case 'groq':
           models = openAIModels
-            .map(groqModelToModelDescription);
+            .map(groqModelToModelDescription)
+            .sort(groqModelSortFn);
           break;
 
         case 'lmstudio':
@@ -615,7 +616,7 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
     model: model.id,
     messages: history,
     ...(functions && { functions: functions, function_call: forceFunctionName ? { name: forceFunctionName } : 'auto' }),
-    ...(model.temperature && { temperature: model.temperature }),
+    ...(model.temperature !== undefined && { temperature: model.temperature }),
     ...(model.maxTokens && { max_tokens: model.maxTokens }),
     ...(n > 1 && { n }),
     stream,

@@ -11,6 +11,7 @@ import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
+import { updateBeamLastConfig } from '../store-module-beam';
 
 
 export type BRayId = string;
@@ -158,7 +159,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   // ray actions
   setRayCount: (count: number) => void;
   removeRay: (rayId: BRayId) => void;
-  importRays: (messages: DMessage[]) => void;
+  importRays: (messages: DMessage[], raysLlmId: DLLMId | null) => void;
   setRayLlmIds: (rayLlmIds: DLLMId[]) => void;
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
@@ -166,6 +167,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
+  _storeLastScatterConfig: () => void;
   _syncRaysStateToScatter: () => void;
 
 }
@@ -178,7 +180,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
 
   setRayCount: (count: number) => {
-    const { rays, inputChatLlmId, _syncRaysStateToScatter } = _get();
+    const { rays, _storeLastScatterConfig, _syncRaysStateToScatter } = _get();
     if (count < rays.length) {
       // Terminate exceeding rays
       rays.slice(count).forEach(rayScatterStop);
@@ -188,15 +190,17 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     } else if (count > rays.length) {
       _set({
         rays: [...rays, ...Array(count - rays.length).fill(null)
-          // Create missing rays, using the last ray llmId as a fallback, or the inputChatLlmId
-          .map(() => createBRay(rays[rays.length - 1]?.rayLlmId || inputChatLlmId)),
+          // Create missing rays, copying the llmId of the former Ray, or using the fallback
+          .map(() => createBRay(rays[rays.length - 1]?.rayLlmId || null)),
         ],
       });
     }
+    _storeLastScatterConfig();
     _syncRaysStateToScatter();
   },
 
   removeRay: (rayId: BRayId) => {
+    const { _storeLastScatterConfig, _syncRaysStateToScatter } = _get();
     _set(state => ({
       rays: state.rays.filter((ray) => {
         const shallStay = ray.rayId !== rayId;
@@ -205,16 +209,22 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
         return shallStay;
       }),
     }));
-    _get()._syncRaysStateToScatter();
+    _storeLastScatterConfig();
+    _syncRaysStateToScatter();
   },
 
-  importRays: (messages: DMessage[]) => {
-    _set(state => ({
+  importRays: (messages: DMessage[], raysLlmId: DLLMId | null) => {
+    const { rays, _storeLastScatterConfig, _syncRaysStateToScatter } = _get();
+
+    // remove the empty rays that will be replaced by the imported messages
+    const raysToRemove = rays.filter((ray) => ray.status === 'empty' && ray.rayLlmId === raysLlmId).slice(0, messages.length);
+
+    _set({
       rays: [
         // prepend the imported rays
         ...messages.map((message) => {
             // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
-            const ray = createBRay(/*null ||*/ state.inputChatLlmId);
+            const ray = createBRay(raysLlmId);
             // pre-fill the ray status with the message and to a successful state
             if (message.text.trim()) {
               ray.status = 'success';
@@ -225,23 +235,26 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
             return ray;
           },
         ),
-        // trim the back if too many empties
-        ...state.rays.filter((ray) => ray.status !== 'empty'),
+        // append the other rays (excluding the ones to remove)
+        ...rays.filter((ray) => !raysToRemove.includes(ray)),
       ],
-    }));
-    _get()._syncRaysStateToScatter();
+    });
+    _storeLastScatterConfig();
+    _syncRaysStateToScatter();
   },
 
   setRayLlmIds: (rayLlmIds: DLLMId[]) => {
-    const { rays, setRayCount, _syncRaysStateToScatter } = _get();
-    if (rayLlmIds.length > rays.length)
-      setRayCount(rayLlmIds.length);
+    const { setRayCount, _storeLastScatterConfig, _syncRaysStateToScatter } = _get();
+    // NOTE: the behavior was to only enlarge the set, but turns out that the UX would be less intuitive
+    // if (rayLlmIds.length > rays.length)
+    setRayCount(rayLlmIds.length);
     _set(state => ({
       rays: state.rays.map((ray, index): BRay => index >= rayLlmIds.length ? ray : {
         ...ray,
         rayLlmId: rayLlmIds[index] || null,
       }),
     }));
+    _storeLastScatterConfig();
     _syncRaysStateToScatter();
   },
 
@@ -272,10 +285,13 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     _syncRaysStateToScatter();
   },
 
-  raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) =>
-    _get()._rayUpdate(rayId, {
+  raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => {
+    const { _rayUpdate, _storeLastScatterConfig } = _get();
+    _rayUpdate(rayId, {
       rayLlmId: llmId,
-    }),
+    });
+    _storeLastScatterConfig();
+  },
 
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) =>
     _set(state => ({
@@ -285,6 +301,11 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       ),
     })),
 
+  _storeLastScatterConfig: () => {
+    updateBeamLastConfig({
+      rayLlmIds: _get().rays.map(ray => ray.rayLlmId).filter(Boolean) as DLLMId[],
+    });
+  },
 
   _syncRaysStateToScatter: () => {
     const { rays } = _get();
@@ -296,7 +317,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
     // [debug]
     if (SCATTER_DEBUG_STATE)
-      console.log('_syncRaysStateToBeam', { rays: rays.length, allDone, raysReady, isScattering: hasRays && !allDone });
+      console.log('_syncRaysStateToScatter', { rays: rays.length, allDone, raysReady, isScattering: hasRays && !allDone });
 
     _set({
       isScattering: hasRays && !allDone,

@@ -17,6 +17,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     pricing: { chatIn: 15, chatOut: 75 },
+    benchmark: { cbaElo: 1256, cbaMmlu: 86.8 },
   },
   {
     id: 'claude-3-sonnet-20240229',
@@ -28,6 +29,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     pricing: { chatIn: 3, chatOut: 15 },
+    benchmark: { cbaElo: 1203, cbaMmlu: 79 },
   },
   {
     id: 'claude-3-haiku-20240307',
@@ -39,6 +41,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     pricing: { chatIn: 0.25, chatOut: 1.25 },
+    benchmark: { cbaElo: 1181, cbaMmlu: 75.2 },
   },
 
   // Claude 2 models
@@ -51,6 +54,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat],
     pricing: { chatIn: 8, chatOut: 24 },
+    benchmark: { cbaElo: 1119 },
   },
   {
     id: 'claude-2.0',
@@ -61,6 +65,7 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat],
     pricing: { chatIn: 8, chatOut: 24 },
+    benchmark: { cbaElo: 1131, cbaMmlu: 78.5 },
     hidden: true,
   },
   {
@@ -70,8 +75,8 @@ export const hardcodedAnthropicModels: ModelDescriptionSchema[] = [
     description: 'Low-latency, high throughput model',
     contextWindow: 100000,
     maxCompletionTokens: 4096,
-    pricing: { chatIn: 0.8, chatOut: 2.4 },
     interfaces: [LLM_IF_OAI_Chat],
+    pricing: { chatIn: 0.8, chatOut: 2.4 },
   },
   {
     id: 'claude-instant-1.1',

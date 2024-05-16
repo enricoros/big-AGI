@@ -4,12 +4,11 @@ import { heuristicIsHtml } from './RenderHtml';
 import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks } from './RenderImage';
 
 // Block types
-export type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | LatexBlock | TextBlock;
+export type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | TextBlock;
 export type CodeBlock = { type: 'code'; blockTitle: string; blockCode: string; complete: boolean; };
 export type DiffBlock = { type: 'diff'; textDiffs: TextDiff[] };
 export type HtmlBlock = { type: 'html'; html: string; };
 export type ImageBlock = { type: 'image'; url: string; alt?: string }; // Added optional alt property
-export type LatexBlock = { type: 'latex'; latex: string; };
 export type TextBlock = { type: 'text'; content: string; }; // for Text or Markdown
 
 
@@ -26,8 +25,6 @@ export function areBlocksEqual(a: Block, b: Block): boolean {
       return a.html === (b as HtmlBlock).html;
     case 'image':
       return a.url === (b as ImageBlock).url && a.alt === (b as ImageBlock).alt;
-    case 'latex':
-      return a.latex === (b as LatexBlock).latex;
     case 'text':
       return a.content === (b as TextBlock).content;
   }
@@ -56,12 +53,11 @@ export function parseMessageBlocks(text: string, disableParsing: boolean, forceT
     return legacyImageBlocks;
 
   const regexPatterns = {
-    codeBlock: /`{3,}([\w\x20\\.+-_]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
+    // was: \w\x20\\.+-_ for tge filename, but was missing too much
+    // REVERTED THIS: was: (`{3,}\n?|$), but was matching backticks within blocks. so now it must end with a newline or stop
+    codeBlock: /`{3,}([\S\x20]+)?\n([\s\S]*?)(`{3,}\n?|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/g,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
-    latexBlock: /\$\$([\s\S]*?)\$\$\n?/g,
-    latexBlock2: /\\\[\n([\s\S]*?)\n\s*\\]\n/g,
-    // latexBlockOrInline: /\$\$([\s\S]*?)\$\$|\$([^$]*?)\$/g,
   };
 
   const blocks: Block[] = [];
@@ -97,16 +93,9 @@ export function parseMessageBlocks(text: string, disableParsing: boolean, forceT
         blocks.push({ type: 'code', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
         break;
 
-
       case 'htmlCodeBlock':
         const html: string = `<!DOCTYPE html>${match[1]}</html>`;
         blocks.push({ type: 'code', blockTitle: 'html', blockCode: html, complete: true });
-        break;
-
-      case 'latexBlock':
-      case 'latexBlock2':
-        const latex: string = match[1];
-        blocks.push({ type: 'latex', latex });
         break;
 
       case 'svgBlock':

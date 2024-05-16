@@ -12,7 +12,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { VideoPlayer } from '~/common/components/VideoPlayer';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorLMStudio } from './lmstudio.vendor';
@@ -34,7 +34,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorLMStudio, access, false /* use button only (we don't have server-side conf) */, source);
+    useLlmUpdateModels(false /* use button only (we don't have server-side conf) */, source);
 
   return <>
 

@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+
 import { BrowserContext, connect, ScreenshotOptions, TimeoutError } from '@cloudflare/puppeteer';
+import { default as TurndownService } from 'turndown';
+import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -17,10 +20,14 @@ const browseAccessSchema = z.object({
   wssEndpoint: z.string().trim().optional(),
 });
 
+const pageTransformSchema = z.enum(['html', 'text', 'markdown']);
+type PageTransformSchema = z.infer<typeof pageTransformSchema>;
+
 const fetchPageInputSchema = z.object({
   access: browseAccessSchema,
   subjects: z.array(z.object({
     url: z.string().url(),
+    transform: pageTransformSchema,
   })),
   screenshot: z.object({
     width: z.number(),
@@ -60,7 +67,7 @@ export const browseRouter = createTRPCRouter({
 
       for (const subject of subjects) {
         try {
-          pages.push(await workerPuppeteer(access, subject.url, screenshot?.width, screenshot?.height, screenshot?.quality));
+          pages.push(await workerPuppeteer(access, subject.url, subject.transform, screenshot?.width, screenshot?.height, screenshot?.quality));
         } catch (error: any) {
           pages.push({
             url: subject.url,
@@ -80,9 +87,15 @@ export const browseRouter = createTRPCRouter({
 type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
 type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
 
-async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ssWidth: number | undefined, ssHeight: number | undefined, ssQuality: number | undefined): Promise<FetchPageWorkerOutputSchema> {
 
-  // access
+async function workerPuppeteer(
+  access: BrowseAccessSchema,
+  targetUrl: string,
+  transform: PageTransformSchema,
+  ssWidth: number | undefined,
+  ssHeight: number | undefined,
+  ssQuality: number | undefined,
+): Promise<FetchPageWorkerOutputSchema> {
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
   const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
   if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
@@ -117,27 +130,39 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ss
     if (!isWebPage) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(`Invalid content-type: ${contentType}`);
-    } else
+    } else {
       result.stopReason = 'end';
+    }
   } catch (error: any) {
-    const isTimeout: boolean = error instanceof TimeoutError;
+    const isTimeout = error instanceof TimeoutError;
     result.stopReason = isTimeout ? 'timeout' : 'error';
-    if (!isTimeout)
-      result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown goto error';
+    if (!isTimeout) {
+      result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown goto error');
+    }
   }
 
   // transform the content of the page as text
   try {
     if (result.stopReason !== 'error') {
-      result.content = await page.evaluate(() => {
-        const content = document.body.innerText || document.textContent;
-        if (!content)
-          throw new Error('No content');
-        return content;
-      });
+      switch (transform) {
+        case 'html':
+          result.content = await page.content();
+          break;
+        case 'text':
+          result.content = await page.evaluate(() => document.body.innerText || document.textContent || '');
+          break;
+        case 'markdown':
+          const html = await page.content();
+          const cleanedHtml = cleanHtml(html);
+          const turndownService = new TurndownService({ headingStyle: 'atx' });
+          result.content = turndownService.turndown(cleanedHtml);
+          break;
+      }
+      if (!result.content)
+        result.error = '[Puppeteer] Empty content';
     }
   } catch (error: any) {
-    result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
+    result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown evaluate error');
   }
 
   // get a screenshot of the page
@@ -191,4 +216,36 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ss
   }
 
   return result;
+}
+
+
+function cleanHtml(html: string) {
+  const $ = cheerioLoad(html);
+
+  // Remove standard unwanted elements
+  $('script, style, nav, aside, noscript, iframe, svg, canvas, .ads, .comments, link[rel="stylesheet"]').remove();
+
+  // Remove elements that might be specific to proxy services or injected by them
+  $('[id^="brightdata-"], [class^="brightdata-"]').remove();
+
+  // Remove comments
+  $('*').contents().filter(function() {
+    return this.type === 'comment';
+  }).remove();
+
+  // Remove empty elements
+  $('p, div, span').each(function() {
+    if ($(this).text().trim() === '' && $(this).children().length === 0) {
+      $(this).remove();
+    }
+  });
+
+  // Merge consecutive paragraphs
+  $('p + p').each(function() {
+    $(this).prev().append(' ' + $(this).text());
+    $(this).remove();
+  });
+
+  // Return the cleaned HTML
+  return $.html();
 }

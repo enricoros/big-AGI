@@ -136,6 +136,10 @@ export function ChatMessageList(props: {
     }), false);
   }, [conversationId, editMessage]);
 
+  const handleReplyTo = React.useCallback((_messageId: string, text: string) => {
+    props.conversationHandler?.getOverlayStore().getState().setReplyToText(text);
+  }, [props.conversationHandler]);
+
   const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
     conversationId && onTextDiagram({ conversationId: conversationId, messageId, text });
   }, [conversationId, onTextDiagram]);
@@ -225,12 +229,15 @@ export function ChatMessageList(props: {
 
   return (
     <List sx={{
-      p: 0, ...(props.sx || {}),
-      // this makes sure that the the window is scrolled to the bottom (column-reverse)
-      display: 'flex',
-      flexDirection: 'column',
+      p: 0,
+      ...(props.sx || {}),
+
       // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
       // marginBottom: '-1px',
+
+      // layout
+      display: 'flex',
+      flexDirection: 'column',
     }}>
 
       {optionalTranslationWarning}
@@ -276,9 +283,10 @@ export function ChatMessageList(props: {
               onMessageEdit={handleMessageEdit}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
+              // onReplyTo={handleReplyTo}
               onTextDiagram={handleTextDiagram}
-              onTextImagine={handleTextImagine}
-              onTextSpeak={handleTextSpeak}
+              onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
+              onTextSpeak={isSpeakable ? handleTextSpeak : undefined}
             />
 
           );
