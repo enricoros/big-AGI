@@ -27,6 +27,7 @@ const rayGridMobileSx: SxProps = {
 
 export function BeamRayGrid(props: {
   beamStore: BeamStoreApi,
+  hadImportedRays: boolean
   isMobile: boolean,
   onIncreaseRayCount: () => void,
   rayIds: string[],
@@ -44,6 +45,7 @@ export function BeamRayGrid(props: {
           key={'ray-' + rayId}
           rayIndexWeak={index}
           beamStore={props.beamStore}
+          hadImportedRays={props.hadImportedRays}
           isRemovable={raysCount > SCATTER_RAY_MIN}
           rayId={rayId}
           // linkedLlmId={props.linkedLlmId}
