@@ -8,10 +8,9 @@
 # To start the containers, run:
 #   docker-compose -f docs/docker/docker-compose-browserless.yaml up
 
-version: '3.9'
-
 services:
   big-agi:
+  container_name: big-agi
     image: ghcr.io/enricoros/big-agi:latest
     ports:
       - "3000:3000"
@@ -22,10 +21,11 @@ services:
     command: [ "next", "start", "-p", "3000" ]
     depends_on:
       - browserless
+    restart: unless-stopped
 
   browserless:
+  container_name: browserless
     image: browserless/chrome:latest
-    ports:
-      - "9222:3000"  # Map host's port 9222 to container's port 3000
     environment:
       - MAX_CONCURRENT_SESSIONS=10
+    restart: unless-stopped
