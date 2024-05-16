@@ -58,16 +58,12 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
       edit({ label: source.refUrl, ref: source.refUrl });
       try {
         const page = await callBrowseFetchPage(source.url);
-        if (page.content) {
-          edit({
-            input: {
-              mimeType: 'text/plain',
-              data: page.content,
-              dataSize: page.content.length,
-            },
-          });
-        } else
-          edit({ inputError: 'No content found at this link' });
+        edit(
+          page.content.markdown ? { input: { mimeType: 'text/markdown', data: page.content.markdown, dataSize: page.content.markdown.length } }
+            : page.content.text ? { input: { mimeType: 'text/plain', data: page.content.text, dataSize: page.content.text.length } }
+              : page.content.html ? { input: { mimeType: 'text/html', data: page.content.html, dataSize: page.content.html.length } }
+                : { inputError: 'No content found at this link' },
+        );
       } catch (error: any) {
         edit({ inputError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
       }
