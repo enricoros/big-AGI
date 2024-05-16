@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -42,7 +43,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='perplexity-key' label='Perplexity API Key'
       rightLabel={<>{needsUserKey
         ? !perplexityKey && <Link level='body-sm' href={PERPLEXITY_REG_LINK} target='_blank'>API keys</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={perplexityKey} onChange={value => updateSetup({ perplexityKey: value })}
       required={needsUserKey} isError={showKeyError}

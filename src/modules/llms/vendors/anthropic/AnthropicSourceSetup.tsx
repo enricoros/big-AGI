@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -49,7 +50,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
-        : '✔️ already set in server'
+        : <AlreadySet />
       } {anthropicKey && keyValid && <Link level='body-sm' href='https://console.anthropic.com/settings/usage' target='_blank'>show tokens usage</Link>}
       </>}
       value={anthropicKey} onChange={value => updateSetup({ anthropicKey: value })}

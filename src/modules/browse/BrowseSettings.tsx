@@ -3,12 +3,13 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Checkbox, FormControl, FormHelperText, Option, Select, Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
-import { ExternalLink } from '~/common/components/ExternalLink';
-import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 
 export function BrowseSettings() {
@@ -44,7 +45,7 @@ export function BrowseSettings() {
     <FormInputKey
       autoCompleteId='browse-wss' label='Puppeteer Wss' noKey
       value={wssEndpoint} onChange={setWssEndpoint}
-      rightLabel={!isServerConfig ? 'required' : '✔️ already set in server'}
+      rightLabel={<AlreadySet required={!isServerConfig} />}
       required={!isServerConfig} isError={!isClientValid && !isServerConfig}
       placeholder='wss://...'
     />
