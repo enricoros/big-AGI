@@ -4,12 +4,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
-
 import { SystemPurposeId } from '../../../data';
-import { countModelTokens } from '../../util/token-counter';
-import { idbStateStorage } from '../../util/idbUtils';
 
-import { DConversation, DConversationId, conversationTitle, convertCConversation_V3_V4, createDConversation, duplicateCConversation } from './chat.conversation';
+import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
+import { countModelTokens } from '~/common/util/token-counter';
+
+import { conversationTitle, convertCConversation_V3_V4, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
 import { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 
 
@@ -274,11 +274,14 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       storage: createJSONStorage(() => idbStateStorage),
 
       // Migrations
-      migrate: (state: any, fromVersion: number): ConversationsStore => {
+      migrate: async (state: any, fromVersion: number) => {
 
         // 3 -> 4: Convert messages to multi-part
-        if (fromVersion < 4 && state && state.conversations && state.conversations.length)
+        if (fromVersion < 4 && state && state.conversations && state.conversations.length) {
+          if (await backupIdbV3('app-chats', 'app-chats-v3'))
+            console.warn('Migrated app-chats from v3 to v4');
           state.conversations.forEach(convertCConversation_V3_V4);
+        }
 
         return state;
       },
