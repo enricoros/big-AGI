@@ -50,7 +50,7 @@ import { providerCommands } from './actile/providerCommands';
 import { providerStarredMessage, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
-import type { AttachmentId } from './attachments/store-attachments';
+import { AttachmentId } from './attachments/attachment.types';
 import { Attachments } from './attachments/Attachments';
 import { getSingleTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
 import { useAttachments } from './attachments/useAttachments';
@@ -163,7 +163,7 @@ export function Composer(props: {
 
   // attachments derived state
 
-  const llmAttachments = useLLMAttachments(_attachments, chatLLMId);
+  const llmAttachments = useLLMAttachments(_attachments, props.chatLLM);
 
   // tokens derived state
 
@@ -460,20 +460,28 @@ export function Composer(props: {
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
   const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
+    console.log('handleAttachmentInlineText - FIXME');
     setComposeText(currentText => {
       const inlinedMultiPart = llmAttachments.collapseWithAttachment(currentText, attachmentId);
       const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
-      removeAttachment(attachmentId);
-      return inlinedText;
+      if (inlinedText) {
+        removeAttachment(attachmentId);
+        return inlinedText;
+      } else
+        return currentText;
     });
   }, [llmAttachments, removeAttachment, setComposeText]);
 
   const handleAttachmentsInlineText = React.useCallback(() => {
+    console.log('handleAttachmentsInlineText - FIXME');
     setComposeText(currentText => {
       const inlinedMultiPart = llmAttachments.collapseWithAttachments(currentText);
       const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
-      clearAttachments();
-      return inlinedText;
+      if (inlinedText) {
+        clearAttachments();
+        return inlinedText;
+      } else
+        return currentText;
     });
   }, [clearAttachments, llmAttachments, setComposeText]);
 
@@ -504,7 +512,7 @@ export function Composer(props: {
 
   const handleOverlayDragOver = React.useCallback((e: React.DragEvent) => {
     eatDragEvent(e);
-    // this makes sure we don't "transfer" (or move) the attachment, but we tell the sender we'll copy it
+    // this makes sure we don't "transfer" (or move) the item, but we tell the sender we'll copy it
     e.dataTransfer.dropEffect = 'copy';
   }, [eatDragEvent]);
 

@@ -14,8 +14,8 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import type { Attachment, AttachmentConverterType, AttachmentId } from './store-attachments';
 import type { LLMAttachment } from './useLLMAttachments';
+import { Attachment, AttachmentConverterType, AttachmentId } from './attachment.types';
 
 
 // default attachment width
@@ -73,6 +73,7 @@ const converterTypeToIconMap: { [key in AttachmentConverterType]: React.Componen
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PictureAsPdfIcon,
   'image': ImageOutlinedIcon,
+  'image-to-webp': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
   'ego-message-md': TelegramIcon,
   'unhandled': TextureIcon,

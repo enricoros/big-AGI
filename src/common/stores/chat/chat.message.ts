@@ -33,8 +33,6 @@ export interface DMessage {
   updated: number | null;             // updated timestamp - null means incomplete - TODO: disambiguate vs pendingIncomplete
 }
 
-export type DContentParts = DContentPart[];
-
 export type DMessageId = string;
 
 export type DMessageRole = 'user' | 'assistant' | 'system';
@@ -44,7 +42,7 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 
 type DContentRef =
   | { reftype: 'url'; url: string } // remotely accessible URL
-  | { reftype: 'dblob'; mimeType: string; dblobId: DBlobId } // reference to a DBlob
+  | { reftype: 'dblob'; dblobId: DBlobId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
 
 // type CMediaSourceInline =
@@ -53,6 +51,8 @@ type DContentRef =
 
 
 // Content Part - this gets saved to the slow DB - needs to be small and efficient
+
+export type DContentParts = DContentPart[];
 
 type DContentPart =
   | { ptype: 'text'; text: string } // H/A
@@ -67,11 +67,11 @@ type DContentPart =
 
 // Attachment Part
 
+// export type DAttachmentMultiPart = DAttachmentPart[];
+
 export type DAttachmentPart =
   | { atype: 'atext', text: string, title?: string, collapsible: boolean }
   | { atype: 'aimage', source: DContentRef, title?: string, width?: number, height?: number, collapsible: false }
-
-// export type CAttachmentMultiPart = CAttachmentPart[];
 
 
 // Metadata

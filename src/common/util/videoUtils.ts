@@ -2,6 +2,7 @@
  * Copyright (c) 2024 Enrico Ros
  *
  * Functions to deal with HTML5Video elements.
+ * Also see imageUtils.ts for more image-related functions.
  */
 
 import { prettyTimestampForFilenames } from './timeUtils';

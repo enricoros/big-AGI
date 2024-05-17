@@ -72,7 +72,7 @@ export function AttachmentMenu(props: {
   }, [aId, onClose]);
 
   const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) => {
-    return useAttachmentsStore.getState().setConverterIdx(aId, converterIdx);
+    return useAttachmentsStore.getState().setConverterIdxAndConvert(aId, converterIdx);
   }, [aId]);
 
   // const handleSummarizeText = React.useCallback(() => {
@@ -82,10 +82,10 @@ export function AttachmentMenu(props: {
   const handleCopyOutputToClipboard = React.useCallback(() => {
     if (attachmentOutputs.length >= 1) {
       const concat = attachmentOutputs.map(output => {
-        if (output.type === 'text-block')
+        if (output.atype === 'atext')
           return output.text;
-        else if (output.type === 'image-part')
-          return output.base64Url;
+        else if (output.atype === 'aimage')
+          return output.title;
         else
           return null;
       }).join('\n\n---\n\n');
@@ -153,11 +153,10 @@ export function AttachmentMenu(props: {
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Typography level='body-xs'>
-              🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.type}, ${output.type === 'text-block'
-              ? output.text.length.toLocaleString()
-              : output.type === 'image-part'
-                ? output.base64Url.length.toLocaleString()
-                : '(other)'} bytes`).join(' · ')}
+              🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.atype}, ${
+              output.atype === 'atext' ? output.text.length.toLocaleString()
+                : output.atype === 'aimage' ? (output.source.reftype === 'dblob' ? output.source.bytesSize : '(remote)')
+                  : '(other)'} bytes`).join(' · ')}
             </Typography>
             {!!tokenCountApprox && <Typography level='body-xs'>
               🡒 {tokenCountApprox.toLocaleString()} tokens
