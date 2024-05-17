@@ -19,15 +19,15 @@ export interface UserChecklistOption {
 export async function executeUserInputChecklist(
   _i: UserInputChecklistInstruction,
   inputs: ExecutionInputState,
-  previousResult: string,
+  prevStepOutput: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
 
     // initial text to options
-    let options = parseTextToChecklist(previousResult, false);
+    let options = parseTextToChecklist(prevStepOutput, false);
     const relaxMatch = options.length < 2;
     if (relaxMatch)
-      options = parseTextToChecklist(previousResult, true);
+      options = parseTextToChecklist(prevStepOutput, true);
 
     // if no options, there's an error
     if (options.length < 2) {
