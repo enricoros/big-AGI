@@ -153,11 +153,19 @@ export function duplicateDMessage(message: DMessage): DMessage {
 // helpers - conversion
 
 export function convertDMessage_V3_V4(message: DMessage) {
-  const v3 = message as DMessage & { text: string };
-  if (!message.content || message.content.length === 0) {
-    message.content = [createTextPart(v3.text || '')];
-    delete (v3 as any).text;
+
+  // .content
+  if (!message.content || !Array.isArray(message.content)) {
+
+    // v3.text -> v4.content
+    message.content = [
+      createTextPart((message as any).text || ''),
+    ];
+    delete (message as any).text;
+
   }
+
+  // .userAttachments
   if (!message.userAttachments?.length)
     message.userAttachments = [];
 }
