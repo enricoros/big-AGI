@@ -154,20 +154,29 @@ export function duplicateDMessage(message: DMessage): DMessage {
 
 export function convertDMessage_V3_V4(message: DMessage) {
 
+  const v3 = message as (DMessage & {
+    text?: string,
+    typing?: boolean
+  });
+
   // .content
   if (!message.content || !Array.isArray(message.content)) {
 
     // v3.text -> v4.content
     message.content = [
-      createTextPart((message as any).text || ''),
+      createTextPart(v3.text || ''),
     ];
-    delete (message as any).text;
+    delete v3.text;
 
   }
 
   // .userAttachments
   if (!message.userAttachments?.length)
     message.userAttachments = [];
+
+  // delete v3 fields
+  delete v3.text;
+  delete v3.typing;
 }
 
 
