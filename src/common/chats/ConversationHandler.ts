@@ -7,7 +7,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, createTextPart, DMessage, fixmeThisReplacesAllParts, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessage, createTextPart, DContentParts, DMessage, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createChatOverlayVanillaStore } from './store-chat-overlay-vanilla';
@@ -118,17 +118,17 @@ export class ConversationHandler {
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
-    // TODO: we shall get a Message here, rather than a string - it's limiting
-    const onBeamSuccess = (beamText: string, llmId: DLLMId) => {
+    const onBeamSuccess = (content: DContentParts, llmId: DLLMId) => {
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { content: fixmeThisReplacesAllParts(beamText), originLLM: llmId }, true); // [chat] replace assistant:Beam text
+        this.messageEdit(destReplaceMessageId, { content, originLLM: llmId, pendingIncomplete: undefined, pendingPlaceholderText: undefined }, true); // [chat] replace assistant:Beam contentParts
       } else {
         // replace (may truncate) the conversation history and append a message
-        const newMessage = createDMessage('assistant', beamText); // [chat] append Beam text
+        const newMessage = createDMessage('assistant', content); // [chat] append Beam contentParts
         newMessage.originLLM = llmId;
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
+        // TODO: put the other rays in the metadata?! (reqby @Techfren)
         this.messagesReplace([...viewHistory, newMessage]);
       }
 

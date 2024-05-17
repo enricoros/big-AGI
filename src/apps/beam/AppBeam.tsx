@@ -22,7 +22,7 @@ function initTestConversation(): DConversation {
 }
 
 function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamVanillaStore()): BeamStoreApi {
-  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, (text) => alert(text));
+  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, (content) => alert(content));
   return beamStore;
 }
 
