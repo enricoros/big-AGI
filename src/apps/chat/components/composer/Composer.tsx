@@ -140,8 +140,12 @@ export function Composer(props: {
     };
   }));
   const { inComposer: browsingInComposer } = useBrowseCapability();
-  const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
-    useAttachments(browsingInComposer && !composeText.startsWith('/'));
+  const enableLoadURLs = browsingInComposer && !composeText.startsWith('/'); // don't load URLs if the user is typing a command
+  const {
+    attachments: _attachments,
+    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
+    clearAttachments, removeAttachment,
+  } = useAttachments(enableLoadURLs);
 
   // external overlay state (extra conversationId-dependent state)
   const conversationHandler = props.conversationId ? ConversationsManager.getHandler(props.conversationId) : null;
