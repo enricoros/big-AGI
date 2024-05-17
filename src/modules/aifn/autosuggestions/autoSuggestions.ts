@@ -1,8 +1,9 @@
 import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 
 /*const suggestUserFollowUpFn: VChatFunctionIn = {
@@ -105,9 +106,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           if (!plantUML.startsWith('@start') || !(plantUML.endsWith('@enduml') || plantUML.endsWith('@endmindmap'))) return;
 
           // append the PlantUML diagram to the assistant response
-          editMessage(conversationId, assistantMessageId, {
-            content: [createTextPart(assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`)],
-          }, false);
+          const cHandler = ConversationsManager.getHandler(conversationId);
+          cHandler.messageAppendTextPart(assistantMessageId, assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`, true, true); // [chat] assistant:+PlantUML diagram
         }
       }
     }).catch(err => {

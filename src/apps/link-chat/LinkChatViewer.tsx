@@ -8,7 +8,7 @@ import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
-import { DConversation, conversationTitle } from '~/common/stores/chat/chat.conversation';
+import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
@@ -138,7 +138,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 message={message}
                 fitScreen={isMobile}
                 showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
-                onMessageEdit={(_messageId, text: string) => message.content = [createTextPart(text)]}
+                onMessageEdit={(_messageId, text: string) => message.content = [createTextPart(text)] /* TODO: replace edit with Content rather than text */}
               />,
             )}
 

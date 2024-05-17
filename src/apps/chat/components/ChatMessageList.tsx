@@ -128,9 +128,9 @@ export function ChatMessageList(props: {
     conversationId && deleteMessage(conversationId, messageId);
   }, [conversationId, deleteMessage]);
 
-  const handleMessageEdit = React.useCallback((messageId: string, newText: string) => {
+  const handleMessageEdit = React.useCallback((messageId: string, newText: string /* FIXME: contents instead of text */) => {
     conversationId && editMessage(conversationId, messageId, (message): Partial<DMessage> => ({
-      content: contentPartsReplaceText(message, newText),
+      content: contentPartsReplaceText(message.content, newText),
     }), true);
   }, [conversationId, editMessage]);
 

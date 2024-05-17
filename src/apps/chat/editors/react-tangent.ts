@@ -3,7 +3,6 @@ import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { createTextPart } from '~/common/stores/chat/chat.message';
 
 // configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
@@ -42,21 +41,18 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     const agent = new Agent();
     const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
-    cHandler.messageEdit(assistantMessageId, {
-      content: [createTextPart(reactResult)],
-      pendingIncomplete: undefined, pendingPlaceholderText: undefined,
-    }, false);
+    cHandler.messageAppendTextPart(assistantMessageId, reactResult, true, true);
 
     setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
 
     return true;
   } catch (error: any) {
-    console.error(error);
+    console.error('ReAct error', error);
+
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
-    cHandler.messageEdit(assistantMessageId, {
-      content: [createTextPart('Issue: ReAct did not produce an answer.')],
-      pendingIncomplete: undefined, pendingPlaceholderText: undefined,
-    }, false);
+
+    cHandler.messageAppendTextPart(assistantMessageId, '[Issue] ReAct couldn\'t answer your question.', true, false);
+
     return false;
   }
 }
