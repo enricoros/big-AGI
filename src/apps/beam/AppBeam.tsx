@@ -16,8 +16,8 @@ import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout
 
 function initTestConversation(): DConversation {
   const conversation = createDConversation();
-  conversation.messages.push(createDMessage('system', 'You are a helpful assistant.'));
-  conversation.messages.push(createDMessage('user', 'Hello, who are you? (please expand...)'));
+  conversation.messages.push(createDMessage('system', 'You are a helpful assistant.')); // Beam Test - seed1
+  conversation.messages.push(createDMessage('user', 'Hello, who are you? (please expand...)')); // Beam Test - seed2
   return conversation;
 }
 

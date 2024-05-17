@@ -130,13 +130,13 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortTyping } = useChatStore(useShallow(state => {
+  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       assistantAbortible: conversation ? !!conversation.abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
-      abortTyping: state.abortTyping,
+      abortConversationTemp: state.abortConversationTemp,
     };
   }));
   const { inComposer: browsingInComposer } = useBrowseCapability();
@@ -235,8 +235,8 @@ export function Composer(props: {
   }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
-    !!props.conversationId && abortTyping(props.conversationId);
-  }, [abortTyping, props.conversationId]);
+    !!props.conversationId && abortConversationTemp(props.conversationId);
+  }, [abortConversationTemp, props.conversationId]);
 
 
   // Secondary buttons
@@ -317,7 +317,7 @@ export function Composer(props: {
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
 
 
-  // Text typing
+  // Type...
 
   const handleTextareaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComposeText(e.target.value);

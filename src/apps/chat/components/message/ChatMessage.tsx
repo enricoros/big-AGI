@@ -52,6 +52,12 @@ const SELECTION_TOOLBAR_MIN_LENGTH = 3;
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
+// Animations
+const ANIM_BUSY_DOWNLOADING = 'https://i.giphy.com/26u6dIwIphLj8h10A.webp'; // hourglass: https://i.giphy.com/TFSxpAIYz5inJGuY8f.webp, small-lq: https://i.giphy.com/131tNuGktpXGhy.webp, floppy: https://i.giphy.com/RxR1KghIie2iI.webp
+const ANIM_BUSY_PAINTING = 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp';
+const ANIM_BUSY_THINKING = 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp';
+export const ANIM_BUSY_TYPING = 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp';
+
 
 export function messageBackground(messageRole: DMessageRole | string, wasEdited: boolean, isAssistantIssue: boolean): string {
   switch (messageRole) {
@@ -87,11 +93,11 @@ const personaSx: SxProps = {
 };
 
 
-export function makeAvatar(messageAvatar: string | null, messageRole: DMessageRole | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | string | undefined, messageSender: string, messageTyping: boolean, size: 'sm' | undefined = undefined): React.JSX.Element {
-  if (typeof messageAvatar === 'string' && messageAvatar)
-    return <Avatar alt={messageSender} src={messageAvatar} />;
+export function makeMessageAvatar(messageAvatarUrl: string | null, messageRole: DMessageRole | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | string | undefined, messageSender: string, messageIncomplete: boolean, larger?: boolean): React.JSX.Element {
+  if (typeof messageAvatarUrl === 'string' && messageAvatarUrl)
+    return <Avatar alt={messageSender} src={messageAvatarUrl} />;
 
-  const mascotSx = size === 'sm' ? avatarIconSx : { width: 64, height: 64 };
+  const mascotSx = larger ? { width: 64, height: 64 } : avatarIconSx;
   switch (messageRole) {
     case 'system':
       return <SettingsSuggestIcon sx={avatarIconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
@@ -100,19 +106,18 @@ export function makeAvatar(messageAvatar: string | null, messageRole: DMessageRo
       return <Face6Icon sx={avatarIconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
 
     case 'assistant':
-      // typing gif (people seem to love this, so keeping it after april fools')
       const isDownload = messageOriginLLM === 'web';
       const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
       const isReact = messageOriginLLM?.startsWith('react-');
 
-      // animation: message typing
-      if (messageTyping)
+      // animation on incomplete messages
+      if (messageIncomplete)
         return <Avatar
           alt={messageSender} variant='plain'
-          src={isDownload ? 'https://i.giphy.com/26u6dIwIphLj8h10A.webp' // hourglass: https://i.giphy.com/TFSxpAIYz5inJGuY8f.webp, small-lq: https://i.giphy.com/131tNuGktpXGhy.webp, floppy: https://i.giphy.com/RxR1KghIie2iI.webp
-            : isTextToImage ? 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp' // brush
-              : isReact ? 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp' // mind
-                : 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'} // typing
+          src={isDownload ? ANIM_BUSY_DOWNLOADING
+            : isTextToImage ? ANIM_BUSY_PAINTING
+              : isReact ? ANIM_BUSY_THINKING
+                : ANIM_BUSY_TYPING}
           sx={{ ...mascotSx, borderRadius: 'sm' }}
         />;
 
@@ -257,7 +262,7 @@ export function ChatMessage(props: {
   })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
 
-  const messageText = singleTextOrThrow(props.message);
+  const messageText = props.message.content.length ? singleTextOrThrow(props.message) : '';
 
   const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
@@ -266,7 +271,8 @@ export function ChatMessage(props: {
     id: messageId,
     sender: messageSender,
     avatar: messageAvatar,
-    typing: messageTyping,
+    pendingIncomplete: messagePendingIncomplete,
+    pendingPlaceholderText: messagePendingPlaceholderText,
     role: messageRole,
     purposeId: messagePurposeId,
     originLLM: messageOriginLLM,
@@ -315,11 +321,11 @@ export function ChatMessage(props: {
   };
 
   const handleOpsEdit = React.useCallback((e: React.MouseEvent) => {
-    if (messageTyping && !isEditing) return; // don't allow editing while typing
+    if (messagePendingIncomplete && !isEditing) return; // don't allow editing while incomplete
     setIsEditing(!isEditing);
     e.preventDefault();
     handleCloseOpsMenu();
-  }, [handleCloseOpsMenu, isEditing, messageTyping]);
+  }, [handleCloseOpsMenu, isEditing, messagePendingIncomplete]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, 'starred');
@@ -524,8 +530,8 @@ export function ChatMessage(props: {
 
   // avatar
   const avatarEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatar ? makeAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, messageTyping) : null,
-    [messageAvatar, messageOriginLLM, messagePurposeId, messageRole, messageSender, messageTyping, showAvatar],
+    () => showAvatar ? makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, !!messagePendingIncomplete, true) : null,
+    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, messageSender, showAvatar],
   );
 
 
@@ -596,12 +602,12 @@ export function ChatMessage(props: {
               )}
             </Box>
 
-            {/* Assistant model name */}
+            {/* Assistant (llm/function) name */}
             {fromAssistant && (
-              <Tooltip arrow title={messageTyping ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
+              <Tooltip arrow title={messagePendingIncomplete ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
                 <Typography level='body-xs' sx={{
                   overflowWrap: 'anywhere',
-                  ...(messageTyping ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
+                  ...(messagePendingIncomplete ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
                 }}>
                   {prettyBaseModel(messageOriginLLM)}
                 </Typography>
@@ -624,7 +630,7 @@ export function ChatMessage(props: {
 
           <BlocksRenderer
             ref={blocksRendererRef}
-            text={messageText}
+            text={messageText || messagePendingPlaceholderText || ''}
             fromRole={messageRole}
             contentScaling={contentScaling}
             errorMessage={errorMessage}
@@ -637,7 +643,7 @@ export function ChatMessage(props: {
             wasUserEdited={wasEdited}
             onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
-            optiAllowMemo={messageTyping}
+            optiAllowSubBlocksMemo={!!messagePendingIncomplete}
           />
 
         )}
@@ -650,7 +656,7 @@ export function ChatMessage(props: {
 
       {/* Overlay copy icon */}
       {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditing && (
-        <Tooltip title={messageTyping ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>
+        <Tooltip title={messagePendingIncomplete ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>
           <IconButton
             variant='outlined' onClick={handleOpsCopy}
             sx={{
@@ -683,7 +689,7 @@ export function ChatMessage(props: {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {/* Edit */}
             {!!props.onMessageEdit && (
-              <MenuItem variant='plain' disabled={messageTyping} onClick={handleOpsEdit} sx={{ flex: 1 }}>
+              <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEdit} sx={{ flex: 1 }}>
                 <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
                 {isEditing ? 'Discard' : 'Edit'}
                 {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}

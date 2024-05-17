@@ -63,9 +63,9 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   } satisfies Partial<DMessage>);
 
   // update the UI
-  const onMessageUpdate = (update: Partial<DMessage>) => {
+  const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
     // in-place update of the intermediate message
-    Object.assign(inputs.intermediateDMessage, update);
+    Object.assign(inputs.intermediateDMessage, incrementalMessage);
     // if (update.text) // TODO: port to contents
     inputs.intermediateDMessage.updated = Date.now();
 
@@ -75,7 +75,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
       case 'character-count':
         inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{singleTextOrThrow(update as any)?.length || 0} characters</Typography>,
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{singleTextOrThrow(incrementalMessage as any)?.length || 0} characters</Typography>,
         );
         return;
 
@@ -96,7 +96,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   };
 
   // LLM Streaming generation
-  return streamAssistantMessage(inputs.llmId, history, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdate, inputs.chainAbortController.signal)
+  return streamAssistantMessage(inputs.llmId, history, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdated, inputs.chainAbortController.signal)
     .then((status) => {
       // re-throw errors, as streamAssistantMessage catches internally
       if (status.outcome === 'aborted') {

@@ -5,7 +5,7 @@ import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../d
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 
 import { Brand } from '~/common/app.config';
-import { DConversation, DConversationId, conversationTitle } from '~/common/stores/chat/chat.conversation';
+import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -211,7 +211,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     switch (message.role) {
       case 'system':
         sender = '✨ System message';
-        text = '<img src="https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp" width="48" height="48" alt="typing fast meme"/>\n\n' + '*' + text + '*';
+        text = '<img src="https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp" width="48" height="48" alt="meme"/>\n\n' + '*' + text + '*';
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;

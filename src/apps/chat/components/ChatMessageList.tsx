@@ -8,7 +8,7 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { DMessage, DMessageUserFlag, contentPartsReplaceText, createDMessage, messageToggleUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { contentPartsReplaceText, createDMessage, DMessage, DMessageUserFlag, messageToggleUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
@@ -74,7 +74,7 @@ export function ChatMessageList(props: {
   // text actions
 
   const handleRunExample = React.useCallback(async (examplePrompt: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', examplePrompt)]);
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', examplePrompt)]); // [chat] append user:persona question
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
@@ -195,13 +195,13 @@ export function ChatMessageList(props: {
   });
 
 
-  // text-diff functionality: only diff the last message and when it's complete (not typing), and they're similar in size
+  // text-diff functionality: only diff the last complete message, and they're similar in size
 
   const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
     const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
     const textB = msgB ? singleTextOrThrow(msgB) : undefined;
     const textA = msgA ? singleTextOrThrow(msgA) : undefined;
-    if (textB && textA && !msgB?.typing) {
+    if (textB && textA && !msgB?.pendingIncomplete) {
       const lenA = textA.length, lenB = textB.length;
       if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
         return { diffTargetMessage: msgB, diffPrevText: textA };
@@ -259,8 +259,8 @@ export function ChatMessageList(props: {
 
       {filteredMessages.map((message, idx, { length: count }) => {
 
-          // Optimization: if the component is going to change (e.g. the message is typing), we don't want to memoize it to not throw garbage in memory
-          const ChatMessageMemoOrNot = message.typing ? ChatMessage : ChatMessageMemo;
+          // Optimization: only memo complete components, or we'd be memoizing garbage
+          const ChatMessageMemoOrNot = !message.pendingIncomplete ? ChatMessageMemo : ChatMessage;
 
           return props.isMessageSelectionMode ? (
 
