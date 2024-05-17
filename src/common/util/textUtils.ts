@@ -20,32 +20,22 @@ export function ellipsizeMiddle(text: string, maxLength: number) {
 }
 
 
-export function createBase36Uid(checkDuplicates: string[]): string {
-  let id = '';
-  do {
-    id = Math.random().toString(36).substring(2, 10);
-  } while (checkDuplicates.includes(id));
-  return id;
-}
-
-
-export function uuid4base64(): string {
+export function createBase64UuidV4(): string {
   return uuidToBase64(uuidv4());
 }
 
 function uuidToBase64(uuid: string): string {
   // Remove hyphens from the UUID
-  const cleanUuid = uuid.replace(/-/g, '');
+  const cleanUuid = uuid.replaceAll('-', '');
 
   // Convert the cleaned UUID to a byte array
   const uuidBytes = new Uint8Array(16);
-  for (let i = 0; i < 32; i += 2) {
+  for (let i = 0; i < 32; i += 2)
     uuidBytes[i / 2] = parseInt(cleanUuid.substring(i, i + 2), 16);
-  }
 
   // Convert byte array to a Base64 string
   const base64 = btoa(String.fromCharCode.apply(null, uuidBytes as any));
 
-  // Optionally remove '=' padding if not required by your application
+  // Remove '=' end padding
   return base64.replace(/=+$/, '');
 }

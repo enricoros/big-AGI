@@ -1,6 +1,6 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { createBase36Uid } from '~/common/util/textUtils';
+import { createBase64UuidV4 } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
@@ -27,7 +27,7 @@ const PLAIN_TEXT_MIMETYPES: string[] = [
  */
 export function attachmentCreate(source: AttachmentSource, checkDuplicates: AttachmentId[]): Attachment {
   return {
-    id: createBase36Uid(checkDuplicates),
+    id: createBase64UuidV4(),
     source: source,
     label: 'Loading...',
     ref: '',
