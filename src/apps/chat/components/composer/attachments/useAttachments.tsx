@@ -7,7 +7,8 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile, useAttachmentsStore } from './store-attachments';
+import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile } from './attachment.types';
+import { useAttachmentsStore } from './store-attachments';
 
 
 // enable to debug attachment operations

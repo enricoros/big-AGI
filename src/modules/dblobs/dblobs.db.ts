@@ -20,14 +20,11 @@ const db = new DigitalAssetsDB();
 // CRUD
 
 
-export async function addDBlobItem(item: DBlobItem): Promise<void> {
-  const dbItem: DBlobDBItem = {
+export async function addDBlobItem(item: DBlobItem, cId: 'global', sId: DBlobDBItem['sId']): Promise<string> {
+  return db.items.add({
     ...item,
-    uId: '1',
-    wId: '1',
-    cId: 'global', // context Id
-  };
-  await db.items.add(dbItem);
+    uId: '1', wId: '1', cId, sId,
+  });
 }
 
 export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {

@@ -8,7 +8,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 
-import type { AttachmentId } from './store-attachments';
+import type { AttachmentId } from './attachment.types';
 import type { LLMAttachments } from './useLLMAttachments';
 import { AttachmentItem } from './AttachmentItem';
 import { AttachmentMenu } from './AttachmentMenu';
