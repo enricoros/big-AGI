@@ -207,8 +207,8 @@ function deleteValue(dbName, key) {
 
 // Example usage:
 const myNewJsonString = '{"your": "new json string"}'; // Replace with your desired JSON string
-setValue('keyval-store', 'app-chats', myNewJsonString).then(console.log).catch(console.error);
-copyValue('keyval-store', 'app-chats', 'app-chats-copy').then(console.log).catch(console.error);
-deleteValue('keyval-store', 'app-chats-prev').then(console.log).catch(console.error);
+await setValue('keyval-store', 'app-chats', myNewJsonString);
+await copyValue('keyval-store', 'app-chats', 'app-chats-copy');
+await deleteValue('keyval-store', 'app-chats-prev');
 
 */
