@@ -77,13 +77,14 @@ async function getServersLastSyncTime(supabase: SupabaseClient): Promise<number>
     }
 }
 
-async function syncToServer(supabase: SupabaseClient, conversations: DConversation[]): Promise<number> {
+async function syncToServer(supabase: SupabaseClient, conversations: DConversation[], lastSyncTime: number): Promise<number> {
     // find all conversations that have been updated since the last sync
 
-    const lastSyncTime = await getServersLastSyncTime(supabase);
+    // not the last time the server was synced as we may have changes that were before another client synced and those would get missed
+    // sync time needs to be the last time this instance synced with the server
 
     const updatedConversations = conversations
-       .filter(conversation => conversation.updated && conversation.updated > lastSyncTime)
+       .filter(conversation => conversation.updated && conversation.updated > lastSyncTime && conversation.messages.length > 0)
        .map(conversationToJsonV1); // this removes some of the fields we want to sync
 
     if (updatedConversations.length === 0) {
@@ -123,18 +124,22 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
         const conversationsFromServer: SupabaseConversation[] = data.map(record => ({ ...record }));
         
         const importConversation = useChatStore.getState().importConversation;
-
+        let importCount = 0;
         conversationsFromServer.forEach(conversationFromServer => {
             let conversation = conversations.find(conversation => conversation.id === conversationFromServer.id);
+            
             if (conversation) {
+                // we may have just sent this to the server, in which case we don't need to update it
                 // is it already updated (e.g. did we just push that to the server?)
-                if (conversation.updated && conversation.updated > (conversationFromServer.updated ?? 0)) {
+                if (conversation.updated && conversation.updated >= (conversationFromServer.updated ?? 0)) {
                     return; // the same, don't touch
                 }
             } else {
                 conversation = createDConversation();
                 conversation.id = conversationFromServer.id;
                 conversation.created = conversationFromServer.created;
+             
+                //conversations.push(conversation); // insert the new conversation into the current working array
             }
 
             conversation.updated = conversationFromServer.updated;
@@ -143,9 +148,10 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
             conversation.messages = conversationFromServer.messages;
 
             importConversation(conversation, false);
+            importCount++;
         });
 
-        return conversationsFromServer.length;
+        return importCount;
     } else {
         console.debug('No conversations from server');
     }
@@ -160,15 +166,16 @@ export async function syncAllConversations(setMessage?: (message: string | null)
 
     //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
     try {
+
         logInfo('Starting sync to server...');
-        const pushedCount = await syncToServer(supabase, conversations);
+        const pushedCount = await syncToServer(supabase, conversations, lastSyncTime);
         logInfo('Sync to server completed.');
 
         const updatedSyncTime = Date.now();
         logInfo('Starting sync from server to client...');
         const pulledCount = await syncFromServerToClient(supabase, conversations, lastSyncTime);
         logInfo('Sync from server to client completed.');
-
+        
         setLastSyncTime(updatedSyncTime);
         logInfo(`Sync completed. Last sync time updated to ${updatedSyncTime}.`);
         setMessage?.(`Sync Successful, ${pushedCount} pushed, ${pulledCount} pulled`);

@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
-import { FormControl, FormHelperText, Input } from '@mui/joy';
+import { FormControl, FormHelperText, Input, Button, Typography } from '@mui/joy';
+import DoneIcon from '@mui/icons-material/Done';
+import SyncIcon from '@mui/icons-material/Sync';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -12,7 +14,7 @@ import { Link } from '~/common/components/Link';
 
 import { isValidSupabaseConnection } from './supabaseSync.client';
 import { useSupabaseSyncStore } from './store-module-supabase-sync';
-
+import { syncAllConversations } from '~/modules/supabasesync/supabaseSync.client';
 
 export function SupabaseSyncSettings() {
 
@@ -28,6 +30,8 @@ export function SupabaseSyncSettings() {
   // derived state
   const isValueUrl = supabaseUrl ? isValidSupabaseConnection(supabaseUrl, supabaseKey) : backendHasSupabaseSync;
   const isValidAnonKey = isValueUrl;
+  const [syncAllState, setSyncAllState] = React.useState<'ok' | 'fail' | null>(null);
+  const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
 
   const handleSupabaseSyncChange = (e: React.ChangeEvent<HTMLInputElement>) => setSupabaseUrl(e.target.value);
 
@@ -40,6 +44,15 @@ export function SupabaseSyncSettings() {
     if (isNaN(value))
       value = 0;
     setLastSyncTime(value);
+  }
+
+  const handleSyncAllConversations = async () => {
+    try {
+      const syncedCount = await syncAllConversations(setSyncMessage);
+      setSyncAllState('ok');
+    } catch {
+      setSyncAllState('fail');
+    }
   }
 
   return <>
@@ -86,6 +99,25 @@ export function SupabaseSyncSettings() {
         sx={{ width: '100%' }}
       />
     </FormControl>
+    <FormHelperText sx={{ display: 'block' }}>
+      WARNING: Resetting Last Synced to 0 will force push all exiting chats to the server and will overwrite them.
+    </FormHelperText>
+    {(lastSyncTime === 0) && (
+      <Button
+        variant='soft'
+        color={syncAllState === 'ok' ? 'success' : syncAllState === 'fail' ? 'warning' : 'primary'}
+        endDecorator={syncAllState === 'ok' ? <DoneIcon /> : syncAllState === 'fail' ? '✘' : <SyncIcon />}
+        sx={{ minWidth: 240, justifyContent: 'space-between' }}
+        onClick={handleSyncAllConversations}
+      >
+        Sync
+      </Button>     
+    )}
+    {syncMessage && (
+      <Typography level='body-sm'>
+        {syncMessage}
+      </Typography>
+    )} 
 
   </>;
 }
