@@ -8,11 +8,10 @@ import { streamAssistantMessage } from '../../../../apps/chat/editors/chat-strea
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { DMessage, createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, reduceContentToText, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
-import { GATHER_PLACEHOLDER } from '../../beam.config';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
 import { getBeamCardScrolling } from '../../store-module-beam';
 
@@ -56,18 +55,12 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     { role: 'user', content: _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput) },
   ];
 
-  // reset the intermediate message
-  Object.assign(inputs.intermediateDMessage, {
-    content: [createTextPart(GATHER_PLACEHOLDER)],
-    updated: undefined,
-  } satisfies Partial<DMessage>);
-
   // update the UI
   const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
     // in-place update of the intermediate message
     Object.assign(inputs.intermediateDMessage, incrementalMessage);
-    // if (update.text) // TODO: port to contents
-    inputs.intermediateDMessage.updated = Date.now();
+    if (incrementalMessage.content?.length)
+      inputs.intermediateDMessage.updated = Date.now();
 
     switch (_i.display) {
       case 'mute':
@@ -107,7 +100,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
         throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
 
       // Proceed to the next step
-      return singleTextOrThrow(inputs.intermediateDMessage);
+      return reduceContentToText(inputs.intermediateDMessage.content);
     });
 }
 

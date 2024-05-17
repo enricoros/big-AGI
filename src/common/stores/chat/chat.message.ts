@@ -241,10 +241,6 @@ export function contentPartsReplaceText(message: DMessage, newText: string): DCo
   );
 }
 
-export function fixmeThisReplacesAllParts(text: string): DContentParts {
-  return [createTextPart(text)];
-}
-
 
 // helpers - user flags
 
