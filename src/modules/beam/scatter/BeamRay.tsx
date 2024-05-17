@@ -18,6 +18,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { reduceContentToText } from '~/common/stores/chat/chat.message';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
@@ -148,16 +149,16 @@ export function BeamRay(props: {
   const handleRayCopy = React.useCallback(() => {
     const { rays } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
-    if (ray?.message?.text)
-      copyToClipboard(ray.message.text, 'Beam');
+    if (ray?.message.content.length)
+      copyToClipboard(reduceContentToText(ray.message.content), 'Response');
   }, [props.beamStore, props.rayId]);
 
   const handleRayUse = React.useCallback(() => {
     // get snapshot values, so we don't have to react to the hook
     const { rays, onSuccessCallback } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
-    if (ray?.message?.text && onSuccessCallback)
-      onSuccessCallback(ray.message.text, llmId || '');
+    if (ray && ray.message.content.length && onSuccessCallback)
+      onSuccessCallback(ray.message.content, llmId || '');
   }, [llmId, props.beamStore, props.rayId]);
 
   const handleRayRemove = React.useCallback(() => {
@@ -200,7 +201,7 @@ export function BeamRay(props: {
       {!!ray?.scatterIssue && <InlineError error={ray.scatterIssue} />}
 
       {/* Ray Message */}
-      {(!!ray?.message?.text || ray?.status === 'scattering') && (
+      {(!!ray?.message?.content.length || ray?.status === 'scattering') && (
         <Box sx={beamCardMessageWrapperSx}>
           {!!ray.message && (
             <ChatMessageMemo

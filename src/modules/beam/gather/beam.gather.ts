@@ -7,7 +7,6 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
-import { GATHER_PLACEHOLDER } from '../beam.config';
 import { RootStoreSlice } from '../store-beam-vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
@@ -84,8 +83,7 @@ export function fusionIsStopped(fusion: BFusion | null): boolean {
 }
 
 export function fusionIsUsableOutput(fusion: BFusion | null): boolean {
-  const message = fusion?.outputDMessage ?? null;
-  return !!message && !!message.updated && !!message.text && message.text !== GATHER_PLACEHOLDER;
+  return !!fusion?.outputDMessage?.content.length;
 }
 
 export function fusionIsError(fusion: BFusion | null): boolean {
@@ -261,7 +259,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     // start the fusion
     const { inputHistory, rays, _fusionUpdate } = _get();
     const chatMessages = inputHistory ? [...inputHistory] : [];
-    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.text.trim());
+    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.content.length);
     const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
     gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
   },

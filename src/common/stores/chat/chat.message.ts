@@ -9,7 +9,7 @@ export interface DMessage {
   id: DMessageId;                     // unique message ID
 
   role: DMessageRole;
-  content: DContentPart[];            // multi-part content (sent: mix of text/images/etc., received: usually one part)
+  content: DContentParts;             // multi-part content (sent: mix of text/images/etc., received: usually one part)
   userAttachments: DAttachmentPart[]; // higher-level multi-part to be sent (transformed to multipart before sending)
 
   // pending state (not stored)
@@ -33,6 +33,8 @@ export interface DMessage {
   updated: number | null;             // updated timestamp - null means incomplete - TODO: disambiguate vs pendingIncomplete
 }
 
+export type DContentParts = DContentPart[];
+
 export type DMessageId = string;
 
 export type DMessageRole = 'user' | 'assistant' | 'system';
@@ -52,7 +54,7 @@ type DContentRef =
 
 // Content Part
 
-export type DContentPart =
+type DContentPart =
   | { type: 'text'; text: string }
   | { type: 'image'; mimeType: string; source: DContentRef }
   // | { type: 'audio'; mimeType: string; source: DContentRef }
@@ -87,7 +89,7 @@ export type DMessageUserFlag =
 
 // helpers - creation
 
-export function createDMessage(role: DMessageRole, content?: string | DContentPart[]): DMessage {
+export function createDMessage(role: DMessageRole, content?: string | DContentParts): DMessage {
 
   // ensure content is an array
   if (content === undefined)
@@ -202,6 +204,15 @@ export function convertDMessage_V3_V4(message: DMessage) {
 
 // helpers - text
 
+export function reduceContentToText(content: DContentParts): string {
+  const partTextSeparator = '\n\n';
+  return content.map(part => {
+    if (part.type === 'text')
+      return part.text;
+    return '';
+  }).join(partTextSeparator);
+}
+
 export function singleTextOrThrow(message: DMessage): string {
   if (message.content.length !== 1)
     throw new Error('Expected single content');
@@ -210,7 +221,7 @@ export function singleTextOrThrow(message: DMessage): string {
   return message.content[0].text;
 }
 
-export function singleTextOrThrow2(content?: DContentPart[]): string {
+export function singleTextOrThrow2(content?: DContentParts): string {
   if (!content || content.length !== 1)
     throw new Error('Expected single content');
   if (content[0].type !== 'text')
@@ -219,7 +230,7 @@ export function singleTextOrThrow2(content?: DContentPart[]): string {
 }
 
 // zustand-like deep replace
-export function contentPartsReplaceText(message: DMessage, newText: string): DContentPart[] {
+export function contentPartsReplaceText(message: DMessage, newText: string): DContentParts {
   const lastTextPart = message.content.findLast(part => part.type === 'text');
   if (!lastTextPart)
     return [...message.content, createTextPart(newText)];
@@ -230,7 +241,7 @@ export function contentPartsReplaceText(message: DMessage, newText: string): DCo
   );
 }
 
-export function fixmeThisReplacesAllParts(text: string): DContentPart[] {
+export function fixmeThisReplacesAllParts(text: string): DContentParts {
   return [createTextPart(text)];
 }
 
