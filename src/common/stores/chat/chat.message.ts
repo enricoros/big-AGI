@@ -43,33 +43,33 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 // Content Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
 
 type DContentRef =
-  | { type: 'url'; url: string } // remotely accessible URL
-  | { type: 'dblob'; mimeType: string; dblobId: DBlobId } // reference to a DBlob
+  | { reftype: 'url'; url: string } // remotely accessible URL
+  | { reftype: 'dblob'; mimeType: string; dblobId: DBlobId } // reference to a DBlob
   ;
 
 // type CMediaSourceInline =
-//   | { type: 'base64'; mimeType: string; base64Data: string }
+//   | { stype: 'base64'; mimeType: string; base64Data: string }
 //   ;
 
 
-// Content Part
+// Content Part - this gets saved to the slow DB - needs to be small and efficient
 
 type DContentPart =
-  | { type: 'text'; text: string }
-  | { type: 'image'; mimeType: string; source: DContentRef }
-  // | { type: 'audio'; mimeType: string; source: DContentRef }
-  // | { type: 'video'; mimeType: string; source: DContentRef }
-  // | { type: 'document'; source: DContentRef }
-  | { type: 'function_call'; function: string; args: Record<string, any> }
-  | { type: 'function_response'; function: string; response: Record<string, any> }
+  | { ptype: 'text'; text: string } // H/A
+  | { ptype: 'image'; mimeType: string; source: DContentRef }
+  // | { ptype: 'audio'; mimeType: string; source: DContentRef }
+  // | { ptype: 'video'; mimeType: string; source: DContentRef }
+  // | { ptype: 'document'; source: DContentRef } // H
+  | { ptype: 'function_call'; function: string; args: Record<string, any> } // A
+  | { ptype: 'function_response'; function: string; response: Record<string, any> } // A
   ;
 
 
 // Attachment Part
 
 export type DAttachmentPart =
-  | { type: 'atext', text: string, title?: string, collapsible: boolean }
-  | { type: 'aimage', source: DContentRef, title?: string, width?: number, height?: number, collapsible: false }
+  | { atype: 'atext', text: string, title?: string, collapsible: boolean }
+  | { atype: 'aimage', source: DContentRef, title?: string, width?: number, height?: number, collapsible: false }
 
 // export type CAttachmentMultiPart = CAttachmentPart[];
 
@@ -138,7 +138,7 @@ export function pendDMessage(message: DMessage, placeholderText?: string): DMess
 }
 
 export function createTextPart(text: string): DContentPart {
-  return { type: 'text', text };
+  return { ptype: 'text', text: text };
 }
 
 
@@ -202,22 +202,21 @@ export function convertDMessage_V3_V4(message: DMessage) {
 }
 
 
-// helpers - text
+// helpers - content parts
 
-export function reduceContentToText(content: DContentParts): string {
-  const partTextSeparator = '\n\n';
+export function reduceContentToText(content: DContentParts, textPartSeparator: string = '\n\n'): string {
   return content.map(part => {
-    if (part.type === 'text')
+    if (part.ptype === 'text')
       return part.text;
     return '';
-  }).join(partTextSeparator);
+  }).filter(text => !!text).join(textPartSeparator);
 }
 
 // TODO: this should be gone away once the port is fully done
 export function singleTextOrThrow(message: DMessage): string {
   if (message.content.length !== 1)
     throw new Error('Expected single content');
-  if (message.content[0].type !== 'text')
+  if (message.content[0].ptype !== 'text')
     throw new Error('Expected text content');
   return message.content[0].text;
 }
@@ -226,14 +225,14 @@ export function singleTextOrThrow(message: DMessage): string {
 // zustand-like deep replace
 export function contentPartsReplaceText(content: Readonly<DContentParts>, newText: string, appendText?: boolean): DContentParts {
   // if there's no text part, append a new one
-  const lastTextPart = content.findLast(part => part.type === 'text');
+  const lastTextPart = content.findLast(part => part.ptype === 'text');
   if (!lastTextPart)
     return [...content, createTextPart(newText)];
 
   // otherwise, replace/append the text in the last text part
   return content.map(part =>
     (part === lastTextPart)
-      ? { ...part, text: (appendText && part.type === 'text') ? part.text + newText : newText }
+      ? { ...part, text: (appendText && part.ptype === 'text') ? part.text + newText : newText }
       : part,
   );
 }

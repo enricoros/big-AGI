@@ -9,8 +9,8 @@ import { SystemPurposeId } from '../../../data';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 import { countModelTokens } from '~/common/util/token-counter';
 
+import { DMessage, DMessageId, DMessageMetadata, reduceContentToText } from './chat.message';
 import { conversationTitle, convertCConversation_V3_V4, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
-import { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 
 
 /// Conversations Store
@@ -338,7 +338,8 @@ function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceU
 
     // NOTE: temporary flattening of text-only parts, until we figure out a better way to handle this
     // FIXME: this is a quick and dirty hack, until we move token counting outside
-    const messageTextParts = message.content.reduce((fullText, part) => fullText + (part.type === 'text' ? part.text : ''), '');
+    const messageTextParts = reduceContentToText(message.content, '');
+
     // TODO: handle attachments too
     message.tokenCount = countModelTokens(messageTextParts, llmId, debugFrom) ?? 0;
   }
