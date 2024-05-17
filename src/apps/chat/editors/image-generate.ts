@@ -2,7 +2,6 @@ import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { createTextPart } from '~/common/stores/chat/chat.message';
 
 
 /**
@@ -35,20 +34,16 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   );
 
   try {
-
     const imageUrls = await t2iGenerateImageOrThrow(t2iProvider, imageText, repeat);
-    cHandler.messageEdit(assistantMessageId, {
-      content: [createTextPart(imageUrls.join('\n'))],
-      pendingIncomplete: undefined, pendingPlaceholderText: undefined,
-    }, true);
+
+    cHandler.messageAppendTextPart(assistantMessageId, imageUrls.join('\n'), true, true);
 
     return true;
   } catch (error: any) {
+
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
-    cHandler.messageEdit(assistantMessageId, {
-      content: [createTextPart(`[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`)],
-      pendingIncomplete: undefined, pendingPlaceholderText: undefined,
-    }, false);
+    cHandler.messageAppendTextPart(assistantMessageId, `[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`, true, false);
+
     return false;
   }
 }

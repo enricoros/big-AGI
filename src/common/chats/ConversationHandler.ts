@@ -95,6 +95,18 @@ export class ConversationHandler {
     this.chatActions.editMessage(this.conversationId, messageId, update, touch);
   }
 
+  messageAppendTextPart(messageId: string, text: string, complete: boolean, touch?: boolean): void {
+    this.chatActions.editMessage(this.conversationId, messageId, (message) => {
+      return {
+        content: [...message.content, createTextPart(text)],
+        ...(complete ? {
+          pendingIncomplete: undefined,
+          pendingPlaceholderText: undefined,
+        } : {}),
+      };
+    }, !!touch);
+  }
+
   messagesReplace(messages: DMessage[]): void {
     this.chatActions.setMessages(this.conversationId, messages);
 

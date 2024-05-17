@@ -6,7 +6,7 @@ import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.cli
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { createTextPart, DMessage, singleTextOrThrow, singleTextOrThrow2 } from '~/common/stores/chat/chat.message';
+import { contentPartsReplaceText, DContentParts, DMessage, reduceContentToText, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
@@ -92,7 +92,15 @@ export async function streamAssistantMessage(
     }
   }
 
-  const incrementalAnswer: Partial<DMessage> = { content: [createTextPart('')] };
+  // NOTE: should clean this up once we have multi-part streaming/recombination
+  const incrementalAnswer: {
+    content: DContentParts,
+    originLLM?: string,
+    pendingIncomplete?: boolean,
+    pendingPlaceholderText?: string,
+  } = {
+    content: [],
+  };
 
   try {
     await llmStreamingChatGenerate(llmId, messagesHistory, null, null, abortSignal, (update: StreamingClientUpdate) => {
@@ -100,7 +108,7 @@ export async function streamAssistantMessage(
 
       // grow the incremental message
       if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-      if (textSoFar) incrementalAnswer.content = [createTextPart(textSoFar)];
+      if (textSoFar) incrementalAnswer.content = contentPartsReplaceText(incrementalAnswer.content, textSoFar);
       if (update.typing !== undefined) {
         incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
         if (!update.typing)
@@ -128,8 +136,7 @@ export async function streamAssistantMessage(
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-      const incrementalText = singleTextOrThrow2(incrementalAnswer.content);
-      incrementalAnswer.content = [createTextPart(incrementalText + errorText)];
+      incrementalAnswer.content = contentPartsReplaceText(incrementalAnswer.content, errorText, true);
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
     } else
@@ -141,7 +148,7 @@ export async function streamAssistantMessage(
 
   // 📢 TTS: all
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
-    const incrementalText = singleTextOrThrow2(incrementalAnswer.content);
+    const incrementalText = reduceContentToText(incrementalAnswer.content);
     if (incrementalText.length > 0)
       void speakText(incrementalText);
   }

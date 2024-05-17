@@ -213,6 +213,7 @@ export function reduceContentToText(content: DContentParts): string {
   }).join(partTextSeparator);
 }
 
+// TODO: this should be gone away once the port is fully done
 export function singleTextOrThrow(message: DMessage): string {
   if (message.content.length !== 1)
     throw new Error('Expected single content');
@@ -221,22 +222,18 @@ export function singleTextOrThrow(message: DMessage): string {
   return message.content[0].text;
 }
 
-export function singleTextOrThrow2(content?: DContentParts): string {
-  if (!content || content.length !== 1)
-    throw new Error('Expected single content');
-  if (content[0].type !== 'text')
-    throw new Error('Expected text content');
-  return content[0].text;
-}
 
 // zustand-like deep replace
-export function contentPartsReplaceText(message: DMessage, newText: string): DContentParts {
-  const lastTextPart = message.content.findLast(part => part.type === 'text');
+export function contentPartsReplaceText(content: Readonly<DContentParts>, newText: string, appendText?: boolean): DContentParts {
+  // if there's no text part, append a new one
+  const lastTextPart = content.findLast(part => part.type === 'text');
   if (!lastTextPart)
-    return [...message.content, createTextPart(newText)];
-  return message.content.map(part =>
+    return [...content, createTextPart(newText)];
+
+  // otherwise, replace/append the text in the last text part
+  return content.map(part =>
     (part === lastTextPart)
-      ? { ...part, text: newText }
+      ? { ...part, text: (appendText && part.type === 'text') ? part.text + newText : newText }
       : part,
   );
 }
