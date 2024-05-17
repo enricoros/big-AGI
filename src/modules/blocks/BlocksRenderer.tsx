@@ -165,7 +165,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
 
     // Apply specialDiagramMode filter if applicable
     return props.specialDiagramMode
-      ? recycledBlocks.filter(block => block.type === 'code' || recycledBlocks.length === 1)
+      ? recycledBlocks.filter(block => block.type === 'codeb' || recycledBlocks.length === 1)
       : recycledBlocks;
   }, [errorMessage, fromSystem, props.specialDiagramMode, renderTextDiff, text]);
 
@@ -204,13 +204,13 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
             const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== blocks.length - 1;
             const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
             const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
-            return block.type === 'html'
+            return block.type === 'htmlb'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
-              : block.type === 'code'
+              : block.type === 'codeb'
                 ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
-                : block.type === 'image'
+                : block.type === 'imageb'
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
-                  : block.type === 'diff'
+                  : block.type === 'diffb'
                     ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
                     : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
                       ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />

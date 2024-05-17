@@ -34,7 +34,7 @@ export function heuristicMarkdownImageReferenceBlocks(fullText: string) {
     if (match && imageExtensions.test(match[2])) {
       const alt = match[1];
       const url = match[2];
-      imageBlocks.push({ type: 'image', url, alt });
+      imageBlocks.push({ type: 'imageb', url, alt });
     } else {
       // if there is any outlier line, return null
       return null;
@@ -58,7 +58,7 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
     const match = prodiaUrlRegex.exec(line);
     if (match) {
       const url = match[1];
-      imageBlocks.push({ type: 'image', url });
+      imageBlocks.push({ type: 'imageb', url });
     } else {
       // if there is any outlier line, return null
       return null;
@@ -143,7 +143,7 @@ export const RenderImage = (props: {
           )}
 
           <GoodTooltip title='Open in new tab'>
-            <OverlayButton variant='outlined' component={Link} href={url} download={alt || 'image'} target='_blank'>
+            <OverlayButton variant='outlined' component={Link} href={url} download={alt || 'Image'} target='_blank'>
               <OpenInNewIcon />
             </OverlayButton>
           </GoodTooltip>
