@@ -16,16 +16,16 @@ export interface DConversation {
   userTitle?: string;
   autoTitle?: string;
 
-  // TODO: @deprecated - this should be the system purpose of current head of the conversation
+  // TODO: [x Head] - this should be the system purpose of current head of the conversation
   // there should be the concept of the audience of the current head
   systemPurposeId: SystemPurposeId;   // system purpose of this conversation
-
-  // TODO: @deprecated - should be a view-related cache
-  tokenCount: number;                 // f(messages, llmId)
 
   // when updated is null, we don't have messages yet (timestamps as Date.now())
   created: number;                    // creation timestamp
   updated: number | null;             // last update timestamp
+
+  // TODO: @deprecated - should be a view-related cache
+  tokenCount: number;                 // f(messages, llmId)
 
   // Not persisted, used while in-memory, or temporarily by the UI
   // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
@@ -101,7 +101,8 @@ export function duplicateCConversation(conversation: DConversation, lastMessageI
 // helpers - conversion
 
 export function convertCConversation_V3_V4(conversation: DConversation) {
-  conversation.messages.forEach(message => convertDMessage_V3_V4(message));
+  // .messages
+  conversation.messages.forEach(convertDMessage_V3_V4);
 }
 
 
