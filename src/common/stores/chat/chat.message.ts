@@ -12,8 +12,9 @@ export interface DMessage {
   content: DContentPart[];            // multi-part content (sent: mix of text/images/etc., received: usually one part)
   userAttachments: DAttachmentPart[]; // higher-level multi-part to be sent (transformed to multipart before sending)
 
-  // transient state
-  typing: boolean;                    // incomplete message, still typing - also suspends counting tokens while true
+  // pending state (not stored)
+  pendingIncomplete?: boolean;        // incomplete message (also suspends counting tokens while true)
+  pendingPlaceholderText?: string;    // text being typed, not yet sent
 
   // identity
   avatar: string | null;              // image URL, or null
@@ -29,7 +30,7 @@ export interface DMessage {
   tokenCount: number;                 // cache for token count, using the current Conversation model (0 = not yet calculated)
 
   created: number;                    // created timestamp
-  updated: number | null;             // updated timestamp
+  updated: number | null;             // updated timestamp - null means incomplete - TODO: disambiguate vs pendingIncomplete
 }
 
 export type DMessageId = string;
@@ -86,16 +87,26 @@ export type DMessageUserFlag =
 
 // helpers - creation
 
-export function createDMessage(role: DMessageRole, text: string): DMessage {
+export function createDMessage(role: DMessageRole, content?: string | DContentPart[]): DMessage {
+
+  // ensure content is an array
+  if (content === undefined)
+    content = [];
+  else if (typeof content === 'string')
+    content = [createTextPart(content)];
+  else if (!Array.isArray(content))
+    throw new Error('Invalid content');
+
   return {
     id: uuidv4(),
 
     role: role,
-    content: [createTextPart(text)],
+    content: content,
     userAttachments: [],
 
-    // transient
-    typing: false,
+    // pending state
+    // pendingIncomplete: false,
+    // pendingPlaceholderText: undefined,
 
     // identity
     avatar: null,
@@ -110,10 +121,18 @@ export function createDMessage(role: DMessageRole, text: string): DMessage {
     // @deprecated
     tokenCount: 0,
 
-    // when updated is null, the message is considered incomplete yet (probably still typing)
     created: Date.now(),
     updated: null,
   };
+}
+
+export function pendDMessage(message: DMessage, placeholderText?: string): DMessage {
+  message.pendingIncomplete = true;
+  if (placeholderText)
+    message.pendingPlaceholderText = placeholderText;
+  else
+    delete message.pendingPlaceholderText;
+  return message;
 }
 
 export function createTextPart(text: string): DContentPart {
@@ -132,7 +151,8 @@ export function duplicateDMessage(message: DMessage): DMessage {
     content: message.content.map(part => ({ ...part })),
     userAttachments: message.userAttachments.map(part => ({ ...part })),
 
-    typing: false,
+    ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
+    ...(message.pendingPlaceholderText ? { pendingPlaceholderText: message.pendingPlaceholderText } : {}),
 
     avatar: message.avatar,
     sender: message.sender,

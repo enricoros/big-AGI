@@ -6,7 +6,7 @@ import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
-import { createDMessage, DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createDMessage, DMessage, duplicateDMessage, pendDMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
@@ -28,11 +28,11 @@ export interface BRay {
 }
 
 
-export function createBRay(llmId: DLLMId | null): BRay {
+export function createBRayEmpty(llmId: DLLMId | null): BRay {
   return {
     rayId: uuidv4(),
     status: 'empty',
-    message: createDMessage('assistant', ''),
+    message: createDMessage('assistant'), // [state] assistant:Ray_empty
     rayLlmId: llmId,
     userSelected: false,
     imported: false,
@@ -55,19 +55,22 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const abortController = new AbortController();
 
-  const updateMessage = (update: Partial<DMessage>) => _rayUpdate(ray.rayId, (ray) => ({
-    ...ray,
-    message: {
-      ...ray.message,
-      ...update,
-      // only update the timestamp when the text changes
-      ...(update.text ? { updated: Date.now() } : {}),
-    },
-  }));
+  const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
+    _rayUpdate(ray.rayId, (ray) => ({
+      message: {
+        ...ray.message,
+        ...incrementalMessage,
+        ...(incrementalMessage.content?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
+      },
+    }));
+  };
 
   // stream the assistant's messages
-  const messagesHistory: VChatMessageIn[] = inputHistory.map(({ role, text }) => ({ role, content: text }));
-  streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
+  const messagesHistory: VChatMessageIn[] = inputHistory.map((message) => ({
+    role: message.role,
+    content: singleTextOrThrow(message),
+  }));
+  streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', onMessageUpdated, abortController.signal)
     .then((status) => {
       _rayUpdate(ray.rayId, {
         status: (status.outcome === 'success') ? 'success'
@@ -84,12 +87,11 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   return {
     rayId: ray.rayId,
     status: 'scattering',
-    message: {
+    message: pendDMessage({
       ...ray.message,
-      text: SCATTER_PLACEHOLDER,
       created: Date.now(),
       updated: null,
-    },
+    }, SCATTER_PLACEHOLDER),
     rayLlmId: llmId,
     scatterIssue: undefined,
     genAbortController: abortController,
@@ -117,7 +119,11 @@ export function rayIsScattering(ray: BRay | null): boolean {
 }
 
 export function rayIsSelectable(ray: BRay | null): boolean {
-  return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== SCATTER_PLACEHOLDER;
+  // NOTE: this was here before, but prob not needed anymore after the MP refactor
+  //        && !!ray.message.text && ray.message.text !== SCATTER_PLACEHOLDER
+  // any ray is selectable once it's 'updated' (message started flowing in)
+  // return !!ray?.message?.updated /*&& !ray.message.pendingIncomplete*/;
+  return !!ray?.message.content.length;
 }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {
@@ -147,8 +153,8 @@ export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => 
   prevRays.forEach(rayScatterStop);
 
   return {
-    // (remember) keep the same quantity of rays and same llms
-    rays: prevRays.map(prevRay => createBRay(prevRay.rayLlmId)),
+    // recreate empty rays to match the previous count, with the same llms too
+    rays: prevRays.map(prevRay => createBRayEmpty(prevRay.rayLlmId)),
     hadImportedRays: false,
 
     isScattering: false,
@@ -191,9 +197,12 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       });
     } else if (count > rays.length) {
       _set({
-        rays: [...rays, ...Array(count - rays.length).fill(null)
-          // Create missing rays, copying the llmId of the former Ray, or using the fallback
-          .map(() => createBRay(rays[rays.length - 1]?.rayLlmId || null)),
+        rays: [
+          ...rays,
+          // add missing empties, carrying forward the last llm
+          ...Array(count - rays.length)
+            .fill(null)
+            .map(() => createBRayEmpty(rays[rays.length - 1]?.rayLlmId || null)),
         ],
       });
     }
@@ -221,23 +230,26 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     // remove the empty rays that will be replaced by the imported messages
     const raysToRemove = rays.filter((ray) => ray.status === 'empty' && ray.rayLlmId === raysLlmId).slice(0, messages.length);
 
+    const importedRays = messages.map((message) => {
+
+      // In this case, we just use the active LLM in all the imported...
+      // FIXME: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
+      const emptyRay = createBRayEmpty(raysLlmId);
+
+      // pre-fill the ray with the imported message
+      if (message.content.length) {
+        emptyRay.status = 'success';
+        emptyRay.message = duplicateDMessage(message);
+        emptyRay.message.updated = Date.now();
+        emptyRay.imported = true;
+      }
+
+      return emptyRay;
+    });
+
     _set({
       rays: [
-        // prepend the imported rays
-        ...messages.map((message) => {
-            // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
-            const ray = createBRay(raysLlmId);
-            // pre-fill the ray status with the message and to a successful state
-            if (singleTextOrThrow(message).trim()) {
-              ray.status = 'success';
-              ray.message.content = [...message.content];
-              ray.message.updated = Date.now();
-              ray.imported = true;
-            }
-            return ray;
-          },
-        ),
-        // append the other rays (excluding the ones to remove)
+        ...importedRays,
         ...rays.filter((ray) => !raysToRemove.includes(ray)),
       ],
       hadImportedRays: messages.length > 0,

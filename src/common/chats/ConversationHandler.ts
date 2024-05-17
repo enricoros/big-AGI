@@ -1,13 +1,13 @@
 import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { SystemPurposeId, SystemPurposes } from '../../data';
+import { SystemPurposes } from '../../data';
 
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, createTextPart, DMessage, fixmeThisReplacesAllParts } from '~/common/stores/chat/chat.message';
+import { createDMessage, createTextPart, DMessage, fixmeThisReplacesAllParts, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createChatOverlayVanillaStore } from './store-chat-overlay-vanilla';
@@ -38,8 +38,15 @@ export class ConversationHandler {
 
   inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined): DMessage[] {
     const purposeId = getConversationSystemPurposeId(this.conversationId);
+    // TODO: HACK: find the persona identiy separately from the "first system message", as e.g. right now would take the reply-to and promote as system
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
-    let systemMessage: DMessage = systemMessageIndex >= 0 ? history.splice(systemMessageIndex, 1)[0] : createDMessage('system', '');
+
+    let systemMessage: DMessage = systemMessageIndex >= 0
+      ? history.splice(systemMessageIndex, 1)[0]
+      : createDMessage('system'); // [chat] new system:'' (non updated)
+
+    // TODO: move this to a proper persona identity management
+    // Update the system message with the current persona's message, if formerly unset
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
       const systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
@@ -52,6 +59,7 @@ export class ConversationHandler {
       // HACK: refresh the object to trigger a re-render of this message
       systemMessage = { ...systemMessage };
     }
+
     history.unshift(systemMessage);
     // NOTE: disabled on 2024-03-13; we are only manipulating the history in-place, an we'll set it later in every code branch
     // this.chatActions.setMessages(this.conversationId, history);
@@ -68,14 +76,17 @@ export class ConversationHandler {
   /**
    * @param text assistant text
    * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
-   * @param purposeId purpose that supposedly triggered this message
-   * @param typing whether the assistant is typing at the onset
    */
-  messageAppendAssistant(text: string, purposeId: SystemPurposeId | string | undefined, llmLabel: DLLMId | string, typing: boolean): string {
+  messageAppendAssistant(text: string, llmLabel: DLLMId | string) {
     const assistantMessage: DMessage = createDMessage('assistant', text);
-    assistantMessage.typing = typing;
-    assistantMessage.purposeId = purposeId ?? undefined;
     assistantMessage.originLLM = llmLabel;
+    this.chatActions.appendMessage(this.conversationId, assistantMessage);
+  }
+
+  messageAppendAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): string {
+    const assistantMessage: DMessage = createDMessage('assistant');
+    pendDMessage(assistantMessage, placeholderText);
+    update && Object.assign(assistantMessage, update);
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
     return assistantMessage.id;
   }
@@ -107,14 +118,15 @@ export class ConversationHandler {
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
-    const onBeamSuccess = (messageText: string, llmId: DLLMId) => {
+    // TODO: we shall get a Message here, rather than a string - it's limiting
+    const onBeamSuccess = (beamText: string, llmId: DLLMId) => {
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { content: fixmeThisReplacesAllParts(messageText), originLLM: llmId }, true);
+        this.messageEdit(destReplaceMessageId, { content: fixmeThisReplacesAllParts(beamText), originLLM: llmId }, true); // [chat] replace assistant:Beam text
       } else {
         // replace (may truncate) the conversation history and append a message
-        const newMessage = createDMessage('assistant', messageText);
+        const newMessage = createDMessage('assistant', beamText); // [chat] append Beam text
         newMessage.originLLM = llmId;
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
         this.messagesReplace([...viewHistory, newMessage]);

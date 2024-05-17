@@ -138,7 +138,7 @@ export function FlattenerModal(props: {
     if (branch)
       newConversationId = props.onConversationBranch(props.conversationId, null);
     if (newConversationId) {
-      const newRootMessage = createDMessage('user', flattenedText);
+      const newRootMessage = createDMessage('user', flattenedText);// [new chat] user:former chat summary
       useChatStore.getState().setMessages(newConversationId, [newRootMessage]);
     }
     props.onClose();

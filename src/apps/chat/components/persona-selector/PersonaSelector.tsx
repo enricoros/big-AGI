@@ -159,7 +159,6 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // Handlers
 
-// Modify the handlePurposeChanged function to check for the YouTube Transcriber
   const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
     if (purposeId) {
       if (purposeId === 'YouTubeTranscriber') {
@@ -180,15 +179,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, [systemPurposeId]);
 
 
-// Implement handleAddMessage function
-  const handleAddMessage = (messageText: string) => {
+  const handleAppendTranscriptAsMessage = (messageText: string) => {
     // Retrieve the appendMessage action from the useChatStore
     const { appendMessage } = useChatStore.getState();
 
     const conversationId = props.conversationId;
 
     // Create a new message object
-    const newMessage = createDMessage('assistant', messageText);
+    const newMessage = createDMessage('assistant', messageText); // [chat] append assistant:YouTube transcript
 
     // Append the new message to the conversation
     appendMessage(conversationId, newMessage);
@@ -458,7 +456,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         {/* [row -1] YouTube URL */}
         {isYouTubeTranscriberActive && (
           <YouTubeURLInput
-            onSubmit={(url) => handleAddMessage(url)}
+            onSubmit={(transcript) => handleAppendTranscriptAsMessage(transcript)}
             isFetching={false}
             sx={{
               gridColumn: '1 / -1',

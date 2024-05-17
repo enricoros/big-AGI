@@ -95,7 +95,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         const role = message.author.role;
         const joinedText = message.content.parts.join('\n');
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {
-          const dMessage = createDMessage(role, joinedText);
+          const dMessage = createDMessage(role, joinedText); // [state] import role:text from ChatGPT
           dMessage.id = message.id;
           if (message.create_time)
             dMessage.created = Math.round(message.create_time * 1000);

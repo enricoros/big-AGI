@@ -3,7 +3,7 @@ import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { DMessage, createDMessage, createTextPart, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createTextPart, DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -70,7 +70,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
               cHandler.messagesReplace([]);
             } else {
               cHandler.messagesReplace(history);
-              cHandler.messageAppendAssistant('Issue: this command requires the \'all\' parameter to confirm the operation.', undefined, 'issue', false);
+              cHandler.messageAppendAssistant('Issue: this command requires the \'all\' parameter to confirm the operation.', 'issue');
             }
             return true;
           }
@@ -88,7 +88,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
             .map(cmd => ` - ${cmd.primary}` + (cmd.alternatives?.length ? ` (${cmd.alternatives.join(', ')})` : '') + `: ${cmd.description}`)
             .join('\n');
           cHandler.messagesReplace(history);
-          cHandler.messageAppendAssistant('Available Chat Commands:\n' + chatCommandsText, undefined, 'help', false);
+          cHandler.messageAppendAssistant('Available Chat Commands:\n' + chatCommandsText, 'help');
           return true;
 
         case 'mode-beam':
@@ -103,7 +103,8 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
           return true;
 
         default:
-          cHandler.messagesReplace([...history, createDMessage('assistant', 'This command is not supported.')]);
+          cHandler.messagesReplace(history);
+          cHandler.messageAppendAssistant('This command is not supported', 'help');
           return false;
       }
     }
@@ -113,7 +114,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   // get the system purpose (note: we don't react to it, or it would invalidate half UI components..)
   if (!getConversationSystemPurposeId(conversationId)) {
     cHandler.messagesReplace(history);
-    cHandler.messageAppendAssistant('Issue: no Persona selected.', undefined, 'issue', false);
+    cHandler.messageAppendAssistant('Issue: no Persona selected.', 'issue');
     return 'err-no-persona';
   }
 

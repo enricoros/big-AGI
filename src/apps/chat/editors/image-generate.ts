@@ -2,6 +2,7 @@ import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { createTextPart } from '~/common/stores/chat/chat.message';
 
 
 /**
@@ -9,7 +10,7 @@ import type { TextToImageProvider } from '~/common/components/useCapabilities';
  */
 export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText?: string) {
   if (!imageText) {
-    cHandler.messageAppendAssistant('Issue: no image description provided.', undefined, 'issue', false);
+    cHandler.messageAppendAssistant('Issue: no image description provided.', 'issue');
     return false;
   }
 
@@ -18,7 +19,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   try {
     t2iProvider = getActiveTextToImageProviderOrThrow();
   } catch (error: any) {
-    cHandler.messageAppendAssistant(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, undefined, 'issue', false);
+    cHandler.messageAppendAssistant(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, 'issue');
     return 'err-t2i-unconfigured';
   }
 
@@ -28,18 +29,26 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   if (repeat > 1)
     imageText = imageText.replace(/x(\d+)$|\[(\d+)]$/, '').trim(); // Remove the "xN" or "[N]" part from the imageText
 
-  const assistantMessageId = cHandler.messageAppendAssistant(
+  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
     `Give me ${t2iProvider.vendor === 'openai' ? 'a dozen' : 'a few'} seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`,
-    undefined, t2iProvider.painter, true,
+    { originLLM: t2iProvider.painter },
   );
 
   try {
+
     const imageUrls = await t2iGenerateImageOrThrow(t2iProvider, imageText, repeat);
-    cHandler.messageEdit(assistantMessageId, { text: imageUrls.join('\n'), typing: false }, true);
+    cHandler.messageEdit(assistantMessageId, {
+      content: [createTextPart(imageUrls.join('\n'))],
+      pendingIncomplete: undefined, pendingPlaceholderText: undefined,
+    }, true);
+
     return true;
   } catch (error: any) {
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
-    cHandler.messageEdit(assistantMessageId, { text: `[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`, typing: false }, false);
+    cHandler.messageEdit(assistantMessageId, {
+      content: [createTextPart(`[Issue] Sorry, I couldn't create an image for you. ${errorMessage}`)],
+      pendingIncomplete: undefined, pendingPlaceholderText: undefined,
+    }, false);
     return false;
   }
 }

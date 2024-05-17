@@ -120,9 +120,9 @@ export function Telephone(props: {
   const onSpeechResultCallback = React.useCallback((result: SpeechResult) => {
     setSpeechInterim(result.done ? null : { ...result });
     if (result.done) {
-      const transcribed = result.transcript.trim();
-      if (transcribed.length >= 1)
-        setCallMessages(messages => [...messages, createDMessage('user', transcribed)]);
+      const userSpeechTranscribed = result.transcript.trim();
+      if (userSpeechTranscribed.length >= 1)
+        setCallMessages(messages => [...messages, createDMessage('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
   const { isSpeechEnabled, isRecording, isRecordingAudio, isRecordingSpeech, startRecording, stopRecording, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 1000);
@@ -171,7 +171,8 @@ export function Telephone(props: {
     const phoneMessages = personaCallStarters || ['Hello?', 'Hey!'];
     const firstMessage = phoneMessages[Math.floor(Math.random() * phoneMessages.length)];
 
-    setCallMessages([createDMessage('assistant', firstMessage)]);
+    setCallMessages([createDMessage('assistant', firstMessage)]); // [state] set assistant:hello message
+
     // fire/forget
     void EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId);
 
@@ -239,7 +240,7 @@ export function Telephone(props: {
     }).finally(() => {
       setPersonaTextInterim(null);
       if (finalText || error)
-        setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
+        setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]); // [state] append assistant:call_response
       // fire/forget
       if (finalText?.length >= 1)
         void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);

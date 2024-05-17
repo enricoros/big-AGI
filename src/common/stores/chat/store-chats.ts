@@ -29,7 +29,7 @@ export interface ChatActions {
 
   // within a conversation
   setAbortController: (cId: DConversationId, abortController: AbortController | null) => void;
-  abortTyping: (cId: DConversationId) => void;
+  abortConversationTemp: (cId: DConversationId) => void;
   setMessages: (cId: DConversationId, messages: DMessage[]) => void;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
@@ -146,7 +146,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             abortController: abortController,
           })),
 
-      abortTyping: (conversationId: DConversationId) =>
+      abortConversationTemp: (conversationId: DConversationId) =>
         _get()._editConversation(conversationId, conversation => {
           conversation.abortController?.abort();
           return {
@@ -171,7 +171,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       appendMessage: (conversationId: DConversationId, message: DMessage) =>
         _get()._editConversation(conversationId, conversation => {
 
-          if (!message.typing)
+          if (!message.pendingIncomplete)
             updateMessagesTokenCounts([message], true, 'appendMessage');
 
           const messages = [...conversation.messages, message];
@@ -208,8 +208,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               ...(touchUpdated && { updated: Date.now() }),
             };
 
-            if (!updatedMessage.typing)
-              updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(typing=false)');
+            if (!updatedMessage.pendingIncomplete)
+              updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(incomplete=false)');
 
             return updatedMessage;
           });
@@ -304,8 +304,11 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           // re-add transient properties
           conversation.abortController = null;
           // fixup messages
-          for (const message of conversation.messages)
-            message.typing = false;
+          for (const message of conversation.messages) {
+            delete message.pendingIncomplete;
+            delete message.pendingPlaceholderText;
+            delete (message as any).typing;
+          }
         }
       },
 

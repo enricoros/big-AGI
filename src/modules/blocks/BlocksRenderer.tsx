@@ -69,7 +69,7 @@ type BlocksRendererProps = {
   onImageRegenerate?: () => void;
 
   // optimization: allow memo
-  optiAllowMemo?: boolean;
+  optiAllowSubBlocksMemo?: boolean;
 };
 
 
@@ -201,13 +201,13 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
         blocks.map(
           (block, index) => {
             // Optimization: only memo the non-currently-rendered components, if the message is still in flux
-            const optimizeWithMemo = props.optiAllowMemo && index !== blocks.length - 1;
-            const RenderCodeMemoOrNot = optimizeWithMemo ? RenderCodeMemo : RenderCode;
-            const RenderMarkdownMemoOrNot = optimizeWithMemo ? RenderMarkdownMemo : RenderMarkdown;
+            const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== blocks.length - 1;
+            const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
+            const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
             return block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
               : block.type === 'code'
-                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
+                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
                   : block.type === 'diff'

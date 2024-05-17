@@ -237,7 +237,7 @@ export function AppChat() {
       const history = getConversation(_cId)?.messages;
       if (!history) continue;
 
-      const newUserMessage = createDMessage('user', userText);
+      const newUserMessage = createDMessage('user', userText); // [chat] append user:message
       if (metadata) newUserMessage.metadata = metadata;
 
       // fire/forget
@@ -281,7 +281,7 @@ export function AppChat() {
     const imaginedPrompt = await imaginePromptFromText(messageText) || 'An error sign.';
     await handleExecuteAndOutcome('generate-image', conversationId, [
       ...conversation.messages,
-      createDMessage('user', imaginedPrompt),
+      createDMessage('user', imaginedPrompt), // [chat] append user:imagine prompt
     ]);
   }, [handleExecuteAndOutcome]);
 
