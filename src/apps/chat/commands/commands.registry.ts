@@ -11,7 +11,7 @@ import { CommandsReact } from './CommandsReact';
 export type CommandsProviderId = 'ass-browse' | 'ass-t2i' | 'ass-react' | 'chat-alter' | 'cmd-help' | 'mode-beam';
 
 type TextCommandPiece =
-  | { type: 'text'; value: string; }
+  | { type: 'nocmd'; value: string; }
   | { type: 'cmd'; providerId: CommandsProviderId, command: string; params?: string, isError?: boolean };
 
 
@@ -36,7 +36,7 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
 
   // quick exit: command does not start with '/'
   if (!inputTrimmed.startsWith('/'))
-    return [{ type: 'text', value: input }];
+    return [{ type: 'nocmd', value: input }];
 
   // Find the first space to separate the command from its parameters (if any)
   const firstSpaceIndex = inputTrimmed.indexOf(' ');
@@ -67,7 +67,7 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
           params: undefined,
         }];
         textAfterCommand && pieces.push({
-          type: 'text',
+          type: 'nocmd',
           value: textAfterCommand,
         });
         return pieces;
@@ -77,7 +77,7 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
 
   // No command found, return the entire input as text
   return [{
-    type: 'text',
+    type: 'nocmd',
     value: input,
   }];
 }
