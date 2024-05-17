@@ -140,3 +140,75 @@ export const idbStateStorage: StateStorage = {
     await idbDel(name);
   },
 };
+
+
+/// Maintenance
+
+/* Sets a single key-value in a given IndexedDB key-value store.
+
+function setValue(dbName, key, value) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName);
+    request.onerror = event => reject(new Error('Error opening database: ' + event.target.error));
+    request.onsuccess = event => {
+      const db = event.target.result;
+      const transaction = db.transaction('keyval', 'readwrite');
+      const store = transaction.objectStore('keyval');
+
+      const updateRequest = store.put(value, key);
+      updateRequest.onerror = event => reject(new Error('Error updating JSON string: ' + event.target.error));
+      updateRequest.onsuccess = () => resolve('Successfully updated JSON string.');
+    };
+  });
+}
+
+function copyValue(dbName, sourceKey, targetKey) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName);
+    request.onerror = event => reject(new Error('Error opening database: ' + event.target.error));
+    request.onsuccess = event => {
+      const db = event.target.result;
+      const transaction = db.transaction('keyval', 'readwrite');
+      const store = transaction.objectStore('keyval');
+
+      const getRequest = store.get(sourceKey);
+      getRequest.onerror = event => reject(new Error('Error retrieving value: ' + event.target.error));
+      getRequest.onsuccess = () => {
+        const value = getRequest.result;
+
+        if (value === undefined) {
+          reject(new Error(`No value found for key: ${sourceKey}`));
+          return;
+        }
+
+        const putRequest = store.put(value, targetKey);
+        putRequest.onsuccess = () => resolve(`Successfully copied value from ${sourceKey} to ${targetKey}.`);
+        putRequest.onerror = event => reject(new Error('Error copying value: ' + event.target.error));
+      };
+    };
+  });
+}
+
+function deleteValue(dbName, key) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName);
+    request.onerror = event => reject(new Error('Error opening database: ' + event.target.error));
+    request.onsuccess = event => {
+      const db = event.target.result;
+      const transaction = db.transaction('keyval', 'readwrite');
+      const store = transaction.objectStore('keyval');
+
+      const deleteRequest = store.delete(key);
+      deleteRequest.onerror = event => reject(new Error('Error deleting value: ' + event.target.error));
+      deleteRequest.onsuccess = () => resolve(`Successfully deleted value for key: ${key}.`);
+    };
+  });
+}
+
+// Example usage:
+const myNewJsonString = '{"your": "new json string"}'; // Replace with your desired JSON string
+setValue('keyval-store', 'app-chats', myNewJsonString).then(console.log).catch(console.error);
+copyValue('keyval-store', 'app-chats', 'app-chats-copy').then(console.log).catch(console.error);
+deleteValue('keyval-store', 'app-chats-prev').then(console.log).catch(console.error);
+
+*/
