@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 
-import { createBase36Uid } from '~/common/util/textUtils';
+import { createBase64UuidV4 } from '~/common/util/textUtils';
 
 // constraint the max number of saved prompts, to stay below localStorage quota
 const MAX_SAVED_PROMPTS = 100;
@@ -60,7 +60,7 @@ const useAppPersonasStore = create<AppPersonasStore>()(persist(
     prependSimplePersona: (systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) =>
       _set(state => {
         const newPersona: SimplePersona = {
-          id: createBase36Uid(state.simplePersonas.map(persona => persona.id)),
+          id: createBase64UuidV4(),
           systemPrompt,
           creationDate: new Date().toISOString(),
           inputProvenance,
