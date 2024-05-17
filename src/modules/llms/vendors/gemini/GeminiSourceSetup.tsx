@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, FormHelperText, Option, Select } from '@mui/joy';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { InlineError } from '~/common/components/InlineError';
@@ -50,7 +51,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='gemini-key' label='Gemini API Key'
       rightLabel={<>{needsUserKey
         ? !geminiKey && <Link level='body-sm' href={GEMINI_API_KEY_LINK} target='_blank'>request Key</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={geminiKey} onChange={value => updateSetup({ geminiKey: value.trim() })}
       required={needsUserKey} isError={showKeyError}

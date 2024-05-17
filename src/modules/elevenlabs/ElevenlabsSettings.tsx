@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -31,7 +32,7 @@ export function ElevenlabsSettings() {
 
     {!isConfiguredServerSide && <FormInputKey
       autoCompleteId='elevenlabs-key' label='ElevenLabs API Key'
-      rightLabel={isConfiguredServerSide ? '✔️ already set in server' : 'required'}
+      rightLabel={<AlreadySet required={!isConfiguredServerSide} />}
       value={apiKey} onChange={setApiKey}
       required={!isConfiguredServerSide} isError={!isValidKey}
     />}

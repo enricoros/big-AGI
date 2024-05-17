@@ -6,14 +6,20 @@ import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 // Do not set this to true in production, it's very verbose
 const DEBUG_TOKEN_COUNT = false;
 
+// Globals
+// const tokenEncodings: string[] = ['gpt2', 'r50k_base', 'p50k_base', 'p50k_edit', 'cl100k_base', 'o200k_base'] satisfies TiktokenEncoding[];
 
-// global symbols to dynamically load the Tiktoken library
+// Global symbols to dynamically load the Tiktoken library
 let get_encoding: ((encoding: TiktokenEncoding) => Tiktoken) | null = null;
 let encoding_for_model: ((model: TiktokenModel) => Tiktoken) | null = null;
 let preloadPromise: Promise<void> | null = null;
 let informTheUser = false;
 
-export function preloadTiktokenLibrary() {
+/**
+ * Preloads the Tiktoken library if not already loaded.
+ * @returns {Promise<void>} A promise that resolves when the library is loaded.
+ */
+export function preloadTiktokenLibrary(): Promise<void> {
   if (!preloadPromise) {
     preloadPromise = import('tiktoken')
       .then(tiktoken => {
@@ -33,16 +39,21 @@ export function preloadTiktokenLibrary() {
 
 
 /**
- * Wrapper around the Tiktoken library, to keep tokenizers for all models in a cache
- *
- * We also preload the tokenizer for the default model, so that the first time a user types
- * a message, it doesn't stall loading the tokenizer.
+ * Wrapper around the Tiktoken library to keep tokenizers for all models in a cache.
+ * Also, preloads the tokenizer for the default model to avoid initial stall.
  */
 export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) => number | null = (() => {
   // return () => 0;
   const tokenEncoders: { [modelId: string]: Tiktoken } = {};
-  let encodingCL100K: Tiktoken | null = null;
+  let encodingDefault: Tiktoken | null = null;
 
+  /**
+   * Counts the tokens in the given text for the specified model.
+   * @param {string} text - The text to tokenize.
+   * @param {DLLMId} llmId - The ID of the LLM.
+   * @param {string} debugFrom - Debug information.
+   * @returns {number | null} The token count or null if not ready.
+   */
   function _tokenCount(text: string, llmId: DLLMId, debugFrom: string): number | null {
 
     // The library shall have been preloaded - if not, attempt to start its loading and return null to indicate we're not ready to count
@@ -55,21 +66,23 @@ export const countModelTokens: (text: string, llmId: DLLMId, debugFrom: string) 
       return null;
     }
 
-    const { options: { llmRef: openaiModel } } = findLLMOrThrow(llmId);
+    const openaiModel = findLLMOrThrow(llmId)?.options?.llmRef;
     if (!openaiModel) throw new Error(`LLM ${llmId} has no LLM reference id`);
+
     if (!(openaiModel in tokenEncoders)) {
       try {
         tokenEncoders[openaiModel] = encoding_for_model(openaiModel as TiktokenModel);
       } catch (e) {
-        // make sure we recycle the default encoding across all models
-        if (!encodingCL100K)
-          encodingCL100K = get_encoding('cl100k_base');
-        tokenEncoders[openaiModel] = encodingCL100K;
+        // fallback to the default encoding across all models (not just OpenAI - this will be used everywhere..)
+        if (!encodingDefault)
+          encodingDefault = get_encoding('cl100k_base');
+        tokenEncoders[openaiModel] = encodingDefault;
       }
     }
-    let count: number = 0;
+
     // Note: the try/catch shouldn't be necessary, but there could be corner cases where the tiktoken library throws
     // https://github.com/enricoros/big-agi/issues/182
+    let count = 0;
     try {
       count = tokenEncoders[openaiModel]?.encode(text, 'all', [])?.length || 0;
     } catch (e) {

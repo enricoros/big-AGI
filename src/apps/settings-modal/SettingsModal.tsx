@@ -201,7 +201,7 @@ export function SettingsModal(props: {
 
         <TabPanel value={PreferencesTab.Tools} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
-            <Topic icon={<SearchIcon />} title='Browsing' startCollapsed>
+            <Topic icon={<SearchIcon />} title='Browsing'>
               <BrowseSettings />
             </Topic>
             <Topic icon={<SearchIcon />} title='Google Search API' startCollapsed>
