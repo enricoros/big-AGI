@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, Grid, Typography } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import SyncIcon from '@mui/icons-material/Sync';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
@@ -13,7 +14,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
 import { downloadAllConversationsJson, downloadConversation } from './trade.client';
-
+import { syncAllConversations } from '~/modules/supabasesync/supabaseSync.client';
 
 export type ExportConfig = {
   dir: 'export',
@@ -31,6 +32,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const [downloadedJSONState, setDownloadedJSONState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedMarkdownState, setDownloadedMarkdownState] = React.useState<'ok' | 'fail' | null>(null);
   const [downloadedAllState, setDownloadedAllState] = React.useState<'ok' | 'fail' | null>(null);
+  const [syncAllState, setSyncAllState] = React.useState<'ok' | 'fail' | null>(null);
+  const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
 
   // external state
   const enableSharing = getBackendCapabilities().hasDB;
@@ -64,6 +67,15 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
       .then(() => setDownloadedAllState('ok'))
       .catch(() => setDownloadedAllState('fail'));
   };
+
+  const handleSyncAllConversations = async () => {
+    try {
+      const syncedCount = await syncAllConversations(setSyncMessage);
+      setSyncAllState('ok');
+    } catch {
+      setSyncAllState('fail');
+    }
+  }
 
 
   const hasConversation = !!props.config.conversationId;
@@ -146,6 +158,22 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             >
               Download All · JSON
             </Button>
+
+            <Button
+              variant='soft'
+              color={syncAllState === 'ok' ? 'success' : syncAllState === 'fail' ? 'warning' : 'primary'}
+              endDecorator={syncAllState === 'ok' ? <DoneIcon /> : syncAllState === 'fail' ? '✘' : <SyncIcon />}
+              sx={{ minWidth: 240, justifyContent: 'space-between' }}
+              onClick={handleSyncAllConversations}
+            >
+              Sync
+            </Button>
+
+            {syncMessage && (
+              <Typography level='body-sm'>
+                {syncMessage}
+              </Typography>
+            )}
 
           </Box>
         </Grid>

@@ -386,12 +386,14 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         _get()._editConversation(conversationId,
           {
             autoTitle,
+            updated: Date.now(),
           }),
 
       setUserTitle: (conversationId: string, userTitle: string) =>
         _get()._editConversation(conversationId,
           {
             userTitle,
+            updated: Date.now(),
           }),
 
     }),
