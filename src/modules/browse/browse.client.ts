@@ -1,4 +1,4 @@
-import { BrowsePageTransform, useBrowseStore } from '~/modules/browse/store-module-browsing';
+import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { apiAsyncNode } from '~/common/util/trpc.client';
 
@@ -7,34 +7,39 @@ import { apiAsyncNode } from '~/common/util/trpc.client';
 const DEBUG_SHOW_SCREENSHOT = false;
 
 
-export async function callBrowseFetchPage(url: string, forceTransform?: BrowsePageTransform) {
+// export function
 
-  // thow if no URL is provided
+export async function callBrowseFetchPage(
+  url: string,
+  // transforms?: BrowsePageTransform[],
+  // screenshotOptions?: { width: number, height: number, quality?: number },
+) {
+
+  // validate url
   url = url?.trim() || '';
   if (!url)
     throw new Error('Browsing error: Invalid URL');
 
-  // assume https if no protocol is provided
-  // noinspection HttpUrlsUsage
+  // noinspection HttpUrlsUsage: assume https if no protocol is provided
   if (!url.startsWith('http://') && !url.startsWith('https://'))
     url = 'https://' + url;
 
-  const { wssEndpoint: clientWssEndpoint, pageTransform } = useBrowseStore.getState();
+  const { wssEndpoint, pageTransform } = useBrowseStore.getState();
 
   const { pages } = await apiAsyncNode.browse.fetchPages.mutate({
     access: {
       dialect: 'browse-wss',
-      ...(!!clientWssEndpoint && { wssEndpoint: clientWssEndpoint }),
+      ...(!!wssEndpoint && { wssEndpoint }),
     },
-    subjects: [{
+    requests: [{
       url,
-      transform: pageTransform || 'text',
+      transforms: /*transforms ? transforms :*/ [pageTransform],
+      screenshot: /*screenshotOptions ? screenshotOptions :*/ !DEBUG_SHOW_SCREENSHOT ? undefined : {
+        width: 512,
+        height: 512,
+        // quality: 100,
+      },
     }],
-    screenshot: DEBUG_SHOW_SCREENSHOT ? {
-      width: 512,
-      height: 512,
-      // quality: 100,
-    } : undefined,
   });
 
   if (pages.length !== 1)
@@ -45,7 +50,7 @@ export async function callBrowseFetchPage(url: string, forceTransform?: BrowsePa
   // DEBUG: if there's a screenshot, append it to the dom
   if (DEBUG_SHOW_SCREENSHOT && page.screenshot) {
     const img = document.createElement('img');
-    img.src = page.screenshot.imageDataUrl;
+    img.src = page.screenshot.webpDataUrl;
     img.style.width = `${page.screenshot.width}px`;
     img.style.height = `${page.screenshot.height}px`;
     document.body.appendChild(img);
@@ -54,7 +59,7 @@ export async function callBrowseFetchPage(url: string, forceTransform?: BrowsePa
   // throw if there's an error
   if (page.error) {
     console.warn('Browsing service error:', page.error);
-    if (!page.content)
+    if (!Object.keys(page.content).length)
       throw new Error(page.error);
   }
 

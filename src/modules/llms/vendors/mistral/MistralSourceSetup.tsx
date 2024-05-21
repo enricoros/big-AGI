@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -39,7 +40,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='mistral-key' label='Mistral Key'
       rightLabel={<>{needsUserKey
         ? !mistralKey && <Link level='body-sm' href={MISTRAL_REG_LINK} target='_blank'>request Key</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={mistralKey} onChange={value => updateSetup({ oaiKey: value })}
       required={needsUserKey} isError={showKeyError}
