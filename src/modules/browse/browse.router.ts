@@ -165,7 +165,7 @@ async function workerPuppeteer(
         result.error = '[Puppeteer] Empty content';
     }
   } catch (error: any) {
-    result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown evaluate error');
+    result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown content error');
   }
 
   // get a screenshot of the page
