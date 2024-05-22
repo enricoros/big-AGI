@@ -96,7 +96,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
               <MoreHorizIcon />
             </MenuButton>
           </Tooltip>
-          <Menu variant='solid' invertedColors placement='right-start'>
+          <Menu variant='solid' invertedColors placement='right-start' sx={{ minWidth: 160 }}>
             {overflowApps.map((app, appIdx) =>
               <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
                 <ListItemDecorator sx={{ ml: 1 }}>
