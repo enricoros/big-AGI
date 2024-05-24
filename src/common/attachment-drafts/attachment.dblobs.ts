@@ -10,7 +10,7 @@ import type { AttachmentDraftSource } from './attachment.types';
 /**
  * Convert an image input to a DBlob and return the DAttachmentPart
  */
-export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean, resizeMode: false | 'openai'): Promise<DAttachmentPart | null> {
+export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean, resizeMode: false | 'openai' | 'google' | 'anthropic'): Promise<DAttachmentPart | null> {
   let base64Data: string;
   let inputLength: number;
 
