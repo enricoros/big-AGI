@@ -40,7 +40,7 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 
 // Content Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
 
-type DContentRef =
+export type DContentRef =
   | { reftype: 'url'; url: string } // remotely accessible URL
   | { reftype: 'dblob'; dblobId: DBlobId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;

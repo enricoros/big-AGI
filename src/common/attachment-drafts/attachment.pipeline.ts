@@ -10,6 +10,13 @@ import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, A
 import { attachmentImageToPartViaDBlob } from './attachment.dblobs';
 
 
+// configuration
+export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = 'image/webp';
+export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.98;
+const PDF_IMAGE_PAGE_SCALE = 1.5;
+const PDF_IMAGE_QUALITY = 0.5;
+
+
 // extensions to treat as plain text
 const PLAIN_TEXT_EXTENSIONS: string[] = ['.ts', '.tsx'];
 
@@ -69,9 +76,6 @@ const IMAGE_MIMETYPES: string[] = [
   'image/webp',
   'image/gif',
 ];
-
-export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = 'image/webp';
-export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.98;
 
 
 /**
@@ -430,7 +434,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData2 = new Uint8Array(input.data.slice(0));
       try {
-        const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY);
+        const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
         for (const pdfPageImage of imageDataURLs) {
           const pdfPageImagePart = await attachmentImageToPartViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, ref, `Page ${outputParts.length + 1}`, false, false);
           if (pdfPageImagePart)

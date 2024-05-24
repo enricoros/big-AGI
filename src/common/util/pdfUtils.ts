@@ -64,7 +64,7 @@ interface PdfPageImage {
  * @param imageQuality The quality of the image (default 0.95 for moderate quality)
  * @param scale The scale factor for the image resolution (default 1.5 for moderate quality)
  */
-export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale = 1.5): Promise<PdfPageImage[]> {
+export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/): Promise<PdfPageImage[]> {
   const { getDocument } = await dynamicImportPdfJs();
   const pdf = await getDocument({ data: pdfBuffer }).promise;
   const images: PdfPageImage[] = [];

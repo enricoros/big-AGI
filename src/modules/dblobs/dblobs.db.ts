@@ -48,6 +48,31 @@ export async function deleteDBlobItem(id: string) {
 }
 
 
+// Specific item types
+async function getImageItemById(id: string) {
+  return await getItemById<DBlobImageItem>(id);
+}
+
+export async function getImageDataURLById(id: string) {
+  const item = await getImageItemById(id);
+  return item ? `data:${item.data.mimeType};base64,${item.data.base64}` : null;
+}
+
+export async function getImageBlobURLById(id: string) {
+  const item = await getImageItemById(id);
+  if (item) {
+    const byteCharacters = atob(item.data.base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: item.data.mimeType });
+    return URL.createObjectURL(blob);
+  }
+  return null;
+}
+
 // Example usage:
 async function getAllImages(): Promise<DBlobImageItem[]> {
   return await getDBlobItemsByType<DBlobImageItem>(DBlobMetaDataType.IMAGE);
