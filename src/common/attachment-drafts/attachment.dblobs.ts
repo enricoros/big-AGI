@@ -5,24 +5,36 @@ import { convertBase64Image, getImageDimensions } from '~/common/util/imageUtils
 
 import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 
-import type { AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
+import type { AttachmentDraftSource } from './attachment.types';
 
 
 /**
  * Convert an image input to a DBlob and return the DAttachmentPart
  */
-export async function attachmentImageToPartViaDBlob(_input: AttachmentDraftInput, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean): Promise<DAttachmentPart | null> {
-  if (!(_input.data instanceof ArrayBuffer)) {
-    console.log('Expected ArrayBuffer for Image, got:', typeof _input.data);
+export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean): Promise<DAttachmentPart | null> {
+  let base64Data: string;
+  let inputLength: number;
+
+  if (inputData instanceof ArrayBuffer) {
+    // Convert ArrayBuffer to base64
+    try {
+      const buffer = Buffer.from(inputData);
+      base64Data = buffer.toString('base64');
+      inputLength = buffer.byteLength;
+    } catch (error) {
+      console.log('attachmentImageToPartViaDBlob: Issue converting ArrayBuffer', error);
+      return null;
+    }
+  } else if (typeof inputData === 'string') {
+    // Assume data is already base64 encoded
+    base64Data = inputData;
+    inputLength = inputData.length;
+  } else {
+    console.log('attachmentImageToPartViaDBlob: Expected ArrayBuffer or base64, got:', typeof inputData);
     return null;
   }
 
   try {
-    // get image data
-    const buffer = Buffer.from(_input.data);
-    let base64Data = buffer.toString('base64');
-    let mimeType = _input.mimeType;
-
     // Convert to WebP if requested
     if (toWebp) {
       const webpData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, 'image/webp').catch(() => null);
@@ -65,7 +77,7 @@ export async function attachmentImageToPartViaDBlob(_input: AttachmentDraftInput
         reftype: 'dblob',
         dblobId: dblobId,
         mimeType: mimeType,
-        bytesSize: _input.data.byteLength,
+        bytesSize: inputLength,
       },
       title: title,
       width: dimensions?.width,

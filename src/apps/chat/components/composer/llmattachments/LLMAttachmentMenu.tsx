@@ -155,7 +155,7 @@ export function LLMAttachmentMenu(props: {
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Typography level='body-xs'>
-              🡒 {isOutputMissing ? 'empty' : aOutputParts.map(output => `${output.atype}, ${
+              🡒 {isOutputMissing ? 'empty' : aOutputParts.map(output => `${output.atype === 'aimage' ? 'img' : output.atype === 'atext' ? 'txt' : (output as any).atype}: ${
               output.atype === 'atext' ? output.text.length.toLocaleString()
                 : output.atype === 'aimage' ? (output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)')
                   : '(other)'} bytes`).join(' · ')}
