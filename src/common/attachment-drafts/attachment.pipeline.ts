@@ -325,14 +325,22 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
     // image as-is, the mime is supported
     case 'image':
-      const imageOrigPart = await attachmentImageToPartViaDBlob(input, source, ref, ref, false);
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for image, got:', typeof input.data);
+        return null;
+      }
+      const imageOrigPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false);
       if (imageOrigPart)
         outputParts.push(imageOrigPart);
       break;
 
     // image converted (potentially unsupported mime)
     case 'image-to-webp':
-      const imageWebpPart = await attachmentImageToPartViaDBlob(input, source, ref, ref, true);
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for image-to-webp, got:', typeof input.data);
+        return null;
+      }
+      const imageWebpPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, true);
       if (imageWebpPart)
         outputParts.push(imageWebpPart);
       break;
@@ -394,13 +402,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       try {
         const imageDataURLs = await pdfToImageDataURLs(pdfData2, 'image/jpeg');
         for (const pdfPageImage of imageDataURLs) {
-
-          const pdfPageImagePart = await attachmentImageToPartViaDBlob({
-            mimeType: pdfPageImage.mimeType,
-            data: Buffer.from(pdfPageImage.base64Data),
-            dataSize: pdfPageImage.base64Data.length,
-          }, source, ref, `Page ${outputParts.length + 1}`, false);
-
+          const pdfPageImagePart = await attachmentImageToPartViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, ref, `Page ${outputParts.length + 1}`, false);
           if (pdfPageImagePart)
             outputParts.push(pdfPageImagePart);
         }
