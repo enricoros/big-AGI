@@ -1,12 +1,16 @@
 import * as React from 'react';
 
-import { Box, ListDivider, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, IconButton, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Tooltip, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import LaunchIcon from '@mui/icons-material/Launch';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import { getImageBlobURLById } from '~/modules/dblobs/dblobs.db';
+
+import type { DContentRef } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
@@ -17,6 +21,22 @@ import type { LLMAttachment } from './useLLMAttachments';
 
 // enable for debugging
 export const DEBUG_LLMATTACHMENTS = true;
+
+
+/**
+ * Note: this utility function could be extracted more broadly to chat.message.ts, but
+ * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
+ */
+async function handleShowContentInNewTab(source: DContentRef) {
+  console.log('handleShowContentInNewTab', source);
+  let imageUrl: string | null = null;
+  if (source.reftype === 'url')
+    imageUrl = source.url;
+  else if (source.reftype === 'dblob')
+    imageUrl = await getImageBlobURLById(source.dblobId);
+  if (imageUrl && typeof window !== 'undefined')
+    window.open(imageUrl, '_blank', 'noopener,noreferrer');
+}
 
 
 export function LLMAttachmentMenu(props: {
@@ -145,8 +165,16 @@ export function LLMAttachmentMenu(props: {
       {!isUnconvertible && <ListDivider />}
 
       {DEBUG_LLMATTACHMENTS && !!aInput && (
-        <MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>
-          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+        <ListItem>
+          <ListItemDecorator>
+            {isOutputTextInlineable && (
+              <Tooltip title='Copy Text to clipboard'>
+                <IconButton size='sm' onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable} sx={{ ml: -0.5 }}>
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </ListItemDecorator>
           <Box>
             {!!aInput && <Typography level='body-xs'>
               🡐 {aInput.mimeType}, {aInput.dataSize.toLocaleString()} bytes
@@ -160,11 +188,15 @@ export function LLMAttachmentMenu(props: {
               ) : (
                 aOutputParts.map((output, index) => {
                   if (output.atype === 'aimage') {
-                    const resolution = output.width && output.height ? `${output.width}x${output.height}` : 'unknown resolution';
+                    const resolution = output.width && output.height ? `${output.width} x ${output.height}` : 'unknown resolution';
                     const mime = output.source.reftype === 'dblob' ? output.source.mimeType : 'unknown image';
                     return (
                       <Typography key={index} level='body-xs'>
-                        🡒 {mime}: {resolution}, {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'} bytes
+                        🡒 {mime.replace('image/', 'img: ')}, {resolution}, {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'} bytes,
+                        {' '}
+                        <Link onClick={() => handleShowContentInNewTab(output.source)}>
+                          show <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
+                        </Link>
                       </Typography>
                     );
                   } else if (output.atype === 'atext') {
@@ -189,7 +221,7 @@ export function LLMAttachmentMenu(props: {
               )}
             </Box>
           </Box>
-        </MenuItem>
+        </ListItem>
       )}
       {DEBUG_LLMATTACHMENTS && !!aInput && <ListDivider />}
 
