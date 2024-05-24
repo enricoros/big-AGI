@@ -30,7 +30,7 @@ export async function getImageDimensions(base64DataUrl: string): Promise<{ width
 /**
  * Converts an image buffer to WebP format and returns the base64 encoded string.
  */
-export async function convertBase64Image(base64DataUrl: string, destMimeType = 'image/webp'): Promise<{
+export async function convertBase64Image(base64DataUrl: string, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
   mimeType: string,
   base64: string,
 }> {
@@ -47,7 +47,7 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType = '
         return;
       }
       ctx.drawImage(image, 0, 0);
-      const dataUrl = canvas.toDataURL(destMimeType);
+      const dataUrl = canvas.toDataURL(destMimeType, destQuality);
       resolve({
         mimeType: destMimeType,
         base64: dataUrl.split(',')[1],
@@ -55,6 +55,52 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType = '
     };
     image.onerror = (error) => {
       reject(new Error('Failed to load image for conversion.'));
+    };
+    image.src = base64DataUrl;
+  });
+}
+
+
+/**
+ * Resizes an image to have its largest side equal to the given max size while maintaining the aspect ratio.
+ */
+export async function resizeBase64Image(base64DataUrl: string, resizeMode: 'openai', destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
+  mimeType: string,
+  base64: string,
+}> {
+  const maxSide = 1024;
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'Anonymous';
+    image.onload = () => {
+      const aspectRatio = image.width / image.height;
+      let newWidth, newHeight;
+
+      if (image.width > image.height) {
+        newWidth = maxSide;
+        newHeight = maxSide / aspectRatio;
+      } else {
+        newHeight = maxSide;
+        newWidth = maxSide * aspectRatio;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      ctx.drawImage(image, 0, 0, newWidth, newHeight);
+      const resizedDataUrl = canvas.toDataURL(destMimeType, destQuality);
+      resolve({
+        mimeType: destMimeType,
+        base64: resizedDataUrl.split(',')[1], // Return base64 part only
+      });
+    };
+    image.onerror = (error) => {
+      reject(new Error('Failed to load image for resizing.'));
     };
     image.src = base64DataUrl;
   });

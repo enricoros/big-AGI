@@ -227,9 +227,10 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
     // Images (Known/Unknown)
     case input.mimeType.startsWith('image/'):
       const imageSupported = IMAGE_MIMETYPES.includes(input.mimeType);
-      converters.push({ id: 'image', name: 'Image', disabled: !imageSupported });
+      converters.push({ id: 'image-resized', name: 'Image (resized)', disabled: !imageSupported });
+      converters.push({ id: 'image-original', name: 'Image (original)', disabled: !imageSupported });
       if (!imageSupported)
-        converters.push({ id: 'image-to-webp', name: 'As Image', unsupported: true });
+        converters.push({ id: 'image-to-webp', name: 'As Webp Image' });
       converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
       break;
 
@@ -323,13 +324,24 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       });
       break;
 
-    // image as-is, the mime is supported
-    case 'image':
+    // image resized (webp, 0.9, openai-resize)
+    case 'image-resized':
       if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for image, got:', typeof input.data);
+        console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
         return null;
       }
-      const imageOrigPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false);
+      const imageResizedPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai');
+      if (imageResizedPart)
+        outputParts.push(imageResizedPart);
+      break;
+
+    // image as-is
+    case 'image-original':
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for image-original, got:', typeof input.data);
+        return null;
+      }
+      const imageOrigPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, false);
       if (imageOrigPart)
         outputParts.push(imageOrigPart);
       break;
@@ -340,7 +352,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         console.log('Expected ArrayBuffer for image-to-webp, got:', typeof input.data);
         return null;
       }
-      const imageWebpPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, true);
+      const imageWebpPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, true, false);
       if (imageWebpPart)
         outputParts.push(imageWebpPart);
       break;
@@ -402,7 +414,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       try {
         const imageDataURLs = await pdfToImageDataURLs(pdfData2, 'image/jpeg');
         for (const pdfPageImage of imageDataURLs) {
-          const pdfPageImagePart = await attachmentImageToPartViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, ref, `Page ${outputParts.length + 1}`, false);
+          const pdfPageImagePart = await attachmentImageToPartViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, ref, `Page ${outputParts.length + 1}`, false, false);
           if (pdfPageImagePart)
             outputParts.push(pdfPageImagePart);
         }
