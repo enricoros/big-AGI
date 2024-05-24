@@ -230,7 +230,8 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
     // Images (Known/Unknown)
     case input.mimeType.startsWith('image/'):
       const imageSupported = IMAGE_MIMETYPES.includes(input.mimeType);
-      converters.push({ id: 'image-resized', name: 'Image (resized)', disabled: !imageSupported });
+      converters.push({ id: 'image-resized-high', name: 'Image (high detail)', disabled: !imageSupported });
+      converters.push({ id: 'image-resized-low', name: 'Image (low detail)', disabled: !imageSupported });
       converters.push({ id: 'image-original', name: 'Image (original)', disabled: !imageSupported });
       if (!imageSupported)
         converters.push({ id: 'image-to-webp', name: 'As Webp Image' });
@@ -327,15 +328,26 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       });
       break;
 
-    // image resized (webp, 0.9, openai-resize)
-    case 'image-resized':
+    // image resized (webp, 0.9, openai-high-res)
+    case 'image-resized-high':
       if (!(input.data instanceof ArrayBuffer)) {
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
         return null;
       }
-      const imageResizedPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai');
-      if (imageResizedPart)
-        outputParts.push(imageResizedPart);
+      const imageResizedHighPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-high-res');
+      if (imageResizedHighPart)
+        outputParts.push(imageResizedHighPart);
+      break;
+
+    // image resized (webp, 0.95, openai-low-res)
+    case 'image-resized-low':
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
+        return null;
+      }
+      const imageResizedLowPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-low-res');
+      if (imageResizedLowPart)
+        outputParts.push(imageResizedLowPart);
       break;
 
     // image as-is

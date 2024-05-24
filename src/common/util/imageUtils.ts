@@ -20,6 +20,7 @@ export async function getImageDimensions(base64DataUrl: string): Promise<{ width
       });
     };
     image.onerror = (error) => {
+      console.warn('Failed to load image for dimension extraction.', error);
       reject(new Error('Failed to load image for dimension extraction.'));
     };
     image.src = base64DataUrl;
@@ -54,6 +55,7 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
       });
     };
     image.onerror = (error) => {
+      console.warn('Failed to load image for conversion.', error);
       reject(new Error('Failed to load image for conversion.'));
     };
     image.src = base64DataUrl;
@@ -61,10 +63,12 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
 }
 
 
+export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google' | 'anthropic';
+
 /**
  * Resizes an image based on the specified resize mode.
  */
-export async function resizeBase64Image(base64DataUrl: string, resizeMode: 'openai' | 'google' | 'anthropic', destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
+export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMImageResizeMode, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
   mimeType: string,
   base64: string,
 }> {
@@ -83,7 +87,41 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: 'open
       let newHeight: number;
 
       switch (resizeMode) {
-        case 'openai':
+        case 'anthropic':
+          // Resize to fit within 1568px on the long edge
+          const maxSideAnthropic = 1568;
+          if (image.width > maxSideAnthropic || image.height > maxSideAnthropic) {
+            if (image.width > image.height) {
+              newWidth = maxSideAnthropic;
+              newHeight = (image.height / image.width) * maxSideAnthropic;
+            } else {
+              newHeight = maxSideAnthropic;
+              newWidth = (image.width / image.height) * maxSideAnthropic;
+            }
+          } else {
+            newWidth = image.width;
+            newHeight = image.height;
+          }
+          break;
+
+        case 'google':
+          // Resize to fit within 3072x3072
+          const maxSideGoogle = 3072;
+          if (image.width > maxSideGoogle || image.height > maxSideGoogle) {
+            if (image.width > image.height) {
+              newWidth = maxSideGoogle;
+              newHeight = (image.height / image.width) * maxSideGoogle;
+            } else {
+              newHeight = maxSideGoogle;
+              newWidth = (image.width / image.height) * maxSideGoogle;
+            }
+          } else {
+            newWidth = image.width;
+            newHeight = image.height;
+          }
+          break;
+
+        case 'openai-high-res':
           // Resize to fit within 2048x2048, then scale shortest side to 768px
           const maxSideOpenAI = 2048;
           const minSideOpenAI = 768;
@@ -109,38 +147,13 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: 'open
           }
           break;
 
-        case 'google':
-          // Resize to fit within 3072x3072
-          const maxSideGoogle = 3072;
-          if (image.width > maxSideGoogle || image.height > maxSideGoogle) {
-            if (image.width > image.height) {
-              newWidth = maxSideGoogle;
-              newHeight = (image.height / image.width) * maxSideGoogle;
-            } else {
-              newHeight = maxSideGoogle;
-              newWidth = (image.width / image.height) * maxSideGoogle;
-            }
-          } else {
-            newWidth = image.width;
-            newHeight = image.height;
-          }
-          break;
-
-        case 'anthropic':
-          // Resize to fit within 1568px on the long edge
-          const maxSideAnthropic = 1568;
-          if (image.width > maxSideAnthropic || image.height > maxSideAnthropic) {
-            if (image.width > image.height) {
-              newWidth = maxSideAnthropic;
-              newHeight = (image.height / image.width) * maxSideAnthropic;
-            } else {
-              newHeight = maxSideAnthropic;
-              newWidth = (image.width / image.height) * maxSideAnthropic;
-            }
-          } else {
-            newWidth = image.width;
-            newHeight = image.height;
-          }
+        case 'openai-low-res':
+          // Resize to 512x512
+          // NOTE: this will square any image, and upscale them if they are smaller than 512x512, because
+          // as stated by the API, it expects to receive one image of this size. However we should verify,
+          // as upscaling here seems sub-optimal.
+          newWidth = 512;
+          newHeight = 512;
           break;
 
         default:
@@ -158,7 +171,7 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: 'open
       });
     };
     image.onerror = (error) => {
-      console.log('Failed to load image for resizing.', error);
+      console.warn('Failed to load image for resizing.', error);
       reject(new Error('Failed to load image for resizing.'));
     };
     image.src = base64DataUrl;

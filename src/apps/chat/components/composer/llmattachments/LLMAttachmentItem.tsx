@@ -6,6 +6,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
+import PhotoSizeSelectSmallOutlinedIcon from '@mui/icons-material/PhotoSizeSelectSmallOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -75,7 +76,8 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PermMediaOutlinedIcon,
   'image-original': ImageOutlinedIcon,
-  'image-resized': PhotoSizeSelectLargeOutlinedIcon,
+  'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
+  'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
   'image-to-webp': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
   'ego-message-md': TelegramIcon,
