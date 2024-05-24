@@ -65,7 +65,7 @@ type DContentPart =
   ;
 
 
-// Attachment Part
+// Attachment (non-draft) Part
 
 // export type DAttachmentMultiPart = DAttachmentPart[];
 

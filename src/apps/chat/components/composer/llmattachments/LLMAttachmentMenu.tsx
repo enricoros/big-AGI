@@ -10,20 +10,22 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
+
 import type { LLMAttachment } from './useLLMAttachments';
-import { useAttachmentsStore } from './store-attachments';
 
 
 // enable for debugging
-export const DEBUG_ATTACHMENTS = true;
+export const DEBUG_LLMATTACHMENTS = true;
 
 
-export function AttachmentMenu(props: {
+export function LLMAttachmentMenu(props: {
+  attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
   llmAttachment: LLMAttachment,
   menuAnchor: HTMLAnchorElement,
   isPositionFirst: boolean,
   isPositionLast: boolean,
-  onAttachmentInlineText: (attachmentId: string) => void,
+  onAttachmentDraftInlineText: (attachmentDraftId: string) => void,
   onClose: () => void,
 }) {
 
@@ -32,8 +34,8 @@ export function AttachmentMenu(props: {
   const isPositionFixed = props.isPositionFirst && props.isPositionLast;
 
   const {
-    attachment,
-    attachmentOutputs,
+    attachmentDraft,
+    attachmentDraftCollapsedParts,
     isUnconvertible,
     isOutputMissing,
     isOutputTextInlineable,
@@ -45,43 +47,43 @@ export function AttachmentMenu(props: {
     input: aInput,
     converters: aConverters,
     converterIdx: aConverterIdx,
-    outputs: aOutputs,
-  } = attachment;
+    outputParts: aOutputParts,
+  } = attachmentDraft;
 
 
   // operations
 
-  const { onClose, onAttachmentInlineText } = props;
+  const { attachmentDraftsStoreApi, onClose, onAttachmentDraftInlineText } = props;
 
   const handleInlineText = React.useCallback(() => {
     onClose();
-    onAttachmentInlineText(aId);
-  }, [aId, onAttachmentInlineText, onClose]);
+    onAttachmentDraftInlineText(aId);
+  }, [aId, onAttachmentDraftInlineText, onClose]);
 
   const handleMoveUp = React.useCallback(() => {
-    useAttachmentsStore.getState().moveAttachment(aId, -1);
-  }, [aId]);
+    attachmentDraftsStoreApi.getState().moveAttachmentDraft(aId, -1);
+  }, [aId, attachmentDraftsStoreApi]);
 
   const handleMoveDown = React.useCallback(() => {
-    useAttachmentsStore.getState().moveAttachment(aId, 1);
-  }, [aId]);
+    attachmentDraftsStoreApi.getState().moveAttachmentDraft(aId, 1);
+  }, [aId, attachmentDraftsStoreApi]);
 
   const handleRemove = React.useCallback(() => {
     onClose();
-    useAttachmentsStore.getState().removeAttachment(aId);
-  }, [aId, onClose]);
+    attachmentDraftsStoreApi.getState().removeAttachmentDraft(aId);
+  }, [aId, attachmentDraftsStoreApi, onClose]);
 
   const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) => {
-    return useAttachmentsStore.getState().setConverterIdxAndConvert(aId, converterIdx);
-  }, [aId]);
+    return attachmentDraftsStoreApi.getState().setAttachmentDraftConverterIdxAndConvert(aId, converterIdx);
+  }, [aId, attachmentDraftsStoreApi]);
 
   // const handleSummarizeText = React.useCallback(() => {
-  //   onAttachmentSummarizeText(aId);
-  // }, [aId, onAttachmentSummarizeText]);
+  //   onAttachmentDraftSummarizeText(aId);
+  // }, [aId, onAttachmentDraftSummarizeText]);
 
   const handleCopyOutputToClipboard = React.useCallback(() => {
-    if (attachmentOutputs.length >= 1) {
-      const concat = attachmentOutputs.map(output => {
+    if (attachmentDraftCollapsedParts.length >= 1) {
+      const concat = attachmentDraftCollapsedParts.map(output => {
         if (output.atype === 'atext')
           return output.text;
         else if (output.atype === 'aimage')
@@ -91,7 +93,7 @@ export function AttachmentMenu(props: {
       }).join('\n\n---\n\n');
       copyToClipboard(concat.trim(), 'Converted attachment');
     }
-  }, [attachmentOutputs]);
+  }, [attachmentDraftCollapsedParts]);
 
 
   return (
@@ -142,7 +144,7 @@ export function AttachmentMenu(props: {
       )}
       {!isUnconvertible && <ListDivider />}
 
-      {DEBUG_ATTACHMENTS && !!aInput && (
+      {DEBUG_LLMATTACHMENTS && !!aInput && (
         <MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>
           <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           <Box>
@@ -153,9 +155,9 @@ export function AttachmentMenu(props: {
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Typography level='body-xs'>
-              🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.atype}, ${
+              🡒 {isOutputMissing ? 'empty' : aOutputParts.map(output => `${output.atype}, ${
               output.atype === 'atext' ? output.text.length.toLocaleString()
-                : output.atype === 'aimage' ? (output.source.reftype === 'dblob' ? output.source.bytesSize : '(remote)')
+                : output.atype === 'aimage' ? (output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)')
                   : '(other)'} bytes`).join(' · ')}
             </Typography>
             {!!tokenCountApprox && <Typography level='body-xs'>
@@ -164,7 +166,7 @@ export function AttachmentMenu(props: {
           </Box>
         </MenuItem>
       )}
-      {DEBUG_ATTACHMENTS && !!aInput && <ListDivider />}
+      {DEBUG_LLMATTACHMENTS && !!aInput && <ListDivider />}
 
       {/* Destructive Operations */}
       {/*<MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>*/}

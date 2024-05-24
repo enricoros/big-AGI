@@ -39,7 +39,7 @@ import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
-import { useChatOverlayStore } from '~/common/chats/store-chat-overlay-vanilla';
+import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
@@ -50,10 +50,10 @@ import { providerCommands } from './actile/providerCommands';
 import { providerStarredMessage, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
-import { AttachmentId } from './attachments/attachment.types';
-import { Attachments } from './attachments/Attachments';
-import { getSingleTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
-import { useAttachments } from './attachments/useAttachments';
+import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
+import { LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
+import { getSingleTextBlockText, useLLMAttachments } from './llmattachments/useLLMAttachments';
+import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
@@ -139,20 +139,28 @@ export function Composer(props: {
       abortConversationTemp: state.abortConversationTemp,
     };
   }));
-  const { inComposer: browsingInComposer } = useBrowseCapability();
-  const enableLoadURLs = browsingInComposer && !composeText.startsWith('/'); // don't load URLs if the user is typing a command
-  const {
-    attachments: _attachments,
-    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
-    clearAttachments, removeAttachment,
-  } = useAttachments(enableLoadURLs);
 
   // external overlay state (extra conversationId-dependent state)
   const conversationHandler = props.conversationId ? ConversationsManager.getHandler(props.conversationId) : null;
   const conversationOverlayStore = conversationHandler?.getOverlayStore() ?? null;
+
+  // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
     replyToGenerateText: chatModeId === 'generate-text' ? store.replyToText?.trim() || null : null,
   })));
+
+  // don't load URLs if the user is typing a command or there's no capability
+  const enableLoadURLsInComposer = useBrowseCapability().inComposer && !composeText.startsWith('/');
+
+  // attachments-overlay: comes from the attachments slice of the conversation overlay
+  const {
+    attachmentDrafts,
+    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
+    clearAttachmentDrafts, removeAttachmentDraft,
+  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
+
+  // attachments derived state
+  const llmAttachments = useLLMAttachments(attachmentDrafts, props.chatLLM);
 
 
   // derived state
@@ -161,9 +169,6 @@ export function Composer(props: {
   const isDesktop = !props.isMobile;
   const chatLLMId = props.chatLLM?.id || null;
 
-  // attachments derived state
-
-  const llmAttachments = useLLMAttachments(_attachments, props.chatLLM);
 
   // tokens derived state
 
@@ -212,7 +217,7 @@ export function Composer(props: {
       return false;
 
     // get the multipart output including all attachments
-    const multiPartMessage = llmAttachments.collapseWithAttachments(composerText || null);
+    const multiPartMessage = llmAttachments.collapseTextWithAttachmentDrafts(composerText || null);
     if (!multiPartMessage.length)
       return false;
 
@@ -222,13 +227,13 @@ export function Composer(props: {
     // send the message
     const enqueued = onAction(conversationId, _chatModeId, multiPartMessage, metadata);
     if (enqueued) {
-      clearAttachments();
+      clearAttachmentDrafts();
       handleReplyToCleared();
       setComposeText('');
     }
 
     return enqueued;
-  }, [clearAttachments, conversationId, handleReplyToCleared, llmAttachments, onAction, replyToGenerateText, setComposeText]);
+  }, [clearAttachmentDrafts, conversationId, handleReplyToCleared, llmAttachments, onAction, replyToGenerateText, setComposeText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -429,7 +434,7 @@ export function Composer(props: {
   }, [toggleRecording, micContinuationTrigger]);
 
 
-  // Attachments
+  // Attachment Drafts
 
   const handleAttachCtrlV = React.useCallback((event: React.ClipboardEvent) => {
     if (attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
@@ -459,31 +464,31 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
-  const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
-    console.log('handleAttachmentInlineText - FIXME');
+  const handleAttachmentDraftInlineText = React.useCallback((attachmentDraftId: AttachmentDraftId) => {
+    console.log('handleAttachmentDraftInlineText - FIXME');
     setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachments.collapseWithAttachment(currentText, attachmentId);
+      const inlinedMultiPart = llmAttachments.collapseTextWithAttachmentDraft(currentText, attachmentDraftId);
       const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
       if (inlinedText) {
-        removeAttachment(attachmentId);
+        removeAttachmentDraft(attachmentDraftId);
         return inlinedText;
       } else
         return currentText;
     });
-  }, [llmAttachments, removeAttachment, setComposeText]);
+  }, [llmAttachments, removeAttachmentDraft, setComposeText]);
 
-  const handleAttachmentsInlineText = React.useCallback(() => {
-    console.log('handleAttachmentsInlineText - FIXME');
+  const handleAttachmentDraftsInlineText = React.useCallback(() => {
+    console.log('handleAttachmentDraftsInlineText - FIXME');
     setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachments.collapseWithAttachments(currentText);
+      const inlinedMultiPart = llmAttachments.collapseTextWithAttachmentDrafts(currentText);
       const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
       if (inlinedText) {
-        clearAttachments();
+        clearAttachmentDrafts();
         return inlinedText;
       } else
         return currentText;
     });
-  }, [clearAttachments, llmAttachments, setComposeText]);
+  }, [clearAttachmentDrafts, llmAttachments, setComposeText]);
 
 
   // Drag & Drop
@@ -644,12 +649,12 @@ export function Composer(props: {
             </>}
           </Box>
 
-          {/* [ Textarea + Overlays + Mic | Attachments ] */}
+          {/* [ Textarea + Overlays + Mic | Attachment Drafts ] */}
           <Box sx={{
             flexGrow: 1,
             // layout
             display: 'flex', flexDirection: 'column', gap: 1,
-            minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachments)
+            minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
           }}>
 
             {/* Textarea + Mic buttons + Mic/Drag overlay */}
@@ -772,12 +777,14 @@ export function Composer(props: {
             </Box>
 
             {/* Render any Attachments & menu items */}
-            <Attachments
-              llmAttachments={llmAttachments}
-              onAttachmentInlineText={handleAttachmentInlineText}
-              onAttachmentsClear={clearAttachments}
-              onAttachmentsInlineText={handleAttachmentsInlineText}
-            />
+            {!!conversationOverlayStore && (
+              <LLMAttachmentsList
+                attachmentDraftsStoreApi={conversationOverlayStore}
+                llmAttachments={llmAttachments}
+                onAttachmentDraftInlineText={handleAttachmentDraftInlineText}
+                onAttachmentDraftsInlineText={handleAttachmentDraftsInlineText}
+              />
+            )}
 
           </Box>
 

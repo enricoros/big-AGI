@@ -3,50 +3,49 @@ import type { FileWithHandle } from 'browser-fs-access';
 import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 
 
-// Attachment
+// Attachment Draft
 
-export type Attachment = {
-  readonly id: AttachmentId;
-  readonly source: AttachmentSource,
+export type AttachmentDraft = {
+  readonly id: AttachmentDraftId;
+  readonly source: AttachmentDraftSource,
   label: string;
   ref: string; // will be used in ```ref\n...``` for instance
 
   inputLoading: boolean;
   inputError: string | null;
-  input?: AttachmentInput;
+  input?: AttachmentDraftInput;
 
   // options to convert the input
-  converters: AttachmentConverter[]; // List of available converters for this attachment
+  converters: AttachmentDraftConverter[]; // List of available converters for this attachment
   converterIdx: number | null; // Index of the selected converter
 
   outputsConverting: boolean;
-  outputs: DAttachmentPart[]; // undefined: not yet converted, []: conversion failed, [ {}+ ]: conversion succeeded
+  outputParts: DAttachmentPart[]; // undefined: not yet converted, []: conversion failed, [ {}+ ]: conversion succeeded
 
   // metadata: {
-  //   size?: number; // Size of the attachment in bytes
   //   creationDate?: Date; // Creation date of the file
   //   modifiedDate?: Date; // Last modified date of the file
   //   altText?: string; // Alternative text for images for screen readers
   // };
 };
 
-export type AttachmentId = string;
+export type AttachmentDraftId = string;
 
 
-// attachment source
+// draft source
 
-export type AttachmentSource = {
+export type AttachmentDraftSource = {
   media: 'url';
   url: string;
   refUrl: string;
 } | {
   media: 'file';
-  origin: AttachmentSourceOriginFile,
+  origin: AttachmentDraftSourceOriginFile,
   fileWithHandle: FileWithHandle;
   refPath: string;
 } | {
   media: 'text';
-  method: 'clipboard-read' | AttachmentSourceOriginDTO;
+  method: 'clipboard-read' | AttachmentDraftSourceOriginDTO;
   textPlain?: string;
   textHtml?: string;
 } | {
@@ -58,14 +57,14 @@ export type AttachmentSource = {
   textPlain: string;
 };
 
-export type AttachmentSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentSourceOriginDTO;
+export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentDraftSourceOriginDTO;
 
-export type AttachmentSourceOriginDTO = 'drop' | 'paste';
+export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
 
-// attachment input
+// draft input
 
-export type AttachmentInput = {
+export type AttachmentDraftInput = {
   mimeType: string; // Original MIME type of the file
   data: string | ArrayBuffer; // The original data of the attachment
   dataSize: number; // Size of the original data in bytes
@@ -75,10 +74,10 @@ export type AttachmentInput = {
 };
 
 
-// attachment converter
+// draft converter
 
-export type AttachmentConverter = {
-  id: AttachmentConverterType;
+export type AttachmentDraftConverter = {
+  id: AttachmentDraftConverterType;
   name: string;
   disabled?: boolean;
   unsupported?: boolean;
@@ -89,7 +88,7 @@ export type AttachmentConverter = {
   // errorMessage?: string; // Error message if the conversion failed
 }
 
-export type AttachmentConverterType =
+export type AttachmentDraftConverterType =
   | 'text' | 'rich-text' | 'rich-text-table'
   | 'pdf-text' | 'pdf-images'
   | 'image' | 'image-ocr' | 'image-to-webp'
@@ -97,7 +96,7 @@ export type AttachmentConverterType =
   | 'unhandled';
 
 
-/*export type AttachmentPreview = {
+/*export type AttachmentDraftPreview = {
   renderer: 'noPreview',
   title: string; // A title for the preview
 } | {
