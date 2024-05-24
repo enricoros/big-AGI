@@ -1,7 +1,7 @@
 import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
 import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
-import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64Image } from '~/common/util/imageUtils';
+import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 
@@ -38,7 +38,7 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
   try {
     // Resize image if requested
     if (resizeMode) {
-      const resizedData = await resizeBase64Image(`data:${mimeType};base64,${base64Data}`, resizeMode, convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY).catch(() => null);
+      const resizedData = await resizeBase64ImageIfNeeded(mimeType, base64Data, resizeMode, convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY).catch(() => null);
       if (resizedData) {
         base64Data = resizedData.base64;
         mimeType = resizedData.mimeType;

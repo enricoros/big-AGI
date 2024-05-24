@@ -68,10 +68,10 @@ export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google'
 /**
  * Resizes an image based on the specified resize mode.
  */
-export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMImageResizeMode, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
+export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
   mimeType: string,
   base64: string,
-}> {
+} | null> {
   const image = new Image();
   image.crossOrigin = 'Anonymous';
 
@@ -136,7 +136,7 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMIm
                 newHeight = (originalHeight / originalWidth) * minSideOpenAI;
               }
             }
-          } else if (originalWidth < minSideOpenAI || originalHeight < minSideOpenAI) {
+          } else if (originalWidth < minSideOpenAI && originalHeight < minSideOpenAI) {
             shouldResize = true;
             if (originalWidth > originalHeight) {
               newWidth = minSideOpenAI;
@@ -163,11 +163,7 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMIm
       }
 
       if (!shouldResize || !newWidth || !newHeight) {
-        // No resizing needed, return original data
-        resolve({
-          mimeType: destMimeType,
-          base64: base64DataUrl.split(',')[1], // Return base64 part only
-        });
+        resolve(null);
         return;
       }
 
@@ -194,6 +190,6 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMIm
     };
 
     // this starts the decoding
-    image.src = base64DataUrl;
+    image.src = `data:${inputMimeType};base64,${inputBase64Data}`;
   });
 }
