@@ -1,12 +1,13 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 import { createBase64UuidV4 } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import type { Attachment, AttachmentConverter, AttachmentInput, AttachmentSource } from './attachment.types';
-import { imageDataToOutputsViaDBlobs } from './attachment.dblobs';
+import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+
+import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
+import { attachmentImageToPartViaDBlob } from './attachment.dblobs';
 
 
 // extensions to treat as plain text
@@ -68,9 +69,9 @@ const IMAGE_MIMETYPES: string[] = [
 
 
 /**
- * Creates a new Attachment object.
+ * Creates a new AttachmentDraft object.
  */
-export function attachmentCreate(source: AttachmentSource): Attachment {
+export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft {
   return {
     id: createBase64UuidV4(),
     source: source,
@@ -82,18 +83,18 @@ export function attachmentCreate(source: AttachmentSource): Attachment {
     converters: [],
     converterIdx: null,
     outputsConverting: false,
-    outputs: [],
+    outputParts: [],
     // metadata: {},
   };
 }
 
 /**
- * Asynchronously loads the input for an Attachment object.
+ * Asynchronously loads the input for an AttachmentDraft object.
  *
- * @param {Readonly<AttachmentSource>} source - The source of the attachment.
- * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
+ * @param {Readonly<AttachmentDraftSource>} source - The source of the attachment.
+ * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
  */
-export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource>, edit: (changes: Partial<Attachment>) => void) {
+export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftSource>, edit: (changes: Partial<AttachmentDraft>) => void) {
   edit({ inputLoading: true });
 
   switch (source.media) {
@@ -192,16 +193,16 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentSource
 
 
 /**
- * Defines the possible converters for an Attachment object based on its input type.
+ * Defines the possible converters for an AttachmentDraft object based on its input type.
  *
- * @param {AttachmentSource['media']} sourceType - The media type of the attachment source.
- * @param {Readonly<AttachmentInput>} input - The input of the attachment.
- * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
+ * @param {AttachmentDraftSource['media']} sourceType - The media type of the attachment source.
+ * @param {Readonly<AttachmentDraftInput>} input - The input of the AttachmentDraft object.
+ * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
  */
-export function attachmentDefineConverters(sourceType: AttachmentSource['media'], input: Readonly<AttachmentInput>, edit: (changes: Partial<Attachment>) => void) {
+export function attachmentDefineConverters(sourceType: AttachmentDraftSource['media'], input: Readonly<AttachmentDraftInput>, edit: (changes: Partial<AttachmentDraft>) => void) {
 
   // return all the possible converters for the input
-  const converters: AttachmentConverter[] = [];
+  const converters: AttachmentDraftConverter[] = [];
 
   switch (true) {
 
@@ -255,19 +256,19 @@ export function attachmentDefineConverters(sourceType: AttachmentSource['media']
 
 
 /**
- * Converts the input of an Attachment object based on the selected converter.
+ * Converts the input of an AttachmentDraft object based on the selected converter.
  *
- * @param {Readonly<Attachment>} attachment - The Attachment object to convert.
- * @param {number | null} converterIdx - The index of the selected conversion in the Attachment object's converters array.
- * @param {(changes: Partial<Attachment>) => void} edit - A function to edit the Attachment object.
+ * @param {Readonly<AttachmentDraft>} attachment - The AttachmentDraft object to convert.
+ * @param {number | null} converterIdx - The index of the selected converter.
+ * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
  */
-export async function attachmentPerformConversion(attachment: Readonly<Attachment>, converterIdx: number | null, edit: (changes: Partial<Attachment>) => void) {
+export async function attachmentPerformConversion(attachment: Readonly<AttachmentDraft>, converterIdx: number | null, edit: (changes: Partial<AttachmentDraft>) => void) {
 
   // set converter index
   converterIdx = (converterIdx !== null && converterIdx >= 0 && converterIdx < attachment.converters.length) ? converterIdx : null;
   edit({
     converterIdx: converterIdx,
-    outputs: [],
+    outputParts: [],
   });
 
   // get converter
@@ -282,12 +283,12 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
 
   // apply converter to the input
-  const outputs: DAttachmentPart[] = [];
+  const outputParts: DAttachmentPart[] = [];
   switch (converter.id) {
 
     // text as-is
     case 'text':
-      outputs.push({
+      outputParts.push({
         atype: 'atext',
         text: inputDataToString(input.data),
         title: ref,
@@ -297,7 +298,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
     // html as-is
     case 'rich-text':
-      outputs.push({
+      outputParts.push({
         atype: 'atext',
         text: input.altData!,
         title: ref || '\n<!DOCTYPE html>',
@@ -314,7 +315,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         // fallback to text/plain
         mdTable = inputDataToString(input.data);
       }
-      outputs.push({
+      outputParts.push({
         atype: 'atext',
         text: mdTable,
         title: ref,
@@ -324,16 +325,16 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
     // image as-is, the mime is supported
     case 'image':
-      const imageOutput = await imageDataToOutputsViaDBlobs(input, source, ref, ref, false);
-      if (imageOutput)
-        outputs.push(imageOutput);
+      const imageOrigPart = await attachmentImageToPartViaDBlob(input, source, ref, ref, false);
+      if (imageOrigPart)
+        outputParts.push(imageOrigPart);
       break;
 
     // image converted (potentially unsupported mime)
     case 'image-to-webp':
-      const imageConvOutput = await imageDataToOutputsViaDBlobs(input, source, ref, ref, true);
-      if (imageConvOutput)
-        outputs.push(imageConvOutput);
+      const imageWebpPart = await attachmentImageToPartViaDBlob(input, source, ref, ref, true);
+      if (imageWebpPart)
+        outputParts.push(imageWebpPart);
       break;
 
     // image to text
@@ -353,7 +354,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
           },
         });
         const imageText = result.data.text;
-        outputs.push({
+        outputParts.push({
           atype: 'atext',
           text: imageText,
           title: ref,
@@ -374,7 +375,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData = new Uint8Array(input.data.slice(0));
       const pdfText = await pdfToText(pdfData);
-      outputs.push({
+      outputParts.push({
         atype: 'atext',
         text: pdfText,
         title: ref,
@@ -391,17 +392,17 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData2 = new Uint8Array(input.data.slice(0));
       try {
-        const imageDataURLs = await pdfToImageDataURLs(pdfData2);
+        const imageDataURLs = await pdfToImageDataURLs(pdfData2, 'image/jpeg');
         for (const pdfPageImage of imageDataURLs) {
 
-          const imageConvOutput = await imageDataToOutputsViaDBlobs({
+          const pdfPageImagePart = await attachmentImageToPartViaDBlob({
             mimeType: pdfPageImage.mimeType,
             data: Buffer.from(pdfPageImage.base64Data),
             dataSize: pdfPageImage.base64Data.length,
-          }, source, ref, `Page ${outputs.length + 1}`, false);
+          }, source, ref, `Page ${outputParts.length + 1}`, false);
 
-          if (imageConvOutput)
-            outputs.push(imageConvOutput);
+          if (pdfPageImagePart)
+            outputParts.push(pdfPageImagePart);
         }
       } catch (error) {
         console.error('Error converting PDF to images:', error);
@@ -411,7 +412,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
     // self: message
     case 'ego-message-md':
-      outputs.push({
+      outputParts.push({
         atype: 'atext',
         text: inputDataToString(input.data),
         title: ref,
@@ -427,7 +428,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   // update
   edit({
     outputsConverting: false,
-    outputs,
+    outputParts,
   });
 }
 

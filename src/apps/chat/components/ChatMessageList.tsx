@@ -197,17 +197,17 @@ export function ChatMessageList(props: {
 
   // text-diff functionality: only diff the last complete message, and they're similar in size
 
-  const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
-    const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
-    const textB = msgB ? singleTextOrThrow(msgB) : undefined;
-    const textA = msgA ? singleTextOrThrow(msgA) : undefined;
-    if (textB && textA && !msgB?.pendingIncomplete) {
-      const lenA = textA.length, lenB = textB.length;
-      if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
-        return { diffTargetMessage: msgB, diffPrevText: textA };
-    }
-    return { diffTargetMessage: undefined, diffPrevText: undefined };
-  }, [conversationMessages]);
+  // const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
+  //   const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
+  //   const textB = msgB ? singleTextOrThrow(msgB) : undefined;
+  //   const textA = msgA ? singleTextOrThrow(msgA) : undefined;
+  //   if (textB && textA && !msgB?.pendingIncomplete) {
+  //     const lenA = textA.length, lenB = textB.length;
+  //     if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
+  //       return { diffTargetMessage: msgB, diffPrevText: textA };
+  //   }
+  //   return { diffTargetMessage: undefined, diffPrevText: undefined };
+  // }, [conversationMessages]);
 
 
   // scroll to the very bottom of a new chat
@@ -276,7 +276,7 @@ export function ChatMessageList(props: {
             <ChatMessageMemoOrNot
               key={'msg-' + message.id}
               message={message}
-              diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
+              // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
               isBottom={idx === count - 1}
               isImagining={isImagining}

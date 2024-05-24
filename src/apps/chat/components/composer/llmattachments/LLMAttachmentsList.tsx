@@ -8,29 +8,32 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 
-import type { AttachmentId } from './attachment.types';
+import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
+
 import type { LLMAttachments } from './useLLMAttachments';
-import { AttachmentItem } from './AttachmentItem';
-import { AttachmentMenu } from './AttachmentMenu';
+import { LLMAttachmentItem } from './LLMAttachmentItem';
+import { LLMAttachmentMenu } from './LLMAttachmentMenu';
 
 
 /**
- * Renderer of attachments, with menus, etc.
+ * Renderer of attachment drafts, with menus, etc.
  */
-export function Attachments(props: {
+export function LLMAttachmentsList(props: {
+  attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
   llmAttachments: LLMAttachments,
-  onAttachmentInlineText: (attachmentId: AttachmentId) => void,
-  onAttachmentsClear: () => void,
-  onAttachmentsInlineText: () => void,
+
+  onAttachmentDraftInlineText: (attachmentDraftId: AttachmentDraftId) => void,
+  onAttachmentDraftsInlineText: () => void,
 }) {
 
   // state
-  const [confirmClearAttachments, setConfirmClearAttachments] = React.useState<boolean>(false);
-  const [itemMenu, setItemMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentId: AttachmentId } | null>(null);
+  const [confirmClearAttachmentDrafts, setConfirmClearAttachmentDrafts] = React.useState<boolean>(false);
+  const [itemMenu, setItemMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentDraftId: AttachmentDraftId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
 
   // derived state
-  const { llmAttachments, onAttachmentsClear, onAttachmentInlineText, onAttachmentsInlineText } = props;
+  const { llmAttachments, onAttachmentDraftInlineText, onAttachmentDraftsInlineText } = props;
 
   const { attachments, isOutputTextInlineable } = llmAttachments;
 
@@ -39,16 +42,16 @@ export function Attachments(props: {
   // derived item menu state
 
   const itemMenuAnchor = itemMenu?.anchor;
-  const itemMenuAttachmentId = itemMenu?.attachmentId;
-  const itemMenuAttachment = itemMenuAttachmentId ? attachments.find(la => la.attachment.id === itemMenu.attachmentId) : undefined;
+  const itemMenuAttachmentDraftId = itemMenu?.attachmentDraftId;
+  const itemMenuAttachment = itemMenuAttachmentDraftId ? attachments.find(la => la.attachmentDraft.id === itemMenu.attachmentDraftId) : undefined;
   const itemMenuIndex = itemMenuAttachment ? attachments.indexOf(itemMenuAttachment) : -1;
 
 
   // item menu
 
-  const handleItemMenuToggle = React.useCallback((attachmentId: AttachmentId, anchor: HTMLAnchorElement) => {
+  const handleItemMenuToggle = React.useCallback((attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => {
     handleOverallMenuHide();
-    setItemMenu(prev => prev?.attachmentId === attachmentId ? null : { anchor, attachmentId });
+    setItemMenu(prev => prev?.attachmentDraftId === attachmentDraftId ? null : { anchor, attachmentDraftId });
   }, []);
 
   const handleItemMenuHide = React.useCallback(() => {
@@ -58,10 +61,10 @@ export function Attachments(props: {
 
   // item menu operations
 
-  const handleAttachmentInlineText = React.useCallback((attachmentId: string) => {
+  const handleAttachmentDraftInlineText = React.useCallback((attachmentDraftId: string) => {
     handleItemMenuHide();
-    onAttachmentInlineText(attachmentId);
-  }, [handleItemMenuHide, onAttachmentInlineText]);
+    onAttachmentDraftInlineText(attachmentDraftId);
+  }, [handleItemMenuHide, onAttachmentDraftInlineText]);
 
 
   // menu
@@ -76,18 +79,18 @@ export function Attachments(props: {
 
   // overall operations
 
-  const handleAttachmentsInlineText = React.useCallback(() => {
+  const handleAttachmentDraftsInlineText = React.useCallback(() => {
     handleOverallMenuHide();
-    onAttachmentsInlineText();
-  }, [onAttachmentsInlineText]);
+    onAttachmentDraftsInlineText();
+  }, [onAttachmentDraftsInlineText]);
 
-  const handleClearAttachments = () => setConfirmClearAttachments(true);
+  const handleClearAttachmentDrafts = () => setConfirmClearAttachmentDrafts(true);
 
-  const handleClearAttachmentsConfirmed = React.useCallback(() => {
+  const handleClearAttachmentDraftsConfirmed = React.useCallback(() => {
     handleOverallMenuHide();
-    setConfirmClearAttachments(false);
-    onAttachmentsClear();
-  }, [onAttachmentsClear]);
+    setConfirmClearAttachmentDrafts(false);
+    props.attachmentDraftsStoreApi.getState().clearAttachmentsDrafts();
+  }, [props.attachmentDraftsStoreApi]);
 
 
   // no components without attachments
@@ -96,16 +99,16 @@ export function Attachments(props: {
 
   return <>
 
-    {/* Attachments bar */}
+    {/* Attachment Drafts bar */}
     <Box sx={{ position: 'relative' }}>
 
       {/* Horizontally scrollable Attachments */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
         {attachments.map((llmAttachment) =>
-          <AttachmentItem
-            key={llmAttachment.attachment.id}
+          <LLMAttachmentItem
+            key={llmAttachment.attachmentDraft.id}
             llmAttachment={llmAttachment}
-            menuShown={llmAttachment.attachment.id === itemMenuAttachmentId}
+            menuShown={llmAttachment.attachmentDraft.id === itemMenuAttachmentDraftId}
             onItemMenuToggle={handleItemMenuToggle}
           />,
         )}
@@ -128,14 +131,15 @@ export function Attachments(props: {
     </Box>
 
 
-    {/* Attachment Menu */}
-    {!!itemMenuAnchor && !!itemMenuAttachment && (
-      <AttachmentMenu
+    {/* LLM Attachment Draft Menu */}
+    {!!itemMenuAnchor && !!itemMenuAttachment && !!props.attachmentDraftsStoreApi && (
+      <LLMAttachmentMenu
+        attachmentDraftsStoreApi={props.attachmentDraftsStoreApi}
         llmAttachment={itemMenuAttachment}
         menuAnchor={itemMenuAnchor}
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === attachments.length - 1}
-        onAttachmentInlineText={handleAttachmentInlineText}
+        onAttachmentDraftInlineText={handleAttachmentDraftInlineText}
         onClose={handleItemMenuHide}
       />
     )}
@@ -147,11 +151,11 @@ export function Attachments(props: {
         dense placement='top-start'
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
       >
-        <MenuItem onClick={handleAttachmentsInlineText} disabled={!isOutputTextInlineable}>
+        <MenuItem onClick={handleAttachmentDraftsInlineText} disabled={!isOutputTextInlineable}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline <span style={{ opacity: 0.5 }}>text attachments</span>
         </MenuItem>
-        <MenuItem onClick={handleClearAttachments}>
+        <MenuItem onClick={handleClearAttachmentDrafts}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
           Clear{attachments.length > 5 ? <span style={{ opacity: 0.5 }}> {attachments.length} attachments</span> : null}
         </MenuItem>
@@ -159,9 +163,9 @@ export function Attachments(props: {
     )}
 
     {/* 'Clear' Confirmation */}
-    {confirmClearAttachments && (
+    {confirmClearAttachmentDrafts && (
       <ConfirmationModal
-        open onClose={() => setConfirmClearAttachments(false)} onPositive={handleClearAttachmentsConfirmed}
+        open onClose={() => setConfirmClearAttachmentDrafts(false)} onPositive={handleClearAttachmentDraftsConfirmed}
         title='Confirm Removal'
         positiveActionText='Remove All'
         confirmationText={`This action will remove all (${attachments.length}) attachments. Do you want to proceed?`}

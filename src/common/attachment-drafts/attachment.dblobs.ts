@@ -1,16 +1,17 @@
 import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
 import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 import { convertBase64Image, getImageDimensions } from '~/common/util/imageUtils';
 
-import type { AttachmentInput, AttachmentSource } from './attachment.types';
+import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+
+import type { AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
 
 
 /**
- * Convert an image attachment to a DBlob and return the DAttachmentPart
+ * Convert an image input to a DBlob and return the DAttachmentPart
  */
-export async function imageDataToOutputsViaDBlobs(_input: AttachmentInput, source: AttachmentSource, ref: string, title: string, toWebp: boolean): Promise<DAttachmentPart | null> {
+export async function attachmentImageToPartViaDBlob(_input: AttachmentDraftInput, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean): Promise<DAttachmentPart | null> {
   if (!(_input.data instanceof ArrayBuffer)) {
     console.log('Expected ArrayBuffer for Image, got:', typeof _input.data);
     return null;
@@ -57,7 +58,7 @@ export async function imageDataToOutputsViaDBlobs(_input: AttachmentInput, sourc
     // Add to DBlobs database
     const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachments');
 
-    // Create output
+    // Create Part
     return {
       atype: 'aimage',
       source: {
@@ -70,7 +71,7 @@ export async function imageDataToOutputsViaDBlobs(_input: AttachmentInput, sourc
       width: dimensions?.width,
       height: dimensions?.height,
       collapsible: false,
-    };
+    } satisfies DAttachmentPart;
   } catch (error) {
     console.error('Error storing image in DBlobs:', error);
     return null;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
@@ -7,39 +7,39 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { AttachmentSourceOriginDTO, AttachmentSourceOriginFile } from './attachment.types';
-import { useAttachmentsStore } from './store-attachments';
+import { useChatAttachmentsStore } from '../chats/store-chat-overlay';
+
+import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
+import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
 
 
-// enable to debug attachment operations
+// enable to debug operations
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export const useAttachments = (enableLoadURLs: boolean) => {
+export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean) => {
 
   // state
-
-  const { attachments, clearAttachments, createAttachment, removeAttachment } = useAttachmentsStore(state => ({
-    attachments: state.attachments,
-    clearAttachments: state.clearAttachments,
-    createAttachment: state.createAttachment,
-    removeAttachment: state.removeAttachment,
-  }), shallow);
-
+  const { attachmentDrafts, clearAttachmentDrafts, createAttachmentDraft, removeAttachmentDraft } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
+    attachmentDrafts: state.attachmentDrafts,
+    clearAttachmentDrafts: state.clearAttachmentsDrafts,
+    createAttachmentDraft: state.createAttachmentDraft,
+    removeAttachmentDraft: state.removeAttachmentDraft,
+  })));
 
   // Creation helpers
 
-  const attachAppendFile = React.useCallback((origin: AttachmentSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) => {
+  const attachAppendFile = React.useCallback((origin: AttachmentDraftSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) => {
     if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendFile', origin, fileWithHandle, overrideFileName);
 
-    return createAttachment({
+    return createAttachmentDraft({
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
     });
-  }, [createAttachment]);
+  }, [createAttachmentDraft]);
 
 
-  const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+  const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
     // https://github.com/enricoros/big-AGI/issues/286
     const textHtml = dt.getData('text/html') || '';
@@ -78,7 +78,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
     if (textPlain && enableLoadURLs) {
       const textPlainUrl = asValidURL(textPlain);
       if (textPlainUrl && textPlainUrl) {
-        void createAttachment({
+        void createAttachmentDraft({
           media: 'url', url: textPlainUrl, refUrl: textPlain,
         });
         return 'as_url';
@@ -87,7 +87,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
     if (attachText && (textHtml || textPlain)) {
-      void createAttachment({
+      void createAttachmentDraft({
         media: 'text', method, textPlain, textHtml,
       });
       return 'as_text';
@@ -98,17 +98,17 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
     // did not attach anything from this data transfer
     return false;
-  }, [attachAppendFile, createAttachment, enableLoadURLs]);
+  }, [attachAppendFile, createAttachmentDraft, enableLoadURLs]);
 
 
   const attachAppendEgoMessage = React.useCallback((blockTitle: string, textPlain: string, attachmentLabel: string) => {
     if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendEgo', { blockTitle, textPlain, attachmentLabel });
 
-    return createAttachment({
+    return createAttachmentDraft({
       media: 'ego', method: 'ego-message', label: attachmentLabel, blockTitle: blockTitle, textPlain: textPlain,
     });
-  }, [createAttachment]);
+  }, [createAttachmentDraft]);
 
 
   const attachAppendClipboardItems = React.useCallback(async () => {
@@ -162,7 +162,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
       if (textPlain && enableLoadURLs) {
         const textPlainUrl = asValidURL(textPlain);
         if (textPlainUrl && textPlainUrl.trim()) {
-          void createAttachment({
+          void createAttachmentDraft({
             media: 'url', url: textPlainUrl.trim(), refUrl: textPlain,
           });
           continue;
@@ -171,7 +171,7 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
       // attach as Text
       if (textHtml || textPlain) {
-        void createAttachment({
+        void createAttachmentDraft({
           media: 'text', method: 'clipboard-read', textPlain, textHtml,
         });
         continue;
@@ -179,21 +179,21 @@ export const useAttachments = (enableLoadURLs: boolean) => {
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [attachAppendFile, createAttachment, enableLoadURLs]);
+  }, [attachAppendFile, createAttachmentDraft, enableLoadURLs]);
 
 
   return {
     // state
-    attachments,
+    attachmentDrafts,
 
-    // create attachments
+    // create drafts
     attachAppendClipboardItems,
     attachAppendDataTransfer,
     attachAppendEgoMessage,
     attachAppendFile,
 
     // manage attachments
-    clearAttachments,
-    removeAttachment,
+    clearAttachmentDrafts,
+    removeAttachmentDraft,
   };
 };

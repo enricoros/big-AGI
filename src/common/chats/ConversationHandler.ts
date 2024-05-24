@@ -10,7 +10,7 @@ import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { createDMessage, createTextPart, DContentParts, DMessage, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
-import { createChatOverlayVanillaStore } from './store-chat-overlay-vanilla';
+import { createPerChatVanillaStore } from './store-chat-overlay';
 
 
 /**
@@ -24,7 +24,7 @@ export class ConversationHandler {
   private readonly conversationId: DConversationId;
 
   private readonly beamStore = createBeamVanillaStore();
-  private readonly overlayStore = createChatOverlayVanillaStore();
+  private readonly overlayStore = createPerChatVanillaStore();
   readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
 
 
