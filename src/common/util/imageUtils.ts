@@ -72,93 +72,110 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMIm
   mimeType: string,
   base64: string,
 }> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.crossOrigin = 'Anonymous';
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'));
-        return;
-      }
+  const image = new Image();
+  image.crossOrigin = 'Anonymous';
 
-      let newWidth: number;
-      let newHeight: number;
+  return new Promise((resolve, reject) => {
+    image.onload = () => {
+      const originalWidth = image.width;
+      const originalHeight = image.height;
+
+      let newWidth: number = 0;
+      let newHeight: number = 0;
+      let shouldResize = false;
 
       switch (resizeMode) {
         case 'anthropic':
           // Resize to fit within 1568px on the long edge
           const maxSideAnthropic = 1568;
-          if (image.width > maxSideAnthropic || image.height > maxSideAnthropic) {
-            if (image.width > image.height) {
+          if (originalWidth > maxSideAnthropic || originalHeight > maxSideAnthropic) {
+            shouldResize = true;
+            if (originalWidth > originalHeight) {
               newWidth = maxSideAnthropic;
-              newHeight = (image.height / image.width) * maxSideAnthropic;
+              newHeight = (originalHeight / originalWidth) * maxSideAnthropic;
             } else {
               newHeight = maxSideAnthropic;
-              newWidth = (image.width / image.height) * maxSideAnthropic;
+              newWidth = (originalWidth / originalHeight) * maxSideAnthropic;
             }
-          } else {
-            newWidth = image.width;
-            newHeight = image.height;
           }
           break;
 
         case 'google':
           // Resize to fit within 3072x3072
           const maxSideGoogle = 3072;
-          if (image.width > maxSideGoogle || image.height > maxSideGoogle) {
-            if (image.width > image.height) {
+          if (originalWidth > maxSideGoogle || originalHeight > maxSideGoogle) {
+            shouldResize = true;
+            if (originalWidth > originalHeight) {
               newWidth = maxSideGoogle;
-              newHeight = (image.height / image.width) * maxSideGoogle;
+              newHeight = (originalHeight / originalWidth) * maxSideGoogle;
             } else {
               newHeight = maxSideGoogle;
-              newWidth = (image.width / image.height) * maxSideGoogle;
+              newWidth = (originalWidth / originalHeight) * maxSideGoogle;
             }
-          } else {
-            newWidth = image.width;
-            newHeight = image.height;
           }
           break;
 
         case 'openai-high-res':
-          // Resize to fit within 2048x2048, then scale shortest side to 768px
+          // Resize to fit within 2048x2048, then scale shortest side to 768px without upscaling
           const maxSideOpenAI = 2048;
           const minSideOpenAI = 768;
-          if (image.width > maxSideOpenAI || image.height > maxSideOpenAI) {
-            if (image.width > image.height) {
+          if (originalWidth > maxSideOpenAI || originalHeight > maxSideOpenAI) {
+            shouldResize = true;
+            if (originalWidth > originalHeight) {
               newWidth = maxSideOpenAI;
-              newHeight = (image.height / image.width) * maxSideOpenAI;
+              newHeight = (originalHeight / originalWidth) * maxSideOpenAI;
               if (newHeight < minSideOpenAI) {
                 newHeight = minSideOpenAI;
-                newWidth = (image.width / image.height) * minSideOpenAI;
+                newWidth = (originalWidth / originalHeight) * minSideOpenAI;
               }
             } else {
               newHeight = maxSideOpenAI;
-              newWidth = (image.width / image.height) * maxSideOpenAI;
+              newWidth = (originalWidth / originalHeight) * maxSideOpenAI;
               if (newWidth < minSideOpenAI) {
                 newWidth = minSideOpenAI;
-                newHeight = (image.height / image.width) * minSideOpenAI;
+                newHeight = (originalHeight / originalWidth) * minSideOpenAI;
               }
             }
-          } else {
-            newWidth = image.width;
-            newHeight = image.height;
+          } else if (originalWidth < minSideOpenAI || originalHeight < minSideOpenAI) {
+            shouldResize = true;
+            if (originalWidth > originalHeight) {
+              newWidth = minSideOpenAI;
+              newHeight = (originalHeight / originalWidth) * minSideOpenAI;
+            } else {
+              newHeight = minSideOpenAI;
+              newWidth = (originalWidth / originalHeight) * minSideOpenAI;
+            }
           }
           break;
 
         case 'openai-low-res':
-          // Resize to 512x512
-          // NOTE: this will square any image, and upscale them if they are smaller than 512x512, because
-          // as stated by the API, it expects to receive one image of this size. However we should verify,
-          // as upscaling here seems sub-optimal.
-          newWidth = 512;
-          newHeight = 512;
+          // Resize to 512x512 without upscaling
+          if (originalWidth > 512 || originalHeight > 512) {
+            shouldResize = true;
+            newWidth = 512;
+            newHeight = 512;
+          }
           break;
 
         default:
           reject(new Error('Unsupported resize mode'));
           return;
+      }
+
+      if (!shouldResize || !newWidth || !newHeight) {
+        // No resizing needed, return original data
+        resolve({
+          mimeType: destMimeType,
+          base64: base64DataUrl.split(',')[1], // Return base64 part only
+        });
+        return;
+      }
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
       }
 
       canvas.width = newWidth;
@@ -170,10 +187,13 @@ export async function resizeBase64Image(base64DataUrl: string, resizeMode: LLMIm
         base64: resizedDataUrl.split(',')[1], // Return base64 part only
       });
     };
+
     image.onerror = (error) => {
       console.warn('Failed to load image for resizing.', error);
       reject(new Error('Failed to load image for resizing.'));
     };
+
+    // this starts the decoding
     image.src = base64DataUrl;
   });
 }
