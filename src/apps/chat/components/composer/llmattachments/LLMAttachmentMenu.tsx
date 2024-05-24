@@ -154,15 +154,40 @@ export function LLMAttachmentMenu(props: {
             {/*<Typography level='body-xs'>*/}
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
-            <Typography level='body-xs'>
-              🡒 {isOutputMissing ? 'empty' : aOutputParts.map(output => `${output.atype === 'aimage' ? 'img' : output.atype === 'atext' ? 'txt' : (output as any).atype}: ${
-              output.atype === 'atext' ? output.text.length.toLocaleString()
-                : output.atype === 'aimage' ? (output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)')
-                  : '(other)'} bytes`).join(' · ')}
-            </Typography>
-            {!!tokenCountApprox && <Typography level='body-xs'>
-              🡒 {tokenCountApprox.toLocaleString()} tokens
-            </Typography>}
+            <Box>
+              {isOutputMissing ? (
+                <Typography level='body-xs'>🡒 ...</Typography>
+              ) : (
+                aOutputParts.map((output, index) => {
+                  if (output.atype === 'aimage') {
+                    const resolution = output.width && output.height ? `${output.width}x${output.height}` : 'unknown resolution';
+                    const mime = output.source.reftype === 'dblob' ? output.source.mimeType : 'unknown image';
+                    return (
+                      <Typography key={index} level='body-xs'>
+                        🡒 {mime}: {resolution}, {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'} bytes
+                      </Typography>
+                    );
+                  } else if (output.atype === 'atext') {
+                    return (
+                      <Typography key={index} level='body-xs'>
+                        🡒 txt: {output.text.length.toLocaleString()} bytes
+                      </Typography>
+                    );
+                  } else {
+                    return (
+                      <Typography key={index} level='body-xs'>
+                        🡒 {(output as any).atype}: (other)
+                      </Typography>
+                    );
+                  }
+                })
+              )}
+              {!!tokenCountApprox && (
+                <Typography level='body-xs' sx={{ ml: 1.75 }}>
+                  ~ {tokenCountApprox.toLocaleString()} tokens
+                </Typography>
+              )}
+            </Box>
           </Box>
         </MenuItem>
       )}
