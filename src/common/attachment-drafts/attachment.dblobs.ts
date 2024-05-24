@@ -6,11 +6,13 @@ import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase6
 import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraftSource } from './attachment.types';
+import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './attachment.pipeline';
+
 
 /**
  * Convert an image input to a DBlob and return the DAttachmentPart
  */
-export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean, resizeMode: false | LLMImageResizeMode): Promise<DAttachmentPart | null> {
+export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, convertToMimeType: false | string, resizeMode: false | LLMImageResizeMode): Promise<DAttachmentPart | null> {
   let base64Data: string;
   let inputLength: number;
 
@@ -36,7 +38,7 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
   try {
     // Resize image if requested
     if (resizeMode) {
-      const resizedData = await resizeBase64Image(`data:${mimeType};base64,${base64Data}`, resizeMode, 'image/webp', 0.96).catch(() => null);
+      const resizedData = await resizeBase64Image(`data:${mimeType};base64,${base64Data}`, resizeMode, convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY).catch(() => null);
       if (resizedData) {
         base64Data = resizedData.base64;
         mimeType = resizedData.mimeType;
@@ -44,12 +46,12 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
       }
     }
 
-    // Convert to WebP if requested
-    if (toWebp && mimeType !== 'image/webp') {
-      const webpData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, 'image/webp', 0.90).catch(() => null);
-      if (webpData) {
-        base64Data = webpData.base64;
-        mimeType = webpData.mimeType;
+    // Convert to default image mimetype if requested
+    if (convertToMimeType && mimeType !== convertToMimeType) {
+      const convertedData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, convertToMimeType, DEFAULT_ADRAFT_IMAGE_QUALITY).catch(() => null);
+      if (convertedData) {
+        base64Data = convertedData.base64;
+        mimeType = convertedData.mimeType;
         inputLength = base64Data.length;
       }
     }

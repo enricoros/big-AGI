@@ -70,6 +70,9 @@ const IMAGE_MIMETYPES: string[] = [
   'image/gif',
 ];
 
+export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = 'image/webp';
+export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.98;
+
 
 /**
  * Creates a new AttachmentDraft object.
@@ -234,7 +237,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       converters.push({ id: 'image-resized-low', name: 'Image (low detail)', disabled: !imageSupported });
       converters.push({ id: 'image-original', name: 'Image (original)', disabled: !imageSupported });
       if (!imageSupported)
-        converters.push({ id: 'image-to-webp', name: 'As Webp Image' });
+        converters.push({ id: 'image-to-default', name: `As Image (${DEFAULT_ADRAFT_IMAGE_MIMETYPE})` });
       converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
       break;
 
@@ -328,7 +331,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       });
       break;
 
-    // image resized (webp, 0.9, openai-high-res)
+    // image resized (default mime/quality, openai-high-res)
     case 'image-resized-high':
       if (!(input.data instanceof ArrayBuffer)) {
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
@@ -339,7 +342,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         outputParts.push(imageResizedHighPart);
       break;
 
-    // image resized (webp, 0.95, openai-low-res)
+    // image resized (default mime/quality, openai-low-res)
     case 'image-resized-low':
       if (!(input.data instanceof ArrayBuffer)) {
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
@@ -362,14 +365,14 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       break;
 
     // image converted (potentially unsupported mime)
-    case 'image-to-webp':
+    case 'image-to-default':
       if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for image-to-webp, got:', typeof input.data);
+        console.log('Expected ArrayBuffer for image-to-default, got:', typeof input.data);
         return null;
       }
-      const imageWebpPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, true, false);
-      if (imageWebpPart)
-        outputParts.push(imageWebpPart);
+      const imageDefaultMimePart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
+      if (imageDefaultMimePart)
+        outputParts.push(imageDefaultMimePart);
       break;
 
     // image to text
@@ -427,7 +430,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData2 = new Uint8Array(input.data.slice(0));
       try {
-        const imageDataURLs = await pdfToImageDataURLs(pdfData2, 'image/jpeg');
+        const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY);
         for (const pdfPageImage of imageDataURLs) {
           const pdfPageImagePart = await attachmentImageToPartViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, ref, `Page ${outputParts.length + 1}`, false, false);
           if (pdfPageImagePart)

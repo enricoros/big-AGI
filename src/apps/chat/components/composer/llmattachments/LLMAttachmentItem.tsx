@@ -78,7 +78,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'image-original': ImageOutlinedIcon,
   'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
   'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
-  'image-to-webp': ImageOutlinedIcon,
+  'image-to-default': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
   'ego-message-md': TelegramIcon,
   'unhandled': TextureIcon,
