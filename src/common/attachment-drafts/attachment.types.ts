@@ -91,7 +91,7 @@ export type AttachmentDraftConverter = {
 export type AttachmentDraftConverterType =
   | 'text' | 'rich-text' | 'rich-text-table'
   | 'pdf-text' | 'pdf-images'
-  | 'image-original' | 'image-resized' | 'image-ocr' | 'image-to-webp'
+  | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-webp'
   | 'ego-message-md'
   | 'unhandled';
 
