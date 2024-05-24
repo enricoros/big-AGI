@@ -75,7 +75,7 @@ function ChatDrawer(props: {
 
   // local state
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
-  const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('frequency');
+  const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
