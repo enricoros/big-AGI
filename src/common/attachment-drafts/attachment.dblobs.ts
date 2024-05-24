@@ -1,17 +1,16 @@
 import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
 import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
-import { convertBase64Image, getImageDimensions } from '~/common/util/imageUtils';
+import { convertBase64Image, getImageDimensions, resizeBase64Image } from '~/common/util/imageUtils';
 
 import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraftSource } from './attachment.types';
 
-
 /**
  * Convert an image input to a DBlob and return the DAttachmentPart
  */
-export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean): Promise<DAttachmentPart | null> {
+export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, toWebp: boolean, resizeMode: false | 'openai'): Promise<DAttachmentPart | null> {
   let base64Data: string;
   let inputLength: number;
 
@@ -35,12 +34,23 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
   }
 
   try {
+    // Resize image if requested
+    if (resizeMode) {
+      const resizedData = await resizeBase64Image(`data:${mimeType};base64,${base64Data}`, resizeMode, 'image/webp', 0.90).catch(() => null);
+      if (resizedData) {
+        base64Data = resizedData.base64;
+        mimeType = resizedData.mimeType;
+        inputLength = base64Data.length;
+      }
+    }
+
     // Convert to WebP if requested
-    if (toWebp) {
-      const webpData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, 'image/webp').catch(() => null);
+    if (toWebp && mimeType !== 'image/webp') {
+      const webpData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, 'image/webp', 0.90).catch(() => null);
       if (webpData) {
         base64Data = webpData.base64;
         mimeType = webpData.mimeType;
+        inputLength = base64Data.length;
       }
     }
 

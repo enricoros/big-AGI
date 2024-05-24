@@ -4,6 +4,8 @@ import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } fr
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
+import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -71,8 +73,9 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'rich-text': CodeIcon,
   'rich-text-table': PivotTableChartIcon,
   'pdf-text': PictureAsPdfIcon,
-  'pdf-images': PictureAsPdfIcon,
-  'image': ImageOutlinedIcon,
+  'pdf-images': PermMediaOutlinedIcon,
+  'image-original': ImageOutlinedIcon,
+  'image-resized': PhotoSizeSelectLargeOutlinedIcon,
   'image-to-webp': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
   'ego-message-md': TelegramIcon,
