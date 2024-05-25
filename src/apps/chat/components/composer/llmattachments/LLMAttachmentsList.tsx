@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItemDecorator, MenuItem } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
@@ -150,9 +150,10 @@ export function LLMAttachmentsList(props: {
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline <span style={{ opacity: 0.5 }}>text attachments</span>
         </MenuItem>
+        <ListDivider />
         <MenuItem onClick={handleOverallClear}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
-          Clear{attachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {attachmentDrafts.length} attachments</span> : null}
+          Remove All{attachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {attachmentDrafts.length} attachments</span> : null}
         </MenuItem>
       </CloseableMenu>
     )}

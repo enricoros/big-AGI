@@ -94,7 +94,7 @@ export function LLMAttachmentMenu(props: {
     <CloseableMenu
       dense placement='top'
       open anchorEl={props.menuAnchor} onClose={props.onClose}
-      sx={{ minWidth: 200 }}
+      sx={{ minWidth: 260 }}
     >
 
       {/* Move Arrows */}
@@ -178,14 +178,14 @@ export function LLMAttachmentMenu(props: {
                         🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'}
                         {' · '}
                         <Link onClick={() => handleShowContentInNewTab(output.source)}>
-                          show <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
+                          open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                         </Link>
                       </Typography>
                     );
                   } else if (output.atype === 'atext') {
                     return (
                       <Typography key={index} level='body-sm'>
-                        🡒 txt: {output.text.length.toLocaleString()} bytes
+                        🡒 text: {output.text.length.toLocaleString()} bytes
                       </Typography>
                     );
                   } else {
@@ -221,6 +221,7 @@ export function LLMAttachmentMenu(props: {
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline text
       </MenuItem>
+      <ListDivider />
       <MenuItem onClick={handleRemove}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
         Remove
