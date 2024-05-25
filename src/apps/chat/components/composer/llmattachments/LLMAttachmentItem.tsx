@@ -18,7 +18,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { LLMAttachment } from './useLLMAttachments';
+import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 
 
 // default attachment width
@@ -107,43 +107,38 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
 
 
 export function LLMAttachmentItem(props: {
-  llmAttachment: LLMAttachment,
+  llmAttachment: LLMAttachmentDraft,
   menuShown: boolean,
-  onItemMenuToggle: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
+  onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
 }) {
 
   // derived state
+  const { attachmentDraft: draft, llmSupportsAllParts } = props.llmAttachment;
 
-  const { onItemMenuToggle } = props;
+  const isInputLoading = draft.inputLoading;
+  const isInputError = !!draft.inputError;
+  const isUnconvertible = !draft.converters.length;
+  const isOutputLoading = draft.outputsConverting;
+  const isOutputMissing = !draft.outputParts.length;
 
-  const {
-    attachmentDraft,
-    isUnconvertible,
-    isOutputMissing,
-    isOutputAttachable,
-  } = props.llmAttachment;
+  const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllParts);
 
-  const {
-    inputError,
-    inputLoading: isInputLoading,
-    outputsConverting: isOutputLoading,
-  } = attachmentDraft;
 
-  const isInputError = !!inputError;
-  const showWarning = isUnconvertible || isOutputMissing || !isOutputAttachable;
+  // handlers
 
+  const { onToggleMenu } = props;
 
   const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    onItemMenuToggle(attachmentDraft.id, event.currentTarget);
-  }, [attachmentDraft, onItemMenuToggle]);
+    onToggleMenu(draft.id, event.currentTarget);
+  }, [draft.id, onToggleMenu]);
 
 
   // compose tooltip
   let tooltip: string | null = '';
-  if (attachmentDraft.source.media !== 'text')
-    tooltip += attachmentDraft.source.media + ': ';
-  tooltip += attachmentDraft.label;
+  if (draft.source.media !== 'text')
+    tooltip += draft.source.media + ': ';
+  tooltip += draft.label;
   // if (hasInput)
   //   tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
   // if (aOutputs && aOutputs.length >= 1)
@@ -155,15 +150,15 @@ export function LLMAttachmentItem(props: {
   if (isInputLoading || isOutputLoading) {
     color = 'success';
   } else if (isInputError) {
-    tooltip = `Issue loading the attachment: ${attachmentDraft.inputError}\n\n${tooltip}`;
     color = 'danger';
+    tooltip = props.menuShown ? null
+      : `Issue loading the attachment: ${draft.inputError}\n\n${tooltip}`;
   } else if (showWarning) {
-    tooltip = props.menuShown
-      ? null
-      : isUnconvertible
-        ? `Attachments of type '${attachmentDraft.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
-        : `Not compatible with the selected LLM or not supported. Please select another format.\n\n${tooltip}`;
     color = 'warning';
+    tooltip = props.menuShown ? null
+      : isUnconvertible
+        ? `Attachments of type '${draft.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
+        : `Not compatible with the selected LLM or file not supported. Please try another format.\n\n${tooltip}`;
   } else {
     // all good
     tooltip = null;
@@ -181,7 +176,7 @@ export function LLMAttachmentItem(props: {
       sx={{ p: 1, whiteSpace: 'break-spaces' }}
     >
       {isInputLoading
-        ? <LoadingIndicator label={attachmentDraft.label} />
+        ? <LoadingIndicator label={draft.label} />
         : (
           <Button
             size='sm'
@@ -201,11 +196,11 @@ export function LLMAttachmentItem(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentConverterIcon(attachmentDraft)}
+                {attachmentConverterIcon(draft)}
                 {isOutputLoading
                   ? <>Converting <CircularProgress color='success' size='sm' /></>
                   : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-                    {attachmentLabelText(attachmentDraft)}
+                    {attachmentLabelText(draft)}
                   </Typography>}
               </>}
           </Button>

@@ -8,40 +8,38 @@ import { countModelTokens } from '~/common/util/token-counter';
 import type { AttachmentDraft, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 
 
-export interface LLMAttachments {
-  attachments: LLMAttachment[];
-  isOutputAttacheable: boolean;
-  isOutputTextInlineable: boolean;
-  tokenCountApprox: number;
+export interface LLMAttachmentDrafts {
+  attachmentDrafts: LLMAttachmentDraft[];
+  canAttachAllParts: boolean;
+  canInlineAllTextParts: boolean;
+  llmTokenCountApprox: number;
   collapseTextWithAttachmentDraft: (initialTextBlockText: string | null, attachmentDraftId: AttachmentDraftId) => DAttachmentPart[];
   collapseTextWithAttachmentDrafts: (initialTextBlockText: string | null) => DAttachmentPart[];
 }
 
-export interface LLMAttachment {
+export interface LLMAttachmentDraft {
   attachmentDraft: AttachmentDraft;
-  attachmentDraftCollapsedParts: DAttachmentPart[];
-  isUnconvertible: boolean;
-  isOutputMissing: boolean;
-  isOutputAttachable: boolean;
-  isOutputTextInlineable: boolean;
-  tokenCountApprox: number | null;
+  llmSupportsAllParts: boolean;
+  llmSupportsTextParts: boolean;
+  llmTokenCountApprox: number | null;
 }
 
 
-export function useLLMAttachments(attachments: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachments {
+export function useLLMAttachmentDrafts(attachments: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachmentDrafts {
   return React.useMemo(() => {
 
     // Adjust the recommended DAttachmentPart(s) based on the LLM
     const supportsImages = !!chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
     const supportedOutputPartTypes: DAttachmentPart['atype'][] = supportsImages ? ['aimage', 'atext'] : ['atext'];
 
-    const llmAttachments = attachments.map(attachment => toLLMAttachment(attachment, supportedOutputPartTypes, chatLLM?.id || null));
+    const llmAttachments = attachments.map(attachment =>
+      toLLMAttachment(attachment, supportedOutputPartTypes, chatLLM?.id || null));
 
     return {
-      attachments: llmAttachments,
-      isOutputAttacheable: llmAttachments.every(a => a.isOutputAttachable),
-      isOutputTextInlineable: llmAttachments.every(a => a.isOutputTextInlineable),
-      tokenCountApprox: llmAttachments.reduce((acc, a) => acc + (a.tokenCountApprox || 0), 0),
+      attachmentDrafts: llmAttachments,
+      canAttachAllParts: llmAttachments.every(a => a.llmSupportsAllParts),
+      canInlineAllTextParts: llmAttachments.every(a => a.llmSupportsTextParts),
+      llmTokenCountApprox: llmAttachments.reduce((acc, a) => acc + (a.llmTokenCountApprox || 0), 0),
       collapseTextWithAttachmentDraft: (initialTextBlockText: string | null, attachmentDraftId: AttachmentDraftId): DAttachmentPart[] => {
         // get outputs of a specific attachment
         const outputs = attachments.find(a => a.id === attachmentDraftId)?.outputParts || [];
@@ -63,16 +61,11 @@ export function getSingleTextBlockText(outputs: DAttachmentPart[]): string | nul
 }
 
 
-function toLLMAttachment(attachmentDraft: AttachmentDraft, supportedOutputPartTypes: DAttachmentPart['atype'][], llmForTokenCount: DLLMId | null): LLMAttachment {
-  const { converters, outputParts } = attachmentDraft;
-
-  const isUnconvertible = converters.length === 0;
-  const isOutputMissing = outputParts.length === 0;
-  const isOutputAttachable = areAllOutputsSupported(outputParts, supportedOutputPartTypes);
-  const isOutputTextInlineable = areAllOutputsSupported(outputParts, supportedOutputPartTypes.filter(pt => pt === 'atext'));
+function toLLMAttachment(attachmentDraft: AttachmentDraft, llmSupportedOutputPartTypes: DAttachmentPart['atype'][], llmForTokenCount: DLLMId | null): LLMAttachmentDraft {
+  const { outputParts } = attachmentDraft;
 
   const attachmentCollapsedParts = attachmentCollapseOutputs(null, outputParts);
-  const tokenCountApprox = llmForTokenCount
+  const llmTokenCountApprox = llmForTokenCount
     ? attachmentCollapsedParts.reduce((acc, output) => {
       if (output.atype === 'atext')
         return acc + (countModelTokens(output.text, llmForTokenCount, 'attachments tokens count') ?? 0);
@@ -83,12 +76,9 @@ function toLLMAttachment(attachmentDraft: AttachmentDraft, supportedOutputPartTy
 
   return {
     attachmentDraft: attachmentDraft,
-    attachmentDraftCollapsedParts: attachmentCollapsedParts,
-    isUnconvertible,
-    isOutputMissing,
-    isOutputAttachable,
-    isOutputTextInlineable,
-    tokenCountApprox,
+    llmSupportsAllParts: areAllOutputsSupported(outputParts, llmSupportedOutputPartTypes),
+    llmSupportsTextParts: areAllOutputsSupported(outputParts, llmSupportedOutputPartTypes.filter(pt => pt === 'atext')),
+    llmTokenCountApprox,
   };
 }
 
@@ -97,6 +87,7 @@ function areAllOutputsSupported(outputs: DAttachmentPart[], supportedOutputPartT
     ? outputs.every(output => supportedOutputPartTypes.includes(output.atype))
     : false;
 }
+
 
 function attachmentCollapseOutputs(initialTextBlockText: string | null, outputs: DAttachmentPart[]) {
   const accumulatedOutputs: DAttachmentPart[] = [];

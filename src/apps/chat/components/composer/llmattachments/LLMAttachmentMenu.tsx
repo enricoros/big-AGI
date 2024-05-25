@@ -12,11 +12,11 @@ import { getImageBlobURLById } from '~/modules/dblobs/dblobs.db';
 
 import type { DContentRef } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
 
+import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
-
-import type { LLMAttachment } from './useLLMAttachments';
+import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
+import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
 
 
 // enable for debugging
@@ -28,7 +28,6 @@ export const DEBUG_LLMATTACHMENTS = true;
  * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
  */
 async function handleShowContentInNewTab(source: DContentRef) {
-  console.log('handleShowContentInNewTab', source);
   let imageUrl: string | null = null;
   if (source.reftype === 'url')
     imageUrl = source.url;
@@ -41,79 +40,54 @@ async function handleShowContentInNewTab(source: DContentRef) {
 
 export function LLMAttachmentMenu(props: {
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
-  llmAttachment: LLMAttachment,
+  llmAttachmentDraft: LLMAttachmentDraft,
   menuAnchor: HTMLAnchorElement,
   isPositionFirst: boolean,
   isPositionLast: boolean,
-  onAttachmentDraftInlineText: (attachmentDraftId: string) => void,
+  onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
   onClose: () => void,
 }) {
 
   // derived state
 
-  const isPositionFixed = props.isPositionFirst && props.isPositionLast;
-
   const {
-    attachmentDraft,
-    attachmentDraftCollapsedParts,
-    isUnconvertible,
-    isOutputMissing,
-    isOutputTextInlineable,
-    tokenCountApprox,
-  } = props.llmAttachment;
+    attachmentDraft: draft,
+    llmSupportsTextParts,
+    llmTokenCountApprox,
+  } = props.llmAttachmentDraft;
 
-  const {
-    id: aId,
-    input: aInput,
-    converters: aConverters,
-    converterIdx: aConverterIdx,
-    outputParts: aOutputParts,
-  } = attachmentDraft;
+  const draftId = draft.id;
+  const draftInput = draft.input;
+  const isUnconvertible = !draft.converters.length;
+  const isOutputMissing = !draft.outputParts.length;
+
+  const isUnmoveable = props.isPositionFirst && props.isPositionLast;
 
 
   // operations
 
-  const { attachmentDraftsStoreApi, onClose, onAttachmentDraftInlineText } = props;
-
-  const handleInlineText = React.useCallback(() => {
-    onClose();
-    onAttachmentDraftInlineText(aId);
-  }, [aId, onAttachmentDraftInlineText, onClose]);
+  const { attachmentDraftsStoreApi, onDraftAction, onClose } = props;
 
   const handleMoveUp = React.useCallback(() => {
-    attachmentDraftsStoreApi.getState().moveAttachmentDraft(aId, -1);
-  }, [aId, attachmentDraftsStoreApi]);
+    attachmentDraftsStoreApi.getState().moveAttachmentDraft(draftId, -1);
+  }, [draftId, attachmentDraftsStoreApi]);
 
   const handleMoveDown = React.useCallback(() => {
-    attachmentDraftsStoreApi.getState().moveAttachmentDraft(aId, 1);
-  }, [aId, attachmentDraftsStoreApi]);
+    attachmentDraftsStoreApi.getState().moveAttachmentDraft(draftId, 1);
+  }, [draftId, attachmentDraftsStoreApi]);
 
   const handleRemove = React.useCallback(() => {
     onClose();
-    attachmentDraftsStoreApi.getState().removeAttachmentDraft(aId);
-  }, [aId, attachmentDraftsStoreApi, onClose]);
+    attachmentDraftsStoreApi.getState().removeAttachmentDraft(draftId);
+  }, [draftId, attachmentDraftsStoreApi, onClose]);
 
   const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) => {
-    return attachmentDraftsStoreApi.getState().setAttachmentDraftConverterIdxAndConvert(aId, converterIdx);
-  }, [aId, attachmentDraftsStoreApi]);
+    return attachmentDraftsStoreApi.getState().setAttachmentDraftConverterIdxAndConvert(draftId, converterIdx);
+  }, [draftId, attachmentDraftsStoreApi]);
 
   // const handleSummarizeText = React.useCallback(() => {
-  //   onAttachmentDraftSummarizeText(aId);
-  // }, [aId, onAttachmentDraftSummarizeText]);
-
-  const handleCopyOutputToClipboard = React.useCallback(() => {
-    if (attachmentDraftCollapsedParts.length >= 1) {
-      const concat = attachmentDraftCollapsedParts.map(output => {
-        if (output.atype === 'atext')
-          return output.text;
-        else if (output.atype === 'aimage')
-          return output.title;
-        else
-          return null;
-      }).join('\n\n---\n\n');
-      copyToClipboard(concat.trim(), 'Converted attachment');
-    }
-  }, [attachmentDraftCollapsedParts]);
+  //   onAttachmentDraftSummarizeText(draftId);
+  // }, [draftId, onAttachmentDraftSummarizeText]);
 
 
   return (
@@ -124,7 +98,7 @@ export function LLMAttachmentMenu(props: {
     >
 
       {/* Move Arrows */}
-      {!isPositionFixed && <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {!isUnmoveable && <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <MenuItem
           disabled={props.isPositionFirst}
           onClick={handleMoveUp}
@@ -140,7 +114,7 @@ export function LLMAttachmentMenu(props: {
           <KeyboardArrowRightIcon />
         </MenuItem>
       </Box>}
-      {!isPositionFixed && <ListDivider sx={{ mt: 0 }} />}
+      {!isUnmoveable && <ListDivider sx={{ mt: 0 }} />}
 
       {/* Render Converters as menu items */}
       {!isUnconvertible && (
@@ -150,14 +124,14 @@ export function LLMAttachmentMenu(props: {
           </Typography>
         </ListItem>
       )}
-      {!isUnconvertible && aConverters.map((c, idx) =>
+      {!isUnconvertible && draft.converters.map((c, idx) =>
         <MenuItem
           disabled={c.disabled}
           key={'c-' + c.id}
-          onClick={async () => idx !== aConverterIdx && await handleSetConverterIdx(idx)}
+          onClick={async () => idx !== draft.converterIdx && await handleSetConverterIdx(idx)}
         >
           <ListItemDecorator>
-            <Radio checked={idx === aConverterIdx} />
+            <Radio checked={idx === draft.converterIdx} />
           </ListItemDecorator>
           {c.unsupported
             ? <Box>Unsupported 🤔 <Typography level='body-xs'>{c.name}</Typography></Box>
@@ -166,36 +140,36 @@ export function LLMAttachmentMenu(props: {
       )}
       {!isUnconvertible && <ListDivider />}
 
-      {DEBUG_LLMATTACHMENTS && !!aInput && (
+      {DEBUG_LLMATTACHMENTS && !!draftInput && (
         <ListItem>
           <ListItemDecorator>
-            {isOutputTextInlineable && (
+            {llmSupportsTextParts && (
               <Tooltip title='Copy Text to clipboard'>
-                <IconButton size='sm' onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable} sx={{ ml: -0.5 }}>
+                <IconButton size='sm' onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextParts} sx={{ ml: -0.5 }}>
                   <ContentCopyIcon />
                 </IconButton>
               </Tooltip>
             )}
           </ListItemDecorator>
           <Box>
-            {!!aInput && (
+            {!!draftInput && (
               <Typography level='body-sm'>
-                🡐 {aInput.mimeType} · {aInput.dataSize.toLocaleString()}
+                🡐 {draftInput.mimeType} · {draftInput.dataSize.toLocaleString()}
               </Typography>
             )}
-            {!!aInput?.altMimeType && (
+            {!!draftInput?.altMimeType && (
               <Typography level='body-sm'>
-                <span style={{ color: 'transparent' }}>🡐</span> {aInput.altMimeType} · {aInput.altData?.length.toLocaleString()}
+                <span style={{ color: 'transparent' }}>🡐</span> {draftInput.altMimeType} · {draftInput.altData?.length.toLocaleString()}
               </Typography>
             )}
             {/*<Typography level='body-sm'>*/}
-            {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
+            {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === draft.converterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Box>
               {isOutputMissing ? (
                 <Typography level='body-sm'>🡒 ...</Typography>
               ) : (
-                aOutputParts.map((output, index) => {
+                draft.outputParts.map((output, index) => {
                   if (output.atype === 'aimage') {
                     const resolution = output.width && output.height ? `${output.width} x ${output.height}` : 'unknown resolution';
                     const mime = output.source.reftype === 'dblob' ? output.source.mimeType : 'unknown image';
@@ -223,19 +197,19 @@ export function LLMAttachmentMenu(props: {
                   }
                 })
               )}
-              {!!tokenCountApprox && (
+              {!!llmTokenCountApprox && (
                 <Typography level='body-sm' sx={{ ml: 1.75 }}>
-                  ~ {tokenCountApprox.toLocaleString()} tokens
+                  ~ {llmTokenCountApprox.toLocaleString()} tokens
                 </Typography>
               )}
             </Box>
           </Box>
         </ListItem>
       )}
-      {DEBUG_LLMATTACHMENTS && !!aInput && <ListDivider />}
+      {DEBUG_LLMATTACHMENTS && !!draftInput && <ListDivider />}
 
       {/* Destructive Operations */}
-      {/*<MenuItem onClick={handleCopyOutputToClipboard} disabled={!isOutputTextInlineable}>*/}
+      {/*<MenuItem onClick={handleCopyToClipboard} disabled={!isOutputTextInlineable}>*/}
       {/*  <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>*/}
       {/*  Copy*/}
       {/*</MenuItem>*/}
@@ -243,7 +217,7 @@ export function LLMAttachmentMenu(props: {
       {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
       {/*  Shrink*/}
       {/*</MenuItem>*/}
-      <MenuItem onClick={handleInlineText} disabled={!isOutputTextInlineable}>
+      <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextParts}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline text
       </MenuItem>

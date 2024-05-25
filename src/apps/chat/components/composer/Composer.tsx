@@ -51,8 +51,8 @@ import { providerStarredMessage, StarredMessageItem } from './actile/providerSta
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import { LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
-import { getSingleTextBlockText, useLLMAttachments } from './llmattachments/useLLMAttachments';
+import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
+import { getSingleTextBlockText, useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
@@ -160,7 +160,7 @@ export function Composer(props: {
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
   // attachments derived state
-  const llmAttachments = useLLMAttachments(attachmentDrafts, props.chatLLM);
+  const llmAttachmentDrafts = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
 
 
   // derived state
@@ -177,7 +177,7 @@ export function Composer(props: {
       return 0;
     return countModelTokens(debouncedText, chatLLMId, 'composer text') ?? 0;
   }, [chatLLMId, debouncedText]);
-  let tokensComposer = tokensComposerText + llmAttachments.tokenCountApprox;
+  let tokensComposer = tokensComposerText + llmAttachmentDrafts.llmTokenCountApprox;
   if (tokensComposer > 0)
     tokensComposer += 4; // every user message has this many surrounding tokens (note: shall depend on llm..)
   const tokensHistory = _historyTokenCount;
@@ -217,7 +217,7 @@ export function Composer(props: {
       return false;
 
     // get the multipart output including all attachments
-    const multiPartMessage = llmAttachments.collapseTextWithAttachmentDrafts(composerText || null);
+    const multiPartMessage = llmAttachmentDrafts.collapseTextWithAttachmentDrafts(composerText || null);
     if (!multiPartMessage.length)
       return false;
 
@@ -233,7 +233,7 @@ export function Composer(props: {
     }
 
     return enqueued;
-  }, [clearAttachmentDrafts, conversationId, handleReplyToCleared, llmAttachments, onAction, replyToGenerateText, setComposeText]);
+  }, [clearAttachmentDrafts, conversationId, handleReplyToCleared, llmAttachmentDrafts, onAction, replyToGenerateText, setComposeText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -464,10 +464,39 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
+
+  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftId: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
+    // only support text actions
+    if (action !== 'inline-text' && (action as any) !== 'inline-all-text')
+      return console.warn('handleAttachmentDraftsAction - unsupported action', action);
+
+
+
+
+    console.log('handleAttachmentDraftsAction - FIXME', attachmentDraftId, action);
+
+    /*
+        if (attachmentDraftCollapsedParts.length >= 1) {
+      const concat = attachmentDraftCollapsedParts.map(output => {
+        if (output.atype === 'atext')
+          return output.text;
+        else if (output.atype === 'aimage')
+          return output.title;
+        else
+          return null;
+      }).join('\n\n---\n\n');
+      copyToClipboard(concat.trim(), 'Converted attachment');
+    }
+
+     */
+
+  }, []);
+
+
   const handleAttachmentDraftInlineText = React.useCallback((attachmentDraftId: AttachmentDraftId) => {
     console.log('handleAttachmentDraftInlineText - FIXME');
     setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachments.collapseTextWithAttachmentDraft(currentText, attachmentDraftId);
+      const inlinedMultiPart = llmAttachmentDrafts.collapseTextWithAttachmentDraft(currentText, attachmentDraftId);
       const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
       if (inlinedText) {
         removeAttachmentDraft(attachmentDraftId);
@@ -475,12 +504,12 @@ export function Composer(props: {
       } else
         return currentText;
     });
-  }, [llmAttachments, removeAttachmentDraft, setComposeText]);
+  }, [llmAttachmentDrafts, removeAttachmentDraft, setComposeText]);
 
   const handleAttachmentDraftsInlineText = React.useCallback(() => {
     console.log('handleAttachmentDraftsInlineText - FIXME');
     setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachments.collapseTextWithAttachmentDrafts(currentText);
+      const inlinedMultiPart = llmAttachmentDrafts.collapseTextWithAttachmentDrafts(currentText);
       const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
       if (inlinedText) {
         clearAttachmentDrafts();
@@ -488,7 +517,7 @@ export function Composer(props: {
       } else
         return currentText;
     });
-  }, [clearAttachmentDrafts, llmAttachments, setComposeText]);
+  }, [clearAttachmentDrafts, llmAttachmentDrafts, setComposeText]);
 
 
   // Drag & Drop
@@ -780,9 +809,8 @@ export function Composer(props: {
             {!!conversationOverlayStore && (
               <LLMAttachmentsList
                 attachmentDraftsStoreApi={conversationOverlayStore}
-                llmAttachments={llmAttachments}
-                onAttachmentDraftInlineText={handleAttachmentDraftInlineText}
-                onAttachmentDraftsInlineText={handleAttachmentDraftsInlineText}
+                llmAttachmentDrafts={llmAttachmentDrafts}
+                onAttachmentDraftsAction={handleAttachmentDraftsAction}
               />
             )}
 
@@ -819,7 +847,7 @@ export function Composer(props: {
                 {!assistantAbortible ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
+                    fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachmentDrafts.canAttachAllParts}
                     onClick={handleSendClicked}
                     endDecorator={buttonIcon}
                     sx={{ '--Button-gap': '1rem' }}
@@ -865,7 +893,7 @@ export function Composer(props: {
               {/* [desktop] secondary-top buttons */}
               {isDesktop && showChatExtras && !assistantAbortible && (
                 <ButtonBeamMemo
-                  disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
+                  disabled={!props.conversationId || !chatLLMId || !llmAttachmentDrafts.canAttachAllParts}
                   hasContent={!!composeText}
                   onClick={handleSendTextBeamClicked}
                 />
