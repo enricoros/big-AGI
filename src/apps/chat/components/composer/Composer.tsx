@@ -29,7 +29,7 @@ import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptim
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { countModelTokens } from '~/common/util/token-counter';
+import { textTokensForLLMId } from '~/common/util/token-counter';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
@@ -175,7 +175,7 @@ export function Composer(props: {
   const tokensComposerText = React.useMemo(() => {
     if (!debouncedText || !chatLLMId)
       return 0;
-    return countModelTokens(debouncedText, chatLLMId, 'composer text') ?? 0;
+    return textTokensForLLMId(debouncedText, chatLLMId, 'composer text') ?? 0;
   }, [chatLLMId, debouncedText]);
   let tokensComposer = tokensComposerText + llmAttachmentDrafts.llmTokenCountApprox;
   if (tokensComposer > 0)

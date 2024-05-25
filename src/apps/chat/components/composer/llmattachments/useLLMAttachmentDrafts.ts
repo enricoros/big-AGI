@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DLLM, DLLMId, LLM_IF_OAI_Vision } from '~/modules/llms/store-llms';
 
 import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
-import { countModelTokens } from '~/common/util/token-counter';
+import { textTokensForLLMId } from '~/common/util/token-counter';
 
 import type { AttachmentDraft, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 
@@ -68,7 +68,7 @@ function toLLMAttachment(attachmentDraft: AttachmentDraft, llmSupportedOutputPar
   const llmTokenCountApprox = llmForTokenCount
     ? attachmentCollapsedParts.reduce((acc, output) => {
       if (output.atype === 'atext')
-        return acc + (countModelTokens(output.text, llmForTokenCount, 'attachments tokens count') ?? 0);
+        return acc + (textTokensForLLMId(output.text, llmForTokenCount, 'attachments tokens count') ?? 0);
       console.warn('Unhandled token preview for output type:', output.atype);
       return acc;
     }, 0)

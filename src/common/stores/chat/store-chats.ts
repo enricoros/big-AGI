@@ -7,7 +7,7 @@ import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
 import { SystemPurposeId } from '../../../data';
 
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
-import { countModelTokens } from '~/common/util/token-counter';
+import { textTokensForLLMId } from '~/common/util/token-counter';
 
 import { DMessage, DMessageId, DMessageMetadata, reduceContentToText } from './chat.message';
 import { conversationTitle, convertCConversation_V3_V4, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
@@ -341,7 +341,7 @@ function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceU
     const messageTextParts = reduceContentToText(message.content, '');
 
     // TODO: handle attachments too
-    message.tokenCount = countModelTokens(messageTextParts, llmId, debugFrom) ?? 0;
+    message.tokenCount = textTokensForLLMId(messageTextParts, llmId, debugFrom) ?? 0;
   }
   return message.tokenCount;
 }

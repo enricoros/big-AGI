@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Container, FormControl, Textarea, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { countTokenizerTokens, preloadTiktokenLibrary } from '~/common/util/token-counter';
+import { textTokensForEncodingId, preloadTiktokenLibrary } from '~/common/util/token-counter';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useTokenizerSelect } from '~/common/components/forms/useTokenizerSelect';
 
@@ -47,7 +47,7 @@ export function AppTokens() {
 
   const updateTokenDetails = (text: string, encodingId: string | null) => {
     if (encodingId) {
-      const details = countTokenizerTokens(text, encodingId, 'AppTokens');
+      const details = textTokensForEncodingId(text, encodingId, 'AppTokens');
       setTokenDetails(details || []);
     }
   };
