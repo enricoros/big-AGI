@@ -9,7 +9,7 @@ export interface DMessage {
   id: DMessageId;                     // unique message ID
 
   role: DMessageRole;
-  content: DContentParts;             // multi-part content (sent: mix of text/images/etc., received: usually one part)
+  content: DContentPart[];            // multi-part content (sent: mix of text/images/etc., received: usually one part)
   userAttachments: DAttachmentPart[]; // higher-level multi-part to be sent (transformed to multipart before sending)
 
   // pending state (not stored)
@@ -28,6 +28,9 @@ export interface DMessage {
 
   // TODO: @deprecated remove this, it's really view-dependent
   tokenCount: number;                 // cache for token count, using the current Conversation model (0 = not yet calculated)
+
+  // TODO: add a Beam JSON state load/store
+  // volatileBeamRestore?: object;
 
   created: number;                    // created timestamp
   updated: number | null;             // updated timestamp - null means incomplete - TODO: disambiguate vs pendingIncomplete
