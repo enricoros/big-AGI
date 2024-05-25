@@ -24,7 +24,7 @@ import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/com
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DAttachmentPart, DMessage, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createDMessage, DAttachmentPart, DContentParts, DMessage, DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -211,9 +211,9 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: DAttachmentPart[], metadata?: DMessageMetadata): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, contentParts: DContentParts, attachmentParts: DAttachmentPart[], metadata?: DMessageMetadata): boolean => {
     // validate inputs
-    if (multiPartMessage.length !== 1 || multiPartMessage[0].atype !== 'atext') {
+    if (contentParts.length !== 1 || contentParts[0].ptype !== 'text') {
       addSnackbar({
         key: 'chat-composer-action-invalid',
         message: 'Only a single text part is supported for now.',
@@ -224,7 +224,7 @@ export function AppChat() {
       });
       return false;
     }
-    const userText = multiPartMessage[0].text;
+    const userText = contentParts[0].text;
 
     // multicast: send the message to all the panes
     const uniqueConversationIds = new Set([conversationId]);

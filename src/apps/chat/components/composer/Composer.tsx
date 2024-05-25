@@ -24,11 +24,12 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DAttachmentPart, DMessageMetadata, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DAttachmentPart, DContentParts, DMessageMetadata, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
@@ -36,7 +37,6 @@ import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { playSoundUrl } from '~/common/util/audioUtils';
-import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
@@ -52,8 +52,8 @@ import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
-import { getSingleTextBlockText, useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
-import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
+import { attachmentInlineTextParts, useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
+import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
@@ -102,7 +102,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: DAttachmentPart[], metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, contentParts: DContentParts, attachmentParts: DAttachmentPart[], metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -156,7 +156,7 @@ export function Composer(props: {
   const {
     attachmentDrafts,
     attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
-    clearAttachmentDrafts, removeAttachmentDraft,
+    attachmentsClear, attachmentsTakeAllParts, attachmentsTakeTextParts,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
   // attachments derived state
@@ -217,24 +217,35 @@ export function Composer(props: {
     if (!conversationId)
       return false;
 
-    // get the multipart output including all attachments
-    const multiPartMessage = llmAttachmentDrafts.collapseTextWithAttachmentDrafts(composerText || null);
-    if (!multiPartMessage.length)
+    // squash all text parts and keep the rest as attachments
+    const textParts: DAttachmentPart[] = [];
+    const attachmentParts: DAttachmentPart[] = [];
+    for (const part of attachmentsTakeAllParts(false)) {
+      if (part.atype === 'atext')
+        textParts.push(part);
+      else
+        attachmentParts.push(part);
+    }
+    const inlinedText = attachmentInlineTextParts(composerText, textParts, 'markdown-code', '\n\n');
+    const contentParts: DContentParts = inlinedText ? [{ ptype: 'text', text: inlinedText }] : [];
+
+    // stop if no content
+    if (!contentParts.length && !attachmentParts.length)
       return false;
 
     // metadata
     const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
 
     // send the message
-    const enqueued = onAction(conversationId, _chatModeId, multiPartMessage, metadata);
+    const enqueued = onAction(conversationId, _chatModeId, contentParts, attachmentParts, metadata);
     if (enqueued) {
-      clearAttachmentDrafts();
+      attachmentsClear();
       handleReplyToCleared();
       setComposeText('');
     }
 
     return enqueued;
-  }, [clearAttachmentDrafts, conversationId, handleReplyToCleared, llmAttachmentDrafts, onAction, replyToGenerateText, setComposeText]);
+  }, [attachmentsClear, attachmentsTakeAllParts, conversationId, handleReplyToCleared, onAction, replyToGenerateText, setComposeText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -465,58 +476,19 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
-
   const handleAttachmentDraftsAction = React.useCallback((attachmentDraftId: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
-    // only support text actions
-    if (action !== 'inline-text' && action !== 'copy-text')
-      return console.warn('handleAttachmentDraftsAction - unsupported action', action);
-
-
-    console.log('handleAttachmentDraftsAction - FIXME', attachmentDraftId, action);
-
-    /*
-        if (attachmentDraftCollapsedParts.length >= 1) {
-      const concat = attachmentDraftCollapsedParts.map(output => {
-        if (output.atype === 'atext')
-          return output.text;
-        else if (output.atype === 'aimage')
-          return output.title;
-        else
-          return null;
-      }).join('\n\n---\n\n');
-      copyToClipboard(concat.trim(), 'Converted attachment');
+    switch (action) {
+      case 'copy-text':
+        const copyTextParts = attachmentsTakeTextParts(attachmentDraftId, false);
+        const copyTextString = attachmentInlineTextParts(null, copyTextParts, false, '\n\n---\n\n');
+        copyToClipboard(copyTextString, attachmentDraftId ? 'Attachment Text' : 'Attachments Text');
+        break;
+      case 'inline-text':
+        const inlineTextParts = attachmentsTakeTextParts(attachmentDraftId, true);
+        setComposeText(currentText => attachmentInlineTextParts(currentText, inlineTextParts, 'markdown-code', '\n\n'));
+        break;
     }
-
-     */
-
-  }, []);
-
-
-  const handleAttachmentDraftInlineText = React.useCallback((attachmentDraftId: AttachmentDraftId) => {
-    console.log('handleAttachmentDraftInlineText - FIXME');
-    setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachmentDrafts.collapseTextWithAttachmentDraft(currentText, attachmentDraftId);
-      const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
-      if (inlinedText) {
-        removeAttachmentDraft(attachmentDraftId);
-        return inlinedText;
-      } else
-        return currentText;
-    });
-  }, [llmAttachmentDrafts, removeAttachmentDraft, setComposeText]);
-
-  const handleAttachmentDraftsInlineText = React.useCallback(() => {
-    console.log('handleAttachmentDraftsInlineText - FIXME');
-    setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachmentDrafts.collapseTextWithAttachmentDrafts(currentText);
-      const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
-      if (inlinedText) {
-        clearAttachmentDrafts();
-        return inlinedText;
-      } else
-        return currentText;
-    });
-  }, [clearAttachmentDrafts, llmAttachmentDrafts, setComposeText]);
+  }, [attachmentsTakeTextParts, setComposeText]);
 
 
   // Drag & Drop

@@ -71,8 +71,16 @@ function _attachmentPartTokens(part: DAttachmentPart, llm: DLLM, debugFrom: stri
   }
 }
 
+export type TextAttachmentWrapFormat = false | 'markdown-code';
+
+export function attachmentWrapText(text: string, title: string | undefined, wrapFormat: TextAttachmentWrapFormat): string {
+  if (wrapFormat === 'markdown-code')
+    return `\`\`\`${title || ''}\n${text}\n\`\`\``;
+  return text;
+}
+
 function _attachmentPartTextTokens(title: string | undefined, text: string, llm: DLLM, debugFrom: string): number {
-  const likelyBlockRendition = `\`\`\`${title || ''}\n${text}\n\`\`\``;
+  const likelyBlockRendition = attachmentWrapText(text, title, 'markdown-code');
   return estimateTextTokens(likelyBlockRendition, llm, debugFrom);
 }
 

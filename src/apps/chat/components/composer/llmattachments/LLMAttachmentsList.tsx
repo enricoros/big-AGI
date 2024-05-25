@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
@@ -35,7 +36,7 @@ export function LLMAttachmentsList(props: {
 
   // derived state
 
-  const { llmAttachmentDrafts, canInlineAllTextParts } = props.llmAttachmentDrafts;
+  const { llmAttachmentDrafts, canInlineSomeTextParts } = props.llmAttachmentDrafts;
 
   const hasAttachments = llmAttachmentDrafts.length >= 1;
 
@@ -57,6 +58,11 @@ export function LLMAttachmentsList(props: {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
   }, []);
+
+  const handleOverallCopyText = React.useCallback(() => {
+    handleOverallMenuHide();
+    onAttachmentDraftsAction(null, 'copy-text');
+  }, [handleOverallMenuHide, onAttachmentDraftsAction]);
 
   const handleOverallInlineText = React.useCallback(() => {
     handleOverallMenuHide();
@@ -145,10 +151,15 @@ export function LLMAttachmentsList(props: {
       <CloseableMenu
         dense placement='top-start'
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
+        sx={{ minWidth: 200 }}
       >
-        <MenuItem onClick={handleOverallInlineText} disabled={!canInlineAllTextParts}>
+        <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeTextParts}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-          Inline <span style={{ opacity: 0.5 }}>text attachments</span>
+          Inline all text
+        </MenuItem>
+        <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeTextParts}>
+          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+          Copy all text
         </MenuItem>
         <ListDivider />
         <MenuItem onClick={handleOverallClear}>

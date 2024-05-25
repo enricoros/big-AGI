@@ -94,7 +94,6 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
       title: title,
       width: dimensions?.width,
       height: dimensions?.height,
-      collapsible: false,
     } satisfies DAttachmentPart;
   } catch (error) {
     console.error('Error storing image in DBlobs:', error);

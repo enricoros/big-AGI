@@ -7,7 +7,9 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import { useChatAttachmentsStore } from '../chats/store-chat-overlay';
+import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+import { attachmentWrapText, TextAttachmentWrapFormat } from '~/common/stores/chat/chat.tokens';
+import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
@@ -17,14 +19,28 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
+export function attachmentInlineTextParts(initialTextBlockText: string | null, textParts: DAttachmentPart[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
+  let inlinedText = initialTextBlockText || '';
+  for (const textPart of textParts) {
+    if (inlinedText.length)
+      inlinedText += separator;
+    if (textPart.atype === 'atext')
+      inlinedText += attachmentWrapText(textPart.text, textPart.title, wrapFormat);
+    else
+      console.warn('attachmentInlineTextParts: unhandled part type:', textPart.atype);
+  }
+  return inlinedText;
+}
+
 export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean) => {
 
   // state
-  const { attachmentDrafts, clearAttachmentDrafts, createAttachmentDraft, removeAttachmentDraft } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
+  const { _createAttachmentDraft, attachmentDrafts, attachmentsClear, attachmentsTakeAllParts, attachmentsTakeTextParts } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
+    _createAttachmentDraft: state.createAttachmentDraft,
     attachmentDrafts: state.attachmentDrafts,
-    clearAttachmentDrafts: state.clearAttachmentsDrafts,
-    createAttachmentDraft: state.createAttachmentDraft,
-    removeAttachmentDraft: state.removeAttachmentDraft,
+    attachmentsClear: state.clearAttachmentsDrafts,
+    attachmentsTakeAllParts: state.takeAllParts,
+    attachmentsTakeTextParts: state.takeTextParts,
   })));
 
   // Creation helpers
@@ -33,10 +49,10 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendFile', origin, fileWithHandle, overrideFileName);
 
-    return createAttachmentDraft({
+    return _createAttachmentDraft({
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
     });
-  }, [createAttachmentDraft]);
+  }, [_createAttachmentDraft]);
 
 
   const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
@@ -78,7 +94,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     if (textPlain && enableLoadURLs) {
       const textPlainUrl = asValidURL(textPlain);
       if (textPlainUrl && textPlainUrl) {
-        void createAttachmentDraft({
+        void _createAttachmentDraft({
           media: 'url', url: textPlainUrl, refUrl: textPlain,
         });
         return 'as_url';
@@ -87,7 +103,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
     if (attachText && (textHtml || textPlain)) {
-      void createAttachmentDraft({
+      void _createAttachmentDraft({
         media: 'text', method, textPlain, textHtml,
       });
       return 'as_text';
@@ -98,17 +114,17 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [attachAppendFile, createAttachmentDraft, enableLoadURLs]);
+  }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
 
 
   const attachAppendEgoMessage = React.useCallback((blockTitle: string, textPlain: string, attachmentLabel: string) => {
     if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendEgo', { blockTitle, textPlain, attachmentLabel });
 
-    return createAttachmentDraft({
+    return _createAttachmentDraft({
       media: 'ego', method: 'ego-message', label: attachmentLabel, blockTitle: blockTitle, textPlain: textPlain,
     });
-  }, [createAttachmentDraft]);
+  }, [_createAttachmentDraft]);
 
 
   const attachAppendClipboardItems = React.useCallback(async () => {
@@ -162,7 +178,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       if (textPlain && enableLoadURLs) {
         const textPlainUrl = asValidURL(textPlain);
         if (textPlainUrl && textPlainUrl.trim()) {
-          void createAttachmentDraft({
+          void _createAttachmentDraft({
             media: 'url', url: textPlainUrl.trim(), refUrl: textPlain,
           });
           continue;
@@ -171,7 +187,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
       // attach as Text
       if (textHtml || textPlain) {
-        void createAttachmentDraft({
+        void _createAttachmentDraft({
           media: 'text', method: 'clipboard-read', textPlain, textHtml,
         });
         continue;
@@ -179,7 +195,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [attachAppendFile, createAttachmentDraft, enableLoadURLs]);
+  }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
 
 
   return {
@@ -193,7 +209,8 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     attachAppendFile,
 
     // manage attachments
-    clearAttachmentDrafts,
-    removeAttachmentDraft,
+    attachmentsClear,
+    attachmentsTakeAllParts,
+    attachmentsTakeTextParts,
   };
 };
