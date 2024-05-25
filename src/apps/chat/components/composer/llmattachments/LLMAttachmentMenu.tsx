@@ -144,7 +144,7 @@ export function LLMAttachmentMenu(props: {
         <ListItem>
           <ListItemDecorator>
             {llmSupportsTextParts && (
-              <Tooltip title='Copy Text to clipboard'>
+              <Tooltip title='Copy text to clipboard'>
                 <IconButton size='sm' onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextParts} sx={{ ml: -0.5 }}>
                   <ContentCopyIcon />
                 </IconButton>

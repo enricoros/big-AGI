@@ -40,7 +40,6 @@ const PLAIN_TEXT_MIMETYPES: string[] = [
 //    - PNG (.png), JPEG (.jpeg and .jpg), WEBP (.webp), and non-animated GIF (.gif)
 //
 // Google: https://ai.google.dev/gemini-api/docs/prompting_with_media
-//
 //  - Supported Image formats:
 //    - models: gemini-1.5-pro, gemini-pro-vision
 //    - PNG - image/png, JPEG - image/jpeg, WEBP - image/webp, HEIC - image/heic, HEIF - image/heif

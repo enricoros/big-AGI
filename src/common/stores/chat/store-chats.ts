@@ -3,14 +3,14 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
+import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
 import { SystemPurposeId } from '../../../data';
 
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
-import { textTokensForLLMId } from '~/common/util/token-counter';
 
-import { DMessage, DMessageId, DMessageMetadata, reduceContentToText } from './chat.message';
+import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, convertCConversation_V3_V4, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
+import { estimateTokensForAttachmentParts, estimateTokensForContentParts } from './chat.tokens';
 
 
 /// Conversations Store
@@ -331,17 +331,24 @@ function updateMessagesTokenCounts(messages: DMessage[], forceUpdate: boolean, d
 // Convenience function to count the tokens in a DMessage object
 function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceUpdate: boolean, debugFrom: string): number {
   if (forceUpdate || !message.tokenCount) {
+    // if there's no LLM, we can't count tokens
     if (!llmId) {
       message.tokenCount = 0;
       return 0;
     }
 
-    // NOTE: temporary flattening of text-only parts, until we figure out a better way to handle this
-    // FIXME: this is a quick and dirty hack, until we move token counting outside
-    const messageTextParts = reduceContentToText(message.content, '');
+    // find the LLM from the ID
+    try {
+      const dllm = findLLMOrThrow(llmId);
 
-    // TODO: handle attachments too
-    message.tokenCount = textTokensForLLMId(messageTextParts, llmId, debugFrom) ?? 0;
+      // count the tokens
+      const contentTokens = estimateTokensForContentParts(message.content, dllm, debugFrom);
+      const attachmentTokens = estimateTokensForAttachmentParts(message.userAttachments, dllm, contentTokens > 0, debugFrom);
+      message.tokenCount = contentTokens + attachmentTokens;
+    } catch (e) {
+      console.error(`updateMessageTokenCount: LLM not found for ID ${llmId}`);
+      message.tokenCount = 0;
+    }
   }
   return message.tokenCount;
 }

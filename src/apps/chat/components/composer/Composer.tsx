@@ -29,7 +29,7 @@ import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptim
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { textTokensForLLMId } from '~/common/util/token-counter';
+import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
@@ -167,19 +167,20 @@ export function Composer(props: {
 
   const isMobile = !!props.isMobile;
   const isDesktop = !props.isMobile;
-  const chatLLMId = props.chatLLM?.id || null;
+  const noConversation = !props.conversationId;
+  const noLLM = !props.chatLLM;
 
 
   // tokens derived state
 
-  const tokensComposerText = React.useMemo(() => {
-    if (!debouncedText || !chatLLMId)
-      return 0;
-    return textTokensForLLMId(debouncedText, chatLLMId, 'composer text') ?? 0;
-  }, [chatLLMId, debouncedText]);
-  let tokensComposer = tokensComposerText + llmAttachmentDrafts.llmTokenCountApprox;
-  if (tokensComposer > 0)
-    tokensComposer += 4; // every user message has this many surrounding tokens (note: shall depend on llm..)
+  const tokensComposerTextDebounced = React.useMemo(() => {
+    return (debouncedText && props.chatLLM)
+      ? estimateTextTokens(debouncedText, props.chatLLM, 'composer text')
+      : 0;
+  }, [props.chatLLM, debouncedText]);
+  let tokensComposer = tokensComposerTextDebounced + (llmAttachmentDrafts.llmTokenCountApprox || 0);
+  if (props.chatLLM && tokensComposer > 0)
+    tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (props.chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
@@ -467,10 +468,8 @@ export function Composer(props: {
 
   const handleAttachmentDraftsAction = React.useCallback((attachmentDraftId: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
     // only support text actions
-    if (action !== 'inline-text' && (action as any) !== 'inline-all-text')
+    if (action !== 'inline-text' && action !== 'copy-text')
       return console.warn('handleAttachmentDraftsAction - unsupported action', action);
-
-
 
 
     console.log('handleAttachmentDraftsAction - FIXME', attachmentDraftId, action);
@@ -828,7 +827,7 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (showChatExtras
-                  ? <ButtonCallMemo isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />
+                  ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
@@ -847,7 +846,7 @@ export function Composer(props: {
                 {!assistantAbortible ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachmentDrafts.canAttachAllParts}
+                    fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllParts}
                     onClick={handleSendClicked}
                     endDecorator={buttonIcon}
                     sx={{ '--Button-gap': '1rem' }}
@@ -857,7 +856,7 @@ export function Composer(props: {
                 ) : (
                   <Button
                     key='composer-stop'
-                    fullWidth variant='soft' disabled={!props.conversationId}
+                    fullWidth variant='soft' disabled={noConversation}
                     onClick={handleStopClicked}
                     endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
                     sx={{ animation: `${animationEnterBelow} 0.1s ease-out` }}
@@ -868,14 +867,14 @@ export function Composer(props: {
 
                 {/* [Beam] Open Beam */}
                 {/*{isText && <Tooltip title='Open Beam'>*/}
-                {/*  <IconButton variant='outlined' disabled={!props.conversationId || !chatLLMId} onClick={handleSendTextBeamClicked}>*/}
+                {/*  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleSendTextBeamClicked}>*/}
                 {/*    <ChatBeamIcon />*/}
                 {/*  </IconButton>*/}
                 {/*</Tooltip>}*/}
 
                 {/* [Draw] Imagine */}
                 {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
-                  <IconButton variant='outlined' disabled={!props.conversationId || !chatLLMId} onClick={handleTextImagineClicked}>
+                  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>
                     <AutoAwesomeIcon />
                   </IconButton>
                 </Tooltip>}
@@ -883,7 +882,7 @@ export function Composer(props: {
                 {/* Mode expander */}
                 <IconButton
                   variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
-                  disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor}
+                  disabled={noConversation || noLLM || !!chatModeMenuAnchor}
                   onClick={handleModeSelectorShow}
                 >
                   <ExpandLessIcon />
@@ -893,7 +892,7 @@ export function Composer(props: {
               {/* [desktop] secondary-top buttons */}
               {isDesktop && showChatExtras && !assistantAbortible && (
                 <ButtonBeamMemo
-                  disabled={!props.conversationId || !chatLLMId || !llmAttachmentDrafts.canAttachAllParts}
+                  disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllParts}
                   hasContent={!!composeText}
                   onClick={handleSendTextBeamClicked}
                 />
@@ -908,7 +907,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
-              {showChatExtras && <ButtonCallMemo disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
+              {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
