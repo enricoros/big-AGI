@@ -10,7 +10,7 @@ import { TokenBadgeMemo } from '../../../apps/chat/components/composer/TokenBadg
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { Section } from '~/common/components/Section';
-import { countModelTokens } from '~/common/util/token-counter';
+import { textTokensForLLMId } from '~/common/util/token-counter';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 
 import { summerizeToFitContextBudget } from './summerize';
@@ -48,7 +48,7 @@ export function ContentReducer(props: {
   const [processing, setProcessing] = React.useState(false);
 
   // derived state
-  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') ?? 0 : 0;
+  const reducedTokens = reducerModelId ? textTokensForLLMId(reducedText, reducerModelId, 'content reducer reduce') ?? 0 : 0;
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 

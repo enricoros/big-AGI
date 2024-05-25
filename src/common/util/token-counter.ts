@@ -67,7 +67,7 @@ const tokenizerCache: { [encodingId: string]: Tiktoken } = {};
  * @param {string} debugFrom - Debug information.
  * @returns {number | null} The token count or null if not ready.
  */
-export function countModelTokens(text: string, llmId: DLLMId, debugFrom: string): number | null {
+export function textTokensForLLMId(text: string, llmId: DLLMId, debugFrom: string): number | null {
   // The library shall have been preloaded - if not, attempt to start its loading and return null to indicate we're not ready to count
   if (!encoding_for_model || !get_encoding) {
     if (!informTheUser) {
@@ -114,7 +114,7 @@ export function countModelTokens(text: string, llmId: DLLMId, debugFrom: string)
  * @param {string} debugFrom - Debug information.
  * @returns {Array<{ token: number, bytes: string }> | null} The detailed token information or null if not ready.
  */
-export function countTokenizerTokens(text: string, encodingId: string, debugFrom: string): Array<TokenChunk> | null {
+export function textTokensForEncodingId(text: string, encodingId: string, debugFrom: string): Array<TokenChunk> | null {
   // The library shall have been preloaded - if not, attempt to start its loading and return null to indicate we're not ready to count
   if (!get_encoding) {
     if (!informTheUser) {
