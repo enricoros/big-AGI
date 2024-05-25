@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Tooltip, Typography } from '@mui/joy';
+import { Box, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -142,15 +142,7 @@ export function LLMAttachmentMenu(props: {
 
       {DEBUG_LLMATTACHMENTS && !!draftInput && (
         <ListItem>
-          <ListItemDecorator>
-            {llmSupportsTextParts && (
-              <Tooltip title='Copy text to clipboard'>
-                <IconButton size='sm' onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextParts} sx={{ ml: -0.5 }}>
-                  <ContentCopyIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-          </ListItemDecorator>
+          <ListItemDecorator />
           <Box>
             {!!draftInput && (
               <Typography level='body-sm'>
@@ -220,6 +212,10 @@ export function LLMAttachmentMenu(props: {
       <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextParts}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline text
+      </MenuItem>
+      <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextParts}>
+        <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+        Copy text
       </MenuItem>
       <ListDivider />
       <MenuItem onClick={handleRemove}>

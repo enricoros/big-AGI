@@ -304,7 +304,6 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         atype: 'atext',
         text: inputDataToString(input.data),
         title: ref,
-        collapsible: true,
       });
       break;
 
@@ -314,7 +313,6 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         atype: 'atext',
         text: input.altData!,
         title: ref || '\n<!DOCTYPE html>',
-        collapsible: true,
       });
       break;
 
@@ -331,7 +329,6 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         atype: 'atext',
         text: mdTable,
         title: ref,
-        collapsible: true,
       });
       break;
 
@@ -400,7 +397,6 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
           atype: 'atext',
           text: imageText,
           title: ref,
-          collapsible: true,
         });
       } catch (error) {
         console.error(error);
@@ -421,7 +417,6 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         atype: 'atext',
         text: pdfText,
         title: ref,
-        collapsible: true,
       });
       break;
 
@@ -452,7 +447,6 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         atype: 'atext',
         text: inputDataToString(input.data),
         title: ref,
-        collapsible: true,
       });
       break;
 

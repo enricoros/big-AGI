@@ -70,8 +70,8 @@ type DContentPart =
 // export type DAttachmentMultiPart = DAttachmentPart[];
 
 export type DAttachmentPart =
-  | { atype: 'atext', text: string, title?: string, collapsible: boolean }
-  | { atype: 'aimage', contentRef: DContentRef, title?: string, width?: number, height?: number, collapsible: false }
+  | { atype: 'atext', text: string, title?: string }
+  | { atype: 'aimage', contentRef: DContentRef, title?: string, width?: number, height?: number }
 
 
 // Metadata
