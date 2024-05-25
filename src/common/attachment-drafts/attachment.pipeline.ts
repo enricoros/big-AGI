@@ -29,6 +29,15 @@ const PLAIN_TEXT_MIMETYPES: string[] = [
   'text/css',
   'text/javascript',
   'application/json',
+  // https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=node#plain_text_formats
+  'application/rtf',
+  'application/x-javascript',
+  'application/x-python-code',
+  'application/x-typescript',
+  'text/rtf',
+  'text/x-python',
+  'text/x-typescript',
+  'text/xml',
 ];
 
 // Image Rules across the supported LLMs
