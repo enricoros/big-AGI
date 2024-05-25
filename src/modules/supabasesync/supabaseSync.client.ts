@@ -1,12 +1,8 @@
-//import { apiAsync } from '~/common/util/trpc.client';
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { useSupabaseSyncStore } from "./store-module-supabase-sync";
-import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 import { conversationToJsonV1 } from '~/modules/trade/trade.client';
-import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore, createDConversation } from '~/common/state/store-chats';
-//import { DFolder, useFolderStore } from '~/common/state/store-folders';
-import { shallow } from 'zustand/shallow';
-import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../data';
+import { DConversation, DMessage, useChatStore, createDConversation } from '~/common/state/store-chats';
+import { SystemPurposeId } from '../../data';
 
 type SupabaseConversation = {
     id: string;
@@ -28,54 +24,68 @@ function logError(message: string, error: any) {
     console.error(`[ERROR]: ${message}`, error);
 }
 
-/**
- * This function tests the Supabase connection
- * @param url 
- * @param key 
- * @returns true if the connection is valid, false otherwise
- */
-export async function testSupabaseConnection(url: string, key: string): Promise<boolean> {
+// Singleton instance of Supabase Client, recreate when api key changes
+let supabaseClientInstance: SupabaseClient<any, "public", any> | null = null;
+let lastSupabaseClientKey: string | null = null;
 
-    // get the keys (empty if they're on server)
+// Singleton instance of Supabase Realtime, recreate when api key changes
+export function getSupabaseClient(): SupabaseClient<any, "public", any> {
     const { supabaseUrl, supabaseKey } = useSupabaseSyncStore.getState();
     
-    try {
-        console.log('test Connection');
-        //const supabase = createClient(supabaseUrl, supabaseKey);
-        //supabase.
-        //await supabase.auth.api.getUser();
-        //const { data: Conversations } = await supabase.from('Conversation').select();
-        return true;
-    } catch (error: any) {
-        console.error(`testSupabaseConnection: ${error}`);
-        return false;
-    }
-}
-
-function createSupabase(): SupabaseClient {
-    const { supabaseUrl, supabaseKey } = useSupabaseSyncStore.getState();
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    return supabase;
-}
-
-async function getServersLastSyncTime(supabase: SupabaseClient): Promise<number> {
-    const { data, error } = await supabase
-        .from('conversation')
-        .select('updated')
-        .order('updated', { ascending: false })
-        .limit(1);
-
-    if (error) {
-        console.error('Error fetching lastSyncTime:', error);
-        return 0;
-    }
-
-    if (data && data.length > 0) {
-        return data[0].updated;
+    // if the url or key is not set the return null
+    if (supabaseClientInstance && lastSupabaseClientKey === supabaseKey) {
+        return supabaseClientInstance;
     } else {
-        return 0;
+
+        // dispose of the previous instance if it exists
+        // if (supabaseClientInstance) {
+        //     await supabaseClientInstance.auth.signOut();
+        //     supabaseClientInstance = null;
+        // }
+        
+        supabaseClientInstance = createClient(supabaseUrl, supabaseKey);
+        lastSupabaseClientKey = supabaseKey;
+        return supabaseClientInstance;
     }
 }
+
+// async function signIn(): Promise<void> {
+//     const { supabaseUrl, supabaseKey } = useSupabaseSyncStore.getState();
+//     if (!isValidSupabaseConnection(supabaseUrl, supabaseKey)) {
+//         throw new Error('Invalid Supabase Connection');
+//     }
+//
+//     const supabase = createSupabaseClient();
+//     const { data, error } = await supabase
+//        .auth.signInWithPassword();
+//       
+//     if (error) {
+//         throw error;
+//     }
+//
+//     if (!data) {
+//         throw new Error('Invalid Supabase Connection');
+//     }
+// }
+
+// async function getServersLastSyncTime(supabase: SupabaseClient): Promise<number> {
+//     const { data, error } = await supabase
+//         .from('conversation')
+//         .select('updated')
+//         .order('updated', { ascending: false })
+//         .limit(1);
+//
+//     if (error) {
+//         console.error('Error fetching lastSyncTime:', error);
+//         return 0;
+//     }
+//
+//     if (data && data.length > 0) {
+//         return data[0].updated;
+//     } else {
+//         return 0;
+//     }
+// }
 
 async function syncToServer(supabase: SupabaseClient, conversations: DConversation[], lastSyncTime: number): Promise<number> {
     // find all conversations that have been updated since the last sync
@@ -162,7 +172,7 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
 export async function syncAllConversations(setMessage?: (message: string | null) => void): Promise<number> {
     const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore.getState();
     const conversations = useChatStore.getState().conversations;
-    const supabase = createSupabase();
+    const supabase = await getSupabaseClient();
 
     //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
     try {
