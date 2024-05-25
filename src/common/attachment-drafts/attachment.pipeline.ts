@@ -240,7 +240,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       const imageSupported = IMAGE_MIMETYPES.includes(input.mimeType);
       converters.push({ id: 'image-resized-high', name: 'Image (high detail)', disabled: !imageSupported });
       converters.push({ id: 'image-resized-low', name: 'Image (low detail)', disabled: !imageSupported });
-      converters.push({ id: 'image-original', name: 'Image (original)', disabled: !imageSupported });
+      converters.push({ id: 'image-original', name: 'Image (original quality)', disabled: !imageSupported });
       if (!imageSupported)
         converters.push({ id: 'image-to-default', name: `As Image (${DEFAULT_ADRAFT_IMAGE_MIMETYPE})` });
       converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
