@@ -65,10 +65,7 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
 
 export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google' | 'anthropic';
 
-/**
- * Resizes an image based on the specified resize mode.
- */
-export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
+export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: string = 'image/webp', destQuality: number = 0.90): Promise<{
   mimeType: string,
   base64: string,
 } | null> {
@@ -80,8 +77,8 @@ export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase
       const originalWidth = image.width;
       const originalHeight = image.height;
 
-      let newWidth: number = 0;
-      let newHeight: number = 0;
+      let newWidth: number = originalWidth;
+      let newHeight: number = originalHeight;
       let shouldResize = false;
 
       switch (resizeMode) {
@@ -92,68 +89,82 @@ export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase
             shouldResize = true;
             if (originalWidth > originalHeight) {
               newWidth = maxSideAnthropic;
-              newHeight = (originalHeight / originalWidth) * maxSideAnthropic;
+              newHeight = Math.round((originalHeight / originalWidth) * maxSideAnthropic);
             } else {
               newHeight = maxSideAnthropic;
-              newWidth = (originalWidth / originalHeight) * maxSideAnthropic;
+              newWidth = Math.round((originalWidth / originalHeight) * maxSideAnthropic);
             }
           }
           break;
 
         case 'google':
-          // Resize to fit within 3072x3072
+          // Google: Resize to fit within 3072x3072
           const maxSideGoogle = 3072;
           if (originalWidth > maxSideGoogle || originalHeight > maxSideGoogle) {
             shouldResize = true;
             if (originalWidth > originalHeight) {
               newWidth = maxSideGoogle;
-              newHeight = (originalHeight / originalWidth) * maxSideGoogle;
+              newHeight = Math.round((originalHeight / originalWidth) * maxSideGoogle);
             } else {
               newHeight = maxSideGoogle;
-              newWidth = (originalWidth / originalHeight) * maxSideGoogle;
+              newWidth = Math.round((originalWidth / originalHeight) * maxSideGoogle);
             }
           }
           break;
 
         case 'openai-high-res':
-          // Resize to fit within 2048x2048, then scale shortest side to 768px without upscaling
+          // OpenAI:
+          // 1. Scale down to fit within 2048x2048
           const maxSideOpenAI = 2048;
-          const minSideOpenAI = 768;
           if (originalWidth > maxSideOpenAI || originalHeight > maxSideOpenAI) {
             shouldResize = true;
             if (originalWidth > originalHeight) {
               newWidth = maxSideOpenAI;
-              newHeight = (originalHeight / originalWidth) * maxSideOpenAI;
-              if (newHeight < minSideOpenAI) {
-                newHeight = minSideOpenAI;
-                newWidth = (originalWidth / originalHeight) * minSideOpenAI;
-              }
+              newHeight = Math.round((originalHeight / originalWidth) * maxSideOpenAI);
             } else {
               newHeight = maxSideOpenAI;
-              newWidth = (originalWidth / originalHeight) * maxSideOpenAI;
-              if (newWidth < minSideOpenAI) {
-                newWidth = minSideOpenAI;
-                newHeight = (originalHeight / originalWidth) * minSideOpenAI;
-              }
+              newWidth = Math.round((originalWidth / originalHeight) * maxSideOpenAI);
             }
-          } else if (originalWidth < minSideOpenAI && originalHeight < minSideOpenAI) {
+          }
+
+          // 2. Scale down to 768px on the shortest side (if larger) - maintain aspect ratio
+          const minSideOpenAI = 768;
+          if (newWidth > newHeight && newHeight > minSideOpenAI) {
             shouldResize = true;
-            if (originalWidth > originalHeight) {
-              newWidth = minSideOpenAI;
-              newHeight = (originalHeight / originalWidth) * minSideOpenAI;
-            } else {
-              newHeight = minSideOpenAI;
-              newWidth = (originalWidth / originalHeight) * minSideOpenAI;
-            }
+            newWidth = Math.round((newWidth / newHeight) * minSideOpenAI);
+            newHeight = minSideOpenAI;
+          } else if (newWidth < newHeight && newWidth > minSideOpenAI) {
+            shouldResize = true;
+            newHeight = Math.round((newHeight / newWidth) * minSideOpenAI);
+            newWidth = minSideOpenAI;
           }
           break;
 
         case 'openai-low-res':
-          // Resize to 512x512 without upscaling
-          if (originalWidth > 512 || originalHeight > 512) {
-            shouldResize = true;
-            newWidth = 512;
-            newHeight = 512;
+          // Resize to 512x512 if any side is larger
+          if (originalWidth <= 512 && originalHeight <= 512) {
+            resolve(null);
+            return;
+          }
+
+          const lrScaleMode = 'keep-aspect-ratio' as ('stretch' | 'keep-aspect-ratio');
+          switch (lrScaleMode) {
+            case 'stretch':
+              newWidth = 512;
+              newHeight = 512;
+              shouldResize = true;
+              break;
+
+            case 'keep-aspect-ratio':
+              if (originalWidth > originalHeight) {
+                newWidth = 512;
+                newHeight = Math.round((originalHeight / originalWidth) * 512);
+              } else {
+                newHeight = 512;
+                newWidth = Math.round((originalWidth / originalHeight) * 512);
+              }
+              shouldResize = true;
+              break;
           }
           break;
 
@@ -162,7 +173,7 @@ export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase
           return;
       }
 
-      if (!shouldResize || !newWidth || !newHeight) {
+      if (!shouldResize) {
         resolve(null);
         return;
       }

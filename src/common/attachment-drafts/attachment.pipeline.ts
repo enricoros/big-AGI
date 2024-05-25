@@ -35,7 +35,8 @@ const PLAIN_TEXT_MIMETYPES: string[] = [
 //
 // OpenAI: https://platform.openai.com/docs/guides/vision/what-type-of-files-can-i-upload
 //  - Supported Image formats:
-//    - Images are first scaled to fit within a 2048 x 2048 square, maintaining their aspect ratio. Then, they are scaled such that the shortest side of the image is 768px long.
+//    - Images are first scaled to fit within a 2048 x 2048 square (if larger), maintaining their aspect ratio.
+//      Then, they are scaled down such that the shortest side of the image is 768px (if larger)
 //    - PNG (.png), JPEG (.jpeg and .jpg), WEBP (.webp), and non-animated GIF (.gif)
 //
 // Google: https://ai.google.dev/gemini-api/docs/prompting_with_media
@@ -65,7 +66,7 @@ const PLAIN_TEXT_MIMETYPES: string[] = [
 //  - Supported Image formats:
 //    - image/jpeg, image/png, image/gif, and image/webp
 //    - If image’s long edge is more than 1568 pixels, or your image is more than ~1600 tokens, it will first be scaled down
-//      - Aspect ratio:	Image size - 1:1 1092x1092 px, 3:4 951x1268 px, 2:3 896x1344 px, 9:16 819x1456 px, 1:2 784x1568 px
+//      - Max Image Size per Aspect ratio: 1:1 1092x1092 px, 3:4 951x1268 px, 2:3 896x1344 px, 9:16 819x1456 px, 1:2 784x1568 px
 //    - Max size is 5MB/image on the API
 //    - Up to 20 images in a single request (note, request, not message)
 
