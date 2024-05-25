@@ -56,7 +56,7 @@ export type DContentParts = DContentPart[];
 
 type DContentPart =
   | { ptype: 'text'; text: string } // H/A
-  | { ptype: 'image'; mimeType: string; source: DContentRef }
+  | { ptype: 'image'; /*mimeType: string;*/ source: DContentRef, title?: string, width?: number, height?: number }
   // | { ptype: 'audio'; mimeType: string; source: DContentRef }
   // | { ptype: 'video'; mimeType: string; source: DContentRef }
   // | { ptype: 'document'; source: DContentRef } // H

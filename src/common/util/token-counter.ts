@@ -1,6 +1,6 @@
 import type { Tiktoken, TiktokenEncoding, TiktokenModel } from 'tiktoken';
 
-import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
+import type { DLLM } from '~/modules/llms/store-llms';
 
 
 // Do not set this to true in production, it's very verbose
@@ -63,24 +63,27 @@ const tokenizerCache: { [encodingId: string]: Tiktoken } = {};
 /**
  * Counts the tokens in the given text for the specified model.
  * @param {string} text - The text to tokenize.
- * @param {DLLMId} llmId - The ID of the LLM.
+ * @param llm - The LLM to use for tokenization count.
  * @param {string} debugFrom - Debug information.
  * @returns {number | null} The token count or null if not ready.
  */
-export function textTokensForLLMId(text: string, llmId: DLLMId, debugFrom: string): number | null {
+export function textTokensForLLM(text: string, llm: DLLM, debugFrom: string): number | null {
   // The library shall have been preloaded - if not, attempt to start its loading and return null to indicate we're not ready to count
   if (!encoding_for_model || !get_encoding) {
     if (!informTheUser) {
-      console.warn('countModelTokens: Tiktoken library is not yet loaded, loading now...');
+      console.warn('textTokensForLLM: Tiktoken library is not yet loaded, loading now...');
       informTheUser = true;
     }
     void preloadTiktokenLibrary(); // Attempt to preload without waiting.
     return null;
   }
 
-  // this will throw, so llmId better be found.. FIXME
-  const openaiModel = findLLMOrThrow(llmId)?.options?.llmRef;
-  if (!openaiModel) throw new Error(`LLM ${llmId} has no LLM reference id`);
+  // Validate input
+  const openaiModel = llm?.options?.llmRef;
+  if (!openaiModel) {
+    console.warn(`textTokensForLLM: LLM ${llm?.id} has no LLM reference id`);
+    return null;
+  }
 
   if (!(openaiModel in tokenEncoders)) {
     try {
@@ -99,10 +102,10 @@ export function textTokensForLLMId(text: string, llmId: DLLMId, debugFrom: strin
   try {
     count = tokenEncoders[openaiModel]?.encode(text, 'all', [])?.length || 0;
   } catch (e) {
-    console.error(`countModelTokens: Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
+    console.warn(`textTokensForLLM: Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
   }
   if (DEBUG_TOKEN_COUNT)
-    console.log(`countModelTokens: ${debugFrom}, ${llmId}, "${text.slice(0, 10)}": ${count}`);
+    console.log(`textTokensForLLM: ${debugFrom}, ${llm?.id}, "${text.slice(0, 10)}": ${count}`);
   return count;
 }
 
@@ -114,11 +117,11 @@ export function textTokensForLLMId(text: string, llmId: DLLMId, debugFrom: strin
  * @param {string} debugFrom - Debug information.
  * @returns {Array<{ token: number, bytes: string }> | null} The detailed token information or null if not ready.
  */
-export function textTokensForEncodingId(text: string, encodingId: string, debugFrom: string): Array<TokenChunk> | null {
+export function textTokensForEncodingId(text: string, encodingId: string, debugFrom: string): Array<UITokenChunk> | null {
   // The library shall have been preloaded - if not, attempt to start its loading and return null to indicate we're not ready to count
   if (!get_encoding) {
     if (!informTheUser) {
-      console.warn('countTokenizerTokens: Tiktoken library is not yet loaded, loading now...');
+      console.warn('textTokensForEncodingId: Tiktoken library is not yet loaded, loading now...');
       informTheUser = true;
     }
     void preloadTiktokenLibrary(); // Attempt to preload without waiting.
@@ -129,7 +132,7 @@ export function textTokensForEncodingId(text: string, encodingId: string, debugF
     try {
       tokenizerCache[encodingId] = get_encoding(encodingId as TiktokenEncoding);
     } catch (e) {
-      console.error(`countTokenizerTokens: Error initializing tokenizer "${encodingId}": ${e}`);
+      console.error(`textTokensForEncodingId: Error initializing tokenizer "${encodingId}": ${e}`);
       return null;
     }
   }
@@ -137,10 +140,10 @@ export function textTokensForEncodingId(text: string, encodingId: string, debugF
   try {
     const tokens = tokenizerCache[encodingId]?.encode(text, 'all', []) || new Uint32Array();
     if (DEBUG_TOKEN_COUNT)
-      console.log(`countTokenizerTokens: ${debugFrom}, ${encodingId}, "${text.slice(0, 10)}": ${tokens.length}`);
+      console.log(`textTokensForEncodingId: ${debugFrom}, ${encodingId}, "${text.slice(0, 10)}": ${tokens.length}`);
 
     // for every token create an object {t:token, b: bytes}
-    const tokenDetails: TokenChunk[] = [];
+    const tokenDetails: UITokenChunk[] = [];
     for (let i = 0; i < tokens.length; i++) {
       const bytesForToken = tokenizerCache[encodingId].decode_single_token_bytes(tokens[i]);
       const stringForToken = String.fromCharCode(...bytesForToken);
@@ -152,12 +155,12 @@ export function textTokensForEncodingId(text: string, encodingId: string, debugF
     }
     return tokenDetails;
   } catch (e) {
-    console.error(`countTokenizerTokens: Error tokenizing "${text.slice(0, 10)}..." with tokenizer '${encodingId}': ${e}`);
+    console.error(`textTokensForEncodingId: Error tokenizing "${text.slice(0, 10)}..." with tokenizer '${encodingId}': ${e}`);
     return null;
   }
 }
 
-interface TokenChunk {
+interface UITokenChunk {
   token: number;
   chunk: string;
   bytes: string;

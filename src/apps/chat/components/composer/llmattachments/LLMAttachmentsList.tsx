@@ -35,16 +35,16 @@ export function LLMAttachmentsList(props: {
 
   // derived state
 
-  const { attachmentDrafts, canInlineAllTextParts } = props.llmAttachmentDrafts;
+  const { llmAttachmentDrafts, canInlineAllTextParts } = props.llmAttachmentDrafts;
 
-  const hasAttachments = attachmentDrafts.length >= 1;
+  const hasAttachments = llmAttachmentDrafts.length >= 1;
 
   // derived item menu state
 
   const itemMenuAnchor = draftMenu?.anchor;
   const itemMenuAttachmentDraftId = draftMenu?.attachmentDraftId;
-  const itemMenuAttachmentDraft = itemMenuAttachmentDraftId ? attachmentDrafts.find(la => la.attachmentDraft.id === draftMenu.attachmentDraftId) : undefined;
-  const itemMenuIndex = itemMenuAttachmentDraft ? attachmentDrafts.indexOf(itemMenuAttachmentDraft) : -1;
+  const itemMenuAttachmentDraft = itemMenuAttachmentDraftId ? llmAttachmentDrafts.find(la => la.attachmentDraft.id === draftMenu.attachmentDraftId) : undefined;
+  const itemMenuIndex = itemMenuAttachmentDraft ? llmAttachmentDrafts.indexOf(itemMenuAttachmentDraft) : -1;
 
 
   // overall menu
@@ -99,7 +99,7 @@ export function LLMAttachmentsList(props: {
 
       {/* Horizontally scrollable Attachments */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
-        {attachmentDrafts.map((llmAttachment) =>
+        {llmAttachmentDrafts.map((llmAttachment) =>
           <LLMAttachmentItem
             key={llmAttachment.attachmentDraft.id}
             llmAttachment={llmAttachment}
@@ -133,7 +133,7 @@ export function LLMAttachmentsList(props: {
         llmAttachmentDraft={itemMenuAttachmentDraft}
         menuAnchor={itemMenuAnchor}
         isPositionFirst={itemMenuIndex === 0}
-        isPositionLast={itemMenuIndex === attachmentDrafts.length - 1}
+        isPositionLast={itemMenuIndex === llmAttachmentDrafts.length - 1}
         onDraftAction={handleDraftAction}
         onClose={handleDraftMenuHide}
       />
@@ -153,7 +153,7 @@ export function LLMAttachmentsList(props: {
         <ListDivider />
         <MenuItem onClick={handleOverallClear}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
-          Remove All{attachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {attachmentDrafts.length} attachments</span> : null}
+          Remove All{llmAttachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {llmAttachmentDrafts.length} attachments</span> : null}
         </MenuItem>
       </CloseableMenu>
     )}
@@ -164,7 +164,7 @@ export function LLMAttachmentsList(props: {
         open onClose={() => setConfirmClearAttachmentDrafts(false)} onPositive={handleOverallClearConfirmed}
         title='Confirm Removal'
         positiveActionText='Remove All'
-        confirmationText={`This action will remove all (${attachmentDrafts.length}) attachments. Do you want to proceed?`}
+        confirmationText={`This action will remove all (${llmAttachmentDrafts.length}) attachments. Do you want to proceed?`}
       />
     )}
 
