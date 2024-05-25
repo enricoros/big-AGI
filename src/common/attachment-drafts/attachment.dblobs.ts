@@ -85,7 +85,7 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
     // Create Part
     return {
       atype: 'aimage',
-      source: {
+      contentRef: {
         reftype: 'dblob',
         dblobId: dblobId,
         mimeType: mimeType,

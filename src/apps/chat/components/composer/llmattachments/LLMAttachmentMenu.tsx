@@ -27,12 +27,12 @@ export const DEBUG_LLMATTACHMENTS = true;
  * Note: this utility function could be extracted more broadly to chat.message.ts, but
  * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
  */
-async function handleShowContentInNewTab(source: DContentRef) {
+async function handleShowContentInNewTab(contentRef: DContentRef) {
   let imageUrl: string | null = null;
-  if (source.reftype === 'url')
-    imageUrl = source.url;
-  else if (source.reftype === 'dblob')
-    imageUrl = await getImageBlobURLById(source.dblobId);
+  if (contentRef.reftype === 'url')
+    imageUrl = contentRef.url;
+  else if (contentRef.reftype === 'dblob')
+    imageUrl = await getImageBlobURLById(contentRef.dblobId);
   if (imageUrl && typeof window !== 'undefined')
     window.open(imageUrl, '_blank', 'noopener,noreferrer');
 }
@@ -172,12 +172,12 @@ export function LLMAttachmentMenu(props: {
                 draft.outputParts.map((output, index) => {
                   if (output.atype === 'aimage') {
                     const resolution = output.width && output.height ? `${output.width} x ${output.height}` : 'unknown resolution';
-                    const mime = output.source.reftype === 'dblob' ? output.source.mimeType : 'unknown image';
+                    const mime = output.contentRef.reftype === 'dblob' ? output.contentRef.mimeType : 'unknown image';
                     return (
                       <Typography key={index} level='body-sm'>
-                        🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'}
+                        🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {output.contentRef.reftype === 'dblob' ? output.contentRef.bytesSize?.toLocaleString() : '(remote)'}
                         {' · '}
-                        <Link onClick={() => handleShowContentInNewTab(output.source)}>
+                        <Link onClick={() => handleShowContentInNewTab(output.contentRef)}>
                           open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                         </Link>
                       </Typography>
