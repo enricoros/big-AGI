@@ -143,11 +143,13 @@ export function LLMAttachmentMenu(props: {
       {!isPositionFixed && <ListDivider sx={{ mt: 0 }} />}
 
       {/* Render Converters as menu items */}
-      {/*{!isUnconvertible && <ListItem>*/}
-      {/*  <Typography level='body-md'>*/}
-      {/*    Attach as:*/}
-      {/*  </Typography>*/}
-      {/*</ListItem>}*/}
+      {!isUnconvertible && (
+        <ListItem>
+          <Typography level='body-sm'>
+            Attach as:
+          </Typography>
+        </ListItem>
+      )}
       {!isUnconvertible && aConverters.map((c, idx) =>
         <MenuItem
           disabled={c.disabled}
@@ -176,24 +178,31 @@ export function LLMAttachmentMenu(props: {
             )}
           </ListItemDecorator>
           <Box>
-            {!!aInput && <Typography level='body-xs'>
-              🡐 {aInput.mimeType}, {aInput.dataSize.toLocaleString()} bytes
-            </Typography>}
-            {/*<Typography level='body-xs'>*/}
+            {!!aInput && (
+              <Typography level='body-sm'>
+                🡐 {aInput.mimeType} · {aInput.dataSize.toLocaleString()}
+              </Typography>
+            )}
+            {!!aInput?.altMimeType && (
+              <Typography level='body-sm'>
+                <span style={{ color: 'transparent' }}>🡐</span> {aInput.altMimeType} · {aInput.altData?.length.toLocaleString()}
+              </Typography>
+            )}
+            {/*<Typography level='body-sm'>*/}
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Box>
               {isOutputMissing ? (
-                <Typography level='body-xs'>🡒 ...</Typography>
+                <Typography level='body-sm'>🡒 ...</Typography>
               ) : (
                 aOutputParts.map((output, index) => {
                   if (output.atype === 'aimage') {
                     const resolution = output.width && output.height ? `${output.width} x ${output.height}` : 'unknown resolution';
                     const mime = output.source.reftype === 'dblob' ? output.source.mimeType : 'unknown image';
                     return (
-                      <Typography key={index} level='body-xs'>
-                        🡒 {mime.replace('image/', 'img: ')}, {resolution}, {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'} bytes,
-                        {' '}
+                      <Typography key={index} level='body-sm'>
+                        🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {output.source.reftype === 'dblob' ? output.source.bytesSize?.toLocaleString() : '(remote)'}
+                        {' · '}
                         <Link onClick={() => handleShowContentInNewTab(output.source)}>
                           show <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                         </Link>
@@ -201,13 +210,13 @@ export function LLMAttachmentMenu(props: {
                     );
                   } else if (output.atype === 'atext') {
                     return (
-                      <Typography key={index} level='body-xs'>
+                      <Typography key={index} level='body-sm'>
                         🡒 txt: {output.text.length.toLocaleString()} bytes
                       </Typography>
                     );
                   } else {
                     return (
-                      <Typography key={index} level='body-xs'>
+                      <Typography key={index} level='body-sm'>
                         🡒 {(output as any).atype}: (other)
                       </Typography>
                     );
@@ -215,7 +224,7 @@ export function LLMAttachmentMenu(props: {
                 })
               )}
               {!!tokenCountApprox && (
-                <Typography level='body-xs' sx={{ ml: 1.75 }}>
+                <Typography level='body-sm' sx={{ ml: 1.75 }}>
                   ~ {tokenCountApprox.toLocaleString()} tokens
                 </Typography>
               )}
