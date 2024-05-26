@@ -21,7 +21,7 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -122,7 +122,7 @@ export function Telephone(props: {
     if (result.done) {
       const userSpeechTranscribed = result.transcript.trim();
       if (userSpeechTranscribed.length >= 1)
-        setCallMessages(messages => [...messages, createDMessage('user', userSpeechTranscribed)]); // [state] append user:speech
+        setCallMessages(messages => [...messages, createTextContentDMessage('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
   const { isSpeechEnabled, isRecording, isRecordingAudio, isRecordingSpeech, startRecording, stopRecording, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 1000);
@@ -171,7 +171,7 @@ export function Telephone(props: {
     const phoneMessages = personaCallStarters || ['Hello?', 'Hey!'];
     const firstMessage = phoneMessages[Math.floor(Math.random() * phoneMessages.length)];
 
-    setCallMessages([createDMessage('assistant', firstMessage)]); // [state] set assistant:hello message
+    setCallMessages([createTextContentDMessage('assistant', firstMessage)]); // [state] set assistant:hello message
 
     // fire/forget
     void EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId);
@@ -184,7 +184,7 @@ export function Telephone(props: {
     // only act when we have a new user message
     if (!isConnected || callMessages.length < 1 || callMessages[callMessages.length - 1].role !== 'user')
       return;
-    switch (singleTextOrThrow(callMessages[callMessages.length - 1])) {
+    switch (messageSingleTextOrThrow(callMessages[callMessages.length - 1])) {
       // do not respond
       case 'Stop.':
         return;
@@ -209,7 +209,7 @@ export function Telephone(props: {
 
     // temp fix: when the chat has no messages, only assume a single system message
     const chatMessages: { role: VChatMessageIn['role'], text: string }[] = (reMessages && reMessages.length > 0)
-      ? reMessages.map(message => ({ role: message.role, text: singleTextOrThrow(message) }))
+      ? reMessages.map(message => ({ role: message.role, text: messageSingleTextOrThrow(message) }))
       : personaSystemMessage
         ? [{ role: 'system', text: personaSystemMessage }]
         : [];
@@ -220,7 +220,7 @@ export function Telephone(props: {
       { role: 'system', content: 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.' },
       ...chatMessages.map(message => ({ role: message.role, content: message.text })),
       { role: 'system', content: 'You are now on the phone call related to the chat above. Respect your personality and answer with short, friendly and accurate thoughtful lines.' },
-      ...callMessages.map(message => ({ role: message.role, content: singleTextOrThrow(message) })),
+      ...callMessages.map(message => ({ role: message.role, content: messageSingleTextOrThrow(message) })),
     ];
 
     // perform completion
@@ -240,7 +240,7 @@ export function Telephone(props: {
     }).finally(() => {
       setPersonaTextInterim(null);
       if (finalText || error)
-        setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]); // [state] append assistant:call_response
+        setCallMessages(messages => [...messages, createTextContentDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]); // [state] append assistant:call_response
       // fire/forget
       if (finalText?.length >= 1)
         void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
@@ -342,7 +342,7 @@ export function Telephone(props: {
             {callMessages.map((message) =>
               <CallMessage
                 key={message.id}
-                text={singleTextOrThrow(message)}
+                text={messageSingleTextOrThrow(message)}
                 variant={message.role === 'assistant' ? 'solid' : 'soft'}
                 color={message.role === 'assistant' ? 'neutral' : 'primary'}
                 role={message.role}

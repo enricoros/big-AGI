@@ -84,7 +84,7 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
     })}
 
   </>;
-};
+}
 
 
 export function TextToImage(props: {

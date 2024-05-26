@@ -10,7 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { getImageBlobURLById } from '~/modules/dblobs/dblobs.db';
 
-import type { DContentRef } from '~/common/stores/chat/chat.message';
+import type { DDataRef, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -27,12 +27,12 @@ export const DEBUG_LLMATTACHMENTS = true;
  * Note: this utility function could be extracted more broadly to chat.message.ts, but
  * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
  */
-async function handleShowContentInNewTab(contentRef: DContentRef) {
+async function handleShowDataRefInNewTab(dataRef: DDataRef) {
   let imageUrl: string | null = null;
-  if (contentRef.reftype === 'url')
-    imageUrl = contentRef.url;
-  else if (contentRef.reftype === 'dblob')
-    imageUrl = await getImageBlobURLById(contentRef.dblobId);
+  if (dataRef.reftype === 'url')
+    imageUrl = dataRef.url;
+  else if (dataRef.reftype === 'dblob')
+    imageUrl = await getImageBlobURLById(dataRef.dblobId);
   if (imageUrl && typeof window !== 'undefined')
     window.open(imageUrl, '_blank', 'noopener,noreferrer');
 }
@@ -52,14 +52,14 @@ export function LLMAttachmentMenu(props: {
 
   const {
     attachmentDraft: draft,
-    llmSupportsTextParts,
+    llmSupportsTextFragments,
     llmTokenCountApprox,
   } = props.llmAttachmentDraft;
 
   const draftId = draft.id;
   const draftInput = draft.input;
   const isUnconvertible = !draft.converters.length;
-  const isOutputMissing = !draft.outputParts.length;
+  const isOutputMissing = !draft.outputFragments.length;
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
 
@@ -161,29 +161,29 @@ export function LLMAttachmentMenu(props: {
               {isOutputMissing ? (
                 <Typography level='body-sm'>🡒 ...</Typography>
               ) : (
-                draft.outputParts.map((output, index) => {
-                  if (output.atype === 'aimage') {
-                    const resolution = output.width && output.height ? `${output.width} x ${output.height}` : 'unknown resolution';
-                    const mime = output.contentRef.reftype === 'dblob' ? output.contentRef.mimeType : 'unknown image';
+                draft.outputFragments.map(({ part }, index) => {
+                  if (part.pt === 'image_ref') {
+                    const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'unknown resolution';
+                    const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
                     return (
                       <Typography key={index} level='body-sm'>
-                        🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {output.contentRef.reftype === 'dblob' ? output.contentRef.bytesSize?.toLocaleString() : '(remote)'}
+                        🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? part.dataRef.bytesSize?.toLocaleString() : '(remote)'}
                         {' · '}
-                        <Link onClick={() => handleShowContentInNewTab(output.contentRef)}>
+                        <Link onClick={() => handleShowDataRefInNewTab(part.dataRef)}>
                           open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                         </Link>
                       </Typography>
                     );
-                  } else if (output.atype === 'atext') {
+                  } else if (part.pt === 'text') {
                     return (
                       <Typography key={index} level='body-sm'>
-                        🡒 text: {output.text.length.toLocaleString()} bytes
+                        🡒 text: {part.text.length.toLocaleString()} bytes
                       </Typography>
                     );
                   } else {
                     return (
                       <Typography key={index} level='body-sm'>
-                        🡒 {(output as any).atype}: (other)
+                        🡒 {(part as DMessageAttachmentFragment['part']).pt}: (other)
                       </Typography>
                     );
                   }
@@ -209,11 +209,11 @@ export function LLMAttachmentMenu(props: {
       {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
       {/*  Shrink*/}
       {/*</MenuItem>*/}
-      <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextParts}>
+      <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline text
       </MenuItem>
-      <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextParts}>
+      <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments}>
         <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
         Copy text
       </MenuItem>

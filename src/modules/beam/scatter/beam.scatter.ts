@@ -6,7 +6,7 @@ import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
-import { createDMessage, DMessage, duplicateDMessage, pendDMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createEmptyDMessage, DMessage, duplicateDMessage, messageSingleTextOrThrow, pendDMessage } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
@@ -32,7 +32,7 @@ export function createBRayEmpty(llmId: DLLMId | null): BRay {
   return {
     rayId: uuidv4(),
     status: 'empty',
-    message: createDMessage('assistant'), // [state] assistant:Ray_empty
+    message: createEmptyDMessage('assistant'), // [state] assistant:Ray_empty
     rayLlmId: llmId,
     userSelected: false,
     imported: false,
@@ -60,7 +60,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
       message: {
         ...ray.message,
         ...incrementalMessage,
-        ...(incrementalMessage.content?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
+        ...(incrementalMessage.fragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
       },
     }));
   };
@@ -68,7 +68,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   // stream the assistant's messages
   const messagesHistory: VChatMessageIn[] = inputHistory.map((message) => ({
     role: message.role,
-    content: singleTextOrThrow(message),
+    content: messageSingleTextOrThrow(message),
   }));
   streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', onMessageUpdated, abortController.signal)
     .then((status) => {
@@ -123,7 +123,7 @@ export function rayIsSelectable(ray: BRay | null): boolean {
   //        && !!ray.message.text && ray.message.text !== SCATTER_PLACEHOLDER
   // any ray is selectable once it's 'updated' (message started flowing in)
   // return !!ray?.message?.updated /*&& !ray.message.pendingIncomplete*/;
-  return !!ray?.message.content.length;
+  return !!ray?.message.fragments.length;
 }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {
@@ -237,7 +237,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       const emptyRay = createBRayEmpty(raysLlmId);
 
       // pre-fill the ray with the imported message
-      if (message.content.length) {
+      if (message.fragments.length) {
         emptyRay.status = 'success';
         emptyRay.message = duplicateDMessage(message);
         emptyRay.message.updated = Date.now();

@@ -1,6 +1,6 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 
 // Attachment Draft
@@ -20,7 +20,7 @@ export type AttachmentDraft = {
   converterIdx: number | null; // Index of the selected converter
 
   outputsConverting: boolean;
-  outputParts: DAttachmentPart[]; // undefined: not yet converted, []: conversion failed, [ {}+ ]: conversion succeeded
+  outputFragments: DMessageAttachmentFragment[];
 
   // metadata: {
   //   creationDate?: Date; // Creation date of the file

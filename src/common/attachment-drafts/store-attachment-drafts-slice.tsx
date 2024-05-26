@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand';
 import type { StateCreator } from 'zustand/vanilla';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
 import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './attachment.pipeline';
@@ -24,15 +24,15 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
   setAttachmentDraftConverterIdxAndConvert: (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => Promise<void>;
 
   /**
-   * Extracts all parts from the all drafts and clears the store.
+   * Extracts all fragments from the all drafts and clears the store.
    */
-  takeAllParts: (removeParts: boolean) => DAttachmentPart[];
+  takeAllFragments: (removeFragments: boolean) => DMessageAttachmentFragment[];
 
   /**
-   * Extracts text parts from the attachment drafts and optionally removes them from the store.
+   * Extracts text fragments from the attachment drafts and optionally removes them from the store.
    * If `attachmentDraftId` is null, all the attachments are processed, otherwise only this.
    */
-  takeTextParts: (attachmentDraftId: AttachmentDraftId | null, removeParts: boolean) => DAttachmentPart[];
+  takeTextFragments: (attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
 
   _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<AttachmentDraft> | ((attachment: AttachmentDraft) => Partial<AttachmentDraft>)) => void;
   _getAttachment: (attachmentDraftId: AttachmentDraftId) => AttachmentDraft | undefined;
@@ -111,22 +111,22 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     await attachmentPerformConversion(attachmentDraft, converterIdx, editFn);
   },
 
-  takeAllParts: (removeParts: boolean): DAttachmentPart[] => {
-    const allParts: DAttachmentPart[] = [];
+  takeAllFragments: (removeFragments: boolean): DMessageAttachmentFragment[] => {
+    const allFragments: DMessageAttachmentFragment[] = [];
     _get().attachmentDrafts.forEach(draft => {
-      allParts.push(...draft.outputParts);
+      allFragments.push(...draft.outputFragments);
     });
 
-    if (removeParts)
+    if (removeFragments)
       _set({ attachmentDrafts: [] });
 
-    return allParts;
+    return allFragments;
   },
 
-  takeTextParts: (attachmentDraftId: AttachmentDraftId | null, removeParts: boolean): DAttachmentPart[] => {
+  takeTextFragments: (attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean): DMessageAttachmentFragment[] => {
     const { attachmentDrafts } = _get();
 
-    const textParts: DAttachmentPart[] = [];
+    const textFragments: DMessageAttachmentFragment[] = [];
     const keptDrafts: AttachmentDraft[] = [];
 
     for (const draft of attachmentDrafts) {
@@ -137,33 +137,33 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
         continue;
       }
 
-      // Extract text parts
-      const extractedTextParts = draft.outputParts.filter(part => part.atype === 'atext');
-      textParts.push(...extractedTextParts);
+      // Extract
+      const extractedTextFragments = draft.outputFragments.filter(fragment => fragment.part.pt === 'text');
+      textFragments.push(...extractedTextFragments);
 
       // keep as-is if there's nothing to remove
-      if (!removeParts || extractedTextParts.length === 0) {
+      if (!removeFragments || extractedTextFragments.length === 0) {
         keptDrafts.push(draft);
         continue;
       }
 
-      // Remove text parts from the output parts
-      const remainingParts = draft.outputParts.filter(part => part.atype !== 'atext');
-      if (remainingParts.length || draft.outputsConverting) {
+      // Remove text fragments
+      const remainingFragments = draft.outputFragments.filter(fragment => fragment.part.pt !== 'text');
+      if (remainingFragments.length || draft.outputsConverting) {
         keptDrafts.push({
           ...draft,
-          outputParts: remainingParts,
+          outputFragments: remainingFragments,
         });
       }
     }
 
-    // Update the state if parts were removed
-    if (removeParts)
+    // Remove the text fragments if requested
+    if (removeFragments)
       _set({
         attachmentDrafts: keptDrafts,
       });
 
-    return textParts;
+    return textFragments;
   },
 
   _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<AttachmentDraft> | ((attachment: AttachmentDraft) => Partial<AttachmentDraft>)) =>

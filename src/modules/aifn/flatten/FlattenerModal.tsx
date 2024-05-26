@@ -8,7 +8,7 @@ import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { DMessage, createDMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, createTextContentDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
@@ -70,7 +70,7 @@ function encodeConversationAsUserMessage(userPrompt: string, messages: DMessage[
   for (const message of messages) {
     if (message.role === 'system') continue;
     const author = message.role === 'user' ? 'User' : 'Assistant';
-    const messageText = singleTextOrThrow(message);
+    const messageText = messageSingleTextOrThrow(message);
     const text = messageText.replace(/\n/g, '\n\n');
     encodedMessages += `---${author}---\n${text}\n\n`;
   }
@@ -138,7 +138,7 @@ export function FlattenerModal(props: {
     if (branch)
       newConversationId = props.onConversationBranch(props.conversationId, null);
     if (newConversationId) {
-      const newRootMessage = createDMessage('user', flattenedText);// [new chat] user:former chat summary
+      const newRootMessage = createTextContentDMessage('user', flattenedText);// [new chat] user:former chat summary
       useChatStore.getState().setMessages(newConversationId, [newRootMessage]);
     }
     props.onClose();

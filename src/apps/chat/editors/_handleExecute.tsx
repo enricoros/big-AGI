@@ -3,7 +3,7 @@ import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { contentPartsReplaceText, DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReplaceLastText, DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -46,7 +46,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
   const lastMessage = history.length > 0 ? history[history.length - 1] : null;
-  const lastMessageText = lastMessage ? singleTextOrThrow(lastMessage) : '';
+  const lastMessageText = lastMessage ? messageSingleTextOrThrow(lastMessage) : '';
   if (lastMessage?.role === 'user') {
     const chatCommand = extractChatCommand(lastMessageText)[0];
     if (chatCommand && chatCommand.type === 'cmd') {
@@ -76,7 +76,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
           }
           // /assistant, /system
           lastMessage.role = chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user';
-          lastMessage.content = contentPartsReplaceText(lastMessage.content, chatCommand.params || ''); // [chat] assistant|system: content
+          lastMessage.fragments = messageFragmentsReplaceLastText(lastMessage.fragments, chatCommand.params || ''); // [chat] assistant|system: content
           lastMessage.sender = 'Bot';
           cHandler.messagesReplace(history);
           return true;

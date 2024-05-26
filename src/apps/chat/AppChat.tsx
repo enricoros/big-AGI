@@ -24,7 +24,7 @@ import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/com
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DAttachmentPart, DContentParts, DMessage, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage, DMessageFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -211,12 +211,12 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, contentParts: DContentParts, attachmentParts: DAttachmentPart[], metadata?: DMessageMetadata): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, fragments: DMessageFragment[], metadata?: DMessageMetadata): boolean => {
     // validate inputs
-    if (contentParts.length !== 1 || contentParts[0].ptype !== 'text') {
+    if (fragments.length !== 1 || fragments[0].part.pt !== 'text') {
       addSnackbar({
         key: 'chat-composer-action-invalid',
-        message: 'Only a single text part is supported for now.',
+        message: 'Only a single text fragment is supported for now.',
         type: 'issue',
         overrides: {
           autoHideDuration: 2000,
@@ -224,7 +224,7 @@ export function AppChat() {
       });
       return false;
     }
-    const userText = contentParts[0].text;
+    const userText = fragments[0].part.text;
 
     // multicast: send the message to all the panes
     const uniqueConversationIds = new Set([conversationId]);
@@ -237,7 +237,7 @@ export function AppChat() {
       const history = getConversation(_cId)?.messages;
       if (!history) continue;
 
-      const newUserMessage = createDMessage('user', userText); // [chat] append user:message
+      const newUserMessage = createTextContentDMessage('user', userText); // [chat] append user:message
       if (metadata) newUserMessage.metadata = metadata;
 
       // fire/forget
@@ -281,7 +281,7 @@ export function AppChat() {
     const imaginedPrompt = await imaginePromptFromText(messageText) || 'An error sign.';
     await handleExecuteAndOutcome('generate-image', conversationId, [
       ...conversation.messages,
-      createDMessage('user', imaginedPrompt), // [chat] append user:imagine prompt
+      createTextContentDMessage('user', imaginedPrompt), // [chat] append user:imagine prompt
     ]);
   }, [handleExecuteAndOutcome]);
 

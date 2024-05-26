@@ -4,10 +4,10 @@ import { createBase64UuidV4 } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+import { createTextAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
-import { attachmentImageToPartViaDBlob } from './attachment.dblobs';
+import { attachmentImageToFragmentViaDBlob } from './attachment.dblobs';
 
 
 // configuration
@@ -102,7 +102,7 @@ export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft
     converters: [],
     converterIdx: null,
     outputsConverting: false,
-    outputParts: [],
+    outputFragments: [],
     // metadata: {},
   };
 }
@@ -289,7 +289,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   converterIdx = (converterIdx !== null && converterIdx >= 0 && converterIdx < attachment.converters.length) ? converterIdx : null;
   edit({
     converterIdx: converterIdx,
-    outputParts: [],
+    outputFragments: [],
   });
 
   // get converter
@@ -304,25 +304,17 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
 
   // apply converter to the input
-  const outputParts: DAttachmentPart[] = [];
+  const outputFragments: DMessageAttachmentFragment[] = [];
   switch (converter.id) {
 
     // text as-is
     case 'text':
-      outputParts.push({
-        atype: 'atext',
-        text: inputDataToString(input.data),
-        title: ref,
-      });
+      outputFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
       break;
 
     // html as-is
     case 'rich-text':
-      outputParts.push({
-        atype: 'atext',
-        text: input.altData!,
-        title: ref || '\n<!DOCTYPE html>',
-      });
+      outputFragments.push(createTextAttachmentFragment(input.altData!, ref || '\n<!DOCTYPE html>'));
       break;
 
     // html to markdown table
@@ -334,11 +326,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         // fallback to text/plain
         mdTable = inputDataToString(input.data);
       }
-      outputParts.push({
-        atype: 'atext',
-        text: mdTable,
-        title: ref,
-      });
+      outputFragments.push(createTextAttachmentFragment(mdTable, ref));
       break;
 
     // image resized (default mime/quality, openai-high-res)
@@ -347,9 +335,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
         return null;
       }
-      const imageResizedHighPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-high-res');
-      if (imageResizedHighPart)
-        outputParts.push(imageResizedHighPart);
+      const imageHighF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-high-res');
+      if (imageHighF)
+        outputFragments.push(imageHighF);
       break;
 
     // image resized (default mime/quality, openai-low-res)
@@ -358,9 +346,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
         return null;
       }
-      const imageResizedLowPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-low-res');
-      if (imageResizedLowPart)
-        outputParts.push(imageResizedLowPart);
+      const imageLowF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-low-res');
+      if (imageLowF)
+        outputFragments.push(imageLowF);
       break;
 
     // image as-is
@@ -369,9 +357,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         console.log('Expected ArrayBuffer for image-original, got:', typeof input.data);
         return null;
       }
-      const imageOrigPart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, false, false);
-      if (imageOrigPart)
-        outputParts.push(imageOrigPart);
+      const imageOrigF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, false);
+      if (imageOrigF)
+        outputFragments.push(imageOrigF);
       break;
 
     // image converted (potentially unsupported mime)
@@ -380,9 +368,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         console.log('Expected ArrayBuffer for image-to-default, got:', typeof input.data);
         return null;
       }
-      const imageDefaultMimePart = await attachmentImageToPartViaDBlob(input.mimeType, input.data, source, ref, ref, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
-      if (imageDefaultMimePart)
-        outputParts.push(imageDefaultMimePart);
+      const imageCastF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
+      if (imageCastF)
+        outputFragments.push(imageCastF);
       break;
 
     // image to text
@@ -402,11 +390,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
           },
         });
         const imageText = result.data.text;
-        outputParts.push({
-          atype: 'atext',
-          text: imageText,
-          title: ref,
-        });
+        outputFragments.push(createTextAttachmentFragment(imageText, ref));
       } catch (error) {
         console.error(error);
       }
@@ -422,11 +406,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData = new Uint8Array(input.data.slice(0));
       const pdfText = await pdfToText(pdfData);
-      outputParts.push({
-        atype: 'atext',
-        text: pdfText,
-        title: ref,
-      });
+      outputFragments.push(createTextAttachmentFragment(pdfText, ref));
       break;
 
     // pdf to images
@@ -440,9 +420,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       try {
         const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
         for (const pdfPageImage of imageDataURLs) {
-          const pdfPageImagePart = await attachmentImageToPartViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, ref, `Page ${outputParts.length + 1}`, false, false);
-          if (pdfPageImagePart)
-            outputParts.push(pdfPageImagePart);
+          const pdfPageImageF = await attachmentImageToFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `Page ${outputFragments.length + 1}`, ref, false, false);
+          if (pdfPageImageF)
+            outputFragments.push(pdfPageImageF);
         }
       } catch (error) {
         console.error('Error converting PDF to images:', error);
@@ -452,11 +432,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
     // self: message
     case 'ego-message-md':
-      outputParts.push({
-        atype: 'atext',
-        text: inputDataToString(input.data),
-        title: ref,
-      });
+      outputFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
       break;
 
     case 'unhandled':
@@ -467,7 +443,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   // update
   edit({
     outputsConverting: false,
-    outputParts,
+    outputFragments,
   });
 }
 

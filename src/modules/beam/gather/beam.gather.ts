@@ -83,7 +83,7 @@ export function fusionIsStopped(fusion: BFusion | null): boolean {
 }
 
 export function fusionIsUsableOutput(fusion: BFusion | null): boolean {
-  return !!fusion?.outputDMessage?.content.length;
+  return !!fusion?.outputDMessage?.fragments.length;
 }
 
 export function fusionIsError(fusion: BFusion | null): boolean {
@@ -259,7 +259,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     // start the fusion
     const { inputHistory, rays, _fusionUpdate } = _get();
     const chatMessages = inputHistory ? [...inputHistory] : [];
-    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.content.length);
+    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.fragments.length);
     const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
     gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
   },

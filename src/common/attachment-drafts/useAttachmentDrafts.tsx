@@ -7,7 +7,7 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 import { attachmentWrapText, TextAttachmentWrapFormat } from '~/common/stores/chat/chat.tokens';
 import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
@@ -19,15 +19,15 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export function attachmentInlineTextParts(initialTextBlockText: string | null, textParts: DAttachmentPart[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
+export function attachmentInlineTextFragments(initialTextBlockText: string | null, textAttachmentFragments: DMessageAttachmentFragment[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
   let inlinedText = initialTextBlockText || '';
-  for (const textPart of textParts) {
+  for (const textAttachmentFragment of textAttachmentFragments) {
     if (inlinedText.length)
       inlinedText += separator;
-    if (textPart.atype === 'atext')
-      inlinedText += attachmentWrapText(textPart.text, textPart.title, wrapFormat);
+    if (textAttachmentFragment.part.pt === 'text')
+      inlinedText += attachmentWrapText(textAttachmentFragment.part.text, textAttachmentFragment.title, wrapFormat);
     else
-      console.warn('attachmentInlineTextParts: unhandled part type:', textPart.atype);
+      console.warn('attachmentInlineTextFragments: unhandled part type:', textAttachmentFragment.part.pt);
   }
   return inlinedText;
 }
@@ -35,12 +35,12 @@ export function attachmentInlineTextParts(initialTextBlockText: string | null, t
 export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean) => {
 
   // state
-  const { _createAttachmentDraft, attachmentDrafts, attachmentsClear, attachmentsTakeAllParts, attachmentsTakeTextParts } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
+  const { _createAttachmentDraft, attachmentDrafts, attachmentsClear, attachmentsTakeAllFragments, attachmentsTakeTextFragments } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
     _createAttachmentDraft: state.createAttachmentDraft,
     attachmentDrafts: state.attachmentDrafts,
     attachmentsClear: state.clearAttachmentsDrafts,
-    attachmentsTakeAllParts: state.takeAllParts,
-    attachmentsTakeTextParts: state.takeTextParts,
+    attachmentsTakeAllFragments: state.takeAllFragments,
+    attachmentsTakeTextFragments: state.takeTextFragments,
   })));
 
   // Creation helpers
@@ -210,7 +210,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // manage attachments
     attachmentsClear,
-    attachmentsTakeAllParts,
-    attachmentsTakeTextParts,
+    attachmentsTakeAllFragments,
+    attachmentsTakeTextFragments,
   };
 };

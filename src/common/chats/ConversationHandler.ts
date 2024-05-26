@@ -7,7 +7,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, createTextPart, DContentParts, DMessage, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessage, createEmptyDMessage, createTextContentDMessage, createTextContentFragment, DMessage, DMessageFragment, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -43,14 +43,14 @@ export class ConversationHandler {
 
     let systemMessage: DMessage = systemMessageIndex >= 0
       ? history.splice(systemMessageIndex, 1)[0]
-      : createDMessage('system'); // [chat] new system:'' (non updated)
+      : createEmptyDMessage('system'); // [chat] new system:'' (non updated)
 
     // TODO: move this to a proper persona identity management
     // Update the system message with the current persona's message, if formerly unset
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
       const systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
-      systemMessage.content = [createTextPart(systemMessageText)];
+      systemMessage.fragments = [createTextContentFragment(systemMessageText)];
 
       // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)
       if (purposeId === 'Custom')
@@ -78,13 +78,13 @@ export class ConversationHandler {
    * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
    */
   messageAppendAssistant(text: string, llmLabel: DLLMId | string) {
-    const assistantMessage: DMessage = createDMessage('assistant', text);
+    const assistantMessage: DMessage = createTextContentDMessage('assistant', text);
     assistantMessage.originLLM = llmLabel;
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
   }
 
   messageAppendAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): string {
-    const assistantMessage: DMessage = createDMessage('assistant');
+    const assistantMessage: DMessage = createEmptyDMessage('assistant');
     pendDMessage(assistantMessage, placeholderText);
     update && Object.assign(assistantMessage, update);
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
@@ -98,7 +98,7 @@ export class ConversationHandler {
   messageAppendTextPart(messageId: string, text: string, complete: boolean, touch?: boolean): void {
     this.chatActions.editMessage(this.conversationId, messageId, (message) => {
       return {
-        content: [...message.content, createTextPart(text)],
+        fragments: [...message.fragments, createTextContentFragment(text)],
         ...(complete ? {
           pendingIncomplete: undefined,
           pendingPlaceholderText: undefined,
@@ -130,14 +130,14 @@ export class ConversationHandler {
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
-    const onBeamSuccess = (content: DContentParts, llmId: DLLMId) => {
+    const onBeamSuccess = (fragments: DMessageFragment[], llmId: DLLMId) => {
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { content, originLLM: llmId, pendingIncomplete: undefined, pendingPlaceholderText: undefined }, true); // [chat] replace assistant:Beam contentParts
+        this.messageEdit(destReplaceMessageId, { fragments, originLLM: llmId, pendingIncomplete: undefined, pendingPlaceholderText: undefined }, true); // [chat] replace assistant:Beam contentParts
       } else {
         // replace (may truncate) the conversation history and append a message
-        const newMessage = createDMessage('assistant', content); // [chat] append Beam contentParts
+        const newMessage = createDMessage('assistant', fragments); // [chat] append Beam message
         newMessage.originLLM = llmId;
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
         // TODO: put the other rays in the metadata?! (reqby @Techfren)

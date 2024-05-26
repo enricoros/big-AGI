@@ -8,7 +8,7 @@ import { streamAssistantMessage } from '../../../../apps/chat/editors/chat-strea
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { DMessage, reduceContentToText, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
@@ -47,10 +47,10 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     // s0-h0-u0
     ...inputs.chatMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant'))
-      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: singleTextOrThrow(m) })),
+      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: messageSingleTextOrThrow(m) })),
     // aN
     ...inputs.rayMessages
-      .map((m): VChatMessageIn => ({ role: 'assistant', content: singleTextOrThrow(m) })),
+      .map((m): VChatMessageIn => ({ role: 'assistant', content: messageSingleTextOrThrow(m) })),
     // u
     { role: 'user', content: _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput) },
   ];
@@ -59,7 +59,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
     // in-place update of the intermediate message
     Object.assign(inputs.intermediateDMessage, incrementalMessage);
-    if (incrementalMessage.content?.length)
+    if (incrementalMessage.fragments?.length)
       inputs.intermediateDMessage.updated = Date.now();
 
     switch (_i.display) {
@@ -68,7 +68,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
       case 'character-count':
         inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{singleTextOrThrow(incrementalMessage as any)?.length || 0} characters</Typography>,
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageSingleTextOrThrow(incrementalMessage as any)?.length || 0} characters</Typography>,
         );
         return;
 
@@ -100,7 +100,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
         throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
 
       // Proceed to the next step
-      return reduceContentToText(inputs.intermediateDMessage.content);
+      return messageFragmentsReduceText(inputs.intermediateDMessage.fragments);
     });
 }
 

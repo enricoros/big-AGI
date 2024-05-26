@@ -30,7 +30,7 @@ import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageRole, DMessageUserFlag, messageHasUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageRole, DMessageUserFlag, messageHasUserFlag, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
@@ -262,7 +262,7 @@ export function ChatMessage(props: {
   })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
 
-  const messageText = props.message.content.length ? singleTextOrThrow(props.message) : '';
+  const messageText = props.message.fragments.length ? messageSingleTextOrThrow(props.message) : '';
 
   const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
