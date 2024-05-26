@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import type { DBlobId } from '~/modules/dblobs/dblobs.types';
+
+import { createBase64UuidV4 } from '~/common/util/textUtils';
 
 
 // Message
@@ -9,11 +9,10 @@ export interface DMessage {
   id: DMessageId;                     // unique message ID
 
   role: DMessageRole;
-  content: DContentPart[];            // multi-part content (sent: mix of text/images/etc., received: usually one part)
-  userAttachments: DAttachmentPart[]; // higher-level multi-part to be sent (transformed to multipart before sending)
+  fragments: DMessageFragment[];      // fragments can be content/attachments/... implicitly ordered
 
   // pending state (not stored)
-  pendingIncomplete?: boolean;        // incomplete message (also suspends counting tokens while true)
+  pendingIncomplete?: boolean;        // if true, the message is incomplete (e.g. tokens won't be computed)
   pendingPlaceholderText?: string;    // text being typed, not yet sent
 
   // identity
@@ -37,44 +36,48 @@ export interface DMessage {
 }
 
 export type DMessageId = string;
-
 export type DMessageRole = 'user' | 'assistant' | 'system';
 
 
-// Content Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
+// Message Fragments
+// - mostly Parts with a purpose and extra information, with forward compatibility
 
-export type DContentRef =
+export type DMessageFragment =
+  | DMessageContentFragment
+  | DMessageAttachmentFragment
+  ;
+
+export type DMessageContentFragment = {
+  ft: 'content',
+  part: DMessageTextPart | DMessageImagePart | DMessageToolCallPart | DMessageToolResponsePart;
+}
+
+export type DMessageAttachmentFragment = {
+  ft: 'attachment',
+  title: string;
+  part: DMessageTextPart | DMessageImagePart;
+}
+
+
+// Message Fragment Parts
+// - small and efficient (larger objects need to only be referred to)
+
+type DMessageTextPart = { pt: 'text', text: string };
+type DMessageImagePart = { pt: 'image_ref', dataRef: DDataRef, altText?: string, width?: number, height?: number };
+type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
+type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
+
+
+// Data Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
+
+export type DDataRef =
   | { reftype: 'url'; url: string } // remotely accessible URL
   | { reftype: 'dblob'; dblobId: DBlobId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
 
-// type CMediaSourceInline =
+// type DDataInline =
 //   | { stype: 'base64'; mimeType: string; base64Data: string }
 //   ;
-
-
-// Content Part - this gets saved to the slow DB - needs to be small and efficient
-
-export type DContentParts = DContentPart[];
-
-type DContentPart =
-  | { ptype: 'text'; text: string } // H/A
-  | { ptype: 'image'; /*mimeType: string;*/ contentRef: DContentRef, title?: string, width?: number, height?: number }
-  // | { ptype: 'audio'; mimeType: string; source: DContentRef }
-  // | { ptype: 'video'; mimeType: string; source: DContentRef }
-  // | { ptype: 'document'; source: DContentRef } // H
-  | { ptype: 'function_call'; function: string; args: Record<string, any> } // A
-  | { ptype: 'function_response'; function: string; response: Record<string, any> } // A
-  ;
-
-
-// Attachment (non-draft) Part
-
-// export type DAttachmentMultiPart = DAttachmentPart[];
-
-export type DAttachmentPart =
-  | { atype: 'atext', text: string, title?: string }
-  | { atype: 'aimage', contentRef: DContentRef, title?: string, width?: number, height?: number }
 
 
 // Metadata
@@ -92,22 +95,20 @@ export type DMessageUserFlag =
 
 // helpers - creation
 
-export function createDMessage(role: DMessageRole, content?: string | DContentParts): DMessage {
+export function createEmptyDMessage(role: DMessageRole) {
+  return createDMessage(role, []);
+}
 
-  // ensure content is an array
-  if (content === undefined)
-    content = [];
-  else if (typeof content === 'string')
-    content = [createTextPart(content)];
-  else if (!Array.isArray(content))
-    throw new Error('Invalid content');
+export function createTextContentDMessage(role: DMessageRole, text: string): DMessage {
+  return createDMessage(role, [createTextContentFragment(text)]);
+}
 
+export function createDMessage(role: DMessageRole, fragments: DMessageFragment[]): DMessage {
   return {
-    id: uuidv4(),
+    id: createBase64UuidV4(),
 
     role: role,
-    content: content,
-    userAttachments: [],
+    fragments,
 
     // pending state
     // pendingIncomplete: false,
@@ -131,6 +132,19 @@ export function createDMessage(role: DMessageRole, content?: string | DContentPa
   };
 }
 
+
+export function createTextContentFragment(text: string): DMessageContentFragment {
+  return { ft: 'content', part: { pt: 'text', text: text } };
+}
+
+export function createAttachmentFragment(title: string, part: DMessageTextPart | DMessageImagePart): DMessageAttachmentFragment {
+  return { ft: 'attachment', title, part };
+}
+
+export function createTextAttachmentFragment(text: string, title: string): DMessageAttachmentFragment {
+  return { ft: 'attachment', title, part: { pt: 'text', text } };
+}
+
 export function pendDMessage(message: DMessage, placeholderText?: string): DMessage {
   message.pendingIncomplete = true;
   if (placeholderText)
@@ -140,21 +154,15 @@ export function pendDMessage(message: DMessage, placeholderText?: string): DMess
   return message;
 }
 
-export function createTextPart(text: string): DContentPart {
-  return { ptype: 'text', text: text };
-}
 
+// helpers - duplication
 
-export function duplicateDMessage(message: DMessage): DMessage {
-  // TODO: deep copy of content and userAttachments?
-  // there may be refs to the same DBlob, but that's fine, hopefully (they are immutable once here)
-  // the dblob may need more reference count?
+export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
   return {
-    id: uuidv4(),
+    id: createBase64UuidV4(),
 
     role: message.role,
-    content: message.content.map(part => ({ ...part })),
-    userAttachments: message.userAttachments.map(part => ({ ...part })),
+    fragments: _duplicateFragments(message.fragments),
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
     ...(message.pendingPlaceholderText ? { pendingPlaceholderText: message.pendingPlaceholderText } : {}),
@@ -174,30 +182,82 @@ export function duplicateDMessage(message: DMessage): DMessage {
   };
 }
 
+function _duplicateFragments(fragments: DMessageFragment[]): DMessageFragment[] {
+  return fragments.map(fragment => {
+    switch (fragment.ft) {
+      case 'content':
+        return { ft: 'content', part: _duplicatePart(fragment.part) };
+
+      case 'attachment':
+        return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
+
+      default:
+        throw new Error('Invalid fragment');
+    }
+  });
+}
+
+function _duplicatePart<T extends DMessageFragment['part']>(part: T): T {
+  switch (part.pt) {
+    case 'text':
+      return {
+        pt: 'text',
+        text: part.text,
+      } as T;
+
+    case 'image_ref':
+      return {
+        pt: 'image_ref',
+        dataRef: {
+          ...part.dataRef,
+        },
+        altText: part.altText,
+        width: part.width,
+        height: part.height,
+      } as T;
+
+    case 'tool_call':
+      return {
+        pt: 'tool_call',
+        function: part.function,
+        args: {
+          ...part.args,
+        },
+      } as T;
+
+    case 'tool_response':
+      return {
+        pt: 'tool_response',
+        function: part.function,
+        response: {
+          ...part.response,
+        },
+      } as T;
+
+    default:
+      throw new Error('Invalid part');
+  }
+}
+
 
 // helpers - conversion
 
-export function convertDMessage_V3_V4(message: DMessage) {
+export function convertDMessage_V3_to_V4(message: DMessage) {
 
   const v3 = message as (DMessage & {
     text?: string,
     typing?: boolean
   });
 
-  // .content
-  if (!message.content || !Array.isArray(message.content)) {
+  // .fragments
+  if (!message.fragments || !Array.isArray(message.fragments)) {
 
-    // v3.text -> v4.content
-    message.content = [
-      createTextPart(v3.text || ''),
-    ];
-    delete v3.text;
+    // v3.text -> v4.fragments
+    // text content fragment
+    // = [{ ft: 'content', part: { pt: 'text', text: ... } }]
+    message.fragments = [createTextContentFragment(v3.text || '')];
 
   }
-
-  // .userAttachments
-  if (!message.userAttachments?.length)
-    message.userAttachments = [];
 
   // delete v3 fields
   delete v3.text;
@@ -205,39 +265,37 @@ export function convertDMessage_V3_V4(message: DMessage) {
 }
 
 
-// helpers - content parts
+// helpers during the transition from V3
 
-export function reduceContentToText(content: DContentParts, textPartSeparator: string = '\n\n'): string {
-  return content.map(part => {
-    if (part.ptype === 'text')
-      return part.text;
-    return '';
-  }).filter(text => !!text).join(textPartSeparator);
+export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
+  return fragments
+    .map(fragment => fragment.part.pt === 'text' ? fragment.part.text : '')
+    .filter(text => !!text)
+    .join(fragmentSeparator);
 }
 
-// TODO: this should be gone away once the port is fully done
-export function singleTextOrThrow(message: DMessage): string {
-  if (message.content.length !== 1)
-    throw new Error('Expected single content');
-  if (message.content[0].ptype !== 'text')
-    throw new Error('Expected text content');
-  return message.content[0].text;
-}
+export function messageFragmentsReplaceLastText(fragments: Readonly<DMessageFragment[]>, newText: string, appendText?: boolean): DMessageFragment[] {
 
+  // if there's no text fragment, create it
+  const lastTextFragment = fragments.findLast(f => f.part.pt === 'text');
+  if (!lastTextFragment)
+    return [...fragments, createTextContentFragment(newText)];
 
-// zustand-like deep replace
-export function contentPartsReplaceText(content: Readonly<DContentParts>, newText: string, appendText?: boolean): DContentParts {
-  // if there's no text part, append a new one
-  const lastTextPart = content.findLast(part => part.ptype === 'text');
-  if (!lastTextPart)
-    return [...content, createTextPart(newText)];
-
-  // otherwise, replace/append the text in the last text part
-  return content.map(part =>
-    (part === lastTextPart)
-      ? { ...part, text: (appendText && part.ptype === 'text') ? part.text + newText : newText }
-      : part,
+  // append/replace the last text fragment
+  return fragments.map(fragment =>
+    (fragment === lastTextFragment)
+      ? { ...fragment, text: (appendText && fragment.part.pt === 'text') ? fragment.part.text + newText : newText }
+      : fragment,
   );
+}
+
+// TODO: remove once the port is fully done
+export function messageSingleTextOrThrow(message: DMessage): string {
+  if (message.fragments.length !== 1)
+    throw new Error('Expected single fragment');
+  if (message.fragments[0].part.pt !== 'text')
+    throw new Error('Expected a text part');
+  return message.fragments[0].part.text;
 }
 
 

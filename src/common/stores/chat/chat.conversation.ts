@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
 
-import { DMessage, DMessageId, convertDMessage_V3_V4, duplicateDMessage } from './chat.message';
+import { DMessage, DMessageId, convertDMessage_V3_to_V4, duplicateDMessage } from './chat.message';
 
 
 /// Conversation
@@ -102,7 +102,7 @@ export function duplicateCConversation(conversation: DConversation, lastMessageI
 
 export function convertCConversation_V3_V4(conversation: DConversation) {
   // .messages
-  conversation.messages.forEach(convertDMessage_V3_V4);
+  conversation.messages.forEach(convertDMessage_V3_to_V4);
 }
 
 

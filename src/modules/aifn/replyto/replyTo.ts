@@ -1,4 +1,4 @@
-import { createDMessage, DMessage } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage } from '~/common/stores/chat/chat.message';
 
 
 const replyToSystemPrompt = `The user is referring to this in particular:
@@ -19,7 +19,7 @@ export function updateHistoryForReplyTo(history: DMessage[]) {
 
   if (lastMessage.role === 'user' && lastMessage.metadata?.inReplyToText) {
     const replyToPrompt = replyToSystemPrompt.replace('{{ReplyToText}}', lastMessage.metadata.inReplyToText);
-    const replyToMessage = createDMessage('system', replyToPrompt); // [state] append system:reply-To to the history
+    const replyToMessage = createTextContentDMessage('system', replyToPrompt); // [state] append system:reply-To to the history
     history.push(replyToMessage);
   }
 }

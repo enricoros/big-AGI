@@ -36,7 +36,7 @@ export function LLMAttachmentsList(props: {
 
   // derived state
 
-  const { llmAttachmentDrafts, canInlineSomeTextParts } = props.llmAttachmentDrafts;
+  const { llmAttachmentDrafts, canInlineSomeFragments } = props.llmAttachmentDrafts;
 
   const hasAttachments = llmAttachmentDrafts.length >= 1;
 
@@ -153,11 +153,11 @@ export function LLMAttachmentsList(props: {
         open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
         sx={{ minWidth: 200 }}
       >
-        <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeTextParts}>
+        <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline all text
         </MenuItem>
-        <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeTextParts}>
+        <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           Copy all text
         </MenuItem>

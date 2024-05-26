@@ -6,7 +6,7 @@ import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.cli
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { contentPartsReplaceText, DContentParts, DMessage, reduceContentToText, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
@@ -36,7 +36,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   };
   const messageStatus = await streamAssistantMessage(
     assistantLlmId,
-    history.map((m): VChatMessageIn => ({ role: m.role, content: singleTextOrThrow(m) })),
+    history.map((m): VChatMessageIn => ({ role: m.role, content: messageSingleTextOrThrow(m) })),
     parallelViewCount,
     autoSpeak,
     onMessageUpdated,
@@ -92,14 +92,9 @@ export async function streamAssistantMessage(
     }
   }
 
-  // NOTE: should clean this up once we have multi-part streaming/recombination
-  const incrementalAnswer: {
-    content: DContentParts,
-    originLLM?: string,
-    pendingIncomplete?: boolean,
-    pendingPlaceholderText?: string,
-  } = {
-    content: [],
+  // TODO: should clean this up once we have multi-fragment streaming/recombination
+  const incrementalAnswer: Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete' | 'pendingPlaceholderText'> = {
+    fragments: [],
   };
 
   try {
@@ -108,7 +103,7 @@ export async function streamAssistantMessage(
 
       // grow the incremental message
       if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-      if (textSoFar) incrementalAnswer.content = contentPartsReplaceText(incrementalAnswer.content, textSoFar);
+      if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastText(incrementalAnswer.fragments, textSoFar);
       if (update.typing !== undefined) {
         incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
         if (!update.typing)
@@ -136,7 +131,7 @@ export async function streamAssistantMessage(
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-      incrementalAnswer.content = contentPartsReplaceText(incrementalAnswer.content, errorText, true);
+      incrementalAnswer.fragments = messageFragmentsReplaceLastText(incrementalAnswer.fragments, errorText, true);
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
     } else
@@ -148,7 +143,7 @@ export async function streamAssistantMessage(
 
   // 📢 TTS: all
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
-    const incrementalText = reduceContentToText(incrementalAnswer.content);
+    const incrementalText = messageFragmentsReduceText(incrementalAnswer.fragments);
     if (incrementalText.length > 0)
       void speakText(incrementalText);
   }

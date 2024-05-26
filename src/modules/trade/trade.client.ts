@@ -7,7 +7,7 @@ import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
 import { Brand } from '~/common/app.config';
 import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
-import { DMessage, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
@@ -207,7 +207,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     : '';
   return mdTitle + conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
     let sender: string = message.sender;
-    let text = singleTextOrThrow(message);
+    let text = messageSingleTextOrThrow(message);
     switch (message.role) {
       case 'system':
         sender = '✨ System message';

@@ -10,7 +10,7 @@ import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, convertCConversation_V3_V4, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
-import { estimateTokensForAttachmentParts, estimateTokensForContentParts } from './chat.tokens';
+import { estimateTokensForFragments } from './chat.tokens';
 
 
 /// Conversations Store
@@ -340,11 +340,7 @@ function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceU
     // find the LLM from the ID
     try {
       const dllm = findLLMOrThrow(llmId);
-
-      // count the tokens
-      const contentTokens = estimateTokensForContentParts(message.content, dllm, debugFrom);
-      const attachmentTokens = estimateTokensForAttachmentParts(message.userAttachments, dllm, contentTokens > 0, debugFrom);
-      message.tokenCount = contentTokens + attachmentTokens;
+      message.tokenCount = estimateTokensForFragments(message.fragments, dllm, false, debugFrom);
     } catch (e) {
       console.error(`updateMessageTokenCount: LLM not found for ID ${llmId}`);
       message.tokenCount = 0;

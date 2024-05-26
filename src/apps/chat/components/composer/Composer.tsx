@@ -24,12 +24,12 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DAttachmentPart, DContentParts, DMessageMetadata, singleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageMetadata, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
@@ -52,7 +52,7 @@ import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
-import { attachmentInlineTextParts, useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
+import { attachmentInlineTextFragments, useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
@@ -102,7 +102,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, contentParts: DContentParts, attachmentParts: DAttachmentPart[], metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, fragments: DMessageFragment[], metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -156,7 +156,7 @@ export function Composer(props: {
   const {
     attachmentDrafts,
     attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
-    attachmentsClear, attachmentsTakeAllParts, attachmentsTakeTextParts,
+    attachmentsClear, attachmentsTakeAllFragments, attachmentsTakeTextFragments,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
   // attachments derived state
@@ -217,35 +217,39 @@ export function Composer(props: {
     if (!conversationId)
       return false;
 
-    // squash all text parts and keep the rest as attachments
-    const textParts: DAttachmentPart[] = [];
-    const attachmentParts: DAttachmentPart[] = [];
-    for (const part of attachmentsTakeAllParts(false)) {
-      if (part.atype === 'atext')
-        textParts.push(part);
+    // TODO: move to the new pure-Fragment behavior
+    // Inline all Text Fragments into the main message - this is the V1 approach
+    const textFragments: DMessageAttachmentFragment[] = [];
+    const otherFragments: DMessageAttachmentFragment[] = [];
+    for (const attachmentFragment of attachmentsTakeAllFragments(false)) {
+      if (attachmentFragment.part.pt === 'text')
+        textFragments.push(attachmentFragment);
       else
-        attachmentParts.push(part);
+        otherFragments.push(attachmentFragment);
     }
-    const inlinedText = attachmentInlineTextParts(composerText, textParts, 'markdown-code', '\n\n');
-    const contentParts: DContentParts = inlinedText ? [{ ptype: 'text', text: inlinedText }] : [];
+    const inlinedText = attachmentInlineTextFragments(composerText, textFragments, 'markdown-code', '\n\n');
+
+    // content fragments
+    const contentFragments: DMessageContentFragment[] = inlinedText ? [createTextContentFragment(inlinedText)] : [];
 
     // stop if no content
-    if (!contentParts.length && !attachmentParts.length)
+    if (!contentFragments.length && !otherFragments.length)
       return false;
 
     // metadata
     const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
 
     // send the message
-    const enqueued = onAction(conversationId, _chatModeId, contentParts, attachmentParts, metadata);
+    const enqueued = onAction(conversationId, _chatModeId, [...contentFragments, ...otherFragments], metadata);
     if (enqueued) {
+      // TODO: move the state of the DBlob Refs, to avoid the GC
       attachmentsClear();
       handleReplyToCleared();
       setComposeText('');
     }
 
     return enqueued;
-  }, [attachmentsClear, attachmentsTakeAllParts, conversationId, handleReplyToCleared, onAction, replyToGenerateText, setComposeText]);
+  }, [attachmentsClear, attachmentsTakeAllFragments, conversationId, handleReplyToCleared, onAction, replyToGenerateText, setComposeText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -321,7 +325,7 @@ export function Composer(props: {
     // get the message
     const conversation = getConversation(item.conversationId);
     const messageToAttach = conversation?.messages.find(m => m.id === item.messageId);
-    const messageText = messageToAttach ? singleTextOrThrow(messageToAttach) : null;
+    const messageText = messageToAttach ? messageSingleTextOrThrow(messageToAttach) : null;
     if (conversation && messageToAttach && messageText) {
       // Testing with this serialization for LLM. Note it will still be within a multi-part message,
       // this could be in a titled markdown block. Don't know yet how this fares with different LLMs.
@@ -479,16 +483,16 @@ export function Composer(props: {
   const handleAttachmentDraftsAction = React.useCallback((attachmentDraftId: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
     switch (action) {
       case 'copy-text':
-        const copyTextParts = attachmentsTakeTextParts(attachmentDraftId, false);
-        const copyTextString = attachmentInlineTextParts(null, copyTextParts, false, '\n\n---\n\n');
+        const copyTextFragments = attachmentsTakeTextFragments(attachmentDraftId, false);
+        const copyTextString = attachmentInlineTextFragments(null, copyTextFragments, false, '\n\n---\n\n');
         copyToClipboard(copyTextString, attachmentDraftId ? 'Attachment Text' : 'Attachments Text');
         break;
       case 'inline-text':
-        const inlineTextParts = attachmentsTakeTextParts(attachmentDraftId, true);
-        setComposeText(currentText => attachmentInlineTextParts(currentText, inlineTextParts, 'markdown-code', '\n\n'));
+        const inlineTextFragments = attachmentsTakeTextFragments(attachmentDraftId, true);
+        setComposeText(currentText => attachmentInlineTextFragments(currentText, inlineTextFragments, 'markdown-code', '\n\n'));
         break;
     }
-  }, [attachmentsTakeTextParts, setComposeText]);
+  }, [attachmentsTakeTextFragments, setComposeText]);
 
 
   // Drag & Drop
@@ -818,7 +822,7 @@ export function Composer(props: {
                 {!assistantAbortible ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllParts}
+                    fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
                     onClick={handleSendClicked}
                     endDecorator={buttonIcon}
                     sx={{ '--Button-gap': '1rem' }}
@@ -864,7 +868,7 @@ export function Composer(props: {
               {/* [desktop] secondary-top buttons */}
               {isDesktop && showChatExtras && !assistantAbortible && (
                 <ButtonBeamMemo
-                  disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllParts}
+                  disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
                   hasContent={!!composeText}
                   onClick={handleSendTextBeamClicked}
                 />

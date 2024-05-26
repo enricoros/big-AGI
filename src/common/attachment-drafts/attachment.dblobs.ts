@@ -3,16 +3,16 @@ import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
+import { createAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraftSource } from './attachment.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './attachment.pipeline';
 
 
 /**
- * Convert an image input to a DBlob and return the DAttachmentPart
+ * Convert an image input to a DBlob and return a DMessageAttachmentFragment
  */
-export async function attachmentImageToPartViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, ref: string, title: string, convertToMimeType: false | string, resizeMode: false | LLMImageResizeMode): Promise<DAttachmentPart | null> {
+export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, title: string, altText: string, convertToMimeType: false | string, resizeMode: false | LLMImageResizeMode): Promise<DMessageAttachmentFragment | null> {
   let base64Data: string;
   let inputLength: number;
 
@@ -23,7 +23,7 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
       base64Data = buffer.toString('base64');
       inputLength = buffer.byteLength;
     } catch (error) {
-      console.log('attachmentImageToPartViaDBlob: Issue converting ArrayBuffer', error);
+      console.log('imageAttachment: Error converting ArrayBuffer to base64:', error);
       return null;
     }
   } else if (typeof inputData === 'string') {
@@ -31,7 +31,7 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
     base64Data = inputData;
     inputLength = inputData.length;
   } else {
-    console.log('attachmentImageToPartViaDBlob: Expected ArrayBuffer or base64, got:', typeof inputData);
+    console.log('imageAttachment: Invalid input data type:', typeof inputData);
     return null;
   }
 
@@ -61,7 +61,7 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
 
     // Create DBlob image item
     const dblobImageItem = createDBlobImageItem(
-      ref ? 'Image: ' + ref : 'Image',
+      title ? 'Image: ' + title : 'Image',
       {
         mimeType: mimeType as any, /* we assume the mime is supported */
         base64: base64Data,
@@ -82,21 +82,21 @@ export async function attachmentImageToPartViaDBlob(mimeType: string, inputData:
     // Add to DBlobs database
     const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachments');
 
-    // Create Part
-    return {
-      atype: 'aimage',
-      contentRef: {
+    // return the DMessageAttachmentFragment
+    return createAttachmentFragment(title, {
+      pt: 'image_ref',
+      dataRef: {
         reftype: 'dblob',
         dblobId: dblobId,
         mimeType: mimeType,
         bytesSize: inputLength,
       },
-      title: title,
+      altText: altText,
       width: dimensions?.width,
       height: dimensions?.height,
-    } satisfies DAttachmentPart;
+    });
   } catch (error) {
-    console.error('Error storing image in DBlobs:', error);
+    console.error('imageAttachment: Error processing image:', error);
     return null;
   }
 }

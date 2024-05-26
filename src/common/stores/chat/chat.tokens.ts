@@ -2,29 +2,15 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/util/token-counter';
 
-import type { DAttachmentPart, DContentParts } from './chat.message';
+import type { DMessageFragment } from './chat.message';
 
 
-// export function estimateTokensForComposer(text: string, parts: DAttachmentPart[], llm: DLLM, debugFrom: string) {
-//   const textTokens = text?.trim() ? estimateTextTokens(text, llm, debugFrom) : 0;
-//   return textTokens + estimateTokensForAttachmentParts(parts, llm, textTokens > 0, debugFrom);
-// }
-
-export function estimateTokensForContentParts(content: DContentParts, llm: DLLM, debugFrom: string) {
-  return content.reduce((acc, part) => {
-    let partTokens = _contentPartTokens(part, llm, debugFrom);
-    if (acc > 0)
-      partTokens += _glueForContentPartTokens(llm);
-    return acc + partTokens;
-  }, 0);
-}
-
-export function estimateTokensForAttachmentParts(parts: DAttachmentPart[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
-  return parts.reduce((acc, part) => {
-    let partTokens = _attachmentPartTokens(part, llm, debugFrom);
+export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
+  return fragments.reduce((acc, fragment) => {
+    let fragmentTokens = _fragmentTokens(fragment, llm, debugFrom);
     if (acc > 0 || addTopGlue)
-      partTokens += _glueForAttachmentPartTokens(llm);
-    return acc + partTokens;
+      fragmentTokens += _glueForFragmentTokens(llm);
+    return acc + fragmentTokens;
   }, 0);
 }
 
@@ -38,38 +24,29 @@ export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): 
 
 // Content Parts
 
-function _contentPartTokens(part: DContentParts[number], llm: DLLM, debugFrom: string): number {
-  switch (part.ptype) {
+function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: string): number {
+  switch (fragment.part.pt) {
     case 'text':
-      return estimateTextTokens(part.text, llm, debugFrom) ?? 0;
+      if (fragment.ft === 'attachment') {
+        // NOTE: the wrapFormat could be llm-dependent
+        const likelyBlockRendition = attachmentWrapText(fragment.part.text, fragment.title, 'markdown-code');
+        return estimateTextTokens(likelyBlockRendition, llm, debugFrom);
+      }
+      return estimateTextTokens(fragment.part.text, llm, debugFrom);
 
-    case 'image':
-      return _attachmentPartImageTokens(part.width, part.height, part.title, llm);
+    case 'image_ref':
+      return _imagePartTokens(fragment.part.width, fragment.part.height, fragment.ft === 'attachment' ? fragment.title : '', llm);
 
-    case 'function_call':
-    case 'function_response':
+    case 'tool_call':
+    case 'tool_response':
     default:
-      console.warn('Unhandled token preview for content type:', (part as any).ptype);
+      console.warn('Unhandled token preview for content type:', fragment.part.pt);
       return 0;
   }
 }
 
 
-// Attachment Parts
-
-function _attachmentPartTokens(part: DAttachmentPart, llm: DLLM, debugFrom: string): number {
-  switch (part.atype) {
-    case 'atext':
-      return _attachmentPartTextTokens(part.title, part.text, llm, debugFrom) ?? 0;
-
-    case 'aimage':
-      return _attachmentPartImageTokens(part.width, part.height, part.title, llm);
-
-    default:
-      console.warn('Unhandled token preview for output type:', (part as any).atype);
-      return 0;
-  }
-}
+// Attachment Fragments
 
 export type TextAttachmentWrapFormat = false | 'markdown-code';
 
@@ -79,12 +56,7 @@ export function attachmentWrapText(text: string, title: string | undefined, wrap
   return text;
 }
 
-function _attachmentPartTextTokens(title: string | undefined, text: string, llm: DLLM, debugFrom: string): number {
-  const likelyBlockRendition = attachmentWrapText(text, title, 'markdown-code');
-  return estimateTextTokens(likelyBlockRendition, llm, debugFrom);
-}
-
-function _attachmentPartImageTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM) {
+function _imagePartTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM) {
   // for the guidelines, see `attachment.pipeline.ts` (lists the latest URLs)
   switch (llm._source?.vId) {
     case 'openai':
@@ -118,11 +90,7 @@ function _attachmentPartImageTokens(width: number | undefined, height: number | 
 
 // Encoding Glue - TODO: implement these correctly and based off LLMs
 
-function _glueForContentPartTokens(_llm: DLLM): number {
-  return 4;
-}
-
-function _glueForAttachmentPartTokens(_llm: DLLM): number {
+function _glueForFragmentTokens(_llm: DLLM): number {
   return 4;
 }
 

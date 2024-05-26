@@ -4,14 +4,14 @@ import { Box, Button, FormControl, Input, Sheet, Textarea, Typography } from '@m
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 import { Brand } from '~/common/app.config';
-import { DConversationId, createDConversation } from '~/common/stores/chat/chat.conversation';
-import { DMessage, createDMessage } from '~/common/stores/chat/chat.message';
 import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
+import { createDConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { createTextContentDMessage, DMessage } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
@@ -95,7 +95,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         const role = message.author.role;
         const joinedText = message.content.parts.join('\n');
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {
-          const dMessage = createDMessage(role, joinedText); // [state] import role:text from ChatGPT
+          const dMessage = createTextContentDMessage(role, joinedText); // [state] import role:text from ChatGPT
           dMessage.id = message.id;
           if (message.create_time)
             dMessage.created = Math.round(message.create_time * 1000);

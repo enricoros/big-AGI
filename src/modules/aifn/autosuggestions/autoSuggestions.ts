@@ -2,7 +2,7 @@ import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.clie
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -69,7 +69,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Execute the following follow-ups in parallel
   // const assistantMessageId = assistantMessage.id;
-  let assistantMessageText = singleTextOrThrow(assistantMessage);
+  let assistantMessageText = messageSingleTextOrThrow(assistantMessage);
 
   // Follow-up: Question
   if (suggestQuestions) {
@@ -86,8 +86,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
     void llmChatGenerateOrThrow(funcLLMId, [
-        { role: 'system', content: singleTextOrThrow(systemMessage) },
-        { role: 'user', content: singleTextOrThrow(userMessage) },
+        { role: 'system', content: messageSingleTextOrThrow(systemMessage) },
+        { role: 'user', content: messageSingleTextOrThrow(userMessage) },
         { role: 'assistant', content: assistantMessageText },
       ], [suggestPlantUMLFn], 'draw_plantuml_diagram',
     ).then(chatResponse => {

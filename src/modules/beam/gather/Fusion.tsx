@@ -13,7 +13,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { reduceContentToText } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
@@ -69,16 +69,16 @@ export function Fusion(props: {
   const handleFusionCopy = React.useCallback(() => {
     const { fusions } = props.beamStore.getState();
     const fusion = fusions.find(fusion => fusion.fusionId === props.fusionId);
-    if (fusion?.outputDMessage?.content.length)
-      copyToClipboard(reduceContentToText(fusion.outputDMessage.content), 'Merge');
+    if (fusion?.outputDMessage?.fragments.length)
+      copyToClipboard(messageFragmentsReduceText(fusion.outputDMessage.fragments), 'Merge');
   }, [props.beamStore, props.fusionId]);
 
   const handleFusionUse = React.useCallback(() => {
     // get snapshot values, so we don't have to react to the hook
     const { fusions, onSuccessCallback } = props.beamStore.getState();
     const fusion = fusions.find(fusion => fusion.fusionId === props.fusionId);
-    if (fusion?.outputDMessage?.content.length && onSuccessCallback)
-      onSuccessCallback(fusion.outputDMessage.content, fusion.llmId || '');
+    if (fusion?.outputDMessage?.fragments.length && onSuccessCallback)
+      onSuccessCallback(fusion.outputDMessage.fragments, fusion.llmId || '');
   }, [props.beamStore, props.fusionId]);
 
 
@@ -138,7 +138,7 @@ export function Fusion(props: {
       {!!fusion?.fusingInstructionComponent && fusion.fusingInstructionComponent}
 
       {/* Output Message */}
-      {(!!fusion?.outputDMessage?.content.length || fusion?.stage === 'fusing') && (
+      {(!!fusion?.outputDMessage?.fragments.length || fusion?.stage === 'fusing') && (
         <Box sx={beamCardMessageWrapperSx}>
           {!!fusion.outputDMessage && (
             <ChatMessageMemo

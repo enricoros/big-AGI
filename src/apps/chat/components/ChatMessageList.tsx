@@ -6,13 +6,13 @@ import { Box, List } from '@mui/joy';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
-import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { contentPartsReplaceText, createDMessage, DMessage, DMessageUserFlag, messageToggleUserFlag, singleTextOrThrow } from '~/common/stores/chat/chat.message';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { createTextContentDMessage, DMessage, DMessageUserFlag, messageFragmentsReplaceLastText, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -74,7 +74,7 @@ export function ChatMessageList(props: {
   // text actions
 
   const handleRunExample = React.useCallback(async (examplePrompt: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', examplePrompt)]); // [chat] append user:persona question
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createTextContentDMessage('user', examplePrompt)]); // [chat] append user:persona question
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
@@ -130,7 +130,7 @@ export function ChatMessageList(props: {
 
   const handleMessageEdit = React.useCallback((messageId: string, newText: string /* FIXME: contents instead of text */) => {
     conversationId && editMessage(conversationId, messageId, (message): Partial<DMessage> => ({
-      content: contentPartsReplaceText(message.content, newText),
+      fragments: messageFragmentsReplaceLastText(message.fragments, newText),
     }), true);
   }, [conversationId, editMessage]);
 

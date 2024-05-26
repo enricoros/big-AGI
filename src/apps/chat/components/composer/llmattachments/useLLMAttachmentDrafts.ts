@@ -3,22 +3,22 @@ import * as React from 'react';
 import { DLLM, LLM_IF_OAI_Vision } from '~/modules/llms/store-llms';
 
 import type { AttachmentDraft } from '~/common/attachment-drafts/attachment.types';
-import type { DAttachmentPart } from '~/common/stores/chat/chat.message';
-import { estimateTokensForAttachmentParts } from '~/common/stores/chat/chat.tokens';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import { estimateTokensForFragments } from '~/common/stores/chat/chat.tokens';
 
 
 export interface LLMAttachmentDrafts {
   llmAttachmentDrafts: LLMAttachmentDraft[];
-  canAttachAllParts: boolean;
-  canInlineSomeTextParts: boolean;
+  canAttachAllFragments: boolean;
+  canInlineSomeFragments: boolean;
   llmTokenCountApprox: number | null;
 }
 
 
 export interface LLMAttachmentDraft {
   attachmentDraft: AttachmentDraft;
-  llmSupportsAllParts: boolean;
-  llmSupportsTextParts: boolean;
+  llmSupportsAllFragments: boolean;
+  llmSupportsTextFragments: boolean;
   llmTokenCountApprox: number | null;
 }
 
@@ -26,32 +26,32 @@ export interface LLMAttachmentDraft {
 export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachmentDrafts {
   return React.useMemo(() => {
 
-    // Adjust the recommended DAttachmentPart(s) based on the LLM
+    // LLM-dependent multi-modal enablement
     const supportsImages = !!chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
-    const supportedOutputPartTypes: DAttachmentPart['atype'][] = supportsImages ? ['aimage', 'atext'] : ['atext'];
-    const supportedTextPartTypes = supportedOutputPartTypes.filter(pt => pt === 'atext');
+    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = supportsImages ? ['image_ref', 'text'] : ['text'];
+    const supportedTextTypes = supportedTypes.filter(pt => pt === 'text');
 
     // Add LLM-specific properties to each attachment draft
     const llmAttachmentDrafts = attachmentDrafts.map((a): LLMAttachmentDraft => ({
       attachmentDraft: a,
-      llmSupportsAllParts: a.outputParts ? a.outputParts.every(op => supportedOutputPartTypes.includes(op.atype)) : false,
-      llmSupportsTextParts: a.outputParts ? a.outputParts.some(op => supportedTextPartTypes.includes(op.atype)) : false,
+      llmSupportsAllFragments: !a.outputFragments ? false : a.outputFragments.every(op => supportedTypes.includes(op.part.pt)),
+      llmSupportsTextFragments: !a.outputFragments ? false : a.outputFragments.some(op => supportedTextTypes.includes(op.part.pt)),
       llmTokenCountApprox: chatLLM
-        ? estimateTokensForAttachmentParts(a.outputParts, chatLLM, true, 'useLLMAttachmentDrafts')
+        ? estimateTokensForFragments(a.outputFragments, chatLLM, true, 'useLLMAttachmentDrafts')
         : null,
     }));
 
     // Calculate the overall properties
-    const canAttachAllParts = llmAttachmentDrafts.every(a => a.llmSupportsAllParts);
-    const canInlineSomeTextParts = llmAttachmentDrafts.some(a => a.llmSupportsTextParts);
+    const canAttachAllFragments = llmAttachmentDrafts.every(a => a.llmSupportsAllFragments);
+    const canInlineSomeFragments = llmAttachmentDrafts.some(a => a.llmSupportsTextFragments);
     const llmTokenCountApprox = chatLLM
       ? llmAttachmentDrafts.reduce((acc, a) => acc + (a.llmTokenCountApprox || 0), 0)
       : null;
 
     return {
       llmAttachmentDrafts,
-      canAttachAllParts,
-      canInlineSomeTextParts,
+      canAttachAllFragments,
+      canInlineSomeFragments,
       llmTokenCountApprox,
     };
   }, [attachmentDrafts, chatLLM]);

@@ -113,15 +113,15 @@ export function LLMAttachmentItem(props: {
 }) {
 
   // derived state
-  const { attachmentDraft: draft, llmSupportsAllParts } = props.llmAttachment;
+  const { attachmentDraft: draft, llmSupportsAllFragments } = props.llmAttachment;
 
   const isInputLoading = draft.inputLoading;
   const isInputError = !!draft.inputError;
   const isUnconvertible = !draft.converters.length;
   const isOutputLoading = draft.outputsConverting;
-  const isOutputMissing = !draft.outputParts.length;
+  const isOutputMissing = !draft.outputFragments.length;
 
-  const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllParts);
+  const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments);
 
 
   // handlers
