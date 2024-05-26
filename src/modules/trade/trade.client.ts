@@ -2,18 +2,19 @@ import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
 import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../data';
 
-import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
+import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Brand } from '~/common/app.config';
-import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
-import { DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
+import { messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
-import { ImportedOutcome } from './ImportOutcomeModal';
+import type { ImportedOutcome } from './ImportOutcomeModal';
+import { convertDConversation_V3_V4, convertDMessageV3_to_V4, ExportedAllJsonV1B, ExportedChatJsonV1, ExportedFolderJsonV1 } from './trade.types';
 
 
 /// IMPORT ///
@@ -77,7 +78,7 @@ function loadAllConversationsFromJson(fileName: string, obj: any, outcome: Impor
 
   // parse ExportedAllJsonV1
   if (hasConversations && !hasMessages) {
-    const { conversations, folders } = obj as ExportedAllJsonV1b;
+    const { conversations, folders } = obj as ExportedAllJsonV1B;
     for (const conversation of conversations)
       pushOutcomeFromJsonV1(fileName, conversation, outcome);
     // in ExportedAllJsonV1b+, folders weren't there before
@@ -88,7 +89,7 @@ function loadAllConversationsFromJson(fileName: string, obj: any, outcome: Impor
   }
   // parse ExportedConversationJsonV1
   else if (hasMessages && !hasConversations) {
-    pushOutcomeFromJsonV1(fileName, obj as ExportedConversationJsonV1, outcome);
+    pushOutcomeFromJsonV1(fileName, obj as ExportedChatJsonV1, outcome);
   }
   // invalid
   else {
@@ -96,16 +97,25 @@ function loadAllConversationsFromJson(fileName: string, obj: any, outcome: Impor
   }
 }
 
+function pushOutcomeFromJsonV1(fileName: string, part: ExportedChatJsonV1, outcome: ImportedOutcome) {
+  const restored = createDConversationFromJsonV1(part);
+  if (!restored)
+    outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
+  else
+    outcome.conversations.push({ success: true, fileName, conversation: restored });
+}
+
+
 // NOTE: the tokenCount was removed while still in the JsonV1 format, so here we add it back, for backwards compat
-export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & { tokenCount?: number }) {
+export function createDConversationFromJsonV1(part: ExportedChatJsonV1 & { tokenCount?: number }) {
   if (!part || !part.id || !part.messages) {
     console.warn('createConversationFromJsonV1: invalid conversation json', part);
     return null;
   }
-  const restored: DConversation = {
+  return convertDConversation_V3_V4({
     id: part.id,
-    messages: part.messages,
-    systemPurposeId: part.systemPurposeId || defaultSystemPurposeId,
+    messages: part.messages.map(convertDMessageV3_to_V4),
+    systemPurposeId: (part.systemPurposeId as any) || defaultSystemPurposeId,
     ...(part.userTitle && { userTitle: part.userTitle }),
     ...(part.autoTitle && { autoTitle: part.autoTitle }),
     tokenCount: part.tokenCount || 0,
@@ -113,8 +123,7 @@ export function createConversationFromJsonV1(part: ExportedConversationJsonV1 & 
     updated: part.updated || Date.now(),
     // add these back - these fields are not exported
     abortController: null,
-  };
-  return restored;
+  });
 }
 
 function createFolderFromJsonV1(part: ExportedFolderJsonV1) {
@@ -131,14 +140,6 @@ function createFolderFromJsonV1(part: ExportedFolderJsonV1) {
   return restored;
 }
 
-function pushOutcomeFromJsonV1(fileName: string, part: ExportedConversationJsonV1, outcome: ImportedOutcome) {
-  const restored = createConversationFromJsonV1(part);
-  if (!restored)
-    outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
-  else
-    outcome.conversations.push({ success: true, fileName, conversation: restored });
-}
-
 
 /// EXPORT ///
 
@@ -149,7 +150,7 @@ function pushOutcomeFromJsonV1(fileName: string, part: ExportedConversationJsonV
 export async function downloadAllConversationsJson() {
   // conversations and
   const { folders, enableFolders } = useFolderStore.getState();
-  const payload: ExportedAllJsonV1b = {
+  const payload: ExportedAllJsonV1B = {
     conversations: useChatStore.getState().conversations.map(conversationToJsonV1),
     folders: { folders, enableFolders },
     models: { sources: useModelsStore.getState().sources },
@@ -176,7 +177,7 @@ export async function downloadConversation(conversation: DConversation, format: 
 
   if (format == 'json') {
     // remove fields (abortController, etc.) from the export
-    const exportableConversation: ExportedConversationJsonV1 = conversationToJsonV1(conversation);
+    const exportableConversation: ExportedChatJsonV1 = conversationToJsonV1(conversation);
     const json = JSON.stringify(exportableConversation, null, 2);
     blob = new Blob([json], { type: 'application/json' });
     extension = '.json';
@@ -228,35 +229,14 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
 
 }
 
-export function conversationToJsonV1(_conversation: DConversation): ExportedConversationJsonV1 {
-  // remove fields from the export
-  const { abortController, tokenCount, ...conversation } = _conversation;
-  return conversation;
-}
-
-
-/// STORED TYPES definitions ///
-/// do not change these - consider people's backups
-
-type ExportedConversationJsonV1 = {
-  id: string;
-  messages: DMessage[];
-  systemPurposeId: SystemPurposeId;
-  userTitle?: string;
-  autoTitle?: string;
-  created: number;
-  updated: number | null;
-}
-
-type ExportedFolderJsonV1 = { // this is here to 'freeze' in time and cause typescript errors when we alter the real def
-  id: string;
-  title: string;
-  conversationIds: DConversationId[];
-  color?: string; // Optional color property
-}
-
-type ExportedAllJsonV1b = {
-  conversations: ExportedConversationJsonV1[];
-  models: { sources: DModelSource[] };
-  folders?: { folders: ExportedFolderJsonV1[]; enableFolders: boolean };
+export function conversationToJsonV1(_conversation: DConversation): ExportedChatJsonV1 {
+  return {
+    id: _conversation.id,
+    messages: _conversation.messages,
+    systemPurposeId: _conversation.systemPurposeId,
+    userTitle: _conversation.userTitle,
+    autoTitle: _conversation.autoTitle,
+    created: _conversation.created,
+    updated: _conversation.updated,
+  };
 }

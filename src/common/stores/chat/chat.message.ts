@@ -240,31 +240,6 @@ function _duplicatePart<T extends DMessageFragment['part']>(part: T): T {
 }
 
 
-// helpers - conversion
-
-export function convertDMessage_V3_to_V4(message: DMessage) {
-
-  const v3 = message as (DMessage & {
-    text?: string,
-    typing?: boolean
-  });
-
-  // .fragments
-  if (!message.fragments || !Array.isArray(message.fragments)) {
-
-    // v3.text -> v4.fragments
-    // text content fragment
-    // = [{ ft: 'content', part: { pt: 'text', text: ... } }]
-    message.fragments = [createTextContentFragment(v3.text || '')];
-
-  }
-
-  // delete v3 fields
-  delete v3.text;
-  delete v3.typing;
-}
-
-
 // helpers during the transition from V3
 
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {

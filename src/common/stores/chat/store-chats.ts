@@ -3,13 +3,15 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
+import type { SystemPurposeId } from '../../../data';
+
 import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
-import { SystemPurposeId } from '../../../data';
+import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
-import { conversationTitle, convertCConversation_V3_V4, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
+import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -280,7 +282,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         if (fromVersion < 4 && state && state.conversations && state.conversations.length) {
           if (await backupIdbV3('app-chats', 'app-chats-v3'))
             console.warn('Migrated app-chats from v3 to v4');
-          state.conversations.forEach(convertCConversation_V3_V4);
+          state.conversations = convertDConversation_V3_V4(state.conversations);
         }
 
         return state;
