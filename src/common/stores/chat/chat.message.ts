@@ -259,7 +259,7 @@ export function messageFragmentsReplaceLastText(fragments: Readonly<DMessageFrag
   // append/replace the last text fragment
   return fragments.map(fragment =>
     (fragment === lastTextFragment)
-      ? { ...fragment, text: (appendText && fragment.part.pt === 'text') ? fragment.part.text + newText : newText }
+      ? createTextContentFragment((appendText && fragment.part.pt === 'text') ? fragment.part.text + newText : newText)
       : fragment,
   );
 }
