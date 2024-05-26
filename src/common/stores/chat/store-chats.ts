@@ -282,7 +282,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         if (fromVersion < 4 && state && state.conversations && state.conversations.length) {
           if (await backupIdbV3('app-chats', 'app-chats-v3'))
             console.warn('Migrated app-chats from v3 to v4');
-          state.conversations = convertDConversation_V3_V4(state.conversations);
+          state.conversations = state.conversations?.map(convertDConversation_V3_V4) || [];
         }
 
         return state;
