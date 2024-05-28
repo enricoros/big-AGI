@@ -2,8 +2,6 @@
 #
 # For more examples, such runnin big-AGI alongside a web browsing service, see the `docs/docker` folder.
 
-version: '3.9'
-
 services:
   big-agi:
     image: ghcr.io/enricoros/big-agi:latest
@@ -27,7 +25,7 @@ services:
       - "traefik.http.routers.bigagi-secure.rule=Host(`ai.aranaga.com`)"
       - "traefik.http.routers.bigagi-secure.tls=true"
       - "traefik.http.routers.bigagi-secure.service=bigagi"
-      - "traefik.http.services.bigagi.loadbalancer.server.port=9000"
+      - "traefik.http.services.bigagi.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
 
     command: [ "next", "start", "-p", "3000" ]
