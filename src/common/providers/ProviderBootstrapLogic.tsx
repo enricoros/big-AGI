@@ -1,39 +1,43 @@
 import * as React from 'react';
-
-import { navigateToNews } from '~/common/app.routes';
-import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
-
+import { useRouter } from 'next/router';
 
 import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
+
+import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
+import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
+import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
 export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
-  // wire-up the NextJS router to a top-level loading bar - this will alleviate
-  // the perceived delay on the first 'backend' (provider) capabiliies load
-  useNextLoadProgress();
+  // external state
+  const { route, events } = useRouter();
 
-  // NOTE: just a pass-through for now. Will be used for the following:
-  //  - loading the latest news (see ChatPage -> useRedirectToNewsOnUpdates)
-  //  - loading the commander
-  //  - ...
+  // wire-up the NextJS router to a loading bar to be displayed while routes change
+  useNextLoadProgress(route, events);
+
+
+  // [bootup] logic
+  const isOnChat = route === ROUTE_APP_CHAT;
+  const doRedirectToNews = isOnChat && shallRedirectToNews();
+
+  // [autoconf] initiate the llm auto-configuration process if on the chat
+  const doAutoConf = isOnChat && !doRedirectToNews;
+  React.useEffect(() => {
+    doAutoConf && autoConfInitiateConfiguration();
+  }, [doAutoConf]);
+
+
+  // redirect Chat -> News if fresh news
   const isRedirecting = React.useMemo(() => {
-
-    // redirect to the news page if the news is outdated
-    let doRedirect = shallRedirectToNews();
-    if (doRedirect) {
-      markNewsAsSeen();
-      void navigateToNews();
+    if (doRedirectToNews) {
+      // the async is important (esp. on strict mode second pass)
+      navigateToNews().then(() => markNewsAsSeen());
+      return true;
     }
+    return false;
+  }, [doRedirectToNews]);
 
-    // redirect to the commander if the app is running on mobile
-    // if (!doRedirect && getIsMobile()) {
-    //   doRedirect = true;
-    //   void showCommander();
-    // }
 
-    return doRedirect;
-  }, []);
-
-  return /*isRedirecting ? null :*/ props.children;
+  return isRedirecting ? null : props.children;
 }

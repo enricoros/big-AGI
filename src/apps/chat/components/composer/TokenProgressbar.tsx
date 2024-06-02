@@ -12,7 +12,15 @@ import { tokensPrettyMath, TokenTooltip } from './TokenBadge';
  */
 export const TokenProgressbarMemo = React.memo(TokenProgressbar);
 
-function TokenProgressbar(props: { direct: number, history: number, responseMax: number, limit: number }) {
+function TokenProgressbar(props: {
+  direct: number,
+  history: number,
+  responseMax: number,
+  limit: number,
+
+  tokenPriceIn?: number,
+  tokenPriceOut?: number,
+}) {
   // external state
   const theme = useTheme();
 
@@ -40,7 +48,7 @@ function TokenProgressbar(props: { direct: number, history: number, responseMax:
   const overflowColor = theme.palette.danger.softColor;
 
   // tooltip message/color
-  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax);
+  const { message, color } = tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax, props.tokenPriceIn, props.tokenPriceOut);
 
   // sizes
   const containerHeight = 8;

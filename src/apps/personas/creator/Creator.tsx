@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, tabClasses, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
@@ -11,7 +11,7 @@ import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormEditTextArray } from '~/common/components/forms/useFormEditTextArray';
-import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { FromText } from './FromText';
@@ -93,7 +93,8 @@ export function Creator(props: { display: boolean }) {
   const [showIntermediates, setShowIntermediates] = React.useState(false);
 
   // external state
-  const [personaLlm, llmComponent] = useLLMSelect(true, 'Persona Creation Model');
+  const [personaLlmId, setPersonaLlmId] = useLLMSelectLocalState(true);
+  const [personaLlm, llmComponent] = useLLMSelect(personaLlmId, setPersonaLlmId, 'Persona Creation Model');
 
 
   // editable prompts
@@ -176,8 +177,20 @@ export function Creator(props: { display: boolean }) {
         display: isTransforming ? 'none' : undefined,
       }}
     >
-      <TabList sx={{ minHeight: '3rem' }}>
-        <Tab>From YouTube Video</Tab>
+      <TabList
+        sx={{
+          minHeight: '3rem',
+          [`& .${tabClasses.root}[aria-selected="true"]`]: {
+            // color: 'primary.softColor',
+            bgcolor: 'background.popup',
+            boxShadow: 'sm',
+            fontWeight: 'lg',
+          },
+          // first element
+          '& > *:first-of-type': { borderTopLeftRadius: '0.5rem' },
+        }}
+      >
+        <Tab>From YouTube</Tab>
         <Tab>From Text</Tab>
       </TabList>
       <TabPanel keepMounted value={0} sx={{ p: 3 }}>

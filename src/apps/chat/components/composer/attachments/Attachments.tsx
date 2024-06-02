@@ -68,8 +68,10 @@ export function Attachments(props: {
 
   const handleOverallMenuHide = () => setOverallMenuAnchor(null);
 
-  const handleOverallMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) =>
+  const handleOverallMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  };
 
 
   // overall operations
@@ -112,6 +114,7 @@ export function Attachments(props: {
       {/* Overall Menu button */}
       <IconButton
         onClick={handleOverallMenuToggle}
+        onContextMenu={handleOverallMenuToggle}
         sx={{
           // borderRadius: 'sm',
           borderRadius: 0,
@@ -150,7 +153,7 @@ export function Attachments(props: {
         </MenuItem>
         <MenuItem onClick={handleClearAttachments}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
-          Clear
+          Clear{attachments.length > 5 ? <span style={{ opacity: 0.5 }}> {attachments.length} attachments</span> : null}
         </MenuItem>
       </CloseableMenu>
     )}

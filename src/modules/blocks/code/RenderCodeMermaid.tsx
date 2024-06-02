@@ -158,6 +158,7 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
       component='div'
       ref={mermaidContainerRef}
       dangerouslySetInnerHTML={{ __html: patchSvgString(props.fitScreen, _svgCode) || 'Loading Diagram...' }}
+      style={{ marginInline: 'auto' }}
     />
   );
 

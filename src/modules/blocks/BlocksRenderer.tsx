@@ -4,6 +4,8 @@ import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Tooltip, Typography } from '@mui/joy';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import type { DMessage } from '~/common/state/store-chats';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
@@ -12,7 +14,6 @@ import { InlineError } from '~/common/components/InlineError';
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImage } from './RenderImage';
-import { RenderLatex } from './RenderLatex';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderChatText } from './RenderChatText';
 import { RenderTextDiff } from './RenderTextDiff';
@@ -20,7 +21,7 @@ import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
 
 
 // How long is the user collapsed message
-const USER_COLLAPSED_LINES: number = 8;
+const USER_COLLAPSED_LINES: number = 7;
 
 
 const blocksSx: SxProps = {
@@ -38,11 +39,15 @@ const renderBlocksSx: SxProps = {
   ...blocksSx,
   flexGrow: 0,
   overflowX: 'auto',
+  '& *::selection': {
+    // backgroundColor: '#fc70c3',
+    backgroundColor: 'primary.solidBg',
+    color: 'primary.solidColor',
+  },
 } as const;
 
 
-export function BlocksRenderer(props: {
-
+type BlocksRendererProps = {
   // required
   text: string;
   fromRole: DMessage['role'];
@@ -54,6 +59,7 @@ export function BlocksRenderer(props: {
   fitScreen: boolean;
   isBottom?: boolean;
   showDate?: number;
+  showUnsafeHtml?: boolean;
   wasUserEdited?: boolean;
 
   specialDiagramMode?: boolean;
@@ -64,8 +70,10 @@ export function BlocksRenderer(props: {
 
   // optimization: allow memo
   optiAllowMemo?: boolean;
+};
 
-}) {
+
+export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 
   // state
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
@@ -76,11 +84,6 @@ export function BlocksRenderer(props: {
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
-
-
-  const handleTextUncollapse = React.useCallback(() => {
-    setForceUserExpanded(true);
-  }, []);
 
 
   // Memo text, which could be 'collapsed' to a few lines in case of user messages
@@ -94,18 +97,28 @@ export function BlocksRenderer(props: {
     return { text: _text, isTextCollapsed: false };
   }, [forceUserExpanded, fromUser, _text]);
 
+  const handleTextCollapse = React.useCallback(() => {
+    setForceUserExpanded(false);
+  }, []);
+
+  const handleTextUncollapse = React.useCallback(() => {
+    setForceUserExpanded(true);
+  }, []);
+
+
   // Memo the styles, to minimize re-renders
 
   const scaledCodeSx: SxProps = React.useMemo(() => (
     {
+      my: props.specialDiagramMode ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
       backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-      boxShadow: props.specialDiagramMode ? 'md' : 'xs',
+      boxShadow: props.specialDiagramMode ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
+      borderRadius: 'sm',
       fontFamily: 'code',
       fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
       fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
       fontVariantLigatures: 'none',
       lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-      borderRadius: 'var(--joy-radius-sm)',
     }
   ), [fromAssistant, props.contentScaling, props.specialDiagramMode]);
 
@@ -159,6 +172,7 @@ export function BlocksRenderer(props: {
 
   return (
     <Box
+      ref={ref}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
       sx={renderBlocksSx}
@@ -193,21 +207,23 @@ export function BlocksRenderer(props: {
             return block.type === 'html'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
               : block.type === 'code'
-                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
+                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
                 : block.type === 'image'
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
-                  : block.type === 'latex'
-                    ? <RenderLatex key={'latex-' + index} latexBlock={block} sx={scaledTypographySx} />
-                    : block.type === 'diff'
-                      ? <RenderTextDiff key={'latex-' + index} diffBlock={block} sx={scaledTypographySx} />
-                      : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
-                        ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                        : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+                  : block.type === 'diff'
+                    ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
+                    : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
+                      ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
+                      : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
           })
 
       )}
 
-      {isTextCollapsed && <Button variant='plain' color='neutral' onClick={handleTextUncollapse}>... expand ...</Button>}
+      {isTextCollapsed ? (
+        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<ExpandMoreIcon />} sx={{ minWidth: 120 }}>Expand</Button></Box>
+      ) : forceUserExpanded && (
+        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<ExpandLessIcon />} sx={{ minWidth: 120 }}>Collapse</Button></Box>
+      )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
       {/*<br />*/}
@@ -217,4 +233,6 @@ export function BlocksRenderer(props: {
 
     </Box>
   );
-}
+});
+
+BlocksRenderer.displayName = 'BlocksRenderer';

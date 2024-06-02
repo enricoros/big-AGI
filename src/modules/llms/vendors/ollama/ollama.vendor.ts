@@ -1,7 +1,5 @@
-import { backendCaps } from '~/modules/backend/state-backend';
-
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
-import { apiAsync, apiQuery } from '~/common/util/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
@@ -16,16 +14,17 @@ import { OllamaSourceSetup } from './OllamaSourceSetup';
 
 export interface SourceSetupOllama {
   ollamaHost: string;
+  ollamaJson: boolean;
 }
 
 
 export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSchema, LLMOptionsOpenAI> = {
   id: 'ollama',
   name: 'Ollama',
-  rank: 20,
+  rank: 22,
   location: 'local',
   instanceLimit: 2,
-  hasBackendCap: () => backendCaps().hasLlmOllama,
+  hasBackendCapKey: 'hasLlmOllama',
 
   // components
   Icon: OllamaIcon,
@@ -36,17 +35,11 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({
     dialect: 'ollama',
     ollamaHost: partialSetup?.ollamaHost || '',
+    ollamaJson: partialSetup?.ollamaJson || false,
   }),
 
   // List Models
-  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
-    return apiQuery.llmOllama.listModels.useQuery({ access }, {
-      enabled: enabled,
-      onSuccess: onSuccess,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    });
-  },
+  rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmOllama.listModels.query({ access }),
 
   // Chat Generate (non-streaming) with Functions
   rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {

@@ -1,8 +1,8 @@
 import type { FunctionComponent } from 'react';
 
 // App icons
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import CallIcon from '@mui/icons-material/Call';
@@ -10,8 +10,9 @@ import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
 import Diversity2Icon from '@mui/icons-material/Diversity2';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
-import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
+import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
+import GrainIcon from '@mui/icons-material/Grain';
 import ImageIcon from '@mui/icons-material/Image';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
@@ -29,6 +30,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 import { Brand } from '~/common/app.config';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
 
 
@@ -60,6 +62,7 @@ export interface NavItemApp extends ItemBase {
   hideNav?: boolean
     | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
+  isDev?: boolean,        // show a 'dev mode' badge
   _delete?: boolean,      // delete from the UI
 }
 
@@ -108,11 +111,12 @@ export const navItems: {
       name: 'Draw',
       barTitle: 'Generate Images',
       icon: FormatPaintOutlinedIcon,
-      iconActive: FormatPaintIcon,
+      iconActive: FormatPaintTwoToneIcon,
       type: 'app',
       route: '/draw',
       // hideOnMobile: true,
       hideDrawer: true,
+      isDev: true,
       _delete: true,
     },
     {
@@ -121,14 +125,16 @@ export const navItems: {
       iconActive: AutoAwesomeIcon,
       type: 'app',
       route: '/cortex',
+      isDev: true,
       _delete: true,
     },
     {
       name: 'Patterns',
       icon: AccountTreeOutlinedIcon,
-      iconActive: AccountTreeIcon,
+      iconActive: AccountTreeTwoToneIcon,
       type: 'app',
       route: '/patterns',
+      isDev: true,
       _delete: true,
     },
     {
@@ -139,6 +145,7 @@ export const navItems: {
       route: '/workspace',
       hideDrawer: true,
       hideOnMobile: true,
+      isDev: true,
       _delete: true,
     },
     // <-- divider here -->
@@ -157,11 +164,28 @@ export const navItems: {
       hideBar: true,
     },
     {
+      name: 'Tokenize',
+      icon: GrainIcon,
+      type: 'app',
+      route: '/tokens',
+      hideDrawer: true,
+    },
+    {
+      name: 'Beam',
+      icon: ChatBeamIcon,
+      type: 'app',
+      route: '/dev/beam',
+      hideDrawer: true,
+      hideIcon: true,
+      isDev: true,
+    },
+    {
       name: 'Media Library',
       icon: ImageOutlinedIcon,
       iconActive: ImageIcon,
       type: 'app',
       route: '/media',
+      isDev: true,
       _delete: true,
     },
     {

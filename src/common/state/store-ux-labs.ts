@@ -4,12 +4,9 @@ import { persist } from 'zustand/middleware';
 
 // UX Labs Experiments
 
-/**
- * Graduated:
- *  - see `UxLabsSettings.tsx`, and also:
- *  - Text Tools: dinamically shown where applicable
- *  - Chat Mode: follow-ups; moved to Chat Advanced UI
- */
+// UxLabsSettings.tsx contains the graduated settings, but the following are not stated:
+//  - Text Tools: dinamically shown where applicable
+//  - Chat Mode: Follow-Ups; moved to Chat Advanced UI
 interface UXLabsStore {
 
   labsAttachScreenCapture: boolean;
@@ -21,11 +18,11 @@ interface UXLabsStore {
   labsChatBarAlt: false | 'title',
   setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => void;
 
-  labsChatBeam: boolean;
-  setLabsChatBeam: (labsChatBeam: boolean) => void;
-
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
+
+  labsShowCost: boolean;
+  setLabsShowCost: (labsShowCost: boolean) => void;
 
 }
 
@@ -42,11 +39,11 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsChatBarAlt: false,
       setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => set({ labsChatBarAlt }),
 
-      labsChatBeam: false,
-      setLabsChatBeam: (labsChatBeam: boolean) => set({ labsChatBeam }),
-
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
+
+      labsShowCost: true, // release 1.16.0 with this enabled by default
+      setLabsShowCost: (labsShowCost: boolean) => set({ labsShowCost }),
 
     }),
     {
@@ -54,10 +51,6 @@ export const useUXLabsStore = create<UXLabsStore>()(
     },
   ),
 );
-
-export function getUXLabsChatBeam() {
-  return useUXLabsStore.getState().labsChatBeam;
-}
 
 export function getUXLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;

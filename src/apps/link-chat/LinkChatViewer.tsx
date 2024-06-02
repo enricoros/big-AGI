@@ -5,10 +5,10 @@ import { Box, Button, Card, CardContent, List, ListItem, Tooltip, Typography } f
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
-import { ScrollToBottom } from '../chat/components/scroll-to-bottom/ScrollToBottom';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
+import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
 import { launchAppChat } from '~/common/app.routes';
@@ -63,7 +63,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
   const handleClone = async (canOverwrite: boolean) => {
     setCloning(true);
     const importedId = useChatStore.getState().importConversation({ ...props.conversation }, !canOverwrite);
-    await launchAppChat(importedId);
+    void launchAppChat(importedId);
     setCloning(false);
   };
 
@@ -108,17 +108,10 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
         p: 0,
       }}>
 
-        <ScrollToBottom
-          bootToBottom bootSmoothly
-          sx={{
-            // allows the content to be scrolled (all browsers)
-            overflowY: 'auto',
-            // actually make sure this scrolls & fills
-            height: '100%',
-          }}
-        >
+        <ScrollToBottom bootToBottom bootSmoothly>
 
           <List sx={{
+            minHeight: '100%',
             p: 0,
             display: 'flex', flexDirection: 'column',
             flexGrow: 1,
@@ -142,7 +135,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 key={'msg-' + message.id}
                 message={message}
                 fitScreen={isMobile}
-                blocksShowDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
+                showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
                 onMessageEdit={(_messageId, text: string) => message.text = text}
               />,
             )}

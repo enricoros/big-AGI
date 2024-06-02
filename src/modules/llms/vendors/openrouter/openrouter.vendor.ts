@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/state-backend';
-
 import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -38,7 +36,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
-  hasBackendCap: () => backendCaps().hasLlmOpenRouter,
+  hasBackendCapKey: 'hasLlmOpenRouter',
 
   // components
   Icon: OpenRouterIcon,
@@ -63,7 +61,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   getRateLimitDelay: (llm) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
-    const wait = llm.isFree
+    const wait = llm.tmpIsFree
       ? 5000 + 100 /* 5 seconds for free call, plus some safety margin */
       : 100;
 
@@ -78,7 +76,7 @@ export const ModelVendorOpenRouter: IModelVendor<SourceSetupOpenRouter, OpenAIAc
   },
 
   // OpenAI transport ('openrouter' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

@@ -5,12 +5,54 @@ by release.
 
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.13.0 - Feb 2024
+### 1.17.0 - Jun 2024
 
-- milestone: [1.13.0](https://github.com/enricoros/big-agi/milestone/13)
+- milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
-## What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
+### What's New in 1.16.1 · May 13, 2024 (minor release, models support)
+
+- Support for the new OpenAI GPT-4o 2024-05-13 model
+
+### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
+
+- [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
+- Chat cost estimation 💰 (enable it in Labs / hover the token counter)
+- Save/load chat files with Ctrl+S / Ctrl+O on desktop
+- Major enhancements to the Auto-Diagrams tool
+- YouTube Transcriber Persona for chatting with video content, [#500](https://github.com/enricoros/big-AGI/pull/500)
+- Improved formula rendering (LaTeX), and dark-mode diagrams, [#508](https://github.com/enricoros/big-AGI/issues/508), [#520](https://github.com/enricoros/big-AGI/issues/520)
+- Models update: **Anthropic**, **Groq**, **Ollama**, **OpenAI**, **OpenRouter**, **Perplexity**
+- Code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, and more [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
+- Developers: update the LLMs data structures
+
+### What's New in 1.15.1 · April 10, 2024 (minor release, models support)
+
+- Support for the newly released Gemini Pro 1.5 models
+- Support for the new OpenAI 2024-04-09 Turbo models
+- Resilience fixes after the large success of 1.15.0
+
+### What's New in 1.15.0 · April 1, 2024 · Beam
+
+- ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- Managed Deployments **Auto-Configuration**: simplify the UI mdoels setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
+- Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
+- Enhanced the default Persona
+- Fixes to Gemini models and SVGs, improvements to UI and icons
+- Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
+
+### What's New in 1.14.1 · March 7, 2024 · Modelmorphic
+
+- **Anthropic** [Claude-3](https://www.anthropic.com/news/claude-3-family) model family support. [#443](https://github.com/enricoros/big-AGI/issues/443)
+- New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
+- **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
+- **Mistral** Large and Google **Gemini 1.5** support
+- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
+- And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
+- [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)
+
+### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
 
@@ -22,7 +64,7 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Better looking chats with improved spacing, fonts, and menus
 - More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-local-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/deploy-database.md) (thanks @ranfysvalle02), and speedups
 
-## What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
+### What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline
 
 https://github.com/enricoros/big-AGI/assets/32999/95ceb03c-945d-4fdd-9a9f-3317beb54f3f
 

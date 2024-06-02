@@ -18,7 +18,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
 
   // state
   const [sortByPulls, setSortByPulls] = React.useState<boolean>(false);
-  const [modelName, setModelName] = React.useState<string | null>('llama2');
+  const [modelName, setModelName] = React.useState<string | null>('llama3');
   const [modelTag, setModelTag] = React.useState<string>('');
 
   // external state

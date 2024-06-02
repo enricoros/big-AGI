@@ -9,6 +9,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   const [popupOpen, setPopupOpen] = React.useState(false);
   const [provider, setProvider] = React.useState<ActileProvider | null>(null);
 
+  const [title, setTitle] = React.useState<string>('');
   const [items, setItems] = React.useState<ActileItem[]>([]);
   const [activeSearchString, setActiveSearchString] = React.useState<string>('');
   const [activeItemIndex, setActiveItemIndex] = React.useState<number>(0);
@@ -17,7 +18,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   // derived state
   const activeItems = React.useMemo(() => {
     const search = activeSearchString.trim().toLowerCase();
-    return items.filter(item => item.label.toLowerCase().startsWith(search));
+    return items.filter(item => item.label?.toLowerCase().startsWith(search));
   }, [items, activeSearchString]);
   const activeItem = activeItemIndex >= 0 && activeItemIndex < activeItems.length ? activeItems[activeItemIndex] : null;
 
@@ -25,6 +26,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   const handleClose = React.useCallback(() => {
     setPopupOpen(false);
     setProvider(null);
+    setTitle('');
     setItems([]);
     setActiveSearchString('');
     setActiveItemIndex(0);
@@ -42,13 +44,19 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
 
   const actileInterceptTextChange = React.useCallback((trailingText: string) => {
     for (const provider of providers) {
-      if (provider.checkTriggerText(trailingText)) {
-        setProvider(provider);
-        setPopupOpen(true);
-        setActiveSearchString(provider.searchPrefix);
+      if (provider.fastCheckTriggerText(trailingText)) {
         provider
           .fetchItems()
-          .then(items => setItems(items))
+          .then(({ title, searchPrefix, items }) => {
+            // if there are no items, ignore
+            if (items.length) {
+              setPopupOpen(true);
+              setProvider(provider);
+              setTitle(title);
+              setItems(items);
+              setActiveSearchString(searchPrefix);
+            }
+          })
           .catch(error => {
             handleClose();
             console.error('Failed to fetch popup items:', error);
@@ -100,14 +108,14 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
       <ActilePopup
         anchorEl={anchorRef.current}
         onClose={handleClose}
-        title={provider?.title}
+        title={title}
         items={activeItems}
         activeItemIndex={activeItemIndex}
         activePrefixLength={activeSearchString.length}
         onItemClick={handlePopupItemClicked}
       />
     );
-  }, [activeItemIndex, activeItems, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen, provider?.title]);
+  }, [activeItemIndex, activeItems, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen, title]);
 
   return {
     actileComponent,

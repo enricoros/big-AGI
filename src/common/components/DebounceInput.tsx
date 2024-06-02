@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { InputProps } from '@mui/joy/Input';
-import { IconButton, Input } from '@mui/joy';
+import { Box, IconButton, Input } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -12,11 +12,11 @@ type DebounceInputProps = Omit<InputProps, 'onChange'> & {
 };
 
 const DebounceInput: React.FC<DebounceInputProps> = ({
-  minChars,
-  onDebounce,
-  debounceTimeout,
-  ...rest
-}) => {
+                                                       minChars,
+                                                       onDebounce,
+                                                       debounceTimeout,
+                                                       ...rest
+                                                     }) => {
   const [inputValue, setInputValue] = React.useState('');
   const timerRef = React.useRef<ReturnType<typeof setTimeout>>();
 
@@ -57,11 +57,14 @@ const DebounceInput: React.FC<DebounceInputProps> = ({
       aria-label={rest['aria-label'] || 'Search'}
       startDecorator={<SearchIcon />}
       endDecorator={
-        !inputValue ? rest.endDecorator : (
-          <IconButton aria-label='Clear search' onClick={handleClear}>
-            <ClearIcon  sx={{ fontSize: 'xl' }} />
-          </IconButton>
-        )
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {!!inputValue && (
+            <IconButton size='sm' aria-label='Clear search' onClick={handleClear}>
+              <ClearIcon sx={{ fontSize: 'xl' }} />
+            </IconButton>
+          )}
+          {rest.endDecorator}
+        </Box>
       }
     />
   );

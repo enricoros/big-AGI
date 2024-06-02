@@ -5,7 +5,7 @@ import { FormControl, FormHelperText, Input } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
 
-import { backendCaps } from '~/modules/backend/state-backend';
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
@@ -17,7 +17,7 @@ import { useGoogleSearchStore } from './store-module-google';
 export function GoogleSearchSettings() {
 
   // external state
-  const backendHasGoogle = backendCaps().hasGoogleCustomSearch;
+  const backendHasGoogle = getBackendCapabilities().hasGoogleCustomSearch;
   const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useGoogleSearchStore(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,

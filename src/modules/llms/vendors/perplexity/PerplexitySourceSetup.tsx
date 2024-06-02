@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -9,7 +10,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 
 import { DModelSourceId } from '../../store-llms';
 import { ModelVendorPerplexity } from './perplexity.vendor';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 
@@ -20,30 +21,29 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
   const {
-    source, access,
-    sourceSetupValid, updateSetup,
+    source, sourceHasLLMs, access,
+    sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorPerplexity);
 
   // derived state
   const { oaiKey: perplexityKey } = access;
 
   // key validation
-  const needsUserKey = !ModelVendorPerplexity.hasBackendCap?.();
   const shallFetchSucceed = !needsUserKey || (!!perplexityKey && sourceSetupValid);
   const showKeyError = !!perplexityKey && !sourceSetupValid;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorPerplexity, access, shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
 
   return <>
 
     <FormInputKey
-      id='perplexity-key' label='Perplexity API Key'
+      autoCompleteId='perplexity-key' label='Perplexity API Key'
       rightLabel={<>{needsUserKey
         ? !perplexityKey && <Link level='body-sm' href={PERPLEXITY_REG_LINK} target='_blank'>API keys</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={perplexityKey} onChange={value => updateSetup({ perplexityKey: value })}
       required={needsUserKey} isError={showKeyError}

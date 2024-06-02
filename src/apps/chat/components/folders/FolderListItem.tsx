@@ -5,7 +5,7 @@ import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListI
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -36,8 +36,9 @@ export function FolderListItem(props: {
 
 
   // Menu
-  const handleMenuOpen = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    setMenuAnchorEl(event.currentTarget);
+  const handleMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    setMenuAnchorEl(anchor => anchor ? null : event.currentTarget);
     setDeleteArmed(false); // Reset delete armed state
   };
 
@@ -188,9 +189,11 @@ export function FolderListItem(props: {
 
         {/* Icon to show the Popup menu */}
         <IconButton
+          size='sm'
           variant='outlined'
           className='menu-icon'
-          onClick={handleMenuOpen}
+          onClick={handleMenuToggle}
+          onContextMenu={handleMenuToggle}
           sx={{
             visibility: 'hidden',
             my: '-0.25rem', /* absorb the button padding */
@@ -214,7 +217,7 @@ export function FolderListItem(props: {
               }}
             >
               <ListItemDecorator>
-                <EditIcon />
+                <EditRoundedIcon />
               </ListItemDecorator>
               Edit
             </MenuItem>

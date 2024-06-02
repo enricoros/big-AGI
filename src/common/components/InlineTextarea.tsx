@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Textarea } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -9,7 +9,9 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 export function InlineTextarea(props: {
   initialText: string,
   placeholder?: string,
+  decolor?: boolean
   invertedColors?: boolean,
+  minRows?: number,
   onEdit: (text: string) => void,
   onCancel?: () => void,
   sx?: SxProps,
@@ -38,9 +40,9 @@ export function InlineTextarea(props: {
   return (
     <Textarea
       variant={props.invertedColors ? 'plain' : 'soft'}
-      color={props.invertedColors ? 'primary' : 'warning'}
-      autoFocus
-      minRows={1}
+      color={props.decolor ? undefined : props.invertedColors ? 'primary' : 'warning'}
+      autoFocus={!props.decolor}
+      minRows={props.minRows !== undefined ? props.minRows : 1}
       placeholder={props.placeholder}
       value={text} onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown} onBlur={handleEditBlur}

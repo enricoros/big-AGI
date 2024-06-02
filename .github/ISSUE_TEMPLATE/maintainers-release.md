@@ -21,8 +21,9 @@ assignees: enricoros
   - [ ] Create a temporary tag `git tag v1.2.3 && git push opensource --tags`
   - [ ] Create a [New Draft GitHub Release](https://github.com/enricoros/big-agi/releases/new), and generate the automated changelog (for new contributors)
   - [ ] Update the release version in package.json, and `npm i`
-  - [ ] Update in-app News [src/apps/news/news.data.tsx](/src/apps/news/news.data.tsx)
   - [ ] Update the in-app News version number
+  - [ ] Update in-app News [src/apps/news/news.data.tsx](/src/apps/news/news.data.tsx)
+  - [ ] Update in-app Cover graphics
   - [ ] Update the README.md with the new release
   - [ ] Copy the highlights to the [docs/changelog.md](/docs/changelog.md)
 - Release:
@@ -79,9 +80,30 @@ I need the following from you:
 
 1. a table summarizing all the new features in 1.2.3 with the following columns: 4 words description (exactly what it is), short description, usefulness (what it does for the user), significance, link to the issue number (not the commit)), which will be used for the artifacts later
 2. then double-check the git log to see if there are any features of significance that are not in the table
-3. then score each feature in terms of importance for users (1-10), relative impact of the feature (1-10, where 10 applies to the broadest user base), and novelty and uniqueness (1-10, where 10 is truly unique and novel from what exists already) 
+3. then score each feature in terms of importance for users (1-10), relative impact of the feature (1-10, where 10 applies to the broadest user base), and novelty and uniqueness (1-10, where 10 is truly unique and novel from what exists already)
 4. then improve the table, in decreasing order of importance for features, fixing any detail that's missing, in particular check if there are commits of significance from a user or developer point of view, which are not contained in the table
 5. then I want you then to update the news.data.tsx for the new release
+```
+
+### release name
+
+```markdown
+please brainstorm 10 different names for this release. see the former names here: https://big-agi.com/blog
+```
+
+You can follow with 'What do you think of Modelmorphic?' or other selected name
+
+### cover images
+
+```markdown
+Great, now I need to generate images for this. Before I used the following prompts (2 releases before).
+
+// An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is using a computer with split screen made of origami, split keyboard and is wearing origami sunglasses with very different split reflections. Split halves are very contrasting. Close up photography, bokeh, white background.
+import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
+// An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is calling on a 3D origami old-school pink telephone and the camera is zooming on the telephone. Close up photography, bokeh, white background.
+import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
+
+What can I do now as far as images? Give me 4 prompt ideas with the same style as looks as the former, but different scene or action
 ```
 
 ### Readme (and Changelog)

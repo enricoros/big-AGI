@@ -2,13 +2,18 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { CapabilityBrowsing } from '~/common/components/useCapabilities';
-import { backendCaps } from '~/modules/backend/state-backend';
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
+
+export type BrowsePageTransform = 'html' | 'text' | 'markdown';
 
 interface BrowseState {
 
   wssEndpoint: string;
   setWssEndpoint: (url: string) => void;
+
+  pageTransform: BrowsePageTransform;
+  setPageTransform: (transform: BrowsePageTransform) => void;
 
   enableCommandBrowse: boolean;
   setEnableCommandBrowse: (value: boolean) => void;
@@ -30,6 +35,9 @@ export const useBrowseStore = create<BrowseState>()(
 
       wssEndpoint: '', // default WSS endpoint
       setWssEndpoint: (wssEndpoint: string) => set(() => ({ wssEndpoint })),
+
+      pageTransform: 'text',
+      setPageTransform: (pageTransform: BrowsePageTransform) => set(() => ({ pageTransform })),
 
       enableCommandBrowse: true,
       setEnableCommandBrowse: (enableCommandBrowse: boolean) => set(() => ({ enableCommandBrowse })),
@@ -53,7 +61,7 @@ export const useBrowseStore = create<BrowseState>()(
 
 export function useBrowseCapability(): CapabilityBrowsing {
   // server config
-  const isServerConfig = backendCaps().hasBrowsing;
+  const isServerConfig = getBackendCapabilities().hasBrowsing;
 
   // external client state
   const { wssEndpoint, enableCommandBrowse, enableComposerAttach, enableReactTool, enablePersonaTool } = useBrowseStore();

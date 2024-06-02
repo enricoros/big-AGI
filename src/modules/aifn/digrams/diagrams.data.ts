@@ -7,7 +7,7 @@ export type DiagramLanguage = 'mermaid' | 'plantuml';
 
 // NOTE: keep these global, or it will trigger re-renders
 export const diagramTypes: FormRadioOption<DiagramType>[] = [
-  { label: 'Auto-diagram', value: 'auto' },
+  { label: 'Automatic', value: 'auto' },
   { label: 'Mindmap', value: 'mind' },
 ];
 
@@ -16,7 +16,8 @@ export const diagramLanguages: FormRadioOption<DiagramLanguage>[] = [
   { label: 'Mermaid (mindmaps)', value: 'mermaid' },
 ];
 
-const mermaidMindmapExample = `
+const mermaidMindmapExample = `For example:
+\`\`\`mermaid
 mindmap
   root((mindmap))
     Origins
@@ -32,42 +33,43 @@ mindmap
     Tools
       Pen and paper
       Mermaid
-`.trim();
-
-function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
-  let promptDetails = diagramType === 'auto'
-    ? 'You create a valid Mermaid diagram markdown (```mermaid\\n...), ready to be rendered into a diagram. Ensure the code contains no external references, and all names are properly enclosed in double quotes and escaped if necessary. Choose the most suitable diagram type from the following supported types: flowchart, sequence, class, state, erd, gantt, pie, git.'
-    : 'You create a valid Mermaid mindmap markdown (```mermaid\\n...), ready to be rendered into a mind map. Ensure the code contains no external references, and all names are properly enclosed in double quotes and escaped if necessary. For example:\n' + mermaidMindmapExample + '\n';
-  return {
-    sys: `You are an AI that generates correct Mermaid code based on provided text. ${promptDetails}`,
-    usr: `Generate the Mermaid code for a ${diagramType === 'auto' ? 'suitable diagram' : 'mind map'} that represents the preceding assistant message.`,
-  };
-}
+\`\`\`
+`;
 
 function plantumlDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
   switch (diagramType) {
     case 'auto':
       return {
-        sys: 'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by "```\n@startuml" and "@enduml\n```", ready to be rendered into a diagram or mindmap, ensuring the code contains no external references and all names are properly escaped without spaces. You choose the most suitable diagram type—sequence, class, use case, activity, component, state, object, deployment, wireframe, mindmap, gantt, or flowchart.',
-        usr: 'Generate the PlantUML code for the diagram type that best represents the preceding assistant message.',
+        sys: 'Generate a valid PlantUML diagram markdown (```plantuml\\n@startuml\\n...@enduml\\n```), ready for rendering. No external references allowed and all strings must be escaped correctly (each in a single line). Choose the most suitable PlantUML diagram type: sequence, class, use case, activity, component, state, object, deployment, wireframe, mindmap, gantt, or flowchart.',
+        usr: 'Generate the PlantUML code for a suitable diagram that best captures the essence of the preceding message.',
       };
     case 'mind':
       return {
-        sys: 'You are an AI that writes PlantUML code based on provided text. You create a valid PlantUML string, enclosed by "```\n@startmindmap" and "@endmindmap\n```", ready to be rendered into a mind map, ensuring the code contains no external references and all names are properly escaped without spaces.',
-        usr: 'Generate the PlantUML code for a mind map based on the preceding assistant message.',
+        sys: 'Generate a valid PlantUML mindmap markdown (```plantuml\\n@startmindmap\\n...@endmindmap\\n\`\`\`), ready for rendering. No external references allowed. Use one or more asterisks to indent and separate with spaces.',
+        usr: 'Generate a PlantUML mindmap that effectively summarizes the key points from the preceding message.',
       };
   }
 }
 
+function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
+  let promptDetails = diagramType === 'auto'
+    ? 'Generate a valid Mermaid diagram markdown (```mermaid\\n...```), ready for rendering. The code should have no external references and all names must be in double quotes and properly escaped. Select the most appropriate Mermaid diagram type: flowchart, sequence, class, state, erd, gantt, pie, or git.'
+    : 'Generate a valid Mermaid mindmap markdown (```mermaid\\n...```), ready for rendering. The code should have no external references and all names must be in double quotes and properly escaped. ' + mermaidMindmapExample;
+  return {
+    sys: `Your task is to generate accurate and well-structured Mermaid code from the given text. ${promptDetails}`,
+    usr: `Generate the Mermaid code for a ${diagramType === 'auto' ? 'suitable diagram' : 'mind map'} that ${diagramType === 'auto' ? 'best captures the essence' : 'effectively summarizes the key points'} of the preceding message.`,
+  };
+}
+
+const sysSuffixPM = 'The next three messages will outline: 1. your personality, 2. the data you\'ll work with, and 3. a clear restatement of the instructions.';
+const usrSuffixCoT = 'Please think step by step, then generate valid diagram code in a markdown block as instructed, and stop your response.';
+
 export function bigDiagramPrompt(diagramType: DiagramType, diagramLanguage: DiagramLanguage, chatSystemPrompt: string, subject: string, customInstruction: string): VChatMessageIn[] {
   const { sys, usr } = diagramLanguage === 'mermaid' ? mermaidDiagramPrompt(diagramType) : plantumlDiagramPrompt(diagramType);
-  if (customInstruction) {
-    customInstruction = 'Also consider the following instructions: ' + customInstruction;
-  }
   return [
-    { role: 'system', content: sys },
-    { role: 'system', content: chatSystemPrompt },
+    { role: 'system', content: sys + '\n' + sysSuffixPM },
+    { role: 'user', content: chatSystemPrompt },
     { role: 'assistant', content: subject },
-    { role: 'user', content: `${usr} ${customInstruction}` },
+    { role: 'user', content: (!customInstruction?.trim() ? usr : `${usr} Also consider the following instructions: ${customInstruction.trim()}`) + '\n' + usrSuffixCoT },
   ];
 }

@@ -1,7 +1,5 @@
-import { backendCaps } from '~/modules/backend/state-backend';
-
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
-import { apiAsync, apiQuery } from '~/common/util/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
 import type { IModelVendor } from '../IModelVendor';
@@ -15,7 +13,7 @@ import { AnthropicSourceSetup } from './AnthropicSourceSetup';
 
 
 // special symbols
-export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length >= 40);
+export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length > 1);
 
 export interface SourceSetupAnthropic {
   anthropicKey: string;
@@ -29,7 +27,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
   rank: 13,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmAnthropic,
+  hasBackendCapKey: 'hasLlmAnthropic',
 
   // components
   Icon: AnthropicIcon,
@@ -46,14 +44,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
 
 
   // List Models
-  rpcUpdateModelsQuery: (access, enabled, onSuccess) => {
-    return apiQuery.llmAnthropic.listModels.useQuery({ access }, {
-      enabled: enabled,
-      onSuccess: onSuccess,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    });
-  },
+  rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmAnthropic.listModels.query({ access }),
 
   // Chat Generate (non-streaming) with Functions
   rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
@@ -62,7 +53,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
 
     const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
     try {
-      return await apiAsync.llmAnthropic.chatGenerate.mutate({
+      return await apiAsync.llmAnthropic.chatGenerateMessage.mutate({
         access,
         model: {
           id: llmRef,

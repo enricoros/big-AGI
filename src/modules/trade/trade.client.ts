@@ -1,4 +1,4 @@
-import { fileSave } from 'browser-fs-access';
+import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
 import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../data';
 
@@ -9,6 +9,7 @@ import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, type DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
 import { prettyBaseModel } from '~/common/util/modelUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
 import { ImportedOutcome } from './ImportOutcomeModal';
 
@@ -16,10 +17,58 @@ import { ImportedOutcome } from './ImportOutcomeModal';
 /// IMPORT ///
 
 /**
+ * Open a file dialog and load all conversations from the selected JSON files
+ */
+export async function openAndLoadConversations(preventClash: boolean = false): Promise<ImportedOutcome | null> {
+  const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
+
+  let blobs: FileWithHandle[];
+  try {
+    blobs = await fileOpen({
+      description: `${Brand.Title.Base} JSON Conversations`,
+      mimeTypes: ['application/json', 'application/big-agi'],
+      multiple: true,
+    });
+  } catch (error) {
+    // User closed the dialog
+    return null;
+  }
+
+  // unroll files to conversations
+  for (const blob of blobs) {
+    const fileName = blob.name || 'unknown file';
+    try {
+      const fileString = await blob.text();
+      const fileObject = JSON.parse(fileString);
+      loadAllConversationsFromJson(fileName, fileObject, outcome);
+    } catch (error: any) {
+      outcome.conversations.push({
+        success: false,
+        fileName,
+        error: `Invalid file: ${error?.message || error?.toString() || 'unknown error'}`,
+      });
+    }
+  }
+
+  // import conversations
+  for (const cOutcome of [...outcome.conversations].reverse()) {
+    if (!cOutcome.success)
+      continue;
+    cOutcome.importedConversationId = useChatStore.getState().importConversation(cOutcome.conversation, preventClash);
+    // the last successfully imported is the one to activate
+    if (cOutcome.importedConversationId)
+      outcome.activateConversationId = cOutcome.importedConversationId;
+  }
+
+  return outcome;
+}
+
+
+/**
  * Restores all conversations in a JSON
  *  - supports both ExportedConversationJsonV1, and ExportedAllJsonV1 files
  */
-export function loadAllConversationsFromJson(fileName: string, obj: any, outcome: ImportedOutcome) {
+function loadAllConversationsFromJson(fileName: string, obj: any, outcome: ImportedOutcome) {
   // heuristics
   const hasConversations = obj.hasOwnProperty('conversations');
   const hasMessages = obj.hasOwnProperty('messages');
@@ -106,9 +155,12 @@ export async function downloadAllConversationsJson() {
   const json = JSON.stringify(payload);
   const blob = new Blob([json], { type: 'application/json' });
 
-  // link to begin the download
-  const isoDate = new Date().toISOString().replace(/:/g, '-');
-  await fileSave(blob, { fileName: `conversations-${isoDate}.json`, extensions: ['.json'] });
+  // save file
+  await fileSave(blob, {
+    fileName: `conversations_${window?.location?.hostname || 'all'}_${payload.conversations.length}_${prettyTimestampForFilenames(false)}.agi.json`,
+    // mimeTypes: ['application/json', 'application/big-agi'],
+    extensions: ['.json'],
+  });
 }
 
 /**
@@ -134,11 +186,14 @@ export async function downloadConversation(conversation: DConversation, format: 
     throw new Error(`Invalid download format: ${format}`);
   }
 
-  // bonify title for saving to file (spaces to dashes, etc)
-  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'untitled';
+  // const fileConvId = conversation.id.slice(0, 8);
+  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'untitled';
 
-  // link to begin the download
-  await fileSave(blob, { fileName: `conversation-${fileTitle ? fileTitle + '-' : ''}${conversation.id}${extension}`, extensions: [extension] });
+  // save file
+  await fileSave(blob, {
+    fileName: `conversation_${fileTitle}_${prettyTimestampForFilenames(false)}.agi${extension}`,
+    extensions: [extension],
+  });
 }
 
 /**

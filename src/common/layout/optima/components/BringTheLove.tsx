@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Button, Tooltip } from '@mui/joy';
 
 import { Link } from '~/common/components/Link';
-import { cssRainbowColorKeyframes } from '~/common/app.theme';
+import { animationColorRainbow } from '~/common/util/animUtils';
 
 import { DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 
@@ -35,7 +35,7 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
             background: 'transparent',
             // color: 'text.tertiary',
             '&:hover': {
-              animation: `${cssRainbowColorKeyframes} 5s linear infinite`,
+              animation: `${animationColorRainbow} 5s linear infinite`,
             },
           }}
         >
@@ -46,7 +46,7 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
           component={Link} href={props.link} target='_blank' noLinkStyle
           onClick={() => setLoved(true)}
           sx={{
-            '&:hover': { animation: `${cssRainbowColorKeyframes} 5s linear infinite` },
+            '&:hover': { animation: `${animationColorRainbow} 5s linear infinite` },
             background: 'transparent',
             ...props.sx,
           }}

@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { List, ListItem, ListItemButton, ListItemDecorator, Sheet } from '@mui/joy';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { StrictModeDroppable } from '~/common/components/StrictModeDroppable';
 
 import { AddFolderButton } from './AddFolderButton';
 import { FolderListItem } from './FolderListItem';
-import { StrictModeDroppable } from './StrictModeDroppable';
 
 
 export function ChatFolderList(props: {
@@ -17,6 +18,7 @@ export function ChatFolderList(props: {
   contentScaling: ContentScaling;
   activeFolderId: string | null;
   onFolderSelect: (folderId: string | null) => void;
+  sx?: SxProps;
 }) {
 
   // derived props
@@ -31,13 +33,18 @@ export function ChatFolderList(props: {
 
 
   return (
-    <Sheet variant='soft' sx={{ p: 2 }}>
+    <Sheet variant='soft' sx={props.sx}>
       <List
         variant='plain'
         sx={(theme) => ({
+          // added to be responsive to parent's layout sizing
+          height: '100%',
+          overflowY: 'auto',
+
+          // original list properties
           '& ul': {
             '--List-gap': '0px',
-            bgcolor: 'background.surface',
+            bgcolor: 'background.popup',
             '& > li:first-of-type > [role="button"]': {
               borderTopRightRadius: 'var(--List-radius)',
               borderTopLeftRadius: 'var(--List-radius)',
@@ -131,6 +138,6 @@ export function ChatFolderList(props: {
         </ListItem>
       </List>
 
-    </Sheet>
+     </Sheet>
   );
 }

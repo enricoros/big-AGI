@@ -1,5 +1,3 @@
-import { backendCaps } from '~/modules/backend/state-backend';
-
 import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon';
 
 import type { IModelVendor } from '../IModelVendor';
@@ -21,7 +19,7 @@ export const ModelVendorPerplexity: IModelVendor<SourceSetupPerplexity, OpenAIAc
   rank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCap: () => backendCaps().hasLlmPerplexity,
+  hasBackendCapKey: 'hasLlmPerplexity',
 
   // components
   Icon: PerplexityIcon,
@@ -45,7 +43,7 @@ export const ModelVendorPerplexity: IModelVendor<SourceSetupPerplexity, OpenAIAc
   }),
 
   // OpenAI transport ('perplexity' dialect in 'access')
-  rpcUpdateModelsQuery: ModelVendorOpenAI.rpcUpdateModelsQuery,
+  rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
   rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
   streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
 };

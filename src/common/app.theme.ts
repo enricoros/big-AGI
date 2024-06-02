@@ -2,7 +2,6 @@ import createCache from '@emotion/cache';
 
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
-import { keyframes } from '@emotion/react';
 
 
 // CSS utils
@@ -15,7 +14,7 @@ export const formLabelStartWidth = 140;
 
 // Theme & Fonts
 
-const inter = Inter({
+const font = Inter({
   weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
   subsets: ['latin'],
   display: 'swap',
@@ -31,7 +30,8 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const appTheme = extendTheme({
   fontFamily: {
-    body: inter.style.fontFamily,
+    body: font.style.fontFamily,
+    display: font.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },
   colorSchemes: {
@@ -104,6 +104,14 @@ export const appTheme = extendTheme({
       },
     },
 
+    // JoyMenuItem: {
+    //   styleOverrides: {
+    //     root: {
+    //       '--Icon-fontSize': '1rem', // smaller menu(s) icon - default is 1.25rem ('xl', 20px)
+    //     },
+    //   },
+    // },
+
     // JoyModal: {
     //   styleOverrides: {
     //     backdrop: {
@@ -138,6 +146,7 @@ export const themeBgAppChatComposer = 'background.surface';
 export const lineHeightChatTextMd = 1.75;
 export const lineHeightTextareaMd = 1.75;
 
+export const themeZIndexBeamView = 10;
 export const themeZIndexPageBar = 25;
 export const themeZIndexDesktopDrawer = 26;
 export const themeZIndexDesktopNav = 27;
@@ -149,9 +158,18 @@ export const themeBreakpoints = appTheme.breakpoints.values;
 // Dyanmic UI Sizing
 export type ContentScaling = 'xs' | 'sm' | 'md';
 
+export function adjustContentScaling(scaling: ContentScaling, offset?: number) {
+  if (!offset) return scaling;
+  const scalingArray = ['xs', 'sm', 'md'];
+  const scalingIndex = scalingArray.indexOf(scaling);
+  const newScalingIndex = Math.max(0, Math.min(scalingArray.length - 1, scalingIndex + offset));
+  return scalingArray[newScalingIndex] as ContentScaling;
+}
+
 interface ContentScalingOptions {
   // BlocksRenderer
   blockCodeFontSize: string;
+  blockCodeMarginY: number;
   blockFontSize: string;
   blockImageGap: number;
   blockLineHeight: string | number;
@@ -165,6 +183,7 @@ interface ContentScalingOptions {
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   xs: {
     blockCodeFontSize: '0.75rem',
+    blockCodeMarginY: 0.5,
     blockFontSize: 'xs',
     blockImageGap: 1,
     blockLineHeight: 1.666667,
@@ -174,6 +193,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   },
   sm: {
     blockCodeFontSize: '0.75rem',
+    blockCodeMarginY: 1,
     blockFontSize: 'sm',
     blockImageGap: 1.5,
     blockLineHeight: 1.714286,
@@ -183,6 +203,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   },
   md: {
     blockCodeFontSize: '0.875rem',
+    blockCodeMarginY: 1.5,
     blockFontSize: 'md',
     blockImageGap: 2,
     blockLineHeight: 1.75,
@@ -194,45 +215,6 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
   //   chatDrawerFoldersLineHeight: '3rem',
   // },
 };
-
-
-export const cssRainbowColorKeyframes = keyframes`
-    100%, 0% {
-        color: rgb(255, 0, 0);
-    }
-    8% {
-        color: rgb(204, 102, 0);
-    }
-    16% {
-        color: rgb(128, 128, 0);
-    }
-    25% {
-        color: rgb(77, 153, 0);
-    }
-    33% {
-        color: rgb(0, 179, 0);
-    }
-    41% {
-        color: rgb(0, 153, 82);
-    }
-    50% {
-        color: rgb(0, 128, 128);
-    }
-    58% {
-        color: rgb(0, 102, 204);
-    }
-    66% {
-        color: rgb(0, 0, 255);
-    }
-    75% {
-        color: rgb(127, 0, 255);
-    }
-    83% {
-        color: rgb(153, 0, 153);
-    }
-    91% {
-        color: rgb(204, 0, 102);
-    }`;
 
 
 // Emotion Cache (with insertion point on the SSR pass)

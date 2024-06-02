@@ -33,10 +33,13 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
 
   // styling
   backgroundColor: 'transparent',
+  borderRight: '1px solid',
+  borderRightColor: theme.palette.divider,
   // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
   // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
   // contain: 'strict',
-  boxShadow: theme.shadow.md,
+  // boxShadow: theme.shadow.md, // too thin and complex; also tried 40px blurs
+  boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`,
 
   // content layout
   display: 'flex',

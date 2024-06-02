@@ -1,7 +1,7 @@
 :root {
     --AGI-Nav-width: 52px;
     --AGI-Drawer-width: 320px;
-    --AGI-Desktop-Drawer-width: clamp(320px, 22.1vw, 450px);
+    --AGI-Desktop-Drawer-width: clamp(300px, 20.17vw, 400px);
     --AGI-Optima-Radius: 0.75rem; /* var(--joy-radius-lg) */
 }
 
@@ -9,4 +9,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Prevents pull-to-refresh on mobile, so it's not triggered while scrolling the chat inadvertently */
+body {
+    overscroll-behavior-y: none;
 }

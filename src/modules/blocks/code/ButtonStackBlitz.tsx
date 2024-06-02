@@ -1,9 +1,12 @@
 import * as React from 'react';
 
-import { IconButton, Tooltip } from '@mui/joy';
+import { Tooltip } from '@mui/joy';
 
-import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { Brand } from '~/common/app.config';
+import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+
+import { OverlayButton } from './RenderCode';
 
 
 const _languages = [
@@ -42,7 +45,7 @@ const handleOpenInStackBlitz = (code: string, language: string, title?: string) 
   const projectDetails = {
     files: { [fileName]: code },
     template: template,
-    description: `${Brand.Title.Common} file created on ${new Date().toISOString()}`,
+    description: `${Brand.Title.Common} file created on ${prettyTimestampForFilenames()}`,
     title: language == 'python' ? 'Python Starter' : title,
   } as const;
 
@@ -76,9 +79,9 @@ const handleOpenInStackBlitz = (code: string, language: string, title?: string) 
 export function ButtonStackBlitz(props: { code: string, language: string, title?: string }): React.JSX.Element {
   return (
     <Tooltip title='Open in StackBlitz' variant='solid'>
-      <IconButton variant='outlined' color='neutral' onClick={() => handleOpenInStackBlitz(props.code, props.language, props.title)}>
+      <OverlayButton variant='outlined' onClick={() => handleOpenInStackBlitz(props.code, props.language, props.title)}>
         <StackBlitzIcon />
-      </IconButton>
+      </OverlayButton>
     </Tooltip>
   );
 }
