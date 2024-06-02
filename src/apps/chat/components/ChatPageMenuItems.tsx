@@ -13,7 +13,7 @@ import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutl
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 

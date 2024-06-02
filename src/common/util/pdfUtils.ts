@@ -48,15 +48,23 @@ export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
 }
 
 
-type PdfPageImage = { base64Url: string, scale: number, width: number, height: number };
+interface PdfPageImage {
+  mimeType: string;
+  base64Data: string;
+  scale: number;
+  width: number;
+  height: number;
+}
 
 /**
  * Renders all pages of a PDF to images
  *
  * @param pdfBuffer The content of a PDF file
+ * @param imageMimeType The MIME type of the image to render (default 'image/jpeg')
+ * @param imageQuality The quality of the image (default 0.95 for moderate quality)
  * @param scale The scale factor for the image resolution (default 1.5 for moderate quality)
  */
-export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, scale = 1.5): Promise<PdfPageImage[]> {
+export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/): Promise<PdfPageImage[]> {
   const { getDocument } = await dynamicImportPdfJs();
   const pdf = await getDocument({ data: pdfBuffer }).promise;
   const images: PdfPageImage[] = [];
@@ -74,8 +82,12 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, scale = 1.5): P
       viewport,
     }).promise;
 
+    const base64DataUrl = canvas.toDataURL(imageMimeType, imageQuality);
+    const base64Data = base64DataUrl.slice(`data:${imageMimeType};base64,`.length);
+
     images.push({
-      base64Url: canvas.toDataURL('image/jpeg'),
+      mimeType: imageMimeType,
+      base64Data,
       scale,
       width: viewport.width,
       height: viewport.height,

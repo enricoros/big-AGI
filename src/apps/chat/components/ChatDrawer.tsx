@@ -12,7 +12,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { DebounceInputMemo } from '~/common/components/DebounceInput';
@@ -75,7 +75,7 @@ function ChatDrawer(props: {
 
   // local state
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
-  const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('frequency');
+  const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 

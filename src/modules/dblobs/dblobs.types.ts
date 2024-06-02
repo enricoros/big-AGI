@@ -12,9 +12,10 @@ enum DBlobMimeType {
 }
 
 interface DBlobData<M extends DBlobMimeType> {
-  mimeType: M; // | ArrayBuffer; // Base64 encoded content or ArrayBuffer
-  base64: string; // Base64 encoded content
-  size?: number; // Size in bytes (optional)
+  mimeType: M;
+  base64: string; // Base64 encoded content (not a data URL)
+  // NOTE: the data url will be "data:${mimeType};base64,${base64}"
+  // size?: number; // Size in bytes (optional)
   altMimeType?: DBlobMimeType; // Alternative MIME type for the input (optional)
   altData?: string; // Alternative data for the input (optional)
 }
@@ -22,19 +23,19 @@ interface DBlobData<M extends DBlobMimeType> {
 
 // Item Origin
 
-interface UploadOrigin {
-  origin: 'upload';
-  dir: 'out';
+interface UserOrigin {
+  origin: 'user';
   source: 'attachment'; // 'attachment' | 'message' | 'note' | 'task' | 'event' | 'contact' | 'file' | 'url' | 'text' | 'ego'..
-  fileName: string;
-  fileSize?: number; // Size of the uploaded file (optional)
-  fileType?: string; // Type of the uploaded file (optional)
+  media: string; // file: 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | 'drop' | 'paste',  url: 'url',  'unknown'
+  url?: string;
+  fileName?: string;
+  // fileSize?: number; // Size of the uploaded file (optional)
+  // fileType?: string; // Type of the uploaded file (optional)
   attachmentMessageId?: string; // ID of the message that the attachment is associated with (optional)
 }
 
 interface GeneratedOrigin {
   origin: 'generated';
-  dir: 'in';
   source: 'ai-text-to-image';
   generatorName: string;
   parameters: { [key: string]: any }; // Parameters used for generation
@@ -75,13 +76,13 @@ interface EgoOrigin {
 }*/
 
 // Union type for ItemDataOrigin
-type ItemDataOrigin = UploadOrigin | GeneratedOrigin;
+type ItemDataOrigin = UserOrigin | GeneratedOrigin;
 
 
 // Item Base type
 
 interface DBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
-  id: string; // Unique identifier
+  id: DBlobId; // Unique identifier
   type: TType; // Type of item, used for discrimination
 
   label: string; // Textual representation
@@ -94,6 +95,8 @@ interface DBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType
   metadata: TMeta; // Flexible metadata for specific .type(s)
   cache: Record<string, DBlobData<DBlobMimeType>>; // Cached conversions as BlobData objects
 }
+
+export type DBlobId = string;
 
 export function createDBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(type: TType, label: string, data: DBlobData<TMime>, origin: ItemDataOrigin, metadata: TMeta): DBlobBase<TType, TMime, TMeta> {
   return {
@@ -173,12 +176,12 @@ export type DBlobAudioItem = DBlobBase<DBlobMetaDataType.AUDIO, DBlobMimeType.AU
 
 export type DBlobItem = DBlobImageItem | DBlobAudioItem; // | DBlobVideoItem | DBlobDocumentItem | DBlobTextItem | DBlobEgoItem;
 
-export function createDBlobImageItem(label: string, data: DBlobImageItem['data'], origin: ItemDataOrigin, metadata: ImageMetadata): DBlobImageItem {
-  return createDBlobBase(DBlobMetaDataType.IMAGE, label, data, origin, metadata);
-}
+export const createDBlobImageItem = (label: string, data: DBlobImageItem['data'], origin: ItemDataOrigin, metadata: ImageMetadata): DBlobImageItem =>
+  createDBlobBase(DBlobMetaDataType.IMAGE, label, data, origin, metadata);
 
 export type DBlobDBItem = DBlobItem & {
   uId: '1';
   wId: '1';
   cId: 'global';
+  sId: 'app-chat' | 'attachments'; // scope ID
 }

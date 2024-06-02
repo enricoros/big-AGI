@@ -1,7 +1,9 @@
 import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { useChatStore } from '~/common/state/store-chats';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
 /*const suggestUserFollowUpFn: VChatFunctionIn = {
@@ -67,7 +69,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Execute the following follow-ups in parallel
   // const assistantMessageId = assistantMessage.id;
-  let assistantMessageText = assistantMessage.text;
+  let assistantMessageText = messageSingleTextOrThrow(assistantMessage);
 
   // Follow-up: Question
   if (suggestQuestions) {
@@ -84,8 +86,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
     void llmChatGenerateOrThrow(funcLLMId, [
-        { role: 'system', content: systemMessage.text },
-        { role: 'user', content: userMessage.text },
+        { role: 'system', content: messageSingleTextOrThrow(systemMessage) },
+        { role: 'user', content: messageSingleTextOrThrow(userMessage) },
         { role: 'assistant', content: assistantMessageText },
       ], [suggestPlantUMLFn], 'draw_plantuml_diagram',
     ).then(chatResponse => {
@@ -104,9 +106,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           if (!plantUML.startsWith('@start') || !(plantUML.endsWith('@enduml') || plantUML.endsWith('@endmindmap'))) return;
 
           // append the PlantUML diagram to the assistant response
-          editMessage(conversationId, assistantMessageId, {
-            text: assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`,
-          }, false);
+          const cHandler = ConversationsManager.getHandler(conversationId);
+          cHandler.messageAppendTextPart(assistantMessageId, assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`, true, true); // [chat] assistant:+PlantUML diagram
         }
       }
     }).catch(err => {

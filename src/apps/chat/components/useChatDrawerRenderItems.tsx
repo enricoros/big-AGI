@@ -1,7 +1,9 @@
 import { shallow } from 'zustand/shallow';
 
 import type { DFolder } from '~/common/state/store-folders';
-import { conversationTitle, DConversationId, DMessageUserFlag, messageHasUserFlag, messageUserFlagToEmoji, useChatStore } from '~/common/state/store-chats';
+import { DMessageUserFlag, messageHasUserFlag, messageUserFlagToEmoji, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';
 
@@ -119,7 +121,7 @@ export function useChatDrawerRenderItems(
           let searchFrequency: number = 0;
           if (isSearching) {
             const titleFrequency = title.toLowerCase().split(lcTextQuery).length - 1;
-            const messageFrequency = _c.messages.reduce((count, message) => count + (message.text.toLowerCase().split(lcTextQuery).length - 1), 0);
+            const messageFrequency = _c.messages.reduce((count, message) => count + (messageSingleTextOrThrow(message).toLowerCase().split(lcTextQuery).length - 1), 0);
             searchFrequency = titleFrequency + messageFrequency;
           }
 
@@ -144,7 +146,7 @@ export function useChatDrawerRenderItems(
                 : null,
             updatedAt: _c.updated || _c.created || 0,
             messageCount: _c.messages.length,
-            assistantTyping: !!_c.abortController,
+            beingGenerated: !!_c.abortController, // FIXME: when the AbortController is moved at the message level, derive the state in the conv
             systemPurposeId: _c.systemPurposeId,
             searchFrequency,
           };

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
-import { v4 as uuidv4 } from 'uuid';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
@@ -16,10 +15,12 @@ import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
+import { createTextContentDMessage } from '~/common/stores/chat/chat.message';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -158,7 +159,6 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
   // Handlers
 
-// Modify the handlePurposeChanged function to check for the YouTube Transcriber
   const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
     if (purposeId) {
       if (purposeId === 'YouTubeTranscriber') {
@@ -179,25 +179,14 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, [systemPurposeId]);
 
 
-// Implement handleAddMessage function
-  const handleAddMessage = (messageText: string) => {
+  const handleAppendTranscriptAsMessage = (messageText: string) => {
     // Retrieve the appendMessage action from the useChatStore
     const { appendMessage } = useChatStore.getState();
 
     const conversationId = props.conversationId;
 
     // Create a new message object
-    const newMessage: DMessage = {
-      id: uuidv4(),
-      text: messageText,
-      sender: 'Bot',
-      avatar: null,
-      typing: false,
-      role: 'assistant' as 'assistant',
-      tokenCount: 0,
-      created: Date.now(),
-      updated: null,
-    };
+    const newMessage = createTextContentDMessage('assistant', messageText); // [chat] append assistant:YouTube transcript
 
     // Append the new message to the conversation
     appendMessage(conversationId, newMessage);
@@ -467,7 +456,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         {/* [row -1] YouTube URL */}
         {isYouTubeTranscriberActive && (
           <YouTubeURLInput
-            onSubmit={(url) => handleAddMessage(url)}
+            onSubmit={(transcript) => handleAppendTranscriptAsMessage(transcript)}
             isFetching={false}
             sx={{
               gridColumn: '1 / -1',

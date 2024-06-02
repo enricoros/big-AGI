@@ -81,7 +81,7 @@ export function PromptDesigner(props: {
   }, [nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
 
 
-  // Typing
+  // Type...
 
   const handleTextareaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNextPrompt(e.target.value);

@@ -8,11 +8,10 @@ import { streamAssistantMessage } from '../../../../apps/chat/editors/chat-strea
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { DMessage } from '~/common/state/store-chats';
+import { DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
-import { GATHER_PLACEHOLDER } from '../../beam.config';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
 import { getBeamCardScrolling } from '../../store-module-beam';
 
@@ -48,25 +47,19 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     // s0-h0-u0
     ...inputs.chatMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant'))
-      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: m.text })),
+      .map((m): VChatMessageIn => ({ role: (m.role !== 'assistant') ? 'user' : m.role, content: messageSingleTextOrThrow(m) })),
     // aN
     ...inputs.rayMessages
-      .map((m): VChatMessageIn => ({ role: 'assistant', content: m.text })),
+      .map((m): VChatMessageIn => ({ role: 'assistant', content: messageSingleTextOrThrow(m) })),
     // u
     { role: 'user', content: _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput) },
   ];
 
-  // reset the intermediate message
-  Object.assign(inputs.intermediateDMessage, {
-    text: GATHER_PLACEHOLDER,
-    updated: undefined,
-  } satisfies Partial<DMessage>);
-
   // update the UI
-  const onMessageUpdate = (update: Partial<DMessage>) => {
+  const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
     // in-place update of the intermediate message
-    Object.assign(inputs.intermediateDMessage, update);
-    if (update.text)
+    Object.assign(inputs.intermediateDMessage, incrementalMessage);
+    if (incrementalMessage.fragments?.length)
       inputs.intermediateDMessage.updated = Date.now();
 
     switch (_i.display) {
@@ -75,7 +68,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
       case 'character-count':
         inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{update.text?.length || 0} characters</Typography>,
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageSingleTextOrThrow(incrementalMessage as any)?.length || 0} characters</Typography>,
         );
         return;
 
@@ -96,7 +89,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   };
 
   // LLM Streaming generation
-  return streamAssistantMessage(inputs.llmId, history, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdate, inputs.chainAbortController.signal)
+  return streamAssistantMessage(inputs.llmId, history, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdated, inputs.chainAbortController.signal)
     .then((status) => {
       // re-throw errors, as streamAssistantMessage catches internally
       if (status.outcome === 'aborted') {
@@ -107,7 +100,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
         throw new Error(`Model execution error: ${status.errorMessage || 'Unknown error'}`);
 
       // Proceed to the next step
-      return inputs.intermediateDMessage.text;
+      return messageFragmentsReduceText(inputs.intermediateDMessage.fragments);
     });
 }
 

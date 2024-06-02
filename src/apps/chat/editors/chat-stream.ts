@@ -5,13 +5,10 @@ import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
-import type { DMessage } from '~/common/state/store-chats';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
-
-
-export const STREAM_TEXT_INDICATOR = '...';
 
 
 /**
@@ -23,20 +20,26 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
-  // create a blank and 'typing' message for the assistant
-  const assistantMessageId = cHandler.messageAppendAssistant(STREAM_TEXT_INDICATOR, history[0].purposeId, assistantLlmId, true);
+  // assistant placeholder
+  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
+    '...',
+    { originLLM: assistantLlmId, purposeId: history[0].purposeId },
+  );
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
   cHandler.setAbortController(abortController);
 
-  // stream the assistant's messages
+  // stream the assistant's messages directly to the state store
+  const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
+    cHandler.messageEdit(assistantMessageId, incrementalMessage, false);
+  };
   const messageStatus = await streamAssistantMessage(
     assistantLlmId,
-    history.map((m): VChatMessageIn => ({ role: m.role, content: m.text })),
+    history.map((m): VChatMessageIn => ({ role: m.role, content: messageSingleTextOrThrow(m) })),
     parallelViewCount,
     autoSpeak,
-    (update) => cHandler.messageEdit(assistantMessageId, update, false),
+    onMessageUpdated,
     abortController.signal,
   );
 
@@ -63,7 +66,7 @@ export async function streamAssistantMessage(
   messagesHistory: VChatMessageIn[],
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
-  editMessage: (update: Partial<DMessage>) => void,
+  onMessageUpdated: (incrementalMessage: Partial<DMessage>) => void,
   abortSignal: AbortSignal,
 ): Promise<StreamMessageStatus> {
 
@@ -84,12 +87,15 @@ export async function streamAssistantMessage(
   function throttledEditMessage(updatedMessage: Partial<DMessage>) {
     const now = Date.now();
     if (throttleUnits === 0 || now - lastCallTime >= throttleDelay) {
-      editMessage(updatedMessage);
+      onMessageUpdated(updatedMessage);
       lastCallTime = now;
     }
   }
 
-  const incrementalAnswer: Partial<DMessage> = { text: '' };
+  // TODO: should clean this up once we have multi-fragment streaming/recombination
+  const incrementalAnswer: Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete' | 'pendingPlaceholderText'> = {
+    fragments: [],
+  };
 
   try {
     await llmStreamingChatGenerate(llmId, messagesHistory, null, null, abortSignal, (update: StreamingClientUpdate) => {
@@ -97,8 +103,12 @@ export async function streamAssistantMessage(
 
       // grow the incremental message
       if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-      if (textSoFar) incrementalAnswer.text = textSoFar;
-      if (update.typing !== undefined) incrementalAnswer.typing = update.typing;
+      if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastText(incrementalAnswer.fragments, textSoFar);
+      if (update.typing !== undefined) {
+        incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
+        if (!update.typing)
+          incrementalAnswer.pendingPlaceholderText = undefined;
+      }
 
       // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
       // This can be toggled from the settings
@@ -121,21 +131,22 @@ export async function streamAssistantMessage(
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-      incrementalAnswer.text = (incrementalAnswer.text || '') + errorText;
+      incrementalAnswer.fragments = messageFragmentsReplaceLastText(incrementalAnswer.fragments, errorText, true);
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
     } else
       returnStatus.outcome = 'aborted';
   }
 
-  // Optimized:
-  // 1 - stop the typing animation
-  // 2 - ensure the last content is flushed out
-  editMessage({ ...incrementalAnswer, typing: false });
+  // Ensure the last content is flushed out, and mark as complete
+  onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined, pendingPlaceholderText: undefined });
 
   // 📢 TTS: all
-  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && incrementalAnswer.text && !spokenLine && !abortSignal.aborted)
-    void speakText(incrementalAnswer.text);
+  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
+    const incrementalText = messageFragmentsReduceText(incrementalAnswer.fragments);
+    if (incrementalText.length > 0)
+      void speakText(incrementalText);
+  }
 
   return returnStatus;
 }

@@ -4,6 +4,9 @@ import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } fr
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
+import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
+import PhotoSizeSelectSmallOutlinedIcon from '@mui/icons-material/PhotoSizeSelectSmallOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PivotTableChartIcon from '@mui/icons-material/PivotTableChart';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -14,8 +17,8 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import type { Attachment, AttachmentConverterType, AttachmentId } from './store-attachments';
-import type { LLMAttachment } from './useLLMAttachments';
+import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
+import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 
 
 // default attachment width
@@ -66,20 +69,23 @@ const InputErrorIndicator = () =>
   <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
 
 
-const converterTypeToIconMap: { [key in AttachmentConverterType]: React.ComponentType<any> } = {
+const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.ComponentType<any> } = {
   'text': TextFieldsIcon,
   'rich-text': CodeIcon,
   'rich-text-table': PivotTableChartIcon,
   'pdf-text': PictureAsPdfIcon,
-  'pdf-images': PictureAsPdfIcon,
-  'image': ImageOutlinedIcon,
+  'pdf-images': PermMediaOutlinedIcon,
+  'image-original': ImageOutlinedIcon,
+  'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
+  'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
+  'image-to-default': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
   'ego-message-md': TelegramIcon,
   'unhandled': TextureIcon,
 };
 
-function attachmentConverterIcon(attachment: Attachment) {
-  const converter = attachment.converterIdx !== null ? attachment.converters[attachment.converterIdx] ?? null : null;
+function attachmentConverterIcon(attachmentDraft: AttachmentDraft) {
+  const converter = attachmentDraft.converterIdx !== null ? attachmentDraft.converters[attachmentDraft.converterIdx] ?? null : null;
   if (converter && converter.id) {
     const Icon = converterTypeToIconMap[converter.id] ?? null;
     if (Icon)
@@ -88,56 +94,51 @@ function attachmentConverterIcon(attachment: Attachment) {
   return null;
 }
 
-function attachmentLabelText(attachment: Attachment): string {
-  const converter = attachment.converterIdx !== null ? attachment.converters[attachment.converterIdx] ?? null : null;
-  if (converter && attachment.label === 'Rich Text') {
+function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
+  const converter = attachmentDraft.converterIdx !== null ? attachmentDraft.converters[attachmentDraft.converterIdx] ?? null : null;
+  if (converter && attachmentDraft.label === 'Rich Text') {
     if (converter.id === 'rich-text-table')
       return 'Rich Table';
     if (converter.id === 'rich-text')
       return 'Rich HTML';
   }
-  return ellipsizeFront(attachment.label, 24);
+  return ellipsizeFront(attachmentDraft.label, 24);
 }
 
 
-export function AttachmentItem(props: {
-  llmAttachment: LLMAttachment,
+export function LLMAttachmentItem(props: {
+  llmAttachment: LLMAttachmentDraft,
   menuShown: boolean,
-  onItemMenuToggle: (attachmentId: AttachmentId, anchor: HTMLAnchorElement) => void,
+  onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
 }) {
 
   // derived state
+  const { attachmentDraft: draft, llmSupportsAllFragments } = props.llmAttachment;
 
-  const { onItemMenuToggle } = props;
+  const isInputLoading = draft.inputLoading;
+  const isInputError = !!draft.inputError;
+  const isUnconvertible = !draft.converters.length;
+  const isOutputLoading = draft.outputsConverting;
+  const isOutputMissing = !draft.outputFragments.length;
 
-  const {
-    attachment,
-    isUnconvertible,
-    isOutputMissing,
-    isOutputAttachable,
-  } = props.llmAttachment;
+  const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments);
 
-  const {
-    inputError,
-    inputLoading: isInputLoading,
-    outputsConverting: isOutputLoading,
-  } = attachment;
 
-  const isInputError = !!inputError;
-  const showWarning = isUnconvertible || isOutputMissing || !isOutputAttachable;
+  // handlers
 
+  const { onToggleMenu } = props;
 
   const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    onItemMenuToggle(attachment.id, event.currentTarget);
-  }, [attachment, onItemMenuToggle]);
+    onToggleMenu(draft.id, event.currentTarget);
+  }, [draft.id, onToggleMenu]);
 
 
   // compose tooltip
   let tooltip: string | null = '';
-  if (attachment.source.media !== 'text')
-    tooltip += attachment.source.media + ': ';
-  tooltip += attachment.label;
+  if (draft.source.media !== 'text')
+    tooltip += draft.source.media + ': ';
+  tooltip += draft.label;
   // if (hasInput)
   //   tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
   // if (aOutputs && aOutputs.length >= 1)
@@ -149,15 +150,15 @@ export function AttachmentItem(props: {
   if (isInputLoading || isOutputLoading) {
     color = 'success';
   } else if (isInputError) {
-    tooltip = `Issue loading the attachment: ${attachment.inputError}\n\n${tooltip}`;
     color = 'danger';
+    tooltip = props.menuShown ? null
+      : `Issue loading the attachment: ${draft.inputError}\n\n${tooltip}`;
   } else if (showWarning) {
-    tooltip = props.menuShown
-      ? null
-      : isUnconvertible
-        ? `Attachments of type '${attachment.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
-        : `Not compatible with the selected LLM or not supported. Please select another format.\n\n${tooltip}`;
     color = 'warning';
+    tooltip = props.menuShown ? null
+      : isUnconvertible
+        ? `Attachments of type '${draft.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
+        : `Not compatible with the selected LLM or file not supported. Please try another format.\n\n${tooltip}`;
   } else {
     // all good
     tooltip = null;
@@ -175,7 +176,7 @@ export function AttachmentItem(props: {
       sx={{ p: 1, whiteSpace: 'break-spaces' }}
     >
       {isInputLoading
-        ? <LoadingIndicator label={attachment.label} />
+        ? <LoadingIndicator label={draft.label} />
         : (
           <Button
             size='sm'
@@ -195,11 +196,11 @@ export function AttachmentItem(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentConverterIcon(attachment)}
+                {attachmentConverterIcon(draft)}
                 {isOutputLoading
                   ? <>Converting <CircularProgress color='success' size='sm' /></>
                   : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-                    {attachmentLabelText(attachment)}
+                    {attachmentLabelText(draft)}
                   </Typography>}
               </>}
           </Button>

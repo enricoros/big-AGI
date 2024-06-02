@@ -15,13 +15,14 @@ import { SystemPurposeId, SystemPurposes } from '../../../data';
 
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/state/store-folders';
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/jsUtils';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
+import { ANIM_BUSY_TYPING } from './message/ChatMessage';
 import { CHAT_NOVEL_TITLE } from '../AppChat';
-import { STREAM_TEXT_INDICATOR } from '../editors/chat-stream';
 
 
 // set to true to display the conversation IDs
@@ -58,7 +59,7 @@ export interface ChatNavigationItemData {
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;
   messageCount: number;
-  assistantTyping: boolean;
+  beingGenerated: boolean;
   systemPurposeId: SystemPurposeId;
   searchFrequency: number;
 }
@@ -88,7 +89,7 @@ function ChatDrawerItem(props: {
 
   // derived state
   const { onConversationBranch, onConversationExport, onConversationFolderChange } = props;
-  const { conversationId, isActive, isAlsoOpen, title, userFlagsSummary, folder, messageCount, assistantTyping, systemPurposeId, searchFrequency } = props.item;
+  const { conversationId, isActive, isAlsoOpen, title, userFlagsSummary, folder, messageCount, beingGenerated, systemPurposeId, searchFrequency } = props.item;
   const isNew = messageCount === 0;
 
 
@@ -185,11 +186,11 @@ function ChatDrawerItem(props: {
 
     {/* Symbol, if globally enabled */}
     {props.showSymbols && <ListItemDecorator>
-      {assistantTyping
+      {beingGenerated
         ? (
           <Avatar
-            alt='typing' variant='plain'
-            src='https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp'
+            alt='activity' variant='plain'
+            src={ANIM_BUSY_TYPING}
             sx={{
               width: '1.5rem',
               height: '1.5rem',
@@ -215,7 +216,7 @@ function ChatDrawerItem(props: {
         }}
       >
         {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
-        {title.trim() ? title : CHAT_NOVEL_TITLE}{assistantTyping && STREAM_TEXT_INDICATOR}
+        {title.trim() ? title : CHAT_NOVEL_TITLE}{beingGenerated && ' ...'}
       </Box>
     ) : (
       <InlineTextarea
@@ -242,7 +243,7 @@ function ChatDrawerItem(props: {
       </Typography>
     ) : null}
 
-  </>, [assistantTyping, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, props.showSymbols, searchFrequency, textSymbol, title, userFlagsSummary]);
+  </>, [beingGenerated, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, props.showSymbols, searchFrequency, textSymbol, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (

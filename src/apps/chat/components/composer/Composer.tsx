@@ -27,17 +27,19 @@ import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { conversationTitle, DConversationId, DMessageMetadata, getConversation, useChatStore } from '~/common/state/store-chats';
-import { countModelTokens } from '~/common/util/token-counter';
+import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageMetadata, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
+import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { playSoundUrl } from '~/common/util/audioUtils';
-import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
-import { useChatOverlayStore } from '~/common/chats/store-chat-overlay-vanilla';
+import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
@@ -48,12 +50,11 @@ import { providerCommands } from './actile/providerCommands';
 import { providerStarredMessage, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
-import type { AttachmentId } from './attachments/store-attachments';
-import { Attachments } from './attachments/Attachments';
-import { getSingleTextBlockText, useLLMAttachments } from './attachments/useLLMAttachments';
-import { useAttachments } from './attachments/useAttachments';
+import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
+import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
+import { attachmentInlineTextFragments, useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
+import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 
-import type { ComposerOutputMultiPart } from './composer.types';
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
@@ -101,7 +102,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, fragments: DMessageFragment[], metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
@@ -129,47 +130,57 @@ export function Composer(props: {
   const [startupText, setStartupText] = useComposerStartupText();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
-  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, stopTyping } = useChatStore(useShallow(state => {
+  const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       assistantAbortible: conversation ? !!conversation.abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
-      stopTyping: state.stopTyping,
+      abortConversationTemp: state.abortConversationTemp,
     };
   }));
-  const { inComposer: browsingInComposer } = useBrowseCapability();
-  const { attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile, attachments: _attachments, clearAttachments, removeAttachment } =
-    useAttachments(browsingInComposer && !composeText.startsWith('/'));
 
   // external overlay state (extra conversationId-dependent state)
   const conversationHandler = props.conversationId ? ConversationsManager.getHandler(props.conversationId) : null;
   const conversationOverlayStore = conversationHandler?.getOverlayStore() ?? null;
+
+  // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
     replyToGenerateText: chatModeId === 'generate-text' ? store.replyToText?.trim() || null : null,
   })));
+
+  // don't load URLs if the user is typing a command or there's no capability
+  const enableLoadURLsInComposer = useBrowseCapability().inComposer && !composeText.startsWith('/');
+
+  // attachments-overlay: comes from the attachments slice of the conversation overlay
+  const {
+    attachmentDrafts,
+    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
+    attachmentsClear, attachmentsTakeAllFragments, attachmentsTakeTextFragments,
+  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
+
+  // attachments derived state
+  const llmAttachmentDrafts = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
 
 
   // derived state
 
   const isMobile = !!props.isMobile;
   const isDesktop = !props.isMobile;
-  const chatLLMId = props.chatLLM?.id || null;
+  const noConversation = !props.conversationId;
+  const noLLM = !props.chatLLM;
 
-  // attachments derived state
-
-  const llmAttachments = useLLMAttachments(_attachments, chatLLMId);
 
   // tokens derived state
 
-  const tokensComposerText = React.useMemo(() => {
-    if (!debouncedText || !chatLLMId)
-      return 0;
-    return countModelTokens(debouncedText, chatLLMId, 'composer text') ?? 0;
-  }, [chatLLMId, debouncedText]);
-  let tokensComposer = tokensComposerText + llmAttachments.tokenCountApprox;
-  if (tokensComposer > 0)
-    tokensComposer += 4; // every user message has this many surrounding tokens (note: shall depend on llm..)
+  const tokensComposerTextDebounced = React.useMemo(() => {
+    return (debouncedText && props.chatLLM)
+      ? estimateTextTokens(debouncedText, props.chatLLM, 'composer text')
+      : 0;
+  }, [props.chatLLM, debouncedText]);
+  let tokensComposer = tokensComposerTextDebounced + (llmAttachmentDrafts.llmTokenCountApprox || 0);
+  if (props.chatLLM && tokensComposer > 0)
+    tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (props.chatLLM?.options as LLMOptionsOpenAI /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
@@ -206,24 +217,39 @@ export function Composer(props: {
     if (!conversationId)
       return false;
 
-    // get the multipart output including all attachments
-    const multiPartMessage = llmAttachments.collapseWithAttachments(composerText || null);
-    if (!multiPartMessage.length)
+    // TODO: move to the new pure-Fragment behavior
+    // Inline all Text Fragments into the main message - this is the V1 approach
+    const textFragments: DMessageAttachmentFragment[] = [];
+    const otherFragments: DMessageAttachmentFragment[] = [];
+    for (const attachmentFragment of attachmentsTakeAllFragments(false)) {
+      if (attachmentFragment.part.pt === 'text')
+        textFragments.push(attachmentFragment);
+      else
+        otherFragments.push(attachmentFragment);
+    }
+    const inlinedText = attachmentInlineTextFragments(composerText, textFragments, 'markdown-code', '\n\n');
+
+    // content fragments
+    const contentFragments: DMessageContentFragment[] = inlinedText ? [createTextContentFragment(inlinedText)] : [];
+
+    // stop if no content
+    if (!contentFragments.length && !otherFragments.length)
       return false;
 
     // metadata
     const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
 
     // send the message
-    const enqueued = onAction(conversationId, _chatModeId, multiPartMessage, metadata);
+    const enqueued = onAction(conversationId, _chatModeId, [...contentFragments, ...otherFragments], metadata);
     if (enqueued) {
-      clearAttachments();
+      // TODO: move the state of the DBlob Refs, to avoid the GC
+      attachmentsClear();
       handleReplyToCleared();
       setComposeText('');
     }
 
     return enqueued;
-  }, [clearAttachments, conversationId, handleReplyToCleared, llmAttachments, onAction, replyToGenerateText, setComposeText]);
+  }, [attachmentsClear, attachmentsTakeAllFragments, conversationId, handleReplyToCleared, onAction, replyToGenerateText, setComposeText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -234,8 +260,8 @@ export function Composer(props: {
   }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
-    !!props.conversationId && stopTyping(props.conversationId);
-  }, [props.conversationId, stopTyping]);
+    !!props.conversationId && abortConversationTemp(props.conversationId);
+  }, [abortConversationTemp, props.conversationId]);
 
 
   // Secondary buttons
@@ -299,12 +325,13 @@ export function Composer(props: {
     // get the message
     const conversation = getConversation(item.conversationId);
     const messageToAttach = conversation?.messages.find(m => m.id === item.messageId);
-    if (conversation && messageToAttach && messageToAttach.text) {
+    const messageText = messageToAttach ? messageSingleTextOrThrow(messageToAttach) : null;
+    if (conversation && messageToAttach && messageText) {
       // Testing with this serialization for LLM. Note it will still be within a multi-part message,
       // this could be in a titled markdown block. Don't know yet how this fares with different LLMs.
       const chatTitle = conversationTitle(conversation);
-      const textPlain = `---\nitem id: ${messageToAttach.id}\ncontext title: ${chatTitle}\n---\n${messageToAttach.text.trim()}\n`;
-      void attachAppendEgoMessage('context-item', textPlain, `${chatTitle} > ${messageToAttach.text.slice(0, 10)}...`);
+      const textPlain = `---\nitem id: ${messageToAttach.id}\ncontext title: ${chatTitle}\n---\n${messageText.trim()}\n`;
+      void attachAppendEgoMessage('context-item', textPlain, `${chatTitle} > ${messageText.slice(0, 10)}...`);
     }
   }, [attachAppendEgoMessage]);
 
@@ -315,7 +342,7 @@ export function Composer(props: {
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
 
 
-  // Text typing
+  // Type...
 
   const handleTextareaTextChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComposeText(e.target.value);
@@ -423,7 +450,7 @@ export function Composer(props: {
   }, [toggleRecording, micContinuationTrigger]);
 
 
-  // Attachments
+  // Attachment Drafts
 
   const handleAttachCtrlV = React.useCallback((event: React.ClipboardEvent) => {
     if (attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
@@ -453,23 +480,19 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
-  const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
-    setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachments.collapseWithAttachment(currentText, attachmentId);
-      const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
-      removeAttachment(attachmentId);
-      return inlinedText;
-    });
-  }, [llmAttachments, removeAttachment, setComposeText]);
-
-  const handleAttachmentsInlineText = React.useCallback(() => {
-    setComposeText(currentText => {
-      const inlinedMultiPart = llmAttachments.collapseWithAttachments(currentText);
-      const inlinedText = getSingleTextBlockText(inlinedMultiPart) || '';
-      clearAttachments();
-      return inlinedText;
-    });
-  }, [clearAttachments, llmAttachments, setComposeText]);
+  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftId: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
+    switch (action) {
+      case 'copy-text':
+        const copyTextFragments = attachmentsTakeTextFragments(attachmentDraftId, false);
+        const copyTextString = attachmentInlineTextFragments(null, copyTextFragments, false, '\n\n---\n\n');
+        copyToClipboard(copyTextString, attachmentDraftId ? 'Attachment Text' : 'Attachments Text');
+        break;
+      case 'inline-text':
+        const inlineTextFragments = attachmentsTakeTextFragments(attachmentDraftId, true);
+        setComposeText(currentText => attachmentInlineTextFragments(currentText, inlineTextFragments, 'markdown-code', '\n\n'));
+        break;
+    }
+  }, [attachmentsTakeTextFragments, setComposeText]);
 
 
   // Drag & Drop
@@ -498,7 +521,7 @@ export function Composer(props: {
 
   const handleOverlayDragOver = React.useCallback((e: React.DragEvent) => {
     eatDragEvent(e);
-    // this makes sure we don't "transfer" (or move) the attachment, but we tell the sender we'll copy it
+    // this makes sure we don't "transfer" (or move) the item, but we tell the sender we'll copy it
     e.dataTransfer.dropEffect = 'copy';
   }, [eatDragEvent]);
 
@@ -630,12 +653,12 @@ export function Composer(props: {
             </>}
           </Box>
 
-          {/* [ Textarea + Overlays + Mic | Attachments ] */}
+          {/* [ Textarea + Overlays + Mic | Attachment Drafts ] */}
           <Box sx={{
             flexGrow: 1,
             // layout
             display: 'flex', flexDirection: 'column', gap: 1,
-            minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachments)
+            minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
           }}>
 
             {/* Textarea + Mic buttons + Mic/Drag overlay */}
@@ -758,12 +781,13 @@ export function Composer(props: {
             </Box>
 
             {/* Render any Attachments & menu items */}
-            <Attachments
-              llmAttachments={llmAttachments}
-              onAttachmentInlineText={handleAttachmentInlineText}
-              onAttachmentsClear={clearAttachments}
-              onAttachmentsInlineText={handleAttachmentsInlineText}
-            />
+            {!!conversationOverlayStore && (
+              <LLMAttachmentsList
+                attachmentDraftsStoreApi={conversationOverlayStore}
+                llmAttachmentDrafts={llmAttachmentDrafts}
+                onAttachmentDraftsAction={handleAttachmentDraftsAction}
+              />
+            )}
 
           </Box>
 
@@ -779,7 +803,7 @@ export function Composer(props: {
 
               {/* [mobile] bottom-corner secondary button */}
               {isMobile && (showChatExtras
-                  ? <ButtonCallMemo isMobile disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />
+                  ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
                   : isDraw
                     ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
                     : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
@@ -798,7 +822,7 @@ export function Composer(props: {
                 {!assistantAbortible ? (
                   <Button
                     key='composer-act'
-                    fullWidth disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
+                    fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
                     onClick={handleSendClicked}
                     endDecorator={buttonIcon}
                     sx={{ '--Button-gap': '1rem' }}
@@ -808,7 +832,7 @@ export function Composer(props: {
                 ) : (
                   <Button
                     key='composer-stop'
-                    fullWidth variant='soft' disabled={!props.conversationId}
+                    fullWidth variant='soft' disabled={noConversation}
                     onClick={handleStopClicked}
                     endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
                     sx={{ animation: `${animationEnterBelow} 0.1s ease-out` }}
@@ -819,14 +843,14 @@ export function Composer(props: {
 
                 {/* [Beam] Open Beam */}
                 {/*{isText && <Tooltip title='Open Beam'>*/}
-                {/*  <IconButton variant='outlined' disabled={!props.conversationId || !chatLLMId} onClick={handleSendTextBeamClicked}>*/}
+                {/*  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleSendTextBeamClicked}>*/}
                 {/*    <ChatBeamIcon />*/}
                 {/*  </IconButton>*/}
                 {/*</Tooltip>}*/}
 
                 {/* [Draw] Imagine */}
                 {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
-                  <IconButton variant='outlined' disabled={!props.conversationId || !chatLLMId} onClick={handleTextImagineClicked}>
+                  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>
                     <AutoAwesomeIcon />
                   </IconButton>
                 </Tooltip>}
@@ -834,7 +858,7 @@ export function Composer(props: {
                 {/* Mode expander */}
                 <IconButton
                   variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
-                  disabled={!props.conversationId || !chatLLMId || !!chatModeMenuAnchor}
+                  disabled={noConversation || noLLM || !!chatModeMenuAnchor}
                   onClick={handleModeSelectorShow}
                 >
                   <ExpandLessIcon />
@@ -844,7 +868,7 @@ export function Composer(props: {
               {/* [desktop] secondary-top buttons */}
               {isDesktop && showChatExtras && !assistantAbortible && (
                 <ButtonBeamMemo
-                  disabled={!props.conversationId || !chatLLMId || !llmAttachments.isOutputAttacheable}
+                  disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
                   hasContent={!!composeText}
                   onClick={handleSendTextBeamClicked}
                 />
@@ -859,7 +883,7 @@ export function Composer(props: {
             {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
-              {showChatExtras && <ButtonCallMemo disabled={!props.conversationId || !chatLLMId} onClick={handleCallClicked} />}
+              {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM} onClick={handleCallClicked} />}
 
               {/* [desktop] Draw Options secondary button */}
               {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}

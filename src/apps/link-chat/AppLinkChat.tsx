@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Button, Card, CardContent, Divider, Input, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { createConversationFromJsonV1 } from '~/modules/trade/trade.client';
+import { createDConversationFromJsonV1 } from '~/modules/trade/trade.client';
 import { forgetChatLinkItem, useSharedChatLinkItems } from '~/modules/trade/link/store-link';
 
 import { Brand } from '~/common/app.config';
@@ -13,17 +13,17 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle } from '~/common/state/store-chats';
+import { conversationTitle } from '~/common/stores/chat/chat.conversation';
+import { navigateToChatLinkList } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { LinkChatDrawer } from './LinkChatDrawer';
 import { LinkChatPageMenuItems } from './LinkChatPageMenuItems';
 import { LinkChatViewer } from './LinkChatViewer';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
-import { navigateToChatLinkList } from '~/common/app.routes';
 
 
 const SPECIAL_LIST_PAGE_ID = 'list';
@@ -89,7 +89,7 @@ async function fetchStoredChatV1(objectId: string | null) {
     throw new Error('Unsupported data type: ' + dataType);
 
   // convert to DConversation
-  const restored = createConversationFromJsonV1(dataObject as any);
+  const restored = createDConversationFromJsonV1(dataObject as any);
   if (!restored)
     throw new Error('Could not restore conversation');
 

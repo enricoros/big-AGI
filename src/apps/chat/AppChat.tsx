@@ -17,13 +17,15 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DConversationId, DMessage, DMessageMetadata, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
+import { createTextContentDMessage, DMessage, DMessageFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -31,7 +33,6 @@ import { useRouterQuery } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import type { ComposerOutputMultiPart } from './components/composer/composer.types';
 import { ChatBarAltBeam } from './components/ChatBarAltBeam';
 import { ChatBarAltTitle } from './components/ChatBarAltTitle';
 import { ChatBarDropdowns } from './components/ChatBarDropdowns';
@@ -210,12 +211,12 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata?: DMessageMetadata): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, fragments: DMessageFragment[], metadata?: DMessageMetadata): boolean => {
     // validate inputs
-    if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
+    if (fragments.length !== 1 || fragments[0].part.pt !== 'text') {
       addSnackbar({
         key: 'chat-composer-action-invalid',
-        message: 'Only a single text part is supported for now.',
+        message: 'Only a single text fragment is supported for now.',
         type: 'issue',
         overrides: {
           autoHideDuration: 2000,
@@ -223,7 +224,7 @@ export function AppChat() {
       });
       return false;
     }
-    const userText = multiPartMessage[0].text;
+    const userText = fragments[0].part.text;
 
     // multicast: send the message to all the panes
     const uniqueConversationIds = new Set([conversationId]);
@@ -236,7 +237,7 @@ export function AppChat() {
       const history = getConversation(_cId)?.messages;
       if (!history) continue;
 
-      const newUserMessage = createDMessage('user', userText);
+      const newUserMessage = createTextContentDMessage('user', userText); // [chat] append user:message
       if (metadata) newUserMessage.metadata = metadata;
 
       // fire/forget
@@ -280,7 +281,7 @@ export function AppChat() {
     const imaginedPrompt = await imaginePromptFromText(messageText) || 'An error sign.';
     await handleExecuteAndOutcome('generate-image', conversationId, [
       ...conversation.messages,
-      createDMessage('user', imaginedPrompt),
+      createTextContentDMessage('user', imaginedPrompt), // [chat] append user:imagine prompt
     ]);
   }, [handleExecuteAndOutcome]);
 

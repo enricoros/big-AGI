@@ -7,7 +7,7 @@ import { Box, Button, Tooltip, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import type { DMessage } from '~/common/state/store-chats';
+import { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
 import { InlineError } from '~/common/components/InlineError';
 
@@ -50,7 +50,7 @@ const renderBlocksSx: SxProps = {
 type BlocksRendererProps = {
   // required
   text: string;
-  fromRole: DMessage['role'];
+  fromRole: DMessageRole;
   contentScaling: ContentScaling;
   renderTextAsMarkdown: boolean;
   renderTextDiff?: TextDiff[];
@@ -69,7 +69,7 @@ type BlocksRendererProps = {
   onImageRegenerate?: () => void;
 
   // optimization: allow memo
-  optiAllowMemo?: boolean;
+  optiAllowSubBlocksMemo?: boolean;
 };
 
 
@@ -165,7 +165,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
 
     // Apply specialDiagramMode filter if applicable
     return props.specialDiagramMode
-      ? recycledBlocks.filter(block => block.type === 'code' || recycledBlocks.length === 1)
+      ? recycledBlocks.filter(block => block.type === 'codeb' || recycledBlocks.length === 1)
       : recycledBlocks;
   }, [errorMessage, fromSystem, props.specialDiagramMode, renderTextDiff, text]);
 
@@ -201,16 +201,16 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
         blocks.map(
           (block, index) => {
             // Optimization: only memo the non-currently-rendered components, if the message is still in flux
-            const optimizeWithMemo = props.optiAllowMemo && index !== blocks.length - 1;
-            const RenderCodeMemoOrNot = optimizeWithMemo ? RenderCodeMemo : RenderCode;
-            const RenderMarkdownMemoOrNot = optimizeWithMemo ? RenderMarkdownMemo : RenderMarkdown;
-            return block.type === 'html'
+            const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== blocks.length - 1;
+            const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
+            const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
+            return block.type === 'htmlb'
               ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
-              : block.type === 'code'
-                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeWithMemo} sx={scaledCodeSx} />
-                : block.type === 'image'
+              : block.type === 'codeb'
+                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
+                : block.type === 'imageb'
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
-                  : block.type === 'diff'
+                  : block.type === 'diffb'
                     ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
                     : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
                       ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />

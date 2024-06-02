@@ -8,20 +8,21 @@ import { BeamView } from '~/modules/beam/BeamView';
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { createDConversation, createDMessage, DConversation, DMessage } from '~/common/state/store-chats';
+import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
+import { createTextContentDMessage, DMessage } from '~/common/stores/chat/chat.message';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
 function initTestConversation(): DConversation {
   const conversation = createDConversation();
-  conversation.messages.push(createDMessage('system', 'You are a helpful assistant.'));
-  conversation.messages.push(createDMessage('user', 'Hello, who are you? (please expand...)'));
+  conversation.messages.push(createTextContentDMessage('system', 'You are a helpful assistant.')); // Beam Test - seed1
+  conversation.messages.push(createTextContentDMessage('user', 'Hello, who are you? (please expand...)')); // Beam Test - seed2
   return conversation;
 }
 
 function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamVanillaStore()): BeamStoreApi {
-  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, (text) => alert(text));
+  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, (content) => alert(content));
   return beamStore;
 }
 

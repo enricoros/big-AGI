@@ -7,10 +7,12 @@ import { Box, List } from '@mui/joy';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
+import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { createTextContentDMessage, DMessage, DMessageUserFlag, messageFragmentsReplaceLastText, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -72,7 +74,7 @@ export function ChatMessageList(props: {
   // text actions
 
   const handleRunExample = React.useCallback(async (examplePrompt: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessage('user', examplePrompt)]);
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createTextContentDMessage('user', examplePrompt)]); // [chat] append user:persona question
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
@@ -126,8 +128,10 @@ export function ChatMessageList(props: {
     conversationId && deleteMessage(conversationId, messageId);
   }, [conversationId, deleteMessage]);
 
-  const handleMessageEdit = React.useCallback((messageId: string, newText: string) => {
-    conversationId && editMessage(conversationId, messageId, { text: newText }, true);
+  const handleMessageEdit = React.useCallback((messageId: string, newText: string /* FIXME: contents instead of text */) => {
+    conversationId && editMessage(conversationId, messageId, (message): Partial<DMessage> => ({
+      fragments: messageFragmentsReplaceLastText(message.fragments, newText),
+    }), true);
   }, [conversationId, editMessage]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: string, userFlag: DMessageUserFlag) => {
@@ -191,18 +195,19 @@ export function ChatMessageList(props: {
   });
 
 
-  // text-diff functionality: only diff the last message and when it's complete (not typing), and they're similar in size
+  // text-diff functionality: only diff the last complete message, and they're similar in size
 
-  const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
-    const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
-    if (msgB?.text && msgA?.text && !msgB?.typing) {
-      const textA = msgA.text, textB = msgB.text;
-      const lenA = textA.length, lenB = textB.length;
-      if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
-        return { diffTargetMessage: msgB, diffPrevText: textA };
-    }
-    return { diffTargetMessage: undefined, diffPrevText: undefined };
-  }, [conversationMessages]);
+  // const { diffTargetMessage, diffPrevText } = React.useMemo(() => {
+  //   const [msgB, msgA] = conversationMessages.filter(m => m.role === 'assistant').reverse();
+  //   const textB = msgB ? singleTextOrThrow(msgB) : undefined;
+  //   const textA = msgA ? singleTextOrThrow(msgA) : undefined;
+  //   if (textB && textA && !msgB?.pendingIncomplete) {
+  //     const lenA = textA.length, lenB = textB.length;
+  //     if (lenA > 80 && lenB > 80 && lenA > lenB / 3 && lenB > lenA / 3)
+  //       return { diffTargetMessage: msgB, diffPrevText: textA };
+  //   }
+  //   return { diffTargetMessage: undefined, diffPrevText: undefined };
+  // }, [conversationMessages]);
 
 
   // scroll to the very bottom of a new chat
@@ -254,8 +259,8 @@ export function ChatMessageList(props: {
 
       {filteredMessages.map((message, idx, { length: count }) => {
 
-          // Optimization: if the component is going to change (e.g. the message is typing), we don't want to memoize it to not throw garbage in memory
-          const ChatMessageMemoOrNot = message.typing ? ChatMessage : ChatMessageMemo;
+          // Optimization: only memo complete components, or we'd be memoizing garbage
+          const ChatMessageMemoOrNot = !message.pendingIncomplete ? ChatMessageMemo : ChatMessage;
 
           return props.isMessageSelectionMode ? (
 
@@ -271,7 +276,7 @@ export function ChatMessageList(props: {
             <ChatMessageMemoOrNot
               key={'msg-' + message.id}
               message={message}
-              diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
+              // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
               isBottom={idx === count - 1}
               isImagining={isImagining}

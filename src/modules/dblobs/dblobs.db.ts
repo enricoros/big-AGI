@@ -20,14 +20,11 @@ const db = new DigitalAssetsDB();
 // CRUD
 
 
-export async function addDBlobItem(item: DBlobItem): Promise<void> {
-  const dbItem: DBlobDBItem = {
+export async function addDBlobItem(item: DBlobItem, cId: 'global', sId: DBlobDBItem['sId']): Promise<string> {
+  return db.items.add({
     ...item,
-    uId: '1',
-    wId: '1',
-    cId: 'global', // context Id
-  };
-  await db.items.add(dbItem);
+    uId: '1', wId: '1', cId, sId,
+  });
 }
 
 export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
@@ -50,6 +47,31 @@ export async function deleteDBlobItem(id: string) {
   return db.items.delete(id);
 }
 
+
+// Specific item types
+async function getImageItemById(id: string) {
+  return await getItemById<DBlobImageItem>(id);
+}
+
+export async function getImageDataURLById(id: string) {
+  const item = await getImageItemById(id);
+  return item ? `data:${item.data.mimeType};base64,${item.data.base64}` : null;
+}
+
+export async function getImageBlobURLById(id: string) {
+  const item = await getImageItemById(id);
+  if (item) {
+    const byteCharacters = atob(item.data.base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: item.data.mimeType });
+    return URL.createObjectURL(blob);
+  }
+  return null;
+}
 
 // Example usage:
 async function getAllImages(): Promise<DBlobImageItem[]> {

@@ -4,8 +4,7 @@ import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 
-import { STREAM_TEXT_INDICATOR } from './chat-stream';
-
+// configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 
 
@@ -14,13 +13,16 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
  */
 export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId) {
   if (!question) {
-    cHandler.messageAppendAssistant('Issue: no question provided.', undefined, 'issue', false);
+    cHandler.messageAppendAssistant('Issue: no question provided.', 'issue');
     return false;
   }
 
-  // create a blank and 'typing' message for the assistant - to be filled when we're done
+  // create an assistant placeholder message - to be filled when we're done
   const assistantModelLabel = 'react-' + assistantLlmId; //.slice(4, 7); // HACK: this is used to change the Avatar animation
-  const assistantMessageId = cHandler.messageAppendAssistant(STREAM_TEXT_INDICATOR, undefined, assistantModelLabel, true);
+  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
+    '...',
+    { originLLM: assistantModelLabel },
+  );
   const { enableReactTool: enableBrowse } = useBrowseStore.getState();
 
   // create an ephemeral space
@@ -39,14 +41,18 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     const agent = new Agent();
     const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
-    cHandler.messageEdit(assistantMessageId, { text: reactResult, typing: false }, false);
+    cHandler.messageAppendTextPart(assistantMessageId, reactResult, true, true);
+
     setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
 
     return true;
   } catch (error: any) {
-    console.error(error);
+    console.error('ReAct error', error);
+
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
-    cHandler.messageEdit(assistantMessageId, { text: 'Issue: ReAct did not produce an answer.', typing: false }, false);
+
+    cHandler.messageAppendTextPart(assistantMessageId, '[Issue] ReAct couldn\'t answer your question.', true, false);
+
     return false;
   }
 }

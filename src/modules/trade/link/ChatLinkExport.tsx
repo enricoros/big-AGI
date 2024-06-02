@@ -5,11 +5,12 @@ import DoneIcon from '@mui/icons-material/Done';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import { Brand } from '~/common/app.config';
+import { DConversationId, conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { Link } from '~/common/components/Link';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { conversationTitle, DConversationId, getConversation } from '~/common/state/store-chats';
+import { getConversation } from '~/common/stores/chat/store-chats';
 
 import type { StoragePutSchema, StorageUpdateDeletionKeySchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
