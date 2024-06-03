@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient, Session } from "@supabase/supabase-js";
 import { useSupabaseSyncStore } from "./store-module-supabase-sync";
 import { conversationToJsonV1 } from '~/modules/trade/trade.client';
 import { DConversation, DMessage, useChatStore, createDConversation } from '~/common/state/store-chats';
@@ -14,6 +14,8 @@ type SupabaseConversation = {
     updated: number | null;
   }
 
+
+
 export const isValidSupabaseConnection = (url?: string, key?: string) => !!url && !!key;
 
 function logInfo(message: string) {
@@ -27,10 +29,16 @@ function logError(message: string, error: any) {
 // Singleton instance of Supabase Client, recreate when api key changes
 let supabaseClientInstance: SupabaseClient<any, "public", any> | null = null;
 let lastSupabaseClientKey: string | null = null;
+let supabaseSession: Session | null = null;
+
 
 // Singleton instance of Supabase Realtime, recreate when api key changes
-export function getSupabaseClient(): SupabaseClient<any, "public", any> {
+export function getSupabaseClient(): SupabaseClient<any, "public", any> | null {
     const { supabaseUrl, supabaseKey } = useSupabaseSyncStore.getState();
+
+    if (!isValidSupabaseConnection(supabaseUrl, supabaseKey)) {
+        return null;
+    }
     
     // if the url or key is not set the return null
     if (supabaseClientInstance && lastSupabaseClientKey === supabaseKey) {
@@ -43,10 +51,47 @@ export function getSupabaseClient(): SupabaseClient<any, "public", any> {
         //     supabaseClientInstance = null;
         // }
         
-        supabaseClientInstance = createClient(supabaseUrl, supabaseKey);
+        supabaseClientInstance = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                persistSession: true
+            }
+        });
         lastSupabaseClientKey = supabaseKey;
+        //supabaseClientInstance.auth.getSession(); // are we logged in?
+        //supabaseClientInstance.auth.getUser
         return supabaseClientInstance;
     }
+}
+
+export async function getSupabaseSession(): Promise<Session | null> {
+
+    if (!supabaseSession) {
+        return supabaseSession;
+    }
+
+    const supaClient = getSupabaseClient();
+    if (!supaClient) {
+        return null;
+    }
+
+    // auto sign-in if we can
+    const { data: { session } } = await supaClient.auth.getSession();
+    supabaseSession = session;
+    return supabaseSession;
+}
+
+export function supabaseSignOut(): void
+{
+    supabaseSession = null;
+    if (supabaseClientInstance) {
+        supabaseClientInstance.auth.signOut();
+    }
+}
+
+export async function getSupabaseUserName(): Promise<string | null> {
+    // auto sign-in if we can
+    const session = await getSupabaseSession();
+    return session?.user.email ?? null;
 }
 
 // async function signIn(): Promise<void> {
@@ -172,11 +217,19 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
 export async function syncAllConversations(setMessage?: (message: string | null) => void): Promise<number> {
     const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore.getState();
     const conversations = useChatStore.getState().conversations;
-    const supabase = await getSupabaseClient();
+    const supabase = getSupabaseClient();
 
     //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
     try {
-
+        if (!supabase) {
+            setMessage?.('Please configure Supabase and log in before Syncing');
+            return 0;
+        }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            setMessage?.('Please log in before Syncing');
+            return 0;
+        }
         logInfo('Starting sync to server...');
         const pushedCount = await syncToServer(supabase, conversations, lastSyncTime);
         logInfo('Sync to server completed.');

@@ -1,7 +1,7 @@
 import {useContext, useEffect, useState, ChangeEvent} from "react";
 import {shallow} from 'zustand/shallow';
 
-import {FormControl, FormHelperText, Input, Button, Typography, Box} from '@mui/joy';
+import {FormControl, FormHelperText, Input, Button, Typography, Box, Divider} from '@mui/joy';
 import {GoodModal} from '~/common/components/GoodModal';
 import DoneIcon from '@mui/icons-material/Done';
 import SyncIcon from '@mui/icons-material/Sync';
@@ -13,20 +13,15 @@ import {FormInputKey} from '~/common/components/forms/FormInputKey';
 import {FormLabelStart} from '~/common/components/forms/FormLabelStart';
 import {Link} from '~/common/components/Link';
 
-import {isValidSupabaseConnection} from './supabaseSync.client';
 import {useSupabaseSyncStore} from './store-module-supabase-sync';
-import {syncAllConversations, getSupabaseClient} from '~/modules/supabasesync/supabaseSync.client';
-import {useSession, UserContext} from '~/modules/supabasesync/use-session';
-import {Auth} from '@supabase/auth-ui-react'
-import {ThemeSupa} from '@supabase/auth-ui-shared'
+import {isValidSupabaseConnection, syncAllConversations, getSupabaseClient, getSupabaseUserName, supabaseSignOut} from '~/modules/supabasesync/supabaseSync.client';
 
 export function SupabaseSyncSettings() {
-    //const [session, setSession] = React.useState(null)
-    const [loginDialogIsOpen, setLoginDialogIsOpen] = useState(false)
-    const [authMode, setAuthMode] = useState<"sign_in" | "sign_up">("sign_in");
+    const [supabaseUserName, setSupabaseUserName] = useState<string | null>(null);
+    const [loginDialogIsOpen, setLoginDialogIsOpen] = useState(false);
     
-    const {session, profile} = useContext(UserContext);
-    const userInfo = useSession();
+    // const {session, profile} = useContext(UserContext);
+    // const userInfo = useSession();
 
     // external state
     const backendHasSupabaseSync = getBackendCapabilities().hasSupabaseSync;
@@ -61,6 +56,12 @@ export function SupabaseSyncSettings() {
 
     const handleSyncAllConversations = async () => {
         try {
+            if (!supabaseUserName) {
+                // need to sign in first, just a catch incase UI disable doesn't work
+                setSyncAllState('fail');
+                setSyncMessage('Please Sign in first.');
+                return;
+            }
             const syncedCount = await syncAllConversations(setSyncMessage);
             setSyncAllState('ok');
         } catch {
@@ -71,20 +72,35 @@ export function SupabaseSyncSettings() {
     const handleLogin = () => {
         // can only call if its valid
         if (isValidAnonKey) {
-            setAuthMode("sign_in");
             setLoginDialogIsOpen(true);
         }
+    }
+
+    const handleSupaUserSignIn = () => {
+        // must have user and pwd
+
+        // if success close
+        setLoginDialogIsOpen(false);
     }
 
     const handleSignUp = () => {
         if (isValidAnonKey) {
-            setAuthMode("sign_up");
             setLoginDialogIsOpen(true);
         }
     }
 
+    const supaClient = getSupabaseClient();
+    if (supaClient && isValidUrl && !supabaseUserName) {
+        getSupabaseUserName().then( (name) => {
+            setSupabaseUserName(name);
+        });
+    }
+
+    const handleSignOut = () => {
+        supabaseSignOut();
+    }
+
     return <>
-        <UserContext.Provider value={userInfo}>
             <FormHelperText sx={{display: 'block'}}>
                 Configure the Supabase Chat Sync, if you do not have a Supabase account you will need to create
                 one <Link
@@ -126,14 +142,31 @@ export function SupabaseSyncSettings() {
                 WARNING: Resetting Last Synced to 0 will force push all exiting chats to the server and will overwrite
                 them.
             </FormHelperText>
+            {supabaseUserName && (
+                <Typography level='body-sm'>
+                    Logged in as {supabaseUserName}
+                </Typography>
+            )}
             <Box sx={{display: 'flex', justifyContent: 'space-around', width: '100%', gap: 2}}>
+                {supabaseUserName && (
+                <Button
+                    variant='soft'
+                    color='primary'
+                    sx={{flex: 1, justifyContent: 'center'}}
+                    onClick={handleSignOut}
+                    >
+                    Sign Out
+                </Button>
+                )}
+                {!supabaseUserName && (
+                <>
                 <Button
                     variant='soft'
                     color='primary'
                     sx={{flex: 1, justifyContent: 'center'}}
                     onClick={handleSignUp}
                     disabled={!isValidAnonKey}
-                >
+                    >
                     Sign Up (New User)
                 </Button>
                 <Button
@@ -142,9 +175,11 @@ export function SupabaseSyncSettings() {
                     sx={{flex: 1, justifyContent: 'center'}}
                     onClick={handleLogin}
                     disabled={!isValidAnonKey}
-                >
+                    >
                     Login
                 </Button>
+                </>
+                )}
                 <Button
                     variant='soft'
                     color={syncAllState === 'ok' ? 'success' : syncAllState === 'fail' ? 'warning' : 'primary'}
@@ -163,26 +198,43 @@ export function SupabaseSyncSettings() {
                 </Typography>
             )}
 
-            {session && profile && (
-                <Typography level='body-sm'>
-                    Logged in as {profile?.username}
-                </Typography>
+            {supaClient && (
+                <GoodModal
+                    title='Supabase Login'
+                    aria-labelledby='login-dialog-title'
+                    open={loginDialogIsOpen}
+                    onClose={() => setLoginDialogIsOpen(false)}
+                >
+                    <Divider />
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                        variant='soft'
+                        color='primary'
+                        sx={{flex: 1, justifyContent: 'center'}}
+                        onClick={handleSupaUserSignIn}
+                        disabled={!isValidAnonKey}
+                        >
+                    Login
+                </Button>
+                <Button
+                        variant='soft'
+                        color='primary'
+                        sx={{flex: 1, justifyContent: 'center'}}
+                        onClick={() => setLoginDialogIsOpen(false)}
+                        disabled={!isValidAnonKey}
+                        >
+                    Cancel
+                </Button>
+          </Box>
+                    {/* <Auth
+                        supabaseClient={supaClient}
+                        appearance={{theme: ThemeSupa}}
+                        // for now, only support email login, in future want to use github, google, etc (but need to register app with these providers)
+                        providers={[]}
+                        view={authMode}
+                        redirectTo="http://127.0.0.1:3000"
+                    /> */}
+                </GoodModal>
             )}
-
-            <GoodModal
-                title='Supabase Login'
-                aria-labelledby='login-dialog-title'
-                open={loginDialogIsOpen}
-                onClose={() => setLoginDialogIsOpen(false)}
-            >
-                <Auth
-                    supabaseClient={getSupabaseClient()}
-                    appearance={{theme: ThemeSupa}}
-                    // for now, only support email login, in future want to use github, google, etc (but need to register app with these providers)
-                    providers={[]}
-                    view={authMode}
-                />
-            </GoodModal>
-        </UserContext.Provider>
     </>;
 }
