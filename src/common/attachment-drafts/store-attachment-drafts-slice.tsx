@@ -5,6 +5,7 @@ import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.messa
 
 import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
 import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './attachment.pipeline';
+import { removeDBlobItemFromAttachmentFragment } from './attachment.dblobs';
 
 
 /// Attachment Draft Slice: per-conversation attachments store ///
@@ -34,7 +35,8 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
    */
   takeTextFragments: (attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
 
-  _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<AttachmentDraft> | ((attachment: AttachmentDraft) => Partial<AttachmentDraft>)) => void;
+  _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>> | ((attachment: AttachmentDraft) => Partial<Omit<AttachmentDraft, 'outputFragments'>>)) => void;
+  _replaceAttachmentOutputFragments: (attachmentDraftId: AttachmentDraftId, outputFragments: DMessageAttachmentFragment[]) => void;
   _getAttachment: (attachmentDraftId: AttachmentDraftId) => AttachmentDraft | undefined;
 
 }
@@ -56,7 +58,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     }));
 
     const attachmentDraftId = _attachmentDraft.id;
-    const editFn = (changes: Partial<AttachmentDraft>) => _editAttachment(attachmentDraftId, changes);
+    const editFn = (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => _editAttachment(attachmentDraftId, changes);
 
     // 1.Resolve the Input
     await attachmentLoadInputAsync(source, editFn);
@@ -75,13 +77,36 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     await setAttachmentDraftConverterIdxAndConvert(attachmentDraftId, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
   },
 
-  clearAttachmentsDrafts: () => _set({
-    attachmentDrafts: [],
-  }),
+  clearAttachmentsDrafts: () =>
+    _set(_state => {
+      // NOTE: commented because right now the attachments are not moved to a different scope
+      //       because this function is actually used to clear the attachments when the message is sent
+      // TODO: do not use clearAttachments when the message is sent, figure out another way0
+      // Remove the DBlob items associated with the removed fragments
+      // for (let draft of _state.attachmentDrafts) {
+      //   for (let fragment of draft.outputFragments) {
+      //     void removeDBlobItemFromAttachmentFragment(fragment);
+      //   }
+      // }
+      return {
+        attachmentDrafts: [],
+      };
+    }),
 
   removeAttachmentDraft: (attachmentDraftId: AttachmentDraftId) =>
     _set(state => ({
-      attachmentDrafts: state.attachmentDrafts.filter(attachment => attachment.id !== attachmentDraftId),
+      attachmentDrafts: state.attachmentDrafts.filter(attachment => {
+        if (attachment.id !== attachmentDraftId)
+          return true;
+
+        // Remove the DBlob items associated with the removed fragments
+        for (let removedFragment of attachment.outputFragments) {
+          void removeDBlobItemFromAttachmentFragment(removedFragment);
+        }
+
+        // Remove the draft
+        return false;
+      }),
     })),
 
   moveAttachmentDraft: (attachmentDraftId: AttachmentDraftId, delta: 1 | -1) =>
@@ -101,14 +126,12 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     }),
 
   setAttachmentDraftConverterIdxAndConvert: async (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => {
-    const { _getAttachment, _editAttachment } = _get();
+    const { _getAttachment, _editAttachment, _replaceAttachmentOutputFragments } = _get();
     const attachmentDraft = _getAttachment(attachmentDraftId);
     if (!attachmentDraft || attachmentDraft.converterIdx === converterIdx)
       return;
 
-    const editFn = (changes: Partial<AttachmentDraft>) => _editAttachment(attachmentDraftId, changes);
-
-    await attachmentPerformConversion(attachmentDraft, converterIdx, editFn);
+    await attachmentPerformConversion(attachmentDraft, converterIdx, _editAttachment, _replaceAttachmentOutputFragments);
   },
 
   takeAllFragments: (removeFragments: boolean): DMessageAttachmentFragment[] => {
@@ -137,7 +160,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
         continue;
       }
 
-      // Extract
+      // Extract text fragments
       const extractedTextFragments = draft.outputFragments.filter(fragment => fragment.part.pt === 'text');
       textFragments.push(...extractedTextFragments);
 
@@ -147,12 +170,17 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
         continue;
       }
 
-      // Remove text fragments
-      const remainingFragments = draft.outputFragments.filter(fragment => fragment.part.pt !== 'text');
-      if (remainingFragments.length || draft.outputsConverting) {
+      // Removal: rmeove associated DBlob items
+      for (let removedFragment of extractedTextFragments) {
+        void removeDBlobItemFromAttachmentFragment(removedFragment);
+      }
+
+      // Removal: leave non-text fragments in the draft
+      const keptFragments = draft.outputFragments.filter(fragment => fragment.part.pt !== 'text');
+      if (keptFragments.length || draft.outputsConverting) {
         keptDrafts.push({
           ...draft,
-          outputFragments: remainingFragments,
+          outputFragments: keptFragments,
         });
       }
     }
@@ -166,13 +194,34 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     return textFragments;
   },
 
-  _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<AttachmentDraft> | ((attachment: AttachmentDraft) => Partial<AttachmentDraft>)) =>
+  _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>> | ((attachment: AttachmentDraft) => Partial<Omit<AttachmentDraft, 'outputFragments'>>)) =>
     _set(state => ({
       attachmentDrafts: state.attachmentDrafts.map((attachmentDraft: AttachmentDraft): AttachmentDraft =>
         attachmentDraft.id === attachmentDraftId
           ? { ...attachmentDraft, ...(typeof update === 'function' ? update(attachmentDraft) : update) }
           : attachmentDraft,
       ),
+    })),
+
+  _replaceAttachmentOutputFragments: (attachmentDraftId: AttachmentDraftId, outputFragments: DMessageAttachmentFragment[]) =>
+    _set(state => ({
+      attachmentDrafts: state.attachmentDrafts.map((attachmentDraft: AttachmentDraft): AttachmentDraft => {
+        if (attachmentDraft.id !== attachmentDraftId)
+          return attachmentDraft;
+
+        // find the removed fragments
+        const removedFragments = attachmentDraft.outputFragments.filter(f => !outputFragments.includes(f));
+
+        // remove the DBlob items associated with the removed fragments
+        for (let removedFragment of removedFragments) {
+          void removeDBlobItemFromAttachmentFragment(removedFragment);
+        }
+
+        return {
+          ...attachmentDraft,
+          outputFragments,
+        };
+      }),
     })),
 
   _getAttachment: (attachmentDraftId: AttachmentDraftId) =>

@@ -1,4 +1,4 @@
-import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
+import { addDBlobItem, deleteDBlobItem } from '~/modules/dblobs/dblobs.db';
 import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
@@ -88,5 +88,14 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
     return null;
+  }
+}
+
+/**
+ * Remove the DBlob item associated with the given DMessageAttachmentFragment
+ */
+export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAttachmentFragment) {
+  if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
+    await deleteDBlobItem(fragment.part.dataRef.dblobId);
   }
 }
