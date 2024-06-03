@@ -26,7 +26,6 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
-import { useSanityTextDiffs } from '~/modules/blocks/RenderTextDiff';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -264,7 +263,8 @@ export function ChatMessage(props: {
 
   const messageText = props.message.fragments.length ? messageSingleTextOrThrow(props.message) : '';
 
-  const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
+  // TODO: fix the diffing
+  // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
   // derived state
   const {
@@ -637,7 +637,7 @@ export function ChatMessage(props: {
             fitScreen={props.fitScreen}
             isBottom={props.isBottom}
             renderTextAsMarkdown={renderMarkdown}
-            renderTextDiff={textDiffs || undefined}
+            // renderTextDiff={textDiffs || undefined}
             showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
             showUnsafeHtml={props.showUnsafeHtml}
             wasUserEdited={wasEdited}
