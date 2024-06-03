@@ -31,7 +31,8 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   // [gc] garbage collection(s)
   React.useEffect(() => {
     // Remove old attachment drafts (not persisted in chats)
-    void gcAttachmentDBlobs(); // fire/forget
+    // TODO: uncomment this once we have the full scope transfer of attachments
+    // void gcAttachmentDBlobs(); // fire/forget
   }, []);
 
 
