@@ -1,4 +1,4 @@
-import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
+import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
@@ -34,10 +34,11 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   );
 
   try {
-    const imageUrls = await t2iGenerateImageOrThrow(t2iProvider, imageText, repeat);
+    const images = await t2iGenerateImagesOrThrow(t2iProvider, imageText, repeat);
+    console.log('FIXME: notImplemented: images:', images);
+    // FIXME
 
-    cHandler.messageAppendTextPart(assistantMessageId, imageUrls.join('\n'), true, true);
-
+   // cHandler.messageAppendTextPart(assistantMessageId, imageUrls.join('\n'), true, true);
     return true;
   } catch (error: any) {
 

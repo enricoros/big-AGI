@@ -5,8 +5,9 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Skeleton } from '@mui/joy';
 
 import type { ImageBlock } from '~/modules/blocks/blocks';
-import { getActiveTextToImageProviderOrThrow, t2iGenerateImageOrThrow } from '~/modules/t2i/t2i.client';
-import { heuristicMarkdownImageReferenceBlocks } from '~/modules/blocks/RenderImage';
+import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
+import { createDBlobImageItem, DBlobMimeType } from '~/modules/dblobs/dblobs.types';
+import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { InlineError } from '~/common/components/InlineError';
@@ -25,15 +26,44 @@ const STILL_LAYOUTING = false;
 async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: number = 1) {
   const t2iProvider = getActiveTextToImageProviderOrThrow();
 
-  const mdStringsVector = await t2iGenerateImageOrThrow(t2iProvider, singlePrompt, vectorSize);
-  if (!mdStringsVector?.length)
+  const imageVector = await t2iGenerateImagesOrThrow(t2iProvider, singlePrompt, vectorSize);
+  if (!imageVector?.length)
     throw new Error('No image generated');
 
-  const block = heuristicMarkdownImageReferenceBlocks(mdStringsVector.join('\n'));
-  if (!block?.length)
-    throw new Error('No URLs in the generated images');
+  // save the generated images
+  for (const image of imageVector) {
+    const { base64ImageDataUrl, altText } = image;
+    const base64Data = base64ImageDataUrl.split(',')[1];
+    const dBlobImageItem = createDBlobImageItem(
+      singlePrompt,
+      {
+        mimeType: DBlobMimeType.IMG_PNG,
+        base64: base64Data,
+        size: base64Data.length,
+      },
+      {
+        origin: 'generated',
+        dir: 'in',
+        source: 'ai-text-to-image',
+        generatorName: t2iProvider.painter,
+        generatedAt: image.generatedAt,
+        parameters: image.parameters,
+      },
+      {
+        width: image.width,
+        height: image.height,
+      },
+    );
+    await addDBlobItem(dBlobImageItem);
+  }
 
-  return block;
+  console.log('notImplemented(): Generated images:', imageVector);
+
+  // const block = heuristicMarkdownImageReferenceBlocks(imageVector.join('\n'));
+  // if (!block?.length)
+  //   throw new Error('No URLs in the generated images');
+
+  return [];
 }
 
 

@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
-import { t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server.types';
+import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server';
 
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
@@ -322,14 +322,28 @@ export const llmOpenAIRouter = createTRPCRouter({
         access, null, requestBody, '/v1/images/generations',
       );
 
+      // common return fields
+      const [width, height] = config.size.split('x').map(nStr => parseInt(nStr));
+      if (!width || !height) {
+        console.error(`openai.router.createImages: invalid size ${config.size}`);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Invalid size ${config.size}` });
+      }
+      const { count: _count, responseFormat: _responseFormat, ...parameters } = config;
+
       // expect a single image and as URL
-      const imagesOutput = wireOpenAICreateImageOutputSchema.parse(wireOpenAICreateImageOutput);
-      return imagesOutput.data.map(image => {
-        if ('b64_json' in image)
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a url, got a b64_json (which is not implemented yet)` });
+      const generatedImages = wireOpenAICreateImageOutputSchema.parse(wireOpenAICreateImageOutput).data;
+      return generatedImages.map((image): T2iCreateImageOutput => {
+        if (!('b64_json' in image))
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
+
         return {
-          imageUrl: image.url,
+          base64ImageDataUrl: 'data:image/png;base64,' + image.b64_json,
           altText: image.revised_prompt || config.prompt,
+          width,
+          height,
+          generatorName: config.model,
+          generatedAt: new Date().toISOString(),
+          parameters,
         };
       });
     }),
