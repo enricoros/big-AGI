@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, CircularProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -10,7 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { getImageBlobURLById } from '~/modules/dblobs/dblobs.db';
 
-import type { DMessageDataRef, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageDataRef } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -58,6 +58,7 @@ export function LLMAttachmentMenu(props: {
 
   const draftId = draft.id;
   const draftInput = draft.input;
+  const isConverting = draft.outputsConverting;
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
 
@@ -126,12 +127,14 @@ export function LLMAttachmentMenu(props: {
       )}
       {!isUnconvertible && draft.converters.map((c, idx) =>
         <MenuItem
-          disabled={c.disabled}
+          disabled={c.disabled || isConverting}
           key={'c-' + c.id}
           onClick={async () => idx !== draft.converterIdx && await handleSetConverterIdx(idx)}
         >
           <ListItemDecorator>
-            <Radio checked={idx === draft.converterIdx} />
+            {(isConverting && idx === draft.converterIdx)
+              ? <CircularProgress size='sm' sx={{ '--CircularProgress-size': '1.25rem' }} />
+              : <Radio checked={idx === draft.converterIdx} disabled={isConverting} />}
           </ListItemDecorator>
           {c.unsupported
             ? <Box>Unsupported 🤔 <Typography level='body-xs'>{c.name}</Typography></Box>
@@ -140,7 +143,7 @@ export function LLMAttachmentMenu(props: {
       )}
       {!isUnconvertible && <ListDivider />}
 
-      {DEBUG_LLMATTACHMENTS && !!draftInput && (
+      {DEBUG_LLMATTACHMENTS && !!draftInput && !isConverting && (
         <ListItem>
           <ListItemDecorator />
           <Box>
@@ -198,7 +201,7 @@ export function LLMAttachmentMenu(props: {
           </Box>
         </ListItem>
       )}
-      {DEBUG_LLMATTACHMENTS && !!draftInput && <ListDivider />}
+      {DEBUG_LLMATTACHMENTS && !!draftInput && !isConverting && <ListDivider />}
 
       {/* Destructive Operations */}
       {/*<MenuItem onClick={handleCopyToClipboard} disabled={!isOutputTextInlineable}>*/}
@@ -209,11 +212,11 @@ export function LLMAttachmentMenu(props: {
       {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
       {/*  Shrink*/}
       {/*</MenuItem>*/}
-      <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments}>
+      <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
         <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
         Inline text
       </MenuItem>
-      <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments}>
+      <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
         <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
         Copy text
       </MenuItem>
