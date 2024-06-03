@@ -107,7 +107,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // append the PlantUML diagram to the assistant response
           const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextPart(assistantMessageId, assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`, true, true); // [chat] assistant:+PlantUML diagram
+          cHandler.messageAppendTextContentFragment(assistantMessageId, assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`, true, true); // [chat] assistant:+PlantUML diagram
         }
       }
     }).catch(err => {
