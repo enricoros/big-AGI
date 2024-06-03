@@ -45,7 +45,8 @@ export function InlineTextarea(props: {
       minRows={props.minRows !== undefined ? props.minRows : 1}
       placeholder={props.placeholder}
       value={text} onChange={handleEditTextChanged}
-      onKeyDown={handleEditKeyDown} onBlur={handleEditBlur}
+      onBlur={handleEditBlur}
+      onKeyDown={handleEditKeyDown}
       slotProps={{
         textarea: {
           enterKeyHint: enterIsNewline ? 'enter' : 'done',
