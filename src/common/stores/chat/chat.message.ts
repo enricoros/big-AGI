@@ -66,6 +66,7 @@ type DMessageTextPart = { pt: 'text', text: string };
 type DMessageImagePart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
 type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
+// type DMessageErrorPart = { pt: 'error', error: string };
 
 
 // Data Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
@@ -150,6 +151,10 @@ export function createContentFragment(part: DMessageContentFragment['part']): DM
 
 export function createTextContentFragment(text: string): DMessageContentFragment {
   return createContentFragment(createDMessageTextPart(text));
+}
+
+export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
+  return createContentFragment(createDMessageImagePart(dataRef, altText, width, height));
 }
 
 export function createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {

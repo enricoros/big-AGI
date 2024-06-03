@@ -1,7 +1,11 @@
+import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
+import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
+
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
 
 
 /**
@@ -35,10 +39,40 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
 
   try {
     const images = await t2iGenerateImagesOrThrow(t2iProvider, imageText, repeat);
-    console.log('FIXME: notImplemented: images:', images);
-    // FIXME
+    for (let image of images) {
 
-   // cHandler.messageAppendTextPart(assistantMessageId, imageUrls.join('\n'), true, true);
+      const { mimeType, base64Data, generatorName, width, height, altText, parameters, generatedAt } = image;
+
+      // Create DBlob image item
+      const dblobImageItem = createDBlobImageItem(
+        'Image: ' + altText,
+        {
+          mimeType: mimeType as any, /* we assume the mime is supported */
+          base64: base64Data,
+        },
+        {
+          origin: 'generated', source: 'ai-text-to-image',
+          generatorName,
+          prompt: altText,
+          parameters: parameters,
+          generatedAt,
+        },
+        {
+          width: width || 0,
+          height: height || 0,
+          // description: '',
+        },
+      );
+
+      // Add to DBlobs database
+      const dblobId = await addDBlobItem(dblobImageItem, 'global', 'app-chat');
+
+      // Create a data reference for the image from the message
+      const imagePartDataRef = createDMessageDataRefDBlob(dblobId, mimeType, base64Data.length);
+
+      // Append the image to the chat
+      cHandler.messageAppendImageContentFragment(assistantMessageId, imagePartDataRef, altText, width, height, true, true);
+    }
     return true;
   } catch (error: any) {
 
