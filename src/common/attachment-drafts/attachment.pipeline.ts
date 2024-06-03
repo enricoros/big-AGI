@@ -7,6 +7,7 @@ import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 import { createTextAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
+import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
 import { attachmentImageToFragmentViaDBlob } from './attachment.dblobs';
 
 
@@ -113,7 +114,7 @@ export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft
  * @param {Readonly<AttachmentDraftSource>} source - The source of the attachment.
  * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
  */
-export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftSource>, edit: (changes: Partial<AttachmentDraft>) => void) {
+export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftSource>, edit: (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void) {
   edit({ inputLoading: true });
 
   switch (source.media) {
@@ -218,7 +219,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
  * @param {Readonly<AttachmentDraftInput>} input - The input of the AttachmentDraft object.
  * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
  */
-export function attachmentDefineConverters(sourceType: AttachmentDraftSource['media'], input: Readonly<AttachmentDraftInput>, edit: (changes: Partial<AttachmentDraft>) => void) {
+export function attachmentDefineConverters(sourceType: AttachmentDraftSource['media'], input: Readonly<AttachmentDraftInput>, edit: (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void) {
 
   // return all the possible converters for the input
   const converters: AttachmentDraftConverter[] = [];
@@ -281,16 +282,22 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
  *
  * @param {Readonly<AttachmentDraft>} attachment - The AttachmentDraft object to convert.
  * @param {number | null} converterIdx - The index of the selected converter.
- * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
+ * @param edit - A function to edit the AttachmentDraft object.
+ * @param replaceOutputFragments - A function to replace the output fragments of the AttachmentDraft object.
  */
-export async function attachmentPerformConversion(attachment: Readonly<AttachmentDraft>, converterIdx: number | null, edit: (changes: Partial<AttachmentDraft>) => void) {
+export async function attachmentPerformConversion(
+  attachment: Readonly<AttachmentDraft>,
+  converterIdx: number | null,
+  edit: AttachmentsDraftsStore['_editAttachment'],
+  replaceOutputFragments: AttachmentsDraftsStore['_replaceAttachmentOutputFragments'],
+) {
 
   // set converter index
   converterIdx = (converterIdx !== null && converterIdx >= 0 && converterIdx < attachment.converters.length) ? converterIdx : null;
-  edit({
+  edit(attachment.id, {
     converterIdx: converterIdx,
-    outputFragments: [],
   });
+  replaceOutputFragments(attachment.id, []);
 
   // get converter
   const { source, ref, input } = attachment;
@@ -298,23 +305,23 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   if (!converter || !input)
     return;
 
-  edit({
+  edit(attachment.id, {
     outputsConverting: true,
   });
 
 
   // apply converter to the input
-  const outputFragments: DMessageAttachmentFragment[] = [];
+  const newFragments: DMessageAttachmentFragment[] = [];
   switch (converter.id) {
 
     // text as-is
     case 'text':
-      outputFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
+      newFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
       break;
 
     // html as-is
     case 'rich-text':
-      outputFragments.push(createTextAttachmentFragment(input.altData!, ref || '\n<!DOCTYPE html>'));
+      newFragments.push(createTextAttachmentFragment(input.altData!, ref || '\n<!DOCTYPE html>'));
       break;
 
     // html to markdown table
@@ -326,7 +333,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
         // fallback to text/plain
         mdTable = inputDataToString(input.data);
       }
-      outputFragments.push(createTextAttachmentFragment(mdTable, ref));
+      newFragments.push(createTextAttachmentFragment(mdTable, ref));
       break;
 
     // image resized (default mime/quality, openai-high-res)
@@ -337,7 +344,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       }
       const imageHighF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-high-res');
       if (imageHighF)
-        outputFragments.push(imageHighF);
+        newFragments.push(imageHighF);
       break;
 
     // image resized (default mime/quality, openai-low-res)
@@ -348,7 +355,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       }
       const imageLowF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-low-res');
       if (imageLowF)
-        outputFragments.push(imageLowF);
+        newFragments.push(imageLowF);
       break;
 
     // image as-is
@@ -359,7 +366,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       }
       const imageOrigF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, false);
       if (imageOrigF)
-        outputFragments.push(imageOrigF);
+        newFragments.push(imageOrigF);
       break;
 
     // image converted (potentially unsupported mime)
@@ -370,7 +377,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       }
       const imageCastF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
       if (imageCastF)
-        outputFragments.push(imageCastF);
+        newFragments.push(imageCastF);
       break;
 
     // image to text
@@ -390,7 +397,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
           },
         });
         const imageText = result.data.text;
-        outputFragments.push(createTextAttachmentFragment(imageText, ref));
+        newFragments.push(createTextAttachmentFragment(imageText, ref));
       } catch (error) {
         console.error(error);
       }
@@ -406,7 +413,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData = new Uint8Array(input.data.slice(0));
       const pdfText = await pdfToText(pdfData);
-      outputFragments.push(createTextAttachmentFragment(pdfText, ref));
+      newFragments.push(createTextAttachmentFragment(pdfText, ref));
       break;
 
     // pdf to images
@@ -420,9 +427,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
       try {
         const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
         for (const pdfPageImage of imageDataURLs) {
-          const pdfPageImageF = await attachmentImageToFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `Page ${outputFragments.length + 1}`, ref, false, false);
+          const pdfPageImageF = await attachmentImageToFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `Page ${newFragments.length + 1}`, ref, false, false);
           if (pdfPageImageF)
-            outputFragments.push(pdfPageImageF);
+            newFragments.push(pdfPageImageF);
         }
       } catch (error) {
         console.error('Error converting PDF to images:', error);
@@ -432,7 +439,7 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
 
     // self: message
     case 'ego-message-md':
-      outputFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
+      newFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
       break;
 
     case 'unhandled':
@@ -441,9 +448,9 @@ export async function attachmentPerformConversion(attachment: Readonly<Attachmen
   }
 
   // update
-  edit({
+  replaceOutputFragments(attachment.id, newFragments);
+  edit(attachment.id, {
     outputsConverting: false,
-    outputFragments,
   });
 }
 
