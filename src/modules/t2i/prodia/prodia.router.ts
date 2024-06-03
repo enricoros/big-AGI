@@ -94,13 +94,15 @@ export const prodiaRouter = createTRPCRouter({
       const { width, height } = getPngDimensions(imageBuffer);
 
       // respond with 1 result
+      const { prompt: altText, ...otherParameters } = jobRequest;
       return [{
-        base64ImageDataUrl: 'data:image/png;base64,' + base64Image,
-        altText: jobRequest.prompt,
+        mimeType: 'image/png',
+        base64Data: base64Image,
+        altText,
         width,
         height,
         generatorName: 'prodia-' + input.prodiaModel,
-        parameters: jobRequest,
+        parameters: otherParameters,
         generatedAt: new Date().toISOString(),
       }];
     }),

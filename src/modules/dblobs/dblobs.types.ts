@@ -38,6 +38,7 @@ interface GeneratedOrigin {
   origin: 'generated';
   source: 'ai-text-to-image';
   generatorName: string;
+  prompt: string; // Prompt used for generation
   parameters: { [key: string]: any }; // Parameters used for generation
   generatedAt?: string; // When was generated (optional ISO date)
 }
@@ -99,14 +100,15 @@ interface DBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType
 export type DBlobId = string;
 
 export function createDBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(type: TType, label: string, data: DBlobData<TMime>, origin: ItemDataOrigin, metadata: TMeta): DBlobBase<TType, TMime, TMeta> {
+  const creationDate = new Date();
   return {
     id: uuidv4(),
     type,
     label,
     data,
     origin,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: creationDate,
+    updatedAt: creationDate,
     metadata,
     cache: {},
   };

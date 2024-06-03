@@ -328,7 +328,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         console.error(`openai.router.createImages: invalid size ${config.size}`);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Invalid size ${config.size}` });
       }
-      const { count: _count, responseFormat: _responseFormat, ...parameters } = config;
+      const { count: _count, responseFormat: _responseFormat, prompt: origPrompt, ...parameters } = config;
 
       // expect a single image and as URL
       const generatedImages = wireOpenAICreateImageOutputSchema.parse(wireOpenAICreateImageOutput).data;
@@ -337,13 +337,14 @@ export const llmOpenAIRouter = createTRPCRouter({
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
 
         return {
-          base64ImageDataUrl: 'data:image/png;base64,' + image.b64_json,
-          altText: image.revised_prompt || config.prompt,
+          mimeType: 'image/png',
+          base64Data: image.b64_json!,
+          altText: image.revised_prompt || origPrompt,
           width,
           height,
           generatorName: config.model,
+          parameters: parameters,
           generatedAt: new Date().toISOString(),
-          parameters,
         };
       });
     }),
