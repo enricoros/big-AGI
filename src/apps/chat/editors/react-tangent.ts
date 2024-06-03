@@ -41,7 +41,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     const agent = new Agent();
     const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
-    cHandler.messageAppendTextPart(assistantMessageId, reactResult, true, true);
+    cHandler.messageAppendTextContentFragment(assistantMessageId, reactResult, true, true);
 
     setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
 
@@ -51,7 +51,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
 
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
 
-    cHandler.messageAppendTextPart(assistantMessageId, '[Issue] ReAct couldn\'t answer your question.', true, false);
+    cHandler.messageAppendErrorContentFragment(assistantMessageId, 'Issue: ReAct couldn\'t answer your question.', true, false);
 
     return false;
   }

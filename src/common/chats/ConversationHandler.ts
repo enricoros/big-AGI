@@ -7,7 +7,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, createEmptyDMessage, createTextContentDMessage, createTextContentFragment, DMessage, DMessageFragment, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessage, createEmptyDMessage, createTextContentDMessage, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -91,20 +91,28 @@ export class ConversationHandler {
     return assistantMessage.id;
   }
 
-  messageEdit(messageId: string, update: Partial<DMessage>, touch: boolean): void {
+  messageEdit(messageId: string, update: Partial<DMessage>, touch: boolean) {
     this.chatActions.editMessage(this.conversationId, messageId, update, touch);
   }
 
-  messageAppendTextPart(messageId: string, text: string, complete: boolean, touch?: boolean): void {
+  messageAppendContentFragment(messageId: string, fragment: DMessageContentFragment, complete: boolean, touch?: boolean) {
     this.chatActions.editMessage(this.conversationId, messageId, (message) => {
       return {
-        fragments: [...message.fragments, createTextContentFragment(text)],
+        fragments: [...message.fragments, fragment],
         ...(complete ? {
           pendingIncomplete: undefined,
           pendingPlaceholderText: undefined,
         } : {}),
       };
     }, !!touch);
+  }
+
+  messageAppendTextContentFragment(messageId: string, text: string, complete: boolean, touch?: boolean) {
+    this.messageAppendContentFragment(messageId, createTextContentFragment(text), complete, touch);
+  }
+
+  messageAppendErrorContentFragment(messageId: string, errorMessage: string, complete: boolean, touch?: boolean) {
+    this.messageAppendTextContentFragment(messageId, errorMessage, complete, touch);
   }
 
   messagesReplace(messages: DMessage[]): void {
