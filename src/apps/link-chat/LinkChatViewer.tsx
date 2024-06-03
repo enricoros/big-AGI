@@ -137,6 +137,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 key={'msg-' + message.id}
                 message={message}
                 fitScreen={isMobile}
+                isMobileForAvatar={isMobile}
                 showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
                 onMessageEdit={(_messageId, text: string) => message.fragments = [createTextContentFragment(text)] /* TODO: replace edit with Content rather than text */}
               />,
