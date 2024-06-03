@@ -183,5 +183,5 @@ export type DBlobDBItem = DBlobItem & {
   uId: '1';
   wId: '1';
   cId: 'global';
-  sId: 'app-chat' | 'attachments'; // scope ID
+  sId: 'app-chat' | 'attachment-drafts'; // scope ID
 }

@@ -22,7 +22,7 @@ const db = new DigitalAssetsDB();
 const DEFAULT_USER_ID = '1';
 const DEFAULT_WORKSPACE_ID = '1';
 
-export async function addDBlobItem(item: DBlobItem, cId: 'global', sId: DBlobDBItem['sId']): Promise<DBlobId> {
+export async function addDBlobItem(item: DBlobItem, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
   // returns the id of the added item
   return db.items.add({
     ...item,
@@ -48,6 +48,10 @@ export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobItem>) 
 
 export async function deleteDBlobItem(id: DBlobId) {
   return db.items.delete(id);
+}
+
+export async function deleteAllDBlobsInScopeId(cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
+  return db.items.where({ cId, sId }).delete();
 }
 
 
