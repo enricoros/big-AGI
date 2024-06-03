@@ -6,11 +6,12 @@ import { Box, Card, Skeleton } from '@mui/joy';
 
 import type { ImageBlock } from '~/modules/blocks/blocks';
 import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
-import { createDBlobImageItem, DBlobMimeType } from '~/modules/dblobs/dblobs.types';
+import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { InlineError } from '~/common/components/InlineError';
+import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 
 import { DesignerPrompt, PromptDesigner } from './components/PromptDesigner';
@@ -26,40 +27,47 @@ const STILL_LAYOUTING = false;
 async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: number = 1) {
   const t2iProvider = getActiveTextToImageProviderOrThrow();
 
-  const imageVector = await t2iGenerateImagesOrThrow(t2iProvider, singlePrompt, vectorSize);
-  if (!imageVector?.length)
+  const images = await t2iGenerateImagesOrThrow(t2iProvider, singlePrompt, vectorSize);
+  if (!images?.length)
     throw new Error('No image generated');
 
   // save the generated images
-  for (const image of imageVector) {
-    const { base64ImageDataUrl, altText } = image;
-    const base64Data = base64ImageDataUrl.split(',')[1];
-    const dBlobImageItem = createDBlobImageItem(
+  for (const _i of images) {
+
+    // Create DBlob image item
+    const dblobImageItem = createDBlobImageItem(
       singlePrompt,
       {
-        mimeType: DBlobMimeType.IMG_PNG,
-        base64: base64Data,
-        size: base64Data.length,
+        mimeType: _i.mimeType as any, /* we assume the mime is supported */
+        base64: _i.base64Data,
       },
       {
         origin: 'generated',
-        dir: 'in',
         source: 'ai-text-to-image',
-        generatorName: t2iProvider.painter,
-        generatedAt: image.generatedAt,
-        parameters: image.parameters,
+        // generatorName: t2iProvider.painter,
+        generatorName: _i.generatorName,
+        prompt: _i.altText,
+        parameters: _i.parameters,
+        generatedAt: _i.generatedAt,
       },
       {
-        width: image.width,
-        height: image.height,
+        width: _i.width || 0,
+        height: _i.height || 0,
+        // description: '',
       },
     );
-    await addDBlobItem(dBlobImageItem);
+
+    // Add to DBlobs database
+    const dblobId = await addDBlobItem(dblobImageItem, 'global', 'app-draw');
+
+    // Create a data reference for the image from the message
+    const imagePartDataRef = createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length);
+
+    // TODO: move to DMessageImagePart?
+    console.log('TODO: notImplemented: imagePartDataRef: CRUD and View of blobs as ImageBlocks', imagePartDataRef);
   }
 
-  console.log('notImplemented(): Generated images:', imageVector);
-
-  // const block = heuristicMarkdownImageReferenceBlocks(imageVector.join('\n'));
+  // const block = heuristicMarkdownImageReferenceBlocks(images.join('\n'));
   // if (!block?.length)
   //   throw new Error('No URLs in the generated images');
 

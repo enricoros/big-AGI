@@ -39,27 +39,26 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
 
   try {
     const images = await t2iGenerateImagesOrThrow(t2iProvider, imageText, repeat);
-    for (let image of images) {
-
-      const { mimeType, base64Data, generatorName, width, height, altText, parameters, generatedAt } = image;
+    for (const _i of images) {
 
       // Create DBlob image item
       const dblobImageItem = createDBlobImageItem(
-        'Image: ' + altText,
+        'Image: ' + _i.altText,
         {
-          mimeType: mimeType as any, /* we assume the mime is supported */
-          base64: base64Data,
+          mimeType: _i.mimeType as any, /* we assume the mime is supported */
+          base64: _i.base64Data,
         },
         {
-          origin: 'generated', source: 'ai-text-to-image',
-          generatorName,
-          prompt: altText,
-          parameters: parameters,
-          generatedAt,
+          origin: 'generated',
+          source: 'ai-text-to-image',
+          generatorName: _i.generatorName,
+          prompt: _i.altText,
+          parameters: _i.parameters,
+          generatedAt: _i.generatedAt,
         },
         {
-          width: width || 0,
-          height: height || 0,
+          width: _i.width || 0,
+          height: _i.height || 0,
           // description: '',
         },
       );
@@ -68,10 +67,10 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
       const dblobId = await addDBlobItem(dblobImageItem, 'global', 'app-chat');
 
       // Create a data reference for the image from the message
-      const imagePartDataRef = createDMessageDataRefDBlob(dblobId, mimeType, base64Data.length);
+      const imagePartDataRef = createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length);
 
       // Append the image to the chat
-      cHandler.messageAppendImageContentFragment(assistantMessageId, imagePartDataRef, altText, width, height, true, true);
+      cHandler.messageAppendImageContentFragment(assistantMessageId, imagePartDataRef, _i.altText, _i.width, _i.height, true, true);
     }
     return true;
   } catch (error: any) {
