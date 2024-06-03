@@ -84,6 +84,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
+  const isUserCommand = fromUser && _text.startsWith('/');
 
 
   // Memo text, which could be 'collapsed' to a few lines in case of user messages
@@ -148,7 +149,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
     const recycledBlocks: Block[] = [];
     for (let i = 0; i < newBlocks.length; i++) {
       const newBlock = newBlocks[i];
-      const prevBlock = prevBlocksRef.current[i];
+      const prevBlock: Block | undefined = prevBlocksRef.current[i];
 
       // Check if the new block can be replaced by the previous block to maintain reference stability
       if (prevBlock && areBlocksEqual(prevBlock, newBlock)) {
@@ -212,7 +213,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
                   ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
                   : block.type === 'diffb'
                     ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
-                    : (props.renderTextAsMarkdown && !fromSystem && !(fromUser && block.content.startsWith('/')))
+                    : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
                       ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
                       : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
           })
