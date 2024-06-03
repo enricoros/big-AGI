@@ -1,4 +1,4 @@
-import { addDBlobItem, deleteDBlobItem } from '~/modules/dblobs/dblobs.db';
+import { addDBlobItem, deleteAllDBlobsInScopeId, deleteDBlobItem } from '~/modules/dblobs/dblobs.db';
 import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
@@ -80,7 +80,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     );
 
     // Add to DBlobs database
-    const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachments');
+    const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachment-drafts');
 
     // return the DMessageAttachmentFragment
     const imagePartDataRef = createDMessageDataRefDBlob(dblobId, mimeType, inputLength);
@@ -98,4 +98,11 @@ export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAt
   if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
     await deleteDBlobItem(fragment.part.dataRef.dblobId);
   }
+}
+
+/**
+ * GC Functions for Attachment DBlobs systems: remove leftover drafts
+ */
+export async function gcAttachmentDBlobs() {
+  await deleteAllDBlobsInScopeId('global', 'attachment-drafts');
 }

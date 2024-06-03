@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
 import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
+import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
@@ -26,6 +27,12 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   React.useEffect(() => {
     doAutoConf && autoConfInitiateConfiguration();
   }, [doAutoConf]);
+
+  // [gc] garbage collection(s)
+  React.useEffect(() => {
+    // Remove old attachment drafts (not persisted in chats)
+    void gcAttachmentDBlobs(); // fire/forget
+  }, []);
 
 
   // redirect Chat -> News if fresh news
