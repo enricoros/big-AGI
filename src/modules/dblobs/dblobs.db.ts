@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-import { DBlobAudioItem, DBlobDBItem, DBlobImageItem, DBlobItem, DBlobMetaDataType } from './dblobs.types';
+import { DBlobAudioItem, DBlobDBItem, DBlobId, DBlobImageItem, DBlobItem, DBlobMetaDataType } from './dblobs.types';
 
 
 class DigitalAssetsDB extends Dexie {
@@ -22,7 +22,7 @@ const db = new DigitalAssetsDB();
 const DEFAULT_USER_ID = '1';
 const DEFAULT_WORKSPACE_ID = '1';
 
-export async function addDBlobItem(item: DBlobItem, cId: 'global', sId: DBlobDBItem['sId']): Promise<string> {
+export async function addDBlobItem(item: DBlobItem, cId: 'global', sId: DBlobDBItem['sId']): Promise<DBlobId> {
   // returns the id of the added item
   return db.items.add({
     ...item,
@@ -38,30 +38,30 @@ export async function getItemsByMimeType<T extends DBlobItem>(mimeType: T['data'
   return await db.items.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
 }
 
-export async function getItemById<T extends DBlobItem = DBlobItem>(id: string) {
+export async function getItemById<T extends DBlobItem = DBlobItem>(id: DBlobId) {
   return await db.items.get(id) as T | undefined;
 }
 
-export async function updateDBlobItem(id: string, updates: Partial<DBlobItem>) {
+export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobItem>) {
   return db.items.update(id, updates);
 }
 
-export async function deleteDBlobItem(id: string) {
+export async function deleteDBlobItem(id: DBlobId) {
   return db.items.delete(id);
 }
 
 
 // Specific item types
-async function getImageItemById(id: string) {
+async function getImageItemById(id: DBlobId) {
   return await getItemById<DBlobImageItem>(id);
 }
 
-export async function getImageDataURLById(id: string) {
+export async function getImageDataURLById(id: DBlobId) {
   const item = await getImageItemById(id);
   return item ? `data:${item.data.mimeType};base64,${item.data.base64}` : null;
 }
 
-export async function getImageBlobURLById(id: string) {
+export async function getImageBlobURLById(id: DBlobId) {
   const item = await getImageItemById(id);
   if (item) {
     const byteCharacters = atob(item.data.base64);
