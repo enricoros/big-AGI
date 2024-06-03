@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Blob
 
-enum DBlobMimeType {
+export enum DBlobMimeType {
   IMG_PNG = 'image/png', IMG_JPEG = 'image/jpeg',
   AUDIO_MPEG = 'audio/mpeg', AUDIO_WAV = 'audio/wav',
   // VIDEO_MP4 = 'video/mp4',
