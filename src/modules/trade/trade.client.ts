@@ -8,7 +8,7 @@ import { Brand } from '~/common/app.config';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
-import { messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -208,7 +208,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     : '';
   return mdTitle + conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
     let sender: string = message.sender;
-    let text = messageSingleTextOrThrow(message);
+    let text = messageFragmentsReduceText(message.fragments);
     switch (message.role) {
       case 'system':
         sender = '✨ System message';

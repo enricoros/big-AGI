@@ -1,5 +1,5 @@
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { messageHasUserFlag, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ActileItem, ActileProvider } from './ActileProvider';
@@ -29,7 +29,7 @@ export function providerStarredMessage(onMessageSeelect: (item: StarredMessageIt
             messageId: message.id,
             // looks
             key: message.id,
-            label: conversationTitle(conversation) + ' - ' + messageSingleTextOrThrow(message).slice(0, 32) + '...',
+            label: conversationTitle(conversation) + ' - ' + messageFragmentsReduceText(message.fragments).slice(0, 32) + '...',
             // description: message.text.slice(32, 100),
             Icon: undefined,
           } satisfies StarredMessageItem);
