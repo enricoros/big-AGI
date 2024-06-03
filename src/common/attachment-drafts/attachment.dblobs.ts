@@ -3,7 +3,7 @@ import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
-import { createAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraftSource } from './attachment.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './attachment.pipeline';
@@ -83,18 +83,8 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachments');
 
     // return the DMessageAttachmentFragment
-    return createAttachmentFragment(title, {
-      pt: 'image_ref',
-      dataRef: {
-        reftype: 'dblob',
-        dblobId: dblobId,
-        mimeType: mimeType,
-        bytesSize: inputLength,
-      },
-      altText: altText,
-      width: dimensions?.width,
-      height: dimensions?.height,
-    });
+    const imagePartDataRef = createDMessageDataRefDBlob(dblobId, mimeType, inputLength);
+    return createImageAttachmentFragment(title, imagePartDataRef, altText, dimensions?.width, dimensions?.height);
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
     return null;

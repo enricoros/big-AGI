@@ -63,14 +63,14 @@ export type DMessageAttachmentFragment = {
 // - small and efficient (larger objects need to only be referred to)
 
 type DMessageTextPart = { pt: 'text', text: string };
-type DMessageImagePart = { pt: 'image_ref', dataRef: DDataRef, altText?: string, width?: number, height?: number };
+type DMessageImagePart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
 type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
 
 
 // Data Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
 
-export type DDataRef =
+export type DMessageDataRef =
   | { reftype: 'url'; url: string } // remotely accessible URL
   | { reftype: 'dblob'; dblobId: DBlobId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
@@ -132,19 +132,6 @@ export function createDMessage(role: DMessageRole, fragments: DMessageFragment[]
   };
 }
 
-
-export function createTextContentFragment(text: string): DMessageContentFragment {
-  return { ft: 'content', part: { pt: 'text', text: text } };
-}
-
-export function createAttachmentFragment(title: string, part: DMessageTextPart | DMessageImagePart): DMessageAttachmentFragment {
-  return { ft: 'attachment', title, part };
-}
-
-export function createTextAttachmentFragment(text: string, title: string): DMessageAttachmentFragment {
-  return { ft: 'attachment', title, part: { pt: 'text', text } };
-}
-
 export function pendDMessage(message: DMessage, placeholderText?: string): DMessage {
   message.pendingIncomplete = true;
   if (placeholderText)
@@ -155,6 +142,57 @@ export function pendDMessage(message: DMessage, placeholderText?: string): DMess
 }
 
 
+// fragments - each message has fragments (zero or more) each of a single type and with a single part
+
+export function createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
+  return { ft: 'content', part };
+}
+
+export function createTextContentFragment(text: string): DMessageContentFragment {
+  return createContentFragment(createDMessageTextPart(text));
+}
+
+export function createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
+  return { ft: 'attachment', title, part };
+}
+
+export function createTextAttachmentFragment(text: string, title: string): DMessageAttachmentFragment {
+  return createAttachmentFragment(title, createDMessageTextPart(text));
+}
+
+export function createImageAttachmentFragment(title: string, dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageAttachmentFragment {
+  return createAttachmentFragment(title, createDMessageImagePart(dataRef, altText, width, height));
+}
+
+// parts - each fragment has a part
+
+function createDMessageTextPart(text: string): DMessageTextPart {
+  return { pt: 'text', text };
+}
+
+function createDMessageImagePart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImagePart {
+  return { pt: 'image_ref', dataRef, altText, width, height };
+}
+
+function createDMessageToolCallPart(functionName: string, args: Record<string, any>): DMessageToolCallPart {
+  return { pt: 'tool_call', function: functionName, args };
+}
+
+function createDMessageToolResponsePart(functionName: string, response: Record<string, any>): DMessageToolResponsePart {
+  return { pt: 'tool_response', function: functionName, response };
+}
+
+// data references
+
+export function createDMessageDataRefUrl(url: string): DMessageDataRef {
+  return { reftype: 'url', url };
+}
+
+export function createDMessageDataRefDBlob(dblobId: DBlobId, mimeType: string, bytesSize: number): DMessageDataRef {
+  return { reftype: 'dblob', dblobId, mimeType, bytesSize };
+}
+
+
 // helpers - duplication
 
 export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
@@ -162,7 +200,7 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     id: createBase64UuidV4(),
 
     role: message.role,
-    fragments: _duplicateFragments(message.fragments),
+    fragments: message.fragments.map(_duplicateFragment),
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
     ...(message.pendingPlaceholderText ? { pendingPlaceholderText: message.pendingPlaceholderText } : {}),
@@ -182,60 +220,48 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
   };
 }
 
-function _duplicateFragments(fragments: DMessageFragment[]): DMessageFragment[] {
-  return fragments.map(fragment => {
-    switch (fragment.ft) {
-      case 'content':
-        return { ft: 'content', part: _duplicatePart(fragment.part) };
+function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
+  switch (fragment.ft) {
+    case 'content':
+      return createContentFragment(_duplicatePart(fragment.part));
 
-      case 'attachment':
-        return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
+    case 'attachment':
+      return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
 
-      default:
-        throw new Error('Invalid fragment');
-    }
-  });
+    default:
+      throw new Error('Invalid fragment');
+  }
 }
 
 function _duplicatePart<T extends DMessageFragment['part']>(part: T): T {
   switch (part.pt) {
     case 'text':
-      return {
-        pt: 'text',
-        text: part.text,
-      } as T;
+      return createDMessageTextPart(part.text) as T;
 
     case 'image_ref':
-      return {
-        pt: 'image_ref',
-        dataRef: {
-          ...part.dataRef,
-        },
-        altText: part.altText,
-        width: part.width,
-        height: part.height,
-      } as T;
+      return createDMessageImagePart(_duplicateReference(part.dataRef), part.altText, part.width, part.height) as T;
 
     case 'tool_call':
-      return {
-        pt: 'tool_call',
-        function: part.function,
-        args: {
-          ...part.args,
-        },
-      } as T;
+      return createDMessageToolCallPart(part.function, { ...part.args }) as T;
 
     case 'tool_response':
-      return {
-        pt: 'tool_response',
-        function: part.function,
-        response: {
-          ...part.response,
-        },
-      } as T;
+      return createDMessageToolResponsePart(part.function, { ...part.response }) as T;
 
     default:
       throw new Error('Invalid part');
+  }
+}
+
+function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
+  switch (ref.reftype) {
+    case 'url':
+      return createDMessageDataRefUrl(ref.url);
+
+    case 'dblob':
+      return createDMessageDataRefDBlob(ref.dblobId, ref.mimeType, ref.bytesSize);
+
+    default:
+      throw new Error('Invalid reference');
   }
 }
 

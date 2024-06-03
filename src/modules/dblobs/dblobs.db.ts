@@ -19,11 +19,14 @@ const db = new DigitalAssetsDB();
 
 // CRUD
 
+const DEFAULT_USER_ID = '1';
+const DEFAULT_WORKSPACE_ID = '1';
 
 export async function addDBlobItem(item: DBlobItem, cId: 'global', sId: DBlobDBItem['sId']): Promise<string> {
+  // returns the id of the added item
   return db.items.add({
     ...item,
-    uId: '1', wId: '1', cId, sId,
+    uId: DEFAULT_USER_ID, wId: DEFAULT_WORKSPACE_ID, cId, sId,
   });
 }
 
