@@ -88,6 +88,7 @@ export function BeamScatterInput(props: {
       <ChatMessageMemo
         message={lastHistoryMessage}
         fitScreen={props.isMobile}
+        isMobileForAvatar={props.isMobile}
         showAvatar={true}
         adjustContentScaling={-1}
         topDecorator={userMessageDecorator}
