@@ -68,7 +68,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
       case 'character-count':
         inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageSingleTextOrThrow(incrementalMessage as any)?.length || 0} characters</Typography>,
+          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageFragmentsReduceText(incrementalMessage.fragments || []).length} characters</Typography>,
         );
         return;
 

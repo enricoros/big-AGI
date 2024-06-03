@@ -4,7 +4,7 @@ import { Box, Button, Checkbox, IconButton, ListItem, Sheet, Typography } from '
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { TokenBadgeMemo } from '../composer/TokenBadge';
 import { makeMessageAvatar, messageBackground } from './ChatMessage';
@@ -54,7 +54,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
     updated: messageUpdated,
   } = props.message;
 
-  const messageText = messageSingleTextOrThrow(props.message);
+  const messageText = messageFragmentsReduceText(props.message.fragments);
 
   const fromAssistant = messageRole === 'assistant';
 

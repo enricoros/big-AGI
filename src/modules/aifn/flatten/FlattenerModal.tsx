@@ -8,9 +8,9 @@ import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { DMessage, createTextContentDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { createTextContentDMessage, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
@@ -70,7 +70,7 @@ function encodeConversationAsUserMessage(userPrompt: string, messages: DMessage[
   for (const message of messages) {
     if (message.role === 'system') continue;
     const author = message.role === 'user' ? 'User' : 'Assistant';
-    const messageText = messageSingleTextOrThrow(message);
+    const messageText = messageFragmentsReduceText(message.fragments);
     const text = messageText.replace(/\n/g, '\n\n');
     encodedMessages += `---${author}---\n${text}\n\n`;
   }

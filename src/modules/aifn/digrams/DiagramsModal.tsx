@@ -15,7 +15,7 @@ import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { adjustContentScaling } from '~/common/app.theme';
-import { createTextContentDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
@@ -96,7 +96,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const stepAbortController = new AbortController();
     setAbortController(stepAbortController);
 
-    const systemMessageText = messageSingleTextOrThrow(systemMessage);
+    const systemMessageText = messageFragmentsReduceText(systemMessage.fragments);
     const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessageText, subject, customInstruction);
 
     try {

@@ -21,7 +21,7 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
-import { createTextContentDMessage, DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -182,9 +182,14 @@ export function Telephone(props: {
   // [E] persona streaming response - upon new user message
   React.useEffect(() => {
     // only act when we have a new user message
-    if (!isConnected || callMessages.length < 1 || callMessages[callMessages.length - 1].role !== 'user')
+    if (!isConnected || callMessages.length < 1)
       return;
-    switch (messageSingleTextOrThrow(callMessages[callMessages.length - 1])) {
+
+    // Voice commands
+    const lastUserMessage = callMessages[callMessages.length - 1];
+    if (lastUserMessage.role !== 'user')
+      return;
+    switch (messageFragmentsReduceText(lastUserMessage.fragments)) {
       // do not respond
       case 'Stop.':
         return;

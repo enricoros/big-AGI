@@ -2,7 +2,7 @@ import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.clie
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -55,7 +55,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   if (!funcLLMId) return;
 
   // only operate on valid conversations, without any title
-  const { conversations, editMessage } = useChatStore.getState();
+  const { conversations } = useChatStore.getState();
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
   if (!conversation || conversation.messages.length < 3) return;
 
@@ -69,7 +69,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Execute the following follow-ups in parallel
   // const assistantMessageId = assistantMessage.id;
-  let assistantMessageText = messageSingleTextOrThrow(assistantMessage);
+  let assistantMessageText = messageFragmentsReduceText(assistantMessage.fragments);
 
   // Follow-up: Question
   if (suggestQuestions) {

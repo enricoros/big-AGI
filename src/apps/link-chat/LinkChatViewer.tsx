@@ -8,10 +8,10 @@ import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
-import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { createTextContentFragment, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
+import { createTextContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -44,7 +44,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
   React.useEffect(() => {
     const { renderMarkdown, setRenderMarkdown } = useUIPreferencesStore.getState();
     if (!renderMarkdown) {
-      const hasMarkdownTables = messages.some(m => messageSingleTextOrThrow(m).includes('|---'));
+      const hasMarkdownTables = messages.some(m => messageFragmentsReduceText(m.fragments).includes('|---'));
       if (hasMarkdownTables) {
         setRenderMarkdown(true);
         console.log('Turning on Markdown because of tables');
