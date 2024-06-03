@@ -5,8 +5,9 @@ import { z } from 'zod';
 
 const t2iCreateImageOutputSchema = z.object({
 
-  // the image data plus mime, as image URL, such as 'data:image/png;base64,...'
-  base64ImageDataUrl: z.string(),
+  // separate mime and data instead of the data URL 'data:image/png;base64,...'
+  mimeType: z.string(),
+  base64Data: z.string(),
 
   // could be the revised prompt, or an alt textual description of the image
   altText: z.string(),
