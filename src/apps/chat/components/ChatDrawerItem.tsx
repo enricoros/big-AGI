@@ -326,7 +326,7 @@ function ChatDrawerItem(props: {
                   </FadeInButton>
                 </Tooltip>
 
-                <Tooltip disableInteractive title='Branch'>
+                <Tooltip disableInteractive title='Duplicate (Branch)'>
                   <FadeInButton size='sm' onClick={handleConversationBranch}>
                     <ForkRightIcon />
                   </FadeInButton>
