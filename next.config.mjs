@@ -27,7 +27,7 @@ let nextConfig = {
     serverComponentsExternalPackages: ['puppeteer-core'],
   },
 
-  webpack: (config, _options) => {
+  webpack: (config, { isServer }) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
@@ -36,6 +36,11 @@ let nextConfig = {
       asyncWebAssembly: true,
       layers: true,
     };
+
+    // fix warnings for async functions in the browser (https://github.com/vercel/next.js/issues/64792)
+    if (!isServer) {
+      config.output.environment = { ...config.output.environment, asyncFunction: true };
+    }
 
     // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
     if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize)
