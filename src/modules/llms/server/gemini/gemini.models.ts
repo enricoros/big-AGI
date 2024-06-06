@@ -19,7 +19,7 @@ const filterUnallowedInterfaces: GeminiModelSchema['supportedGenerationMethods']
 */
 const _knownGeminiModels: ({
   id: string,
-  isLatest?: boolean,
+  isNewest?: boolean,
   isPreview?: boolean
   symLink?: string
 } & Pick<ModelDescriptionSchema, 'interfaces' | 'pricing' | 'trainingDataCutoff' | 'hidden'>)[] = [
@@ -27,7 +27,7 @@ const _knownGeminiModels: ({
   // Generation 1.5
   {
     id: 'models/gemini-1.5-flash-latest', // updated regularly and might be a preview version
-    isLatest: true,
+    isNewest: true,
     isPreview: true,
     pricing: {
       chatIn: 0.70,   // 0.35 up to 128k tokens, 0.70 prompts > 128k tokens
@@ -61,7 +61,7 @@ const _knownGeminiModels: ({
 
   {
     id: 'models/gemini-1.5-pro-latest', // updated regularly and might be a preview version
-    isLatest: true,
+    isNewest: true,
     isPreview: true,
     pricing: {
       chatIn: 7.00,   // $3.50 / 1 million tokens (for prompts up to 128K tokens), $7.00 / 1 million tokens (for prompts longer than 128K)
@@ -97,7 +97,6 @@ const _knownGeminiModels: ({
   // Generation 1.0
   {
     id: 'models/gemini-1.0-pro-latest',
-    isLatest: true,
     pricing: {
       chatIn: 0.50,
       chatOut: 1.50,
@@ -206,7 +205,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiModelSchema): M
 
   return {
     id: modelId,
-    label,
+    label: label, // + (knownModel?.isNewest ? ' 🌟' : ''),
     // created: ...
     // updated: ...
     description: descriptionLong,
