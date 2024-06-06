@@ -15,7 +15,7 @@ import { isBrowser } from '~/common/util/pwaUtils';
  * If you update this file, also make sure the interfaces/type definitions and initialization
  * options are updated accordingly.
  */
-const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js';
+const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
 
 
 interface MermaidAPI {
