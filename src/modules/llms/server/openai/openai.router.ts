@@ -270,7 +270,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     .output(llmsChatGenerateWithFunctionsOutputSchema)
     .mutation(async ({ input }) => {
 
-      const { access, model, history, functions, forceFunctionName } = input;
+      const { access, model, history, functions, forceFunctionName, context } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
@@ -280,7 +280,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // expect a single output
       if (wireCompletions?.choices?.length !== 1) {
-        console.error(`[POST] llmOpenAI.chatGenerateWithFunctions: ${access.dialect}: unexpected output${forceFunctionName ? ` (fn: ${forceFunctionName})` : ''}:`, wireCompletions?.choices?.length);
+        console.error(`[POST] llmOpenAI.chatGenerateWithFunctions: ${access.dialect}: ${context?.name || 'no context'}: unexpected output${forceFunctionName ? ` (fn: ${forceFunctionName})` : ''}:`, model.id, wireCompletions?.choices);
         throw new TRPCError({
           code: 'UNPROCESSABLE_CONTENT',
           message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}`,
