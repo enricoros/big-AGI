@@ -2,10 +2,10 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
-import type { ModelDescriptionSchema } from './server/llm.server.types';
+import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
-import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, useModelsStore } from './store-llms';
+import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, useModelsStore } from './store-llms';
 import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { findAccessForSourceOrThrow, findVendorForLlmOrThrow } from './vendors/vendors.registry';
 
@@ -21,14 +21,8 @@ export interface VChatMessageIn {
 
 export type VChatFunctionIn = OpenAIWire.ChatCompletion.RequestFunctionDef;
 
-export type VChatContextName =
-  | 'conversation'
-  | 'ai-diagram'
-  | 'ai-flattener'
-  | 'beam-scatter'
-  | 'beam-gather'
-  | 'call'
-  | 'persona-extract';
+export type VChatStreamContextName = StreamingContextNameSchema;
+export type VChatGenerateContextName = GenerateContextNameSchema;
 export type VChatContextRef = string;
 
 export interface VChatMessageOut {
@@ -122,12 +116,19 @@ function modelDescriptionToDLLMOpenAIOptions<TSourceSetup, TLLMOptions>(model: M
 export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(
   llmId: DLLMId,
   messages: VChatMessageIn[],
-  functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
+  contextName: VChatGenerateContextName,
+  contextRef: VChatContextRef | null,
+  functions: VChatFunctionIn[] | null,
+  forceFunctionName: string | null,
   maxTokens?: number,
 ): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut> {
 
   // id to DLLM and vendor
   const { llm, vendor } = findVendorForLlmOrThrow<TSourceSetup, TAccess, TLLMOptions>(llmId);
+
+  // if the model does not support function calling and we're trying to force a function, throw
+  if (forceFunctionName && !llm.interfaces.includes(LLM_IF_OAI_Fn))
+    throw new Error(`Model ${llmId} does not support function calling`);
 
   // FIXME: relax the forced cast
   const options = llm.options as TLLMOptions;
@@ -142,14 +143,14 @@ export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = u
     await new Promise(resolve => setTimeout(resolve, delay));
 
   // execute via the vendor
-  return await vendor.rpcChatGenerateOrThrow(access, options, messages, functions, forceFunctionName, maxTokens);
+  return await vendor.rpcChatGenerateOrThrow(access, options, messages, contextName, contextRef, functions, forceFunctionName, maxTokens);
 }
 
 
 export async function llmStreamingChatGenerate<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(
   llmId: DLLMId,
   messages: VChatMessageIn[],
-  contextName: VChatContextName,
+  contextName: VChatStreamContextName,
   contextRef: VChatContextRef,
   functions: VChatFunctionIn[] | null,
   forceFunctionName: string | null,
