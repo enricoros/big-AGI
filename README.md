@@ -21,7 +21,15 @@ Or fork & run on Vercel
 
 [//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
 
-### What's New in 1.16.1 · May 13, 2024 (minor release, models support)
+### What's New in 1.16.2 · Jun 7, 2024 (minor release)
+
+- Improve web downloads, as text, markdwon, or HTML
+- Proper support for Gemini models
+- Added the latest Mistral model
+- Tokenizer support for gpt-4o
+- Updates to Beam
+
+### What's New in 1.16.1 · May 13, 2024 (minor release)
 
 - Support for the new OpenAI GPT-4o 2024-05-13 model
 
