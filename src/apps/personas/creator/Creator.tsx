@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, tabClasses, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -102,8 +103,11 @@ export function Creator(props: { display: boolean }) {
     strings: editedInstructions, stringEditors: instructionEditors,
   } = useFormEditTextArray(Prompts, PromptTitles);
 
-  const creationChainSteps = React.useMemo(() => {
-    return createChain(editedInstructions, PromptTitles);
+  const { steps: creationChainSteps, id: chainId } = React.useMemo(() => {
+    return {
+      steps: createChain(editedInstructions, PromptTitles),
+      id: uuidv4(),
+    };
   }, [editedInstructions]);
 
   const llmLabel = personaLlm?.label || undefined;
@@ -122,7 +126,7 @@ export function Creator(props: { display: boolean }) {
     chainError,
     userCancelChain,
     restartChain,
-  } = useLLMChain(creationChainSteps, personaLlm?.id, chainInputText ?? undefined, savePersona);
+  } = useLLMChain(creationChainSteps, personaLlm?.id, chainInputText ?? undefined, savePersona, 'persona-extract', chainId);
 
 
   // Reset the relevant state when the selected tab changes

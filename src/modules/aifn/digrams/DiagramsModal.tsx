@@ -68,7 +68,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
 
   // derived state
-  const { conversationId, text: subject } = props.config;
+  const { conversationId, messageId, text: subject } = props.config;
   const diagramLlmId = diagramLlm?.id;
 
 
@@ -98,7 +98,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
 
     try {
-      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, null, null, stepAbortController.signal,
+      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, 'ai-diagram', messageId, null, null, stepAbortController.signal,
         ({ textSoFar }) => textSoFar && setDiagramCode(diagramCode = textSoFar),
       );
     } catch (error: any) {
@@ -109,7 +109,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject, customInstruction]);
+  }, [abortController, conversationId, customInstruction, diagramLanguage, diagramLlm, diagramType, messageId, subject]);
 
 
   // [Effect] Auto-abort on unmount
