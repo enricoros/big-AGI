@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
-import { llmStreamingChatGenerate, VChatContextName, VChatContextRef, VChatMessageIn } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
 
 export function useStreamChatText() {
@@ -13,7 +13,7 @@ export function useStreamChatText() {
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
 
-  const startStreaming = React.useCallback(async (llmId: DLLMId, prompt: VChatMessageIn[], contextName: VChatContextName, contextRef: VChatContextRef) => {
+  const startStreaming = React.useCallback(async (llmId: DLLMId, prompt: VChatMessageIn[], contextName: VChatStreamContextName, contextRef: VChatContextRef) => {
     setStreamError(null);
     setPartialText(null);
     setText(null);
