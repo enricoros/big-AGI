@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Card, ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -99,7 +99,7 @@ export function Telephone(props: {
 
   // external state
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
-  const { chatTitle, reMessages } = useChatStore(state => {
+  const { chatTitle, reMessages } = useChatStore(useShallow(state => {
     const conversation = props.callIntent.conversationId
       ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
       : null;
@@ -107,7 +107,7 @@ export function Telephone(props: {
       chatTitle: conversation ? conversationTitle(conversation) : null,
       reMessages: conversation ? conversation.messages : null,
     };
-  }, shallow);
+  }));
   const persona = SystemPurposes[props.callIntent.personaId as SystemPurposeId] ?? undefined;
   const personaCallStarters = persona?.call?.starters ?? undefined;
   const personaVoiceId = overridePersonaVoice ? undefined : (persona?.voices?.elevenLabs?.voiceId ?? undefined);
@@ -225,7 +225,7 @@ export function Telephone(props: {
     let finalText = '';
     let error: any | null = null;
     setPersonaTextInterim('💭...');
-    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
+    llmStreamingChatGenerate(chatLLMId, callPrompt, 'call', callMessages[0].id, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
       const text = textSoFar?.trim();
       if (text) {
         finalText = text;

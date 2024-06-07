@@ -21,6 +21,16 @@ export interface VChatMessageIn {
 
 export type VChatFunctionIn = OpenAIWire.ChatCompletion.RequestFunctionDef;
 
+export type VChatContextName =
+  | 'conversation'
+  | 'ai-diagram'
+  | 'ai-flattener'
+  | 'beam-scatter'
+  | 'beam-gather'
+  | 'call'
+  | 'persona-extract';
+export type VChatContextRef = string;
+
 export interface VChatMessageOut {
   role: 'assistant' | 'system' | 'user';
   content: string;
@@ -139,6 +149,8 @@ export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = u
 export async function llmStreamingChatGenerate<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(
   llmId: DLLMId,
   messages: VChatMessageIn[],
+  contextName: VChatContextName,
+  contextRef: VChatContextRef,
   functions: VChatFunctionIn[] | null,
   forceFunctionName: string | null,
   abortSignal: AbortSignal,
@@ -161,5 +173,5 @@ export async function llmStreamingChatGenerate<TSourceSetup = unknown, TAccess =
     await new Promise(resolve => setTimeout(resolve, delay));
 
   // execute via the vendor
-  return await vendor.streamingChatGenerateOrThrow(access, llmId, llmOptions, messages, functions, forceFunctionName, abortSignal, onUpdate);
+  return await vendor.streamingChatGenerateOrThrow(access, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
 }

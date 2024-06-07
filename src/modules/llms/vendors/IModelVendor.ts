@@ -8,7 +8,7 @@ import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 import type { StreamingClientUpdate } from './unifiedStreamingClient';
-import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
+import type { VChatContextName, VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
 
 
 export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
@@ -53,6 +53,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
     llmId: DLLMId,
     llmOptions: TLLMOptions,
     messages: VChatMessageIn[],
+    contextName: VChatContextName, contexRef: VChatContextRef,
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     abortSignal: AbortSignal,
     onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
