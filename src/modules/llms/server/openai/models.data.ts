@@ -386,7 +386,7 @@ const _knownMistralChatModels: ManualMappings = [
     label: 'Codestral (2405)',
     description: 'Designed and optimized for code generation tasks.',
     contextWindow: 32768,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat],
     pricing: { chatIn: 1, chatOut: 3 },
   },
   {
@@ -397,7 +397,7 @@ const _knownMistralChatModels: ManualMappings = [
     // copied
     description: 'Designed and optimized for code generation tasks.',
     contextWindow: 32768,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat],
     pricing: { chatIn: 1, chatOut: 3 },
   },
 
@@ -430,7 +430,7 @@ const _knownMistralChatModels: ManualMappings = [
     label: 'Open Mixtral 8x22B (2404)',
     description: 'Mixtral 8x22B model',
     contextWindow: 65536,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 2, chatOut: 6 },
   },
   {
@@ -441,7 +441,7 @@ const _knownMistralChatModels: ManualMappings = [
     // copied
     description: 'Mixtral 8x22B model',
     contextWindow: 65536,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 2, chatOut: 6 },
   },
   // Medium (Deprecated)

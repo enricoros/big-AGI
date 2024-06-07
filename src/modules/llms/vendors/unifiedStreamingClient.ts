@@ -3,7 +3,7 @@ import { frontendSideFetch } from '~/common/util/clientFetchers';
 
 import type { ChatStreamingInputSchema, ChatStreamingPreambleModelSchema, ChatStreamingPreambleStartSchema } from '../server/llm.server.streaming';
 import type { DLLMId } from '../store-llms';
-import type { VChatContextName, VChatContextRef, VChatFunctionIn, VChatMessageIn } from '../llm.client';
+import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '../llm.client';
 
 import type { OpenAIAccessSchema } from '../server/openai/openai.router';
 import type { OpenAIWire } from '../server/openai/openai.wiretypes';
@@ -29,7 +29,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
   llmId: DLLMId,
   llmOptions: TLLMOptions,
   messages: VChatMessageIn[],
-  contextName: VChatContextName, contextRef: VChatContextRef,
+  contextName: VChatStreamContextName, contextRef: VChatContextRef,
   functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
   abortSignal: AbortSignal,
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,

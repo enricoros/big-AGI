@@ -132,7 +132,7 @@ export class Agent {
     S.messages.push({ role: 'user', content: prompt });
     let content: string;
     try {
-      content = (await llmChatGenerateOrThrow(llmId, S.messages, null, null, 500)).content;
+      content = (await llmChatGenerateOrThrow(llmId, S.messages, 'chat-react-turn', null, null, null, 500)).content;
     } catch (error: any) {
       content = `Error in llmChatGenerateOrThrow: ${error}`;
     }

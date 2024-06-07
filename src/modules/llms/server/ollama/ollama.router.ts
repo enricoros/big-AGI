@@ -11,7 +11,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
 import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
@@ -117,8 +117,11 @@ const adminPullModelSchema = z.object({
 
 const chatGenerateInputSchema = z.object({
   access: ollamaAccessSchema,
-  model: openAIModelSchema, history: openAIHistorySchema,
-  // functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
+  // functions: openAIFunctionsSchema.optional(),
+  // forceFunctionName: z.string().optional(),
+  context: llmsGenerateContextSchema.optional(),
 });
 
 const listPullableOutputSchema = z.object({
