@@ -1,5 +1,5 @@
 import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
+import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 // prompt to be tried when doing recursive summerization.
@@ -80,10 +80,11 @@ async function cleanUpContent(chunk: string, llmId: DLLMId, _ignored_was_targetW
   const autoResponseTokensSize = contextTokens ? Math.floor(contextTokens * outputTokenShare) : null;
 
   try {
-    const chatResponse = await llmChatGenerateOrThrow(llmId, [
+    const instructions: VChatMessageIn[] = [
       { role: 'system', content: cleanupPrompt },
       { role: 'user', content: chunk },
-    ], null, null, autoResponseTokensSize ?? undefined);
+    ];
+    const chatResponse = await llmChatGenerateOrThrow(llmId, instructions, 'chat-ai-summarize', null, null, null, autoResponseTokensSize ?? undefined);
     return chatResponse?.content ?? '';
   } catch (error: any) {
     return '';
