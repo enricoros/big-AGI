@@ -233,7 +233,7 @@ export function Telephone(props: {
     let finalText = '';
     let error: any | null = null;
     setPersonaTextInterim('💭...');
-    llmStreamingChatGenerate(chatLLMId, callPrompt, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
+    llmStreamingChatGenerate(chatLLMId, callPrompt, 'call', callMessages[0].id, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
       const text = textSoFar?.trim();
       if (text) {
         finalText = text;

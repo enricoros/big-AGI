@@ -23,6 +23,7 @@ export interface ExecutionInputState {
   readonly chatMessages: DMessage[];
   readonly rayMessages: DMessage[];
   readonly llmId: DLLMId;
+  readonly contextRef: string; // not useful
   // interaction
   readonly chainAbortController: AbortController;
   readonly updateProgressComponent: (component: React.ReactNode) => void;
@@ -67,6 +68,7 @@ export function gatherStartFusion(
     chatMessages: chatMessages,
     rayMessages: rayMessages,
     llmId: initialFusion.llmId,
+    contextRef: initialFusion.fusionId,
     // interaction
     chainAbortController: new AbortController(),
     updateProgressComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingProgressComponent: component }),

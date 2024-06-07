@@ -70,7 +70,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
     role: message.role,
     content: messageSingleTextOrThrow(message),
   }));
-  streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', onMessageUpdated, abortController.signal)
+  streamAssistantMessage(llmId, messagesHistory, 'beam-scatter', ray.rayId, getUXLabsHighPerformance() ? 0 : rays.length, 'off', onMessageUpdated, abortController.signal)
     .then((status) => {
       _rayUpdate(ray.rayId, {
         status: (status.outcome === 'success') ? 'success'
