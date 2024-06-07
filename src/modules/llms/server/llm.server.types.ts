@@ -46,6 +46,25 @@ export const llmsListModelsOutputSchema = z.object({
 });
 
 
+// Chat Generation Input (some parts of)
+
+const generateContextNameSchema = z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-react-turn', 'draw-expand-prompt']);
+export type GenerateContextNameSchema = z.infer<typeof generateContextNameSchema>;
+export const llmsGenerateContextSchema = z.object({
+  method: z.literal('chat-generate'),
+  name: generateContextNameSchema,
+  ref: z.string(),
+});
+
+const streamingContextNameSchema = z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']);
+export type StreamingContextNameSchema = z.infer<typeof streamingContextNameSchema>;
+export const llmsStreamingContextSchema = z.object({
+  method: z.literal('chat-stream'),
+  name: streamingContextNameSchema,
+  ref: z.string(),
+});
+
+
 // (non-streaming) Chat Generation Output
 
 export const llmsChatGenerateOutputSchema = z.object({

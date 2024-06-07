@@ -12,7 +12,7 @@ import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
 import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
-import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
 
@@ -72,8 +72,11 @@ const listModelsInputSchema = z.object({
 
 const chatGenerateWithFunctionsInputSchema = z.object({
   access: openAIAccessSchema,
-  model: openAIModelSchema, history: openAIHistorySchema,
-  functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
+  functions: openAIFunctionsSchema.optional(),
+  forceFunctionName: z.string().optional(),
+  context: llmsGenerateContextSchema.optional(),
 });
 
 const createImagesInputSchema = z.object({
@@ -108,7 +111,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [Azure]: use an older 'deployments' API to enumerate the models, and a modified OpenAI id to description mapping
       if (access.dialect === 'azure') {
-        const azureModels = await openaiGET(access, `/openai/deployments?api-version=2023-03-15-preview`);
+        const azureModels = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
 
         const wireAzureListDeploymentsSchema = z.object({
           data: z.array(z.object({
@@ -146,7 +149,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
-      const openAIWireModelsResponse = await openaiGET<OpenAIWire.Models.Response>(access, '/v1/models');
+      const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire.Models.Response>(access, '/v1/models');
 
       // [Together] missing the .data property
       if (access.dialect === 'togetherai')
@@ -267,17 +270,22 @@ export const llmOpenAIRouter = createTRPCRouter({
     .output(llmsChatGenerateWithFunctionsOutputSchema)
     .mutation(async ({ input }) => {
 
-      const { access, model, history, functions, forceFunctionName } = input;
+      const { access, model, history, functions, forceFunctionName, context } = input;
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
-      const wireCompletions = await openaiPOST<OpenAIWire.ChatCompletion.Response, OpenAIWire.ChatCompletion.Request>(
+      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire.ChatCompletion.Response, OpenAIWire.ChatCompletion.Request>(
         access, model.id, completionsBody, '/v1/chat/completions',
       );
 
       // expect a single output
-      if (wireCompletions?.choices?.length !== 1)
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}` });
+      if (wireCompletions?.choices?.length !== 1) {
+        console.error(`[POST] llmOpenAI.chatGenerateWithFunctions: ${access.dialect}: ${context?.name || 'no context'}: unexpected output${forceFunctionName ? ` (fn: ${forceFunctionName})` : ''}:`, model.id, wireCompletions?.choices);
+        throw new TRPCError({
+          code: 'UNPROCESSABLE_CONTENT',
+          message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}`,
+        });
+      }
       let { message, finish_reason } = wireCompletions.choices[0];
 
       // LocalAI hack/workaround, until https://github.com/go-skynet/LocalAI/issues/788 is fixed
@@ -318,7 +326,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         delete requestBody.response_format;
 
       // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
-      const wireOpenAICreateImageOutput = await openaiPOST<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
+      const wireOpenAICreateImageOutput = await openaiPOSTOrThrow<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
         access, null, requestBody, '/v1/images/generations',
       );
 
@@ -340,7 +348,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     .mutation(async ({ input: { access, text } }): Promise<OpenAIWire.Moderation.Response> => {
       try {
 
-        return await openaiPOST<OpenAIWire.Moderation.Response, OpenAIWire.Moderation.Request>(access, null, {
+        return await openaiPOSTOrThrow<OpenAIWire.Moderation.Response, OpenAIWire.Moderation.Request>(access, null, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');
@@ -361,7 +369,7 @@ export const llmOpenAIRouter = createTRPCRouter({
   dialectLocalAI_galleryModelsAvailable: publicProcedure
     .input(listModelsInputSchema)
     .query(async ({ input: { access } }) => {
-      const wireLocalAIModelsAvailable = await openaiGET(access, '/models/available');
+      const wireLocalAIModelsAvailable = await openaiGETOrThrow(access, '/models/available');
       return wireLocalAIModelsAvailableOutputSchema.parse(wireLocalAIModelsAvailable);
     }),
 
@@ -374,7 +382,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     }))
     .mutation(async ({ input: { access, galleryName, modelName } }) => {
       const galleryModelId = `${galleryName}@${modelName}`;
-      const wireLocalAIModelApply = await openaiPOST(access, null, { id: galleryModelId }, '/models/apply');
+      const wireLocalAIModelApply = await openaiPOSTOrThrow(access, null, { id: galleryModelId }, '/models/apply');
       return wilreLocalAIModelsApplyOutputSchema.parse(wireLocalAIModelApply);
     }),
 
@@ -385,7 +393,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       jobId: z.string(),
     }))
     .query(async ({ input: { access, jobId } }) => {
-      const wireLocalAIModelsJobs = await openaiGET(access, `/models/jobs/${jobId}`);
+      const wireLocalAIModelsJobs = await openaiGETOrThrow(access, `/models/jobs/${jobId}`);
       return wireLocalAIModelsListOutputSchema.parse(wireLocalAIModelsJobs);
     }),
 
@@ -623,12 +631,12 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
   };
 }
 
-async function openaiGET<TOut extends object>(access: OpenAIAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, null, apiPath);
   return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, `OpenAI/${access.dialect}`);
 }
 
-async function openaiPOST<TOut extends object, TPostBody extends object>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, modelRefId, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, `OpenAI/${access.dialect}`);
 }

@@ -22,6 +22,9 @@ import type { OpenAIWire } from './openai/openai.wiretypes';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
 
 
+import { llmsStreamingContextSchema } from './llm.server.types';
+
+
 // configuration
 const USER_SYMBOL_MAX_TOKENS = '🧱';
 const USER_SYMBOL_PROMPT_BLOCKED = '🚫';
@@ -46,17 +49,14 @@ type MuxingFormat = 'sse' | 'json-nl';
  */
 type AIStreamParser = (data: string, eventType?: string) => { text: string, close: boolean };
 
-const streamingContextSchema = z.object({
-  method: z.literal('chat-stream'),
-  name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
-  ref: z.string(),
-});
 
 const chatStreamingInputSchema = z.object({
   access: z.union([anthropicAccessSchema, geminiAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
   model: openAIModelSchema,
   history: openAIHistorySchema,
-  context: streamingContextSchema,
+  // NOTE: made it optional for now as we have some old requests without it
+  // 2024-07-07: remove .optional()
+  context: llmsStreamingContextSchema.optional(),
 });
 export type ChatStreamingInputSchema = z.infer<typeof chatStreamingInputSchema>;
 

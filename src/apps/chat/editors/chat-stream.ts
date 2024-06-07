@@ -2,7 +2,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
-import { llmStreamingChatGenerate, VChatContextRef, VChatContextName, VChatMessageIn } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import type { DMessage } from '~/common/state/store-chats';
@@ -63,7 +63,7 @@ type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: strin
 export async function streamAssistantMessage(
   llmId: DLLMId,
   messagesHistory: VChatMessageIn[],
-  contextName: VChatContextName,
+  contextName: VChatStreamContextName,
   contextRef: VChatContextRef,
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
