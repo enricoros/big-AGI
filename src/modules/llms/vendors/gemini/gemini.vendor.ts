@@ -1,10 +1,10 @@
 import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
- import { apiAsync } from '~/common/util/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
 import type { GeminiBlockSafetyLevel } from '../../server/gemini/gemini.wiretypes';
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatMessageOut } from '../../llm.client';
+import type { VChatContextRef, VChatGenerateContextName, VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from '../openai/openai.vendor';
@@ -60,7 +60,7 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmGemini.listModels.query({ access }),
 
   // Chat Generate (non-streaming) with Functions
-  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, contextName: VChatGenerateContextName, contextRef: VChatContextRef | null, functions, forceFunctionName, maxTokens) => {
     if (functions?.length || forceFunctionName)
       throw new Error('Gemini does not support functions');
 
@@ -74,6 +74,11 @@ export const ModelVendorGemini: IModelVendor<SourceSetupGemini, GeminiAccessSche
           maxTokens: maxTokens || maxOutputTokens || FALLBACK_LLM_RESPONSE_TOKENS,
         },
         history: messages,
+        context: contextRef ? {
+          method: 'chat-generate',
+          name: contextName,
+          ref: contextRef,
+        } : undefined,
       }) as VChatMessageOut;
     } catch (error: any) {
       const errorMessage = error?.message || error?.toString() || 'Gemini Chat Generate Error';

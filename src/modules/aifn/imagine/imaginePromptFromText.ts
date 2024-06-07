@@ -1,5 +1,5 @@
 import { getFastLLMId } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
+import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 const simpleImagineSystemPrompt =
@@ -10,14 +10,15 @@ Provide output as a lowercase prompt and nothing else.`;
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
-export async function imaginePromptFromText(messageText: string): Promise<string | null> {
+export async function imaginePromptFromText(messageText: string, contextRef: string): Promise<string | null> {
   const fastLLMId = getFastLLMId();
   if (!fastLLMId) return null;
   try {
-    const chatResponse = await llmChatGenerateOrThrow(fastLLMId, [
+    const instructions: VChatMessageIn[] = [
       { role: 'system', content: simpleImagineSystemPrompt },
       { role: 'user', content: 'Write a prompt, based on the following input.\n\n```\n' + messageText.slice(0, 1000) + '\n```\n' },
-    ], null, null);
+    ];
+    const chatResponse = await llmChatGenerateOrThrow(fastLLMId, instructions, 'draw-expand-prompt', contextRef, null, null);
     return chatResponse.content?.trim() ?? null;
   } catch (error: any) {
     console.error('imaginePromptFromText: fetch request error:', error);

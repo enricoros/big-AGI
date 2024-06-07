@@ -12,7 +12,7 @@ import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
 import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
-import { llmsChatGenerateWithFunctionsOutputSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
 
@@ -72,8 +72,11 @@ const listModelsInputSchema = z.object({
 
 const chatGenerateWithFunctionsInputSchema = z.object({
   access: openAIAccessSchema,
-  model: openAIModelSchema, history: openAIHistorySchema,
-  functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
+  functions: openAIFunctionsSchema.optional(),
+  forceFunctionName: z.string().optional(),
+  context: llmsGenerateContextSchema.optional(),
 });
 
 const createImagesInputSchema = z.object({
