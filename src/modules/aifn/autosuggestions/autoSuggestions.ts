@@ -83,7 +83,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
-    void llmChatGenerateOrThrow(funcLLMId, [
+    llmChatGenerateOrThrow(funcLLMId, [
         { role: 'system', content: systemMessage.text },
         { role: 'user', content: userMessage.text },
         { role: 'assistant', content: assistantMessageText },
@@ -110,7 +110,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
         }
       }
     }).catch(err => {
-      console.error('autoSuggestions::diagram:', err);
+      // Likely the model did not support function calling
+      // console.log('autoSuggestions: diagram error:', err);
     });
   }
 
