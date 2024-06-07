@@ -5,7 +5,7 @@ import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
-import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, useModelsStore } from './store-llms';
+import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, useModelsStore } from './store-llms';
 import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { findAccessForSourceOrThrow, findVendorForLlmOrThrow } from './vendors/vendors.registry';
 
@@ -128,6 +128,10 @@ export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = u
 
   // id to DLLM and vendor
   const { llm, vendor } = findVendorForLlmOrThrow<TSourceSetup, TAccess, TLLMOptions>(llmId);
+
+  // if the model does not support function calling and we're trying to force a function, throw
+  if (forceFunctionName && !llm.interfaces.includes(LLM_IF_OAI_Fn))
+    throw new Error(`Model ${llmId} does not support function calling`);
 
   // FIXME: relax the forced cast
   const options = llm.options as TLLMOptions;
