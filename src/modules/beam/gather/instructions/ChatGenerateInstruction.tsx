@@ -89,7 +89,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   };
 
   // LLM Streaming generation
-  return streamAssistantMessage(inputs.llmId, history, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdated, inputs.chainAbortController.signal)
+  return streamAssistantMessage(inputs.llmId, history, 'beam-gather', inputs.contextRef, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdated, inputs.chainAbortController.signal)
     .then((status) => {
       // re-throw errors, as streamAssistantMessage catches internally
       if (status.outcome === 'aborted') {
