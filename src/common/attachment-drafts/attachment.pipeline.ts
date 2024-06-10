@@ -4,7 +4,7 @@ import { createBase64UuidV4 } from '~/common/util/textUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import { createTextAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import { createAttachmentFragment, createTextAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
@@ -198,11 +198,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
     case 'ego':
       edit({
         label: source.label,
-        ref: source.blockTitle,
+        ref: source.refId,
         input: {
-          mimeType: 'ego/message',
-          data: source.textPlain,
-          dataSize: source.textPlain.length,
+          mimeType: 'ego/contents',
+          data: source.contents,
+          dataSize: source.contents.length,
         },
       });
       break;
@@ -262,8 +262,8 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       break;
 
     // EGO
-    case input.mimeType === 'ego/message':
-      converters.push({ id: 'ego-message-md', name: 'Message' });
+    case input.mimeType === 'ego/contents':
+      converters.push({ id: 'ego-contents-inlined', name: 'Message' });
       break;
 
     // catch-all
@@ -438,8 +438,17 @@ export async function attachmentPerformConversion(
 
 
     // self: message
-    case 'ego-message-md':
-      newFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
+    case 'ego-contents-inlined':
+      if (!Array.isArray(input.data)) {
+        console.log('Expected DMessageContentFragment[] for ego-contents-inlined, got:', typeof input.data);
+        break;
+      }
+      for (const contentFragment of input.data) {
+        if (contentFragment.part.pt === 'text' || contentFragment.part.pt === 'image_ref')
+          newFragments.push(createAttachmentFragment(source.media === 'ego' ? source.refId : 'Message', contentFragment.part));
+        else
+          console.log('Unhandled ego-contents-inlined part:', contentFragment.part.pt);
+      }
       break;
 
     case 'unhandled':
@@ -455,10 +464,11 @@ export async function attachmentPerformConversion(
 }
 
 
-function inputDataToString(data: string | ArrayBuffer | null | undefined): string {
+function inputDataToString(data: string | ArrayBuffer | DMessageContentFragment[] | null | undefined): string {
   if (typeof data === 'string')
     return data;
   if (data instanceof ArrayBuffer)
     return new TextDecoder().decode(data);
+  console.log('attachment.inputDataToString: expected string or ArrayBuffer, got:', typeof data);
   return '';
 }

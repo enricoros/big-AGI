@@ -216,7 +216,7 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     id: createBase64UuidV4(),
 
     role: message.role,
-    fragments: message.fragments.map(_duplicateFragment),
+    fragments: duplicateDMessageFragments(message.fragments),
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
     ...(message.pendingPlaceholderText ? { pendingPlaceholderText: message.pendingPlaceholderText } : {}),
@@ -234,6 +234,10 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     created: message.created,
     updated: message.updated,
   };
+}
+
+export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
+  return fragments.map(_duplicateFragment);
 }
 
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
@@ -284,7 +288,10 @@ function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
 
 // helpers during the transition from V3
 
-// specialize output type with 'is'
+export function isContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment {
+  return fragment.ft === 'content';
+}
+
 export function isContentOrAttachmentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment | DMessageAttachmentFragment {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
