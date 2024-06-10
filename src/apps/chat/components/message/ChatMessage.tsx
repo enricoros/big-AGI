@@ -29,7 +29,7 @@ import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageRole, DMessageUserFlag, messageHasUserFlag, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { Link } from '~/common/components/Link';
@@ -44,9 +44,9 @@ import { useChatShowTextDiff } from '../../store-app-chat';
 
 
 // Enable the menu on text selection
-const ENABLE_SELECTION_RIGHT_CLICK_MENU = false;
-const ENABLE_SELECTION_TOOLBAR = true;
-const SELECTION_TOOLBAR_MIN_LENGTH = 3;
+const ENABLE_CONTEXT_MENU = false;
+const ENABLE_BUBBLE = true;
+const BUBBLE_MIN_TEXT_LENGTH = 3;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
@@ -247,10 +247,10 @@ export function ChatMessage(props: {
   // state
   const blocksRendererRef = React.useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = React.useState(false);
-  const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [selMenuAnchor, setSelMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [selToolbarAnchor, setSelToolbarAnchor] = React.useState<HTMLElement | null>(null);
   const [selText, setSelText] = React.useState<string | null>(null);
+  const [bubbleAnchor, setBubbleAnchor] = React.useState<HTMLElement | null>(null);
+  const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isEditing, setIsEditing] = React.useState(false);
 
   // external state
@@ -270,11 +270,11 @@ export function ChatMessage(props: {
   // derived state
   const {
     id: messageId,
-    sender: messageSender,
-    avatar: messageAvatar,
+    role: messageRole,
     pendingIncomplete: messagePendingIncomplete,
     pendingPlaceholderText: messagePendingPlaceholderText,
-    role: messageRole,
+    avatar: messageAvatar,
+    sender: messageSender,
     purposeId: messagePurposeId,
     originLLM: messageOriginLLM,
     metadata: messageMetadata,
@@ -293,6 +293,9 @@ export function ChatMessage(props: {
   const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
   const couldImagine = textSel.length >= 3 && !isSpecialT2I;
   const couldSpeak = couldImagine;
+
+  // TODO: fix the diffing
+  // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
   const handleTextEdited = (editedText: string) => {
@@ -317,8 +320,8 @@ export function ChatMessage(props: {
     copyToClipboard(textSel, 'Text');
     e.preventDefault();
     handleCloseOpsMenu();
-    closeSelectionMenu();
-    closeToolbar();
+    closeContextMenu();
+    closeBubble();
   };
 
   const handleOpsEdit = React.useCallback((e: React.MouseEvent) => {
@@ -358,8 +361,8 @@ export function ChatMessage(props: {
     if (props.onTextDiagram) {
       await props.onTextDiagram(messageId, textSel);
       handleCloseOpsMenu();
-      closeSelectionMenu();
-      closeToolbar();
+      closeContextMenu();
+      closeBubble();
     }
   };
 
@@ -368,18 +371,18 @@ export function ChatMessage(props: {
     if (props.onTextImagine) {
       await props.onTextImagine(textSel);
       handleCloseOpsMenu();
-      closeSelectionMenu();
-      closeToolbar();
+      closeContextMenu();
+      closeBubble();
     }
   };
 
   const handleOpsReplyTo = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (props.onReplyTo && textSel.trim().length >= SELECTION_TOOLBAR_MIN_LENGTH) {
+    if (props.onReplyTo && textSel.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
       props.onReplyTo(messageId, textSel.trim());
       handleCloseOpsMenu();
-      closeSelectionMenu();
-      closeToolbar();
+      closeContextMenu();
+      closeBubble();
     }
   };
 
@@ -388,8 +391,8 @@ export function ChatMessage(props: {
     if (props.onTextSpeak) {
       await props.onTextSpeak(textSel);
       handleCloseOpsMenu();
-      closeSelectionMenu();
-      closeToolbar();
+      closeContextMenu();
+      closeBubble();
     }
   };
 
@@ -403,24 +406,24 @@ export function ChatMessage(props: {
   };
 
 
-  // Selection Menu
+  // Context Menu
 
-  const removeSelectionAnchor = React.useCallback(() => {
-    if (selMenuAnchor) {
+  const removeContextAnchor = React.useCallback(() => {
+    if (contextMenuAnchor) {
       try {
-        document.body.removeChild(selMenuAnchor);
+        document.body.removeChild(contextMenuAnchor);
       } catch (e) {
         // ignore...
       }
     }
-  }, [selMenuAnchor]);
+  }, [contextMenuAnchor]);
 
-  const openSelectionMenu = React.useCallback((event: MouseEvent, selectedText: string) => {
+  const openContextMenu = React.useCallback((event: MouseEvent, selectedText: string) => {
     event.stopPropagation();
     event.preventDefault();
 
     // remove any stray anchor
-    removeSelectionAnchor();
+    removeContextAnchor();
 
     // create a temporary fixed anchor element to position the menu
     const anchorEl = document.createElement('div');
@@ -429,16 +432,16 @@ export function ChatMessage(props: {
     anchorEl.style.top = `${event.clientY}px`;
     document.body.appendChild(anchorEl);
 
-    setSelMenuAnchor(anchorEl);
+    setContextMenuAnchor(anchorEl);
     setSelText(selectedText);
-  }, [removeSelectionAnchor]);
+  }, [removeContextAnchor]);
 
-  const closeSelectionMenu = React.useCallback(() => {
+  const closeContextMenu = React.useCallback(() => {
     // window.getSelection()?.removeAllRanges?.();
-    removeSelectionAnchor();
-    setSelMenuAnchor(null);
+    removeContextAnchor();
+    setContextMenuAnchor(null);
     setSelText(null);
-  }, [removeSelectionAnchor]);
+  }, [removeContextAnchor]);
 
   const handleContextMenu = React.useCallback((event: MouseEvent) => {
     const selection = window.getSelection();
@@ -446,33 +449,33 @@ export function ChatMessage(props: {
       const range = selection.getRangeAt(0);
       const selectedText = range.toString().trim();
       if (selectedText.length > 0)
-        openSelectionMenu(event, selectedText);
+        openContextMenu(event, selectedText);
     }
-  }, [openSelectionMenu]);
+  }, [openContextMenu]);
 
 
-  // Selection Toolbar
+  // Bubble
 
-  const closeToolbar = React.useCallback((anchorEl?: HTMLElement) => {
+  const closeBubble = React.useCallback((anchorEl?: HTMLElement) => {
     window.getSelection()?.removeAllRanges?.();
     try {
-      const anchor = anchorEl || selToolbarAnchor;
+      const anchor = anchorEl || bubbleAnchor;
       anchor && document.body.removeChild(anchor);
     } catch (e) {
       // ignore...
     }
-    setSelToolbarAnchor(null);
+    setBubbleAnchor(null);
     setSelText(null);
-  }, [selToolbarAnchor]);
+  }, [bubbleAnchor]);
 
-  const handleOpenToolbar = React.useCallback((_event: MouseEvent) => {
+  const handleOpenBubble = React.useCallback((_event: MouseEvent) => {
     // check for selection
     const selection = window.getSelection();
     if (!selection || selection.rangeCount <= 0) return;
 
     // check for enought selection
     const selectionText = selection.toString().trim();
-    if (selectionText.length < SELECTION_TOOLBAR_MIN_LENGTH) return;
+    if (selectionText.length < BUBBLE_MIN_TEXT_LENGTH) return;
 
     // check for the selection being inside the blocks renderer (core of the message)
     const selectionRange = selection.getRangeAt(0);
@@ -494,15 +497,15 @@ export function ChatMessage(props: {
     const closeOnUnselect = () => {
       const selection = window.getSelection();
       if (!selection || selection.toString().trim() === '') {
-        closeToolbar(anchorEl);
+        closeBubble(anchorEl);
         document.removeEventListener('selectionchange', closeOnUnselect);
       }
     };
     document.addEventListener('selectionchange', closeOnUnselect);
 
-    setSelToolbarAnchor(anchorEl);
-    setSelText(selectionText);
-  }, [closeToolbar]);
+    setBubbleAnchor(anchorEl);
+    setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
+  }, [closeBubble]);
 
 
   // Blocks renderer
@@ -516,8 +519,8 @@ export function ChatMessage(props: {
   }, [doubleClickToEdit, handleOpsEdit, props.onMessageEdit]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
-    handleOpenToolbar(event.nativeEvent);
-  }, [handleOpenToolbar]);
+    handleOpenBubble(event.nativeEvent);
+  }, [handleOpenBubble]);
 
 
   // prettier upstream errors
@@ -539,7 +542,7 @@ export function ChatMessage(props: {
   return (
     <ListItem
       role='chat-message'
-      onMouseUp={(ENABLE_SELECTION_TOOLBAR && !fromSystem && !isAssistantError) ? handleBlocksMouseUp : undefined}
+      onMouseUp={(ENABLE_BUBBLE && !fromSystem && !isAssistantError) ? handleBlocksMouseUp : undefined}
       sx={{
         // style
         backgroundColor: backgroundColor,
@@ -642,7 +645,7 @@ export function ChatMessage(props: {
             showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
             showUnsafeHtml={props.showUnsafeHtml}
             wasUserEdited={wasEdited}
-            onContextMenu={(props.onMessageEdit && ENABLE_SELECTION_RIGHT_CLICK_MENU) ? handleBlocksContextMenu : undefined}
+            onContextMenu={(props.onMessageEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
           />
@@ -793,12 +796,12 @@ export function ChatMessage(props: {
       )}
 
 
-      {/* Selection Toolbar */}
-      {ENABLE_SELECTION_TOOLBAR && !!selToolbarAnchor && (
-        <Popper placement='top-start' open anchorEl={selToolbarAnchor} slotProps={{
+      {/* Bubble */}
+      {ENABLE_BUBBLE && !!bubbleAnchor && (
+        <Popper placement='top-start' open anchorEl={bubbleAnchor} slotProps={{
           root: { style: { zIndex: themeZIndexPageBar + 1 } },
         }}>
-          <ClickAwayListener onClickAway={() => closeToolbar()}>
+          <ClickAwayListener onClickAway={() => closeBubble()}>
             <ButtonGroup
               variant='plain'
               sx={{
@@ -857,11 +860,11 @@ export function ChatMessage(props: {
       )}
 
 
-      {/* Selection (Right-click) Menu */}
-      {!!selMenuAnchor && (
+      {/* Context (Right-click) Menu */}
+      {!!contextMenuAnchor && (
         <CloseableMenu
           dense placement='bottom-start'
-          open anchorEl={selMenuAnchor} onClose={closeSelectionMenu}
+          open anchorEl={contextMenuAnchor} onClose={closeContextMenu}
           sx={{ minWidth: 220 }}
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1, alignItems: 'center' }}>
