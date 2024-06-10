@@ -11,6 +11,10 @@
  */
 export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
   const { getDocument } = await dynamicImportPdfJs();
+  if (!getDocument) {
+    console.log('pdfToText: [dev] pdfjs-dist loading skipped');
+    return '';
+  }
   const pdf = await getDocument(pdfBuffer).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages
 
@@ -66,6 +70,10 @@ interface PdfPageImage {
  */
 export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/): Promise<PdfPageImage[]> {
   const { getDocument } = await dynamicImportPdfJs();
+  if (!getDocument) {
+    console.log('pdfToImageDataURLs: [dev] pdfjs-dist loading skipped');
+    return [];
+  }
   const pdf = await getDocument({ data: pdfBuffer }).promise;
   const images: PdfPageImage[] = [];
 
@@ -100,13 +108,19 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
 
 // Dynamically import the 'pdfjs-dist' library
 async function dynamicImportPdfJs() {
-  // Dynamically import the 'pdfjs-dist' library [nextjs]
-  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
+  // https://github.com/vercel/turbo/issues/4795#issuecomment-2153074851
+  // Disable loading 'pdfjs-dist' during development to make --turbo work
+  if (process.env.NODE_ENV === 'development') {
+    return { getDocument: null };
+  } else {
+    // Dynamically import the 'pdfjs-dist' library [nextjs]
+    const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
 
-  // Set the worker script path
-  GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
+    // Set the worker script path
+    GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
 
-  return { getDocument };
+    return { getDocument };
+  }
 }
 
 // Type guard to check if an item has a 'str' property
