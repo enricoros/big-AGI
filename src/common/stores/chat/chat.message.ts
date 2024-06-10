@@ -45,6 +45,8 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 export type DMessageFragment =
   | DMessageContentFragment
   | DMessageAttachmentFragment
+// | DMessageBeamFragment
+// | DMessageMetadataV1Fragment
   ;
 
 export type DMessageContentFragment = {
@@ -57,6 +59,12 @@ export type DMessageAttachmentFragment = {
   title: string;
   part: DMessageTextPart | DMessageImagePart;
 }
+
+// Up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state
+// export type DMessageBeamFragment = {
+//   ft: 'beam',
+//   beam: { ... }
+// }
 
 
 // Message Fragment Parts
@@ -233,12 +241,12 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
     case 'attachment':
       return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
 
-    default:
-      throw new Error('Invalid fragment');
+    // default:
+    //   throw new Error('Invalid fragment');
   }
 }
 
-function _duplicatePart<T extends DMessageFragment['part']>(part: T): T {
+function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: T): T {
   switch (part.pt) {
     case 'text':
       return createDMessageTextPart(part.text) as T;
@@ -252,8 +260,8 @@ function _duplicatePart<T extends DMessageFragment['part']>(part: T): T {
     case 'tool_response':
       return createDMessageToolResponsePart(part.function, { ...part.response }) as T;
 
-    default:
-      throw new Error('Invalid part');
+    // default:
+    //   throw new Error('Invalid part');
   }
 }
 
@@ -265,25 +273,30 @@ function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
     case 'dblob':
       return createDMessageDataRefDBlob(ref.dblobId, ref.mimeType, ref.bytesSize);
 
-    default:
-      throw new Error('Invalid reference');
+    // default: // unreachable, we'd get a compiler error before this
+    //   throw new Error('Invalid reference');
   }
 }
 
 
 // helpers during the transition from V3
 
+// specialize output type with 'is'
+export function isContentOrAttachmentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment | DMessageAttachmentFragment {
+  return fragment.ft === 'content' || fragment.ft === 'attachment';
+}
+
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
   return fragments
-    .map(fragment => fragment.part.pt === 'text' ? fragment.part.text : '')
+    .map(fragment => (isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'text') ? fragment.part.text : '')
     .filter(text => !!text)
     .join(fragmentSeparator);
 }
 
-export function messageFragmentsReplaceLastText(fragments: Readonly<DMessageFragment[]>, newText: string, appendText?: boolean): DMessageFragment[] {
+export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMessageFragment[]>, newText: string, appendText?: boolean): DMessageFragment[] {
 
   // if there's no text fragment, create it
-  const lastTextFragment = fragments.findLast(f => f.part.pt === 'text');
+  const lastTextFragment = fragments.findLast(f => f.ft === 'content' && f.part.pt === 'text') as DMessageContentFragment | undefined;
   if (!lastTextFragment)
     return [...fragments, createTextContentFragment(newText)];
 
@@ -299,6 +312,8 @@ export function messageFragmentsReplaceLastText(fragments: Readonly<DMessageFrag
 export function messageSingleTextOrThrow(message: DMessage): string {
   if (message.fragments.length !== 1)
     throw new Error('Expected single fragment');
+  if (!isContentOrAttachmentFragment(message.fragments[0]))
+    throw new Error('Expected a content or attachment fragment');
   if (message.fragments[0].part.pt !== 'text')
     throw new Error('Expected a text part');
   return message.fragments[0].part.text;

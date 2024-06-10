@@ -2,7 +2,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/util/token-counter';
 
-import type { DMessageFragment } from './chat.message';
+import { DMessageFragment, isContentOrAttachmentFragment } from './chat.message';
 
 
 export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
@@ -25,6 +25,9 @@ export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): 
 // Content Parts
 
 function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: string): number {
+  // non content/attachment fragments are ignored
+  if (!isContentOrAttachmentFragment(fragment))
+    return 0;
   switch (fragment.part.pt) {
     case 'text':
       if (fragment.ft === 'attachment') {

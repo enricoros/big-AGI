@@ -302,7 +302,7 @@ export function ChatMessage(props: {
   };
 
 
-  // Operations Menu
+  // Message Operations Menu
 
   const { onMessageToggleUserFlag } = props;
 
@@ -670,7 +670,7 @@ export function ChatMessage(props: {
       )}
 
 
-      {/* Operations Menu (3 dots) */}
+      {/* Message Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
         <CloseableMenu
           dense placement='bottom-end'
