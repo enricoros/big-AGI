@@ -3,7 +3,7 @@ import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { messageFragmentsReplaceLastText, DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReplaceLastContentText, DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -76,7 +76,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
           }
           // /assistant, /system
           lastMessage.role = chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user';
-          lastMessage.fragments = messageFragmentsReplaceLastText(lastMessage.fragments, chatCommand.params || ''); // [chat] assistant|system: content
+          lastMessage.fragments = messageFragmentsReplaceLastContentText(lastMessage.fragments, chatCommand.params || ''); // [chat] assistant|system: content
           lastMessage.sender = 'Bot';
           cHandler.messagesReplace(history);
           return true;

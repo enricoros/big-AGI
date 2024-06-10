@@ -24,7 +24,7 @@ import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/com
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createTextContentDMessage, DMessage, DMessageFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -211,7 +211,7 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, fragments: DMessageFragment[], metadata?: DMessageMetadata): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
     // validate inputs
     if (fragments.length !== 1 || fragments[0].part.pt !== 'text') {
       addSnackbar({

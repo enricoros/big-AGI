@@ -29,7 +29,7 @@ import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeec
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageMetadata, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
@@ -102,7 +102,7 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, fragments: DMessageFragment[], metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;

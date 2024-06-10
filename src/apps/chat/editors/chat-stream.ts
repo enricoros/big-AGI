@@ -6,7 +6,7 @@ import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamC
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 
 import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 
@@ -107,7 +107,7 @@ export async function streamAssistantMessage(
 
       // grow the incremental message
       if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-      if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastText(incrementalAnswer.fragments, textSoFar);
+      if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, textSoFar);
       if (update.typing !== undefined) {
         incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
         if (!update.typing)
@@ -135,7 +135,7 @@ export async function streamAssistantMessage(
     if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
       const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-      incrementalAnswer.fragments = messageFragmentsReplaceLastText(incrementalAnswer.fragments, errorText, true);
+      incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, errorText, true);
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
     } else

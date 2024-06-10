@@ -12,7 +12,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { createTextContentDMessage, DMessage, DMessageUserFlag, messageFragmentsReplaceLastText, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage, DMessageUserFlag, messageFragmentsReplaceLastContentText, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -131,7 +131,7 @@ export function ChatMessageList(props: {
 
   const handleMessageEdit = React.useCallback((messageId: string, newText: string /* FIXME: contents instead of text */) => {
     conversationId && editMessage(conversationId, messageId, (message): Partial<DMessage> => ({
-      fragments: messageFragmentsReplaceLastText(message.fragments, newText),
+      fragments: messageFragmentsReplaceLastContentText(message.fragments, newText),
     }), true);
   }, [conversationId, editMessage]);
 
