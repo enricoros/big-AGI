@@ -193,16 +193,19 @@ export function Telephone(props: {
       // do not respond
       case 'Stop.':
         return;
+
       // command: close the call
       case 'Goodbye.':
         setStage('ended');
         setTimeout(launchAppChat, 2000);
         return;
+
       // command: regenerate answer
       case 'Retry.':
       case 'Try again.':
         setCallMessages(messages => messages.slice(0, messages.length - 2));
         return;
+
       // command: restart chat
       case 'Restart.':
         setCallMessages([]);

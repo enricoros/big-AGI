@@ -146,7 +146,7 @@ export function BeamRay(props: {
 
   // handlers
 
-  const handleRayCopy = React.useCallback(() => {
+  const handleRayCopyToClipboard = React.useCallback(() => {
     const { rays } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
     if (ray?.message.fragments.length)
@@ -232,7 +232,7 @@ export function BeamRay(props: {
               <GoodTooltip title='Copy'>
                 <IconButton
                   size='sm'
-                  onClick={handleRayCopy}
+                  onClick={handleRayCopyToClipboard}
                 >
                   <ContentCopyIcon sx={{ fontSize: 'md' }} />
                 </IconButton>

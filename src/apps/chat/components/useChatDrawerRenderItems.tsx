@@ -1,4 +1,5 @@
 import { shallow } from 'zustand/shallow';
+import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DFolder } from '~/common/state/store-folders';
 import { DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
@@ -101,7 +102,7 @@ export function useChatDrawerRenderItems(
   filteredChatsBarBasis: number,
   filteredChatsIncludeActive: boolean,
 } {
-  return useChatStore(({ conversations }) => {
+  return useStoreWithEqualityFn(useChatStore, ({ conversations }) => {
 
       // filter 1: select all conversations or just the ones in the active folder
       const selectedConversations = !activeFolder ? conversations : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));

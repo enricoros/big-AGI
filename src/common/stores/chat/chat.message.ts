@@ -49,21 +49,24 @@ export type DMessageFragment =
 // | DMessageMetadataV1Fragment
   ;
 
+// expected a list of one or more per message, of similar or different types
 export type DMessageContentFragment = {
   ft: 'content',
   part: DMessageTextPart | DMessageImagePart | DMessageToolCallPart | DMessageToolResponsePart;
 }
 
+// displayed at the bottom of the message, zero or more
 export type DMessageAttachmentFragment = {
   ft: 'attachment',
   title: string;
   part: DMessageTextPart | DMessageImagePart;
 }
 
-// Up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state
-// export type DMessageBeamFragment = {
+// up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
+// could not be the data store itself, but only used for save/reload
+// export type DMessageBeasmFragment = {
 //   ft: 'beam',
-//   beam: { ... }
+//   beam: { ... serializedState ... }
 // }
 
 

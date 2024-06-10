@@ -1,7 +1,7 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
 import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
-import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
@@ -51,7 +51,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set
-    void conversationAutoTitle(conversationId, false);
+    void autoConversationTitle(conversationId, false);
   }
 
   if (autoSuggestDiagrams || autoSuggestQuestions)
