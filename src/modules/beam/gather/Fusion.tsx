@@ -66,7 +66,7 @@ export function Fusion(props: {
 
 
   // handlers
-  const handleFusionCopy = React.useCallback(() => {
+  const handleFusionCopyToClipboard = React.useCallback(() => {
     const { fusions } = props.beamStore.getState();
     const fusion = fusions.find(fusion => fusion.fusionId === props.fusionId);
     if (fusion?.outputDMessage?.fragments.length)
@@ -161,7 +161,7 @@ export function Fusion(props: {
           {/* Copy */}
           <GoodTooltip title='Copy'>
             <IconButton
-              onClick={handleFusionCopy}
+              onClick={handleFusionCopyToClipboard}
             >
               <ContentCopyIcon sx={{ fontSize: 'md' }} />
             </IconButton>

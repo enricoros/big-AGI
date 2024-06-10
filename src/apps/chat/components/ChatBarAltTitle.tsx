@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Typography } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
-import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -29,7 +29,7 @@ export function ChatBarAltTitle(props: {
   const handleTitleEditAuto = React.useCallback(async () => {
     if (!conversationId) return;
     setIsEditingTitle(true);
-    await conversationAutoTitle(conversationId, true);
+    await autoConversationTitle(conversationId, true);
     setIsEditingTitle(false);
   }, [conversationId]);
 

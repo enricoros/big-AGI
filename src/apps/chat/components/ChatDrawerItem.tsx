@@ -13,7 +13,7 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 
 import { SystemPurposeId, SystemPurposes } from '../../../data';
 
-import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/state/store-folders';
@@ -149,7 +149,7 @@ function ChatDrawerItem(props: {
 
   const handleTitleEditAuto = React.useCallback(async () => {
     setIsAutoEditingTitle(true);
-    await conversationAutoTitle(conversationId, true);
+    await autoConversationTitle(conversationId, true);
     setIsAutoEditingTitle(false);
   }, [conversationId]);
 

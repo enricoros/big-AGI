@@ -9,7 +9,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
  * Creates the AI titles for conversations, by taking the last 5 first-lines and asking AI what's that about
  * @returns true if the title was actually replaced (for instance, it may not be needed)
  */
-export async function conversationAutoTitle(conversationId: string, forceReplace: boolean): Promise<boolean> {
+export async function autoConversationTitle(conversationId: string, forceReplace: boolean): Promise<boolean> {
 
   // use valid fast model
   const fastLLMId = getFastLLMId();
