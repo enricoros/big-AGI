@@ -29,7 +29,7 @@ import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeec
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, duplicateDMessageFragments, isContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
@@ -155,7 +155,7 @@ export function Composer(props: {
   // attachments-overlay: comes from the attachments slice of the conversation overlay
   const {
     attachmentDrafts,
-    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoMessage, attachAppendFile,
+    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoContent, attachAppendFile,
     attachmentsClear, attachmentsTakeAllFragments, attachmentsTakeTextFragments,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
@@ -321,19 +321,22 @@ export function Composer(props: {
     }
   }, [props.composerTextAreaRef, setComposeText]);
 
-  const onActileMessageAttach = React.useCallback((item: StarredMessageItem) => {
+  const onActileMessageAttach = React.useCallback(async (item: StarredMessageItem) => {
     // get the message
     const conversation = getConversation(item.conversationId);
     const messageToAttach = conversation?.messages.find(m => m.id === item.messageId);
-    const messageText = messageToAttach ? messageSingleTextOrThrow(messageToAttach) : null;
-    if (conversation && messageToAttach && messageText) {
-      // Testing with this serialization for LLM. Note it will still be within a multi-part message,
-      // this could be in a titled markdown block. Don't know yet how this fares with different LLMs.
-      const chatTitle = conversationTitle(conversation);
-      const textPlain = `---\nitem id: ${messageToAttach.id}\ncontext title: ${chatTitle}\n---\n${messageText.trim()}\n`;
-      void attachAppendEgoMessage('context-item', textPlain, `${chatTitle} > ${messageText.slice(0, 10)}...`);
+    if (conversation && messageToAttach) {
+      const contentToAttach = duplicateDMessageFragments(messageToAttach.fragments)
+        .filter(isContentFragment);
+      if (contentToAttach.length) {
+        const chatTitle = conversationTitle(conversation);
+        const messageText = messageFragmentsReduceText(contentToAttach);
+        const refLabel = `${chatTitle} > ${messageText.slice(0, 10)}...`;
+        const refId = `${item.messageId} - ${chatTitle}`;
+        await attachAppendEgoContent(refLabel, refId, contentToAttach);
+      }
     }
-  }, [attachAppendEgoMessage]);
+  }, [attachAppendEgoContent]);
 
   const actileProviders = React.useMemo(() => {
     return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileMessageAttach)];

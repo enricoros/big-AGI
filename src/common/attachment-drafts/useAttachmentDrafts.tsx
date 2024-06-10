@@ -7,7 +7,7 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.message';
 import { attachmentWrapText, TextAttachmentWrapFormat } from '~/common/stores/chat/chat.tokens';
 import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
@@ -117,12 +117,12 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
   }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
 
 
-  const attachAppendEgoMessage = React.useCallback((blockTitle: string, textPlain: string, attachmentLabel: string) => {
+  const attachAppendEgoContent = React.useCallback((label: string, refId: string, contents: DMessageContentFragment[]) => {
     if (ATTACHMENTS_DEBUG_INTAKE)
-      console.log('attachAppendEgo', { blockTitle, textPlain, attachmentLabel });
+      console.log('attachAppendEgoContent', label, refId, contents);
 
     return _createAttachmentDraft({
-      media: 'ego', method: 'ego-message', label: attachmentLabel, blockTitle: blockTitle, textPlain: textPlain,
+      media: 'ego', method: 'ego-contents', label, refId, contents,
     });
   }, [_createAttachmentDraft]);
 
@@ -205,7 +205,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     // create drafts
     attachAppendClipboardItems,
     attachAppendDataTransfer,
-    attachAppendEgoMessage,
+    attachAppendEgoContent,
     attachAppendFile,
 
     // manage attachments

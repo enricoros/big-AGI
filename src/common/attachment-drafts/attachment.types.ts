@@ -1,6 +1,6 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.message';
 
 
 // Attachment Draft
@@ -51,10 +51,10 @@ export type AttachmentDraftSource = {
 } | {
   // special type for attachments thar are references to self (ego, application) objects
   media: 'ego';
-  method: 'ego-message';
+  method: 'ego-contents';
+  contents: DMessageContentFragment[];
   label: string;
-  blockTitle: string;
-  textPlain: string;
+  refId: string; // message ID where the context came from (unused..)
 };
 
 export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentDraftSourceOriginDTO;
@@ -66,7 +66,7 @@ export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
 export type AttachmentDraftInput = {
   mimeType: string; // Original MIME type of the file
-  data: string | ArrayBuffer; // The original data of the attachment
+  data: string | ArrayBuffer | DMessageContentFragment[]; // The original data of the attachment
   dataSize: number; // Size of the original data in bytes
   altMimeType?: string; // Alternative MIME type for the input
   altData?: string; // Alternative data for the input
@@ -92,7 +92,7 @@ export type AttachmentDraftConverterType =
   | 'text' | 'rich-text' | 'rich-text-table'
   | 'pdf-text' | 'pdf-images'
   | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-default'
-  | 'ego-message-md'
+  | 'ego-contents-inlined'
   | 'unhandled';
 
 
