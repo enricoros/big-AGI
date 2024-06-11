@@ -1,7 +1,7 @@
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import { heuristicIsHtml } from './RenderHtml';
-import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks } from './RenderImage';
+import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks } from './RenderImageURL';
 
 // Block types
 export type Block = CodeBlock | DiffBlock | HtmlBlock | ImageBlock | TextBlock;

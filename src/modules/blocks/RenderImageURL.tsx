@@ -70,7 +70,7 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 }
 
 
-export const RenderImage = (props: {
+export const RenderImageURL = (props: {
   imageBlock: ImageBlock,
   noTooltip?: boolean,
   onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps,
