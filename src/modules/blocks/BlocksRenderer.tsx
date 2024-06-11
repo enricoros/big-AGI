@@ -13,7 +13,7 @@ import { InlineError } from '~/common/components/InlineError';
 
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
-import { RenderImage } from './RenderImage';
+import { RenderImageURL } from './RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderChatText } from './RenderChatText';
 import { RenderTextDiff } from './RenderTextDiff';
@@ -193,35 +193,24 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
         <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
       )}
 
-      {errorMessage ? (
-
-        <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{text}</Typography>} variant='soft'>
-          <InlineError error={errorMessage} />
-        </Tooltip>
-
-      ) : (
-
-        // sequence of render components, for each Block
-        blocks.map(
-          (block, index) => {
-            // Optimization: only memo the non-currently-rendered components, if the message is still in flux
-            const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== blocks.length - 1;
-            const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
-            const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
-            return block.type === 'htmlb'
-              ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
-              : block.type === 'codeb'
-                ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
-                : block.type === 'imageb'
-                  ? <RenderImage key={'image-' + index} imageBlock={block} onRunAgain={props.isBottom ? props.onImageRegenerate : undefined} sx={scaledImageSx} />
-                  : block.type === 'diffb'
-                    ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
-                    : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
-                      ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                      : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
-          })
-
-      )}
+      {/* sequence of render components, for each Block */}
+      {blocks.map((block, index) => {
+        // Optimization: only memo the non-currently-rendered components, if the message is still in flux
+        const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== blocks.length - 1;
+        const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
+        const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
+        return block.type === 'htmlb'
+          ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
+          : block.type === 'codeb'
+            ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
+            : block.type === 'imageb'
+              ? <RenderImageURL key={'image-' + index} imageBlock={block} onRunAgain={/*props.isBottom ? props.onImageRegenerate :*/ undefined} sx={scaledImageSx} />
+              : block.type === 'diffb'
+                ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
+                : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
+                  ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
+                  : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+      })}
 
       {isTextCollapsed ? (
         <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<ExpandMoreIcon />} sx={{ minWidth: 120 }}>Expand</Button></Box>
