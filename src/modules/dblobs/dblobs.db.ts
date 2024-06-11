@@ -22,7 +22,7 @@ const db = new DigitalAssetsDB();
 const DEFAULT_USER_ID = '1';
 const DEFAULT_WORKSPACE_ID = '1';
 
-export async function addDBlobItem(item: DBlobItem, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
+export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
   // returns the id of the added item
   return db.items.add({
     ...item,
@@ -32,6 +32,10 @@ export async function addDBlobItem(item: DBlobItem, cId: DBlobDBItem['cId'], sId
 
 export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
   return await db.items.where('type').equals(type).toArray() as unknown as T[];
+}
+
+export async function getDBlobItemIDs() {
+  return db.items.toCollection().primaryKeys();
 }
 
 export async function getItemsByMimeType<T extends DBlobItem>(mimeType: T['data']['mimeType']) {
@@ -48,6 +52,10 @@ export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobItem>) 
 
 export async function deleteDBlobItem(id: DBlobId) {
   return db.items.delete(id);
+}
+
+export async function deleteDBlobItems(ids: DBlobId[]) {
+  return db.items.bulkDelete(ids);
 }
 
 export async function deleteAllDBlobsInScopeId(cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {

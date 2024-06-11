@@ -83,9 +83,13 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     // Add to DBlobs database
     const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachment-drafts');
 
-    // return the DMessageAttachmentFragment
-    const imagePartDataRef = createDMessageDataRefDBlob(dblobId, mimeType, inputLength);
-    return createImageAttachmentFragment(title, imagePartDataRef, altText, dimensions?.width, dimensions?.height);
+    // return a new Image Attachment Fragment
+    return createImageAttachmentFragment(
+      title,
+      createDMessageDataRefDBlob(dblobId, mimeType, inputLength),
+      altText,
+      dimensions?.width, dimensions?.height,
+    );
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
     return null;

@@ -8,10 +8,9 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import { getImageBlobURLById } from '~/modules/dblobs/dblobs.db';
-
-import type { DMessageAttachmentFragment, DMessageDataRef } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { handleShowDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
@@ -21,21 +20,6 @@ import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
 
 // enable for debugging
 export const DEBUG_LLMATTACHMENTS = true;
-
-
-/**
- * Note: this utility function could be extracted more broadly to chat.message.ts, but
- * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
- */
-export async function handleShowDataRefInNewTab(dataRef: DMessageDataRef) {
-  let imageUrl: string | null = null;
-  if (dataRef.reftype === 'url')
-    imageUrl = dataRef.url;
-  else if (dataRef.reftype === 'dblob')
-    imageUrl = await getImageBlobURLById(dataRef.dblobId);
-  if (imageUrl && typeof window !== 'undefined')
-    window.open(imageUrl, '_blank', 'noopener,noreferrer');
-}
 
 
 export function LLMAttachmentMenu(props: {

@@ -11,7 +11,7 @@ import { useDBlobItem } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageImagePart } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { handleShowDataRefInNewTab } from '../composer/llmattachments/LLMAttachmentMenu';
+import { handleShowDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
 
 
 function ContentPartImageDBlob(props: {

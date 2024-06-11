@@ -7,7 +7,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, createEmptyDMessage, createImageContentFragment, createTextContentDMessage, createTextContentFragment, DMessage, DMessageContentFragment, DMessageDataRef, DMessageFragment, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessage, createEmptyDMessage, createTextContentDMessage, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -109,11 +109,6 @@ export class ConversationHandler {
 
   messageAppendTextContentFragment(messageId: string, text: string, complete: boolean, touch?: boolean) {
     this.messageAppendContentFragment(messageId, createTextContentFragment(text), complete, touch);
-  }
-
-  messageAppendImageContentFragment(messageId: string, dataRef: DMessageDataRef, altText: string, width: number, height: number, complete: boolean, touch: boolean) {
-    const imageContentFragment = createImageContentFragment(dataRef, altText, width, height);
-    this.messageAppendContentFragment(messageId, imageContentFragment, complete, touch);
   }
 
   messageAppendErrorContentFragment(messageId: string, errorMessage: string, complete: boolean, touch?: boolean) {

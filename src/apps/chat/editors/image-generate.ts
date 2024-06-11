@@ -1,11 +1,11 @@
-import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
 import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
 
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
+import { chatDBlobAddGlobalImage } from '~/common/stores/chat/chat.dblobs';
+import { createDMessageDataRefDBlob, createImageContentFragment } from '~/common/stores/chat/chat.message';
 
 
 /**
@@ -64,13 +64,15 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
       );
 
       // Add to DBlobs database
-      const dblobId = await addDBlobItem(dblobImageItem, 'global', 'app-chat');
+      const dblobId = await chatDBlobAddGlobalImage(dblobImageItem);
 
-      // Create a data reference for the image from the message
-      const imagePartDataRef = createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length);
-
-      // Append the image to the chat
-      cHandler.messageAppendImageContentFragment(assistantMessageId, imagePartDataRef, _i.altText, _i.width, _i.height, true, true);
+      // Create and add an Image Content Fragment
+      const imageContentFragment = createImageContentFragment(
+        createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length),
+        _i.altText,
+        _i.width, _i.height,
+      );
+      cHandler.messageAppendContentFragment(assistantMessageId, imageContentFragment, true, true);
     }
     return true;
   } catch (error: any) {
