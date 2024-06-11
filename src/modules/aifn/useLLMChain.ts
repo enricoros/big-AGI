@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
-import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
 
 // set to true to log to the console
@@ -20,7 +20,7 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess?: (output: string, input: string) => void) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess: (output: string, input: string) => void, contextName: VChatStreamContextName, contextRef: VChatContextRef) {
 
   // state
   const [chain, setChain] = React.useState<ChainState | null>(null);
@@ -114,7 +114,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     setChainStepInterimText(null);
 
     // LLM call (streaming, cancelable)
-    llmStreamingChatGenerate(llmId, llmChatInput, null, null, stepAbortController.signal,
+    llmStreamingChatGenerate(llmId, llmChatInput, contextName, contextRef, null, null, stepAbortController.signal,
       ({ textSoFar }) => {
         textSoFar && setChainStepInterimText(interimText = textSoFar);
       })
@@ -141,7 +141,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
         stepAbortController.abort('step aborted');
       _chainAbortController.signal.removeEventListener('abort', globalToStepListener);
     };
-  }, [chain, llmId, onSuccess]);
+  }, [chain, contextRef, contextName, llmId, onSuccess]);
 
 
   return {

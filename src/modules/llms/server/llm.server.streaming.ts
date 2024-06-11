@@ -19,7 +19,10 @@ import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletio
 
 // OpenAI server imports
 import type { OpenAIWire } from './openai/openai.wiretypes';
-import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from './openai/openai.router';
+import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
+
+
+import { llmsStreamingContextSchema } from './llm.server.types';
 
 
 // configuration
@@ -51,6 +54,9 @@ const chatStreamingInputSchema = z.object({
   access: z.union([anthropicAccessSchema, geminiAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
   model: openAIModelSchema,
   history: openAIHistorySchema,
+  // NOTE: made it optional for now as we have some old requests without it
+  // 2024-07-07: remove .optional()
+  context: llmsStreamingContextSchema.optional(),
 });
 export type ChatStreamingInputSchema = z.infer<typeof chatStreamingInputSchema>;
 
@@ -72,14 +78,15 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
 
   // Parse the request
   const body = await req.json();
-  const { access, model, history } = chatStreamingInputSchema.parse(body);
-  const prettyDialect = serverCapitalizeFirstLetter(access.dialect);
+  const _chatStreamingInput: ChatStreamingInputSchema = chatStreamingInputSchema.parse(body);
+  const { dialect: accessDialect } = _chatStreamingInput.access;
+  const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
 
 
   // Prepare the upstream API request and demuxer/parser
   let requestData: ReturnType<typeof _prepareRequestData>;
   try {
-    requestData = _prepareRequestData(access, model, history);
+    requestData = _prepareRequestData(_chatStreamingInput);
   } catch (error: any) {
     console.error(`[POST] /api/llms/stream: ${prettyDialect}: prepareRequestData issue:`, safeErrorString(error));
     return new NextResponse(`**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown streaming error'}`, {
@@ -103,7 +110,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
   } catch (error: any) {
 
     // server-side admins message
-    const capDialect = serverCapitalizeFirstLetter(access.dialect);
+    const capDialect = serverCapitalizeFirstLetter(accessDialect);
     const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
     console.error(`[POST] /api/llms/stream: ${capDialect}: fetch issue:`, fetchOrVendorError, requestData?.url);
 
@@ -125,7 +132,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const transformUpstreamToBigAgiClient = createUpstreamTransformer(
-    requestData.vendorMuxingFormat, requestData.vendorStreamParser, access.dialect,
+    requestData.vendorMuxingFormat, requestData.vendorStreamParser, accessDialect,
   );
 
   const chatResponseStream =
@@ -486,7 +493,7 @@ function createStreamParserOpenAI(): AIStreamParser {
 }
 
 
-function _prepareRequestData(access: ChatStreamingInputSchema['access'], model: OpenAIModelSchema, history: OpenAIHistorySchema): {
+function _prepareRequestData({ access, model, history, context: _context }: ChatStreamingInputSchema): {
   headers: HeadersInit;
   url: string;
   body: object;

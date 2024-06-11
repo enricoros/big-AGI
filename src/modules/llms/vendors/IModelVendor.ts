@@ -8,7 +8,7 @@ import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 import type { StreamingClientUpdate } from './unifiedStreamingClient';
-import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut } from '../llm.client';
+import type { VChatContextRef, VChatFunctionIn, VChatGenerateContextName, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut, VChatStreamContextName } from '../llm.client';
 
 
 export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
@@ -44,6 +44,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
     access: TAccess,
     llmOptions: TLLMOptions,
     messages: VChatMessageIn[],
+    contextName: VChatGenerateContextName, contextRef: VChatContextRef | null,
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     maxTokens?: number,
   ) => Promise<VChatMessageOut | VChatMessageOrFunctionCallOut>;
@@ -53,6 +54,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
     llmId: DLLMId,
     llmOptions: TLLMOptions,
     messages: VChatMessageIn[],
+    contextName: VChatStreamContextName, contextRef: VChatContextRef,
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     abortSignal: AbortSignal,
     onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
