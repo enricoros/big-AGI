@@ -10,7 +10,7 @@ import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
-import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
+import type { DMessage, DMessageFragment, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 
@@ -36,6 +36,7 @@ export interface ChatActions {
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
   editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
+  editMessageFragment: (cId: DConversationId, mId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
@@ -222,6 +223,24 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             updated: touchUpdated ? Date.now() : conversation.updated,
           };
         }),
+
+      editMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment, touchUpdated: boolean) =>
+        _get().editMessage(conversationId, messageId, message => {
+
+          // Validate the fragment index to be able to replace or insert (+1) a new fragment.
+          if (fragmentIndex < 0 || fragmentIndex > message.fragments.length) {
+            console.error(`editMessageFragment: Invalid fragment index ${fragmentIndex} for message ${messageId}`);
+            return {};
+          }
+
+          // Update the fragment at the given index.
+          const updatedFragments = [...message.fragments];
+          updatedFragments[fragmentIndex] = newFragment;
+
+          return {
+            fragments: updatedFragments,
+          };
+        }, touchUpdated),
 
       updateMetadata: (conversationId: DConversationId, messageId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated: boolean = true) => {
         _get()._editConversation(conversationId, conversation => {

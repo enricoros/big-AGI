@@ -2,7 +2,7 @@ import { createStore, StateCreator } from 'zustand/vanilla';
 
 import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
 
-import type { DMessage, DMessageFragment } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageFragment, DMessageId } from '~/common/stores/chat/chat.message';
 
 import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
 import { SCATTER_RAY_DEF } from './beam.config';
@@ -58,7 +58,7 @@ export interface RootStoreSlice extends RootStateSlice {
   loadBeamConfig: (preset: BeamConfigSnapshot | null) => void;
 
   setIsMaximized: (maximized: boolean) => void;
-  editInputHistoryMessage: (messageId: string, newText: string) => void;
+  editInputHistoryMessageFragment: (mId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => void;
 
 }
 
@@ -137,11 +137,26 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       isMaximized: maximized,
     }),
 
-  editInputHistoryMessage: (messageId: string, newText: string) =>
+  editInputHistoryMessageFragment: (mId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) =>
     _set(state => ({
-      inputHistory: state.inputHistory?.map((message) => (message.id !== messageId) ? message : {
-        ...message,
-        text: newText,
+      inputHistory: state.inputHistory?.map((message): DMessage => {
+        if (message.id !== mId)
+          return message;
+
+        // Validate the fragment index to be able to replace or insert (+1) a new fragment.
+        if (fragmentIndex < 0 || fragmentIndex > message.fragments.length) {
+          console.error(`editInputHistoryMessageFragment: Invalid fragment index ${fragmentIndex} for message ${message.id}`);
+          return message;
+        }
+
+        const updatedFragments = [...message.fragments];
+        updatedFragments[fragmentIndex] = newFragment;
+
+        return {
+          ...message,
+          fragments: updatedFragments,
+          updated: Date.now(),
+        };
       }),
     })),
 

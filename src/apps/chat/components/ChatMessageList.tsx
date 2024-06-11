@@ -12,7 +12,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { createTextContentDMessage, DMessage, DMessageUserFlag, messageFragmentsReplaceLastContentText, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createTextContentDMessage, DMessage, DMessageFragment, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -55,13 +55,14 @@ export function ChatMessageList(props: {
   const { openPreferencesTab } = useOptimaLayout();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
-  const { conversationMessages, historyTokenCount, editMessage, deleteMessage, setMessages } = useChatStore(useShallow(state => {
+  const { conversationMessages, historyTokenCount, deleteMessage, editMessage, editMessageFragment, setMessages } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
       historyTokenCount: conversation ? conversation.tokenCount : 0,
       deleteMessage: state.deleteMessage,
       editMessage: state.editMessage,
+      editMessageFragment: state.editMessageFragment,
       setMessages: state.setMessages,
     };
   }));
@@ -129,11 +130,9 @@ export function ChatMessageList(props: {
     conversationId && deleteMessage(conversationId, messageId);
   }, [conversationId, deleteMessage]);
 
-  const handleMessageEdit = React.useCallback((messageId: string, newText: string /* FIXME: contents instead of text */) => {
-    conversationId && editMessage(conversationId, messageId, (message): Partial<DMessage> => ({
-      fragments: messageFragmentsReplaceLastContentText(message.fragments, newText),
-    }), true);
-  }, [conversationId, editMessage]);
+  const handleMessageFragmentEdit = React.useCallback((messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => {
+    conversationId && editMessageFragment(conversationId, messageId, fragmentIndex, newFragment, true);
+  }, [conversationId, editMessageFragment]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: string, userFlag: DMessageUserFlag) => {
     conversationId && editMessage(conversationId, messageId, (message) => ({
@@ -287,7 +286,7 @@ export function ChatMessageList(props: {
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}
               onMessageDelete={handleMessageDelete}
-              onMessageEdit={handleMessageEdit}
+              onMessageFragmentEdit={handleMessageFragmentEdit}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
               // onReplyTo={handleReplyTo}
