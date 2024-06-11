@@ -10,7 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { handleShowDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
+import { showImageDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
@@ -156,7 +156,7 @@ export function LLMAttachmentMenu(props: {
                       <Typography key={index} level='body-sm'>
                         🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? part.dataRef.bytesSize?.toLocaleString() : '(remote)'}
                         {' · '}
-                        <Link onClick={() => handleShowDataRefInNewTab(part.dataRef)}>
+                        <Link onClick={() => showImageDataRefInNewTab(part.dataRef)}>
                           open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                         </Link>
                       </Typography>
