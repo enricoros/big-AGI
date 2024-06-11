@@ -22,24 +22,21 @@ import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
 const USER_COLLAPSED_LINES: number = 7;
 
 
-const blocksSx: SxProps = {
-  my: 'auto',
+/**
+ * This style is reused by all the Fragments (BlocksRenderer being the Text one),
+ * contained within a singe Grid (1fr) in the Message component.
+ */
+export const blocksRendererSx: SxProps = {
+  // important, as the parent container is a Grid, and this takes up to the Grid's width
+  width: '100%',
+
+  // enables children's x-scrollbars (clips to the Fragment, so sub-parts will stay within this)
+  overflowX: 'auto',
+
   // note: this will be used for non-blocks mainly (errors and other strings ourside of RenderXYX)
   lineHeight: lineHeightChatTextMd,
-} as const;
 
-export const editBlocksSx: SxProps = {
-  ...blocksSx,
-  // the parent is now within a grid layout
-  width: '100%',
-  // disabled: this was when the parent was a flexbox
-  // flexGrow: 1,
-} as const;
-
-const renderBlocksSx: SxProps = {
-  ...blocksSx,
-  flexGrow: 0,
-  overflowX: 'auto',
+  // customize the text selection color (also in edit mode)
   '& *::selection': {
     // backgroundColor: '#fc70c3',
     backgroundColor: 'primary.solidBg',
@@ -178,7 +175,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       ref={ref}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
-      sx={renderBlocksSx}
+      sx={blocksRendererSx}
     >
 
       {/* Warn about user-edited system message */}
