@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
@@ -25,20 +26,17 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
-import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
-
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { Link } from '~/common/components/Link';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { FragmentImageRef, FragmentPlaceholderPart, FragmentTextPart } from './FragmentContentParts';
 import { ReplyToBubble } from './ReplyToBubble';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -146,66 +144,6 @@ export function makeMessageAvatar(messageAvatarUrl: string | null, messageRole: 
   return <Avatar alt={messageSender} />;
 }
 
-function explainErrorInMessage(text: string, isAssistant: boolean, modelId?: string) {
-  const isAssistantError = isAssistant && (text.startsWith('[Issue] ') || text.startsWith('[OpenAI Issue]'));
-  let errorMessage: React.JSX.Element | null = null;
-  if (!isAssistantError)
-    return { errorMessage, isAssistantError };
-
-  // [OpenAI] "Service Temporarily Unavailable (503)", {"code":503,"message":"Service Unavailable.","param":null,"type":"cf_service_unavailable"}
-  if (text.includes('"cf_service_unavailable"')) {
-    errorMessage = <>
-      The OpenAI servers appear to be having trouble at the moment. Kindly follow
-      the <Link noLinkStyle href='https://status.openai.com/' target='_blank'>OpenAI Status</Link> page
-      for up to date information, and at your option try again.
-    </>;
-  }
-  // ...
-  else if (text.startsWith('OpenAI API error: 429 Too Many Requests')) {
-    // TODO: retry at the api/chat level a few times instead of showing this error
-    errorMessage = <>
-      The model appears to be occupied at the moment. Kindly select <b>GPT-3.5 Turbo</b>,
-      or give it another go by selecting <b>Run again</b> from the message menu.
-    </>;
-  } else if (text.includes('"model_not_found"')) {
-    // note that "model_not_found" is different than "The model `gpt-xyz` does not exist" message
-    errorMessage = <>
-      The API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5
-      Turbo</b> and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-      access</Link> to the desired model.
-    </>;
-  } else if (text.includes('"context_length_exceeded"')) {
-    // TODO: propose to summarize or split the input?
-    const pattern = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
-    const match = pattern.exec(text);
-    const usedText = match ? <b>{parseInt(match[2] || '0').toLocaleString()} tokens &gt; {parseInt(match[1] || '0').toLocaleString()}</b> : '';
-    errorMessage = <>
-      This thread <b>surpasses the maximum size</b> allowed for {modelId || 'this model'}. {usedText}.
-      Please consider removing some earlier messages from the conversation, start a new conversation,
-      choose a model with larger context, or submit a shorter new message.
-      {!usedText && ` -- ${text}`}
-    </>;
-  }
-  // [OpenAI] {"error":{"message":"Incorrect API key provided: ...","type":"invalid_request_error","param":null,"code":"invalid_api_key"}}
-  else if (text.includes('"invalid_api_key"')) {
-    errorMessage = <>
-      The API key appears to be incorrect or to have expired.
-      Please <Link noLinkStyle href='https://platform.openai.com/account/api-keys' target='_blank'>check your
-      API key</Link> and update it in <b>Models</b>.
-    </>;
-  } else if (text.includes('"insufficient_quota"')) {
-    errorMessage = <>
-      The API key appears to have <b>insufficient quota</b>. Please
-      check <Link noLinkStyle href='https://platform.openai.com/account/usage' target='_blank'>your usage</Link> and
-      make sure the usage is under <Link noLinkStyle href='https://platform.openai.com/account/billing/limits' target='_blank'>the limits</Link>.
-    </>;
-  }
-  // else
-  //  errorMessage = <>{text || 'Unknown error'}</>;
-
-  return { errorMessage, isAssistantError };
-}
-
 
 export const ChatMessageMemo = React.memo(ChatMessage);
 
@@ -234,7 +172,7 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
-  onMessageEdit?: (messageId: string, text: string) => void,
+  onMessageEdit?: (messageId: DMessageId, contentIndex: number, newContent: DMessageContentFragment) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
   onReplyTo?: (messageId: string, selectedText: string) => void,
@@ -298,11 +236,12 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const handleTextEdited = (editedText: string) => {
+  const handleContentEdited = React.useCallback((contentIndex: number, newContent: DMessageContentFragment) => {
     setIsEditing(false);
-    if (props.onMessageEdit && editedText?.trim() && editedText !== messageText)
-      props.onMessageEdit(messageId, editedText);
-  };
+    props.onMessageEdit?.(messageId, contentIndex, newContent);
+    // if (props.onMessageEdit && editedText?.trim() && editedText !== messageText)
+    //   props.onMessageEdit(messageId, editedText);
+  }, [messageId, props]);
 
 
   // Message Operations Menu
@@ -468,6 +407,7 @@ export function ChatMessage(props: {
     setSelText(null);
   }, [bubbleAnchor]);
 
+  // restore blocksRendererRef
   const handleOpenBubble = React.useCallback((_event: MouseEvent) => {
     // check for selection
     const selection = window.getSelection();
@@ -523,14 +463,8 @@ export function ChatMessage(props: {
   }, [handleOpenBubble]);
 
 
-  // prettier upstream errors
-  const { isAssistantError, errorMessage } = React.useMemo(
-    () => explainErrorInMessage(messageText, fromAssistant, messageOriginLLM),
-    [messageText, fromAssistant, messageOriginLLM],
-  );
-
   // style
-  const backgroundColor = messageBackground(messageRole, wasEdited, isAssistantError && !errorMessage);
+  const backgroundColor = messageBackground(messageRole, wasEdited, false /*isAssistantError && !errorMessage*/);
 
   // avatar
   const avatarEl: React.JSX.Element | null = React.useMemo(
@@ -542,7 +476,7 @@ export function ChatMessage(props: {
   return (
     <ListItem
       role='chat-message'
-      onMouseUp={(ENABLE_BUBBLE && !fromSystem && !isAssistantError) ? handleBlocksMouseUp : undefined}
+      onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
       sx={{
         // style
         backgroundColor: backgroundColor,
@@ -633,57 +567,61 @@ export function ChatMessage(props: {
           gap: { xs: 0, md: 1 },
         }}>
 
+          {/* Optional Message date */}
+          {(props.showBlocksDate === true && !!(messageUpdated || messageCreated)) && (
+            <Typography level='body-sm' sx={{ mx: 1.5, textAlign: fromAssistant ? 'left' : 'right' }}>
+              <TimeAgo date={messageUpdated || messageCreated} />
+            </Typography>
+          )}
+
+          {/* No Content but Placeholder Text */}
+          {!!messagePendingPlaceholderText?.length && !contentFragments.length && (
+            <FragmentPlaceholderPart
+              placeholderText={messagePendingPlaceholderText}
+              messageRole={messageRole}
+              contentScaling={contentScaling}
+            />
+          )}
+
           {/* Content Fragments */}
           {contentFragments.map(({ part }, idx) => {
             switch (part.pt) {
               case 'text':
-                return isEditing ? (
-
-                  <InlineTextarea
-                    key={'edit-' + idx}
-                    initialText={messageText} onEdit={handleTextEdited}
-                    sx={editBlocksSx}
-                  />
-
-                ) : (
-
-                  <BlocksRenderer
-                    key={'block-' + idx}
-                    ref={blocksRendererRef}
-                    text={messageText || messagePendingPlaceholderText || ''}
-                    fromRole={messageRole}
+                return (
+                  <FragmentTextPart
+                    key={'text-part-' + idx}
+                    // ref={blocksRendererRef}
+                    textPart={part}
+                    textPartIndex={idx}
+                    isEditingContent={isEditing}
+                    setIsEditingContent={setIsEditing}
+                    onContentEdit={handleContentEdited}
+                    messageRole={messageRole}
+                    messageOriginLLM={messageOriginLLM}
                     contentScaling={contentScaling}
-                    errorMessage={errorMessage}
                     fitScreen={props.fitScreen}
                     isBottom={props.isBottom}
                     renderTextAsMarkdown={renderMarkdown}
                     // renderTextDiff={textDiffs || undefined}
-                    showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
                     showUnsafeHtml={props.showUnsafeHtml}
-                    wasUserEdited={wasEdited}
+                    showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
+                    optiAllowSubBlocksMemo={!!messagePendingIncomplete}
                     onContextMenu={(props.onMessageEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
                     onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
-                    optiAllowSubBlocksMemo={!!messagePendingIncomplete}
                   />
-
                 );
 
-              // case 'image_ref':
-              //   // not supported yet
-              //   return (
-              //     <Box sx={{
-              //       backgroundColor: 'background.level3',
-              //     }}>
-              //       Image {part.dataRef.reftype} not rendered
-              //     </Box>
-              //   );
+              case 'image_ref':
+                return (
+                  <FragmentImageRef
+                    key={'image-part-' + idx}
+                    imageRefPart={part}
+                    imageRefPartIndex={idx}
+                  />
+                );
 
               default:
-                return (
-                  <Box key={'unknown-' + idx}>
-                    Unknown fragment type: {part.pt}
-                  </Box>
-                );
+                return <Box>Unknown fragment type: {part.pt}</Box>;
             }
           })}
 

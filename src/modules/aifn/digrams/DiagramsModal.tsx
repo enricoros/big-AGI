@@ -225,8 +225,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           <BlocksRenderer
             text={diagramCode}
             fromRole='assistant'
-            fitScreen={isMobile}
             contentScaling={adjustContentScaling(contentScaling, -1)}
+            fitScreen={isMobile}
             renderTextAsMarkdown={false}
             specialDiagramMode
             // onMessageEdit={(text) => setMessage({ ...message, text })}

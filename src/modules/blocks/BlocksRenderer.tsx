@@ -1,21 +1,19 @@
 import * as React from 'react';
-import TimeAgo from 'react-timeago';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
-import { InlineError } from '~/common/components/InlineError';
 
+import { RenderChatText } from './RenderChatText';
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderHtml } from './RenderHtml';
 import { RenderImageURL } from './RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
-import { RenderChatText } from './RenderChatText';
 import { RenderTextDiff } from './RenderTextDiff';
 import { areBlocksEqual, Block, parseMessageBlocks } from './blocks';
 
@@ -54,25 +52,26 @@ type BlocksRendererProps = {
   // required
   text: string;
   fromRole: DMessageRole;
+
   contentScaling: ContentScaling;
+  fitScreen: boolean;
+  isBottom?: boolean;
+  showUnsafeHtml?: boolean;
+  showTopWarning?: string;
+  specialDiagramMode?: boolean;
+
   renderTextAsMarkdown: boolean;
   renderTextDiff?: TextDiff[];
 
-  errorMessage?: React.ReactNode;
-  fitScreen: boolean;
-  isBottom?: boolean;
-  showDate?: number;
-  showUnsafeHtml?: boolean;
-  wasUserEdited?: boolean;
-
-  specialDiagramMode?: boolean;
+  /**
+   * optimization: allow memo to all individual blocks except the last one
+   * work in progress on that
+   */
+  optiAllowSubBlocksMemo?: boolean;
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
-  onImageRegenerate?: () => void;
-
-  // optimization: allow memo
-  optiAllowSubBlocksMemo?: boolean;
+  // onImageRegenerate?: () => void;
 };
 
 
@@ -83,7 +82,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
   const prevBlocksRef = React.useRef<Block[]>([]);
 
   // derived state
-  const { text: _text, errorMessage, renderTextDiff, wasUserEdited = false } = props;
+  const { text: _text, renderTextDiff } = props;
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
@@ -146,7 +145,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
 
   const blocks = React.useMemo(() => {
     // split the complete input text into blocks
-    const newBlocks = errorMessage ? [] : parseMessageBlocks(text, fromSystem, renderTextDiff);
+    const newBlocks = parseMessageBlocks(text, fromSystem, renderTextDiff);
 
     // recycle the previous blocks if they are the same, for stable references to React
     const recycledBlocks: Block[] = [];
@@ -171,7 +170,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
     return props.specialDiagramMode
       ? recycledBlocks.filter(block => block.type === 'codeb' || recycledBlocks.length === 1)
       : recycledBlocks;
-  }, [errorMessage, fromSystem, props.specialDiagramMode, renderTextDiff, text]);
+  }, [fromSystem, props.specialDiagramMode, renderTextDiff, text]);
 
 
   return (
@@ -182,15 +181,9 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       sx={renderBlocksSx}
     >
 
-      {!!props.showDate && (
-        <Typography level='body-sm' sx={{ mx: 1.5, textAlign: fromAssistant ? 'left' : 'right' }}>
-          <TimeAgo date={props.showDate} />
-        </Typography>
-      )}
-
       {/* Warn about user-edited system message */}
-      {fromSystem && wasUserEdited && (
-        <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>modified by user - auto-update disabled</Typography>
+      {!!props.showTopWarning?.length && (
+        <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>{props.showTopWarning}</Typography>
       )}
 
       {/* sequence of render components, for each Block */}
