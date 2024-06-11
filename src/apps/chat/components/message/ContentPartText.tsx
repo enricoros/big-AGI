@@ -1,11 +1,10 @@
 import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
-import { Tooltip, Typography } from '@mui/joy';
-
 import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createTextContentFragment, DMessageContentFragment, DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.message';
@@ -60,9 +59,9 @@ export function ContentPartText(props: {
   // if errored, render an Auto-Error message
   if (errorMessage) {
     return (
-      <Tooltip title={<Typography sx={{ maxWidth: 800 }}>{messageText}</Typography>} variant='soft'>
-        <InlineError error={errorMessage} />
-      </Tooltip>
+      <GoodTooltip placement='top' title={messageText}>
+        <div><InlineError error={errorMessage} /></div>
+      </GoodTooltip>
     );
   }
 
