@@ -71,23 +71,32 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 
 
 export const RenderImageURL = (props: {
-  imageBlock: ImageBlock,
-  noTooltip?: boolean,
-  onRunAgain?: (e: React.MouseEvent) => void, sx?: SxProps,
+  imageURL: string | null, // remote URL, or data URL
+  description?: React.ReactNode,
+  infoText?: string,
+  onOpenInNewTab?: (e: React.MouseEvent) => void,
+  onRunAgain?: (e: React.MouseEvent) => void,
+  sx?: SxProps,
 }) => {
 
   // state
+  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
   const [infoOpen, setInfoOpen] = React.useState(false);
-  const [showAlert, setShowAlert] = React.useState(true);
+  const [showDalleAlert, setShowDalleAlert] = React.useState(true);
+
+  // Effect
+  React.useEffect(() => {
+    const timeout = setTimeout(() => setLoadingTimeout(true), 2000);
+    return () => clearTimeout(timeout);
+  }, []);
 
 
   // derived state
-  const { url, alt } = props.imageBlock;
-  const isTempDalleUrl = url.startsWith('https://oaidalle');
+  const isTempDalleUrl = props.imageURL?.startsWith('https://oaidalle') || false;
 
 
   return (
-    <Box sx={{}}>
+    <Box>
 
       <Sheet
         variant='solid'
@@ -98,29 +107,73 @@ export const RenderImageURL = (props: {
           minHeight: 128,
           boxShadow: 'md',
 
-          // layout
+          // enable anchoring
           position: 'relative',
+
+          // resizeable image
+          '& picture': { display: 'flex', justifyContent: 'center' },
+          '& img': { maxWidth: '100%', maxHeight: '100%' },
+          '&:hover .overlay-buttons': { opacity: 1 },
+          '&:hover .overlay-text': { opacity: 1 },
+
+          // layout
           display: 'grid',
           justifyContent: 'center',
           alignItems: 'center',
-
-          '& picture': { display: 'flex' },
-          '& img': { maxWidth: '100%', maxHeight: '100%' },
-          '&:hover > .overlay-buttons': { opacity: 1 },
 
           ...props.sx,
         }}
       >
 
-        {/* External Image */}
-        <picture>
-          <img src={url} alt={alt ? `Generated Image: ${alt}` : 'Generated Image'} />
-        </picture>
+        {/* Main */}
+        <Box sx={{ position: 'relative' }}>
+
+          {/* Image / Loading Indicator */}
+          {props.imageURL ? (
+            <picture>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={props.imageURL} alt={props.infoText ? `Generated Image: ${props.infoText}` : 'Generated Image'} />
+            </picture>
+          ) : (
+            <Box
+              sx={{
+                flex: 1,
+                p: { xs: 1, md: 3 },
+                overflowWrap: 'anywhere',
+                whiteSpace: 'break-spaces',
+                display: 'block',
+              }}
+            >
+              {loadingTimeout ? 'Error: Could not load image' : 'Loading...'}
+            </Box>
+          )}
+
+          {/* Description Overlay */}
+          {!!props.description && (
+            <Box className='overlay-text' sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: `rgba(0 0 0 / 0.85)`,
+              // backgroundColor: `rgba(${theme.vars.palette.neutral.darkChannel} / 0.85)`,
+              p: { xs: 1, md: 2 },
+              opacity: infoOpen ? 1 : 0,
+              transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
+            }}>
+              {props.description}
+            </Box>
+          )}
+        </Box>
 
         {/* Information */}
-        {!!alt && infoOpen && (
-          <Box sx={{ p: { xs: 1, md: 3 } }}>
-            {alt}
+        {!!props.infoText && infoOpen && (
+          <Box sx={{
+            p: { xs: 1, md: 2 },
+            overflowWrap: 'anywhere',
+            whiteSpace: 'break-spaces',
+          }}>
+            {props.infoText}
           </Box>
         )}
 
@@ -134,7 +187,7 @@ export const RenderImageURL = (props: {
             </GoodTooltip>
           )}
 
-          {!!alt && (
+          {(!!props.infoText || !!props.description) && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
               <OverlayButton variant={infoOpen ? 'solid' : 'outlined'} onClick={() => setInfoOpen(open => !open)}>
                 <InfoOutlinedIcon />
@@ -142,21 +195,30 @@ export const RenderImageURL = (props: {
             </GoodTooltip>
           )}
 
-          <GoodTooltip title='Open in new tab'>
-            <OverlayButton variant='outlined' component={Link} href={url} download={alt || 'Image'} target='_blank'>
-              <OpenInNewIcon />
-            </OverlayButton>
-          </GoodTooltip>
+          {!!props.imageURL && (
+            <GoodTooltip title='Open in new tab'>
+              {props.onOpenInNewTab ? (
+                <OverlayButton variant='outlined' onClick={props.onOpenInNewTab}>
+                  <OpenInNewIcon />
+                </OverlayButton>
+              ) : props.imageURL.startsWith('http') ? (
+                <OverlayButton variant='outlined' component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank'>
+                  <OpenInNewIcon />
+                </OverlayButton>
+              ) : <span />}
+            </GoodTooltip>
+          )}
         </Box>
       </Sheet>
 
-      {/* Dalle Warning notice */}
-      {isTempDalleUrl && showAlert && (
+
+      {/* (Remove in 2025) Dalle Warning notice */}
+      {isTempDalleUrl && showDalleAlert && (
         <Alert
           variant='soft' color='neutral'
           startDecorator={<WarningRoundedIcon />}
           endDecorator={
-            <IconButton variant='soft' aria-label='Close Alert' onClick={() => setShowAlert(on => !on)} sx={{ my: -0.5 }}>
+            <IconButton variant='soft' aria-label='Close Alert' onClick={() => setShowDalleAlert(on => !on)} sx={{ my: -0.5 }}>
               <CloseRoundedIcon />
             </IconButton>
           }
