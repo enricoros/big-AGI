@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
 import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
-import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
+import { gcGlobalChatDBlobs } from '~/common/stores/chat/chat.dblobs';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
@@ -31,8 +31,9 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   // [gc] garbage collection(s)
   React.useEffect(() => {
     // Remove old attachment drafts (not persisted in chats)
-    // TODO: uncomment this once we have the full scope transfer of attachments
     // void gcAttachmentDBlobs(); // fire/forget
+    // Remove chat dblobs (not persisted in chat fragments)
+    void gcGlobalChatDBlobs(); // fire/forget
   }, []);
 
 

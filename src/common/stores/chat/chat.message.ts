@@ -64,7 +64,7 @@ export type DMessageAttachmentFragment = {
 
 // up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
 // could not be the data store itself, but only used for save/reload
-// export type DMessageBeasmFragment = {
+// export type DMessageBeamFragment = {
 //   ft: 'beam',
 //   beam: { ... serializedState ... }
 // }
