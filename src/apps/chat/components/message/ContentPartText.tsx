@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
-import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
+import { BlocksRenderer, blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
@@ -70,7 +70,7 @@ export function ContentPartText(props: {
     return (
       <InlineTextarea
         initialText={messageText} onEdit={handleTextEdit}
-        sx={editBlocksSx}
+        sx={blocksRendererSx}
       />
     );
   }

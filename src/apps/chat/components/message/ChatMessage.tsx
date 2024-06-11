@@ -515,7 +515,7 @@ export function ChatMessage(props: {
       {/* (Optional) underlayed top decorator */}
       {props.topDecorator}
 
-      {/* Message Row: Avatar, Blocks (1 text -> blocksRenderer) */}
+      {/* Message Row: Avatar, Fragment[] */}
       <Box sx={{
         display: 'flex',
         flexDirection: !fromAssistant ? 'row-reverse' : 'row',
@@ -559,15 +559,14 @@ export function ChatMessage(props: {
           </Box>
         )}
 
+        {/* Fragments vertical (grid) layout */}
         <Box sx={{
           // v-center content if there's any gap
           my: 'auto',
           flexGrow: isEditing ? 1 : 0,
-          // outline: '1px solid blue',
 
           // v-layout
           display: 'grid',
-          justifyItems: !fromAssistant ? 'end' : 'start',
           gap: { xs: 0, md: 1 },
         }}>
 
@@ -625,7 +624,7 @@ export function ChatMessage(props: {
                   <ContentPartImageRef
                     key={'image-part-' + fragmentIndex}
                     imageRefPart={fragment.part}
-                    fragmentIndex={fragmentIndex}
+                    contentScaling={contentScaling}
                   />
                 );
 
