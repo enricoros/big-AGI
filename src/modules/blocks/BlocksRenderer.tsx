@@ -32,7 +32,10 @@ const blocksSx: SxProps = {
 
 export const editBlocksSx: SxProps = {
   ...blocksSx,
-  flexGrow: 1,
+  // the parent is now within a grid layout
+  width: '100%',
+  // disabled: this was when the parent was a flexbox
+  // flexGrow: 1,
 } as const;
 
 const renderBlocksSx: SxProps = {

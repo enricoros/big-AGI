@@ -262,10 +262,6 @@ export function ChatMessage(props: {
   })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
 
-  const messageText = props.message.fragments.length ? messageSingleTextOrThrow(props.message) : '';
-
-  // TODO: fix the diffing
-  // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
   // derived state
   const {
@@ -281,6 +277,10 @@ export function ChatMessage(props: {
     created: messageCreated,
     updated: messageUpdated,
   } = props.message;
+
+  const contentFragments = props.message.fragments.filter(f => f.ft === 'content') as DMessageContentFragment[];
+  const attachmentFragments = props.message.fragments.filter(f => f.ft === 'attachment') as DMessageAttachmentFragment[];
+  const messageText = messageFragmentsReduceText(contentFragments);
 
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
@@ -621,41 +621,81 @@ export function ChatMessage(props: {
           </Box>
         )}
 
+        <Box sx={{
+          // v-center content if there's any gap
+          my: 'auto',
+          flexGrow: isEditing ? 1 : 0,
+          // outline: '1px solid blue',
 
-        {/* Edit / Blocks */}
-        {isEditing ? (
+          // v-layout
+          display: 'grid',
+          justifyItems: !fromAssistant ? 'end' : 'start',
+          gap: { xs: 0, md: 1 },
+        }}>
 
-          <InlineTextarea
-            initialText={messageText} onEdit={handleTextEdited}
-            sx={editBlocksSx}
-          />
+          {/* Content Fragments */}
+          {contentFragments.map(({ part }, idx) => {
+            switch (part.pt) {
+              case 'text':
+                return isEditing ? (
 
-        ) : (
+                  <InlineTextarea
+                    key={'edit-' + idx}
+                    initialText={messageText} onEdit={handleTextEdited}
+                    sx={editBlocksSx}
+                  />
 
-          <BlocksRenderer
-            ref={blocksRendererRef}
-            text={messageText || messagePendingPlaceholderText || ''}
-            fromRole={messageRole}
-            contentScaling={contentScaling}
-            errorMessage={errorMessage}
-            fitScreen={props.fitScreen}
-            isBottom={props.isBottom}
-            renderTextAsMarkdown={renderMarkdown}
-            // renderTextDiff={textDiffs || undefined}
-            showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
-            showUnsafeHtml={props.showUnsafeHtml}
-            wasUserEdited={wasEdited}
-            onContextMenu={(props.onMessageEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
-            onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
-            optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-          />
+                ) : (
 
-        )}
+                  <BlocksRenderer
+                    key={'block-' + idx}
+                    ref={blocksRendererRef}
+                    text={messageText || messagePendingPlaceholderText || ''}
+                    fromRole={messageRole}
+                    contentScaling={contentScaling}
+                    errorMessage={errorMessage}
+                    fitScreen={props.fitScreen}
+                    isBottom={props.isBottom}
+                    renderTextAsMarkdown={renderMarkdown}
+                    // renderTextDiff={textDiffs || undefined}
+                    showDate={props.showBlocksDate === true ? messageUpdated || messageCreated || undefined : undefined}
+                    showUnsafeHtml={props.showUnsafeHtml}
+                    wasUserEdited={wasEdited}
+                    onContextMenu={(props.onMessageEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
+                    onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+                    optiAllowSubBlocksMemo={!!messagePendingIncomplete}
+                  />
+
+                );
+
+              // case 'image_ref':
+              //   // not supported yet
+              //   return (
+              //     <Box sx={{
+              //       backgroundColor: 'background.level3',
+              //     }}>
+              //       Image {part.dataRef.reftype} not rendered
+              //     </Box>
+              //   );
+
+              default:
+                return (
+                  <Box key={'unknown-' + idx}>
+                    Unknown fragment type: {part.pt}
+                  </Box>
+                );
+            }
+          })}
+
+          {/* Attachment Fragments */}
+          {/* TODO simple render of Attachment fragments (Selectable) */}
+
+          {/* Reply-To Bubble */}
+          {!!messageMetadata?.inReplyToText && <ReplyToBubble inlineUserMessage replyToText={messageMetadata.inReplyToText} className='reply-to-bubble' />}
+
+        </Box>
 
       </Box>
-
-      {/* Reply-To Bubble */}
-      {!!messageMetadata?.inReplyToText && <ReplyToBubble inlineMessage replyToText={messageMetadata.inReplyToText} className='reply-to-bubble' />}
 
 
       {/* Overlay copy icon */}
