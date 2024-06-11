@@ -11,7 +11,7 @@ import { useDBlobItem } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageImagePart } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { handleShowDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
+import { showImageDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
 
 
 function ContentPartImageDBlob(props: {
@@ -94,7 +94,7 @@ export function ContentPartImageRef(props: {
   const { dataRef } = imagePart;
 
   // event handlers
-  const handleOpenInNewTab = React.useCallback(() => handleShowDataRefInNewTab(dataRef), [dataRef]);
+  const handleOpenInNewTab = React.useCallback(() => showImageDataRefInNewTab(dataRef), [dataRef]);
 
   // memo the scaled image style
   const scaledImageSx = React.useMemo((): SxProps => (

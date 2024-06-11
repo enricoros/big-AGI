@@ -6,27 +6,36 @@ import { useChatStore } from './store-chats';
 
 
 // configuration
-const DEBUG_SHOW_GC = true;
+const DEBUG_SHOW_GC = false;
 
 
+/**
+ * Add a new dblob image item, from the chat
+ */
 export async function chatDBlobAddGlobalImage(item: DBlobImageItem): Promise<DBlobId> {
   return await addDBlobItem<DBlobImageItem>(item, 'global', 'app-chat');
 }
 
+
 /**
- * Note: this utility function could be extracted more broadly to chat.message.ts, but
- * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
+ * Open a DBlob (image) in a new tab
  */
-export async function handleShowDataRefInNewTab(dataRef: DMessageDataRef) {
+export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
   let imageUrl: string | null = null;
   if (dataRef.reftype === 'url')
     imageUrl = dataRef.url;
   else if (dataRef.reftype === 'dblob')
     imageUrl = await getImageBlobURLById(dataRef.dblobId);
-  if (imageUrl && typeof window !== 'undefined')
+  if (imageUrl && typeof window !== 'undefined') {
     window.open(imageUrl, '_blank', 'noopener,noreferrer');
+    return true;
+  }
+  return false;
 }
 
+/**
+ * Garbage collect unreferenced dblobs in global chats
+ */
 export async function gcGlobalChatDBlobs() {
 
   // find all the dblob references in all chats
