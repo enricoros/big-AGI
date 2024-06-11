@@ -14,8 +14,8 @@ import { InlineError } from '~/common/components/InlineError';
 import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 
-import { DesignerPrompt, PromptDesigner } from './components/PromptDesigner';
-import { ProviderConfigure } from './components/ProviderConfigure';
+import { DesignerPrompt, PromptDesigner } from './PromptDesigner';
+import { ProviderConfigure } from './ProviderConfigure';
 
 
 const STILL_LAYOUTING = false;

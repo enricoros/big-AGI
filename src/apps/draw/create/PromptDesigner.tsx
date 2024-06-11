@@ -19,7 +19,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
 import { ButtonPromptFromX } from './ButtonPromptFromX';
-import { useDrawIdeas } from '../state/useDrawIdeas';
+import { useDrawIdeas } from './useDrawIdeas';
 
 
 const promptButtonClass = 'PromptDesigner-button';
