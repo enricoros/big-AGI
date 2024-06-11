@@ -1,7 +1,9 @@
-import { AppPlaceholder } from '../AppPlaceholder';
 import * as React from 'react';
 
-export function Gallery() {
+import { AppPlaceholder } from '../AppPlaceholder';
+
+
+export function DrawGallery(props: { domain: 'draw' | 'app' }) {
   return (
 
     <AppPlaceholder text='Drawing App is under development. v1.16.' />

@@ -14,7 +14,7 @@ const drawDropdownItems: DropdownItems = {
     title: 'Create Image',
   },
   browse: {
-    title: 'Gallery',
+    title: 'View Gallery',
   },
   media: {
     title: 'App Media',
