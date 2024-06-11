@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { SystemPurposeId, SystemPurposes } from '../../../data';
 
@@ -18,9 +18,7 @@ function PersonaDropdown(props: {
 
   // external state
   const hiddenPurposeIDs = usePurposeStore(state => state.hiddenPurposeIDs);
-  const { zenMode } = useUIPreferencesStore(state => ({
-    zenMode: state.zenMode,
-  }), shallow);
+  const zenMode = useUIPreferencesStore(state => state.zenMode);
 
 
   // filter by key in the object - must be missing the system purpose ids hidden by the user, or be the currently active one
@@ -55,12 +53,12 @@ function PersonaDropdown(props: {
 export function usePersonaIdDropdown(conversationId: DConversationId | null) {
 
   // external state
-  const { systemPurposeId } = useChatStore(state => {
+  const { systemPurposeId } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === conversationId);
     return {
       systemPurposeId: conversation?.systemPurposeId ?? null,
     };
-  }, shallow);
+  }));
 
 
   const handleSetSystemPurposeId = React.useCallback((systemPurposeId: SystemPurposeId | null) => {
