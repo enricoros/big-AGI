@@ -27,7 +27,7 @@ export const DEBUG_LLMATTACHMENTS = true;
  * Note: this utility function could be extracted more broadly to chat.message.ts, but
  * I don't want to introduce a (circular) dependency from chat.message.ts to dblobs.db.ts.
  */
-async function handleShowDataRefInNewTab(dataRef: DMessageDataRef) {
+export async function handleShowDataRefInNewTab(dataRef: DMessageDataRef) {
   let imageUrl: string | null = null;
   if (dataRef.reftype === 'url')
     imageUrl = dataRef.url;

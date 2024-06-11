@@ -76,7 +76,7 @@ export const RenderImageURL = (props: {
   infoText?: string,
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onRunAgain?: (e: React.MouseEvent) => void,
-  sx?: SxProps,
+  scaledImageSx?: SxProps,
 }) => {
 
   // state
@@ -121,7 +121,8 @@ export const RenderImageURL = (props: {
           justifyContent: 'center',
           alignItems: 'center',
 
-          ...props.sx,
+          // this shall apply font scaling and maybe margins, not much
+          ...props.scaledImageSx,
         }}
       >
 
@@ -224,7 +225,7 @@ export const RenderImageURL = (props: {
           }
           sx={{
             mx: 0.5,
-            ...props.sx,
+            ...props.scaledImageSx,
           }}
         >
           <div>
