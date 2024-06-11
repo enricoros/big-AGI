@@ -24,7 +24,7 @@ interface DBlobData<M extends DBlobMimeType> {
 // Item Origin
 
 interface UserOrigin {
-  origin: 'user';
+  ot: 'user';
   source: 'attachment'; // 'attachment' | 'message' | 'note' | 'task' | 'event' | 'contact' | 'file' | 'url' | 'text' | 'ego'..
   media: string; // file: 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | 'drop' | 'paste',  url: 'url',  'unknown'
   url?: string;
@@ -35,7 +35,7 @@ interface UserOrigin {
 }
 
 interface GeneratedOrigin {
-  origin: 'generated';
+  ot: 'generated';
   source: 'ai-text-to-image';
   generatorName: string;
   prompt: string; // Prompt used for generation

@@ -67,7 +67,8 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
         base64: base64Data,
       },
       {
-        origin: 'user', source: 'attachment',
+        ot: 'user',
+        source: 'attachment',
         media: source.media === 'file' ? source.origin : source.media === 'url' ? 'url' : 'unknown',
         url: source.media === 'url' ? source.url : undefined,
         fileName: source.media === 'file' ? source.refPath : undefined,

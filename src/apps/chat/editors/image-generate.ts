@@ -43,13 +43,13 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
 
       // Create DBlob image item
       const dblobImageItem = createDBlobImageItem(
-        'Image: ' + _i.altText,
+        imageText, // 'Image: ' + _i.altText
         {
           mimeType: _i.mimeType as any, /* we assume the mime is supported */
           base64: _i.base64Data,
         },
         {
-          origin: 'generated',
+          ot: 'generated',
           source: 'ai-text-to-image',
           generatorName: _i.generatorName,
           prompt: _i.altText,
