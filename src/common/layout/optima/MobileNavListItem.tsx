@@ -31,7 +31,7 @@ export function MobileNavListItem(props: { variant?: VariantProp, currentApp?: N
           sx={{
             '--ButtonGroup-separatorSize': 0,
             '--ButtonGroup-connected': 0,
-            gap: 1,
+            gap: 0,
           }}
         >
           {navItems.apps
