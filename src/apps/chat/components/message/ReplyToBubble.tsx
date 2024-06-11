@@ -28,37 +28,39 @@ const bubbleComposerSx: SxProps = {
   alignItems: 'start',
 };
 
-const inlineMessageSx: SxProps = {
+const inlineUserMessageSx: SxProps = {
   ...bubbleComposerSx,
 
   // redefine
   // border: 'none',
-  mt: 1,
+  // mt: 1,
   borderColor: `${INLINE_COLOR}.outlinedColor`,
   borderRadius: 'sm',
   boxShadow: 'xs',
   width: undefined,
   padding: '0.375rem 0.25rem 0.375rem 0.5rem',
 
-  // self-layout (parent: 'block', as 'grid' was not working and the user would scroll the app on the x-axis on mobile)
-  // ml: 'auto',
-  float: 'inline-end',
-  mr: { xs: 7.75, md: 10.5 }, // personaSx.minWidth + gap (md: 1) + 1.5 (text margin)
+  // FORMERLY: self-layout (parent: 'block', as 'grid' was not working and the user would scroll the app on the x-axis on mobile)
+  // float: 'inline-end',
+  // mr: { xs: 7.75, md: 10.5 }, // personaSx.minWidth + gap (md: 1) + 1.5 (text margin)
+
+  // now: the parent is a 'grid' to v-layout fragment types
+  mx: '0.75rem', // 1.5, like margin of text blocks
 
 };
 
 
 export function ReplyToBubble(props: {
   replyToText: string | null,
-  inlineMessage?: boolean
+  inlineUserMessage?: boolean
   onClear?: () => void,
   className?: string,
 }) {
   return (
-    <Box className={props.className} sx={!props.inlineMessage ? bubbleComposerSx : inlineMessageSx}>
+    <Box className={props.className} sx={!props.inlineUserMessage ? bubbleComposerSx : inlineUserMessageSx}>
       <Tooltip disableInteractive arrow title='Referring to this assistant text' placement='top'>
         <ReplyRoundedIcon sx={{
-          color: props.inlineMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',
+          color: props.inlineUserMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',
           fontSize: 'xl',
           mt: 0.125,
         }} />
