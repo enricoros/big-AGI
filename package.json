@@ -40,6 +40,7 @@
     "browser-fs-access": "^0.35.0",
     "cheerio": "^1.0.0-rc.12",
     "dexie": "^4.0.7",
+    "dexie-react-hooks": "^1.1.7",
     "eventsource-parser": "^1.1.2",
     "idb-keyval": "^6.2.1",
     "next": "~14.2.3",
