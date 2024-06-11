@@ -73,8 +73,8 @@ export type DMessageAttachmentFragment = {
 // Message Fragment Parts
 // - small and efficient (larger objects need to only be referred to)
 
-type DMessageTextPart = { pt: 'text', text: string };
-type DMessageImagePart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
+export type DMessageTextPart = { pt: 'text', text: string };
+export type DMessageImagePart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
 type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
 // type DMessageErrorPart = { pt: 'error', error: string };
