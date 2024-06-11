@@ -28,7 +28,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageContentFragment, DMessageFragment, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -36,9 +36,12 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { FragmentImageRef, FragmentPlaceholderPart, FragmentTextPart } from './FragmentContentParts';
-import { ReplyToBubble } from './ReplyToBubble';
 import { useChatShowTextDiff } from '../../store-app-chat';
+
+import { ContentPartImageRef } from './ContentPartImageRef';
+import { ContentPartPlaceholder } from './ContentPartPlaceholder';
+import { ContentPartText } from './ContentPartText';
+import { ReplyToBubble } from './ReplyToBubble';
 
 
 // Enable the menu on text selection
@@ -205,6 +208,7 @@ export function ChatMessage(props: {
   const {
     id: messageId,
     role: messageRole,
+    fragments: messageFragments,
     pendingIncomplete: messagePendingIncomplete,
     pendingPlaceholderText: messagePendingPlaceholderText,
     avatar: messageAvatar,
@@ -216,19 +220,21 @@ export function ChatMessage(props: {
     updated: messageUpdated,
   } = props.message;
 
-  const fragments = props.message.fragments || [];
-
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const wasEdited = !!messageUpdated;
 
-  const textSel = selText ? selText : messageFragmentsReduceText(props.message.fragments);
+  const textSel = selText ? selText : messageFragmentsReduceText(messageFragments);
   const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
   const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
   const couldImagine = textSel.length >= 3 && !isSpecialT2I;
   const couldSpeak = couldImagine;
+
+  const attachmentFragments = messageFragments.filter(f => f.ft === 'attachment') as DMessageAttachmentFragment[];
+  const hasAttachments = attachmentFragments.length > 0;
+
 
   // TODO: fix the diffing
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
@@ -573,8 +579,8 @@ export function ChatMessage(props: {
           )}
 
           {/* No Content but Placeholder Text */}
-          {!!messagePendingPlaceholderText?.length && !fragments.length && (
-            <FragmentPlaceholderPart
+          {!!messagePendingPlaceholderText?.length && !messageFragments.length && (
+            <ContentPartPlaceholder
               placeholderText={messagePendingPlaceholderText}
               messageRole={messageRole}
               contentScaling={contentScaling}
@@ -582,7 +588,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}
-          {fragments.map((fragment, fragmentIndex) => {
+          {messageFragments.map((fragment, fragmentIndex) => {
 
             // only proceed with DMessageContentFragment
             if (fragment.ft !== 'content')
@@ -591,7 +597,7 @@ export function ChatMessage(props: {
             switch (fragment.part.pt) {
               case 'text':
                 return (
-                  <FragmentTextPart
+                  <ContentPartText
                     key={'text-part-' + fragmentIndex}
                     // ref={blocksRendererRef}
                     textPart={fragment.part}
@@ -616,7 +622,7 @@ export function ChatMessage(props: {
 
               case 'image_ref':
                 return (
-                  <FragmentImageRef
+                  <ContentPartImageRef
                     key={'image-part-' + fragmentIndex}
                     imageRefPart={fragment.part}
                     fragmentIndex={fragmentIndex}
@@ -624,15 +630,39 @@ export function ChatMessage(props: {
                 );
 
               default:
-                return <Box>Unknown Content fragment: {fragment.part.pt}</Box>;
+                return (
+                  <ContentPartPlaceholder
+                    key={'unknown-part-' + fragmentIndex}
+                    placeholderText={`Unknown Content fragment: ${fragment.part.pt}`}
+                    messageRole={messageRole}
+                    contentScaling={contentScaling}
+                  />
+                );
             }
           })}
 
           {/* Attachment Fragments */}
-          {/* TODO simple render of Attachment fragments (Selectable) */}
+          {hasAttachments && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {attachmentFragments.map((fragment, attachmentNumber) => (
+                <ContentPartPlaceholder
+                  key={'attachment-part-' + attachmentNumber}
+                  placeholderText={`Attachment Placeholder: ${fragment.part.pt}`}
+                  messageRole={messageRole}
+                  contentScaling={contentScaling}
+                />
+              ))}
+            </Box>
+          )}
 
           {/* Reply-To Bubble */}
-          {!!messageMetadata?.inReplyToText && <ReplyToBubble inlineUserMessage replyToText={messageMetadata.inReplyToText} className='reply-to-bubble' />}
+          {!!messageMetadata?.inReplyToText && (
+            <ReplyToBubble
+              inlineUserMessage
+              replyToText={messageMetadata.inReplyToText}
+              className='reply-to-bubble'
+            />
+          )}
 
         </Box>
 

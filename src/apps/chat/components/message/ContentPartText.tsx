@@ -1,45 +1,22 @@
 import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
-import { Box, Tooltip, Typography } from '@mui/joy';
+import { Tooltip, Typography } from '@mui/joy';
 
 import { BlocksRenderer, editBlocksSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { InlineError } from '~/common/components/InlineError';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { createTextContentFragment, DMessageContentFragment, DMessageImagePart, DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageContentFragment, DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.message';
 
 import { explainServiceErrors } from './explainServiceErrors';
 
-
-export function FragmentImageRef(props: {
-  imageRefPart: DMessageImagePart,
-  fragmentIndex: number,
-}) {
-  return <Box>FragmentImageRef: not implemented</Box>;
-}
-
-export function FragmentPlaceholderPart(props: {
-  placeholderText: string,
-  messageRole: DMessageRole,
-  contentScaling: ContentScaling,
-}) {
-  return (
-    <BlocksRenderer
-      text={props.placeholderText}
-      fromRole={props.messageRole}
-      contentScaling={props.contentScaling}
-      renderTextAsMarkdown={false}
-      fitScreen={false}
-    />
-  );
-}
-
 /**
  * The OG part, comprised of text, which can be markdown, have code blocks, etc.
+ * Uses BlocksRenderer to render the markdown/code/html/text, etc.
  */
-export function FragmentTextPart(props: {
+export function ContentPartText(props: {
   textPart: DMessageTextPart,
   fragmentIndex: number,
 
