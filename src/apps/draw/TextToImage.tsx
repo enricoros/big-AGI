@@ -42,7 +42,7 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
         base64: _i.base64Data,
       },
       {
-        origin: 'generated',
+        ot: 'generated',
         source: 'ai-text-to-image',
         // generatorName: t2iProvider.painter,
         generatorName: _i.generatorName,
