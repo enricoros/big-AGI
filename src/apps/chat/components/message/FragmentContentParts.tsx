@@ -12,16 +12,10 @@ import { createTextContentFragment, DMessageContentFragment, DMessageImagePart, 
 
 import { explainServiceErrors } from './explainServiceErrors';
 
-/*
-TODO:
-- [ ] restore the global background of the message in case of error
-- [ ] bubble on assistant error (shall disable onMouseUp on the listItem)
-- [ ]
- */
 
 export function FragmentImageRef(props: {
   imageRefPart: DMessageImagePart,
-  imageRefPartIndex: number,
+  fragmentIndex: number,
 }) {
   return <Box>FragmentImageRef: not implemented</Box>;
 }
@@ -47,11 +41,11 @@ export function FragmentPlaceholderPart(props: {
  */
 export function FragmentTextPart(props: {
   textPart: DMessageTextPart,
-  textPartIndex: number,
+  fragmentIndex: number,
 
   isEditingContent: boolean,
   setIsEditingContent: (isEditing: boolean) => void,
-  onContentEdit?: (contentIndex: number, newContent: DMessageContentFragment) => void,
+  onFragmentEdit?: (fragmentIndex: number, newFragment: DMessageContentFragment) => void,
 
   messageRole: DMessageRole,
   messageOriginLLM?: string,
@@ -72,14 +66,14 @@ export function FragmentTextPart(props: {
 }) {
 
   // derived state
-  const { onContentEdit, textPartIndex } = props;
+  const { onFragmentEdit, fragmentIndex } = props;
   const messageText = props.textPart.text;
   const fromAssistant = props.messageRole === 'assistant';
 
-  const handleTextEdited = React.useCallback((newText: string) => {
+  const handleTextEdit = React.useCallback((newText: string) => {
     if (messageText !== newText)
-      onContentEdit?.(textPartIndex, createTextContentFragment(newText));
-  }, [messageText, onContentEdit, textPartIndex]);
+      onFragmentEdit?.(fragmentIndex, createTextContentFragment(newText));
+  }, [messageText, onFragmentEdit, fragmentIndex]);
 
   const { errorMessage } = React.useMemo(
     () => explainServiceErrors(messageText, fromAssistant, props.messageOriginLLM),
@@ -99,7 +93,7 @@ export function FragmentTextPart(props: {
   if (props.isEditingContent) {
     return (
       <InlineTextarea
-        initialText={messageText} onEdit={handleTextEdited}
+        initialText={messageText} onEdit={handleTextEdit}
         sx={editBlocksSx}
       />
     );

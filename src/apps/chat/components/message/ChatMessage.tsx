@@ -28,7 +28,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageContentFragment, DMessageFragment, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -172,7 +172,7 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
-  onMessageEdit?: (messageId: DMessageId, contentIndex: number, newContent: DMessageContentFragment) => void,
+  onMessageFragmentEdit?: (messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
   onReplyTo?: (messageId: string, selectedText: string) => void,
@@ -216,9 +216,7 @@ export function ChatMessage(props: {
     updated: messageUpdated,
   } = props.message;
 
-  const contentFragments = props.message.fragments.filter(f => f.ft === 'content') as DMessageContentFragment[];
-  const attachmentFragments = props.message.fragments.filter(f => f.ft === 'attachment') as DMessageAttachmentFragment[];
-  const messageText = messageFragmentsReduceText(contentFragments);
+  const fragments = props.message.fragments || [];
 
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
@@ -226,7 +224,7 @@ export function ChatMessage(props: {
   const fromSystem = messageRole === 'system';
   const wasEdited = !!messageUpdated;
 
-  const textSel = selText ? selText : messageText;
+  const textSel = selText ? selText : messageFragmentsReduceText(props.message.fragments);
   const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
   const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
   const couldImagine = textSel.length >= 3 && !isSpecialT2I;
@@ -236,12 +234,12 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const handleContentEdited = React.useCallback((contentIndex: number, newContent: DMessageContentFragment) => {
+  const { onMessageFragmentEdit } = props;
+
+  const handleFragmentEdit = React.useCallback((fragmentIndex: number, newContent: DMessageContentFragment) => {
     setIsEditing(false);
-    props.onMessageEdit?.(messageId, contentIndex, newContent);
-    // if (props.onMessageEdit && editedText?.trim() && editedText !== messageText)
-    //   props.onMessageEdit(messageId, editedText);
-  }, [messageId, props]);
+    onMessageFragmentEdit?.(messageId, fragmentIndex, newContent);
+  }, [messageId, onMessageFragmentEdit]);
 
 
   // Message Operations Menu
@@ -455,8 +453,8 @@ export function ChatMessage(props: {
   }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    doubleClickToEdit && props.onMessageEdit && handleOpsEdit(event);
-  }, [doubleClickToEdit, handleOpsEdit, props.onMessageEdit]);
+    doubleClickToEdit && props.onMessageFragmentEdit && handleOpsEdit(event);
+  }, [doubleClickToEdit, handleOpsEdit, props.onMessageFragmentEdit]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
     handleOpenBubble(event.nativeEvent);
@@ -575,7 +573,7 @@ export function ChatMessage(props: {
           )}
 
           {/* No Content but Placeholder Text */}
-          {!!messagePendingPlaceholderText?.length && !contentFragments.length && (
+          {!!messagePendingPlaceholderText?.length && !fragments.length && (
             <FragmentPlaceholderPart
               placeholderText={messagePendingPlaceholderText}
               messageRole={messageRole}
@@ -583,19 +581,24 @@ export function ChatMessage(props: {
             />
           )}
 
-          {/* Content Fragments */}
-          {contentFragments.map(({ part }, idx) => {
-            switch (part.pt) {
+          {/* Content Fragments (iterating all to preserve the index) */}
+          {fragments.map((fragment, fragmentIndex) => {
+
+            // only proceed with DMessageContentFragment
+            if (fragment.ft !== 'content')
+              return null;
+
+            switch (fragment.part.pt) {
               case 'text':
                 return (
                   <FragmentTextPart
-                    key={'text-part-' + idx}
+                    key={'text-part-' + fragmentIndex}
                     // ref={blocksRendererRef}
-                    textPart={part}
-                    textPartIndex={idx}
+                    textPart={fragment.part}
+                    fragmentIndex={fragmentIndex}
                     isEditingContent={isEditing}
                     setIsEditingContent={setIsEditing}
-                    onContentEdit={handleContentEdited}
+                    onFragmentEdit={handleFragmentEdit}
                     messageRole={messageRole}
                     messageOriginLLM={messageOriginLLM}
                     contentScaling={contentScaling}
@@ -606,22 +609,22 @@ export function ChatMessage(props: {
                     showUnsafeHtml={props.showUnsafeHtml}
                     showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
                     optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-                    onContextMenu={(props.onMessageEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
-                    onDoubleClick={(props.onMessageEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+                    onContextMenu={(props.onMessageFragmentEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
+                    onDoubleClick={(props.onMessageFragmentEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
                   />
                 );
 
               case 'image_ref':
                 return (
                   <FragmentImageRef
-                    key={'image-part-' + idx}
-                    imageRefPart={part}
-                    imageRefPartIndex={idx}
+                    key={'image-part-' + fragmentIndex}
+                    imageRefPart={fragment.part}
+                    fragmentIndex={fragmentIndex}
                   />
                 );
 
               default:
-                return <Box>Unknown fragment type: {part.pt}</Box>;
+                return <Box>Unknown Content fragment: {fragment.part.pt}</Box>;
             }
           })}
 
@@ -670,7 +673,7 @@ export function ChatMessage(props: {
           {/* Edit / Copy */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {/* Edit */}
-            {!!props.onMessageEdit && (
+            {!!props.onMessageFragmentEdit && (
               <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEdit} sx={{ flex: 1 }}>
                 <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
                 {isEditing ? 'Discard' : 'Edit'}

@@ -8,10 +8,10 @@ import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
+import { DMessageFragment, DMessageId, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
-import { createTextContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -139,7 +139,12 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 fitScreen={isMobile}
                 isMobileForAvatar={isMobile}
                 showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
-                onMessageEdit={(_messageId, text: string) => message.fragments = [createTextContentFragment(text)] /* TODO: replace edit with Content rather than text */}
+                onMessageFragmentEdit={(_messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => {
+                  // replace the in-mem message
+                  const newFragments = message.fragments.slice();
+                  newFragments[fragmentIndex] = newFragment;
+                  message.fragments = newFragments;
+                }}
               />,
             )}
 

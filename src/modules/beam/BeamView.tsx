@@ -32,7 +32,7 @@ export function BeamView(props: {
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
   const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
   const {
-    /* root */ editInputHistoryMessage,
+    /* root */ editInputHistoryMessageFragment,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
   } = props.beamStore.getState();
   const {
@@ -149,7 +149,7 @@ export function BeamView(props: {
       <BeamScatterInput
         isMobile={props.isMobile}
         history={inputHistory}
-        editHistory={editInputHistoryMessage}
+        onMessageFragmentEdit={editInputHistoryMessageFragment}
       />
 
       {/* Scatter Controls */}

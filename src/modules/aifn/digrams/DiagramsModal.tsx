@@ -229,6 +229,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
             fitScreen={isMobile}
             renderTextAsMarkdown={false}
             specialDiagramMode
+            // Edit is moved from the BlocksRenderer to the FragmentTextPart
             // onMessageEdit={(text) => setMessage({ ...message, text })}
           />
         </Box>
