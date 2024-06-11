@@ -2,9 +2,10 @@ import * as React from 'react';
 
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { useDrawSectionDropdown } from './create/useDrawSectionDropdown';
-import { DrawGallery } from './DrawGallery';
+
 import { DrawCreate } from './DrawCreate';
+import { DrawGallery } from './DrawGallery';
+import { useDrawSectionDropdown } from './useDrawSectionDropdown';
 
 
 // export interface AppDrawIntent {
