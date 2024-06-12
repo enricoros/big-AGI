@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Blob
 
 export enum DBlobMimeType {
-  IMG_PNG = 'image/png', IMG_JPEG = 'image/jpeg',
+  IMG_PNG = 'image/png', IMG_JPEG = 'image/jpeg', IMG_WEBP = 'image/webp',
   AUDIO_MPEG = 'audio/mpeg', AUDIO_WAV = 'audio/wav',
   // VIDEO_MP4 = 'video/mp4',
   // DOCUMENT_PDF = 'application/pdf', DOCUMENT_PLAIN = 'text/plain', DOCUMENT_HTML = 'text/html',
@@ -114,6 +114,8 @@ export function createDBlobBase<TType extends DBlobMetaDataType, TMime extends D
   };
 }
 
+export const dBlobCacheT256 = 'thumbnail-256';
+
 
 // Item Specialization
 
@@ -167,7 +169,7 @@ interface DocumentMetadata {
 
 // Item Data
 
-export type DBlobImageItem = DBlobBase<DBlobMetaDataType.IMAGE, DBlobMimeType.IMG_PNG | DBlobMimeType.IMG_JPEG, ImageMetadata>;
+export type DBlobImageItem = DBlobBase<DBlobMetaDataType.IMAGE, DBlobMimeType.IMG_PNG | DBlobMimeType.IMG_JPEG | DBlobMimeType.IMG_WEBP, ImageMetadata>;
 export type DBlobAudioItem = DBlobBase<DBlobMetaDataType.AUDIO, DBlobMimeType.AUDIO_MPEG | DBlobMimeType.AUDIO_WAV, AudioMetadata>;
 // type DBlobVideoItem = DBlobBase<ItemDataType.VIDEO, BlobMimeType.VIDEO_MP4, VideoMetadata>;
 // type DBlobDocumentItem = DBlobBase<ItemDataType.DOCUMENT, BlobMimeType.DOCUMENT_PDF, DocumentMetadata>;
