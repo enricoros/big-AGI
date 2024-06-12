@@ -54,10 +54,22 @@ export function ProviderConfigure(props: {
       }}
     >
 
+      {/* Service-Specific Configuration */}
+      <ExpanderControlledBox expanded={open}>
+        {!!ProviderConfig && (
+          <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
+            <CardContent sx={{ gap: 2 }}>
+              <ProviderConfig />
+            </CardContent>
+          </Card>
+        )}
+      </ExpanderControlledBox>
+
       {/* Service / Options Button */}
       <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1 }}>
 
         <ProviderSelect
+          title='AI Service:'
           providers={props.providers}
           activeProviderId={props.activeProviderId}
           setActiveProviderId={props.setActiveProviderId}
@@ -73,17 +85,6 @@ export function ProviderConfigure(props: {
           Options
         </Button>
       </Box>
-
-      {/* Service-Specific Configuration */}
-      <ExpanderControlledBox expanded={open}>
-        {!!ProviderConfig && (
-          <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
-            <CardContent sx={{ gap: 2 }}>
-              <ProviderConfig />
-            </CardContent>
-          </Card>
-        )}
-      </ExpanderControlledBox>
 
     </Box>
 
