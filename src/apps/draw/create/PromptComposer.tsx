@@ -340,7 +340,7 @@ export function PromptComposer(props: {
 
           {/* Number of Images */}
           <FormControl sx={{ gap: 1 }}>
-            <Typography level='body-xs'>Number of Images:</Typography>
+            {!props.isMobile && <Typography level='body-xs'>Number of Images:</Typography>}
             <Box sx={{ display: 'flex', justifyContent: 'space-evenly' }}>
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <IconButton
@@ -349,6 +349,7 @@ export function PromptComposer(props: {
                   variant={tempRepeat === n ? 'soft' : 'plain'}
                   onClick={() => setTempRepeat(n)}
                   sx={{
+                    backgroundColor: tempRepeat === n ? 'background.surface' : undefined,
                     borderRadius: '50%',
                     boxShadow: tempRepeat === n ? '0 0 8px 2px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
                     fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
