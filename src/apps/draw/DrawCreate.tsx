@@ -213,33 +213,33 @@ export function DrawCreate(props: {
           }}
         >
 
+          {/* Draw history (last 50) */}
+
+          {/*<Box sx={{*/}
+          {/*  // my: 'auto',*/}
+          {/*  // display: 'flex', flexDirection: 'column', alignItems: 'center',*/}
+          {/*  border: DEBUG_LAYOUT ? '1px solid purple' : undefined,*/}
+          {/*  minHeight: '300px',*/}
+
+          {/*  // layout*/}
+          {/*  display: 'grid',*/}
+          {/*  gridTemplateColumns: props.isMobile*/}
+          {/*    ? 'repeat(auto-fit, minmax(320px, 1fr))'*/}
+          {/*    : 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',*/}
+          {/*  gap: { xs: 2, md: 2 },*/}
           {/*}}>*/}
-          {/*  <Box sx={{*/}
-          {/*    // my: 'auto',*/}
-          {/*    // display: 'flex', flexDirection: 'column', alignItems: 'center',*/}
-          {/*    border: DEBUG_LAYOUT ? '1px solid purple' : undefined,*/}
-          {/*    minHeight: '300px',*/}
-
-          {/*    // layout*/}
-          {/*    display: 'grid',*/}
-          {/*    gridTemplateColumns: props.isMobile*/}
-          {/*      ? 'repeat(auto-fit, minmax(320px, 1fr))'*/}
-          {/*      : 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',*/}
-          {/*    gap: { xs: 2, md: 2 },*/}
-          {/*  }}>*/}
-          {/*    {prompts.map((prompt, _index) => {*/}
-          {/*      return (*/}
-          {/*        <TempPromptImageGen*/}
-          {/*          key={prompt.uuid}*/}
-          {/*          prompt={prompt}*/}
-          {/*          sx={{*/}
-          {/*            border: DEBUG_LAYOUT ? '1px solid green' : undefined,*/}
-          {/*          }}*/}
-          {/*        />*/}
-          {/*      );*/}
-          {/*    })}*/}
-          {/*  </Box>*/}
-
+          {/*  {prompts.map((prompt, _index) => {*/}
+          {/*    return (*/}
+          {/*      <TempPromptImageGen*/}
+          {/*        key={prompt.uuid}*/}
+          {/*        prompt={prompt}*/}
+          {/*        sx={{*/}
+          {/*          border: DEBUG_LAYOUT ? '1px solid green' : undefined,*/}
+          {/*        }}*/}
+          {/*      />*/}
+          {/*    );*/}
+          {/*  })}*/}
+          {/*</Box>*/}
 
           {/* Fallbac*/}
           <FallbackNoImages />

@@ -28,24 +28,26 @@ export function ButtonPromptFromIdea(props: {
 
   return props.isMobile ? null : (
     <ButtonGroup
-      variant='soft' color='neutral'
+      variant='outlined' color='neutral'
       disabled={props.disabled}
       sx={{
         // '--ButtonGroup-separatorSize': 0,
         minWidth: 160,
       }}
     >
-      <Button
-        fullWidth onClick={handleIdeaNext}
-        startDecorator={<LightbulbOutlinedIcon />}
-        sx={{
-          // '--Button-gap': 'auto',
-          // minWidth: 100,
-          justifyContent: 'flex-start',
-          transition: 'background-color 0.2s, color 0.2s',
-        }}>
-        Idea
-      </Button>
+      <Tooltip disableInteractive title='New Idea'>
+        <Button
+          fullWidth onClick={handleIdeaNext}
+          startDecorator={<LightbulbOutlinedIcon />}
+          sx={{
+            // '--Button-gap': 'auto',
+            // minWidth: 100,
+            justifyContent: 'flex-start',
+            transition: 'background-color 0.2s, color 0.2s',
+          }}>
+          Idea
+        </Button>
+      </Tooltip>
       <Tooltip disableInteractive title='Use Idea'>
         <IconButton size='sm' onClick={onIdeaUse}>
           <ArrowForwardRoundedIcon />
