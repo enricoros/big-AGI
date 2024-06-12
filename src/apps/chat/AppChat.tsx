@@ -25,6 +25,7 @@ import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createTextContentDMessage, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { gcGlobalChatDBlobs } from '~/common/stores/chat/chat.dblobs';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -383,6 +384,9 @@ export function AppChat() {
     handleOpenConversationInFocusedPane(nextConversationId);
 
     setDeleteConversationIds(null);
+
+    // run GC for dblobs in this conversation
+    void gcGlobalChatDBlobs(); // fire/forget
   }, [deleteConversations, handleOpenConversationInFocusedPane]);
 
   const handleConfirmedDeleteConversations = React.useCallback(() => {
