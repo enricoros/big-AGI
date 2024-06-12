@@ -16,6 +16,7 @@ import { useDrawSectionDropdown } from './useDrawSectionDropdown';
 export function AppDraw() {
 
   // state
+  const [showHeader, setShowHeader] = React.useState(true);
   const { drawSection, drawSectionDropdown } = useDrawSectionDropdown();
   // const [_drawIntent, setDrawIntent] = React.useState<AppDrawIntent | null>(null);
 
@@ -33,13 +34,12 @@ export function AppDraw() {
   // }, [query]);
   // const hasIntent = !!drawIntent && !!drawIntent.backTo;
 
-
   // pluggable layout
   usePluggableOptimaLayout(null, drawSectionDropdown, null, 'aa');
 
   switch (drawSection) {
     case 'create':
-      return <DrawCreate isMobile={isMobile} />;
+      return <DrawCreate showHeader={showHeader} onHideHeader={() => setShowHeader(false)} isMobile={isMobile} />;
 
     case 'browse':
       return <DrawGallery domain='draw' />;
