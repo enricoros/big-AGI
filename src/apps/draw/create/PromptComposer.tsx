@@ -51,7 +51,7 @@ export function PromptComposer(props: {
   const [nextPrompt, setNextPrompt] = React.useState<string>('');
   const [tempCount, setTempCount] = React.useState<number>(1);
   const [tempRepeat, setTempRepeat] = React.useState<number>(1);
-  const [showMobileRepeat, setShowMobileRepeat] = React.useState<boolean>(true);
+  const [showMobileRepeat, setShowMobileRepeat] = React.useState<boolean>(false);
 
   // external state
   const { currentIdea, nextRandomIdea } = useDrawIdeas();
@@ -61,7 +61,8 @@ export function PromptComposer(props: {
   // derived state
   const isRepeatShown = showMobileRepeat || !props.isMobile;
   const userHasText = !!nextPrompt;
-  const nonEmptyPrompt = nextPrompt || currentIdea.prompt;
+  const currentIdeaPrompt = currentIdea?.prompt || '';
+  const nonEmptyPrompt = nextPrompt || currentIdeaPrompt;
   const queueLength = props.queueLength;
   const qBusy = queueLength > 0;
 
@@ -76,11 +77,13 @@ export function PromptComposer(props: {
 
   const handlePromptEnqueue = React.useCallback(() => {
     setNextPrompt('');
-    onPromptEnqueue([{
-      uuid: uuidv4(),
-      prompt: nonEmptyPrompt,
-      _repeatCount: isRepeatShown ? tempRepeat : 1,
-    }]);
+    if (nonEmptyPrompt?.trim()) {
+      onPromptEnqueue([{
+        uuid: uuidv4(),
+        prompt: nonEmptyPrompt,
+        _repeatCount: isRepeatShown ? tempRepeat : 1,
+      }]);
+    }
   }, [isRepeatShown, nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
 
 
@@ -108,8 +111,8 @@ export function PromptComposer(props: {
   // Ideas
 
   const handleIdeaUse = React.useCallback(() => {
-    setNextPrompt(currentIdea.prompt);
-  }, [currentIdea.prompt]);
+    currentIdeaPrompt && setNextPrompt(currentIdeaPrompt);
+  }, [currentIdeaPrompt]);
 
   // PromptFx
 
@@ -261,7 +264,7 @@ export function PromptComposer(props: {
             autoFocus
             minRows={props.isMobile ? 4 : 3}
             maxRows={props.isMobile ? 6 : 8}
-            placeholder={currentIdea.prompt}
+            placeholder={currentIdeaPrompt || 'Enter your prompt here and hit "Draw".'}
             value={nextPrompt}
             onChange={handleTextareaTextChange}
             onKeyDown={handleTextareaKeyDown}
@@ -274,7 +277,7 @@ export function PromptComposer(props: {
             }}
             sx={{
               flexGrow: 1,
-              boxShadow: 'lg',
+              boxShadow: 'md',
               '&:focus-within': { backgroundColor: 'background.popup' },
               lineHeight: lineHeightTextareaMd,
             }}
@@ -297,7 +300,7 @@ export function PromptComposer(props: {
               onClick={() => setShowMobileRepeat(show => !show)}
               sx={isRepeatShown ? {
                 backgroundColor: 'background.surface',
-                boxShadow: '0 0 8px 1px rgb(var(--joy-palette-primary-mainChannel) / 40%)',
+                boxShadow: '0 0 8px 0 rgb(var(--joy-palette-primary-mainChannel) / 40%)',
               } : undefined}
             >
               <NumbersRoundedIcon />
@@ -372,6 +375,10 @@ export function PromptComposer(props: {
                         borderRadius: '50%',
                         boxShadow: tempRepeat === n ? '0 0 8px 1px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
                         fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
+                        '&:hover': {
+                          backgroundColor: tempRepeat === n ? 'background.popup' : 'background.surface',
+                          boxShadow: '0 0 8px 1px rgb(var(--joy-palette-primary-mainChannel) / 40%)',
+                        },
                       }}
                     >
                       {n}
