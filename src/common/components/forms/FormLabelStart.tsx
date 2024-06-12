@@ -23,7 +23,9 @@ const FormLabelStartBase = (props: {
     <FormLabel
       onClick={props.onClick}
       sx={{
-        minWidth: formLabelStartWidth,
+        // minWidth: formLabelStartWidth,
+        flexWrap: 'nowrap',
+        whiteSpace: 'nowrap',
         ...(!!props.onClick && { cursor: 'pointer', textDecoration: 'underline' }),
         ...props.sx,
       }}
