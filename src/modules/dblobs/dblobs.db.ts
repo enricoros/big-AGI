@@ -55,7 +55,7 @@ export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) 
 }
 
 export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return (await db.items.where({ type, cId, sId }).sortBy('createdAt')).reverse();
+  return (await db.items.where({ type, cId, sId }).sortBy('createdAt')).reverse() as unknown as T[];
 }
 
 export async function getDBlobItemIDs() {
