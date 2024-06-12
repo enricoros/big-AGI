@@ -9,7 +9,7 @@ class DigitalAssetsDB extends Dexie {
   constructor() {
     super('DigitalAssetsDB');
     this.version(1).stores({
-      items: 'id, uId, wId, cId, type, data.mimeType, origin.origin, origin.dir, origin.source, createdAt, updatedAt', // Index common properties
+      items: 'id, uId, wId, cId, sId, type, data.mimeType, origin.ot, origin.source, createdAt, updatedAt', // Index common properties
     });
   }
 }
@@ -32,6 +32,10 @@ export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBIte
 
 export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
   return await db.items.where('type').equals(type).toArray() as unknown as T[];
+}
+
+export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
+  return await db.items.where({ type, cId, sId }).toArray() as unknown as T[];
 }
 
 export async function getDBlobItemIDs() {
