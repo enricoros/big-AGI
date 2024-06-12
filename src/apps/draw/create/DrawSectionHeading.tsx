@@ -90,18 +90,20 @@ export function DrawSectionHeading(props: {
         </Box>
 
         {/* Close button */}
-        <IconButton
-          variant='plain'
-          color='neutral'
-          onClick={props.onRemoveHeading}
-          sx={{
-            position: 'absolute',
-            top: -2,
-            right: -4,
-            zIndex: 1,
-          }}>
-          <CloseRoundedIcon />
-        </IconButton>
+        {!!props.onRemoveHeading && (
+          <IconButton
+            variant='plain'
+            color='neutral'
+            onClick={props.onRemoveHeading}
+            sx={{
+              position: 'absolute',
+              top: -2,
+              right: -4,
+              zIndex: 1,
+            }}>
+            <CloseRoundedIcon />
+          </IconButton>
+        )}
       </Box>
 
       {/* Section Selector*/}
