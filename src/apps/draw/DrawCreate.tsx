@@ -24,9 +24,10 @@ export function DrawCreate(props: {
     {/* The container is a 100dvh, flex column with App bg (see `pageCoreSx`) */}
     {props.showHeader && (
       <DrawSectionHeading
-        title='Create Images'
-        subTitle={mayWork ? 'Model, Prompt, Go!' : 'No AI providers configured :('}
-        chipText='Multi-model'
+        isBeta
+        title='Imagine'
+        subTitle={mayWork ? 'Model, Prompts, Go!' : 'No AI providers configured :('}
+        chipText='Multi-model, AI Text-to-Image'
         highlight={working}
         onRemoveHeading={props.onHideHeader}
         sx={{

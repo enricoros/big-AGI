@@ -14,11 +14,12 @@ import { InlineError } from '~/common/components/InlineError';
 import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 
-import { DesignerPrompt, PromptDesigner } from './PromptDesigner';
+import { DesignerPrompt, PromptComposer } from './PromptComposer';
 import { ProviderConfigure } from './ProviderConfigure';
 
 
-const STILL_LAYOUTING = false;
+// configure module
+const DEBUG_LAYOUT = process.env.NODE_ENV === 'development';
 
 
 /**
@@ -164,13 +165,14 @@ export function TextToImage(props: {
 
       // style
       backgroundColor: 'background.level2',
-      border: STILL_LAYOUTING ? '1px solid blue' : undefined,
+      border: DEBUG_LAYOUT ? '1px solid blue' : undefined,
+      boxShadow: 'inset 0 0 4px 0px rgba(0, 0, 0, 0.2)',
       p: { xs: 1, md: 2 },
     }}>
       <Box sx={{
         // my: 'auto',
         // display: 'flex', flexDirection: 'column', alignItems: 'center',
-        border: STILL_LAYOUTING ? '1px solid purple' : undefined,
+        border: DEBUG_LAYOUT ? '1px solid purple' : undefined,
         minHeight: '300px',
 
         // layout
@@ -180,13 +182,13 @@ export function TextToImage(props: {
           : 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',
         gap: { xs: 2, md: 2 },
       }}>
-        {prompts.map((prompt, index) => {
+        {prompts.map((prompt, _index) => {
           return (
             <TempPromptImageGen
               key={prompt.uuid}
               prompt={prompt}
               sx={{
-                border: STILL_LAYOUTING ? '1px solid green' : undefined,
+                border: DEBUG_LAYOUT ? '1px solid green' : undefined,
               }}
             />
           );
@@ -194,7 +196,7 @@ export function TextToImage(props: {
       </Box>
     </Box>
 
-    <PromptDesigner
+    <PromptComposer
       isMobile={props.isMobile}
       queueLength={prompts.length}
       onDrawingStop={handleStopDrawing}
