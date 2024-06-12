@@ -95,6 +95,7 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
     <DesktopDrawerFixRoot
       sx={{
         contain: isDrawerOpen ? undefined : 'strict',
+        pointerEvents: isDrawerOpen ? undefined : 'none',
       }}
     >
 
