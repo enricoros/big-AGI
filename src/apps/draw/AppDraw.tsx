@@ -6,6 +6,7 @@ import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout
 import { DrawCreate } from './DrawCreate';
 import { DrawGallery } from './DrawGallery';
 import { useDrawSectionDropdown } from './useDrawSectionDropdown';
+import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 
 // export interface AppDrawIntent {
@@ -22,6 +23,8 @@ export function AppDraw() {
 
   // external state
   const isMobile = useIsMobile();
+  const { activeProviderId, mayWork, providers, setActiveProviderId } = useCapabilityTextToImage();
+
   // const query = useRouterQuery<Partial<AppDrawIntent>>();
 
   // [effect] set intent from the query parameters
@@ -39,7 +42,17 @@ export function AppDraw() {
 
   switch (drawSection) {
     case 'create':
-      return <DrawCreate showHeader={showHeader} onHideHeader={() => setShowHeader(false)} isMobile={isMobile} />;
+      return (
+        <DrawCreate
+          isMobile={isMobile}
+          showHeader={showHeader}
+          onHideHeader={() => setShowHeader(false)}
+          mayWork={mayWork}
+          providers={providers}
+          activeProviderId={activeProviderId}
+          setActiveProviderId={setActiveProviderId}
+        />
+      );
 
     case 'browse':
       return <DrawGallery domain='draw' />;

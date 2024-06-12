@@ -10,7 +10,7 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
-import { ProviderSelect } from './ProviderSelect';
+import { ProviderSelector } from './ProviderSelector';
 
 
 export function ProviderConfigure(props: {
@@ -58,7 +58,7 @@ export function ProviderConfigure(props: {
       <ExpanderControlledBox expanded={open}>
         {!!ProviderConfig && (
           <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
-            <CardContent sx={{ gap: 2 }}>
+            <CardContent sx={{ gap: 1 }}>
               <ProviderConfig />
             </CardContent>
           </Card>
@@ -68,7 +68,7 @@ export function ProviderConfigure(props: {
       {/* Service / Options Button */}
       <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1 }}>
 
-        <ProviderSelect
+        <ProviderSelector
           title='AI Service:'
           providers={props.providers}
           activeProviderId={props.activeProviderId}
@@ -77,7 +77,7 @@ export function ProviderConfigure(props: {
 
         <Button
           variant={open ? 'solid' : 'outlined'}
-          color={open ? 'primary' : 'neutral'}
+          color={open ? 'neutral' : 'neutral'}
           endDecorator={<ConstructionIcon />}
           onClick={handleToggleOpen}
           sx={{ backgroundColor: open ? undefined : 'background.surface' }}

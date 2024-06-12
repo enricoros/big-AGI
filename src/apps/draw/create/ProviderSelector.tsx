@@ -8,7 +8,8 @@ import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { hideOnMobile } from '~/common/app.theme';
 
 
-export function ProviderSelect(props: {
+export function ProviderSelector(props: {
+  title?: string,
   providers: TextToImageProvider[],
   activeProviderId: string | null,
   setActiveProviderId: (providerId: (string | null)) => void
@@ -33,7 +34,7 @@ export function ProviderSelect(props: {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'start', alignItems: 'center' }}>
 
       <FormLabel sx={hideOnMobile}>
-        Service:
+        {props.title || 'Service:'}
       </FormLabel>
 
       <Select

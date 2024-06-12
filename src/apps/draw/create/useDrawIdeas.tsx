@@ -41,7 +41,7 @@ function _randomDrawIdea() {
 
 export function useDrawIdeas() {
   // state
-  const [currentIdea, setCurrentIdea] = React.useState<DrawIdea>(_randomDrawIdea());
+  const [currentIdea, setCurrentIdea] = React.useState<DrawIdea | null>(null);
 
   const nextRandomIdea = React.useCallback(() => {
     setCurrentIdea(prevIdea => {
