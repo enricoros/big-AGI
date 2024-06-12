@@ -1,16 +1,13 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, Chip, Divider, IconButton, Typography } from '@mui/joy';
+import { Box, Chip, IconButton, Typography } from '@mui/joy';
 import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 
 import { animationShadowRingLimey } from '~/common/util/animUtils';
 
 
 export function DrawHeading(props: {
-  section: number,
-  setSection: (section: number) => void,
-  showSections?: boolean,
   onRemoveHeading?: () => void,
   sx?: SxProps,
 }) {
@@ -49,46 +46,46 @@ export function DrawHeading(props: {
       </Box>
 
       {/* Section Selector*/}
-      {props.showSections && (
-        <Divider sx={{ flex: 1 }}>
+      {/*{props.showSections && (*/}
+      {/*  <Divider sx={{ flex: 1 }}>*/}
 
-          <ButtonGroup
-            // color='primary'
-            size='sm'
-            orientation='horizontal'
-            sx={{
-              mx: 'auto',
-              backgroundColor: 'background.surface',
-              boxShadow: 'sm',
-              '& > button': {
-                minWidth: 104,
-              },
-            }}
-          >
-            <Button
-              variant={props.section === 0 ? 'solid' : 'plain'}
-              onClick={() => props.setSection(0)}
-            >
-              Generate
-            </Button>
-            <Button
-              disabled
-              variant={props.section === 1 ? 'solid' : 'plain'}
-              onClick={() => props.setSection(1)}
-            >
-              Refine
-            </Button>
-            {/*<Button*/}
-            {/*  disabled*/}
-            {/*  variant={props.section === 2 ? 'solid' : 'plain'}*/}
-            {/*  onClick={() => props.setSection(1)}*/}
-            {/*>*/}
-            {/*  Gallery*/}
-            {/*</Button>*/}
-          </ButtonGroup>
+      {/*    <ButtonGroup*/}
+      {/*      // color='primary'*/}
+      {/*      size='sm'*/}
+      {/*      orientation='horizontal'*/}
+      {/*      sx={{*/}
+      {/*        mx: 'auto',*/}
+      {/*        backgroundColor: 'background.surface',*/}
+      {/*        boxShadow: 'sm',*/}
+      {/*        '& > button': {*/}
+      {/*          minWidth: 104,*/}
+      {/*        },*/}
+      {/*      }}*/}
+      {/*    >*/}
+      {/*      <Button*/}
+      {/*        variant={props.section === 0 ? 'solid' : 'plain'}*/}
+      {/*        onClick={() => props.setSection(0)}*/}
+      {/*      >*/}
+      {/*        Generate*/}
+      {/*      </Button>*/}
+      {/*      <Button*/}
+      {/*        disabled*/}
+      {/*        variant={props.section === 1 ? 'solid' : 'plain'}*/}
+      {/*        onClick={() => props.setSection(1)}*/}
+      {/*      >*/}
+      {/*        Refine*/}
+      {/*      </Button>*/}
+      {/*      /!*<Button*!/*/}
+      {/*      /!*  disabled*!/*/}
+      {/*      /!*  variant={props.section === 2 ? 'solid' : 'plain'}*!/*/}
+      {/*      /!*  onClick={() => props.setSection(1)}*!/*/}
+      {/*      /!*>*!/*/}
+      {/*      /!*  Gallery*!/*/}
+      {/*      /!*</Button>*!/*/}
+      {/*    </ButtonGroup>*/}
 
-        </Divider>
-      )}
+      {/*  </Divider>*/}
+      {/*)}*/}
 
     </Box>
   );
