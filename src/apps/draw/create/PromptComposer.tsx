@@ -14,12 +14,13 @@ import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
+import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
+
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
-import { ButtonPromptFromX } from './ButtonPromptFromX';
 import { useDrawIdeas } from './useDrawIdeas';
 
 
@@ -51,10 +52,11 @@ export function PromptComposer(props: {
   const [nextPrompt, setNextPrompt] = React.useState<string>('');
   const [tempCount, setTempCount] = React.useState<number>(1);
   const [tempRepeat, setTempRepeat] = React.useState<number>(1);
+  const [isSimpleEnhancing, setIsSimpleEnhancing] = React.useState<boolean>(false);
   const [showMobileRepeat, setShowMobileRepeat] = React.useState<boolean>(false);
 
   // external state
-  const { currentIdea, nextRandomIdea } = useDrawIdeas();
+  const { currentIdea, nextRandomIdea, clearCurrentIdea } = useDrawIdeas();
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
 
 
@@ -77,6 +79,7 @@ export function PromptComposer(props: {
 
   const handlePromptEnqueue = React.useCallback(() => {
     setNextPrompt('');
+    clearCurrentIdea();
     if (nonEmptyPrompt?.trim()) {
       onPromptEnqueue([{
         uuid: uuidv4(),
@@ -84,7 +87,7 @@ export function PromptComposer(props: {
         _repeatCount: isRepeatShown ? tempRepeat : 1,
       }]);
     }
-  }, [isRepeatShown, nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
+  }, [clearCurrentIdea, isRepeatShown, nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
 
 
   // Type...
@@ -109,108 +112,114 @@ export function PromptComposer(props: {
 
 
   // Ideas
-
   const handleIdeaUse = React.useCallback(() => {
     currentIdeaPrompt && setNextPrompt(currentIdeaPrompt);
   }, [currentIdeaPrompt]);
 
   // PromptFx
+  const handleSimpleEnhance = React.useCallback(async () => {
+    if (nonEmptyPrompt?.trim()) {
+      setIsSimpleEnhancing(true);
+      const improvedPrompt = await imaginePromptFromText(nonEmptyPrompt, null).catch(console.error);
+      if (improvedPrompt)
+        setNextPrompt(improvedPrompt);
+      setIsSimpleEnhancing(false);
+    }
+  }, [nonEmptyPrompt]);
 
-  const textEnrichComponents = React.useMemo(() => {
+  const textEnrichComponents = React.useMemo(() => (
+    <Box sx={{
+      flex: 1,
+      margin: 1,
+      marginTop: 0,
 
-    const handleClickMissing = (_event: React.MouseEvent) => {
-      alert('Not implemented yet');
-    };
+      // layout
+      display: 'flex', flexFlow: 'row wrap', alignItems: 'center', gap: 1,
 
-    return (
-      // PromptFx Buttons
-      <Box sx={{
-        flex: 1,
-        margin: 1,
+      // Buttons (tagged by class)
+      [`& .${promptButtonClass}`]: {
+        '--Button-gap': '1.2rem',
+        transition: 'background-color 0.2s, color 0.2s',
+        minWidth: 100,
+      },
+    }}>
 
-        // layout
-        display: 'flex', flexFlow: 'row wrap', alignItems: 'center', gap: 1,
+      {/* Change / Use idea */}
+      {/*{props.isMobile && (*/}
+      {/*  <ButtonGroup variant='soft' color='neutral' sx={{ borderRadius: 'sm' }}>*/}
+      {/*    <Button className={promptButtonClass} disabled={userHasText} onClick={handleIdeaNext}>*/}
+      {/*      Idea*/}
+      {/*    </Button>*/}
+      {/*    <Tooltip disableInteractive title='Use Idea'>*/}
+      {/*      <IconButton onClick={handleIdeaUse}>*/}
+      {/*        <ArrowDownwardIcon />*/}
+      {/*      </IconButton>*/}
+      {/*    </Tooltip>*/}
+      {/*  </ButtonGroup>*/}
+      {/*)}*/}
 
-        // Buttons (tagged by class)
-        [`& .${promptButtonClass}`]: {
-          '--Button-gap': '1.2rem',
-          transition: 'background-color 0.2s, color 0.2s',
-          minWidth: 100,
-        },
-      }}>
+      {/* PromptFx */}
+      <Button
+        variant={isSimpleEnhancing ? 'solid' : 'soft'}
+        color='primary'
+        disabled={!userHasText}
+        loading={isSimpleEnhancing}
+        className={promptButtonClass}
+        endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}
+        onClick={handleSimpleEnhance}
+        sx={{
+          boxShadow: (!userHasText || isSimpleEnhancing) ? undefined : '0 6px 6px -6px rgb(var(--joy-palette-primary-darkChannel) / 40%)',
+          borderRadius: 'xs',
+          // boxShadow: 'xs'
+        }}
+      >
+        Enhance
+      </Button>
 
-        {/* Change / Use idea */}
-        {/*{props.isMobile && (*/}
-        {/*  <ButtonGroup variant='soft' color='neutral' sx={{ borderRadius: 'sm' }}>*/}
-        {/*    <Button className={promptButtonClass} disabled={userHasText} onClick={handleIdeaNext}>*/}
-        {/*      Idea*/}
-        {/*    </Button>*/}
-        {/*    <Tooltip disableInteractive title='Use Idea'>*/}
-        {/*      <IconButton onClick={handleIdeaUse}>*/}
-        {/*        <ArrowDownwardIcon />*/}
-        {/*      </IconButton>*/}
-        {/*    </Tooltip>*/}
-        {/*  </ButtonGroup>*/}
-        {/*)}*/}
+      {/*<Button*/}
+      {/*  variant='soft' color='success'*/}
+      {/*  disabled={!userHasText}*/}
+      {/*  className={promptButtonClass}*/}
+      {/*  endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}*/}
+      {/*  onClick={handleClickMissing}*/}
+      {/*  sx={{ borderRadius: 'sm' }}*/}
+      {/*>*/}
+      {/*  Restyle*/}
+      {/*</Button>*/}
 
-        {/* PromptFx */}
-        <Button
-          variant='soft' color='success'
-          disabled={!userHasText}
-          className={promptButtonClass}
-          endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}
-          onClick={handleClickMissing}
-          sx={{ borderRadius: 'sm' }}
-        >
-          Enhance
-        </Button>
-
-        {/*<Button*/}
-        {/*  variant='soft' color='success'*/}
-        {/*  disabled={!userHasText}*/}
-        {/*  className={promptButtonClass}*/}
-        {/*  endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}*/}
-        {/*  onClick={handleClickMissing}*/}
-        {/*  sx={{ borderRadius: 'sm' }}*/}
-        {/*>*/}
-        {/*  Restyle*/}
-        {/*</Button>*/}
-
-        <ButtonGroup sx={{ ml: 'auto' }}>
-          {tempCount > 1 && <IconButton onClick={() => setTempCount(count => count - 1)}>
-            <RemoveIcon />
-          </IconButton>}
-          {tempCount > 1 && <>
-            <IconButton>
-              <KeyboardArrowLeftIcon />
-            </IconButton>
-            <Button
-              sx={{
-                px: 0,
-                minWidth: '3rem',
-                pointerEvents: 'none',
-              }}>
-              <Typography level='body-xs' color='danger' sx={{ fontWeight: 'lg' }}>
-                {tempCount > 1 ? `1 / ${tempCount}` : '1'}
-              </Typography>
-            </Button>
-            <IconButton>
-              <KeyboardArrowRightIcon />
-            </IconButton>
-          </>}
-          <IconButton onClick={() => setTempCount(count => count + 1)}>
-            <AddIcon />
+      <ButtonGroup sx={{ ml: 'auto' }}>
+        {tempCount > 1 && <IconButton onClick={() => setTempCount(count => count - 1)}>
+          <RemoveIcon />
+        </IconButton>}
+        {tempCount > 1 && <>
+          <IconButton>
+            <KeyboardArrowLeftIcon />
           </IconButton>
-        </ButtonGroup>
+          <Button
+            sx={{
+              px: 0,
+              minWidth: '3rem',
+              pointerEvents: 'none',
+            }}>
+            <Typography level='body-xs' color='danger' sx={{ fontWeight: 'lg' }}>
+              {tempCount > 1 ? `1 / ${tempCount}` : '1'}
+            </Typography>
+          </Button>
+          <IconButton>
+            <KeyboardArrowRightIcon />
+          </IconButton>
+        </>}
+        <IconButton onClick={() => setTempCount(count => count + 1)}>
+          <AddIcon />
+        </IconButton>
+      </ButtonGroup>
 
-
-        {/* Char counter */}
-        {/*<Typography level='body-sm' sx={{ ml: 'auto', mr: 1 }}>*/}
-        {/*  {!!nonEmptyPrompt?.length && nonEmptyPrompt.length.toLocaleString()}*/}
-        {/*</Typography>*/}
-      </Box>
-    );
-  }, [tempCount, userHasText]);
+      {/* Char counter */}
+      {/*<Typography level='body-sm' sx={{ ml: 'auto', mr: 1 }}>*/}
+      {/*  {!!nonEmptyPrompt?.length && nonEmptyPrompt.length.toLocaleString()}*/}
+      {/*</Typography>*/}
+    </Box>
+  ), [handleSimpleEnhance, isSimpleEnhancing, tempCount, userHasText]);
 
   return (
     <Box aria-label='Drawing Prompt' component='section' sx={props.sx}>
@@ -235,9 +244,9 @@ export function PromptComposer(props: {
                   <MenuItem>
                     <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
                   </MenuItem>
-                  <MenuItem>
-                    <ButtonPromptFromX name='Image' disabled />
-                  </MenuItem>
+                  {/*<MenuItem>*/}
+                  {/*  <ButtonPromptFromX name='Image' disabled />*/}
+                  {/*</MenuItem>*/}
                   {/*<MenuItem>*/}
                   {/*  <ButtonPromptFromPlaceholder name='Chat' disabled />*/}
                   {/*</MenuItem>*/}
@@ -250,7 +259,7 @@ export function PromptComposer(props: {
 
               <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
 
-              <ButtonPromptFromX name='Image' disabled />
+              {/*<ButtonPromptFromX name='Image' disabled />*/}
 
               {/*<ButtonPromptFromPlaceholder name='Chats' disabled />*/}
 
@@ -268,7 +277,7 @@ export function PromptComposer(props: {
             value={nextPrompt}
             onChange={handleTextareaTextChange}
             onKeyDown={handleTextareaKeyDown}
-            startDecorator={textEnrichComponents}
+            endDecorator={textEnrichComponents}
             slotProps={{
               textarea: {
                 enterKeyHint: enterIsNewline ? 'enter' : 'send',

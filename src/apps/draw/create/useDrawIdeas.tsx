@@ -52,5 +52,9 @@ export function useDrawIdeas() {
     });
   }, []);
 
-  return { allIdeas, currentIdea, nextRandomIdea };
+  const clearCurrentIdea = React.useCallback(() => {
+    setCurrentIdea(null);
+  }, []);
+
+  return { allIdeas, currentIdea, nextRandomIdea, clearCurrentIdea };
 }
