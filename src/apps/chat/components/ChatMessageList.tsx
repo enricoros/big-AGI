@@ -11,8 +11,9 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createTextContentDMessage, DMessage, DMessageFragment, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { gcGlobalChatDBlobs } from '~/common/stores/chat/chat.dblobs';
+import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -127,7 +128,10 @@ export function ChatMessageList(props: {
   }, [conversationId, setMessages]);
 
   const handleMessageDelete = React.useCallback((messageId: string) => {
-    conversationId && deleteMessage(conversationId, messageId);
+    if (conversationId) {
+      deleteMessage(conversationId, messageId);
+      void gcGlobalChatDBlobs(); // fire/forget
+    }
   }, [conversationId, deleteMessage]);
 
   const handleMessageFragmentEdit = React.useCallback((messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => {
@@ -184,9 +188,11 @@ export function ChatMessageList(props: {
   };
 
   const handleSelectionDelete = () => {
-    if (conversationId)
+    if (conversationId) {
       for (const selectedMessage of selectedMessages)
         deleteMessage(conversationId, selectedMessage);
+      void gcGlobalChatDBlobs(); // fire/forget
+    }
     setSelectedMessages(new Set());
   };
 
