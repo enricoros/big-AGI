@@ -21,8 +21,7 @@ export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
   const boxStyles = {
     flexGrow: 1,
     overflowY: 'auto',
-    p: { xs: 3, md: 6 },
-    border: '1px solid blue',
+    p: { xs: 2, md: 6 },
   };
 
   const cellStyles = {
@@ -35,8 +34,7 @@ export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
       <Table borderAxis='both' size='sm' stripe='odd' variant='plain'>
         <thead>
         <tr>
-          <th>ID</th>
-          <th>Label</th>
+          <th>Image</th>
           <th>Origin</th>
           <th>Metadata</th>
         </tr>
@@ -45,15 +43,22 @@ export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
         {items.map(({ id, label, cache, data, origin, metadata, createdAt, updatedAt }) => (
           <tr key={id}>
             <td>
-              <picture style={{ display: 'flex', maxWidth: 256, maxHeight: 256 }}>
-                <img
-                  src={cache[dBlobCacheT256]?.base64 ? `data:${cache[dBlobCacheT256]?.mimeType};base64,${cache[dBlobCacheT256]?.base64}` : `data:${data.mimeType};base64,${data.base64}`}
-                  alt={label}
-                  style={{ maxWidth: '100%', maxHeight: '100%', opacity: cache[dBlobCacheT256]?.base64 ? 1 : 0.5 }}
-                />
-              </picture>
+              <Box sx={cellStyles}>
+                <picture style={{ display: 'flex', maxWidth: 256, maxHeight: 256 }}>
+                  <img
+                    src={cache[dBlobCacheT256]?.base64 ? `data:${cache[dBlobCacheT256]?.mimeType};base64,${cache[dBlobCacheT256]?.base64}` : `data:${data.mimeType};base64,${data.base64}`}
+                    alt={label}
+                    style={{
+                      boxShadow: '0 0 4px 1px rgba(0, 0, 0, 0.1)',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      opacity: cache[dBlobCacheT256]?.base64 ? 1 : 0.5,
+                    }}
+                  />
+                </picture>
+                {label}
+              </Box>
             </td>
-            <td>{label}</td>
             <td>
               <Box sx={cellStyles}>{JSON.stringify(origin, null, 2)}</Box>
             </td>

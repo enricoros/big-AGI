@@ -25,7 +25,7 @@ const DEFAULT_WORKSPACE_ID = '1';
 
 export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
 
-  // When adding an image, generate a thumbnail-128 cache
+  // Auto-Thumbnail: when adding an image, generate a thumbnail-256 cache level
   if (item.type === DBlobMetaDataType.IMAGE) {
     if (!item.cache?.[dBlobCacheT256]) {
       const imageItem = item as DBlobImageItem;
