@@ -2,17 +2,19 @@ import * as React from 'react';
 
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import { DrawHeading } from './create/DrawHeading';
+import { DrawSectionHeading } from './create/DrawSectionHeading';
 import { DrawUnconfigured } from './create/DrawUnconfigured';
 import { TextToImage } from './create/TextToImage';
 
 
 export function DrawCreate(props: {
-  isMobile: boolean
+  isMobile: boolean,
+  showHeader: boolean,
+  onHideHeader: () => void,
 }) {
 
-  // stateo
-  const [showHeading, setShowHeading] = React.useState<boolean>(true);
+  // state
+  const [working, setWorking] = React.useState(false);
 
   // external state
   const { activeProviderId, mayWork, providers, setActiveProviderId } = useCapabilityTextToImage();
@@ -20,13 +22,19 @@ export function DrawCreate(props: {
   return <>
 
     {/* The container is a 100dvh, flex column with App bg (see `pageCoreSx`) */}
-    {showHeading && <DrawHeading
-      onRemoveHeading={() => setShowHeading(false)}
-      sx={{
-        px: { xs: 1, md: 2 },
-        py: { xs: 1, md: 6 },
-      }}
-    />}
+    {props.showHeader && (
+      <DrawSectionHeading
+        title='Create Images'
+        subTitle={mayWork ? 'Model, Prompt, Go!' : 'No AI providers configured :('}
+        chipText='Multi-model'
+        highlight={working}
+        onRemoveHeading={props.onHideHeader}
+        sx={{
+          m: { xs: 1, md: 2 },
+          boxShadow: 'sm',
+        }}
+      />
+    )}
 
     {mayWork ? (
       <TextToImage

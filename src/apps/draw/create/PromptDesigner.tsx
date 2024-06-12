@@ -279,7 +279,33 @@ export function PromptDesigner(props: {
         </Box></Grid>
 
         {/* [Desktop: Right, Mobile: Bottom] Buttons */}
-        <Grid xs={12} md={3} spacing={1}>
+        <Grid xs={12} md={3} sx={{
+          mb: 'auto',
+          display: 'grid',
+          alignItems: 'flex-start',
+          gap: { xs: 1, md: 2 },
+        }}>
+
+          {/* Repeat Counter */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-around', '& > *': {} }}>
+            {[1, 2, 3, 4, 6].map((n) => (
+              <IconButton
+                key={n}
+                color={tempRepeat === n ? 'primary' : 'neutral'}
+                variant={tempRepeat === n ? 'soft' : 'plain'}
+                onClick={() => setTempRepeat(n)}
+                sx={{
+                  borderRadius: '50%',
+                  boxShadow: tempRepeat === n ? '0 0 8px 2px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
+                  fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
+                }}
+              >
+                {`x${n}`}
+              </IconButton>
+            ))}
+          </Box>
+
+
           <Box sx={{ display: 'grid', gap: 1 }}>
 
             {/*  / Stop */}
@@ -329,19 +355,6 @@ export function PromptDesigner(props: {
               </Button>
             </>}
 
-            {/* Repeat */}
-            <Box sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
-              {[1, 2, 3, 4].map((n) => (
-                <Button
-                  key={n}
-                  variant={tempRepeat === n ? 'soft' : 'plain'} color='neutral'
-                  onClick={() => setTempRepeat(n)}
-                  sx={{ fontWeight: tempRepeat === n ? 'xl' : 400 /* reset, from 600 */ }}
-                >
-                  {`x${n}`}
-                </Button>
-              ))}
-            </Box>
 
           </Box>
         </Grid>

@@ -11,7 +11,7 @@ export type DrawSection = 'create' | 'browse' | 'media';
 
 const drawDropdownItems: DropdownItems = {
   create: {
-    title: 'Create Image',
+    title: 'Create Images',
   },
   browse: {
     title: 'View Gallery',
