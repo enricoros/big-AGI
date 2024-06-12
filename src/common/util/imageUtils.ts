@@ -63,7 +63,7 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
 }
 
 
-export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google' | 'anthropic';
+export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google' | 'anthropic' | 'thumbnail-128' | 'thumbnail-256';
 
 export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: string = 'image/webp', destQuality: number = 0.90): Promise<{
   mimeType: string,
@@ -165,6 +165,21 @@ export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase
               }
               shouldResize = true;
               break;
+          }
+          break;
+
+        case 'thumbnail-128':
+        case 'thumbnail-256':
+          shouldResize = true;
+          const maxSideThumbnail = resizeMode === 'thumbnail-128' ? 128 : 256;
+          if (originalWidth > maxSideThumbnail || originalHeight > maxSideThumbnail) {
+            if (originalWidth > originalHeight) {
+              newWidth = maxSideThumbnail;
+              newHeight = Math.round((originalHeight / originalWidth) * maxSideThumbnail);
+            } else {
+              newHeight = maxSideThumbnail;
+              newWidth = Math.round((originalWidth / originalHeight) * maxSideThumbnail);
+            }
           }
           break;
 

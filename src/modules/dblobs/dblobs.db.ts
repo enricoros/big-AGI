@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 
-import { DBlobAudioItem, DBlobDBItem, DBlobId, DBlobImageItem, DBlobItem, DBlobMetaDataType } from './dblobs.types';
+import { DBlobAudioItem, dBlobCacheT256, DBlobDBItem, DBlobId, DBlobImageItem, DBlobItem, DBlobMetaDataType, DBlobMimeType } from './dblobs.types';
+import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 
 class DigitalAssetsDB extends Dexie {
@@ -23,10 +24,29 @@ const DEFAULT_USER_ID = '1';
 const DEFAULT_WORKSPACE_ID = '1';
 
 export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
+
+  // When adding an image, generate a thumbnail-128 cache
+  if (item.type === DBlobMetaDataType.IMAGE) {
+    if (!item.cache?.[dBlobCacheT256]) {
+      const imageItem = item as DBlobImageItem;
+      const resizedDataForCache = await resizeBase64ImageIfNeeded(imageItem.data.mimeType, imageItem.data.base64, 'thumbnail-256', DBlobMimeType.IMG_WEBP, 0.9)
+        .catch((error: any) => console.log('addDBlobItem: Error resizing image', error));
+      if (resizedDataForCache) {
+        item.cache[dBlobCacheT256] = {
+          base64: resizedDataForCache.base64,
+          mimeType: DBlobMimeType.IMG_WEBP,
+        };
+      }
+    }
+  }
+
   // returns the id of the added item
   return db.items.add({
     ...item,
-    uId: DEFAULT_USER_ID, wId: DEFAULT_WORKSPACE_ID, cId, sId,
+    uId: DEFAULT_USER_ID,
+    wId: DEFAULT_WORKSPACE_ID,
+    cId,
+    sId,
   });
 }
 
@@ -35,7 +55,7 @@ export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) 
 }
 
 export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return await db.items.where({ type, cId, sId }).toArray() as unknown as T[];
+  return (await db.items.where({ type, cId, sId }).sortBy('createdAt')).reverse();
 }
 
 export async function getDBlobItemIDs() {
