@@ -64,14 +64,16 @@ export function DrawSectionHeading(props: {
         ml: 'calc(var(--icon-size) / 2)',
         position: 'relative',
       }}>
-        <Typography level='title-lg'>
-          {props.title}
+        <Box sx={{ display: 'flex', alignItems: 'start' }}>
+          <Typography level='title-lg'>
+            {props.title}
+          </Typography>
           {props.isBeta && (
-            <Chip variant='solid' size='sm' sx={{ ml: 1 }}>
+            <Chip variant='solid' size='sm' sx={{ ml: 1, fontSize: '' }}>
               beta
             </Chip>
           )}
-        </Typography>
+        </Box>
         <Typography level='title-sm' sx={{ mt: 1 }}>
           {props.subTitle}
         </Typography>
