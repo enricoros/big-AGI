@@ -10,6 +10,7 @@ import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
+import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
@@ -50,6 +51,7 @@ export function PromptComposer(props: {
   const [nextPrompt, setNextPrompt] = React.useState<string>('');
   const [tempCount, setTempCount] = React.useState<number>(1);
   const [tempRepeat, setTempRepeat] = React.useState<number>(1);
+  const [showMobileRepeat, setShowMobileRepeat] = React.useState<boolean>(true);
 
   // external state
   const { currentIdea, nextRandomIdea } = useDrawIdeas();
@@ -57,6 +59,7 @@ export function PromptComposer(props: {
 
 
   // derived state
+  const isRepeatShown = showMobileRepeat || !props.isMobile;
   const userHasText = !!nextPrompt;
   const nonEmptyPrompt = nextPrompt || currentIdea.prompt;
   const queueLength = props.queueLength;
@@ -76,9 +79,9 @@ export function PromptComposer(props: {
     onPromptEnqueue([{
       uuid: uuidv4(),
       prompt: nonEmptyPrompt,
-      _repeatCount: tempRepeat,
+      _repeatCount: isRepeatShown ? tempRepeat : 1,
     }]);
-  }, [nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
+  }, [isRepeatShown, nonEmptyPrompt, onPromptEnqueue, tempRepeat]);
 
 
   // Type...
@@ -256,7 +259,7 @@ export function PromptComposer(props: {
             variant='outlined'
             // size='sm'
             autoFocus
-            minRows={props.isMobile ? 5 : 3}
+            minRows={props.isMobile ? 4 : 3}
             maxRows={props.isMobile ? 6 : 8}
             placeholder={currentIdea.prompt}
             value={nextPrompt}
@@ -282,15 +285,33 @@ export function PromptComposer(props: {
         {/* [Desktop: Right, Mobile: Bottom] Buttons */}
         <Grid xs={12} md={3} sx={{
           mb: 'auto',
-          display: 'grid',
-          alignItems: 'flex-start',
+          display: 'flex',
+          alignItems: 'flex-end', // to align the mobile number picker to the bottom
           gap: { xs: 1, md: 2 },
         }}>
 
+          {/* Toggle the Numbers Picker */}
+          {props.isMobile && (
+            <IconButton
+              variant='soft'
+              onClick={() => setShowMobileRepeat(show => !show)}
+              sx={isRepeatShown ? {
+                backgroundColor: 'background.surface',
+                boxShadow: '0 0 8px 1px rgb(var(--joy-palette-primary-mainChannel) / 40%)',
+              } : undefined}
+            >
+              <NumbersRoundedIcon />
+            </IconButton>
+          )}
 
-          <Box sx={{ display: 'grid', gap: 1 }}>
+          {/* vertical: Draw Button | Number selector  */}
+          <Box sx={{
+            flex: 1,
+            display: 'grid',
+            gap: 1,
+          }}>
 
-            {/*  / Stop */}
+            {/* Draw / Stop */}
             {!qBusy ? (
               <Button
                 key='draw-queue'
@@ -306,7 +327,6 @@ export function PromptComposer(props: {
                 Draw {tempCount > 1 ? `(${tempCount})` : ''}
               </Button>
             ) : <>
-              {/* Stop + */}
               <Button
                 key='draw-terminate'
                 variant='soft' color='warning'
@@ -320,7 +340,6 @@ export function PromptComposer(props: {
               >
                 Stop / CLEAR (wip)
               </Button>
-              {/* + Enqueue */}
               <Button
                 key='draw-queuemore'
                 variant='soft'
@@ -336,31 +355,33 @@ export function PromptComposer(props: {
                 Enqueue
               </Button>
             </>}
+
+            {/* Number selector */}
+            {isRepeatShown && (
+              <FormControl sx={{ gap: 1 }}>
+                {!props.isMobile && <Typography level='body-xs'>&nbsp;Number of Images:</Typography>}
+                <Box sx={{ display: 'flex', justifyContent: 'space-evenly' }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <IconButton
+                      key={n}
+                      color={tempRepeat === n ? 'primary' : 'neutral'}
+                      variant={tempRepeat === n ? 'soft' : 'plain'}
+                      onClick={() => setTempRepeat(n)}
+                      sx={{
+                        backgroundColor: tempRepeat === n ? 'background.surface' : undefined,
+                        borderRadius: '50%',
+                        boxShadow: tempRepeat === n ? '0 0 8px 1px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
+                        fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
+                      }}
+                    >
+                      {n}
+                    </IconButton>
+                  ))}
+                </Box>
+              </FormControl>
+            )}
+
           </Box>
-
-          {/* Number of Images */}
-          <FormControl sx={{ gap: 1 }}>
-            {!props.isMobile && <Typography level='body-xs'>Number of Images:</Typography>}
-            <Box sx={{ display: 'flex', justifyContent: 'space-evenly' }}>
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <IconButton
-                  key={n}
-                  color={tempRepeat === n ? 'primary' : 'neutral'}
-                  variant={tempRepeat === n ? 'soft' : 'plain'}
-                  onClick={() => setTempRepeat(n)}
-                  sx={{
-                    backgroundColor: tempRepeat === n ? 'background.surface' : undefined,
-                    borderRadius: '50%',
-                    boxShadow: tempRepeat === n ? '0 0 8px 2px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
-                    fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
-                  }}
-                >
-                  {n}
-                </IconButton>
-              ))}
-            </Box>
-          </FormControl>
-
 
         </Grid>
 
