@@ -10,6 +10,7 @@ import { animationShadowRingLimey } from '~/common/util/animUtils';
 
 export function DrawSectionHeading(props: {
   title: React.ReactNode;
+  isBeta?: boolean,
   subTitle: React.ReactNode;
   chipText: string | string[];
   highlight?: boolean,
@@ -65,6 +66,11 @@ export function DrawSectionHeading(props: {
       }}>
         <Typography level='title-lg'>
           {props.title}
+          {props.isBeta && (
+            <Chip variant='solid' size='sm' sx={{ ml: 1 }}>
+              beta
+            </Chip>
+          )}
         </Typography>
         <Typography level='title-sm' sx={{ mt: 1 }}>
           {props.subTitle}

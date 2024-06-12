@@ -2,7 +2,7 @@ import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Dropdown, FormControl, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
@@ -38,7 +38,7 @@ export interface DesignerPrompt {
 }
 
 
-export function PromptDesigner(props: {
+export function PromptComposer(props: {
   isMobile: boolean,
   queueLength: number,
   onDrawingStop: () => void,
@@ -208,6 +208,7 @@ export function PromptDesigner(props: {
 
   return (
     <Box aria-label='Drawing Prompt' component='section' sx={props.sx}>
+
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
         {/* Prompt (Text) Box */}
@@ -286,25 +287,6 @@ export function PromptDesigner(props: {
           gap: { xs: 1, md: 2 },
         }}>
 
-          {/* Repeat Counter */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-around', '& > *': {} }}>
-            {[1, 2, 3, 4, 6].map((n) => (
-              <IconButton
-                key={n}
-                color={tempRepeat === n ? 'primary' : 'neutral'}
-                variant={tempRepeat === n ? 'soft' : 'plain'}
-                onClick={() => setTempRepeat(n)}
-                sx={{
-                  borderRadius: '50%',
-                  boxShadow: tempRepeat === n ? '0 0 8px 2px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
-                  fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
-                }}
-              >
-                {`x${n}`}
-              </IconButton>
-            ))}
-          </Box>
-
 
           <Box sx={{ display: 'grid', gap: 1 }}>
 
@@ -354,12 +336,34 @@ export function PromptDesigner(props: {
                 Enqueue
               </Button>
             </>}
-
-
           </Box>
+
+          {/* Number of Images */}
+          <FormControl sx={{ gap: 1 }}>
+            <Typography level='body-xs'>Number of Images:</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-evenly' }}>
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <IconButton
+                  key={n}
+                  color={tempRepeat === n ? 'primary' : 'neutral'}
+                  variant={tempRepeat === n ? 'soft' : 'plain'}
+                  onClick={() => setTempRepeat(n)}
+                  sx={{
+                    borderRadius: '50%',
+                    boxShadow: tempRepeat === n ? '0 0 8px 2px rgb(var(--joy-palette-primary-mainChannel) / 40%)' : 'none',
+                    fontWeight: tempRepeat === n ? 'xl' : 400, /* reset, from 600 */
+                  }}
+                >
+                  {n}
+                </IconButton>
+              ))}
+            </Box>
+          </FormControl>
+
+
         </Grid>
 
-      </Grid> {/* Prompt Designer */}
+      </Grid>
 
       {/* Modals...  */}
       {/* ... */}
