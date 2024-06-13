@@ -1,14 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
-import type { DBlobDBItem, DBlobItem } from './dblobs.types';
-import { addDBlobItem, deleteDBlobItem, getDBlobItemsByTypeCIdSid, getItemById, updateDBlobItem } from './dblobs.db';
+import type { DBlobAsset, DBlobDBAsset } from './dblobs.types';
+import { addDBlobItem, deleteDBlobItem, getDBlobItemsByTypeContextIdScopeId, getItemById, updateDBlobItem } from './dblobs.db';
 
 
-// export function useDBlobItems<T extends DBlobItem>(type: T['type']): [T[] | undefined, (item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) => Promise<void>, (id: string) => Promise<void>] {
+// export function useDBlobItems<T extends DBlobItem>(type: T['type']): [T[] | undefined, (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => Promise<void>, (id: string) => Promise<void>] {
 //   const items = useLiveQuery(() => getDBlobItemsByType<T>(type), [type]);
 //
-//   const addDBlobItemHandler = async (item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) => {
-//     await addDBlobItem(item, cId, sId);
+//   const addDBlobItemHandler = async (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => {
+//     await addDBlobItem(item, contextId, scopeId);
 //   };
 //
 //   const deleteDBlobItemHandler = async (id: string) => {
@@ -18,14 +18,14 @@ import { addDBlobItem, deleteDBlobItem, getDBlobItemsByTypeCIdSid, getItemById, 
 //   return [items, addDBlobItemHandler, deleteDBlobItemHandler];
 // }
 
-export function useDBlobItemsByTypeCIdSId<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): [T[] | undefined, (item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) => Promise<void>, (id: string) => Promise<void>] {
+export function useDBlobItemsByTypeContextIdScopeId<T extends DBlobAsset>(type: T['type'], contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): [T[] | undefined, (item: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) => Promise<void>, (id: string) => Promise<void>] {
   const items = useLiveQuery(
-    () => getDBlobItemsByTypeCIdSid<T>(type, cId, sId),
-    [type, cId, sId],
+    () => getDBlobItemsByTypeContextIdScopeId<T>(type, contextId, scopeId),
+    [type, contextId, scopeId],
   );
 
-  const addDBlobItemHandler = async (item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) => {
-    await addDBlobItem(item, cId, sId);
+  const addDBlobItemHandler = async (item: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) => {
+    await addDBlobItem(item, contextId, scopeId);
   };
 
   const deleteDBlobItemHandler = async (id: string) => {
@@ -36,7 +36,7 @@ export function useDBlobItemsByTypeCIdSId<T extends DBlobItem>(type: T['type'], 
 }
 
 
-export function useDBlobItem<T extends DBlobItem>(id: string): [T | undefined, (updates: Partial<T>) => Promise<void>] {
+export function useDBlobItem<T extends DBlobAsset>(id: string): [T | undefined, (updates: Partial<T>) => Promise<void>] {
   const item = useLiveQuery(
     () => getItemById<T>(id),
     [id],
