@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
 
 
 // Blob
@@ -102,7 +102,7 @@ export type DBlobId = string;
 export function createDBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(type: TType, label: string, data: DBlobData<TMime>, origin: ItemDataOrigin, metadata: TMeta): DBlobBase<TType, TMime, TMeta> {
   const creationDate = new Date();
   return {
-    id: uuidv4(),
+    id: nanoid(),
     type,
     label,
     data,
