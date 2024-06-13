@@ -4,18 +4,35 @@ import { DBlobAudioItem, dBlobCacheT256, DBlobDBItem, DBlobId, DBlobImageItem, D
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 
-class DigitalAssetsDB extends Dexie {
-  items!: Dexie.Table<DBlobDBItem, string>;
+/**
+ * Dexie DB for Big-AGI
+ * - assets: we store large assets like images/audio/video/documents...
+ *
+ * [DEV NOTE] To delete the full DB (don't do it!):
+ * - indexedDB.deleteDatabase('NAME').onsuccess = console.log;
+ */
+class BigAgiDB extends Dexie {
+  assets!: Dexie.Table<DBlobDBItem, string>;
 
   constructor() {
-    super('DigitalAssetsDB');
+    super('Big-AGI');
     this.version(1).stores({
-      items: 'id, uId, wId, cId, sId, type, data.mimeType, origin.ot, origin.source, createdAt, updatedAt', // Index common properties
+      // Index common properties
+      assets: 'id, uId, wId, cId, sId, [cId+sId], type, [type+cId+sId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
     });
   }
 }
 
-const db = new DigitalAssetsDB();
+/**
+ * In development mode, reuse the same instance of the DB to avoid re-creating it on every hot reload
+ */
+const globalForDexie = globalThis as unknown as {
+  bigAgiDB: BigAgiDB | undefined;
+};
+
+const db = globalForDexie.bigAgiDB ?? new BigAgiDB();
+
+if (process.env.NODE_ENV !== 'production') globalForDexie.bigAgiDB = db;
 
 
 // CRUD
@@ -41,7 +58,7 @@ export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBIte
   }
 
   // returns the id of the added item
-  return db.items.add({
+  return db.assets.add({
     ...item,
     uId: DEFAULT_USER_ID,
     wId: DEFAULT_WORKSPACE_ID,
@@ -51,39 +68,39 @@ export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBIte
 }
 
 export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
-  return await db.items.where('type').equals(type).toArray() as unknown as T[];
+  return await db.assets.where('type').equals(type).toArray() as unknown as T[];
 }
 
 export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return (await db.items.where({ type, cId, sId }).sortBy('createdAt')).reverse() as unknown as T[];
+  return (await db.assets.where({ type, cId, sId }).sortBy('createdAt')).reverse() as unknown as T[];
 }
 
 export async function getDBlobItemIDs() {
-  return db.items.toCollection().primaryKeys();
+  return db.assets.toCollection().primaryKeys();
 }
 
 export async function getItemsByMimeType<T extends DBlobItem>(mimeType: T['data']['mimeType']) {
-  return await db.items.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
+  return await db.assets.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
 }
 
 export async function getItemById<T extends DBlobItem = DBlobItem>(id: DBlobId) {
-  return await db.items.get(id) as T | undefined;
+  return await db.assets.get(id) as T | undefined;
 }
 
 export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobItem>) {
-  return db.items.update(id, updates);
+  return db.assets.update(id, updates);
 }
 
 export async function deleteDBlobItem(id: DBlobId) {
-  return db.items.delete(id);
+  return db.assets.delete(id);
 }
 
 export async function deleteDBlobItems(ids: DBlobId[]) {
-  return db.items.bulkDelete(ids);
+  return db.assets.bulkDelete(ids);
 }
 
 export async function deleteAllDBlobsInScopeId(cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return db.items.where({ cId, sId }).delete();
+  return db.assets.where({ cId, sId }).delete();
 }
 
 
@@ -122,7 +139,7 @@ async function getAllAudio(): Promise<DBlobAudioItem[]> {
 }
 
 async function getHighResImages() {
-  return await db.items
+  return await db.assets
     .where('data.mimeType')
     .startsWith('image/')
     .and(item => (item as DBlobImageItem).metadata.width > 1920)
