@@ -194,7 +194,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
           : block.type === 'codeb'
             ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
             : block.type === 'imageb'
-              ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt} onRunAgain={/*props.isBottom ? props.onImageRegenerate :*/ undefined} scaledImageSx={scaledImageSx} />
+              ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt} onImageRegenerate={/*props.isBottom ? props.onImageRegenerate :*/ undefined} scaledImageSx={scaledImageSx} />
               : block.type === 'diffb'
                 ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
                 : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)

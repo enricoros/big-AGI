@@ -624,7 +624,9 @@ export function ChatMessage(props: {
                   <ContentPartImageRef
                     key={'image-part-' + fragmentIndex}
                     imageRefPart={fragment.part}
+                    fragmentIndex={fragmentIndex}
                     contentScaling={contentScaling}
+                    onFragmentEdit={handleFragmentEdit}
                   />
                 );
 

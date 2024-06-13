@@ -9,7 +9,7 @@ import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
-import type { DMessageImagePart } from '~/common/stores/chat/chat.message';
+import type { DMessageContentFragment, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { showImageDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
 
@@ -20,12 +20,34 @@ function ContentPartImageDBlob(props: {
   imageAltText?: string,
   imageWidth?: number,
   imageHeight?: number,
+  onImageReplace: (newImageFragment: DMessageContentFragment) => void,
   onOpenInNewTab: () => void
   scaledImageSx?: SxProps,
 }) {
 
   // external state from the DB
   const [imageItem] = useDBAsset<DBlobImageAsset>(props.dataRefDBlobAssetId);
+
+  // handlers
+
+  const { label: imageItemLabel, origin: imageItemOrigin, metadata: imageItemMetadata } = imageItem || {};
+  const recreationPrompt = ((imageItemOrigin?.ot === 'generated') ? imageItemOrigin.prompt : undefined) || imageItemLabel || props.imageAltText;
+  const recreationWidth = imageItemMetadata?.width || props.imageWidth;
+  const recreationHeight = imageItemMetadata?.height || props.imageHeight;
+
+  const handleImageRegenerate = React.useCallback(() => {
+    // TODO: ... t2iGenerateImagesOrThrow()
+    console.log('ContentPartImageDBlob: handleImageRegenerate: notImplemented', imageItem, recreationPrompt, recreationWidth, recreationHeight);
+
+    // props.onImageReplace( createImageContentFragment()
+    //   {
+    //   type: 'image',
+    //   dataRef: { reftype: 'dblob', dblobAssetId: props.dataRefDBlobAssetId },
+    //   altText: props.imageAltText,
+    //   width: props.imageWidth,
+    //   height: props.imageHeight,
+    // });
+  }, [imageItem, recreationPrompt, recreationWidth, recreationHeight]);
 
   // memo the description and overlay text
   const { dataUrl, altText, overlayText } = React.useMemo(() => {
@@ -78,6 +100,7 @@ function ContentPartImageDBlob(props: {
       infoText={altText}
       description={overlayText}
       onOpenInNewTab={props.onOpenInNewTab}
+      onImageRegenerate={(!!recreationPrompt) ? handleImageRegenerate : undefined}
       scaledImageSx={props.scaledImageSx}
     />
   );
@@ -85,16 +108,25 @@ function ContentPartImageDBlob(props: {
 
 
 export function ContentPartImageRef(props: {
-  imageRefPart: DMessageImagePart,
+  imageRefPart: DMessageImageRefPart,
+  fragmentIndex: number,
   contentScaling: ContentScaling,
+  onFragmentEdit?: (fragmentIndex: number, newFragment: DMessageContentFragment) => void,
 }) {
 
   // derived state
-  const imagePart = props.imageRefPart;
-  const { dataRef } = imagePart;
+  const { fragmentIndex, imageRefPart, onFragmentEdit } = props;
+  const { dataRef } = imageRefPart;
 
   // event handlers
-  const handleOpenInNewTab = React.useCallback(() => showImageDataRefInNewTab(dataRef), [dataRef]);
+  const handleImageReplace = React.useCallback((newImageFragment: DMessageContentFragment) => {
+    onFragmentEdit?.(fragmentIndex, newImageFragment);
+  }, [onFragmentEdit, fragmentIndex]);
+
+  const handleOpenInNewTab = React.useCallback(() => {
+    void showImageDataRefInNewTab(dataRef); // fire/forget
+  }, [dataRef]);
+
 
   // memo the scaled image style
   const scaledImageSx = React.useMemo((): SxProps => (
@@ -112,16 +144,17 @@ export function ContentPartImageRef(props: {
         <ContentPartImageDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
-          imageAltText={imagePart.altText}
-          imageWidth={imagePart.width}
-          imageHeight={imagePart.height}
+          imageAltText={imageRefPart.altText}
+          imageWidth={imageRefPart.width}
+          imageHeight={imageRefPart.height}
+          onImageReplace={handleImageReplace}
           onOpenInNewTab={handleOpenInNewTab}
           scaledImageSx={scaledImageSx}
         />
       ) : dataRef.reftype === 'url' ? (
         <RenderImageURL
           imageURL={dataRef.url}
-          infoText={imagePart.altText}
+          infoText={imageRefPart.altText}
           scaledImageSx={scaledImageSx}
         />
       ) : (
