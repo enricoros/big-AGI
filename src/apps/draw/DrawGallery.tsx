@@ -3,20 +3,16 @@ import { Box, Table } from '@mui/joy';
 
 import { DBlobAssetType, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 import { useDBAssetsByScopeAndType } from '~/modules/dblobs/dblobs.hooks';
+import { ZeroGallery } from './gallery/ZeroGallery';
 
-import { AppPlaceholder } from '../AppPlaceholder';
 
-
-export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
+export function DrawGallery(props: { domain: 'draw' | 'app' }) {
   const [items] = useDBAssetsByScopeAndType<DBlobImageAsset>(
     DBlobAssetType.IMAGE,
     'global',
-    domain === 'draw' ? 'app-draw' : 'app-chat',
+    props.domain === 'draw' ? 'app-draw' : 'app-chat',
   );
 
-  if (!items || items.length === 0) {
-    return <AppPlaceholder text={items === undefined ? 'Loading...' : 'No images found.'} />;
-  }
 
   const boxStyles = {
     flexGrow: 1,
@@ -40,7 +36,7 @@ export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
         </tr>
         </thead>
         <tbody>
-        {items.map(({ id, label, cache, data, origin, metadata, createdAt, updatedAt }) => (
+        {(items || []).map(({ id, label, cache, data, origin, metadata, createdAt, updatedAt }) => (
           <tr key={id}>
             <td>
               <Box sx={cellStyles}>
@@ -75,6 +71,7 @@ export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
         ))}
         </tbody>
       </Table>
+      {(!items || items.length === 0) && <ZeroGallery domain={props.domain} />}
     </Box>
   );
 }
