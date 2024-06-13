@@ -55,6 +55,10 @@ export async function gcGlobalChatDBlobs() {
     }
   }
 
+  // sanity check: if no blobs are referenced, do nothing; in case we have a bug and we don't wipe the db
+  if (!chatsDBlobIDs.size)
+    return;
+
   // find all the dblob ids in the DB
   const dbDBlobIDs: DBlobId[] = await getDBlobItemIDs();
 
