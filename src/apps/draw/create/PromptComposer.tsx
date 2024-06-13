@@ -3,8 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Dropdown, FormControl, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
-import AddIcon from '@mui/icons-material/Add';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -210,7 +209,7 @@ export function PromptComposer(props: {
           </IconButton>
         </>}
         <IconButton onClick={() => setTempCount(count => count + 1)}>
-          <AddIcon />
+          <AddRoundedIcon />
         </IconButton>
       </ButtonGroup>
 
@@ -238,8 +237,8 @@ export function PromptComposer(props: {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
                 <Dropdown>
-                  <MenuButton slots={{ root: IconButton }}>
-                    <ArrowForwardRoundedIcon />
+                  <MenuButton disabled={userHasText} slots={{ root: IconButton }}>
+                    <AddRoundedIcon />
                   </MenuButton>
                   <Menu placement='top'>
                     {/* Add From History? */}
