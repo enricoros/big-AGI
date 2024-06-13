@@ -1,4 +1,4 @@
-import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
+import { createDBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
@@ -42,7 +42,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
     for (const _i of images) {
 
       // Create DBlob image item
-      const dblobImageItem = createDBlobImageItem(
+      const dblobImageItem = createDBlobImageAsset(
         imageText, // 'Image: ' + _i.altText
         {
           mimeType: _i.mimeType as any, /* we assume the mime is supported */

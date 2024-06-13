@@ -5,8 +5,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Skeleton } from '@mui/joy';
 
 import type { ImageBlock } from '~/modules/blocks/blocks';
-import { addDBlobItem } from '~/modules/dblobs/dblobs.db';
-import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
+import { addDBAsset } from '~/modules/dblobs/dblobs.db';
+import { createDBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
@@ -57,7 +57,7 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
   for (const _i of images) {
 
     // Create DBlob image item
-    const dblobImageItem = createDBlobImageItem(
+    const dblobImageItem = createDBlobImageAsset(
       singlePrompt,
       {
         mimeType: _i.mimeType as any, /* we assume the mime is supported */
@@ -80,7 +80,7 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
     );
 
     // Add to DBlobs database
-    const dblobId = await addDBlobItem(dblobImageItem, 'global', 'app-draw');
+    const dblobId = await addDBAsset(dblobImageItem, 'global', 'app-draw');
 
     // Create a data reference for the image from the message
     const imagePartDataRef = createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length);
