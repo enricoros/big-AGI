@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Card, Typography } from '@mui/joy';
 
 
-export function FallbackNoImages() {
+export function ZeroGenerations() {
   return (
     <Card variant='soft' sx={{
       maxWidth: 'max(50%, 320px)',

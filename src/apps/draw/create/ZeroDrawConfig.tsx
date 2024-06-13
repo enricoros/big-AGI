@@ -5,7 +5,7 @@ import { Button, Card, CardActions, CardContent, Typography } from '@mui/joy';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
-export function FallbackUnconfigured() {
+export function ZeroDrawConfig() {
 
   // external state
   const { openPreferencesTab } = useOptimaLayout();

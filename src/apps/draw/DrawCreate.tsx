@@ -18,8 +18,8 @@ import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
 import { DesignerPrompt, PromptComposer } from './create/PromptComposer';
 import { ProviderConfigure } from './create/ProviderConfigure';
 import { DrawSectionHeading } from './create/DrawSectionHeading';
-import { FallbackUnconfigured } from './create/FallbackUnconfigured';
-import { FallbackNoImages } from './create/FallbackNoImages';
+import { ZeroDrawConfig } from './create/ZeroDrawConfig';
+import { ZeroGenerations } from './create/ZeroGenerations';
 
 
 const imagineWorkspaceSx: SxProps = {
@@ -241,11 +241,11 @@ export function DrawCreate(props: {
           {/*  })}*/}
           {/*</Box>*/}
 
-          {/* Fallbac*/}
-          <FallbackNoImages />
+          {/* Fallback */}
+          <ZeroGenerations />
 
           {/* End with this Unconfigured message */}
-          {!props.mayWork && <FallbackUnconfigured />}
+          {!props.mayWork && <ZeroDrawConfig />}
 
 
           {/* Visibility and actions are handled via Context */}
