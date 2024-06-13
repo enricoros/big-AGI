@@ -141,6 +141,7 @@ export function useChatDrawerRenderItems(
             isAlsoOpen,
             isEmpty: !_c.messages.length && !_c.userTitle,
             title,
+            userSymbol: _c.userSymbol || undefined,
             userFlagsSummary,
             folder: !allFolders.length
               ? undefined                             // don't show folder select if folders are disabled

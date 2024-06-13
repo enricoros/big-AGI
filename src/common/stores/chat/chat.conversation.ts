@@ -15,6 +15,7 @@ export interface DConversation {
   // editable
   userTitle?: string;
   autoTitle?: string;
+  userSymbol?: string;                // there may be a mapping elsewhere, but this is small enough and will do for now
 
   // TODO: [x Head] - this should be the system purpose of current head of the conversation
   // there should be the concept of the audience of the current head
@@ -51,6 +52,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
     // absent
     // userTitle: undefined,
     // autoTitle: undefined,
+    // userSymbol: undefined,
 
     // @deprecated
     systemPurposeId: systemPurposeId || defaultSystemPurposeId,
@@ -84,8 +86,9 @@ export function duplicateCConversation(conversation: DConversation, lastMessageI
       .slice(0, messagesToKeep)
       .map(duplicateDMessage),
 
-    // userTitle: conversation.userTitle,
+    // userTitle: conversation.userTitle, // undefined
     autoTitle: newTitle,
+    userSymbol: conversation.userSymbol,
 
     systemPurposeId: conversation.systemPurposeId,
     tokenCount: conversation.tokenCount,

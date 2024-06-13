@@ -55,6 +55,7 @@ export interface ChatNavigationItemData {
   isAlsoOpen: string | false;
   isEmpty: boolean;
   title: string;
+  userSymbol: string | undefined;
   userFlagsSummary: string | undefined;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;
@@ -89,7 +90,19 @@ function ChatDrawerItem(props: {
 
   // derived state
   const { onConversationBranch, onConversationExport, onConversationFolderChange } = props;
-  const { conversationId, isActive, isAlsoOpen, title, userFlagsSummary, folder, messageCount, beingGenerated, systemPurposeId, searchFrequency } = props.item;
+  const {
+    conversationId,
+    isActive,
+    isAlsoOpen,
+    title,
+    userSymbol,
+    userFlagsSummary,
+    folder,
+    messageCount,
+    beingGenerated,
+    systemPurposeId,
+    searchFrequency,
+  } = props.item;
   const isNew = messageCount === 0;
 
 
@@ -178,7 +191,7 @@ function ChatDrawerItem(props: {
   }, [conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
 
 
-  const textSymbol = SystemPurposes[systemPurposeId]?.symbol || '❓';
+  const textSymbol = userSymbol || SystemPurposes[systemPurposeId]?.symbol || '❓';
 
   const progress = props.bottomBarBasis ? 100 * (searchFrequency || messageCount) / props.bottomBarBasis : 0;
 
