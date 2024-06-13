@@ -5,8 +5,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Skeleton } from '@mui/joy';
 
 import type { ImageBlock } from '~/modules/blocks/blocks';
-import { addDBAsset } from '~/modules/dblobs/dblobs.db';
-import { createDBlobImageAsset } from '~/modules/dblobs/dblobs.types';
+import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
@@ -56,31 +55,27 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
   // save the generated images
   for (const _i of images) {
 
-    // Create DBlob image item
-    const dblobImageItem = createDBlobImageAsset(
-      singlePrompt,
-      {
+    // add the image to the DB
+    const dblobAssetId = await addDBImageAsset('global', 'app-draw', {
+      label: singlePrompt,
+      data: {
         mimeType: _i.mimeType as any, /* we assume the mime is supported */
         base64: _i.base64Data,
       },
-      {
+      origin: {
         ot: 'generated',
         source: 'ai-text-to-image',
-        // generatorName: t2iProvider.painter,
-        generatorName: _i.generatorName,
+        generatorName: _i.generatorName, // t2iProvider.painter?
         prompt: _i.altText,
         parameters: _i.parameters,
         generatedAt: _i.generatedAt,
       },
-      {
+      metadata: {
         width: _i.width || 0,
         height: _i.height || 0,
         // description: '',
       },
-    );
-
-    // Add to DBlobs database
-    const dblobAssetId = await addDBAsset(dblobImageItem, 'global', 'app-draw');
+    });
 
     // Create a data reference for the image from the message
     const imagePartDataRef = createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length);

@@ -12,7 +12,6 @@ import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
 import { createTextContentDMessage, DMessage, DMessageFragment, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
-import { gcGlobalChatDBlobs } from '~/common/stores/chat/chat.dblobs';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -23,6 +22,7 @@ import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
+import { gcChatImageAssets } from '../editors/image-generate';
 import { useChatShowSystemMessages } from '../store-app-chat';
 
 
@@ -130,7 +130,7 @@ export function ChatMessageList(props: {
   const handleMessageDelete = React.useCallback((messageId: string) => {
     if (conversationId) {
       deleteMessage(conversationId, messageId);
-      void gcGlobalChatDBlobs(); // fire/forget
+      void gcChatImageAssets(); // fire/forget
     }
   }, [conversationId, deleteMessage]);
 
@@ -191,7 +191,7 @@ export function ChatMessageList(props: {
     if (conversationId) {
       for (const selectedMessage of selectedMessages)
         deleteMessage(conversationId, selectedMessage);
-      void gcGlobalChatDBlobs(); // fire/forget
+      void gcChatImageAssets(); // fire/forget
     }
     setSelectedMessages(new Set());
   };

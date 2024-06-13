@@ -25,7 +25,6 @@ import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createTextContentDMessage, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
-import { gcGlobalChatDBlobs } from '~/common/stores/chat/chat.dblobs';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -45,6 +44,7 @@ import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import { _handleExecute } from './editors/_handleExecute';
+import { gcChatImageAssets } from './editors/image-generate';
 
 
 // what to say when a chat is new and has no title
@@ -386,7 +386,7 @@ export function AppChat() {
     setDeleteConversationIds(null);
 
     // run GC for dblobs in this conversation
-    void gcGlobalChatDBlobs(); // fire/forget
+    void gcChatImageAssets(); // fire/forget
   }, [deleteConversations, handleOpenConversationInFocusedPane]);
 
   const handleConfirmedDeleteConversations = React.useCallback(() => {

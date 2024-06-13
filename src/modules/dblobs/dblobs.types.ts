@@ -185,11 +185,7 @@ interface DocumentMetadata {
 
 // DB Item Data
 
-export function createDBlobImageAsset(label: string, data: DBlobImageAsset['data'], origin: DBlobAssetOrigin, metadata: ImageAssetMetadata): DBlobImageAsset {
-  return _createAssetImpl(DBlobAssetType.IMAGE, label, data, origin, metadata);
-}
-
-function _createAssetImpl<TType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(
+export function _createAssetObject<TType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(
   assetType: TType,
   label: string,
   data: DBlobAssetData<TMime>,

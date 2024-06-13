@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 import { useShallow } from 'zustand/react/shallow';
+import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
@@ -31,7 +32,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     setActiveProviderId: state.setActiveProviderId,
   })));
 
-  const llmsModelSources: LlmsModelSources[] = useModelsStore(
+  const llmsModelSources: LlmsModelSources[] = useStoreWithEqualityFn(useModelsStore,
     ({ llms, sources }) => getLlmsModelSources(llms, sources),
     (a, b) => a.length === b.length && a.every((_a, i) => shallow(_a, b[i])),
   );
@@ -88,19 +89,19 @@ export function getActiveTextToImageProviderOrThrow() {
   return activeProvider;
 }
 
-export async function t2iGenerateImagesOrThrow(provider: TextToImageProvider, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
-  switch (provider.vendor) {
-
-    case 'openai':
-      if (!provider.id)
-        throw new Error('No OpenAI model source configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(provider.id, prompt, count);
+export async function t2iGenerateImagesOrThrow({ id, vendor }: TextToImageProvider, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
+  switch (vendor) {
 
     case 'localai':
-      throw new Error('LocalAI t2i integration is not yet available');
       // if (!provider.id)
       //   throw new Error('No LocalAI model source configured for TextToImage');
       // return await localaiGenerateImages(provider.id, prompt, count);
+      throw new Error('LocalAI t2i integration is not yet available');
+
+    case 'openai':
+      if (!id)
+        throw new Error('No OpenAI model source configured for TextToImage');
+      return await openAIGenerateImagesOrThrow(id, prompt, count);
 
     case 'prodia':
       const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
