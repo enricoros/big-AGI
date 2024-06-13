@@ -9,6 +9,10 @@ import { DBlobAsset, DBlobAssetId, DBlobAssetType, DBlobDBAsset } from './dblobs
  *
  * [DEV NOTE] To delete the full DB (don't do it!):
  * - indexedDB.deleteDatabase('NAME').onsuccess = console.log;
+ *
+ * [DEV NOTE] This is related to storageUtils.ts's requestPersistentStorage,
+ * aswe need to request persistent storage for the current origin, sot that
+ * indexedDB's content is not evicted.
  */
 class BigAgiDB extends Dexie {
   largeAssets!: Dexie.Table<DBlobDBAsset, string>;
@@ -23,9 +27,7 @@ class BigAgiDB extends Dexie {
   }
 }
 
-/**
- * In development mode, reuse the same instance of the DB to avoid re-creating it on every hot reload
- */
+// In development mode, reuse the same instance of the DB to avoid re-creating it on every hot reload
 const globalForDexie = globalThis as unknown as {
   bigAgiDB: BigAgiDB | undefined;
 };
