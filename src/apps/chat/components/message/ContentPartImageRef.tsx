@@ -4,10 +4,10 @@ import TimeAgo from 'react-timeago';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import type { DBlobId, DBlobImageItem } from '~/modules/dblobs/dblobs.types';
+import type { DBlobId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
-import { useDBlobItem } from '~/modules/dblobs/dblobs.hooks';
+import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageImagePart } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
@@ -25,7 +25,7 @@ function ContentPartImageDBlob(props: {
 }) {
 
   // external state from the DB
-  const [imageItem] = useDBlobItem<DBlobImageItem>(props.dataRefDBlobId);
+  const [imageItem] = useDBAsset<DBlobImageAsset>(props.dataRefDBlobId);
 
   // memo the description and overlay text
   const { dataUrl, altText, overlayText } = React.useMemo(() => {

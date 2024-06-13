@@ -17,13 +17,13 @@ export type DBlobDBAsset = {
 export type DBlobAsset = DBlobImageAsset | DBlobAudioAsset; // | DBlobVideoAsset | DBlobDocumentAsset | DBlobTextAsset;
 
 export type DBlobImageAsset = DBlobAssetImplV1<
-  /* type: */ DBlobAssetType.IMAGE,
+  /* assetType: */ DBlobAssetType.IMAGE,
   /* data: <mime> */ DBlobMimeType.IMG_PNG | DBlobMimeType.IMG_JPEG | DBlobMimeType.IMG_WEBP,
   /* metadata: */ ImageAssetMetadata
 >;
 
 export type DBlobAudioAsset = DBlobAssetImplV1<
-  /* type: */ DBlobAssetType.AUDIO,
+  /* assetType: */ DBlobAssetType.AUDIO,
   /* data: <mime> */ DBlobMimeType.AUDIO_MPEG | DBlobMimeType.AUDIO_WAV,
   /* metadata: */ AudioAssetMetadata
 >;
@@ -35,9 +35,9 @@ export type DBlobAudioAsset = DBlobAssetImplV1<
 
 // DB - Asset Generic Type
 
-interface DBlobAssetImplV1<TType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
+interface DBlobAssetImplV1<TAssetType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
   id: DBlobId; // Unique identifier
-  type: TType; // Type of asset, used for discrimination
+  assetType: TAssetType; // Type of asset, used for discrimination
 
   label: string; // Textual representation
   data: DBlobAssetData<TMime>; // Original data as a BlobData object
@@ -190,7 +190,7 @@ export function createDBlobImageAsset(label: string, data: DBlobImageAsset['data
 }
 
 function _createAssetImpl<TType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(
-  type: TType,
+  assetType: TType,
   label: string,
   data: DBlobAssetData<TMime>,
   origin: DBlobAssetOrigin,
@@ -199,7 +199,7 @@ function _createAssetImpl<TType extends DBlobAssetType, TMime extends DBlobMimeT
   const creationDate = new Date();
   return {
     id: nanoid(),
-    type,
+    assetType,
     label,
     data,
     origin,

@@ -1,5 +1,5 @@
-import type { DBlobId, DBlobImageItem } from '~/modules/dblobs/dblobs.types';
-import { addDBlobItem, deleteDBlobItems, getDBlobItemIDs, getImageBlobURLById } from '~/modules/dblobs/dblobs.db';
+import type { DBlobId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
+import { addDBAsset, deleteDBAssets, getDBAssetDBlobIds, getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.db';
 
 import type { DMessageDataRef } from './chat.message';
 import { useChatStore } from './store-chats';
@@ -12,8 +12,8 @@ const DEBUG_SHOW_GC = false;
 /**
  * Add a new dblob image item, from the chat
  */
-export async function chatDBlobAddGlobalImage(item: DBlobImageItem): Promise<DBlobId> {
-  return await addDBlobItem<DBlobImageItem>(item, 'global', 'app-chat');
+export async function chatDBlobAddGlobalImage(item: DBlobImageAsset): Promise<DBlobId> {
+  return await addDBAsset<DBlobImageAsset>(item, 'global', 'app-chat');
 }
 
 
@@ -25,7 +25,7 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
   if (dataRef.reftype === 'url')
     imageUrl = dataRef.url;
   else if (dataRef.reftype === 'dblob')
-    imageUrl = await getImageBlobURLById(dataRef.dblobId);
+    imageUrl = await getImageAssetAsBlobURL(dataRef.dblobId);
   if (imageUrl && typeof window !== 'undefined') {
     window.open(imageUrl, '_blank', 'noopener,noreferrer');
     return true;
@@ -60,14 +60,14 @@ export async function gcGlobalChatDBlobs() {
     return;
 
   // find all the dblob ids in the DB
-  const dbDBlobIDs: DBlobId[] = await getDBlobItemIDs();
+  const dbDBlobIDs: DBlobId[] = await getDBAssetDBlobIds();
 
   // Determine which blobs are not referenced in any chat
   const unreferencedBlobIDs = dbDBlobIDs.filter(id => !chatsDBlobIDs.has(id));
 
   // Delete unreferenced blobs
   if (unreferencedBlobIDs.length > 0)
-    await deleteDBlobItems(unreferencedBlobIDs);
+    await deleteDBAssets(unreferencedBlobIDs);
 
   if (DEBUG_SHOW_GC)
     console.log(`gcGlobalChatDBlobs: ${unreferencedBlobIDs.length}/${chatsDBlobIDs.size} unreferenced blobs deleted.`);

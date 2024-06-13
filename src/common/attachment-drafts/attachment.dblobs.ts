@@ -1,5 +1,5 @@
-import { addDBlobItem, deleteAllDBlobsInScopeId, deleteDBlobItem } from '~/modules/dblobs/dblobs.db';
-import { createDBlobImageItem } from '~/modules/dblobs/dblobs.types';
+import { addDBAsset, deleteAllScopedAssets, deleteDBAsset } from '~/modules/dblobs/dblobs.db';
+import { createDBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -60,7 +60,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     const dimensions = await getImageDimensions(`data:${mimeType};base64,${base64Data}`).catch(() => null);
 
     // Create DBlob image item
-    const dblobImageItem = createDBlobImageItem(
+    const dblobImageItem = createDBlobImageAsset(
       title ? 'Image: ' + title : 'Image',
       {
         mimeType: mimeType as any, /* we assume the mime is supported */
@@ -81,7 +81,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     );
 
     // Add to DBlobs database
-    const dblobId = await addDBlobItem(dblobImageItem, 'global', 'attachment-drafts');
+    const dblobId = await addDBAsset(dblobImageItem, 'global', 'attachment-drafts');
 
     // return a new Image Attachment Fragment
     return createImageAttachmentFragment(
@@ -101,7 +101,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
  */
 export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAttachmentFragment) {
   if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
-    await deleteDBlobItem(fragment.part.dataRef.dblobId);
+    await deleteDBAsset(fragment.part.dataRef.dblobId);
   }
 }
 
@@ -109,5 +109,5 @@ export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAt
  * GC Functions for Attachment DBlobs systems: remove leftover drafts
  */
 export async function gcAttachmentDBlobs() {
-  await deleteAllDBlobsInScopeId('global', 'attachment-drafts');
+  await deleteAllScopedAssets('global', 'attachment-drafts');
 }

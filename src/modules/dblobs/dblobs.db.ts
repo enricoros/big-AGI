@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-import { DBlobAsset, DBlobAssetType, DBlobAudioAsset, DBlobDBAsset, DBlobId, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
+import { DBlobAsset, DBlobAssetType, DBlobDBAsset, DBlobId, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 
@@ -18,7 +18,7 @@ class BigAgiDB extends Dexie {
     super('Big-AGI');
     this.version(1).stores({
       // Index common properties (and compound indexes)
-      largeAssets: 'id, contextId, scopeId, [contextId+scopeId], type, [type+contextId+scopeId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
+      largeAssets: 'id, [contextId+scopeId], assetType, [assetType+contextId+scopeId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
     });
     // Note: can re-add wId and uId in version 2 if needed
   }
@@ -39,17 +39,16 @@ const assetsTable = _db.largeAssets;
 
 // CRUD
 
-
-export async function addDBlobItem<T extends DBlobAsset>(item: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobId> {
+export async function addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobId> {
 
   // Auto-Thumbnail: when adding an image, generate a thumbnail-256 cache level
-  if (item.type === 'image') {
-    if (!item.cache?.thumb256) {
-      const imageItem = item as DBlobImageAsset;
-      const resizedDataForCache = await resizeBase64ImageIfNeeded(imageItem.data.mimeType, imageItem.data.base64, 'thumbnail-256', DBlobMimeType.IMG_WEBP, 0.9)
-        .catch((error: any) => console.error('addDBlobItem: Error resizing image', error));
+  if (asset.assetType === DBlobAssetType.IMAGE) {
+    if (!asset.cache?.thumb256) {
+      const imageAsset = asset as DBlobImageAsset;
+      const resizedDataForCache = await resizeBase64ImageIfNeeded(imageAsset.data.mimeType, imageAsset.data.base64, 'thumbnail-256', DBlobMimeType.IMG_WEBP, 0.9)
+        .catch((error: any) => console.error('addDBAsset: Error resizing image', error));
       if (resizedDataForCache) {
-        item.cache.thumb256 = {
+        asset.cache.thumb256 = {
           base64: resizedDataForCache.base64,
           mimeType: DBlobMimeType.IMG_WEBP,
         };
@@ -58,95 +57,105 @@ export async function addDBlobItem<T extends DBlobAsset>(item: T, contextId: DBl
   }
 
   try {
-    // returns the id of the added item
+    // returns the id of the added asset
     return await assetsTable.add({
-      ...item,
+      ...asset,
       contextId,
       scopeId,
     });
   } catch (error) {
-    console.error('addDBlobItem: Error adding item', error);
+    console.error('addDBAsset: Error adding asset', error);
     throw error;
   }
 }
 
-export async function getDBlobItemIDs() {
+
+// READ
+
+export async function getDBAssetDBlobIds(): Promise<DBlobId[]> {
   return assetsTable.toCollection().primaryKeys();
 }
 
-export async function getItemById<T extends DBlobAsset = DBlobAsset>(id: DBlobId) {
+export async function getDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobId) {
   return await assetsTable.get(id) as T | undefined;
 }
 
-export async function getDBlobItemsByType<T extends DBlobAsset>(type: T['type']) {
-  return await assetsTable.where({ type }).toArray() as unknown as T[];
+/**
+ * Warning: this function all the matching assets data in memory - not suitable for large datasets.
+ */
+export async function getDBAssetsByType<T extends DBlobAsset = DBlobDBAsset>(assetType: T['assetType']) {
+  return await assetsTable.where({
+    assetType: assetType,
+  }).toArray() as unknown as T[];
 }
 
-export async function getDBlobItemsByTypeContextIdScopeId<T extends DBlobAsset>(type: T['type'], contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
-  const items = await assetsTable.where({ type, contextId, scopeId }).sortBy('createdAt');
-  return items.reverse() as unknown as T[];
+/**
+ * Warning: this function all the matching assets data in memory - not suitable for large datasets.
+ */
+export async function getDBAssetsByScopeAndType<T extends DBlobAsset = DBlobDBAsset>(assetType: T['assetType'], contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
+  const assets = await assetsTable.where({
+    assetType: assetType, contextId: contextId, scopeId: scopeId,
+  }).sortBy('createdAt');
+  return assets.reverse() as unknown as T[];
 }
 
-export async function getItemsByMimeType<T extends DBlobAsset>(mimeType: T['data']['mimeType']) {
-  return await assetsTable.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
-}
 
+// UPDATE
 
-export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobAsset>) {
+export async function updateDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobId, updates: Partial<T>) {
   return assetsTable.update(id, updates);
 }
 
-export async function deleteDBlobItem(id: DBlobId) {
+
+// DELETE
+
+export async function deleteDBAsset(id: DBlobId) {
   return assetsTable.delete(id);
 }
 
-export async function deleteDBlobItems(ids: DBlobId[]) {
+export async function deleteDBAssets(ids: DBlobId[]) {
   return assetsTable.bulkDelete(ids);
 }
 
-export async function deleteAllDBlobsInScopeId(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
-  return assetsTable.where({ contextId, scopeId }).delete();
+export async function deleteAllScopedAssets(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
+  return (contextId && scopeId) ? assetsTable.where({
+    contextId: contextId,
+    scopeId: scopeId,
+  }).delete() : 0;
 }
 
 
-// Specific item types
-async function getImageItemById(id: DBlobId) {
-  return await getItemById<DBlobImageAsset>(id);
+// Specific asset types
+async function getImageAsset(id: DBlobId) {
+  return await getDBAsset<DBlobImageAsset>(id);
 }
 
-export async function getImageDataURLById(id: DBlobId) {
-  const item = await getImageItemById(id);
-  return item ? `data:${item.data.mimeType};base64,${item.data.base64}` : null;
+export async function getImageAssetAsDataURL(id: DBlobId) {
+  const imageAsset = await getImageAsset(id);
+  return imageAsset ? `data:${imageAsset.data.mimeType};base64,${imageAsset.data.base64}` : null;
 }
 
-export async function getImageBlobURLById(id: DBlobId) {
-  const item = await getImageItemById(id);
-  if (item) {
-    const byteCharacters = atob(item.data.base64);
+export async function getImageAssetAsBlobURL(id: DBlobId) {
+  const imageAsset = await getImageAsset(id);
+  if (imageAsset) {
+    const byteCharacters = atob(imageAsset.data.base64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: item.data.mimeType });
+    const blob = new Blob([byteArray], { type: imageAsset.data.mimeType });
     return URL.createObjectURL(blob);
   }
   return null;
 }
 
 // Example usage:
-async function getAllImages(): Promise<DBlobImageAsset[]> {
-  return await getDBlobItemsByType<DBlobImageAsset>(DBlobAssetType.IMAGE);
-}
-
-async function getAllAudio(): Promise<DBlobAudioAsset[]> {
-  return await getDBlobItemsByType<DBlobAudioAsset>(DBlobAssetType.AUDIO);
-}
-
-async function getHighResImages() {
-  return await assetsTable
-    .where('data.mimeType')
-    .startsWith('image/')
-    .and(item => (item as DBlobImageAsset).metadata.width > 1920)
-    .toArray() as DBlobImageAsset[];
-}
+//
+// async function getAllImages() {
+//   return await getDBAssetsByType<DBlobImageAsset>(DBlobAssetType.IMAGE);
+// }
+//
+// async function getAllAudio() {
+//   return await getDBAssetsByType<DBlobAudioAsset>(DBlobAssetType.AUDIO);
+// }

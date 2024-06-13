@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { Box, Table } from '@mui/joy';
 
-import { dBlobCacheT256, DBlobImageItem, DBlobMetaDataType } from '~/modules/dblobs/dblobs.types';
-import { useDBlobItemsByTypeCIdSId } from '~/modules/dblobs/dblobs.hooks';
+import { DBlobAssetType, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
+import { useDBAssetsByScopeAndType } from '~/modules/dblobs/dblobs.hooks';
 
 import { AppPlaceholder } from '../AppPlaceholder';
 
 
 export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
-  const [items] = useDBlobItemsByTypeCIdSId<DBlobImageItem>(
-    DBlobMetaDataType.IMAGE,
+  const [items] = useDBAssetsByScopeAndType<DBlobImageAsset>(
+    DBlobAssetType.IMAGE,
     'global',
     domain === 'draw' ? 'app-draw' : 'app-chat',
   );
@@ -46,13 +46,13 @@ export function DrawGallery({ domain }: { domain: 'draw' | 'app' }) {
               <Box sx={cellStyles}>
                 <picture style={{ display: 'flex', maxWidth: 256, maxHeight: 256 }}>
                   <img
-                    src={cache[dBlobCacheT256]?.base64 ? `data:${cache[dBlobCacheT256]?.mimeType};base64,${cache[dBlobCacheT256]?.base64}` : `data:${data.mimeType};base64,${data.base64}`}
+                    src={cache.thumb256?.base64 ? `data:${cache.thumb256?.mimeType};base64,${cache.thumb256?.base64}` : `data:${data.mimeType};base64,${data.base64}`}
                     alt={label}
                     style={{
                       boxShadow: '0 0 4px 1px rgba(0, 0, 0, 0.1)',
                       maxWidth: '100%',
                       maxHeight: '100%',
-                      opacity: cache[dBlobCacheT256]?.base64 ? 1 : 0.5,
+                      opacity: cache.thumb256?.base64 ? 1 : 0.5,
                     }}
                   />
                 </picture>
