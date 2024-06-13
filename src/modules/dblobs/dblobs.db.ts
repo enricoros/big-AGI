@@ -12,13 +12,13 @@ import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
  * - indexedDB.deleteDatabase('NAME').onsuccess = console.log;
  */
 class BigAgiDB extends Dexie {
-  assets!: Dexie.Table<DBlobDBItem, string>;
+  largeAssets!: Dexie.Table<DBlobDBItem, string>;
 
   constructor() {
     super('Big-AGI');
     this.version(1).stores({
       // Index common properties
-      assets: 'id, uId, wId, cId, sId, [cId+sId], type, [type+cId+sId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
+      largeAssets: 'id, uId, wId, cId, sId, [cId+sId], type, [type+cId+sId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
     });
   }
 }
@@ -30,15 +30,17 @@ const globalForDexie = globalThis as unknown as {
   bigAgiDB: BigAgiDB | undefined;
 };
 
-const db = globalForDexie.bigAgiDB ?? new BigAgiDB();
+const _db = globalForDexie.bigAgiDB ?? new BigAgiDB();
+if (process.env.NODE_ENV !== 'production') globalForDexie.bigAgiDB = _db;
 
-if (process.env.NODE_ENV !== 'production') globalForDexie.bigAgiDB = db;
+const assetsTable = _db.largeAssets;
 
 
 // CRUD
 
 const DEFAULT_USER_ID = '1';
 const DEFAULT_WORKSPACE_ID = '1';
+
 
 export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
 
@@ -47,7 +49,7 @@ export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBIte
     if (!item.cache?.[dBlobCacheT256]) {
       const imageItem = item as DBlobImageItem;
       const resizedDataForCache = await resizeBase64ImageIfNeeded(imageItem.data.mimeType, imageItem.data.base64, 'thumbnail-256', DBlobMimeType.IMG_WEBP, 0.9)
-        .catch((error: any) => console.log('addDBlobItem: Error resizing image', error));
+        .catch((error: any) => console.error('addDBlobItem: Error resizing image', error));
       if (resizedDataForCache) {
         item.cache[dBlobCacheT256] = {
           base64: resizedDataForCache.base64,
@@ -57,50 +59,57 @@ export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBIte
     }
   }
 
-  // returns the id of the added item
-  return db.assets.add({
-    ...item,
-    uId: DEFAULT_USER_ID,
-    wId: DEFAULT_WORKSPACE_ID,
-    cId,
-    sId,
-  });
-}
-
-export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
-  return await db.assets.where('type').equals(type).toArray() as unknown as T[];
-}
-
-export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return (await db.assets.where({ type, cId, sId }).sortBy('createdAt')).reverse() as unknown as T[];
+  try {
+    // returns the id of the added item
+    return await assetsTable.add({
+      ...item,
+      uId: DEFAULT_USER_ID,
+      wId: DEFAULT_WORKSPACE_ID,
+      cId,
+      sId,
+    });
+  } catch (error) {
+    console.error('addDBlobItem: Error adding item', error);
+    throw error;
+  }
 }
 
 export async function getDBlobItemIDs() {
-  return db.assets.toCollection().primaryKeys();
-}
-
-export async function getItemsByMimeType<T extends DBlobItem>(mimeType: T['data']['mimeType']) {
-  return await db.assets.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
+  return assetsTable.toCollection().primaryKeys();
 }
 
 export async function getItemById<T extends DBlobItem = DBlobItem>(id: DBlobId) {
-  return await db.assets.get(id) as T | undefined;
+  return await assetsTable.get(id) as T | undefined;
 }
 
+export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
+  return await assetsTable.where({ type }).toArray() as unknown as T[];
+}
+
+export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
+  const items = await assetsTable.where({ type, cId, sId }).sortBy('createdAt');
+  return items.reverse() as unknown as T[];
+}
+
+export async function getItemsByMimeType<T extends DBlobItem>(mimeType: T['data']['mimeType']) {
+  return await assetsTable.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
+}
+
+
 export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobItem>) {
-  return db.assets.update(id, updates);
+  return assetsTable.update(id, updates);
 }
 
 export async function deleteDBlobItem(id: DBlobId) {
-  return db.assets.delete(id);
+  return assetsTable.delete(id);
 }
 
 export async function deleteDBlobItems(ids: DBlobId[]) {
-  return db.assets.bulkDelete(ids);
+  return assetsTable.bulkDelete(ids);
 }
 
 export async function deleteAllDBlobsInScopeId(cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return db.assets.where({ cId, sId }).delete();
+  return assetsTable.where({ cId, sId }).delete();
 }
 
 
@@ -139,7 +148,7 @@ async function getAllAudio(): Promise<DBlobAudioItem[]> {
 }
 
 async function getHighResImages() {
-  return await db.assets
+  return await assetsTable
     .where('data.mimeType')
     .startsWith('image/')
     .and(item => (item as DBlobImageItem).metadata.width > 1920)
