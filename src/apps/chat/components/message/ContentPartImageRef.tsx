@@ -7,11 +7,28 @@ import { Box } from '@mui/joy';
 import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
+import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
-import type { DMessageContentFragment, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
+import type { DMessageContentFragment, DMessageDataRef, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { showImageDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
+
+
+/**
+ * Opens am image data ref in a new tab (fetches and shows it)
+ */
+export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
+  let imageUrl: string | null = null;
+  if (dataRef.reftype === 'url')
+    imageUrl = dataRef.url;
+  else if (dataRef.reftype === 'dblob')
+    imageUrl = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
+  if (imageUrl && typeof window !== 'undefined') {
+    window.open(imageUrl, '_blank', 'noopener,noreferrer');
+    return true;
+  }
+  return false;
+}
 
 
 function ContentPartImageDBlob(props: {

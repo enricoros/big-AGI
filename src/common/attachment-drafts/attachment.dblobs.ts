@@ -1,5 +1,5 @@
-import { addDBAsset, deleteAllScopedAssets, deleteDBAsset } from '~/modules/dblobs/dblobs.db';
-import { createDBlobImageAsset } from '~/modules/dblobs/dblobs.types';
+import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
+import { deleteDBAsset, gcDBAssetsByScope } from '~/modules/dblobs/dblobs.db';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -59,29 +59,26 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     // find out the dimensions (frontend)
     const dimensions = await getImageDimensions(`data:${mimeType};base64,${base64Data}`).catch(() => null);
 
-    // Create DBlob image item
-    const dblobImageItem = createDBlobImageAsset(
-      title ? 'Image: ' + title : 'Image',
-      {
+    // add the image to the DB
+    const dblobAssetId = await addDBImageAsset('global', 'attachment-drafts', {
+      label: title ? 'Image: ' + title : 'Image',
+      data: {
         mimeType: mimeType as any, /* we assume the mime is supported */
         base64: base64Data,
       },
-      {
+      origin: {
         ot: 'user',
         source: 'attachment',
         media: source.media === 'file' ? source.origin : source.media === 'url' ? 'url' : 'unknown',
         url: source.media === 'url' ? source.url : undefined,
         fileName: source.media === 'file' ? source.refPath : undefined,
       },
-      {
+      metadata: {
         width: dimensions?.width || 0,
         height: dimensions?.height || 0,
         // description: '',
       },
-    );
-
-    // Add to DBlobs database
-    const dblobAssetId = await addDBAsset(dblobImageItem, 'global', 'attachment-drafts');
+    });
 
     // return a new Image Attachment Fragment
     return createImageAttachmentFragment(
@@ -109,5 +106,5 @@ export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAt
  * GC Functions for Attachment DBlobs systems: remove leftover drafts
  */
 export async function gcAttachmentDBlobs() {
-  await deleteAllScopedAssets('global', 'attachment-drafts');
+  await gcDBAssetsByScope('global', 'attachment-drafts', null, []);
 }
