@@ -57,7 +57,7 @@ export function ProviderConfigure(props: {
       {/* Service-Specific Configuration */}
       <ExpanderControlledBox expanded={open}>
         {!!ProviderConfig && (
-          <Card variant='outlined' sx={{ my: 1, borderTopColor: 'primary.softActiveBg' }}>
+          <Card variant='outlined' sx={{ mb: 1, borderTopColor: 'primary.softActiveBg' }}>
             <CardContent sx={{ gap: 1 }}>
               <ProviderConfig />
             </CardContent>
