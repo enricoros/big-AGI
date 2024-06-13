@@ -49,6 +49,7 @@ const prodiaUrlRegex = /^(https?:\/\/images\.prodia\.\S+)$/i;
 
 /**
  * Legacy heuristic for detecting images from "images.prodia." URLs.
+ * @deprecated Remove in mid 2024
  */
 export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | null {
 
@@ -75,7 +76,7 @@ export const RenderImageURL = (props: {
   description?: React.ReactNode,
   infoText?: string,
   onOpenInNewTab?: (e: React.MouseEvent) => void,
-  onRunAgain?: (e: React.MouseEvent) => void,
+  onImageRegenerate?: (e: React.MouseEvent) => void,
   scaledImageSx?: SxProps,
 }) => {
 
@@ -179,10 +180,15 @@ export const RenderImageURL = (props: {
         )}
 
         {/* (overlay) Image Buttons */}
-        <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, pt: 0.5, px: 0.5, gap: 0.5 }}>
-          {!!props.onRunAgain && (
+        <Box className='overlay-buttons' sx={{
+          ...overlayButtonsSx,
+          p: 0.5,
+          display: 'grid',
+          gap: 0.5,
+        }}>
+          {!!props.onImageRegenerate && (
             <GoodTooltip title='Draw again'>
-              <OverlayButton variant='outlined' onClick={props.onRunAgain}>
+              <OverlayButton variant='outlined' onClick={props.onImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
                 <ReplayIcon />
               </OverlayButton>
             </GoodTooltip>

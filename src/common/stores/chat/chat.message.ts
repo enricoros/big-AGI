@@ -52,14 +52,14 @@ export type DMessageFragment =
 // expected a list of one or more per message, of similar or different types
 export type DMessageContentFragment = {
   ft: 'content',
-  part: DMessageTextPart | DMessageImagePart | DMessageToolCallPart | DMessageToolResponsePart;
+  part: DMessageTextPart | DMessageImageRefPart | DMessageToolCallPart | DMessageToolResponsePart;
 }
 
 // displayed at the bottom of the message, zero or more
 export type DMessageAttachmentFragment = {
   ft: 'attachment',
   title: string;
-  part: DMessageTextPart | DMessageImagePart;
+  part: DMessageTextPart | DMessageImageRefPart;
 }
 
 // up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
@@ -74,7 +74,7 @@ export type DMessageAttachmentFragment = {
 // - small and efficient (larger objects need to only be referred to)
 
 export type DMessageTextPart = { pt: 'text', text: string };
-export type DMessageImagePart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
+export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
 type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
 // type DMessageErrorPart = { pt: 'error', error: string };
@@ -186,7 +186,7 @@ function createDMessageTextPart(text: string): DMessageTextPart {
   return { pt: 'text', text };
 }
 
-function createDMessageImagePart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImagePart {
+function createDMessageImagePart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
   return { pt: 'image_ref', dataRef, altText, width, height };
 }
 
