@@ -6,7 +6,7 @@ import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.versio
 
 import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
-import { requestPersistentStorage } from '~/common/util/storageUtils';
+import { estimatePersistentStorageOrThrow, requestPersistentStorage } from '~/common/util/storageUtils';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
@@ -32,12 +32,15 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   // [gc] garbage collection(s)
   React.useEffect(() => {
     // Request persistent storage for the current origin, so that indexedDB's content is not evicted.
-    requestPersistentStorage().finally(() => {
-      // GC: Remove chat dblobs (not persisted in chat fragments)
-      void gcChatImageAssets(); // fire/forget
-      // GC: Remove old attachment drafts (not persisted in chats)
-      // void gcAttachmentDBlobs(); // fire/forget
-    });
+    requestPersistentStorage()
+      .then((persisted: boolean) => persisted ? null : estimatePersistentStorageOrThrow())
+      .then((usage) => usage ? console.warn('Issue requesting persistent storage; usage:', usage) : null)
+      .finally(() => {
+        // GC: Remove chat dblobs (not persisted in chat fragments)
+        void gcChatImageAssets(); // fire/forget
+        // GC: Remove old attachment drafts (not persisted in chats)
+        // void gcAttachmentDBlobs(); // fire/forget
+      });
   }, []);
 
 
