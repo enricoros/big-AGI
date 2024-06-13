@@ -41,6 +41,7 @@ export interface ChatActions {
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
+  setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
 
   // utility function
   _editConversation: (cId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -279,6 +280,12 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         _get()._editConversation(conversationId,
           {
             userTitle,
+          }),
+
+      setUserSymbol: (conversationId: DConversationId, userSymbol: string | null) =>
+        _get()._editConversation(conversationId,
+          {
+            userSymbol: userSymbol || undefined,
           }),
 
     }),
