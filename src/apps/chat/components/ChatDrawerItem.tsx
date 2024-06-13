@@ -225,6 +225,7 @@ function ChatDrawerItem(props: {
         onDoubleClick={handleTitleEditBegin}
         sx={{
           color: isActive ? 'text.primary' : 'text.secondary',
+          overflowWrap: 'anywhere',
           flex: 1,
         }}
       >
@@ -287,6 +288,7 @@ function ChatDrawerItem(props: {
         }),
 
         // style
+        fontSize: 'inherit',
         backgroundColor: isActive ? 'neutral.solidActiveBg' : 'neutral.softBg',
         borderRadius: 'md',
         mx: '0.25rem',
