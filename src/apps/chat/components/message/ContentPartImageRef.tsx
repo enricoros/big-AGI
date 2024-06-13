@@ -4,7 +4,7 @@ import TimeAgo from 'react-timeago';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import type { DBlobId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
+import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
 import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
@@ -15,7 +15,7 @@ import { showImageDataRefInNewTab } from '~/common/stores/chat/chat.dblobs';
 
 
 function ContentPartImageDBlob(props: {
-  dataRefDBlobId: DBlobId,
+  dataRefDBlobAssetId: DBlobAssetId,
   dataRefMimeType: string,
   imageAltText?: string,
   imageWidth?: number,
@@ -25,7 +25,7 @@ function ContentPartImageDBlob(props: {
 }) {
 
   // external state from the DB
-  const [imageItem] = useDBAsset<DBlobImageAsset>(props.dataRefDBlobId);
+  const [imageItem] = useDBAsset<DBlobImageAsset>(props.dataRefDBlobAssetId);
 
   // memo the description and overlay text
   const { dataUrl, altText, overlayText } = React.useMemo(() => {
@@ -110,7 +110,7 @@ export function ContentPartImageRef(props: {
     <Box sx={blocksRendererSx}>
       {dataRef.reftype === 'dblob' ? (
         <ContentPartImageDBlob
-          dataRefDBlobId={dataRef.dblobId}
+          dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
           imageAltText={imagePart.altText}
           imageWidth={imagePart.width}

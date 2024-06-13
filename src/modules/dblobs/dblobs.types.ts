@@ -36,7 +36,7 @@ export type DBlobAudioAsset = DBlobAssetImplV1<
 // DB - Asset Generic Type
 
 interface DBlobAssetImplV1<TAssetType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
-  id: DBlobId; // Unique identifier
+  id: DBlobAssetId; // Unique identifier
   assetType: TAssetType; // Type of asset, used for discrimination
 
   label: string; // Textual representation
@@ -53,7 +53,7 @@ interface DBlobAssetImplV1<TAssetType extends DBlobAssetType, TMime extends DBlo
   };
 }
 
-export type DBlobId = string;
+export type DBlobAssetId = string;
 
 export enum DBlobAssetType {
   IMAGE = 'image',
