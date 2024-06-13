@@ -1,17 +1,72 @@
 import { nanoid } from 'nanoid';
 
 
-// Blob
+// DB - Assets
 
-export enum DBlobMimeType {
-  IMG_PNG = 'image/png', IMG_JPEG = 'image/jpeg', IMG_WEBP = 'image/webp',
-  AUDIO_MPEG = 'audio/mpeg', AUDIO_WAV = 'audio/wav',
-  // VIDEO_MP4 = 'video/mp4',
-  // DOCUMENT_PDF = 'application/pdf', DOCUMENT_PLAIN = 'text/plain', DOCUMENT_HTML = 'text/html',
-  // ...
+/**
+ * This is the asset when stored/loaded in the DB. Carries some more context out of band from the asset itself.
+ */
+export type DBlobDBAsset = {
+  contextId: 'global';
+  scopeId: 'app-chat' | 'app-draw' | 'attachment-drafts';
+} & DBlobAsset;
+
+
+// Assets
+
+export type DBlobAsset = DBlobImageAsset | DBlobAudioAsset; // | DBlobVideoAsset | DBlobDocumentAsset | DBlobTextAsset;
+
+export type DBlobImageAsset = DBlobAssetImplV1<
+  /* type: */ DBlobAssetType.IMAGE,
+  /* data: <mime> */ DBlobMimeType.IMG_PNG | DBlobMimeType.IMG_JPEG | DBlobMimeType.IMG_WEBP,
+  /* metadata: */ ImageAssetMetadata
+>;
+
+export type DBlobAudioAsset = DBlobAssetImplV1<
+  /* type: */ DBlobAssetType.AUDIO,
+  /* data: <mime> */ DBlobMimeType.AUDIO_MPEG | DBlobMimeType.AUDIO_WAV,
+  /* metadata: */ AudioAssetMetadata
+>;
+
+// type DBlobVideoAsset = DBlobAssetImplV1<DBlobAssetType.VIDEO, DBlobDataMimeType.VIDEO_MP4, VideoAssetMetadata>;
+// type DBlobDocumentAsset = DBlobAssetImplV1<DBlobAssetType.DOCUMENT, DBlobDataMimeType.DOCUMENT_PDF, DocumentAssetMetadata>;
+// type DBlobTextAsset = DBlobAssetImplV1<DBlobAssetType.TEXT, DBlobDataMimeType.DOCUMENT_PLAIN, {}>;
+
+
+// DB - Asset Generic Type
+
+interface DBlobAssetImplV1<TType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
+  id: DBlobId; // Unique identifier
+  type: TType; // Type of asset, used for discrimination
+
+  label: string; // Textual representation
+  data: DBlobAssetData<TMime>; // Original data as a BlobData object
+  origin: DBlobAssetOrigin; // Source of the data (e.g., "upload", "generated")
+
+  createdAt: Date; // Creation date
+  updatedAt: Date; // Last updated date
+
+  metadata: TMeta; // Flexible metadata for specific .type(s)
+  // cache: Record<string, DBlobData<DBlobMimeType>>; // Cached conversions as BlobData objects
+  cache: {
+    thumb256?: DBlobAssetData<DBlobMimeType.IMG_WEBP>; // Cache for the thumbnail-256 conversion
+  };
 }
 
-interface DBlobData<M extends DBlobMimeType> {
+export type DBlobId = string;
+
+export enum DBlobAssetType {
+  IMAGE = 'image',
+  AUDIO = 'audio',
+  // VIDEO = 'video',
+  // DOCUMENT = 'document',
+  // EGO = 'ego',
+}
+
+
+// Asset Data
+
+interface DBlobAssetData<M extends DBlobMimeType> {
   mimeType: M;
   base64: string; // Base64 encoded content (not a data URL)
   // NOTE: the data url will be "data:${mimeType};base64,${base64}"
@@ -20,8 +75,17 @@ interface DBlobData<M extends DBlobMimeType> {
   altData?: string; // Alternative data for the input (optional)
 }
 
+export enum DBlobMimeType {
+  IMG_PNG = 'image/png', IMG_JPEG = 'image/jpeg', IMG_WEBP = 'image/webp',
+  AUDIO_MPEG = 'audio/mpeg', AUDIO_WAV = 'audio/wav',
+  // VIDEO_MP4 = 'video/mp4',
+  // DOCUMENT_PDF = 'application/pdf', DOCUMENT_PLAIN = 'text/plain', DOCUMENT_HTML = 'text/html',
+}
 
-// Item Origin
+
+// Asset Origin
+
+type DBlobAssetOrigin = UserOrigin | GeneratedOrigin;
 
 interface UserOrigin {
   ot: 'user';
@@ -76,58 +140,10 @@ interface EgoOrigin {
   messageId?: string; // ID of the message (optional)
 }*/
 
-// Union type for ItemDataOrigin
-type ItemDataOrigin = UserOrigin | GeneratedOrigin;
 
+// Asset Metadata
 
-// Item Base type
-
-interface DBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>> {
-  id: DBlobId; // Unique identifier
-  type: TType; // Type of item, used for discrimination
-
-  label: string; // Textual representation
-  data: DBlobData<TMime>; // Original data as a BlobData object
-  origin: ItemDataOrigin; // Source of the data (e.g., "upload", "generated")
-
-  createdAt: Date; // Creation date
-  updatedAt: Date; // Last updated date
-
-  metadata: TMeta; // Flexible metadata for specific .type(s)
-  cache: Record<string, DBlobData<DBlobMimeType>>; // Cached conversions as BlobData objects
-}
-
-export type DBlobId = string;
-
-export function createDBlobBase<TType extends DBlobMetaDataType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(type: TType, label: string, data: DBlobData<TMime>, origin: ItemDataOrigin, metadata: TMeta): DBlobBase<TType, TMime, TMeta> {
-  const creationDate = new Date();
-  return {
-    id: nanoid(),
-    type,
-    label,
-    data,
-    origin,
-    createdAt: creationDate,
-    updatedAt: creationDate,
-    metadata,
-    cache: {},
-  };
-}
-
-export const dBlobCacheT256 = 'thumbnail-256';
-
-
-// Item Specialization
-
-export enum DBlobMetaDataType {
-  IMAGE = 'image',
-  AUDIO = 'audio',
-  // VIDEO = 'video',
-  // DOCUMENT = 'document',
-  // EGO = 'ego',
-}
-
-interface ImageMetadata {
+interface ImageAssetMetadata {
   width: number;
   height: number;
   averageColor?: string; // Average html color of the image (optional)
@@ -136,7 +152,7 @@ interface ImageMetadata {
   description?: string; // Description of the image (optional)
 }
 
-interface AudioMetadata {
+interface AudioAssetMetadata {
   duration: number; // Duration in seconds
   sampleRate: number; // Sample rate of the audio
   bitrate?: number; // Bitrate of the audio (optional)
@@ -167,25 +183,29 @@ interface DocumentMetadata {
 }*/
 
 
-// Item Data
-
-export type DBlobImageItem = DBlobBase<DBlobMetaDataType.IMAGE, DBlobMimeType.IMG_PNG | DBlobMimeType.IMG_JPEG | DBlobMimeType.IMG_WEBP, ImageMetadata>;
-export type DBlobAudioItem = DBlobBase<DBlobMetaDataType.AUDIO, DBlobMimeType.AUDIO_MPEG | DBlobMimeType.AUDIO_WAV, AudioMetadata>;
-// type DBlobVideoItem = DBlobBase<ItemDataType.VIDEO, BlobMimeType.VIDEO_MP4, VideoMetadata>;
-// type DBlobDocumentItem = DBlobBase<ItemDataType.DOCUMENT, BlobMimeType.DOCUMENT_PDF, DocumentMetadata>;
-// type DBlobTextItem = DBlobBase<ItemDataType.TEXT, BlobMimeType.DOCUMENT_PLAIN, {}>;
-
-
 // DB Item Data
 
-export type DBlobItem = DBlobImageItem | DBlobAudioItem; // | DBlobVideoItem | DBlobDocumentItem | DBlobTextItem | DBlobEgoItem;
+export function createDBlobImageAsset(label: string, data: DBlobImageAsset['data'], origin: DBlobAssetOrigin, metadata: ImageAssetMetadata): DBlobImageAsset {
+  return _createAssetImpl(DBlobAssetType.IMAGE, label, data, origin, metadata);
+}
 
-export const createDBlobImageItem = (label: string, data: DBlobImageItem['data'], origin: ItemDataOrigin, metadata: ImageMetadata): DBlobImageItem =>
-  createDBlobBase(DBlobMetaDataType.IMAGE, label, data, origin, metadata);
-
-export type DBlobDBItem = DBlobItem & {
-  uId: '1';
-  wId: '1';
-  cId: 'global';
-  sId: 'app-chat' | 'app-draw' | 'attachment-drafts'; // scope ID
+function _createAssetImpl<TType extends DBlobAssetType, TMime extends DBlobMimeType, TMeta extends Record<string, any>>(
+  type: TType,
+  label: string,
+  data: DBlobAssetData<TMime>,
+  origin: DBlobAssetOrigin,
+  metadata: TMeta,
+): DBlobAssetImplV1<TType, TMime, TMeta> {
+  const creationDate = new Date();
+  return {
+    id: nanoid(),
+    type,
+    label,
+    data,
+    origin,
+    createdAt: creationDate,
+    updatedAt: creationDate,
+    metadata,
+    cache: {},
+  };
 }

@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-import { DBlobAudioItem, dBlobCacheT256, DBlobDBItem, DBlobId, DBlobImageItem, DBlobItem, DBlobMetaDataType, DBlobMimeType } from './dblobs.types';
+import { DBlobAsset, DBlobAssetType, DBlobAudioAsset, DBlobDBAsset, DBlobId, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 
@@ -12,14 +12,15 @@ import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
  * - indexedDB.deleteDatabase('NAME').onsuccess = console.log;
  */
 class BigAgiDB extends Dexie {
-  largeAssets!: Dexie.Table<DBlobDBItem, string>;
+  largeAssets!: Dexie.Table<DBlobDBAsset, string>;
 
   constructor() {
     super('Big-AGI');
     this.version(1).stores({
-      // Index common properties
-      largeAssets: 'id, uId, wId, cId, sId, [cId+sId], type, [type+cId+sId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
+      // Index common properties (and compound indexes)
+      largeAssets: 'id, contextId, scopeId, [contextId+scopeId], type, [type+contextId+scopeId], data.mimeType, origin.ot, origin.source, createdAt, updatedAt',
     });
+    // Note: can re-add wId and uId in version 2 if needed
   }
 }
 
@@ -38,20 +39,17 @@ const assetsTable = _db.largeAssets;
 
 // CRUD
 
-const DEFAULT_USER_ID = '1';
-const DEFAULT_WORKSPACE_ID = '1';
 
-
-export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']): Promise<DBlobId> {
+export async function addDBlobItem<T extends DBlobAsset>(item: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobId> {
 
   // Auto-Thumbnail: when adding an image, generate a thumbnail-256 cache level
-  if (item.type === DBlobMetaDataType.IMAGE) {
-    if (!item.cache?.[dBlobCacheT256]) {
-      const imageItem = item as DBlobImageItem;
+  if (item.type === 'image') {
+    if (!item.cache?.thumb256) {
+      const imageItem = item as DBlobImageAsset;
       const resizedDataForCache = await resizeBase64ImageIfNeeded(imageItem.data.mimeType, imageItem.data.base64, 'thumbnail-256', DBlobMimeType.IMG_WEBP, 0.9)
         .catch((error: any) => console.error('addDBlobItem: Error resizing image', error));
       if (resizedDataForCache) {
-        item.cache[dBlobCacheT256] = {
+        item.cache.thumb256 = {
           base64: resizedDataForCache.base64,
           mimeType: DBlobMimeType.IMG_WEBP,
         };
@@ -63,10 +61,8 @@ export async function addDBlobItem<T extends DBlobItem>(item: T, cId: DBlobDBIte
     // returns the id of the added item
     return await assetsTable.add({
       ...item,
-      uId: DEFAULT_USER_ID,
-      wId: DEFAULT_WORKSPACE_ID,
-      cId,
-      sId,
+      contextId,
+      scopeId,
     });
   } catch (error) {
     console.error('addDBlobItem: Error adding item', error);
@@ -78,25 +74,25 @@ export async function getDBlobItemIDs() {
   return assetsTable.toCollection().primaryKeys();
 }
 
-export async function getItemById<T extends DBlobItem = DBlobItem>(id: DBlobId) {
+export async function getItemById<T extends DBlobAsset = DBlobAsset>(id: DBlobId) {
   return await assetsTable.get(id) as T | undefined;
 }
 
-export async function getDBlobItemsByType<T extends DBlobItem>(type: T['type']) {
+export async function getDBlobItemsByType<T extends DBlobAsset>(type: T['type']) {
   return await assetsTable.where({ type }).toArray() as unknown as T[];
 }
 
-export async function getDBlobItemsByTypeCIdSid<T extends DBlobItem>(type: T['type'], cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  const items = await assetsTable.where({ type, cId, sId }).sortBy('createdAt');
+export async function getDBlobItemsByTypeContextIdScopeId<T extends DBlobAsset>(type: T['type'], contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
+  const items = await assetsTable.where({ type, contextId, scopeId }).sortBy('createdAt');
   return items.reverse() as unknown as T[];
 }
 
-export async function getItemsByMimeType<T extends DBlobItem>(mimeType: T['data']['mimeType']) {
+export async function getItemsByMimeType<T extends DBlobAsset>(mimeType: T['data']['mimeType']) {
   return await assetsTable.where('data.mimeType').equals(mimeType).toArray() as unknown as T[];
 }
 
 
-export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobItem>) {
+export async function updateDBlobItem(id: DBlobId, updates: Partial<DBlobAsset>) {
   return assetsTable.update(id, updates);
 }
 
@@ -108,14 +104,14 @@ export async function deleteDBlobItems(ids: DBlobId[]) {
   return assetsTable.bulkDelete(ids);
 }
 
-export async function deleteAllDBlobsInScopeId(cId: DBlobDBItem['cId'], sId: DBlobDBItem['sId']) {
-  return assetsTable.where({ cId, sId }).delete();
+export async function deleteAllDBlobsInScopeId(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
+  return assetsTable.where({ contextId, scopeId }).delete();
 }
 
 
 // Specific item types
 async function getImageItemById(id: DBlobId) {
-  return await getItemById<DBlobImageItem>(id);
+  return await getItemById<DBlobImageAsset>(id);
 }
 
 export async function getImageDataURLById(id: DBlobId) {
@@ -139,18 +135,18 @@ export async function getImageBlobURLById(id: DBlobId) {
 }
 
 // Example usage:
-async function getAllImages(): Promise<DBlobImageItem[]> {
-  return await getDBlobItemsByType<DBlobImageItem>(DBlobMetaDataType.IMAGE);
+async function getAllImages(): Promise<DBlobImageAsset[]> {
+  return await getDBlobItemsByType<DBlobImageAsset>(DBlobAssetType.IMAGE);
 }
 
-async function getAllAudio(): Promise<DBlobAudioItem[]> {
-  return await getDBlobItemsByType<DBlobAudioItem>(DBlobMetaDataType.AUDIO);
+async function getAllAudio(): Promise<DBlobAudioAsset[]> {
+  return await getDBlobItemsByType<DBlobAudioAsset>(DBlobAssetType.AUDIO);
 }
 
 async function getHighResImages() {
   return await assetsTable
     .where('data.mimeType')
     .startsWith('image/')
-    .and(item => (item as DBlobImageItem).metadata.width > 1920)
-    .toArray() as DBlobImageItem[];
+    .and(item => (item as DBlobImageAsset).metadata.width > 1920)
+    .toArray() as DBlobImageAsset[];
 }
