@@ -80,10 +80,10 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
     );
 
     // Add to DBlobs database
-    const dblobId = await addDBAsset(dblobImageItem, 'global', 'app-draw');
+    const dblobAssetId = await addDBAsset(dblobImageItem, 'global', 'app-draw');
 
     // Create a data reference for the image from the message
-    const imagePartDataRef = createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length);
+    const imagePartDataRef = createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length);
 
     // TODO: move to DMessageImagePart?
     console.log('TODO: notImplemented: imagePartDataRef: CRUD and View of blobs as ImageBlocks', imagePartDataRef);

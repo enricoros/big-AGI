@@ -1,5 +1,5 @@
-import type { DBlobId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { addDBAsset, deleteDBAssets, getDBAssetDBlobIds, getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.db';
+import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
+import { addDBAsset, deleteDBAssets, getDBlobAssetIds, getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.db';
 
 import type { DMessageDataRef } from './chat.message';
 import { useChatStore } from './store-chats';
@@ -12,7 +12,7 @@ const DEBUG_SHOW_GC = false;
 /**
  * Add a new dblob image item, from the chat
  */
-export async function chatDBlobAddGlobalImage(item: DBlobImageAsset): Promise<DBlobId> {
+export async function chatDBlobAddGlobalImage(item: DBlobImageAsset): Promise<DBlobAssetId> {
   return await addDBAsset<DBlobImageAsset>(item, 'global', 'app-chat');
 }
 
@@ -25,7 +25,7 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
   if (dataRef.reftype === 'url')
     imageUrl = dataRef.url;
   else if (dataRef.reftype === 'dblob')
-    imageUrl = await getImageAssetAsBlobURL(dataRef.dblobId);
+    imageUrl = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
   if (imageUrl && typeof window !== 'undefined') {
     window.open(imageUrl, '_blank', 'noopener,noreferrer');
     return true;
@@ -39,7 +39,7 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
 export async function gcGlobalChatDBlobs() {
 
   // find all the dblob references in all chats
-  const chatsDBlobIDs: Set<DBlobId> = new Set();
+  const chatsAssetIDs: Set<DBlobAssetId> = new Set();
   const chatStore = useChatStore.getState();
   for (const chat of chatStore.conversations) {
     for (const message of chat.messages) {
@@ -50,25 +50,25 @@ export async function gcGlobalChatDBlobs() {
           continue;
         if (fragment.part.dataRef.reftype !== 'dblob')
           continue;
-        chatsDBlobIDs.add(fragment.part.dataRef.dblobId);
+        chatsAssetIDs.add(fragment.part.dataRef.dblobAssetId);
       }
     }
   }
 
   // sanity check: if no blobs are referenced, do nothing; in case we have a bug and we don't wipe the db
-  if (!chatsDBlobIDs.size)
+  if (!chatsAssetIDs.size)
     return;
 
   // find all the dblob ids in the DB
-  const dbDBlobIDs: DBlobId[] = await getDBAssetDBlobIds();
+  const dbAssetIDs: DBlobAssetId[] = await getDBlobAssetIds();
 
   // Determine which blobs are not referenced in any chat
-  const unreferencedBlobIDs = dbDBlobIDs.filter(id => !chatsDBlobIDs.has(id));
+  const unreferencedAssetIDs = dbAssetIDs.filter(id => !chatsAssetIDs.has(id));
 
   // Delete unreferenced blobs
-  if (unreferencedBlobIDs.length > 0)
-    await deleteDBAssets(unreferencedBlobIDs);
+  if (unreferencedAssetIDs.length > 0)
+    await deleteDBAssets(unreferencedAssetIDs);
 
   if (DEBUG_SHOW_GC)
-    console.log(`gcGlobalChatDBlobs: ${unreferencedBlobIDs.length}/${chatsDBlobIDs.size} unreferenced blobs deleted.`);
+    console.log(`gcGlobalChatDBlobs: ${unreferencedAssetIDs.length}/${chatsAssetIDs.size} unreferenced blobs deleted.`);
 }

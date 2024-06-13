@@ -1,17 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
-import type { DBlobAsset, DBlobDBAsset, DBlobId } from './dblobs.types';
+import type { DBlobAsset, DBlobDBAsset, DBlobAssetId } from './dblobs.types';
 import { addDBAsset, deleteDBAsset, getDBAsset, getDBAssetsByScopeAndType, updateDBAsset } from '~/modules/dblobs/dblobs.db';
 
 
-// export function useDBlobItems<T extends DBlobItem>(assetType: T['assetType']): [T[] | undefined, (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => Promise<void>, (id: DBlobId) => Promise<void>] {
+// export function useDBlobItems<T extends DBlobItem>(assetType: T['assetType']): [T[] | undefined, (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => Promise<void>, (id: DBlobAssetId) => Promise<void>] {
 //   const items = useLiveQuery(() => getAssetsByType<T>(assetType), [assetType]);
 //
 //   const addDBlobItemHandler = async (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => {
 //     await addDBlobItem(item, contextId, scopeId);
 //   };
 //
-//   const deleteDBlobItemHandler = async (id: DBlobId) => {
+//   const deleteDBlobItemHandler = async (id: DBlobAssetId) => {
 //     await deleteDBlobItem(id);
 //   };
 //
@@ -26,17 +26,17 @@ export function useDBAssetsByScopeAndType<TAsset extends DBlobAsset = DBlobDBAss
   assetType: TAsset['assetType'],
   contextId: DBlobDBAsset['contextId'],
   scopeId: DBlobDBAsset['scopeId'],
-): [TAsset[] | undefined, (item: TAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) => Promise<DBlobId>, (id: DBlobId) => Promise<void>] {
+): [TAsset[] | undefined, (item: TAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) => Promise<DBlobAssetId>, (id: DBlobAssetId) => Promise<void>] {
   const items = useLiveQuery(
     () => getDBAssetsByScopeAndType<TAsset>(assetType, contextId, scopeId),
     [assetType, contextId, scopeId],
   );
 
-  const addDBlobItemHandler = async (item: TAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobId> => {
+  const addDBlobItemHandler = async (item: TAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobAssetId> => {
     return await addDBAsset(item, contextId, scopeId);
   };
 
-  const deleteDBlobItemHandler = async (id: DBlobId) => {
+  const deleteDBlobItemHandler = async (id: DBlobAssetId) => {
     await deleteDBAsset(id);
   };
 
@@ -44,7 +44,7 @@ export function useDBAssetsByScopeAndType<TAsset extends DBlobAsset = DBlobDBAss
 }
 
 
-export function useDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobId): [T | undefined, (updates: Partial<T>) => Promise<void>] {
+export function useDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobAssetId): [T | undefined, (updates: Partial<T>) => Promise<void>] {
   const item = useLiveQuery(
     () => getDBAsset<T>(id),
     [id],

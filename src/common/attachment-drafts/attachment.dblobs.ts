@@ -81,12 +81,12 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
     );
 
     // Add to DBlobs database
-    const dblobId = await addDBAsset(dblobImageItem, 'global', 'attachment-drafts');
+    const dblobAssetId = await addDBAsset(dblobImageItem, 'global', 'attachment-drafts');
 
     // return a new Image Attachment Fragment
     return createImageAttachmentFragment(
       title,
-      createDMessageDataRefDBlob(dblobId, mimeType, inputLength),
+      createDMessageDataRefDBlob(dblobAssetId, mimeType, inputLength),
       altText,
       dimensions?.width, dimensions?.height,
     );
@@ -101,7 +101,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
  */
 export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAttachmentFragment) {
   if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
-    await deleteDBAsset(fragment.part.dataRef.dblobId);
+    await deleteDBAsset(fragment.part.dataRef.dblobAssetId);
   }
 }
 

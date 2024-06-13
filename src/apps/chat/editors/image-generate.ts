@@ -64,11 +64,11 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
       );
 
       // Add to DBlobs database
-      const dblobId = await chatDBlobAddGlobalImage(dblobImageItem);
+      const dblobAssetId = await chatDBlobAddGlobalImage(dblobImageItem);
 
       // Create and add an Image Content Fragment
       const imageContentFragment = createImageContentFragment(
-        createDMessageDataRefDBlob(dblobId, _i.mimeType, _i.base64Data.length),
+        createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length),
         _i.altText,
         _i.width, _i.height,
       );

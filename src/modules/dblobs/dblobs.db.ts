@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-import { DBlobAsset, DBlobAssetType, DBlobDBAsset, DBlobId, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
+import { DBlobAsset, DBlobAssetId, DBlobAssetType, DBlobDBAsset, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 
@@ -39,7 +39,7 @@ const assetsTable = _db.largeAssets;
 
 // CRUD
 
-export async function addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobId> {
+export async function addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobAssetId> {
 
   // Auto-Thumbnail: when adding an image, generate a thumbnail-256 cache level
   if (asset.assetType === DBlobAssetType.IMAGE) {
@@ -72,11 +72,11 @@ export async function addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBlo
 
 // READ
 
-export async function getDBAssetDBlobIds(): Promise<DBlobId[]> {
+export async function getDBlobAssetIds(): Promise<DBlobAssetId[]> {
   return assetsTable.toCollection().primaryKeys();
 }
 
-export async function getDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobId) {
+export async function getDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobAssetId) {
   return await assetsTable.get(id) as T | undefined;
 }
 
@@ -102,18 +102,18 @@ export async function getDBAssetsByScopeAndType<T extends DBlobAsset = DBlobDBAs
 
 // UPDATE
 
-export async function updateDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobId, updates: Partial<T>) {
+export async function updateDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobAssetId, updates: Partial<T>) {
   return assetsTable.update(id, updates);
 }
 
 
 // DELETE
 
-export async function deleteDBAsset(id: DBlobId) {
+export async function deleteDBAsset(id: DBlobAssetId) {
   return assetsTable.delete(id);
 }
 
-export async function deleteDBAssets(ids: DBlobId[]) {
+export async function deleteDBAssets(ids: DBlobAssetId[]) {
   return assetsTable.bulkDelete(ids);
 }
 
@@ -126,16 +126,16 @@ export async function deleteAllScopedAssets(contextId: DBlobDBAsset['contextId']
 
 
 // Specific asset types
-async function getImageAsset(id: DBlobId) {
+async function getImageAsset(id: DBlobAssetId) {
   return await getDBAsset<DBlobImageAsset>(id);
 }
 
-export async function getImageAssetAsDataURL(id: DBlobId) {
+export async function getImageAssetAsDataURL(id: DBlobAssetId) {
   const imageAsset = await getImageAsset(id);
   return imageAsset ? `data:${imageAsset.data.mimeType};base64,${imageAsset.data.base64}` : null;
 }
 
-export async function getImageAssetAsBlobURL(id: DBlobId) {
+export async function getImageAssetAsBlobURL(id: DBlobAssetId) {
   const imageAsset = await getImageAsset(id);
   if (imageAsset) {
     const byteCharacters = atob(imageAsset.data.base64);

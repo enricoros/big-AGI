@@ -1,4 +1,4 @@
-import type { DBlobId } from '~/modules/dblobs/dblobs.types';
+import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 
 import { createBase64UuidV4 } from '~/common/util/textUtils';
 
@@ -84,7 +84,7 @@ type DMessageToolResponsePart = { pt: 'tool_response', function: string, respons
 
 export type DMessageDataRef =
   | { reftype: 'url'; url: string } // remotely accessible URL
-  | { reftype: 'dblob'; dblobId: DBlobId, mimeType: string; bytesSize: number; } // reference to a DBlob
+  | { reftype: 'dblob'; dblobAssetId: DBlobAssetId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
 
 // type DDataInline =
@@ -204,8 +204,8 @@ export function createDMessageDataRefUrl(url: string): DMessageDataRef {
   return { reftype: 'url', url };
 }
 
-export function createDMessageDataRefDBlob(dblobId: DBlobId, mimeType: string, bytesSize: number): DMessageDataRef {
-  return { reftype: 'dblob', dblobId, mimeType, bytesSize };
+export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType: string, bytesSize: number): DMessageDataRef {
+  return { reftype: 'dblob', dblobAssetId: dblobAssetId, mimeType, bytesSize };
 }
 
 
@@ -278,7 +278,7 @@ function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
       return createDMessageDataRefUrl(ref.url);
 
     case 'dblob':
-      return createDMessageDataRefDBlob(ref.dblobId, ref.mimeType, ref.bytesSize);
+      return createDMessageDataRefDBlob(ref.dblobAssetId, ref.mimeType, ref.bytesSize);
 
     // default: // unreachable, we'd get a compiler error before this
     //   throw new Error('Invalid reference');
