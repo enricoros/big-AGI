@@ -333,6 +333,14 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           conversation.abortController = null;
           // fixup messages
           for (const message of conversation.messages) {
+            // cleanup within-v4: fixup rename of fragment's dblobId to dblobAssetId
+            for (let fragment of message.fragments) {
+              if (fragment.ft === 'content' && fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob' && (fragment.part.dataRef as any)['dblobId']) {
+                fragment.part.dataRef.dblobAssetId = (fragment.part.dataRef as any)['dblobId'];
+                delete (fragment.part.dataRef as any)['dblobId'];
+              }
+            }
+            // cleanup pre-v4 properties
             delete message.pendingIncomplete;
             delete message.pendingPlaceholderText;
             delete (message as any).typing;
