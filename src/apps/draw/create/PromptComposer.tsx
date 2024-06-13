@@ -227,72 +227,78 @@ export function PromptComposer(props: {
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
         {/* Prompt (Text) Box */}
-        <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 } }}>
+        <Grid xs={12} md={9}>
+          <Box sx={{
+            height: '100%',
+            display: 'flex',
+            gap: { xs: 1, md: 2 },
+          }}>
 
-          {props.isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {props.isMobile ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
-              <Dropdown>
-                <MenuButton slots={{ root: IconButton }}>
-                  <ArrowForwardRoundedIcon />
-                </MenuButton>
-                <Menu placement='top'>
-                  {/* Add From History? */}
-                  {/*<MenuItem>*/}
-                  {/*  <ButtonPromptFromPlaceholder name='History' disabled />*/}
-                  {/*</MenuItem>*/}
-                  <MenuItem>
-                    <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
-                  </MenuItem>
-                  {/*<MenuItem>*/}
-                  {/*  <ButtonPromptFromX name='Image' disabled />*/}
-                  {/*</MenuItem>*/}
-                  {/*<MenuItem>*/}
-                  {/*  <ButtonPromptFromPlaceholder name='Chat' disabled />*/}
-                  {/*</MenuItem>*/}
-                </Menu>
-              </Dropdown>
+                <Dropdown>
+                  <MenuButton slots={{ root: IconButton }}>
+                    <ArrowForwardRoundedIcon />
+                  </MenuButton>
+                  <Menu placement='top'>
+                    {/* Add From History? */}
+                    {/*<MenuItem>*/}
+                    {/*  <ButtonPromptFromPlaceholder name='History' disabled />*/}
+                    {/*</MenuItem>*/}
+                    <MenuItem>
+                      <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
+                    </MenuItem>
+                    {/*<MenuItem>*/}
+                    {/*  <ButtonPromptFromX name='Image' disabled />*/}
+                    {/*</MenuItem>*/}
+                    {/*<MenuItem>*/}
+                    {/*  <ButtonPromptFromPlaceholder name='Chat' disabled />*/}
+                    {/*</MenuItem>*/}
+                  </Menu>
+                </Dropdown>
 
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 
-              <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
+                <ButtonPromptFromIdea disabled={userHasText} onIdeaNext={nextRandomIdea} onIdeaUse={handleIdeaUse} />
 
-              {/*<ButtonPromptFromX name='Image' disabled />*/}
+                {/*<ButtonPromptFromX name='Image' disabled />*/}
 
-              {/*<ButtonPromptFromPlaceholder name='Chats' disabled />*/}
+                {/*<ButtonPromptFromPlaceholder name='Chats' disabled />*/}
 
-            </Box>
+              </Box>
 
-          )}
+            )}
 
-          <Textarea
-            variant='outlined'
-            // size='sm'
-            autoFocus
-            minRows={props.isMobile ? 4 : 3}
-            maxRows={props.isMobile ? 6 : 8}
-            placeholder={currentIdeaPrompt || 'Enter your prompt here and hit "Draw".'}
-            value={nextPrompt}
-            onChange={handleTextareaTextChange}
-            onKeyDown={handleTextareaKeyDown}
-            endDecorator={textEnrichComponents}
-            slotProps={{
-              textarea: {
-                enterKeyHint: enterIsNewline ? 'enter' : 'send',
-                // ref: props.designerTextAreaRef,
-              },
-            }}
-            sx={{
-              flexGrow: 1,
-              boxShadow: 'md',
-              '&:focus-within': { backgroundColor: 'background.popup' },
-              lineHeight: lineHeightTextareaMd,
-            }}
-          />
+            <Textarea
+              variant='outlined'
+              // size='sm'
+              autoFocus
+              minRows={props.isMobile ? 4 : 3}
+              maxRows={props.isMobile ? 6 : 8}
+              placeholder={currentIdeaPrompt || 'Enter your prompt here and hit "Draw".'}
+              value={nextPrompt}
+              onChange={handleTextareaTextChange}
+              onKeyDown={handleTextareaKeyDown}
+              endDecorator={textEnrichComponents}
+              slotProps={{
+                textarea: {
+                  enterKeyHint: enterIsNewline ? 'enter' : 'send',
+                  // ref: props.designerTextAreaRef,
+                },
+              }}
+              sx={{
+                flexGrow: 1,
+                boxShadow: 'md',
+                '&:focus-within': { backgroundColor: 'background.popup' },
+                lineHeight: lineHeightTextareaMd,
+              }}
+            />
 
-        </Box></Grid>
+          </Box>
+        </Grid>
 
         {/* [Desktop: Right, Mobile: Bottom] Buttons */}
         <Grid xs={12} md={3} sx={{
