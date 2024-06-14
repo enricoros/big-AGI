@@ -1,22 +1,19 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Card, Skeleton } from '@mui/joy';
-
-import type { ImageBlock } from '~/modules/blocks/blocks';
-import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
+import { Box } from '@mui/joy';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { InlineError } from '~/common/components/InlineError';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 
 import { DesignerPrompt, PromptComposer } from './create/PromptComposer';
-import { ProviderConfigure } from './create/ProviderConfigure';
+import { DrawCreateQueue } from './queue-draw-create';
 import { DrawSectionHeading } from './create/DrawSectionHeading';
+import { ProviderConfigure } from './create/ProviderConfigure';
 import { ZeroDrawConfig } from './create/ZeroDrawConfig';
 import { ZeroGenerations } from './create/ZeroGenerations';
+import { useProcessingQueue } from '~/common/logic/ProcessingQueue';
 
 
 const imagineWorkspaceSx: SxProps = {
@@ -40,10 +37,7 @@ const imagineScrollContainerSx: SxProps = {
 };
 
 
-/**
- * @returns up-to `vectorSize` image URLs
- */
-async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: number = 1) {
+/*async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: number = 1) {
   const imageContentFragments = await t2iGenerateImageContentFragments(null, singlePrompt, vectorSize, 'global', 'app-draw');
 
   for (const imageContentFragment of imageContentFragments) {
@@ -52,9 +46,9 @@ async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: 
   // TODO continue...
 
   return [];
-}
+}*/
 
-
+/*
 function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
 
   // NOTE: we shall consider a multidimensional shape-based design
@@ -65,7 +59,7 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
   // external state
   const { data: imageBlocks, error, isLoading } = useQuery<ImageBlock[], Error>({
     enabled: !!dp.prompt,
-    queryKey: ['draw-uuid', dp.uuid],
+    queryKey: ['draw-dpid', dp.uuid],
     queryFn: () => queryActiveGenerateImageVector(dp.prompt, dp._repeatCount),
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
@@ -103,16 +97,14 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
 
   </>;
 }
-
+*/
 
 export function DrawCreate(props: {
-  // layout
+  queue: DrawCreateQueue,
   isMobile: boolean,
   showHeader: boolean,
   onHideHeader: () => void,
-
-  // provider
-  mayWork: boolean
+  mayWork: boolean,
   providers: TextToImageProvider[],
   activeProviderId: string | null,
   setActiveProviderId: (providerId: (string | null)) => void,
@@ -121,14 +113,22 @@ export function DrawCreate(props: {
   // state
   const [prompts, setPrompts] = React.useState<DesignerPrompt[]>([]);
 
+  // external state
+  const { queueState } = useProcessingQueue(props.queue);
+  console.log('DrawCreate', { queueState });
+  // handlers
 
   const handleStopDrawing = React.useCallback(() => {
     setPrompts([]);
   }, []);
 
-  const handlePromptEnqueue = React.useCallback((prompts: DesignerPrompt[]) => {
-    setPrompts((prevPrompts) => [...prompts, ...prevPrompts]);
-  }, []);
+  const { queue } = props;
+
+  const handlePromptEnqueue = React.useCallback((designerPrompts: DesignerPrompt[]) => {
+    for (const designerPrompt of designerPrompts) {
+      void queue.enqueueItem(designerPrompt); // fire/forget
+    }
+  }, [queue]);
 
 
   return <>
@@ -171,6 +171,7 @@ export function DrawCreate(props: {
           }}
         >
 
+
           {/* Draw history (last 50) */}
 
           {/*<Box sx={{*/}
@@ -189,7 +190,7 @@ export function DrawCreate(props: {
           {/*  {prompts.map((prompt, _index) => {*/}
           {/*    return (*/}
           {/*      <TempPromptImageGen*/}
-          {/*        key={prompt.uuid}*/}
+          {/*        key={prompt.dpId}*/}
           {/*        prompt={prompt}*/}
           {/*        sx={{*/}
           {/*          border: DEBUG_LAYOUT ? '1px solid green' : undefined,*/}
@@ -198,6 +199,7 @@ export function DrawCreate(props: {
           {/*    );*/}
           {/*  })}*/}
           {/*</Box>*/}
+
 
           {/* Fallback */}
           <ZeroGenerations />

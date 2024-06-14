@@ -1,12 +1,15 @@
 import * as React from 'react';
 
+import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
+
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useProcessingQueue } from '~/common/logic/ProcessingQueue';
 
 import { DrawCreate } from './DrawCreate';
 import { DrawGallery } from './DrawGallery';
+import { drawCreateQueue } from './queue-draw-create';
 import { useDrawSectionDropdown } from './useDrawSectionDropdown';
-import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 
 // export interface AppDrawIntent {
@@ -18,11 +21,11 @@ export function AppDraw() {
 
   // state
   const [showHeader, setShowHeader] = React.useState(true);
-  const { drawSection, drawSectionDropdown } = useDrawSectionDropdown();
   // const [_drawIntent, setDrawIntent] = React.useState<AppDrawIntent | null>(null);
 
   // external state
   const isMobile = useIsMobile();
+  const { queueState, queueAddItem, queueCancelAll } = useProcessingQueue(drawCreateQueue);
   const { activeProviderId, mayWork, providers, setActiveProviderId } = useCapabilityTextToImage();
 
   // const query = useRouterQuery<Partial<AppDrawIntent>>();
@@ -38,12 +41,14 @@ export function AppDraw() {
   // const hasIntent = !!drawIntent && !!drawIntent.backTo;
 
   // pluggable layout
+  const { drawSection, drawSectionDropdown } = useDrawSectionDropdown(queueState.items.length, queueCancelAll);
   usePluggableOptimaLayout(null, drawSectionDropdown, null, 'aa');
 
   switch (drawSection) {
     case 'create':
       return (
         <DrawCreate
+          queue={drawCreateQueue}
           isMobile={isMobile}
           showHeader={showHeader}
           onHideHeader={() => setShowHeader(false)}
