@@ -350,3 +350,7 @@ export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag)
   else
     return [...(message.userFlags || []), flag];
 }
+
+export function messageHasImageFragments(message: DMessage): boolean {
+  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob');
+}

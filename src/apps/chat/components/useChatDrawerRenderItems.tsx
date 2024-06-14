@@ -2,7 +2,7 @@ import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DFolder } from '~/common/state/store-folders';
-import { DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
+import { DMessageUserFlag, messageFragmentsReduceText, messageHasImageFragments, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -91,6 +91,7 @@ export function useChatDrawerRenderItems(
   activeFolder: DFolder | null,
   allFolders: DFolder[],
   filterHasStars: boolean,
+  filterHasImageAssets: boolean,
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
@@ -113,6 +114,7 @@ export function useChatDrawerRenderItems(
       // transform (the conversations into ChatNavigationItemData) + filter2 (if searching)
       const chatNavItems = selectedConversations
         .filter(_c => !filterHasStars || _c.messages.some(m => messageHasUserFlag(m, 'starred')))
+        .filter(_c => !filterHasImageAssets || _c.messages.some(m => messageHasImageFragments(m)))
         .map((_c): ChatNavigationItemData => {
           // rich properties
           const title = conversationTitle(_c);
@@ -208,9 +210,11 @@ export function useChatDrawerRenderItems(
       if (!renderNavItems.length)
         renderNavItems.push({
           type: 'nav-item-info-message',
-          message: filterHasStars ? 'No starred results'
-            : isSearching ? 'No results found'
-              : 'No conversations in folder',
+          message: (filterHasStars && filterHasImageAssets) ? 'No starred or image results'
+            : filterHasImageAssets ? 'No image results'
+              : filterHasStars ? 'No starred results'
+                : isSearching ? 'No results found'
+                  : 'No conversations in folder',
         });
 
       // other derived state

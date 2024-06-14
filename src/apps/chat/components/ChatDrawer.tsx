@@ -9,6 +9,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
+import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
@@ -83,12 +84,13 @@ function ChatDrawer(props: {
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const {
     filterHasStars, toggleFilterHasStars,
+    filterHasImageAssets, toggleFilterHasImageAssets,
     showPersonaIcons, toggleShowPersonaIcons,
     showRelativeSize, toggleShowRelativeSize,
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, navGrouping, searchSorting, showRelativeSize,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, navGrouping, searchSorting, showRelativeSize,
   );
   const { contentScaling, showSymbols } = useUIPreferencesStore(useShallow(state => ({
     contentScaling: state.contentScaling,
@@ -159,7 +161,7 @@ function ChatDrawer(props: {
 
       {!isSearching ? (
         // Search/Filter default menu: Grouping, Filtering, ...
-        <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
+        <Menu placement='bottom-start' sx={{ minWidth: 200, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
           <ListItem>
             <Typography level='body-sm'>Group By</Typography>
           </ListItem>
@@ -182,6 +184,10 @@ function ChatDrawer(props: {
           <MenuItem onClick={toggleFilterHasStars}>
             <ListItemDecorator>{filterHasStars && <CheckRoundedIcon />}</ListItemDecorator>
             Starred <StarOutlineRoundedIcon />
+          </MenuItem>
+          <MenuItem onClick={toggleFilterHasImageAssets}>
+            <ListItemDecorator>{filterHasImageAssets && <CheckRoundedIcon />}</ListItemDecorator>
+            Has Images <FormatPaintOutlinedIcon />
           </MenuItem>
 
           <ListDivider />
@@ -214,7 +220,10 @@ function ChatDrawer(props: {
         </Menu>
       )}
     </Dropdown>
-  ), [filterHasStars, isSearching, navGrouping, searchSorting, showPersonaIcons, showRelativeSize, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize]);
+  ), [
+    filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, showPersonaIcons, showRelativeSize,
+    toggleFilterHasImageAssets, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize,
+  ]);
 
 
   return <>
