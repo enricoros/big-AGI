@@ -76,7 +76,7 @@ export const RenderImageURL = (props: {
   description?: React.ReactNode,
   infoText?: string,
   onOpenInNewTab?: (e: React.MouseEvent) => void,
-  onImageRegenerate?: (e: React.MouseEvent) => void,
+  onImageRegenerate?: () => void,
   scaledImageSx?: SxProps,
 }) => {
 

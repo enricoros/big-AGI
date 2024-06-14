@@ -68,7 +68,6 @@ type BlocksRendererProps = {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
-  // onImageRegenerate?: () => void;
 };
 
 
@@ -194,7 +193,9 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
           : block.type === 'codeb'
             ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
             : block.type === 'imageb'
-              ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt} onImageRegenerate={/*props.isBottom ? props.onImageRegenerate :*/ undefined} scaledImageSx={scaledImageSx} />
+              ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt}
+                                onImageRegenerate={undefined /* because there could be many of these URL images in a fragment, and we miss the whole partial-edit logic in a text fragment */}
+                                scaledImageSx={scaledImageSx} />
               : block.type === 'diffb'
                 ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
                 : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
