@@ -23,7 +23,7 @@ export function T2ISettings() {
     providers.forEach(provider => {
       options.push({
         label: provider.label,
-        value: provider.id,
+        value: provider.providerId,
         disabled: !provider.configured,
       });
     });

@@ -52,17 +52,17 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // [Effect] Auto-select the first correctly configured provider
   React.useEffect(() => {
-    const providedIDs = providers.map(p => p.id);
+    const providedIDs = providers.map(p => p.providerId);
     if (activeProviderId && providedIDs.includes(activeProviderId))
       return;
     const autoSelectProvider = providers.find(p => p.configured);
     if (autoSelectProvider)
-      setActiveProviderId(autoSelectProvider.id);
+      setActiveProviderId(autoSelectProvider.providerId);
   }, [activeProviderId, providers, setActiveProviderId]);
 
 
   return {
-    mayWork: providers.find(p => p.configured) !== undefined,
+    mayWork: providers.some(p => p.configured),
     providers,
     activeProviderId,
     setActiveProviderId,
@@ -85,26 +85,26 @@ export function getActiveTextToImageProviderOrThrow() {
   const providers = getTextToImageProviders(openAIModelSourceIds, !!useProdiaStore.getState().prodiaModelId);
 
   // find the active provider
-  const activeProvider = providers.find(p => p.id === activeProviderId);
+  const activeProvider = providers.find(p => p.providerId === activeProviderId);
   if (!activeProvider)
     throw new Error('Text-to-image is not configured correctly');
 
   return activeProvider;
 }
 
-async function _t2iGenerateImagesOrThrow({ id, vendor }: TextToImageProvider, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
+async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProvider, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
   switch (vendor) {
 
     case 'localai':
-      // if (!provider.id)
+      // if (!provider.providerId)
       //   throw new Error('No LocalAI model source configured for TextToImage');
       // return await localaiGenerateImages(provider.id, prompt, count);
       throw new Error('LocalAI t2i integration is not yet available');
 
     case 'openai':
-      if (!id)
+      if (!providerId)
         throw new Error('No OpenAI model source configured for TextToImage');
-      return await openAIGenerateImagesOrThrow(id, prompt, count);
+      return await openAIGenerateImagesOrThrow(providerId, prompt, count);
 
     case 'prodia':
       const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
@@ -196,7 +196,7 @@ function getTextToImageProviders(llmsModelSources: LlmsModelSources[], hasProdia
     switch (modelVendorId) {
       case 'localai':
         providers.push({
-          id: modelSourceId,
+          providerId: modelSourceId,
           label: label,
           painter: 'LocalAI',
           description: 'LocalAI\'s models',
@@ -207,7 +207,7 @@ function getTextToImageProviders(llmsModelSources: LlmsModelSources[], hasProdia
 
       case 'openai':
         providers.push({
-          id: modelSourceId,
+          providerId: modelSourceId,
           label: label,
           painter: 'DALL·E',
           description: 'OpenAI\'s DALL·E models',
@@ -225,7 +225,7 @@ function getTextToImageProviders(llmsModelSources: LlmsModelSources[], hasProdia
   // add Prodia provider
   const hasProdiaServer = getBackendCapabilities().hasImagingProdia;
   providers.push({
-    id: 'prodia',
+    providerId: 'prodia',
     label: 'Prodia',
     painter: 'Prodia',
     description: 'Prodia\'s models',

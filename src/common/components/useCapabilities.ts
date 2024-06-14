@@ -36,8 +36,8 @@ export { useCapability as useCapabilityElevenLabs } from '~/modules/elevenlabs/e
 /// Image Generation
 
 export interface TextToImageProvider {
+  providerId: string;                 // unique ID of this provider, used for selecting in a list (e.g. 'openai-2' or 'localai')
   vendor: TextToImageVendor;
-  id: string;          // has meaning for the vendor, e.g. 'openai-2' or 'localai'
   // UI attributes
   label: string;              // e.g. 'OpenAI #2'
   painter: string;            // e.g. 'DALL·E' or 'Prodia'
