@@ -189,7 +189,7 @@ export function SettingsModal(props: {
             <Topic>
               <T2ISettings />
             </Topic>
-            <Topic icon='🖍️️' title='OpenAI DALL·E' startCollapsed>
+            <Topic icon='🖍️️' title='OpenAI DALL·E'>
               <DallESettings />
             </Topic>
             <Topic icon='🖍️️' title='Prodia API' startCollapsed>
