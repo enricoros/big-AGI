@@ -5,14 +5,12 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Skeleton } from '@mui/joy';
 
 import type { ImageBlock } from '~/modules/blocks/blocks';
-import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
-import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
+import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { InlineError } from '~/common/components/InlineError';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
-import { createDMessageDataRefDBlob } from '~/common/stores/chat/chat.message';
 
 import { DesignerPrompt, PromptComposer } from './create/PromptComposer';
 import { ProviderConfigure } from './create/ProviderConfigure';
@@ -46,47 +44,12 @@ const imagineScrollContainerSx: SxProps = {
  * @returns up-to `vectorSize` image URLs
  */
 async function queryActiveGenerateImageVector(singlePrompt: string, vectorSize: number = 1) {
-  const t2iProvider = getActiveTextToImageProviderOrThrow();
+  const imageContentFragments = await t2iGenerateImageContentFragments(null, singlePrompt, vectorSize, 'global', 'app-draw');
 
-  const images = await t2iGenerateImagesOrThrow(t2iProvider, singlePrompt, vectorSize);
-  if (!images?.length)
-    throw new Error('No image generated');
-
-  // save the generated images
-  for (const _i of images) {
-
-    // add the image to the DB
-    const dblobAssetId = await addDBImageAsset('global', 'app-draw', {
-      label: singlePrompt,
-      data: {
-        mimeType: _i.mimeType as any, /* we assume the mime is supported */
-        base64: _i.base64Data,
-      },
-      origin: {
-        ot: 'generated',
-        source: 'ai-text-to-image',
-        generatorName: _i.generatorName, // t2iProvider.painter?
-        prompt: _i.altText,
-        parameters: _i.parameters,
-        generatedAt: _i.generatedAt,
-      },
-      metadata: {
-        width: _i.width || 0,
-        height: _i.height || 0,
-        // description: '',
-      },
-    });
-
-    // Create a data reference for the image from the message
-    const imagePartDataRef = createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length);
-
-    // TODO: move to DMessageImagePart?
-    console.log('TODO: notImplemented: imagePartDataRef: CRUD and View of blobs as ImageBlocks', imagePartDataRef);
+  for (const imageContentFragment of imageContentFragments) {
+    console.log('TODO: notImplemented: imagePartDataRef: CRUD and View of blobs as ImageBlocks', imageContentFragment.part);
   }
-
-  // const block = heuristicMarkdownImageReferenceBlocks(images.join('\n'));
-  // if (!block?.length)
-  //   throw new Error('No URLs in the generated images');
+  // TODO continue...
 
   return [];
 }

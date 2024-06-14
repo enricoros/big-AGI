@@ -1,10 +1,9 @@
 import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
-import { addDBImageAsset, gcDBImageAssets } from '~/modules/dblobs/dblobs.images';
-import { getActiveTextToImageProviderOrThrow, t2iGenerateImagesOrThrow } from '~/modules/t2i/t2i.client';
+import { gcDBImageAssets } from '~/modules/dblobs/dblobs.images';
+import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { createDMessageDataRefDBlob, createImageContentFragment } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -38,39 +37,12 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   );
 
   try {
-    const images = await t2iGenerateImagesOrThrow(t2iProvider, imageText, repeat);
-    for (const _i of images) {
+    const imageContentFragments = await t2iGenerateImageContentFragments(t2iProvider, imageText, repeat, 'global', 'app-chat');
 
-      // add the image to the DB
-      const dblobAssetId = await addDBImageAsset('global', 'app-chat', {
-        label: imageText, // 'Image: ' + _i.altText
-        data: {
-          mimeType: _i.mimeType as any, /* we assume the mime is supported */
-          base64: _i.base64Data,
-        },
-        origin: {
-          ot: 'generated',
-          source: 'ai-text-to-image',
-          generatorName: _i.generatorName,
-          prompt: _i.altText,
-          parameters: _i.parameters,
-          generatedAt: _i.generatedAt,
-        },
-        metadata: {
-          width: _i.width || 0,
-          height: _i.height || 0,
-          // description: '',
-        },
-      });
-
-      // Create and add an Image Content Fragment
-      const imageContentFragment = createImageContentFragment(
-        createDMessageDataRefDBlob(dblobAssetId, _i.mimeType, _i.base64Data.length),
-        _i.altText,
-        _i.width, _i.height,
-      );
+    // add the image content fragments to the message
+    for (const imageContentFragment of imageContentFragments)
       cHandler.messageAppendContentFragment(assistantMessageId, imageContentFragment, true, true);
-    }
+
     return true;
   } catch (error: any) {
 

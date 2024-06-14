@@ -1,5 +1,6 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
+import { useQuery } from '@tanstack/react-query';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
@@ -8,6 +9,7 @@ import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.type
 import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
+import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageContentFragment, DMessageDataRef, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
@@ -46,25 +48,22 @@ function ContentPartImageRefDBlob(props: {
   const [imageItem] = useDBAsset<DBlobImageAsset>(props.dataRefDBlobAssetId);
 
   // handlers
-
   const { label: imageItemLabel, origin: imageItemOrigin, metadata: imageItemMetadata } = imageItem || {};
   const recreationPrompt = ((imageItemOrigin?.ot === 'generated') ? imageItemOrigin.prompt : undefined) || imageItemLabel || props.imageAltText;
-  const recreationWidth = imageItemMetadata?.width || props.imageWidth;
-  const recreationHeight = imageItemMetadata?.height || props.imageHeight;
+  const _recreationWidth = imageItemMetadata?.width || props.imageWidth;
+  const _recreationHeight = imageItemMetadata?.height || props.imageHeight;
 
-  const handleImageRegenerate = React.useCallback(() => {
-    // TODO: ... t2iGenerateImagesOrThrow()
-    console.log('ContentPartImageDBlob: handleImageRegenerate: notImplemented', imageItem, recreationPrompt, recreationWidth, recreationHeight);
-
-    // props.onImageReplace( createImageContentFragment()
-    //   {
-    //   type: 'image',
-    //   dataRef: { reftype: 'dblob', dblobAssetId: props.dataRefDBlobAssetId },
-    //   altText: props.imageAltText,
-    //   width: props.imageWidth,
-    //   height: props.imageHeight,
-    // });
-  }, [imageItem, recreationPrompt, recreationWidth, recreationHeight]);
+  // async image regeneration
+  const { isLoading: isRegenerating, refetch: handleImageRegenerate } = useQuery({
+    enabled: false,
+    queryKey: ['regen-image-asset', props.dataRefDBlobAssetId, recreationPrompt],
+    queryFn: async ({ signal }) => {
+      if (signal?.aborted || !recreationPrompt) return;
+      const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, 1, 'global', 'app-chat');
+      if (newImageFragments.length === 1)
+        props.onReplaceFragment(newImageFragments[0]);
+    },
+  });
 
   // memo the description and overlay text
   const { dataUrl, altText, overlayText } = React.useMemo(() => {
