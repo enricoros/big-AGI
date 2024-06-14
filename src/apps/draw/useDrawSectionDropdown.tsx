@@ -1,10 +1,12 @@
 import * as React from 'react';
 
+import { Box, Button } from '@mui/joy';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+
+import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
-import { Box } from '@mui/joy';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
-import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 
 
 export type DrawSection = 'create' | 'browse' | 'media';
@@ -43,7 +45,7 @@ function DrawSectionDropdown(props: {
 
 }
 
-export function useDrawSectionDropdown() {
+export function useDrawSectionDropdown(remainingJobs: number, cancelAllJobs: () => void) {
   // state
   const [drawSection, setDrawSection] = React.useState<DrawSection | null>('create');
 
@@ -61,8 +63,18 @@ export function useDrawSectionDropdown() {
         drawSection={drawSection}
         setDrawSection={setDrawSection}
       />
+
+      {/* Button to cancel pending Jobs from the UI (running and queued) */}
+      {!!remainingJobs && (
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Button size='sm' color='danger' variant='soft' onClick={cancelAllJobs} sx={{ my: 0 }}>
+            {remainingJobs} · <CloseRoundedIcon />
+          </Button>
+        </Box>
+      )}
+
     </Box>
-  ), [drawSection]);
+  ), [cancelAllJobs, drawSection, remainingJobs]);
 
   return { drawSection, drawSectionDropdown };
 }

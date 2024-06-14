@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Dropdown, FormControl, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
@@ -27,7 +27,7 @@ const promptButtonClass = 'PromptDesigner-button';
 
 
 export interface DesignerPrompt {
-  uuid: string,
+  dpId: string,
   prompt: string,
   _repeatCount: number,
   // tags: string[],
@@ -81,7 +81,7 @@ export function PromptComposer(props: {
     clearCurrentIdea();
     if (nonEmptyPrompt?.trim()) {
       onPromptEnqueue([{
-        uuid: uuidv4(),
+        dpId: nanoid(),
         prompt: nonEmptyPrompt,
         _repeatCount: isRepeatShown ? tempRepeat : 1,
       }]);
