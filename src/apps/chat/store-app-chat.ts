@@ -30,6 +30,9 @@ interface AppChatStore {
   filterHasStars: boolean;
   setFilterHasStars: (filterHasStars: boolean) => void;
 
+  filterHasImageAssets: boolean;
+  setFilterHasImageAssets: (filterHasImageAssets: boolean) => void;
+
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
@@ -65,6 +68,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     filterHasStars: false,
     setFilterHasStars: (filterHasStars: boolean) => _set({ filterHasStars }),
+
+    filterHasImageAssets: false,
+    setFilterHasImageAssets: (filterHasImageAssets: boolean) => _set({ filterHasImageAssets }),
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
@@ -129,12 +135,14 @@ export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] 
 export const useChatDrawerFilters = () => {
   const values = useAppChatStore(useShallow(state => ({
     filterHasStars: state.filterHasStars,
+    filterHasImageAssets: state.filterHasImageAssets,
     showPersonaIcons: state.showPersonaIcons,
     showRelativeSize: state.showRelativeSize,
   })));
   return {
     ...values,
     toggleFilterHasStars: () => useAppChatStore.getState().setFilterHasStars(!values.filterHasStars),
+    toggleFilterHasImageAssets: () => useAppChatStore.getState().setFilterHasImageAssets(!values.filterHasImageAssets),
     toggleShowPersonaIcons: () => useAppChatStore.getState().setShowPersonaIcons(!values.showPersonaIcons),
     toggleShowRelativeSize: () => useAppChatStore.getState().setShowRelativeSize(!values.showRelativeSize),
   };
