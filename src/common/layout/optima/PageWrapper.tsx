@@ -23,12 +23,16 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
     (isPwa() || props.isMobile || props.currentApp?.fullWidth) ? 'full' : state.centerMode,
   );
 
-  // mobile: no outer containers
+  // mobile: match the desktop container structure, to keep state across layour changes
   if (props.isMobile)
     return (
-      <PageCore component={props.component} isMobile currentApp={props.currentApp}>
-        {props.children}
-      </PageCore>
+      <Box>
+        <Container id='app-page-container' disableGutters maxWidth={false}>
+          <PageCore component={props.component} isMobile currentApp={props.currentApp}>
+            {props.children}
+          </PageCore>
+        </Container>
+      </Box>
     );
 
   return (
@@ -52,6 +56,7 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
     >
 
       <Container
+        id='app-page-container'
         disableGutters
         maxWidth={amplitude === 'full' ? false : amplitude === 'narrow' ? 'md' : 'xl'}
         sx={{
