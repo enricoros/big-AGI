@@ -29,7 +29,7 @@ export function ProviderConfigure(props: {
   const { activeProviderId, providers } = props;
 
   const { ProviderConfig } = React.useMemo(() => {
-    const provider = providers.find(provider => provider.id === activeProviderId);
+    const provider = providers.find(provider => provider.providerId === activeProviderId);
     const ProviderConfig: React.FC | null = provider?.vendor === 'openai' ? DallESettings : provider?.vendor === 'prodia' ? ProdiaSettings : null;
     return {
       ProviderConfig,

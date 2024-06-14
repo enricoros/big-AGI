@@ -21,7 +21,7 @@ export function ProviderSelector(props: {
     props.providers.forEach(provider => {
       options.push({
         label: provider.label + (provider.painter !== provider.label ? ` ${provider.painter}` : ''),
-        value: provider.id,
+        value: provider.providerId,
         configured: provider.configured,
         Icon: provider.vendor === 'openai' ? OpenAIIcon : FormatPaintTwoToneIcon,
       });
