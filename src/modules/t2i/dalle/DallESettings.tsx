@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { FormControl, Option, Select, Switch, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -19,13 +19,13 @@ export function DallESettings() {
   const advanced = useToggleableBoolean(false, 'DallESettings');
 
   // external state
-  const { dalleModelId, setDalleModelId, dalleQuality, setDalleQuality, dalleSize, setDalleSize, dalleStyle, setDalleStyle, dalleNoRewrite, setDalleNoRewrite } = useDalleStore(state => ({
+  const { dalleModelId, setDalleModelId, dalleQuality, setDalleQuality, dalleSize, setDalleSize, dalleStyle, setDalleStyle, dalleNoRewrite, setDalleNoRewrite } = useDalleStore(useShallow(state => ({
     dalleModelId: state.dalleModelId, setDalleModelId: state.setDalleModelId,
     dalleQuality: state.dalleQuality, setDalleQuality: state.setDalleQuality,
     dalleSize: state.dalleSize, setDalleSize: state.setDalleSize,
     dalleStyle: state.dalleStyle, setDalleStyle: state.setDalleStyle,
     dalleNoRewrite: state.dalleNoRewrite, setDalleNoRewrite: state.setDalleNoRewrite,
-  }), shallow);
+  })));
 
   const handleDalleQualityChange = (event: React.ChangeEvent<HTMLInputElement>) => setDalleQuality(event.target.checked ? 'hd' : 'standard');
 
