@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Chip, CircularProgress, FormControl, Input, Option, Select, Slider, Switch } from '@mui/joy';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
@@ -31,7 +31,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
 
   // external state
   const backendHasProdia = getBackendCapabilities().hasImagingProdia;
-  const { apiKey, setApiKey, modelId, setModelId, modelGen, setModelGen, negativePrompt, setNegativePrompt, steps, setSteps, cfgScale, setCfgScale, prodiaAspectRatio, setProdiaAspectRatio, upscale, setUpscale, prodiaResolution, setProdiaResolution, seed, setSeed } = useProdiaStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId, modelGen, setModelGen, negativePrompt, setNegativePrompt, steps, setSteps, cfgScale, setCfgScale, prodiaAspectRatio, setProdiaAspectRatio, upscale, setUpscale, prodiaResolution, setProdiaResolution, seed, setSeed } = useProdiaStore(useShallow(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
     modelGen: state.prodiaModelGen, setModelGen: state.setProdiaModelGen,
@@ -42,7 +42,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
     upscale: state.prodiaUpscale, setUpscale: state.setProdiaUpscale,
     prodiaResolution: state.prodiaResolution, setProdiaResolution: state.setProdiaResolution,
     seed: state.prodiaSeed, setSeed: state.setProdiaSeed,
-  }), shallow);
+  })));
 
 
   // derived state

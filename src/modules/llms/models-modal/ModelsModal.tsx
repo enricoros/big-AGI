@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Checkbox, Divider } from '@mui/joy';
 
@@ -35,10 +35,10 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     openLlmOptions, openModelsSetup,
     showLlmOptions, showModelsSetup,
   } = useOptimaLayout();
-  const { modelSources, llmCount } = useModelsStore(state => ({
+  const { modelSources, llmCount } = useModelsStore(useShallow(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
-  }), shallow);
+  })));
 
   // auto-select the first source - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded
