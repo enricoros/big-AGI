@@ -31,14 +31,14 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
 }
 
 
-function ContentPartImageDBlob(props: {
+function ContentPartImageRefDBlob(props: {
   dataRefDBlobAssetId: DBlobAssetId,
   dataRefMimeType: string,
   imageAltText?: string,
   imageWidth?: number,
   imageHeight?: number,
-  onImageReplace: (newImageFragment: DMessageContentFragment) => void,
   onOpenInNewTab: () => void
+  onReplaceFragment: (newFragment: DMessageContentFragment) => void,
   scaledImageSx?: SxProps,
 }) {
 
@@ -117,7 +117,18 @@ function ContentPartImageDBlob(props: {
       infoText={altText}
       description={overlayText}
       onOpenInNewTab={props.onOpenInNewTab}
-      onImageRegenerate={(!!recreationPrompt) ? handleImageRegenerate : undefined}
+      onImageRegenerate={(!!recreationPrompt && !isRegenerating) ? handleImageRegenerate : undefined}
+      scaledImageSx={props.scaledImageSx}
+    />
+  );
+}
+
+
+function ContentPartImageRefURL(props: { dataRefUrl: string, imageAltText?: string, scaledImageSx?: SxProps, }) {
+  return (
+    <RenderImageURL
+      imageURL={props.dataRefUrl}
+      infoText={props.imageAltText}
       scaledImageSx={props.scaledImageSx}
     />
   );
@@ -136,7 +147,7 @@ export function ContentPartImageRef(props: {
   const { dataRef } = imageRefPart;
 
   // event handlers
-  const handleImageReplace = React.useCallback((newImageFragment: DMessageContentFragment) => {
+  const handleReplaceFragment = React.useCallback((newImageFragment: DMessageContentFragment) => {
     onFragmentEdit?.(fragmentIndex, newImageFragment);
   }, [onFragmentEdit, fragmentIndex]);
 
@@ -146,32 +157,32 @@ export function ContentPartImageRef(props: {
 
 
   // memo the scaled image style
-  const scaledImageSx = React.useMemo((): SxProps => (
-    {
-      // overflowX: 'auto', // <- this would make the right side margin scrollable
-      fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-      lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-      marginBottom: themeScalingMap[props.contentScaling]?.blockImageGap ?? 1.5,
-    }
-  ), [props.contentScaling]);
+  const scaledImageSx = React.useMemo((): SxProps => ({
+    // overflowX: 'auto', // <- this would make the right side margin scrollable
+    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+    marginBottom: themeScalingMap[props.contentScaling]?.blockImageGap ?? 1.5,
+  }), [props.contentScaling]);
 
   return (
     <Box sx={blocksRendererSx}>
       {dataRef.reftype === 'dblob' ? (
-        <ContentPartImageDBlob
+        <ContentPartImageRefDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
           imageAltText={imageRefPart.altText}
           imageWidth={imageRefPart.width}
           imageHeight={imageRefPart.height}
-          onImageReplace={handleImageReplace}
           onOpenInNewTab={handleOpenInNewTab}
+          onReplaceFragment={handleReplaceFragment}
           scaledImageSx={scaledImageSx}
         />
       ) : dataRef.reftype === 'url' ? (
-        <RenderImageURL
-          imageURL={dataRef.url}
-          infoText={imageRefPart.altText}
+        <ContentPartImageRefURL
+          dataRefUrl={dataRef.url}
+          // ...
+          imageAltText={imageRefPart.altText}
+          // ...
           scaledImageSx={scaledImageSx}
         />
       ) : (
