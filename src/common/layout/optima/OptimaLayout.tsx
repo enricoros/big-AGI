@@ -14,6 +14,20 @@ import { OptimaLayoutProvider } from './useOptimaLayout';
 import { PageWrapper } from './PageWrapper';
 
 
+// this undoes the PanelGroup styling on mobile, as it's not needed
+// NOTE: there may be benefits with the PanelGroup layout, namely that
+// it's already 100% x 100% and doesn't scroll, so there would be no
+// chance of overflow, and outer limits are set here
+const undoPanelGroupSx: React.CSSProperties = {
+  display: 'block',
+  marginLeft: undefined,
+  marginRight: undefined,
+  width: undefined,
+  height: undefined,
+  overflow: undefined,
+};
+
+
 /**
  * Core layout of big-AGI, used by all the Primary applications therein.
  *
@@ -38,31 +52,21 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     <OptimaLayoutProvider>
       <OptimaDrawerProvider>
 
-        {isMobile ? <>
+        <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
 
-          <PageWrapper component='main' isMobile currentApp={currentApp}>
+          {!isMobile && checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
+
+          {!isMobile && <DesktopDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
+
+          {/*<Panel defaultSize={100}>*/}
+          <PageWrapper key='app-page-wrapper' component='main' isMobile={isMobile} currentApp={currentApp}>
             {props.children}
           </PageWrapper>
+          {/*</Panel>*/}
 
-          <MobileDrawer component='aside' currentApp={currentApp} />
+          {isMobile && <MobileDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
 
-        </> : (
-
-          <PanelGroup direction='horizontal' id='root-layout'>
-
-            {checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
-
-            <DesktopDrawer component='aside' currentApp={currentApp} />
-
-            {/*<Panel defaultSize={100}>*/}
-            <PageWrapper component='main' currentApp={currentApp}>
-              {props.children}
-            </PageWrapper>
-            {/*</Panel>*/}
-
-          </PanelGroup>
-
-        )}
+        </PanelGroup>
 
       </OptimaDrawerProvider>
 
