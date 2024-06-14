@@ -134,6 +134,7 @@ export function useChatDrawerRenderItems(
           const allFlags = new Set<DMessageUserFlag>();
           _c.messages.forEach(_m => _m.userFlags?.forEach(flag => allFlags.add(flag)));
           const userFlagsSummary = !allFlags.size ? undefined : Array.from(allFlags).map(messageUserFlagToEmoji).join('');
+          const containsImageAssets = filterHasImageAssets || _c.messages.some(messageHasImageFragments);
 
           // create the ChatNavigationData
           return {
@@ -145,6 +146,7 @@ export function useChatDrawerRenderItems(
             title,
             userSymbol: _c.userSymbol || undefined,
             userFlagsSummary,
+            containsImageAssets,
             folder: !allFolders.length
               ? undefined                             // don't show folder select if folders are disabled
               : _c.id === activeConversationId        // only show the folder for active conversation(s)
