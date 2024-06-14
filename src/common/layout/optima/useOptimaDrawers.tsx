@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { isBrowser } from '~/common/util/pwaUtils';
+import { navItems } from '~/common/app.nav';
 
 
 interface OptimaDrawersState {
@@ -23,8 +24,10 @@ interface OptimaDrawersActions {
 
 const UseOptimaDrawers = React.createContext<(OptimaDrawersState & OptimaDrawersActions) | undefined>(undefined);
 
+// TRICK: start from a close state (Default is open) on selected routes
+const initialDrawerOpen = !getIsMobile() && !(isBrowser && navItems.apps.some(item => item.hideDrawer && item.route === window.location.pathname));
 // TRICK: this is how we persist the drawer state across page navigations
-let lastDrawerOpen = !getIsMobile() && !(isBrowser && window.location.pathname === '/news');
+let lastDrawerOpen = initialDrawerOpen;
 
 export function OptimaDrawerProvider(props: { children: React.ReactNode }) {
 
