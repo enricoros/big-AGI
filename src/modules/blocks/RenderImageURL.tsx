@@ -78,17 +78,41 @@ export const RenderImageURL = (props: {
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageRegenerate?: () => void,
   scaledImageSx?: SxProps,
+  className?: string,
 }) => {
 
   // state
-  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
   const [infoOpen, setInfoOpen] = React.useState(false);
+  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
+  const [regenArmed, setRegenArmed] = React.useState(false);
   const [showDalleAlert, setShowDalleAlert] = React.useState(true);
 
   // Effect
   React.useEffect(() => {
     const timeout = setTimeout(() => setLoadingTimeout(true), 2000);
     return () => clearTimeout(timeout);
+  }, []);
+
+  // handlers
+  const { onImageRegenerate, onOpenInNewTab } = props;
+
+  const handleToggleInfoOpen = React.useCallback(() => {
+    setRegenArmed(false);
+    setInfoOpen(open => !open);
+  }, []);
+
+  const handleOpenInNewTab = React.useCallback((e: React.MouseEvent) => {
+    setRegenArmed(false);
+    onOpenInNewTab?.(e);
+  }, [onOpenInNewTab]);
+
+  const handleImageRegenerate = React.useCallback(() => {
+    setRegenArmed(false);
+    onImageRegenerate?.();
+  }, [onImageRegenerate]);
+
+  const handleToggleRegenArmed = React.useCallback(() => {
+    setRegenArmed(armed => !armed);
   }, []);
 
 
@@ -101,6 +125,7 @@ export const RenderImageURL = (props: {
 
       <Sheet
         variant='solid'
+        className={props.className}
         sx={{
           // style
           mx: 1.5,
@@ -146,7 +171,7 @@ export const RenderImageURL = (props: {
                 display: 'block',
               }}
             >
-              {loadingTimeout ? 'Error: Could not load image' : 'Loading...'}
+              {loadingTimeout ? 'Could not load image' : 'Loading...'}
             </Box>
           )}
 
@@ -184,19 +209,13 @@ export const RenderImageURL = (props: {
           ...overlayButtonsSx,
           p: 0.5,
           display: 'grid',
+          gridTemplateColumns: 'auto auto',
           gap: 0.5,
         }}>
-          {!!props.onImageRegenerate && (
-            <GoodTooltip title='Draw again'>
-              <OverlayButton variant='outlined' onClick={props.onImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
-                <ReplayIcon />
-              </OverlayButton>
-            </GoodTooltip>
-          )}
 
           {(!!props.infoText || !!props.description) && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
-              <OverlayButton variant={infoOpen ? 'solid' : 'outlined'} onClick={() => setInfoOpen(open => !open)}>
+              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} onClick={handleToggleInfoOpen}>
                 <InfoOutlinedIcon />
               </OverlayButton>
             </GoodTooltip>
@@ -205,16 +224,37 @@ export const RenderImageURL = (props: {
           {!!props.imageURL && (
             <GoodTooltip title='Open in new tab'>
               {props.onOpenInNewTab ? (
-                <OverlayButton variant='outlined' onClick={props.onOpenInNewTab}>
+                <OverlayButton variant='soft' onClick={handleOpenInNewTab}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : props.imageURL.startsWith('http') ? (
-                <OverlayButton variant='outlined' component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank'>
+                <OverlayButton variant='soft' component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank'>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : <span />}
             </GoodTooltip>
           )}
+
+          {/* Regenerate [armed, arming] buttons */}
+          {regenArmed && (
+            <GoodTooltip title='Confirm Regeneration'>
+              <OverlayButton variant='soft' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '1' }}>
+                <ReplayIcon />
+              </OverlayButton>
+            </GoodTooltip>
+          )}
+
+          {!!onImageRegenerate && (
+            <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the current drawing configuration'}>
+              <OverlayButton variant={regenArmed ? 'solid' : 'soft'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
+                {regenArmed
+                  ? <CloseRoundedIcon />
+                  : <ReplayIcon />
+                }
+              </OverlayButton>
+            </GoodTooltip>
+          )}
+
         </Box>
       </Sheet>
 

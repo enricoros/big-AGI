@@ -54,7 +54,7 @@ function ContentPartImageRefDBlob(props: {
   const _recreationHeight = imageItemMetadata?.height || props.imageHeight;
 
   // async image regeneration
-  const { isLoading: isRegenerating, refetch: handleImageRegenerate } = useQuery({
+  const { isFetching: isRegenerating, refetch: handleImageRegenerate } = useQuery({
     enabled: false,
     queryKey: ['regen-image-asset', props.dataRefDBlobAssetId, recreationPrompt],
     queryFn: async ({ signal }) => {
@@ -117,6 +117,7 @@ function ContentPartImageRefDBlob(props: {
       description={overlayText}
       onOpenInNewTab={props.onOpenInNewTab}
       onImageRegenerate={(!!recreationPrompt && !isRegenerating) ? handleImageRegenerate : undefined}
+      className={isRegenerating ? 'agi-border-4' : undefined}
       scaledImageSx={props.scaledImageSx}
     />
   );

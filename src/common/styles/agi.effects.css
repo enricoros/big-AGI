@@ -1,0 +1,61 @@
+/* AGI processing - nice effects */
+@property --rotate {
+    syntax: "<angle>";
+    initial-value: 132deg;
+    inherits: false;
+}
+
+@keyframes rotation-loop {
+    0% {
+        --rotate: 0deg;
+    }
+    100% {
+        --rotate: 360deg;
+    }
+}
+
+.agi-border-4 {
+    /* config */
+    --border-width: 4px;
+    --border-radius: 2px;
+
+    z-index: 0;
+    position: relative;
+    border-radius: var(--border-width);
+}
+
+.agi-border-4 > * {
+    clip-path: inset(var(--border-width));
+    border-radius: var(--border-radius);
+    opacity: 0.96;
+}
+
+.agi-border-4::before {
+    content: "";
+    z-index: 0;
+    position: absolute;
+    inset: 0;
+    border-radius: var(--border-radius);
+    /*background-image: conic-gradient(*/
+    /*        from var(--rotate),*/
+    /*        #636B74, #0B6BCB, #1F7A1F*/
+    /*);*/
+    background-image: conic-gradient(
+            from var(--rotate),
+            violet, indigo, blue, green,
+            yellow, orange, red, violet
+    );
+    animation: rotation-loop 2.5s linear infinite;
+}
+
+/*.agi-border-4::after {*/
+/*    content: "";*/
+/*    z-index: -1;*/
+/*    position: absolute;*/
+/*    inset: 0;*/
+/*    margin: 0 auto;*/
+/*    transform: translate(0%, 20%) scale(0.8);*/
+/*    filter: blur(48px);*/
+/*    background-image: linear-gradient(var(--rotate), #5ddcff, #3c67e3 43%, #4e00c2);*/
+/*    animation: rotation-loop 2.5s linear infinite;*/
+/*}*/

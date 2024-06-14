@@ -11,6 +11,7 @@ import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
 import '~/common/styles/GithubMarkdown.css';
 import '~/common/styles/NProgress.css';
+import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
 
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
