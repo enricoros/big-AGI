@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -18,6 +17,9 @@ interface AppChatStore {
 
   autoSuggestDiagrams: boolean,
   setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => void;
+
+  autoSuggestHTMLUI: boolean;
+  setAutoSuggestHTMLUI: (autoSuggestHTMLUI: boolean) => void;
 
   autoSuggestQuestions: boolean,
   setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => void;
@@ -59,6 +61,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoSuggestDiagrams: false,
     setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => _set({ autoSuggestDiagrams }),
+
+    autoSuggestHTMLUI: false,
+    setAutoSuggestHTMLUI: (autoSuggestHTMLUI: boolean) => _set({ autoSuggestHTMLUI }),
 
     autoSuggestQuestions: false,
     setAutoSuggestQuestions: (autoSuggestQuestions: boolean) => _set({ autoSuggestQuestions }),
@@ -108,20 +113,23 @@ const useAppChatStore = create<AppChatStore>()(persist(
 ));
 
 
-export const useChatAutoAI = () => useAppChatStore(state => ({
+export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoSpeak: state.autoSpeak,
   autoSuggestDiagrams: state.autoSuggestDiagrams,
+  autoSuggestHTMLUI: state.autoSuggestHTMLUI,
   autoSuggestQuestions: state.autoSuggestQuestions,
   autoTitleChat: state.autoTitleChat,
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
+  setAutoSuggestHTMLUI: state.setAutoSuggestHTMLUI,
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
   setAutoTitleChat: state.setAutoTitleChat,
-}), shallow);
+})));
 
 export const getChatAutoAI = (): {
   autoSpeak: ChatAutoSpeakType,
   autoSuggestDiagrams: boolean,
+  autoSuggestHTMLUI: boolean,
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
 } => useAppChatStore.getState();
@@ -130,7 +138,7 @@ export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
-  useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
+  useAppChatStore(useShallow(state => [state.micTimeoutMs, state.setMicTimeoutMs]));
 
 export const useChatDrawerFilters = () => {
   const values = useAppChatStore(useShallow(state => ({
@@ -149,10 +157,10 @@ export const useChatDrawerFilters = () => {
 };
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>
-  useAppChatStore(state => [state.showTextDiff, state.setShowTextDiff], shallow);
+  useAppChatStore(useShallow(state => [state.showTextDiff, state.setShowTextDiff]));
 
 export const getChatShowSystemMessages = (): boolean =>
   useAppChatStore.getState().showSystemMessages;
 
 export const useChatShowSystemMessages = (): [boolean, (showSystemMessages: boolean) => void] =>
-  useAppChatStore(state => [state.showSystemMessages, state.setShowSystemMessages], shallow);
+  useAppChatStore(useShallow(state => [state.showSystemMessages, state.setShowSystemMessages]));

@@ -18,7 +18,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   const cHandler = ConversationsManager.getHandler(conversationId);
 
   // ai follow-up operations (fire/forget)
-  const { autoSpeak, autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
+  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // assistant placeholder
   const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
@@ -36,7 +36,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   };
   const messageStatus = await streamAssistantMessage(
     assistantLlmId,
-    history.map((m): VChatMessageIn => ({ role: m.role, content: messageSingleTextOrThrow(m) })),
+    instructions,
     'conversation',
     conversationId,
     parallelViewCount,
@@ -54,8 +54,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     void autoConversationTitle(conversationId, false);
   }
 
-  if (autoSuggestDiagrams || autoSuggestQuestions)
-    autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestQuestions);
+  if (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions)
+    autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   return messageStatus.outcome === 'success';
 }
