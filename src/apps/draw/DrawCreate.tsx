@@ -113,11 +113,12 @@ export function DrawCreate(props: {
   // state
   const [prompts, setPrompts] = React.useState<DesignerPrompt[]>([]);
 
+
   // external state
   const { queueState } = useProcessingQueue(props.queue);
   console.log('DrawCreate', { queueState });
-  // handlers
 
+  // handlers
   const handleStopDrawing = React.useCallback(() => {
     setPrompts([]);
   }, []);
@@ -171,35 +172,41 @@ export function DrawCreate(props: {
           }}
         >
 
+          {/* Gallery/Placeholders Grid */}
+          <Box sx={{
+            // my: 'auto',
+            mt: 'auto',
+            mx: 'auto',
+            border: '1px solid purple',
+            minHeight: '300px',
 
-          {/* Draw history (last 50) */}
+            // layout
+            display: 'grid',
+            gridTemplateColumns: props.isMobile
+              ? 'repeat(auto-fit, minmax(320px, 1fr))'
+              : 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',
+            gap: { xs: 2, md: 2 },
+          }}>
 
-          {/*<Box sx={{*/}
-          {/*  // my: 'auto',*/}
-          {/*  // display: 'flex', flexDirection: 'column', alignItems: 'center',*/}
-          {/*  border: DEBUG_LAYOUT ? '1px solid purple' : undefined,*/}
-          {/*  minHeight: '300px',*/}
+            {/*  {prompts.map((prompt, _index) => {*/}
+            {/*    return (*/}
+            {/*      <TempPromptImageGen*/}
+            {/*        key={prompt.dpId}*/}
+            {/*        prompt={prompt}*/}
+            {/*        sx={{*/}
+            {/*          border: DEBUG_LAYOUT ? '1px solid green' : undefined,*/}
+            {/*        }}*/}
+            {/*      />*/}
+            {/*    );*/}
 
-          {/*  // layout*/}
-          {/*  display: 'grid',*/}
-          {/*  gridTemplateColumns: props.isMobile*/}
-          {/*    ? 'repeat(auto-fit, minmax(320px, 1fr))'*/}
-          {/*    : 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',*/}
-          {/*  gap: { xs: 2, md: 2 },*/}
-          {/*}}>*/}
-          {/*  {prompts.map((prompt, _index) => {*/}
-          {/*    return (*/}
-          {/*      <TempPromptImageGen*/}
-          {/*        key={prompt.dpId}*/}
-          {/*        prompt={prompt}*/}
-          {/*        sx={{*/}
-          {/*          border: DEBUG_LAYOUT ? '1px solid green' : undefined,*/}
-          {/*        }}*/}
-          {/*      />*/}
-          {/*    );*/}
-          {/*  })}*/}
-          {/*</Box>*/}
 
+            <Box sx={{background:'red'}}>a</Box>
+            <Box>a</Box>
+            <Box>a</Box>
+            <Box>a</Box>
+            <Box>a</Box>
+            <Box>a</Box>
+          </Box>
 
           {/* Fallback */}
           <ZeroGenerations />
