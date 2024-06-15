@@ -1,9 +1,11 @@
 import * as React from 'react';
 
 import { FormControl, Switch } from '@mui/joy';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { Link } from '~/common/components/Link';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
 
@@ -33,40 +35,40 @@ export function AppChatSettingsAI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Diagrams'
-                      description={autoSuggestDiagrams ? 'LLM Diagrams' : 'Disabled'} />
+                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'No'} />
       <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
               endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title={autoSuggestHTMLUI ? <>Auto UI - <b>DANGER</b></> : 'Auto UI (alpha)'}
-                      description={autoSuggestHTMLUI ? 'Alpha, LLM HTML' : 'Disabled (great!)'}
-                      tooltip={autoSuggestHTMLUI ? <>
-                        SECUIRTY WARNING - THIS WILL TURN ON JS/HTML CODE EXECUTION ON CHAT MESSAGES!<br />
-                        Only here for testing purposes. Use with caution and at your own risk.
-                      </> : undefined} />
+      <FormLabelStart
+        title={<>
+          Auto UI · <b>ALPHA</b>
+          <GoodTooltip enableInteractive arrow title={<>
+            SECUIRTY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES
+            <hr />
+            Alpha quality, for testing only. Does not include state synchronization. Use at your own risk.
+            {' - '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/227'>#227</ExternalLink>
+            {', '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/228'>#228</ExternalLink>
+          </>}>
+            <WarningRoundedIcon sx={{ cursor: 'pointer', color: autoSuggestHTMLUI ? 'red' : 'danger.solidBg' }} />
+          </GoodTooltip>
+        </>}
+        description={autoSuggestHTMLUI ? 'Add UI (see warning)' : 'No'} />
       <Switch checked={autoSuggestHTMLUI} onChange={handleAutoSuggestHTMLUIChange}
               endDecorator={autoSuggestHTMLUI ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
-    <FormControl disabled orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto Questions'
-                      description={autoSuggestQuestions ? 'LLM Questions' : 'Disabled'}
-                      tooltip={<>Vote <Link href='https://github.com/enricoros/big-agi/issues/228' target='_blank'>#228</Link></>} />
-      <Switch checked={autoSuggestQuestions} onChange={handleAutoSuggestQuestionsChange}
-              endDecorator={autoSuggestQuestions ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
-
-    <FormControl disabled orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto UI'
-                      description={autoSuggestQuestions ? 'LLM User Interface' : 'Disabled'}
-                      tooltip={<>Vote <Link href='https://github.com/enricoros/big-agi/issues/227' target='_blank'>#227</Link></>} />
-      <Switch endDecorator={autoSuggestQuestions ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
+    {/*<FormControl disabled orientation='horizontal' sx={{ justifyContent: 'space-between' }}>*/}
+    {/*  <FormLabelStart title='Auto Questions'*/}
+    {/*                  description={autoSuggestQuestions ? 'LLM Questions' : 'No'}*/}
+    {/*                  tooltip={<>Vote <Link href='https://github.com/enricoros/big-agi/issues/228' target='_blank'>#228</Link></>} />*/}
+    {/*  <Switch checked={autoSuggestQuestions} onChange={handleAutoSuggestQuestionsChange}*/}
+    {/*          endDecorator={autoSuggestQuestions ? 'On' : 'Off'}*/}
+    {/*          slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />*/}
+    {/*</FormControl>*/}
 
   </>;
 }

@@ -11,6 +11,7 @@ export const GoodTooltip = (props: {
   title: React.ReactNode,
   placement?: 'top' | 'bottom' | 'top-start',
   isError?: boolean, isWarning?: boolean,
+  enableInteractive?: boolean,
   arrow?: boolean,
   usePlain?: boolean,
   children: React.JSX.Element,
@@ -19,7 +20,7 @@ export const GoodTooltip = (props: {
   <Tooltip
     title={props.title}
     placement={props.placement}
-    disableInteractive
+    disableInteractive={!props.enableInteractive}
     arrow={props.arrow}
     variant={(props.isError || props.isWarning) ? 'soft' : props.usePlain ? 'plain' : undefined}
     color={props.isError ? 'danger' : props.isWarning ? 'warning' : undefined}
