@@ -13,7 +13,7 @@ import { attachmentImageToFragmentViaDBlob } from './attachment.dblobs';
 
 // configuration
 export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = 'image/webp';
-export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.98;
+export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
 
