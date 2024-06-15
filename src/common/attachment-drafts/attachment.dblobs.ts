@@ -38,6 +38,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
   try {
     // Resize image if requested
     if (resizeMode) {
+      convertToMimeType = convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE;
       const resizedData = await resizeBase64ImageIfNeeded(mimeType, base64Data, resizeMode, convertToMimeType || DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY).catch(() => null);
       if (resizedData) {
         base64Data = resizedData.base64;
