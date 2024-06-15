@@ -48,7 +48,7 @@ export const llmsListModelsOutputSchema = z.object({
 
 // Chat Generation Input (some parts of)
 
-const generateContextNameSchema = z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-react-turn', 'draw-expand-prompt']);
+const generateContextNameSchema = z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-followup-htmlui', 'chat-react-turn', 'draw-expand-prompt']);
 export type GenerateContextNameSchema = z.infer<typeof generateContextNameSchema>;
 export const llmsGenerateContextSchema = z.object({
   method: z.literal('chat-generate'),

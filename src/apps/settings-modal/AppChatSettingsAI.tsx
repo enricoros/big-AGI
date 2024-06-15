@@ -11,11 +11,13 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 export function AppChatSettingsAI() {
 
   // external state
-  const { autoSuggestDiagrams, autoSuggestQuestions, autoTitleChat, setAutoSuggestDiagrams, setAutoSuggestQuestions, setAutoTitleChat } = useChatAutoAI();
+  const { autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat, setAutoSuggestDiagrams, setAutoSuggestHTMLUI, setAutoSuggestQuestions, setAutoTitleChat } = useChatAutoAI();
 
   const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoTitleChat(event.target.checked);
 
   const handleAutoSuggestDiagramsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestDiagrams(event.target.checked);
+
+  const handleAutoSuggestHTMLUIChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestHTMLUI(event.target.checked);
 
   const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
 
@@ -34,6 +36,14 @@ export function AppChatSettingsAI() {
                       description={autoSuggestDiagrams ? 'LLM Diagrams' : 'Disabled'} />
       <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
               endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Auto UI (simple)'
+                      description={autoSuggestHTMLUI ? 'LLM HTML UI' : 'Disabled'} />
+      <Switch checked={autoSuggestHTMLUI} onChange={handleAutoSuggestHTMLUIChange}
+              endDecorator={autoSuggestHTMLUI ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
