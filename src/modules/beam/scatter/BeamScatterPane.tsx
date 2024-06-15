@@ -5,6 +5,7 @@ import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import PlusOneRoundedIcon from '@mui/icons-material/PlusOneRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -19,6 +20,9 @@ import { beamPaneSx } from '../BeamCard';
 const scatterPaneSx: SxProps = {
   ...beamPaneSx,
   backgroundColor: 'background.popup',
+
+  // col gap is pad/2 (8px), row is double (1rem)
+  rowGap: 'var(--Pad)',
 
   // [desktop] scatter: primary-chan shadow
   // boxShadow: '0px 6px 12px -8px rgb(var(--joy-palette-primary-darkChannel) / 35%)',
@@ -39,10 +43,11 @@ const desktopScatterPaneSx: SxProps = {
 
 
 export function BeamScatterPane(props: {
-  beamStore: BeamStoreApi
+  beamStore: BeamStoreApi,
   isMobile: boolean,
   rayCount: number,
   setRayCount: (n: number) => void,
+  showRayAdd: boolean
   startEnabled: boolean,
   startBusy: boolean,
   onStart: () => void,
@@ -95,13 +100,26 @@ export function BeamScatterPane(props: {
                   // backgroundColor: isActive ? 'background.popup' : undefined,
                   backgroundColor: isActive ? `${SCATTER_COLOR}.softBg` : 'background.popup',
                   fontWeight: isActive ? 'xl' : 400, /* reset, from 600 */
-                  width: '3.125rem',
+                  width: '3rem',
                 }}
               >
                 {`x${n}`}
               </Button>
             );
           })}
+          {props.showRayAdd && (
+            <Button
+              color='neutral'
+              size='sm'
+              onClick={() => props.setRayCount(props.rayCount + 1)}
+              sx={{
+                backgroundColor: 'background.popup',
+                width: '3rem',
+              }}
+            >
+              <PlusOneRoundedIcon />
+            </Button>
+          )}
         </ButtonGroup>
       </FormControl>
 
