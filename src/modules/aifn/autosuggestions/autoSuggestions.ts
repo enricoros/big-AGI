@@ -2,7 +2,8 @@ import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modul
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { attachmentWrapText } from '~/common/stores/chat/chat.tokens';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -25,22 +26,45 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
   },
 };*/
 
+
+const suggestPlantUMLSystemPrompt = `
+You are a helpful AI assistant skilled in creating diagrams. Analyze the conversation and user persona below to determine if a PlantUML or MermaidJS diagram would complement or enhance the user's understanding.
+
+Rate the diagram's usefulness (1-5): 1: Misleading, unnecessary or duplicate, 2: Not a fit or trivial, 3: Potentially useful to the user, 4: Very useful, 5: Essential.
+
+Only if the rating is 3, 4, or 5, generate the diagram code.
+
+Assistant personality type:
+{{personaSystemPrompt}}
+
+Analyze the following short exchange and call the function \`draw_plantuml_diagram\` with the diagram code only if the score is 3, 4 or 5.
+`;
+
+
 const suggestPlantUMLFn: VChatFunctionIn = {
   name: 'draw_plantuml_diagram',
   description: 'Generates a PlantUML diagram or mindmap from the last message, if applicable, relevant, and no other diagrams are present.',
   parameters: {
     type: 'object',
     properties: {
+      rating_short_reason: {
+        type: 'string',
+        description: 'A 4-10 words reason on whether the diagram would desired by the user or not.',
+      },
+      rating_number: {
+        type: 'number',
+        description: 'The relevance of the diagram to the conversation, on a scale of 1 to 5. If 1 or 2, do not proceed and stop right here.',
+      },
       type: {
         type: 'string',
-        description: 'The suitable type of diagram. Options: sequence, class, usecase, activity, component, state, object, deployment, wireframe, mindmap, gantt, flowchart, or an empty string.',
+        description: 'The most suitable PlantUML diagram type: sequence, class, use case, activity, component, state, object, deployment, wireframe, mindmap, gantt, flowchart, or an empty string.',
       },
       code: {
         type: 'string',
-        description: 'A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram or mindmap, or an empty string. Use quotation marks for proper escaping, avoid external references and avoid unescaped spaces in participants/actors.',
+        description: 'A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram or mindmap (@startmindmap...@endmindmap), or empty. No external references allowed. Use one or more asterisks to indent and separate with spaces.',
       },
     },
-    required: ['type', 'code'],
+    required: ['rating_short_reason', 'rating_number'],
   },
 };
 
@@ -69,7 +93,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Execute the following follow-ups in parallel
   // const assistantMessageId = assistantMessage.id;
-  let assistantMessageText = messageFragmentsReduceText(assistantMessage.fragments);
+  const assistantMessageText = messageFragmentsReduceText(assistantMessage.fragments);
 
   // Follow-up: Question
   if (suggestQuestions) {
@@ -83,11 +107,14 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
     // });
   }
 
-  // Follow-up: Auto-Diagrams
-  if (suggestDiagrams) {
+  // Follow-up: Auto-Diagrams if the assistant text does not contain @startuml / @startmindmap already
+  if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
     const instructions: VChatMessageIn[] = [
-      { role: 'system', content: messageSingleTextOrThrow(systemMessage) },
-      { role: 'user', content: messageSingleTextOrThrow(userMessage) },
+      {
+        role: 'system', content: suggestPlantUMLSystemPrompt
+          .replace('{{personaSystemPrompt}}', attachmentWrapText(messageFragmentsReduceText(systemMessage.fragments), '', 'markdown-code')),
+      },
+      { role: 'user', content: messageFragmentsReduceText(userMessage.fragments) },
       { role: 'assistant', content: assistantMessageText },
     ];
     llmChatGenerateOrThrow(
@@ -112,7 +139,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // append the PlantUML diagram to the assistant response
           const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextContentFragment(assistantMessageId, assistantMessageText + `\n\n\`\`\`${type}.diagram\n${plantUML}\n\`\`\`\n`, true, true); // [chat] assistant:+PlantUML diagram
+          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(plantUML, `${type}.auto-diagram`, 'markdown-code'), true, true);
         }
       }
     }).catch(err => {
