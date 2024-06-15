@@ -28,6 +28,13 @@ export const IFrameComponent = (props: { htmlString: string }) => {
         iframeDoc.open();
         iframeDoc.write(props.htmlString);
         iframeDoc.close();
+
+        // Adding this event listener to prevent arrow keys from scrolling the parent page
+        iframeDoc.addEventListener('keydown', (event) => {
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            event.preventDefault();
+          }
+        });
       }
     }
   }, [props.htmlString]);
