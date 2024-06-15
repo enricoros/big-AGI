@@ -25,9 +25,23 @@ export const IFrameComponent = (props: { htmlString: string }) => {
     if (iframeRef.current) {
       const iframeDoc = iframeRef.current.contentWindow?.document;
       if (iframeDoc) {
+        // Note: not using this for now (2024-06-15), or it would remove the JS code
+        // which is what makes the HTML interactive.
+        // Sanitize the HTML string to remove any potentially harmful content
+        // const sanitizedHtml = DOMPurify.sanitize(props.htmlString);
+
         iframeDoc.open();
         iframeDoc.write(props.htmlString);
         iframeDoc.close();
+
+        // Enhanced Security with Content Security Policy
+        // NOTE: 2024-06-15 disabled until we understand exactly all the implications
+        // In theory we want script from self, images from everywhere, and styles from self
+        // const meta = iframeDoc.createElement('meta');
+        // meta.httpEquiv = 'Content-Security-Policy';
+        // // meta.content = 'default-src \'self\'; script-src \'self\';';
+        // meta.content = 'script-src \'self\' \'unsafe-inline\';';
+        // iframeDoc.head.appendChild(meta);
 
         // Adding this event listener to prevent arrow keys from scrolling the parent page
         iframeDoc.addEventListener('keydown', (event) => {
@@ -45,11 +59,16 @@ export const IFrameComponent = (props: { htmlString: string }) => {
       style={{
         flexGrow: 1,
         width: '100%',
-        height: '50svh',
+        height: '54svh',
         border: 'none',
         boxSizing: 'border-box',
+        maxWidth: '100%',
+        maxHeight: '100%',
       }}
-      title='HTML content'
+      title='Sandboxed Web Content'
+      aria-label='Interactive content frame'
+      sandbox='allow-scripts allow-same-origin allow-forms' // restrict to only these
+      loading='lazy' // do not load until visible in the viewport
     />
   );
 };
@@ -74,7 +93,8 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
       <Box
         sx={{
           minWidth: { sm: '480px', md: '750px', lg: '950px', xl: '1200px' },
-          mx: 0, p: 1.5, // this block gets a thicker border
+          mx: 0,
+          p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',
           '&:hover > .overlay-buttons': { opacity: 1 },
