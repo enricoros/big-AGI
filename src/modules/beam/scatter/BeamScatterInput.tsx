@@ -29,10 +29,11 @@ const userMessageWrapperINVSx: SxProps = {
 };
 
 const userChatMessageSx: SxProps = {
-  border: '1px solid',
-  borderColor: 'primary.outlinedBorder',
+  border: 'none',
+  // border: '1px solid',
+  // borderBottom: 'none',
+  // borderColor: 'primary.outlinedBorder',
   borderRadius: 'md',
-  borderBottom: 'none',
   borderBottomLeftRadius: 0,
   borderBottomRightRadius: 0,
   // px: '0.5rem',
