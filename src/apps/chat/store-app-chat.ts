@@ -134,6 +134,9 @@ export const getChatAutoAI = (): {
   autoTitleChat: boolean,
 } => useAppChatStore.getState();
 
+export const useChatAutoSuggestHTMLUI = (): boolean =>
+  useAppChatStore(state => state.autoSuggestHTMLUI);
+
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);
 

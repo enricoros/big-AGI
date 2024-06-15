@@ -23,7 +23,7 @@ import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessag
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { gcChatImageAssets } from '../editors/image-generate';
-import { useChatShowSystemMessages } from '../store-app-chat';
+import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
 
 
 /**
@@ -54,6 +54,7 @@ export function ChatMessageList(props: {
   // external state
   const { notifyBooting } = useScrollToBottom();
   const { openPreferencesTab } = useOptimaLayout();
+  const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
   const { conversationMessages, historyTokenCount, deleteMessage, editMessage, editMessageFragment, setMessages } = useChatStore(useShallow(state => {
@@ -288,6 +289,7 @@ export function ChatMessageList(props: {
               isBottom={idx === count - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
+              showUnsafeHtml={danger_experimentalHtmlWebUi}
               onMessageAssistantFrom={handleMessageAssistantFrom}
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}

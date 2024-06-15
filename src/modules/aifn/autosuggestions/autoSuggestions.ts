@@ -75,14 +75,16 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 const suggestUISystemPrompt = `
 You are a helpful AI assistant skilled in creating user interfaces. Analyze the conversation and user persona below to determine if an HTML user interface would complement or enhance the user's understanding.
 
-Rate the UI's usefulness (1-5): 1: Misleading, unnecessary or duplicate, 2: Not a fit or trivial, 3: Potentially useful to the user, 4: Very useful, 5: Essential.
+Rate the UI's usefulness (1-5): 1: Misleading, unnecessary or duplicate, 2: Not a fit or trivial, 3: Potentially useful or thought provoking to the user, 4: Very useful, 5: Essential.
 
-Only if the rating is 3, 4, or 5, generate the HTML code.
+Only if the rating is 3, 4, or 5, generate the HTML code. Ensure the generated UI is visual and interactive to enhance user engagement.
 
 Assistant personality type:
 {{personaSystemPrompt}}
 
 Analyze the following short exchange and call the function \`generate_web_ui\` with the HTML code only if the score is 3, 4 or 5.
+
+I want you to consider this as an exercise in creativity and problem-solving to enhance the user experience. Try hard to think of a great UI to visualize or solve the problem at hand.
 `;
 
 const suggestUIFn: VChatFunctionIn = {
@@ -91,6 +93,10 @@ const suggestUIFn: VChatFunctionIn = {
   parameters: {
     type: 'object',
     properties: {
+      possible_ui_requirements: {
+        type: 'string',
+        description: 'Brief (10 words) to medium length (40 words) requirements for the UI. Include the main features, looks, layout.',
+      },
       rating_short_reason: {
         type: 'string',
         description: 'A 4-10 words reason on whether the UI would be desired by the user or not.',
@@ -101,10 +107,10 @@ const suggestUIFn: VChatFunctionIn = {
       },
       html: {
         type: 'string',
-        description: 'A valid HTML string containing the user interface code. The code should be complete, with no dependencies, lower case, and include minimal inline CSS if needed.',
+        description: 'A valid HTML string containing the user interface code. The code should be complete, with no dependencies, lower case, and include minimal inline CSS if needed. The UI should be visual and interactive.',
       },
     },
-    required: ['rating_short_reason', 'rating_number'],
+    required: ['possible_ui_requirements', 'rating_short_reason', 'rating_number'],
   },
 };
 
@@ -179,7 +185,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // append the PlantUML diagram to the assistant response
           const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(plantUML, `${type}.auto-diagram`, 'markdown-code'), true, true);
+          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(plantUML, `auto-${type}.diagram`, 'markdown-code'), true, true);
         }
       }
     }).catch(_err => {
@@ -213,14 +219,14 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // validate the code
           const htmlUI = html.trim();
-          if (!htmlUI.startsWith('<html')) {
+          if (!['<!DOCTYPE', '<html', '<HTML', '<Html'].some(s => htmlUI.includes(s))) {
             console.log(`autoSuggestions: invalid generated HTML: ${htmlUI.slice(0, 20)}...`);
             return;
           }
 
           // append the HTML UI to the assistant response
           const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(htmlUI, 'auto-ui.html', 'markdown-code'), true, true);
+          cHandler.messageAppendTextContentFragment(assistantMessageId, 'Since you turned on the "Auto UI" setting:\n' + attachmentWrapText(htmlUI, 'auto-web-ui.html', 'markdown-code'), true, true);
         }
       }
     }).catch(_err => {
