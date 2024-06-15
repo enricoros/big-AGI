@@ -159,6 +159,9 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const canStackBlitz = blockComplete && isStackBlitzSupported(inferredCodeLanguage);
 
 
+  const showBlockTitle = blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://'));
+
+
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
     copyToClipboard(blockCode, 'Code');
@@ -175,7 +178,8 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
           whiteSpace: softWrap ? 'break-spaces' : 'pre', // was 'break-spaces' before we implemented per-block scrolling
-          mx: 0, p: 1.5, // this block gets a thicker border
+          mx: 0,
+          p: (renderHTML && !showBlockTitle) ? 0 : 1.5, // this block gets a thicker border (but we zoom html in a special no-title case)
           display: 'flex',
           flexDirection: 'column',
           // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
@@ -190,7 +194,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         }}>
 
         {/* Markdown Title (File/Type) */}
-        {blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://')) && (
+        {showBlockTitle && (
           <Sheet sx={{ backgroundColor: 'background.surface', boxShadow: 'xs', borderRadius: 'xs', m: -0.5, mb: 1.5 }}>
             <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }}>
               {blockTitle}
