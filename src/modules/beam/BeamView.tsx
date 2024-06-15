@@ -30,7 +30,10 @@ export function BeamView(props: {
 
   // external state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
-  const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
+  const { cardAdd, gatherAutoStartAfterScatter } = useModuleBeamStore(useShallow(state => ({
+    cardAdd: state.cardAdd,
+    gatherAutoStartAfterScatter: state.gatherAutoStartAfterScatter,
+  })));
   const {
     /* root */ editInputHistoryMessageFragment,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
@@ -158,6 +161,7 @@ export function BeamView(props: {
         isMobile={props.isMobile}
         rayCount={raysCount}
         setRayCount={handleRaySetCount}
+        showRayAdd={!cardAdd}
         startEnabled={inputReady}
         startBusy={isScattering}
         onStart={handleScatterStart}
@@ -171,6 +175,7 @@ export function BeamView(props: {
         beamStore={props.beamStore}
         isMobile={props.isMobile}
         rayIds={rayIds}
+        showRayAdd={cardAdd}
         hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
         // linkedLlmId={currentGatherLlmId}

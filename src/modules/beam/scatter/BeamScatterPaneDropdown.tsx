@@ -68,6 +68,7 @@ export function BeamScatterDropdown(props: {
   // external state
   const {
     presets, addPreset, deletePreset,
+    cardAdd, toggleCardAdd,
     cardScrolling, toggleCardScrolling,
     scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
@@ -154,6 +155,11 @@ export function BeamScatterDropdown(props: {
         <MenuItem onClick={toggleScatterShowPrevMessages}>
           <ListItemDecorator>{scatterShowPrevMessages && <CheckRoundedIcon />}</ListItemDecorator>
           History
+        </MenuItem>
+
+        <MenuItem onClick={toggleCardAdd}>
+          <ListItemDecorator>{cardAdd && <CheckRoundedIcon />}</ListItemDecorator>
+          Large Add
         </MenuItem>
 
         <MenuItem onClick={toggleCardScrolling}>

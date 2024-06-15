@@ -20,6 +20,7 @@ export interface BeamConfigSnapshot {
 interface ModuleBeamState {
   presets: BeamConfigSnapshot[];
   lastConfig: BeamConfigSnapshot | null;
+  cardAdd: boolean;
   cardScrolling: boolean;
   scatterShowLettering: boolean;
   scatterShowPrevMessages: boolean;
@@ -35,6 +36,7 @@ interface ModuleBeamStore extends ModuleBeamState {
   updateLastConfig: (update: Partial<BeamConfigSnapshot>) => void;
   deleteLastConfig: () => void;
 
+  toggleCardAdd: () => void;
   toggleCardScrolling: () => void;
   toggleScatterShowLettering: () => void;
   toggleScatterShowPrevMessages: () => void;
@@ -48,6 +50,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     presets: [],
     lastConfig: null,
+    cardAdd: true,
     cardScrolling: false,
     scatterShowLettering: false,
     scatterShowPrevMessages: false,
@@ -82,6 +85,8 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     deleteLastConfig: () => _set({ lastConfig: null }),
 
+
+    toggleCardAdd: () => _set(state => ({ cardAdd: !state.cardAdd })),
 
     toggleCardScrolling: () => _set(state => ({ cardScrolling: !state.cardScrolling })),
 
