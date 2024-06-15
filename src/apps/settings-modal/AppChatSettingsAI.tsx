@@ -40,8 +40,12 @@ export function AppChatSettingsAI() {
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto UI (simple)'
-                      description={autoSuggestHTMLUI ? 'LLM HTML UI' : 'Disabled'} />
+      <FormLabelStart title={autoSuggestHTMLUI ? <>Auto UI - <b>DANGER</b></> : 'Auto UI (alpha)'}
+                      description={autoSuggestHTMLUI ? 'Alpha, LLM HTML' : 'Disabled (great!)'}
+                      tooltip={autoSuggestHTMLUI ? <>
+                        SECUIRTY WARNING - THIS WILL TURN ON JS/HTML CODE EXECUTION ON CHAT MESSAGES!<br />
+                        Only here for testing purposes. Use with caution and at your own risk.
+                      </> : undefined} />
       <Switch checked={autoSuggestHTMLUI} onChange={handleAutoSuggestHTMLUIChange}
               endDecorator={autoSuggestHTMLUI ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
