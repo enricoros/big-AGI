@@ -12,7 +12,7 @@ const drawCreateWorker: ItemAsyncWorker<DesignerPrompt> = async (item, _update, 
     item.prompt,
     item._repeatCount,
     'global', 'app-draw',
-  );
+  ).catch(console.error);
   return item;
 };
 

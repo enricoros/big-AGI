@@ -17,8 +17,8 @@ export async function requestPersistentStorage(): Promise<boolean> {
       }
 
       const isGranted = await navigator.storage.persist();
-      if (DEBUG_PERSISTENCE)
-        console.log(`Persistent storage granted: ${isGranted}`, await estimatePersistentStorageOrThrow());
+      if (DEBUG_PERSISTENCE || !isGranted)
+        console.warn('Persistent storage granted', isGranted, /*await navigator.storage.getDirectory(),*/ await estimatePersistentStorageOrThrow());
       return isGranted;
     }
   } catch (error) {
