@@ -5,6 +5,7 @@ import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, A
 import AddIcon from '@mui/icons-material/Add';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
@@ -45,7 +46,7 @@ const Topics = styled(AccordionGroup)(({ theme }) => ({
   },
 }));
 
-function Topic(props: { title?: string, icon?: string | React.ReactNode, startCollapsed?: boolean, children?: React.ReactNode }) {
+function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode, startCollapsed?: boolean, children?: React.ReactNode }) {
 
   // state
   const [expanded, setExpanded] = React.useState(props.startCollapsed !== true);
@@ -164,7 +165,7 @@ export function SettingsModal(props: {
             <Topic>
               <AppChatSettingsUI />
             </Topic>
-            <Topic icon='🧠' title='Chat AI' startCollapsed>
+            <Topic icon='🧠' title={<>Chat AI <WarningRoundedIcon sx={{ ml: 1, color: 'orangered' }} /></>} startCollapsed>
               <AppChatSettingsAI />
             </Topic>
             <Topic icon={<ScienceIcon />} title='Labs' startCollapsed>

@@ -109,6 +109,10 @@ const suggestUIFn: VChatFunctionIn = {
         type: 'string',
         description: 'A valid HTML string containing the user interface code. The code should be complete, with no dependencies, lower case, and include minimal inline CSS if needed. The UI should be visual and interactive.',
       },
+      file_name: {
+        type: 'string',
+        description: 'Short letters-and-dashes file name of the HTML without the .html extension',
+      },
     },
     required: ['possible_ui_requirements', 'rating_short_reason', 'rating_number'],
   },
@@ -185,7 +189,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // append the PlantUML diagram to the assistant response
           const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(plantUML, `auto-${type}.diagram`, 'markdown-code'), true, true);
+          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(plantUML, `[Auto Diagram] ${type}.diagram`, 'markdown-code'), true, true);
         }
       }
     }).catch(_err => {
@@ -214,19 +218,22 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
       // parse the output HTML string, if any
       const functionArguments = chatResponse.function_arguments ?? null;
       if (functionArguments) {
-        const { html }: { html: string } = functionArguments as any;
+        const { html, file_name }: { html: string, file_name: string } = functionArguments as any;
         if (html) {
 
           // validate the code
           const htmlUI = html.trim();
-          if (!['<!DOCTYPE', '<html', '<HTML', '<Html'].some(s => htmlUI.includes(s))) {
+          if (!['<!DOCTYPE', '<!doctype', '<html', '<HTML', '<Html'].some(s => htmlUI.includes(s))) {
             console.log(`autoSuggestions: invalid generated HTML: ${htmlUI.slice(0, 20)}...`);
             return;
           }
 
           // append the HTML UI to the assistant response
           const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextContentFragment(assistantMessageId, 'Since you turned on the "Auto UI" setting:\n' + attachmentWrapText(htmlUI, 'auto-web-ui.html', 'markdown-code'), true, true);
+          const fileName = (file_name || 'ui').trim().replace(/[^a-zA-Z0-9-]/g, '') + '.html';
+          const fragmentCodeBlock = attachmentWrapText(htmlUI, '[Auto UI] ' + fileName, 'markdown-code');
+          const fragmentText = `Example of Generative User Interface ("Auto UI" setting):\n${fragmentCodeBlock}`;
+          cHandler.messageAppendTextContentFragment(assistantMessageId, fragmentText, true, true);
         }
       }
     }).catch(_err => {
