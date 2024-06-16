@@ -34,17 +34,9 @@ export function AppChatSettingsAI() {
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto Diagrams'
-                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'No'} />
-      <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
-              endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart
         title={<>
-          Auto UI · <b>ALPHA</b>
+          <b>Generative UI · Alpha</b>
           <GoodTooltip enableInteractive arrow title={<>
             SECUIRTY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES
             <hr />
@@ -52,14 +44,23 @@ export function AppChatSettingsAI() {
             {' - '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/227'>#227</ExternalLink>
             {', '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/228'>#228</ExternalLink>
           </>}>
-            <WarningRoundedIcon sx={{ cursor: 'pointer', color: autoSuggestHTMLUI ? 'red' : 'danger.solidBg' }} />
+            <WarningRoundedIcon sx={{ cursor: 'pointer', color: autoSuggestHTMLUI ? 'red' : 'orangered' }} />
           </GoodTooltip>
         </>}
-        description={autoSuggestHTMLUI ? 'Add UI (see warning)' : 'No'} />
+        description={autoSuggestHTMLUI ? 'Auto-Render HTML' : 'No'} />
       <Switch checked={autoSuggestHTMLUI} onChange={handleAutoSuggestHTMLUIChange}
               endDecorator={autoSuggestHTMLUI ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Generative Diagrams'
+                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'No'} />
+      <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
+              endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
+
 
     {/*<FormControl disabled orientation='horizontal' sx={{ justifyContent: 'space-between' }}>*/}
     {/*  <FormLabelStart title='Auto Questions'*/}

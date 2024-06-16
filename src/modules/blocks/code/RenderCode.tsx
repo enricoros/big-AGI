@@ -18,7 +18,7 @@ import type { CodeBlock } from '../blocks';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
 import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
 import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
-import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
+import { heuristicIsBlockTextHTML, IFrameComponent } from '../RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
 
@@ -127,7 +127,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 
   // heuristics for specialized rendering
 
-  const isHTML = heuristicIsHtml(blockCode);
+  const isHTML = heuristicIsBlockTextHTML(blockCode);
   const renderHTML = isHTML && showHTML;
 
   const isMermaid = blockTitle === 'mermaid' && blockComplete;

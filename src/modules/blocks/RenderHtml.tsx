@@ -12,9 +12,8 @@ import { OverlayButton, overlayButtonsSx } from './code/RenderCode';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)
-export function heuristicIsHtml(text: string): boolean {
-  // noinspection HtmlRequiredTitleElement
-  return text.startsWith('<!DOCTYPE html') || text.startsWith('<head>\n');
+export function heuristicIsBlockTextHTML(text: string): boolean {
+  return ['<!DOCTYPE html', '<!doctype html', '<head'].some((start) => text.startsWith(start));
 }
 
 
