@@ -1,6 +1,8 @@
 import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 
 import { browserLangOrUS } from '~/common/util/pwaUtils';
+import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
+import { suggestUIMixin } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
 /*type Variables =
   | '{{Today}}'
@@ -43,6 +45,13 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
 
   let mixed = _template;
 
+  // If Auto-Follow-Ups are enabled, forcefully add text
+  const { autoSuggestHTMLUI, autoSuggestDiagrams } = getChatAutoAI();
+  if (autoSuggestHTMLUI)
+    mixed += (mixed.endsWith('\n') ? '' : '\n') + '{{AutoSuggestHTMLUI}}';
+  // if (autoSuggestDiagrams)
+  //   mixed += (mixed.endsWith('\n') ? '' : '\n') + '{{AutoSuggestDiagrams}}';
+
   // {{Today}} - yyyy-mm-dd but in user's local time, not UTC
   const today = new Date();
   const varToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
@@ -76,6 +85,9 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   // {{Input...}} / {{Tool...}} - TBA
   mixed = mixed.replace('{{InputImage0}}', 'Image input capabilities: Disabled');
   mixed = mixed.replace('{{ToolBrowser0}}', 'Web browsing capabilities: Disabled');
+  // {{AutoSuggest...}}
+  mixed = mixed.replace('{{AutoSuggestHTMLUI}}', suggestUIMixin);
+  // mixed = mixed.replace('{{AutoSuggestDiagrams}}', suggestDiagramMixin);
 
   // {{Cutoff}} or remove the line
   let varCutoff: string | undefined;
