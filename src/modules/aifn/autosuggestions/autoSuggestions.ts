@@ -29,6 +29,10 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 
 // Auto-Diagram
 
+const suggestDiagramFunctionName = 'draw_plantuml_diagram';
+
+// export const suggestDiagramMixin = `Please defer diagram generation to the \`${suggestDiagramFunctionName}\` function, IF defined.`;
+
 const suggestPlantUMLSystemPrompt = `
 You are a helpful AI assistant skilled in creating diagrams. Analyze the conversation and user persona below to determine if a PlantUML or MermaidJS diagram would complement or enhance the user's understanding.
 
@@ -39,11 +43,11 @@ Only if the rating is 3, 4, or 5, generate the diagram code.
 Assistant personality type:
 {{personaSystemPrompt}}
 
-Analyze the following short exchange and call the function \`draw_plantuml_diagram\` with the diagram code only if the score is 3, 4 or 5.
-`;
+Analyze the following short exchange and call the function \`${suggestDiagramFunctionName}\` with the diagram code only if the score is 3, 4 or 5.
+`.trim();
 
 const suggestPlantUMLFn: VChatFunctionIn = {
-  name: 'draw_plantuml_diagram',
+  name: suggestDiagramFunctionName,
   description: 'Generates a PlantUML diagram or mindmap from the last message, if applicable, relevant, and no other diagrams are present.',
   parameters: {
     type: 'object',
@@ -72,6 +76,10 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 
 // Auto-HTML-UI
 
+const suggestUIFunctionName = 'generate_web_ui';
+
+export const suggestUIMixin = `User inferace generation: only via the \`${suggestUIFunctionName}\` function, IF defined`;
+
 const suggestUISystemPrompt = `
 You are a helpful AI assistant skilled in creating user interfaces. Analyze the conversation and user persona below to determine if an HTML user interface would complement or enhance the user's understanding.
 
@@ -82,13 +90,13 @@ Only if the rating is 3, 4, or 5, generate the HTML code. Ensure the generated U
 Assistant personality type:
 {{personaSystemPrompt}}
 
-Analyze the following short exchange and call the function \`generate_web_ui\` with the HTML code only if the score is 3, 4 or 5.
+Analyze the following short exchange and call the function \`${suggestUIFunctionName}\` with the HTML code only if the score is 3, 4 or 5.
 
 I want you to consider this as an exercise in creativity and problem-solving to enhance the user experience. Try hard to think of a great UI to visualize or solve the problem at hand.
-`;
+`.trim();
 
 const suggestUIFn: VChatFunctionIn = {
-  name: 'generate_web_ui',
+  name: suggestUIFunctionName,
   description: 'Renders a web UI when provided with a single concise HTML5 string (can include CSS and JS), if applicable, relevant, and no other UIs are present.',
   parameters: {
     type: 'object',
@@ -171,7 +179,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
       funcLLMId,
       instructions,
       'chat-followup-diagram', conversationId,
-      [suggestPlantUMLFn], 'draw_plantuml_diagram',
+      [suggestPlantUMLFn], suggestDiagramFunctionName,
     ).then(chatResponse => {
       // cheap way to check if the function was supported
       if (!('function_arguments' in chatResponse))
@@ -209,7 +217,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
       funcLLMId,
       instructions,
       'chat-followup-htmlui', conversationId,
-      [suggestUIFn], 'generate_web_ui',
+      [suggestUIFn], suggestUIFunctionName,
     ).then(chatResponse => {
       // cheap way to check if the function was supported
       if (!('function_arguments' in chatResponse))
