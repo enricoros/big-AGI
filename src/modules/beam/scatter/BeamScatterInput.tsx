@@ -5,7 +5,7 @@ import { Box, Typography } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import type { DMessage, DMessageFragment, DMessageId } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageFragment, DMessageFragmentId, DMessageId } from '~/common/stores/chat/chat.message';
 
 import { BEAM_INVERT_BACKGROUND } from '../beam.config';
 import { useModuleBeamStore } from '../store-module-beam';
@@ -49,7 +49,7 @@ const userChatMessageSx: SxProps = {
 export function BeamScatterInput(props: {
   isMobile: boolean,
   history: DMessage[] | null,
-  onMessageFragmentEdit: (messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => void,
+  onMessageFragmentReplace: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
 }) {
 
   // state
@@ -93,7 +93,7 @@ export function BeamScatterInput(props: {
         showAvatar={true}
         adjustContentScaling={-1}
         topDecorator={userMessageDecorator}
-        onMessageFragmentEdit={props.onMessageFragmentEdit}
+        onMessageFragmentReplace={props.onMessageFragmentReplace}
         sx={userChatMessageSx}
       />
     </Box>

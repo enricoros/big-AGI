@@ -7,7 +7,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { createTextContentFragment, DMessageContentFragment, DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId, DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.message';
 
 import { explainServiceErrors } from './explainServiceErrors';
 
@@ -17,11 +17,11 @@ import { explainServiceErrors } from './explainServiceErrors';
  */
 export function ContentPartText(props: {
   textPart: DMessageTextPart,
-  fragmentIndex: number,
+  fragmentId: DMessageFragmentId,
 
   isEditingContent: boolean,
   setIsEditingContent: (isEditing: boolean) => void,
-  onFragmentEdit?: (fragmentIndex: number, newFragment: DMessageContentFragment) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 
   messageRole: DMessageRole,
   messageOriginLLM?: string,
@@ -42,14 +42,14 @@ export function ContentPartText(props: {
 }) {
 
   // derived state
-  const { onFragmentEdit, fragmentIndex } = props;
+  const { onFragmentReplace, fragmentId } = props;
   const messageText = props.textPart.text;
   const fromAssistant = props.messageRole === 'assistant';
 
   const handleTextEdit = React.useCallback((newText: string) => {
     if (messageText !== newText)
-      onFragmentEdit?.(fragmentIndex, createTextContentFragment(newText));
-  }, [messageText, onFragmentEdit, fragmentIndex]);
+      onFragmentReplace?.(fragmentId, createTextContentFragment(newText));
+  }, [fragmentId, messageText, onFragmentReplace]);
 
   const { errorMessage } = React.useMemo(
     () => explainServiceErrors(messageText, fromAssistant, props.messageOriginLLM),

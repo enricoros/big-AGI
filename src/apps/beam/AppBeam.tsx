@@ -9,15 +9,15 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
-import { createTextContentDMessage, DMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
 function initTestConversation(): DConversation {
   const conversation = createDConversation();
-  conversation.messages.push(createTextContentDMessage('system', 'You are a helpful assistant.')); // Beam Test - seed1
-  conversation.messages.push(createTextContentDMessage('user', 'Hello, who are you? (please expand...)')); // Beam Test - seed2
+  conversation.messages.push(createDMessageTextContent('system', 'You are a helpful assistant.')); // Beam Test - seed1
+  conversation.messages.push(createDMessageTextContent('user', 'Hello, who are you? (please expand...)')); // Beam Test - seed2
   return conversation;
 }
 

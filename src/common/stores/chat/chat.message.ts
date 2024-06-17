@@ -121,15 +121,15 @@ export type DMessageUserFlag =
 
 // helpers - creation
 
-export function createEmptyDMessage(role: DMessageRole) {
-  return createDMessage(role, []);
+export function createDMessageEmpty(role: DMessageRole) {
+  return createDMessageFromFragments(role, []);
 }
 
-export function createTextContentDMessage(role: DMessageRole, text: string): DMessage {
-  return createDMessage(role, [createTextContentFragment(text)]);
+export function createDMessageTextContent(role: DMessageRole, text: string): DMessage {
+  return createDMessageFromFragments(role, [createTextContentFragment(text)]);
 }
 
-export function createDMessage(role: DMessageRole, fragments: DMessageFragment[]): DMessage {
+export function createDMessageFromFragments(role: DMessageRole, fragments: DMessageFragment[]): DMessage {
   return {
     id: agiUuid('chat-dmessage'),
 
@@ -337,7 +337,7 @@ export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMess
   // append/replace the last text fragment
   return fragments.map(fragment =>
     (fragment === lastTextFragment)
-      ? createTextContentFragment((appendText && fragment.part.pt === 'text') ? fragment.part.text + newText : newText)
+      ? { ...fragment, part: createDMessageTextPart((appendText && fragment.part.pt === 'text') ? fragment.part.text + newText : newText) }
       : fragment,
   );
 }

@@ -24,7 +24,7 @@ import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/com
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createTextContentDMessage, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -238,7 +238,7 @@ export function AppChat() {
       const history = getConversation(_cId)?.messages;
       if (!history) continue;
 
-      const newUserMessage = createTextContentDMessage('user', userText); // [chat] append user:message
+      const newUserMessage = createDMessageTextContent('user', userText); // [chat] append user:message
       if (metadata) newUserMessage.metadata = metadata;
 
       // fire/forget
@@ -282,7 +282,7 @@ export function AppChat() {
     const imaginedPrompt = await imaginePromptFromText(messageText, conversationId) || 'An error sign.';
     await handleExecuteAndOutcome('generate-image', conversationId, [
       ...conversation.messages,
-      createTextContentDMessage('user', imaginedPrompt), // [chat] append user:imagine prompt
+      createDMessageTextContent('user', imaginedPrompt), // [chat] append user:imagine prompt
     ]);
   }, [handleExecuteAndOutcome]);
 
@@ -366,7 +366,7 @@ export function AppChat() {
 
   const handleConfirmedClearConversation = React.useCallback(() => {
     if (clearConversationId) {
-      ConversationsManager.getHandler(clearConversationId).messagesReplace([]);
+      ConversationsManager.getHandler(clearConversationId).replaceMessages([]);
       setClearConversationId(null);
     }
   }, [clearConversationId]);

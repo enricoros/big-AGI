@@ -11,7 +11,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { createDConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createTextContentDMessage, DMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
@@ -95,7 +95,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         const role = message.author.role;
         const joinedText = message.content.parts.join('\n');
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {
-          const dMessage = createTextContentDMessage(role, joinedText); // [state] import role:text from ChatGPT
+          const dMessage = createDMessageTextContent(role, joinedText); // [state] import role:text from ChatGPT
           dMessage.id = message.id;
           if (message.create_time)
             dMessage.created = Math.round(message.create_time * 1000);

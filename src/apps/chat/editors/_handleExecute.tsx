@@ -40,7 +40,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   // Handle unconfigured
   if (!chatLLMId || !chatModeId) {
     // set the history (e.g. the updated system prompt and the user prompt) at least, see #523
-    cHandler.messagesReplace(history);
+    cHandler.replaceMessages(history);
     return !chatLLMId ? 'err-no-chatllm' : 'err-no-chatmode';
   }
 
@@ -52,25 +52,25 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
     if (chatCommand && chatCommand.type === 'cmd') {
       switch (chatCommand.providerId) {
         case 'ass-browse':
-          cHandler.messagesReplace(history); // show command
+          cHandler.replaceMessages(history); // show command
           return await runBrowseGetPageUpdatingState(cHandler, chatCommand.params);
 
         case 'ass-t2i':
-          cHandler.messagesReplace(history); // show command
+          cHandler.replaceMessages(history); // show command
           return await runImageGenerationUpdatingState(cHandler, chatCommand.params);
 
         case 'ass-react':
-          cHandler.messagesReplace(history); // show command
+          cHandler.replaceMessages(history); // show command
           return await runReActUpdatingState(cHandler, chatCommand.params, chatLLMId);
 
         case 'chat-alter':
           // /clear
           if (chatCommand.command === '/clear') {
             if (chatCommand.params === 'all') {
-              cHandler.messagesReplace([]);
+              cHandler.replaceMessages([]);
             } else {
-              cHandler.messagesReplace(history);
-              cHandler.messageAppendAssistant('Issue: this command requires the \'all\' parameter to confirm the operation.', 'issue');
+              cHandler.replaceMessages(history);
+              cHandler.appendMessageAssistantText('Issue: this command requires the \'all\' parameter to confirm the operation.', 'issue');
             }
             return true;
           }
@@ -78,31 +78,31 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
           lastMessage.role = chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user';
           lastMessage.fragments = messageFragmentsReplaceLastContentText(lastMessage.fragments, chatCommand.params || ''); // [chat] assistant|system: content
           lastMessage.sender = 'Bot';
-          cHandler.messagesReplace(history);
+          cHandler.replaceMessages(history);
           return true;
 
         case 'cmd-help':
           const chatCommandsText = findAllChatCommands()
             .map(cmd => ` - ${cmd.primary}` + (cmd.alternatives?.length ? ` (${cmd.alternatives.join(', ')})` : '') + `: ${cmd.description}`)
             .join('\n');
-          cHandler.messagesReplace(history);
-          cHandler.messageAppendAssistant('Available Chat Commands:\n' + chatCommandsText, 'help');
+          cHandler.replaceMessages(history);
+          cHandler.appendMessageAssistantText('Available Chat Commands:\n' + chatCommandsText, 'help');
           return true;
 
         case 'mode-beam':
           if (chatCommand.isError) {
-            cHandler.messagesReplace(history);
+            cHandler.replaceMessages(history);
             return false;
           }
           // remove '/beam ', as we want to be a user chat message
           Object.assign(lastMessage, { text: chatCommand.params || '' });
-          cHandler.messagesReplace(history);
+          cHandler.replaceMessages(history);
           ConversationsManager.getHandler(conversationId).beamInvoke(history, [], null);
           return true;
 
         default:
-          cHandler.messagesReplace(history);
-          cHandler.messageAppendAssistant('This command is not supported', 'help');
+          cHandler.replaceMessages(history);
+          cHandler.appendMessageAssistantText('This command is not supported', 'help');
           return false;
       }
     }
@@ -111,30 +111,30 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   // get the system purpose (note: we don't react to it, or it would invalidate half UI components..)
   if (!getConversationSystemPurposeId(conversationId)) {
-    cHandler.messagesReplace(history);
-    cHandler.messageAppendAssistant('Issue: no Persona selected.', 'issue');
+    cHandler.replaceMessages(history);
+    cHandler.appendMessageAssistantText('Issue: no Persona selected.', 'issue');
     return 'err-no-persona';
   }
 
   // synchronous long-duration tasks, which update the state as they go
   switch (chatModeId) {
     case 'generate-text':
-      cHandler.messagesReplace(history);
+      cHandler.replaceMessages(history);
       return await runAssistantUpdatingState(conversationId, history, chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
     case 'generate-text-beam':
-      cHandler.messagesReplace(history);
+      cHandler.replaceMessages(history);
       cHandler.beamInvoke(history, [], null);
       return true;
 
     case 'append-user':
-      cHandler.messagesReplace(history);
+      cHandler.replaceMessages(history);
       return true;
 
     case 'generate-image':
       if (!lastMessage || !lastMessageText) break;
       // also add a 'fake' user message with the '/draw' command
-      cHandler.messagesReplace(history.map(message => (message.id !== lastMessage.id) ? message : {
+      cHandler.replaceMessages(history.map(message => (message.id !== lastMessage.id) ? message : {
         ...message,
         text: `/draw ${lastMessageText}`,
       }));
@@ -142,12 +142,12 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
     case 'generate-react':
       if (!lastMessage || !lastMessageText) break;
-      cHandler.messagesReplace(history);
+      cHandler.replaceMessages(history);
       return await runReActUpdatingState(cHandler, lastMessageText, chatLLMId);
   }
 
   // ISSUE: if we're here, it means we couldn't do the job, at least sync the history
   console.log('Chat execute: issue running', chatModeId, conversationId, lastMessage);
-  cHandler.messagesReplace(history);
+  cHandler.replaceMessages(history);
   return false;
 }

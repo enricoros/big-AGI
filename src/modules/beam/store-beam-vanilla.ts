@@ -2,7 +2,7 @@ import { createStore, StateCreator } from 'zustand/vanilla';
 
 import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
 
-import type { DMessage, DMessageFragment, DMessageId } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageFragment, DMessageFragmentId, DMessageId } from '~/common/stores/chat/chat.message';
 
 import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
 import { SCATTER_RAY_DEF } from './beam.config';
@@ -58,7 +58,7 @@ export interface RootStoreSlice extends RootStateSlice {
   loadBeamConfig: (preset: BeamConfigSnapshot | null) => void;
 
   setIsMaximized: (maximized: boolean) => void;
-  editInputHistoryMessageFragment: (mId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => void;
+  inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
 
 }
 
@@ -137,20 +137,23 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       isMaximized: maximized,
     }),
 
-  editInputHistoryMessageFragment: (mId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) =>
+  inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
     _set(state => ({
       inputHistory: state.inputHistory?.map((message): DMessage => {
-        if (message.id !== mId)
+        if (message.id !== messageId)
           return message;
 
-        // Validate the fragment index to be able to replace or insert (+1) a new fragment.
-        if (fragmentIndex < 0 || fragmentIndex > message.fragments.length) {
-          console.error(`editInputHistoryMessageFragment: Invalid fragment index ${fragmentIndex} for message ${message.id}`);
+        // probably unnecessary development warning
+        if (message.fragments.findIndex(f => f.fId === fragmentId) === -1) {
+          console.error(`inputHistoryReplaceMessageFragment: cannot find missing fragment ID ${fragmentId} for message ${messageId}`);
           return message;
         }
 
-        const updatedFragments = [...message.fragments];
-        updatedFragments[fragmentIndex] = newFragment;
+        const updatedFragments = message.fragments.map((fragment) =>
+          (fragment.fId === fragmentId)
+            ? newFragment
+            : fragment,
+        );
 
         return {
           ...message,
