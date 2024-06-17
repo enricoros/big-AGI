@@ -17,7 +17,7 @@ import { useChatLLM } from '~/modules/llms/store-llms';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import { createTextContentDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -186,7 +186,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
     const conversationId = props.conversationId;
 
     // Create a new message object
-    const newMessage = createTextContentDMessage('assistant', messageText); // [chat] append assistant:YouTube transcript
+    const newMessage = createDMessageTextContent('assistant', messageText); // [chat] append assistant:YouTube transcript
 
     // Append the new message to the conversation
     appendMessage(conversationId, newMessage);

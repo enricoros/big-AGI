@@ -21,7 +21,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // assistant placeholder
-  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
+  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
     '...',
     { originLLM: assistantLlmId, purposeId: history[0].purposeId },
   );
@@ -31,8 +31,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   cHandler.setAbortController(abortController);
 
   // stream the assistant's messages directly to the state store
-  const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
-    cHandler.messageEdit(assistantMessageId, incrementalMessage, false);
+  const onMessageUpdated = (incrementalMessage: Partial<DMessage>, completed: boolean) => {
+    cHandler.messageEdit(assistantMessageId, incrementalMessage, completed, false);
   };
   let instructions: VChatMessageIn[];
   try {
@@ -77,7 +77,7 @@ export async function streamAssistantMessage(
   contextRef: VChatContextRef,
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
-  onMessageUpdated: (incrementalMessage: Partial<DMessage>) => void,
+  onMessageUpdated: (incrementalMessage: Partial<DMessage>, completed: boolean) => void,
   abortSignal: AbortSignal,
 ): Promise<StreamMessageStatus> {
 
@@ -98,7 +98,7 @@ export async function streamAssistantMessage(
   function throttledEditMessage(updatedMessage: Partial<DMessage>) {
     const now = Date.now();
     if (throttleUnits === 0 || now - lastCallTime >= throttleDelay) {
-      onMessageUpdated(updatedMessage);
+      onMessageUpdated(updatedMessage, false);
       lastCallTime = now;
     }
   }
@@ -150,7 +150,7 @@ export async function streamAssistantMessage(
   }
 
   // Ensure the last content is flushed out, and mark as complete
-  onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined, pendingPlaceholderText: undefined });
+  onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined, pendingPlaceholderText: undefined }, true);
 
   // 📢 TTS: all
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {

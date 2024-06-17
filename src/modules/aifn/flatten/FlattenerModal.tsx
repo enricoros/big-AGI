@@ -10,7 +10,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { createTextContentDMessage, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
@@ -138,7 +138,7 @@ export function FlattenerModal(props: {
     if (branch)
       newConversationId = props.onConversationBranch(props.conversationId, null);
     if (newConversationId) {
-      const newRootMessage = createTextContentDMessage('user', flattenedText);// [new chat] user:former chat summary
+      const newRootMessage = createDMessageTextContent('user', flattenedText);// [new chat] user:former chat summary
       useChatStore.getState().setMessages(newConversationId, [newRootMessage]);
     }
     props.onClose();

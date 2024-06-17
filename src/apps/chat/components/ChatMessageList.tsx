@@ -11,7 +11,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { createTextContentDMessage, DMessage, DMessageFragment, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -22,7 +22,6 @@ import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { gcChatImageAssets } from '../editors/image-generate';
 import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
 
 
@@ -57,15 +56,11 @@ export function ChatMessageList(props: {
   const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
-  const { conversationMessages, historyTokenCount, deleteMessage, editMessage, editMessageFragment, setMessages } = useChatStore(useShallow(state => {
+  const { conversationMessages, historyTokenCount } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
       historyTokenCount: conversation ? conversation.tokenCount : 0,
-      deleteMessage: state.deleteMessage,
-      editMessage: state.editMessage,
-      editMessageFragment: state.editMessageFragment,
-      setMessages: state.setMessages,
     };
   }));
   const ephemerals = useEphemerals(props.conversationHandler);
@@ -78,13 +73,13 @@ export function ChatMessageList(props: {
   // text actions
 
   const handleRunExample = React.useCallback(async (examplePrompt: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createTextContentDMessage('user', examplePrompt)]); // [chat] append user:persona question
+    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessageTextContent('user', examplePrompt)]); // [chat] append user:persona question
   }, [conversationId, conversationMessages, onConversationExecuteHistory]);
 
 
   // message menu methods proxy
 
-  const handleMessageAssistantFrom = React.useCallback(async (messageId: string, offset: number) => {
+  const handleMessageAssistantFrom = React.useCallback(async (messageId: DMessageId, offset: number) => {
     const messages = getConversation(conversationId)?.messages;
     if (messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
@@ -92,7 +87,7 @@ export function ChatMessageList(props: {
     }
   }, [conversationId, onConversationExecuteHistory]);
 
-  const handleMessageBeam = React.useCallback(async (messageId: string) => {
+  const handleMessageBeam = React.useCallback(async (messageId: DMessageId) => {
     // Right-click menu Beam
     if (!conversationId || !props.conversationHandler) return;
     const messages = getConversation(conversationId)?.messages;
@@ -116,40 +111,37 @@ export function ChatMessageList(props: {
     }
   }, [conversationId, props.conversationHandler]);
 
-  const handleMessageBranch = React.useCallback((messageId: string) => {
+  const handleMessageBranch = React.useCallback((messageId: DMessageId) => {
     conversationId && onConversationBranch(conversationId, messageId);
   }, [conversationId, onConversationBranch]);
 
-  const handleMessageTruncate = React.useCallback((messageId: string) => {
+  const handleMessageTruncate = React.useCallback((messageId: DMessageId) => {
     const messages = getConversation(conversationId)?.messages;
-    if (conversationId && messages) {
+    if (props.conversationHandler && messages) {
       const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
-      setMessages(conversationId, truncatedHistory);
+      props.conversationHandler.replaceMessages(truncatedHistory);
     }
-  }, [conversationId, setMessages]);
+  }, [conversationId, props.conversationHandler]);
 
-  const handleMessageDelete = React.useCallback((messageId: string) => {
-    if (conversationId) {
-      deleteMessage(conversationId, messageId);
-      void gcChatImageAssets(); // fire/forget
-    }
-  }, [conversationId, deleteMessage]);
+  const handleMessageDelete = React.useCallback((messageId: DMessageId) => {
+    props.conversationHandler?.messageDelete(messageId);
+  }, [props.conversationHandler]);
 
-  const handleMessageFragmentEdit = React.useCallback((messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => {
-    conversationId && editMessageFragment(conversationId, messageId, fragmentIndex, newFragment, true);
-  }, [conversationId, editMessageFragment]);
+  const handleMessageReplaceFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+    props.conversationHandler?.messageReplaceFragment(messageId, fragmentId, newFragment, false, true);
+  }, [props.conversationHandler]);
 
-  const handleMessageToggleUserFlag = React.useCallback((messageId: string, userFlag: DMessageUserFlag) => {
-    conversationId && editMessage(conversationId, messageId, (message) => ({
+  const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag) => {
+    props.conversationHandler?.messageEdit(messageId, (message) => ({
       userFlags: messageToggleUserFlag(message, userFlag),
-    }), false);
-  }, [conversationId, editMessage]);
+    }), false, false);
+  }, [props.conversationHandler]);
 
-  const handleReplyTo = React.useCallback((_messageId: string, text: string) => {
+  const handleReplyTo = React.useCallback((_messageId: DMessageId, text: string) => {
     props.conversationHandler?.getOverlayStore().getState().setReplyToText(text);
   }, [props.conversationHandler]);
 
-  const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
+  const handleTextDiagram = React.useCallback(async (messageId: DMessageId, text: string) => {
     conversationId && onTextDiagram({ conversationId: conversationId, messageId, text });
   }, [conversationId, onTextDiagram]);
 
@@ -182,20 +174,16 @@ export function ChatMessageList(props: {
     setSelectedMessages(newSelected);
   };
 
-  const handleSelectMessage = (messageId: string, selected: boolean) => {
+  const handleSelectMessage = (messageId: DMessageId, selected: boolean) => {
     const newSelected = new Set(selectedMessages);
     selected ? newSelected.add(messageId) : newSelected.delete(messageId);
     setSelectedMessages(newSelected);
   };
 
-  const handleSelectionDelete = () => {
-    if (conversationId) {
-      for (const selectedMessage of selectedMessages)
-        deleteMessage(conversationId, selectedMessage);
-      void gcChatImageAssets(); // fire/forget
-    }
+  const handleSelectionDelete = React.useCallback(() => {
+    props.conversationHandler?.messagesDelete(Array.from(selectedMessages));
     setSelectedMessages(new Set());
-  };
+  }, [props.conversationHandler, selectedMessages]);
 
   useGlobalShortcut(props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
     props.setIsMessageSelectionMode(false);
@@ -294,7 +282,7 @@ export function ChatMessageList(props: {
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}
               onMessageDelete={handleMessageDelete}
-              onMessageFragmentEdit={handleMessageFragmentEdit}
+              onMessageFragmentReplace={handleMessageReplaceFragment}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
               // onReplyTo={handleReplyTo}

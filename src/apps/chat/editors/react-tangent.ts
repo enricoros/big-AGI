@@ -13,13 +13,13 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
  */
 export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId) {
   if (!question) {
-    cHandler.messageAppendAssistant('Issue: no question provided.', 'issue');
+    cHandler.appendMessageAssistantText('Issue: no question provided.', 'issue');
     return false;
   }
 
   // create an assistant placeholder message - to be filled when we're done
   const assistantModelLabel = 'react-' + assistantLlmId; //.slice(4, 7); // HACK: this is used to change the Avatar animation
-  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
+  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
     '...',
     { originLLM: assistantModelLabel },
   );

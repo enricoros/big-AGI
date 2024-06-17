@@ -5,13 +5,13 @@ import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 
 export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandler, url?: string) => {
   if (!url) {
-    cHandler.messageAppendAssistant('Issue: no URL provided.', 'issue');
+    cHandler.appendMessageAssistantText('Issue: no URL provided.', 'issue');
     return false;
   }
 
   // noinspection HttpUrlsUsage
   const shortUrl = url.replace('https://www.', '').replace('https://', '').replace('http://', '').replace('www.', '');
-  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
+  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
     `Loading page at ${shortUrl}...`,
     { originLLM: 'web' },
   );

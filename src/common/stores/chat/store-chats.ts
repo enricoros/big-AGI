@@ -10,7 +10,7 @@ import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 import { agiId, agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
-import type { DMessage, DMessageFragment, DMessageId, DMessageMetadata } from './chat.message';
+import type { DMessage, DMessageFragment, DMessageFragmentId, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 
@@ -35,8 +35,9 @@ export interface ChatActions {
   setMessages: (cId: DConversationId, messages: DMessage[]) => void;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
-  editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
-  editMessageFragment: (cId: DConversationId, mId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment, touchUpdated: boolean) => void;
+  editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) => void;
+  appendMessageFragment: (cId: DConversationId, mId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
+  replaceMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
@@ -199,7 +200,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           };
         }),
 
-      editMessage: (conversationId: DConversationId, messageId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) =>
+      editMessage: (conversationId: DConversationId, messageId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) =>
         _get()._editConversation(conversationId, conversation => {
 
           const messages = conversation.messages.map((message): DMessage => {
@@ -211,6 +212,11 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               ...(typeof update === 'function' ? update(message) : update),
               ...(touchUpdated && { updated: Date.now() }),
             };
+
+            if (removePendingState) {
+              delete updatedMessage.pendingIncomplete;
+              delete updatedMessage.pendingPlaceholderText;
+            }
 
             if (!updatedMessage.pendingIncomplete)
               updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(incomplete=false)');
@@ -225,23 +231,30 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           };
         }),
 
-      editMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment, touchUpdated: boolean) =>
+      appendMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) =>
+        _get().editMessage(conversationId, messageId, message => ({
+          fragments: [...message.fragments, fragment],
+        }), removePendingState, touchUpdated),
+
+      replaceMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) =>
         _get().editMessage(conversationId, messageId, message => {
 
-          // Validate the fragment index to be able to replace or insert (+1) a new fragment.
-          if (fragmentIndex < 0 || fragmentIndex > message.fragments.length) {
-            console.error(`editMessageFragment: Invalid fragment index ${fragmentIndex} for message ${messageId}`);
+          // Warn if the fragment is not found
+          const fragmentIndex = message.fragments.findIndex(f => f.fId === fragmentId);
+          if (fragmentIndex < 0) {
+            console.error(`replaceFragment: fragment not found for ID ${fragmentId}`);
             return {};
           }
 
-          // Update the fragment at the given index.
-          const updatedFragments = [...message.fragments];
-          updatedFragments[fragmentIndex] = newFragment;
-
+          // Replace the fragment
           return {
-            fragments: updatedFragments,
+            fragments: message.fragments.map((fragment, index) =>
+              (index === fragmentIndex)
+                ? { ...newFragment } // force the object tree to change, just in case the contents changed but not the object reference
+                : fragment,
+            ),
           };
-        }, touchUpdated),
+        }, removePendingState, touchUpdated),
 
       updateMetadata: (conversationId: DConversationId, messageId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated: boolean = true) => {
         _get()._editConversation(conversationId, conversation => {

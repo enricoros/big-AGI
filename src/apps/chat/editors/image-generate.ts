@@ -12,7 +12,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
  */
 export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText?: string) {
   if (!imageText) {
-    cHandler.messageAppendAssistant('Issue: no image description provided.', 'issue');
+    cHandler.appendMessageAssistantText('Issue: no image description provided.', 'issue');
     return false;
   }
 
@@ -21,7 +21,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   try {
     t2iProvider = getActiveTextToImageProviderOrThrow();
   } catch (error: any) {
-    cHandler.messageAppendAssistant(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, 'issue');
+    cHandler.appendMessageAssistantText(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, 'issue');
     return 'err-t2i-unconfigured';
   }
 
@@ -31,7 +31,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   if (repeat > 1)
     imageText = imageText.replace(/x(\d+)$|\[(\d+)]$/, '').trim(); // Remove the "xN" or "[N]" part from the imageText
 
-  const assistantMessageId = cHandler.messageAppendAssistantPlaceholder(
+  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
     `Give me ${t2iProvider.vendor === 'openai' ? 'a dozen' : 'a few'} seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`,
     { originLLM: t2iProvider.painter },
   );

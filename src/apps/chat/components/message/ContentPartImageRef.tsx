@@ -12,7 +12,7 @@ import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
-import type { DMessageContentFragment, DMessageDataRef, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
+import type { DMessageContentFragment, DMessageDataRef, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 
@@ -137,19 +137,19 @@ function ContentPartImageRefURL(props: { dataRefUrl: string, imageAltText?: stri
 
 export function ContentPartImageRef(props: {
   imageRefPart: DMessageImageRefPart,
-  fragmentIndex: number,
+  fragmentId: DMessageFragmentId,
   contentScaling: ContentScaling,
-  onFragmentEdit?: (fragmentIndex: number, newFragment: DMessageContentFragment) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
 
   // derived state
-  const { fragmentIndex, imageRefPart, onFragmentEdit } = props;
+  const { fragmentId, imageRefPart, onFragmentReplace } = props;
   const { dataRef } = imageRefPart;
 
   // event handlers
   const handleReplaceFragment = React.useCallback((newImageFragment: DMessageContentFragment) => {
-    onFragmentEdit?.(fragmentIndex, newImageFragment);
-  }, [onFragmentEdit, fragmentIndex]);
+    onFragmentReplace?.(fragmentId, newImageFragment);
+  }, [fragmentId, onFragmentReplace]);
 
   const handleOpenInNewTab = React.useCallback(() => {
     void showImageDataRefInNewTab(dataRef); // fire/forget

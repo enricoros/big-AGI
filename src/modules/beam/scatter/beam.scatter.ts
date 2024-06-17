@@ -6,7 +6,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { agiUuid } from '~/common/util/idUtils';
-import { createEmptyDMessage, DMessage, duplicateDMessage, messageSingleTextOrThrow, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow, pendDMessage } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
@@ -32,7 +32,7 @@ export function createBRayEmpty(llmId: DLLMId | null): BRay {
   return {
     rayId: agiUuid('beam-ray'),
     status: 'empty',
-    message: createEmptyDMessage('assistant'), // [state] assistant:Ray_empty
+    message: createDMessageEmpty('assistant'), // [state] assistant:Ray_empty
     rayLlmId: llmId,
     userSelected: false,
     imported: false,
@@ -55,12 +55,13 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const abortController = new AbortController();
 
-  const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
+  const onMessageUpdated = (incrementalMessage: Partial<DMessage>, completed: boolean) => {
     _rayUpdate(ray.rayId, (ray) => ({
       message: {
         ...ray.message,
         ...incrementalMessage,
         ...(incrementalMessage.fragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
+        ...(completed ? { pendingIncomplete: undefined, pendingPlaceholderText: undefined } : {}), // clear the pending flag once the message is complete
       },
     }));
   };

@@ -2,12 +2,13 @@ import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposes } from '../../data';
+import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessage, createEmptyDMessage, createTextContentDMessage, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageEmpty, createDMessageTextContent, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, DMessageId, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -43,7 +44,7 @@ export class ConversationHandler {
 
     let systemMessage: DMessage = systemMessageIndex >= 0
       ? history.splice(systemMessageIndex, 1)[0]
-      : createEmptyDMessage('system'); // [chat] new system:'' (non updated)
+      : createDMessageEmpty('system'); // [chat] new system:'' (non updated)
 
     // TODO: move this to a proper persona identity management
     // Update the system message with the current persona's message, if formerly unset
@@ -77,46 +78,54 @@ export class ConversationHandler {
    * @param text assistant text
    * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
    */
-  messageAppendAssistant(text: string, llmLabel: DLLMId | string) {
-    const assistantMessage: DMessage = createTextContentDMessage('assistant', text);
+  appendMessageAssistantText(text: string, llmLabel: DLLMId | string) {
+    const assistantMessage: DMessage = createDMessageTextContent('assistant', text);
     assistantMessage.originLLM = llmLabel;
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
   }
 
-  messageAppendAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): string {
-    const assistantMessage: DMessage = createEmptyDMessage('assistant');
+  appendMessageAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): string {
+    const assistantMessage: DMessage = createDMessageEmpty('assistant');
     pendDMessage(assistantMessage, placeholderText);
     update && Object.assign(assistantMessage, update);
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
     return assistantMessage.id;
   }
 
-  messageEdit(messageId: string, update: Partial<DMessage>, touch: boolean) {
-    this.chatActions.editMessage(this.conversationId, messageId, update, touch);
+  messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), complete: boolean, touch: boolean) {
+    this.chatActions.editMessage(this.conversationId, messageId, update, complete, touch);
   }
 
-  messageAppendContentFragment(messageId: string, fragment: DMessageContentFragment, complete: boolean, touch?: boolean) {
-    this.chatActions.editMessage(this.conversationId, messageId, (message) => {
-      return {
-        fragments: [...message.fragments, fragment],
-        ...(complete ? {
-          pendingIncomplete: undefined,
-          pendingPlaceholderText: undefined,
-        } : {}),
-      };
-    }, !!touch);
+  messageDelete(messageId: DMessageId): void {
+    this.chatActions.deleteMessage(this.conversationId, messageId);
+    void gcChatImageAssets(); // fire/forget
   }
 
-  messageAppendTextContentFragment(messageId: string, text: string, complete: boolean, touch?: boolean) {
+  messagesDelete(messageIds: DMessageId[]): void {
+    for (const messageId of messageIds)
+      this.chatActions.deleteMessage(this.conversationId, messageId);
+    void gcChatImageAssets(); // fire/forget
+  }
+
+  messageAppendTextContentFragment(messageId: string, text: string, complete: boolean, touch: boolean) {
     this.messageAppendContentFragment(messageId, createTextContentFragment(text), complete, touch);
   }
 
-  messageAppendErrorContentFragment(messageId: string, errorMessage: string, complete: boolean, touch?: boolean) {
+  messageAppendErrorContentFragment(messageId: string, errorMessage: string, complete: boolean, touch: boolean) {
     this.messageAppendTextContentFragment(messageId, errorMessage, complete, touch);
   }
 
-  messagesReplace(messages: DMessage[]): void {
+  messageAppendContentFragment(messageId: string, fragment: DMessageContentFragment, complete: boolean, touch: boolean) {
+    this.chatActions.appendMessageFragment(this.conversationId, messageId, fragment, complete, touch);
+  }
+
+  messageReplaceFragment(messageId: string, fragmentId: string, newFragment: DMessageFragment, complete: boolean, touch: boolean) {
+    this.chatActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, complete, touch);
+  }
+
+  replaceMessages(messages: DMessage[]): void {
     this.chatActions.setMessages(this.conversationId, messages);
+    void gcChatImageAssets(); // fire/forget
 
     // if zeroing the messages, also terminate an active beam
     if (!messages.length)
@@ -142,14 +151,14 @@ export class ConversationHandler {
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { fragments, originLLM: llmId, pendingIncomplete: undefined, pendingPlaceholderText: undefined }, true); // [chat] replace assistant:Beam contentParts
+        this.messageEdit(destReplaceMessageId, { fragments, originLLM: llmId }, true, true); // [chat] replace assistant:Beam contentParts
       } else {
         // replace (may truncate) the conversation history and append a message
-        const newMessage = createDMessage('assistant', fragments); // [chat] append Beam message
+        const newMessage = createDMessageFromFragments('assistant', fragments); // [chat] append Beam message
         newMessage.originLLM = llmId;
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
         // TODO: put the other rays in the metadata?! (reqby @Techfren)
-        this.messagesReplace([...viewHistory, newMessage]);
+        this.replaceMessages([...viewHistory, newMessage]);
       }
 
       // close beam

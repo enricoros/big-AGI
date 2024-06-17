@@ -28,7 +28,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -175,7 +175,7 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
-  onMessageFragmentEdit?: (messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => void,
+  onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
   onReplyTo?: (messageId: string, selectedText: string) => void,
@@ -240,12 +240,12 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const { onMessageFragmentEdit } = props;
+  const { onMessageFragmentReplace } = props;
 
-  const handleFragmentEdit = React.useCallback((fragmentIndex: number, newContent: DMessageContentFragment) => {
+  const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newContent: DMessageContentFragment) => {
     setIsEditing(false);
-    onMessageFragmentEdit?.(messageId, fragmentIndex, newContent);
-  }, [messageId, onMessageFragmentEdit]);
+    onMessageFragmentReplace?.(messageId, fragmentId, newContent);
+  }, [messageId, onMessageFragmentReplace]);
 
 
   // Message Operations Menu
@@ -459,8 +459,8 @@ export function ChatMessage(props: {
   }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    doubleClickToEdit && props.onMessageFragmentEdit && handleOpsEdit(event);
-  }, [doubleClickToEdit, handleOpsEdit, props.onMessageFragmentEdit]);
+    doubleClickToEdit && props.onMessageFragmentReplace && handleOpsEdit(event);
+  }, [doubleClickToEdit, handleOpsEdit, props.onMessageFragmentReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
     handleOpenBubble(event.nativeEvent);
@@ -587,7 +587,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}
-          {messageFragments.map((fragment, fragmentIndex) => {
+          {messageFragments.map((fragment) => {
 
             // only proceed with DMessageContentFragment
             if (fragment.ft !== 'content')
@@ -597,13 +597,13 @@ export function ChatMessage(props: {
               case 'text':
                 return (
                   <ContentPartText
-                    key={'text-part-' + fragmentIndex}
+                    key={fragment.fId}
                     // ref={blocksRendererRef}
                     textPart={fragment.part}
-                    fragmentIndex={fragmentIndex}
+                    fragmentId={fragment.fId}
                     isEditingContent={isEditing}
                     setIsEditingContent={setIsEditing}
-                    onFragmentEdit={handleFragmentEdit}
+                    onFragmentReplace={handleFragmentReplace}
                     messageRole={messageRole}
                     messageOriginLLM={messageOriginLLM}
                     contentScaling={contentScaling}
@@ -614,26 +614,26 @@ export function ChatMessage(props: {
                     showUnsafeHtml={props.showUnsafeHtml}
                     showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
                     optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-                    onContextMenu={(props.onMessageFragmentEdit && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
-                    onDoubleClick={(props.onMessageFragmentEdit && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+                    onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
+                    onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
                   />
                 );
 
               case 'image_ref':
                 return (
                   <ContentPartImageRef
-                    key={'image-part-' + fragmentIndex}
+                    key={fragment.fId}
                     imageRefPart={fragment.part}
-                    fragmentIndex={fragmentIndex}
+                    fragmentId={fragment.fId}
                     contentScaling={contentScaling}
-                    onFragmentEdit={handleFragmentEdit}
+                    onFragmentReplace={handleFragmentReplace}
                   />
                 );
 
               default:
                 return (
                   <ContentPartPlaceholder
-                    key={'unknown-part-' + fragmentIndex}
+                    key={fragment.fId}
                     placeholderText={`Unknown Content fragment: ${fragment.part.pt}`}
                     messageRole={messageRole}
                     contentScaling={contentScaling}
@@ -704,7 +704,7 @@ export function ChatMessage(props: {
           {/* Edit / Copy */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {/* Edit */}
-            {!!props.onMessageFragmentEdit && (
+            {!!props.onMessageFragmentReplace && (
               <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEdit} sx={{ flex: 1 }}>
                 <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
                 {isEditing ? 'Discard' : 'Edit'}

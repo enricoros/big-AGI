@@ -8,7 +8,7 @@ import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import { Brand } from '~/common/app.config';
-import { DMessageFragment, DMessageId, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { DMessageFragment, DMessageFragmentId, DMessageId, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
@@ -139,11 +139,8 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 fitScreen={isMobile}
                 isMobileForAvatar={isMobile}
                 showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
-                onMessageFragmentEdit={(_messageId: DMessageId, fragmentIndex: number, newFragment: DMessageFragment) => {
-                  // replace the in-mem message
-                  const newFragments = message.fragments.slice();
-                  newFragments[fragmentIndex] = newFragment;
-                  message.fragments = newFragments;
+                onMessageFragmentReplace={(_messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+                  message.fragments = message.fragments.map(f => (f.fId === fragmentId) ? newFragment : f);
                 }}
               />,
             )}
