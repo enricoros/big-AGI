@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { agiUuid } from '~/common/util/idUtils';
 
 
 export interface DFolder {
@@ -51,7 +51,7 @@ export const useFolderStore = create<FolderStore>()(devtools(
 
       createFolder: (title: string, color?: string) => {
         const newFolder: DFolder = {
-          id: uuidv4(),
+          id: agiUuid('chat-folders-item'),
           title,
           conversationIds: [],
           color,

@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { nanoid } from 'nanoid';
+
+import { agiUuid } from '~/common/util/idUtils';
+
 
 /**
  * Pure async function that operates on an item, can monitor the abort signal, and return or throw
@@ -28,7 +30,7 @@ export class ProcessingQueue<TItem> extends EventTarget {
 
   // returns a promise that resolves after processing
   enqueueItem(item: TItem, priority: number = 0): Promise<TItem> {
-    const taskId = nanoid();
+    const taskId = agiUuid('processing-queue-task');
     const enqueuedAt = Date.now();
 
     // Create a new AbortController for each task

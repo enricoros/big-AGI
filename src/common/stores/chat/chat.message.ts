@@ -1,6 +1,6 @@
 import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 
-import { createBase64UuidV4 } from '~/common/util/textUtils';
+import { agiUuid } from '~/common/util/idUtils';
 
 
 // Message
@@ -117,7 +117,7 @@ export function createTextContentDMessage(role: DMessageRole, text: string): DMe
 
 export function createDMessage(role: DMessageRole, fragments: DMessageFragment[]): DMessage {
   return {
-    id: createBase64UuidV4(),
+    id: agiUuid('chat-dmessage'),
 
     role: role,
     fragments,
@@ -213,7 +213,7 @@ export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType:
 
 export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
   return {
-    id: createBase64UuidV4(),
+    id: agiUuid('chat-dmessage'),
 
     role: message.role,
     fragments: duplicateDMessageFragments(message.fragments),

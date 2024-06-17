@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { nanoid } from 'nanoid';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, Dropdown, FormControl, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
@@ -15,6 +14,7 @@ import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 
+import { agiUuid } from '~/common/util/idUtils';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -81,7 +81,7 @@ export function PromptComposer(props: {
     clearCurrentIdea();
     if (nonEmptyPrompt?.trim()) {
       onPromptEnqueue([{
-        dpId: nanoid(),
+        dpId: agiUuid('draw-prompt'),
         prompt: nonEmptyPrompt,
         _repeatCount: isRepeatShown ? tempRepeat : 1,
       }]);
