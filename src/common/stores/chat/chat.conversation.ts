@@ -1,8 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
 
 import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
+import { agiUuid } from '~/common/util/idUtils';
 
 
 /// Conversation
@@ -45,7 +44,7 @@ export type DConversationId = string;
 
 export function createDConversation(systemPurposeId?: SystemPurposeId): DConversation {
   return {
-    id: uuidv4(),
+    id: agiUuid('chat-dconversation'),
 
     messages: [],
 
@@ -80,7 +79,7 @@ export function duplicateCConversation(conversation: DConversation, lastMessageI
   const newTitle = getNextBranchTitle(conversationTitle(conversation));
 
   return {
-    id: uuidv4(),
+    id: agiUuid('chat-dconversation'),
 
     messages: conversation.messages
       .slice(0, messagesToKeep)

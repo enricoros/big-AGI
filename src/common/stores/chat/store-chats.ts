@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import { v4 as uuidv4 } from 'uuid';
 
 import type { SystemPurposeId } from '../../../data';
 
 import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
 import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 
+import { agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageFragment, DMessageId, DMessageMetadata } from './chat.message';
@@ -76,7 +76,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         if (existing) {
           existing?.abortController?.abort();
           if (preventClash) {
-            conversation.id = uuidv4();
+            conversation.id = agiUuid('chat-dconversation');
             console.warn('Conversation ID clash, changing ID to', conversation.id);
           }
         }

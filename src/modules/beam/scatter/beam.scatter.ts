@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import type { StateCreator } from 'zustand/vanilla';
 
 import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
@@ -6,6 +5,7 @@ import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
 import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
+import { agiUuid } from '~/common/util/idUtils';
 import { createEmptyDMessage, DMessage, duplicateDMessage, messageSingleTextOrThrow, pendDMessage } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -30,7 +30,7 @@ export interface BRay {
 
 export function createBRayEmpty(llmId: DLLMId | null): BRay {
   return {
-    rayId: uuidv4(),
+    rayId: agiUuid('beam-ray'),
     status: 'empty',
     message: createEmptyDMessage('assistant'), // [state] assistant:Ray_empty
     rayLlmId: llmId,

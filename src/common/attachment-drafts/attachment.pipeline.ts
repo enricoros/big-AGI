@@ -1,6 +1,6 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { createBase64UuidV4 } from '~/common/util/textUtils';
+import { agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
@@ -93,7 +93,7 @@ const IMAGE_MIMETYPES: string[] = [
  */
 export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft {
   return {
-    id: createBase64UuidV4(),
+    id: agiUuid('attachment-draft'),
     source: source,
     label: 'Loading...',
     ref: '',

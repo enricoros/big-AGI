@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+import { agiUuid } from '~/common/util/idUtils';
 
 
 // DB - Assets
@@ -194,7 +194,7 @@ export function _createAssetObject<TType extends DBlobAssetType, TMime extends D
 ): DBlobAssetImplV1<TType, TMime, TMeta> {
   const creationDate = new Date();
   return {
-    id: nanoid(),
+    id: agiUuid('dblob-asset'),
     assetType,
     label,
     data,

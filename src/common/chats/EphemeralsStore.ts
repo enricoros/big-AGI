@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
+import { agiUuid } from '~/common/util/idUtils';
 import { customEventHelpers } from '~/common/util/eventUtils';
 
 import type { ConversationHandler } from './ConversationHandler';
@@ -18,7 +18,7 @@ export interface DEphemeral {
 
 function createDEphemeral(title: string, initialText: string): DEphemeral {
   return {
-    id: uuidv4(),
+    id: agiUuid('chat-ephemerals-item'),
     title: title,
     text: initialText,
     state: {},

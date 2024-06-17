@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import type { StateCreator } from 'zustand/vanilla';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import { agiUuid } from '~/common/util/idUtils';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
 import { RootStoreSlice } from '../store-beam-vanilla';
@@ -47,7 +47,7 @@ export interface BFusion {
 
 const createBFusion = (factoryId: FFactoryId, instructions: Instruction[], llmId: DLLMId | null): BFusion => ({
   // const
-  fusionId: uuidv4(),
+  fusionId: agiUuid('beam-fusion'),
   factoryId,
 
   // options

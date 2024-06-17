@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
+
+import { agiUuid } from '~/common/util/idUtils';
+
 import type { FFactoryId } from './gather/instructions/beam.gather.factories';
 
 
@@ -60,7 +62,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     addPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
       presets: [...state.presets, {
-        id: uuidv4(),
+        id: agiUuid('beam-preset-config'),
         name,
         rayLlmIds,
         gatherLlmId: gatherLlmId ?? undefined,
