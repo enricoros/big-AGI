@@ -8,6 +8,7 @@ type UidScope =
   | 'beam-ray'
   | 'chat-dconversation'
   | 'chat-dmessage'
+  | 'chat-dfragment'
   | 'chat-ephemerals-item'
   | 'chat-folders-item'
   | 'chat-pane'
@@ -25,10 +26,28 @@ type UidScope =
  * Application-wide unique identifier generator
  * @param _scope Does not influcence the ID generation, but is used to index all the IDs in the application
  */
-export function agiUuid(_scope: UidScope) {
+export function agiUuid(_scope: Exclude<UidScope, 'chat-dfragment'>) {
   return nanoid();
 }
 
+/*
+ * Smaller version of the above, without claims of uniqueness
+ */
+export function agiId(scope: Extract<UidScope, 'chat-dfragment'>) {
+  return nanoid(scope === 'chat-dfragment' ? 8 : 16);
+}
+
+/*
+// Similar to the above but makes sure there's no collision with the given list of IDs
+export function agiUuidUncollided(scope: Extract<UidScope, 'chat-dfragment'>, existingIds: string[]) {
+  const characters = scope === 'chat-dfragment' ? 8 : 21;
+  let id: string;
+  do {
+    id = nanoid(characters);
+  } while (existingIds.includes(id));
+  return id;
+}
+*/
 
 /*
 import { v4 as uuidv4 } from 'uuid';
