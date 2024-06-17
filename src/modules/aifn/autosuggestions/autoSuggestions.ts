@@ -3,7 +3,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { attachmentWrapText } from '~/common/stores/chat/chat.tokens';
-import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, createPlaceholderContentFragment, createTextContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -156,6 +156,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   const userMessageText = messageFragmentsReduceText(userMessage.fragments);
   const assistantMessageText = messageFragmentsReduceText(assistantMessage.fragments);
 
+  const cHandler = ConversationsManager.getHandler(conversationId);
+
   // Follow-up: Question
   if (suggestQuestions) {
     // llmChatGenerateOrThrow(funcLLMId, [
@@ -170,83 +172,89 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Auto-Diagrams if the assistant text does not contain @startuml / @startmindmap already
   if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
+
+    // Placeholder for the diagram
+    const fragmentId = cHandler.messageAppendContentFragment(assistantMessageId, createPlaceholderContentFragment('Evaluating Auto-Diagram...'), false, false);
+
     const instructions: VChatMessageIn[] = [
       { role: 'system', content: suggestPlantUMLSystemPrompt.replace('{{personaSystemPrompt}}', wrappedPersonaSystemText) },
       { role: 'user', content: userMessageText },
       { role: 'assistant', content: assistantMessageText },
     ];
     llmChatGenerateOrThrow(
-      funcLLMId,
-      instructions,
-      'chat-followup-diagram', conversationId,
+      funcLLMId, instructions, 'chat-followup-diagram', conversationId,
       [suggestPlantUMLFn], suggestDiagramFunctionName,
     ).then(chatResponse => {
-      // cheap way to check if the function was supported
-      if (!('function_arguments' in chatResponse))
-        return;
 
-      // parse the output PlantUML string, if any
-      const functionArguments = chatResponse.function_arguments ?? null;
-      if (functionArguments) {
-        const { code, type }: { code: string, type: string } = functionArguments as any;
+      // cheap way to check if the function was supported
+      if ('function_arguments' in chatResponse && chatResponse.function_arguments) {
+        const functionArguments = chatResponse.function_arguments;
+        const { code, type } = functionArguments as { code: string, type: string };
         if (code && type) {
 
           // validate the code
           const plantUML = code.trim();
-          if (!plantUML.startsWith('@start') || !(plantUML.endsWith('@enduml') || plantUML.endsWith('@endmindmap'))) return;
+          if (!plantUML.startsWith('@start') || !(plantUML.endsWith('@enduml') || plantUML.endsWith('@endmindmap'))) {
+            console.log(`autoSuggestions: invalid generated PlantUML: ${plantUML.slice(0, 20)}...`);
+            throw new Error('Invalid PlantUML');
+          }
 
-          // append the PlantUML diagram to the assistant response
-          const cHandler = ConversationsManager.getHandler(conversationId);
-          cHandler.messageAppendTextContentFragment(assistantMessageId, attachmentWrapText(plantUML, `[Auto Diagram] ${type}.diagram`, 'markdown-code'), true, true);
+          // PlantUML Text Content to replace the placeholder
+          const fileName = `[Auto Diagram] ${type}.diagram`;
+          const codeBlock = attachmentWrapText(plantUML, fileName, 'markdown-code');
+          const fragment = createTextContentFragment(codeBlock);
+          cHandler.messageReplaceFragment(assistantMessageId, fragmentId, fragment, false, true);
+          return;
         }
       }
-    }).catch(_err => {
-      // Likely the model did not support function calling
-      // console.log('autoSuggestions: diagram error:', err);
+      // no diagram generated
+      cHandler.messageDeleteFragment(assistantMessageId, fragmentId, false, false);
+    }).catch(error => {
+      cHandler.messageReplaceFragment(assistantMessageId, fragmentId, createErrorContentFragment(`Auto-Diagram generation issue: ${error?.message || error}`), false, false);
     });
   }
 
   // Follow-up: Auto-HTML-UI if the assistant text does not contain <html> already
   if (suggestHTMLUI && !['<html', '<HTML', '<Html'].some(s => assistantMessageText.includes(s))) {
+
+    // Placeholder for the UI
+    const fragmentId = cHandler.messageAppendContentFragment(assistantMessageId, createPlaceholderContentFragment('Evaluating Auto-UI...'), false, false);
+
     const instructions: VChatMessageIn[] = [
       { role: 'system', content: suggestUISystemPrompt.replace('{{personaSystemPrompt}}', wrappedPersonaSystemText) },
       { role: 'user', content: messageFragmentsReduceText(userMessage.fragments) },
       { role: 'assistant', content: assistantMessageText },
     ];
     llmChatGenerateOrThrow(
-      funcLLMId,
-      instructions,
-      'chat-followup-htmlui', conversationId,
+      funcLLMId, instructions, 'chat-followup-htmlui', conversationId,
       [suggestUIFn], suggestUIFunctionName,
     ).then(chatResponse => {
-      // cheap way to check if the function was supported
-      if (!('function_arguments' in chatResponse))
-        return;
 
-      // parse the output HTML string, if any
-      const functionArguments = chatResponse.function_arguments ?? null;
-      if (functionArguments) {
-        const { html, file_name }: { html: string, file_name: string } = functionArguments as any;
+      // cheap way to check if the function was supported
+      if ('function_arguments' in chatResponse && chatResponse.function_arguments) {
+        const functionArguments = chatResponse.function_arguments;
+        const { html, file_name } = functionArguments as { html: string, file_name: string };
         if (html) {
 
           // validate the code
           const htmlUI = html.trim();
           if (!['<!DOCTYPE', '<!doctype', '<html', '<HTML', '<Html'].some(s => htmlUI.includes(s))) {
             console.log(`autoSuggestions: invalid generated HTML: ${htmlUI.slice(0, 20)}...`);
-            return;
+            throw new Error('Invalid HTML');
           }
 
-          // append the HTML UI to the assistant response
-          const cHandler = ConversationsManager.getHandler(conversationId);
+          // HTML UI Text Content to replace the placeholder
           const fileName = (file_name || 'ui').trim().replace(/[^a-zA-Z0-9-]/g, '') + '.html';
-          const fragmentCodeBlock = attachmentWrapText(htmlUI, '[Auto UI] ' + fileName, 'markdown-code');
-          const fragmentText = `Example of Generative User Interface ("Auto UI" setting):\n${fragmentCodeBlock}`;
-          cHandler.messageAppendTextContentFragment(assistantMessageId, fragmentText, true, true);
+          const codeBlock = attachmentWrapText(htmlUI, '[Auto UI] ' + fileName, 'markdown-code');
+          const fragment = createTextContentFragment(codeBlock); // `Example of Generative User Interface ("Auto UI" setting):\n${codeBlock}`
+          cHandler.messageReplaceFragment(assistantMessageId, fragmentId, fragment, false, true);
+          return;
         }
       }
-    }).catch(_err => {
-      // Likely the model did not support function calling
-      // console.log('autoSuggestions: UI error:', err);
+      // no UI generated
+      cHandler.messageDeleteFragment(assistantMessageId, fragmentId, false, false);
+    }).catch(error => {
+      cHandler.messageReplaceFragment(assistantMessageId, fragmentId, createErrorContentFragment(`Auto-UI generation issue: ${error?.message || error}`), false, false);
     });
   }
 

@@ -583,6 +583,7 @@ export function ChatMessage(props: {
               placeholderText={messagePendingPlaceholderText}
               messageRole={messageRole}
               contentScaling={contentScaling}
+              showAsItalic
             />
           )}
 
@@ -630,6 +631,29 @@ export function ChatMessage(props: {
                   />
                 );
 
+              case '..':
+                return (
+                  <ContentPartPlaceholder
+                    key={fragment.fId}
+                    placeholderText={fragment.part.pText}
+                    messageRole={messageRole}
+                    contentScaling={contentScaling}
+                    showAsItalic
+                  />
+                );
+
+              case 'error':
+                return (
+                  <ContentPartPlaceholder
+                    key={fragment.fId}
+                    placeholderText={fragment.part.error}
+                    messageRole={messageRole}
+                    contentScaling={contentScaling}
+                    showAsDanger
+                    showAsItalic
+                  />
+                );
+
               default:
                 return (
                   <ContentPartPlaceholder
@@ -637,6 +661,7 @@ export function ChatMessage(props: {
                     placeholderText={`Unknown Content fragment: ${fragment.part.pt}`}
                     messageRole={messageRole}
                     contentScaling={contentScaling}
+                    showAsDanger
                   />
                 );
             }

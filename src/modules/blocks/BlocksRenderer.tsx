@@ -53,8 +53,10 @@ type BlocksRendererProps = {
   contentScaling: ContentScaling;
   fitScreen: boolean;
   isBottom?: boolean;
-  showUnsafeHtml?: boolean;
+  showAsDanger?: boolean;
+  showAsItalic?: boolean;
   showTopWarning?: string;
+  showUnsafeHtml?: boolean;
   specialDiagramMode?: boolean;
 
   renderTextAsMarkdown: boolean;
@@ -133,8 +135,10 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
     {
       fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
       lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+      ...(props.showAsDanger ? { color: 'danger.500', fontWeight: 500 } : {}),
+      ...(props.showAsItalic ? { fontStyle: 'italic' } : {}),
     }
-  ), [props.contentScaling]);
+  ), [props.contentScaling, props.showAsDanger, props.showAsItalic]);
 
 
   // Block splitter, with memoand special recycle of former blocks, to help React minimize render work

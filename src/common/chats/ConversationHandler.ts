@@ -8,7 +8,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessageFromFragments, createDMessageEmpty, createDMessageTextContent, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, DMessageId, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessageTextContent, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, pendDMessage } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -115,8 +115,13 @@ export class ConversationHandler {
     this.messageAppendTextContentFragment(messageId, errorMessage, complete, touch);
   }
 
-  messageAppendContentFragment(messageId: string, fragment: DMessageContentFragment, complete: boolean, touch: boolean) {
+  messageAppendContentFragment(messageId: string, fragment: DMessageContentFragment, complete: boolean, touch: boolean): DMessageFragmentId {
     this.chatActions.appendMessageFragment(this.conversationId, messageId, fragment, complete, touch);
+    return fragment.fId;
+  }
+
+  messageDeleteFragment(messageId: string, fragmentId: string, complete: boolean, touch: boolean) {
+    this.chatActions.deleteMessageFragment(this.conversationId, messageId, fragmentId, complete, touch);
   }
 
   messageReplaceFragment(messageId: string, fragmentId: string, newFragment: DMessageFragment, complete: boolean, touch: boolean) {
