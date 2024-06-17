@@ -103,7 +103,7 @@ function useMermaidLoader() {
     if (!mermaidAPI)
       loadMermaidFromCDN();
   }, [mermaidAPI]);
-  return { mermaidAPI, isSuccess: !!mermaidAPI, isLoading: loadingStarted, error: loadingError };
+  return { mermaidAPI, isSuccess: !!mermaidAPI, hasStartedLoading: loadingStarted, error: loadingError };
 }
 
 

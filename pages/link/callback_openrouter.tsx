@@ -13,7 +13,7 @@ import { withLayout } from '~/common/layout/withLayout';
 function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
 
   // external state
-  const { data, isError, error, isLoading } = apiQuery.backend.exchangeOpenRouterKey.useQuery({ code: props.openRouterCode || '' }, {
+  const { data, isError, error, isPending } = apiQuery.backend.exchangeOpenRouterKey.useQuery({ code: props.openRouterCode || '' }, {
     enabled: !!props.openRouterCode,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
@@ -56,7 +56,7 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
           Welcome Back
         </Typography>
 
-        {isLoading && <Typography level='body-sm'>Loading...</Typography>}
+        {isPending && <Typography level='body-sm'>Loading...</Typography>}
 
         {isErrorInput && <InlineError error='There was an issue retrieving the code from OpenRouter.' />}
 
