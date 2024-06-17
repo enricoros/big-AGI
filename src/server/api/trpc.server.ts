@@ -6,9 +6,9 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from '@trpc/server';
-import superjson from 'superjson';
 import { ZodError } from 'zod';
+import { initTRPC } from '@trpc/server';
+import { transformer } from '~/server/api/trpc.transformer';
 
 /**
  * 1. CONTEXT
@@ -28,14 +28,15 @@ export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request;
 
 
 /**
- * 2. INITIALIZATION
+ * 2. SERVER-SIDE INITIALIZATION
  *
  * This is where the tRPC API is initialized, connecting the context and transformer. We also parse
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCFetchContext>().create({
-  transformer: superjson,
+  // server transformer - serialize: -> client, deserialize: <- client
+  transformer: transformer,
   errorFormatter({ shape, error }) {
     return {
       ...shape,
