@@ -58,15 +58,23 @@ const t = initTRPC.context<typeof createTRPCFetchContext>().create({
 /**
  * This is how you create new routers and sub-routers in your tRPC API.
  *
- * @see https://trpc.io/docs/router
+ * @link https://trpc.io/docs/v11/router
  */
 export const createTRPCRouter = t.router;
 
 /**
- * Public (unauthenticated) procedure
+ * Public (unprotected) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
+ *
+ * @link https://trpc.io/docs/v11/procedures
  */
 export const publicProcedure = t.procedure;
+
+// /**
+//  * Create a server-side caller
+//  * @link https://trpc.io/docs/v11/server/server-side-calls
+//  */
+// export const createCallerFactory = t.createCallerFactory;
