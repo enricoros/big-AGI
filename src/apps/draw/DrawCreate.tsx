@@ -57,7 +57,7 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
   const { prompt: dp } = props;
 
   // external state
-  const { data: imageBlocks, error, isLoading } = useQuery<ImageBlock[], Error>({
+  const { data: imageBlocks, error, isPending } = useQuery<ImageBlock[], Error>({
     enabled: !!dp.prompt,
     queryKey: ['draw-dpid', dp.uuid],
     queryFn: () => queryActiveGenerateImageVector(dp.prompt, dp._repeatCount),

@@ -15,7 +15,7 @@ import { useElevenLabsApiKey, useElevenLabsVoiceId } from './store-module-eleven
 
 function VoicesDropdown(props: {
   isValidKey: boolean,
-  isLoadingVoices: boolean,
+  isFetchingVoices: boolean,
   isErrorVoices: boolean,
   disabled?: boolean,
   voices: VoiceSchema[],
@@ -32,7 +32,7 @@ function VoicesDropdown(props: {
       // color={props.isErrorVoices ? 'danger' : undefined}
       placeholder={props.isErrorVoices ? 'Issue loading voices' : props.isValidKey ? 'Select a voice' : 'Missing API Key'}
       startDecorator={<RecordVoiceOverTwoToneIcon />}
-      endDecorator={props.isValidKey && props.isLoadingVoices && <CircularProgress size='sm' />}
+      endDecorator={props.isValidKey && props.isFetchingVoices && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={{
         root: { sx: { width: '100%' } },
@@ -54,16 +54,16 @@ export function useElevenLabsVoices() {
 
   const isConfigured = isElevenLabsEnabled(apiKey);
 
-  const { data, isLoading, isError } = apiQuery.elevenlabs.listVoices.useQuery({ elevenKey: apiKey }, {
+  const { data, isError, isFetching, isPending } = apiQuery.elevenlabs.listVoices.useQuery({ elevenKey: apiKey }, {
     enabled: isConfigured,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   return {
     isConfigured,
-    isLoading,
     isError,
-    hasVoices: !isLoading && !!data?.voices.length,
+    isFetching,
+    hasVoices: !isPending && !!data?.voices.length,
     voices: data?.voices || [],
   };
 }
@@ -72,7 +72,7 @@ export function useElevenLabsVoices() {
 export function useElevenLabsVoiceDropdown(autoSpeak: boolean, disabled?: boolean) {
 
   // external state
-  const { isConfigured, isLoading, isError, hasVoices, voices } = useElevenLabsVoices();
+  const { isConfigured, isError, isFetching, hasVoices, voices } = useElevenLabsVoices();
   const [voiceId, setVoiceId] = useElevenLabsVoiceId();
 
   // derived state
@@ -87,11 +87,11 @@ export function useElevenLabsVoiceDropdown(autoSpeak: boolean, disabled?: boolea
 
   const voicesDropdown = React.useMemo(() =>
       <VoicesDropdown
-        isValidKey={isConfigured} isLoadingVoices={isLoading} isErrorVoices={isError} disabled={disabled}
+        isValidKey={isConfigured} isFetchingVoices={isFetching} isErrorVoices={isError} disabled={disabled}
         voices={voices}
         voiceId={voiceId} setVoiceId={setVoiceId}
       />,
-    [disabled, isConfigured, isError, isLoading, setVoiceId, voiceId, voices],
+    [disabled, isConfigured, isError, isFetching, setVoiceId, voiceId, voices],
   );
 
   return {

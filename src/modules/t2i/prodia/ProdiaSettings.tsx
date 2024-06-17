@@ -50,7 +50,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
   const selectedIsXL = modelGen === 'sdxl';
 
   // load models, if the server has a key, or the user provided one
-  const { data: modelsData, isLoading: loadingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
+  const { data: modelsData, isFetching: fetchingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
     enabled: isValidKey,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -94,7 +94,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
         variant='outlined' placeholder={isValidKey ? 'Select a model' : 'Enter API Key'}
         value={modelId} onChange={handleModelChange}
         startDecorator={<FormatPaintTwoToneIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
-        endDecorator={isValidKey && loadingModels && <CircularProgress size='sm' />}
+        endDecorator={isValidKey && fetchingModels && <CircularProgress size='sm' />}
         indicator={<KeyboardArrowDownIcon />}
         slotProps={{
           root: { sx: { width: '100%' } },
