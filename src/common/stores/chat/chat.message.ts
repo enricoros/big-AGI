@@ -91,7 +91,7 @@ export type DMessageTextPart = { pt: 'text', text: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
 export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
-export type DMessagePlaceholderPart = { pt: '..', pText: string };
+export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
 export type DMessageErrorPart = { pt: 'error', error: string };
 
 
@@ -229,7 +229,7 @@ function createDMessageToolResponsePart(functionName: string, response: Record<s
 }
 
 function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceholderPart {
-  return { pt: '..', pText: placeholderText };
+  return { pt: 'ph', pText: placeholderText };
 }
 
 function createDMessageErrorPart(error: string): DMessageErrorPart {
@@ -308,7 +308,7 @@ function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentF
     case 'tool_response':
       return createDMessageToolResponsePart(part.function, { ...part.response }) as T;
 
-    case '..':
+    case 'ph':
       return createDMessagePlaceholderPart(part.pText) as T;
 
     case 'error':

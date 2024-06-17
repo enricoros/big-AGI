@@ -364,6 +364,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
                 fragment.fId = agiId('chat-dfragment');
               }
             }
+            // remove the placeholder parts
+            message.fragments = message.fragments.filter(f => f.ft !== 'content' || f.part.pt !== 'ph');
             // cleanup pre-v4 properties
             delete message.pendingIncomplete;
             delete message.pendingPlaceholderText;

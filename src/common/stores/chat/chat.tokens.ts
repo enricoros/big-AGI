@@ -40,7 +40,7 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
     case 'image_ref':
       return _imagePartTokens(fragment.part.width, fragment.part.height, fragment.ft === 'attachment' ? fragment.title : '', llm);
 
-    case '..':
+    case 'ph':
     case 'error':
       // purely UI elements, no tokens
       return 0;

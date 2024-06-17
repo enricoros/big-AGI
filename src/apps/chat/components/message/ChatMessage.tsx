@@ -631,7 +631,7 @@ export function ChatMessage(props: {
                   />
                 );
 
-              case '..':
+              case 'ph':
                 return (
                   <ContentPartPlaceholder
                     key={fragment.fId}
