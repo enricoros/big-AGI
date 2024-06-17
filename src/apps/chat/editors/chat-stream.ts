@@ -34,6 +34,13 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   const onMessageUpdated = (incrementalMessage: Partial<DMessage>) => {
     cHandler.messageEdit(assistantMessageId, incrementalMessage, false);
   };
+  let instructions: VChatMessageIn[];
+  try {
+    instructions = history.map((m): VChatMessageIn => ({ role: m.role, content: messageSingleTextOrThrow(m) /* BIG FIXME */ }));
+  } catch (error) {
+    console.error('runAssistantUpdatingState: error:', error, history);
+    throw error;
+  }
   const messageStatus = await streamAssistantMessage(
     assistantLlmId,
     instructions,
