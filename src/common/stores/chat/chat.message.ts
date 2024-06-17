@@ -1,6 +1,6 @@
 import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 
-import { agiUuid } from '~/common/util/idUtils';
+import { agiId, agiUuid } from '~/common/util/idUtils';
 
 
 // Message
@@ -47,17 +47,20 @@ export type DMessageFragment =
   | DMessageAttachmentFragment
 // | DMessageBeamFragment
 // | DMessageMetadataV1Fragment
+  | DMessageSentinelFragment
   ;
 
 // expected a list of one or more per message, of similar or different types
 export type DMessageContentFragment = {
   ft: 'content',
+  fId: DMessageFragmentId;
   part: DMessageTextPart | DMessageImageRefPart | DMessageToolCallPart | DMessageToolResponsePart;
 }
 
 // displayed at the bottom of the message, zero or more
 export type DMessageAttachmentFragment = {
   ft: 'attachment',
+  fId: DMessageFragmentId;
   title: string;
   part: DMessageTextPart | DMessageImageRefPart;
 }
@@ -66,8 +69,19 @@ export type DMessageAttachmentFragment = {
 // could not be the data store itself, but only used for save/reload
 // export type DMessageBeamFragment = {
 //   ft: 'beam',
-//   beam: { ... serializedState ... }
+//   fId: DMessageFragmentId;
+//   beam: { rays: any[], merges: any[], ... };
 // }
+
+// here just to foce the typesystem to work and detect corner cases
+export type DMessageSentinelFragment = {
+  ft: 'sentinel',
+  fId: DMessageFragmentId;
+  warningNoPart: boolean;
+}
+
+// this id is not unique, just 8 bytes
+export type DMessageFragmentId = string;
 
 
 // Message Fragment Parts
@@ -156,10 +170,6 @@ export function pendDMessage(message: DMessage, placeholderText?: string): DMess
 
 // fragments - each message has fragments (zero or more) each of a single type and with a single part
 
-export function createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
-  return { ft: 'content', part };
-}
-
 export function createTextContentFragment(text: string): DMessageContentFragment {
   return createContentFragment(createDMessageTextPart(text));
 }
@@ -168,9 +178,10 @@ export function createImageContentFragment(dataRef: DMessageDataRef, altText?: s
   return createContentFragment(createDMessageImagePart(dataRef, altText, width, height));
 }
 
-export function createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
-  return { ft: 'attachment', title, part };
+function createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
+  return { ft: 'content', fId: agiId('chat-dfragment'), part };
 }
+
 
 export function createTextAttachmentFragment(text: string, title: string): DMessageAttachmentFragment {
   return createAttachmentFragment(title, createDMessageTextPart(text));
@@ -179,6 +190,16 @@ export function createTextAttachmentFragment(text: string, title: string): DMess
 export function createImageAttachmentFragment(title: string, dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageAttachmentFragment {
   return createAttachmentFragment(title, createDMessageImagePart(dataRef, altText, width, height));
 }
+
+export function createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
+  return { ft: 'attachment', fId: agiId('chat-dfragment'), title, part };
+}
+
+
+function createSentinelFragment(justAnOption: boolean): DMessageSentinelFragment {
+  return { ft: 'sentinel', fId: agiId('chat-dfragment'), warningNoPart: justAnOption };
+}
+
 
 // parts - each fragment has a part
 
@@ -247,6 +268,9 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
 
     case 'attachment':
       return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
+
+    case 'sentinel':
+      return createSentinelFragment(fragment.warningNoPart);
 
     // default:
     //   throw new Error('Invalid fragment');

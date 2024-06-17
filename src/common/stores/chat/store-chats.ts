@@ -7,7 +7,7 @@ import type { SystemPurposeId } from '../../../data';
 import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
 import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 
-import { agiUuid } from '~/common/util/idUtils';
+import { agiId, agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageFragment, DMessageId, DMessageMetadata } from './chat.message';
@@ -333,11 +333,16 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           conversation.abortController = null;
           // fixup messages
           for (const message of conversation.messages) {
-            // cleanup within-v4: fixup rename of fragment's dblobId to dblobAssetId
-            for (let fragment of message.fragments) {
+            // cleanup within-v4
+            for (const fragment of message.fragments) {
+              // fixup rename of fragment's dblobId to dblobAssetId
               if (fragment.ft === 'content' && fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob' && (fragment.part.dataRef as any)['dblobId']) {
                 fragment.part.dataRef.dblobAssetId = (fragment.part.dataRef as any)['dblobId'];
                 delete (fragment.part.dataRef as any)['dblobId'];
+              }
+              // fixup missing fId
+              if (!fragment.fId) {
+                fragment.fId = agiId('chat-dfragment');
               }
             }
             // cleanup pre-v4 properties
