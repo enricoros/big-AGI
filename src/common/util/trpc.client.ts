@@ -8,10 +8,10 @@
  */
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
-import superjson from 'superjson';
 
 import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
 import type { AppRouterNode } from '~/server/api/trpc.router-node';
+import { transformer } from '~/server/api/trpc.transformer';
 
 import { getBaseUrl } from './urlUtils';
 
@@ -26,13 +26,13 @@ const enableLoggerLink = (opts: any) => {
  * Typesafe React Query hooks for the tRPC Edge-Runtime API
  */
 export const apiQuery = createTRPCNext<AppRouterEdge>({
-  config(_opts) {
+  config() {
     return {
       links: [
         loggerLink({ enabled: enableLoggerLink }),
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc-edge`,
-          transformer: superjson,
+          transformer: transformer,
           // You can pass any HTTP headers you wish here
           // async headers() {
           //   return {
@@ -44,15 +44,15 @@ export const apiQuery = createTRPCNext<AppRouterEdge>({
     };
   },
   /**
-   * Transformer used for data de-serialization from the server.
-   * @see https://trpc.io/docs/server/data-transformers
-   */
-  transformer: superjson,
-  /**
    * Whether tRPC should await queries when server rendering pages.
    * @see https://trpc.io/docs/client/nextjs/ssr
    */
   ssr: false,
+  /**
+   * Transformer used for data de-serialization from the server.
+   * @see https://trpc.io/docs/server/data-transformers
+   */
+  transformer: transformer,
 });
 
 
@@ -64,7 +64,7 @@ export const apiAsync = createTRPCClient<AppRouterEdge>({
     loggerLink({ enabled: enableLoggerLink }),
     httpBatchLink({
       url: `${getBaseUrl()}/api/trpc-edge`,
-      transformer: superjson,
+      transformer: transformer,
     }),
   ],
 });
@@ -78,7 +78,7 @@ export const apiAsyncNode = createTRPCClient<AppRouterNode>({
     loggerLink({ enabled: enableLoggerLink }),
     httpBatchLink({
       url: `${getBaseUrl()}/api/trpc-node`,
-      transformer: superjson,
+      transformer: transformer,
     }),
   ],
 });
