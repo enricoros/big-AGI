@@ -10,14 +10,18 @@ export function ContentPartPlaceholder(props: {
   placeholderText: string,
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
+  showAsDanger?: boolean,
+  showAsItalic?: boolean,
 }) {
   return (
     <BlocksRenderer
       text={props.placeholderText}
       fromRole={props.messageRole}
       contentScaling={props.contentScaling}
-      renderTextAsMarkdown={false}
       fitScreen={false}
+      showAsDanger={props.showAsDanger}
+      showAsItalic={props.showAsItalic}
+      renderTextAsMarkdown={false}
     />
   );
 }

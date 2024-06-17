@@ -54,7 +54,7 @@ export type DMessageFragment =
 export type DMessageContentFragment = {
   ft: 'content',
   fId: DMessageFragmentId;
-  part: DMessageTextPart | DMessageImageRefPart | DMessageToolCallPart | DMessageToolResponsePart;
+  part: DMessageTextPart | DMessageImageRefPart | DMessageToolCallPart | DMessageToolResponsePart | DMessagePlaceholderPart | DMessageErrorPart;
 }
 
 // displayed at the bottom of the message, zero or more
@@ -89,9 +89,10 @@ export type DMessageFragmentId = string;
 
 export type DMessageTextPart = { pt: 'text', text: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
-type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
-type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
-// type DMessageErrorPart = { pt: 'error', error: string };
+export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
+export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
+export type DMessagePlaceholderPart = { pt: '..', pText: string };
+export type DMessageErrorPart = { pt: 'error', error: string };
 
 
 // Data Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
@@ -178,6 +179,14 @@ export function createImageContentFragment(dataRef: DMessageDataRef, altText?: s
   return createContentFragment(createDMessageImagePart(dataRef, altText, width, height));
 }
 
+export function createPlaceholderContentFragment(placeholderText: string): DMessageContentFragment {
+  return createContentFragment(createDMessagePlaceholderPart(placeholderText));
+}
+
+export function createErrorContentFragment(error: string): DMessageContentFragment {
+  return createContentFragment(createDMessageErrorPart(error));
+}
+
 function createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
   return { ft: 'content', fId: agiId('chat-dfragment'), part };
 }
@@ -217,6 +226,14 @@ function createDMessageToolCallPart(functionName: string, args: Record<string, a
 
 function createDMessageToolResponsePart(functionName: string, response: Record<string, any>): DMessageToolResponsePart {
   return { pt: 'tool_response', function: functionName, response };
+}
+
+function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceholderPart {
+  return { pt: '..', pText: placeholderText };
+}
+
+function createDMessageErrorPart(error: string): DMessageErrorPart {
+  return { pt: 'error', error };
 }
 
 // data references
@@ -290,6 +307,12 @@ function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentF
 
     case 'tool_response':
       return createDMessageToolResponsePart(part.function, { ...part.response }) as T;
+
+    case '..':
+      return createDMessagePlaceholderPart(part.pText) as T;
+
+    case 'error':
+      return createDMessageErrorPart(part.error) as T;
 
     // default:
     //   throw new Error('Invalid part');
