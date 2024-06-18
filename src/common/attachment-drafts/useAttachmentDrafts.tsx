@@ -7,8 +7,7 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.message';
-import { attachmentWrapText, TextAttachmentWrapFormat } from '~/common/stores/chat/chat.tokens';
+import type { DMessageContentFragment } from '~/common/stores/chat/chat.message';
 import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
@@ -18,19 +17,6 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
 // enable to debug operations
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
-
-export function attachmentInlineTextFragments(initialTextBlockText: string | null, textAttachmentFragments: DMessageAttachmentFragment[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
-  let inlinedText = initialTextBlockText || '';
-  for (const textAttachmentFragment of textAttachmentFragments) {
-    if (inlinedText.length)
-      inlinedText += separator;
-    if (textAttachmentFragment.part.pt === 'text')
-      inlinedText += attachmentWrapText(textAttachmentFragment.part.text, textAttachmentFragment.title, wrapFormat);
-    else
-      console.warn('attachmentInlineTextFragments: unhandled part type:', textAttachmentFragment.part.pt);
-  }
-  return inlinedText;
-}
 
 export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean) => {
 
@@ -43,8 +29,12 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     attachmentsTakeTextFragments: state.takeTextFragments,
   })));
 
+
   // Creation helpers
 
+  /**
+   * Append a file to the attachments.
+   */
   const attachAppendFile = React.useCallback((origin: AttachmentDraftSourceOriginFile, fileWithHandle: FileWithHandle, overrideFileName?: string) => {
     if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendFile', origin, fileWithHandle, overrideFileName);
@@ -54,7 +44,9 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     });
   }, [_createAttachmentDraft]);
 
-
+  /**
+   * Append data transfer to the attachments.
+   */
   const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
 
     // https://github.com/enricoros/big-AGI/issues/286
@@ -116,17 +108,9 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     return false;
   }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
 
-
-  const attachAppendEgoContent = React.useCallback((label: string, refId: string, contents: DMessageContentFragment[]) => {
-    if (ATTACHMENTS_DEBUG_INTAKE)
-      console.log('attachAppendEgoContent', label, refId, contents);
-
-    return _createAttachmentDraft({
-      media: 'ego', method: 'ego-contents', label, refId, contents,
-    });
-  }, [_createAttachmentDraft]);
-
-
+  /**
+   * Append clipboard items to the attachments.
+   */
   const attachAppendClipboardItems = React.useCallback(async () => {
 
     // if there's an issue accessing the clipboard, show it passively
@@ -196,6 +180,18 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
   }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
+
+  /**
+   * Append ego content to the attachments.
+   */
+  const attachAppendEgoContent = React.useCallback((label: string, refId: string, contents: DMessageContentFragment[]) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendEgoContent', label, refId, contents);
+
+    return _createAttachmentDraft({
+      media: 'ego', method: 'ego-contents', label, refId, contents,
+    });
+  }, [_createAttachmentDraft]);
 
 
   return {
