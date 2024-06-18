@@ -38,15 +38,15 @@ export function ContentPartTextEdit(props: {
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
 
   // events
-  onApplyEdits: () => void,
-  onCancelEdits: () => void,
+  onEnterPressed: () => void,
+  onEscapePressed: () => void,
 }) {
 
   // external state
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
 
   // derived state
-  const { fragmentId, setEditedText, onApplyEdits, onCancelEdits } = props;
+  const { fragmentId, setEditedText, onEnterPressed, onEscapePressed } = props;
 
   // handlers
   const handleEditTextChanged = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -58,13 +58,13 @@ export function ContentPartTextEdit(props: {
       const shiftOrAlt = e.shiftKey || e.altKey;
       if (enterIsNewline ? shiftOrAlt : !shiftOrAlt) {
         e.preventDefault();
-        onApplyEdits();
+        onEnterPressed();
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      onCancelEdits();
+      onEscapePressed();
     }
-  }, [enterIsNewline, onApplyEdits, onCancelEdits]);
+  }, [enterIsNewline, onEnterPressed, onEscapePressed]);
 
   return (
     <Textarea
