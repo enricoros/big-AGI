@@ -51,7 +51,7 @@ export function ContentPartText(props: {
       onFragmentReplace?.(fragmentId, createTextContentFragment(newText));
   }, [fragmentId, messageText, onFragmentReplace]);
 
-  const { errorMessage } = React.useMemo(
+  const errorMessage = React.useMemo(
     () => explainServiceErrors(messageText, fromAssistant, props.messageOriginLLM),
     [fromAssistant, messageText, props.messageOriginLLM],
   );
@@ -59,8 +59,8 @@ export function ContentPartText(props: {
   // if errored, render an Auto-Error message
   if (errorMessage) {
     return (
-      <GoodTooltip placement='top' title={messageText}>
-        <div><InlineError error={errorMessage} /></div>
+      <GoodTooltip placement='top' arrow title={messageText}>
+        <div><InlineError error={`${errorMessage}. Hover this message for more details.`} /></div>
       </GoodTooltip>
     );
   }

@@ -49,7 +49,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
     return true;
   } catch (error: any) {
 
-    const drawError = `Issue: Sorry, I couldn't create an image for you. ${error?.message || error?.toString() || 'Unknown error'}`;
+    const drawError = `Issue: Sorry, I couldn't create an image for you.\n${error?.message || error?.toString() || 'Unknown error'}`;
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(drawError), true);
 
     return false;
