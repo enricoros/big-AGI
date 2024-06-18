@@ -127,16 +127,6 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
     highlightCode, inferCodeLanguage,
     optimizeLightweight,
   } = props;
-  const canRenderLineNumbers = !showSoftWrap;
-  const renderLineNumbers = showLineNumbers && canRenderLineNumbers;
-
-  // heuristic for language, and syntax highlight
-  const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
-    const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
-    const highlightedCode = highlightCode(inferredCodeLanguage, blockCode, renderLineNumbers);
-    return { highlightedCode, inferredCodeLanguage };
-  }, [inferCodeLanguage, blockTitle, blockCode, highlightCode, renderLineNumbers]);
-
 
   // heuristics for specialized rendering
 
@@ -167,6 +157,18 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
   const renderCode = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
+
+
+  const cannotRenderLineNumbers = !renderCode || showSoftWrap;
+  const renderLineNumbers = showLineNumbers && !cannotRenderLineNumbers;
+
+  // heuristic for language, and syntax highlight
+  const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
+    const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
+    const highlightedCode = highlightCode(inferredCodeLanguage, blockCode, renderLineNumbers);
+    return { highlightedCode, inferredCodeLanguage };
+  }, [inferCodeLanguage, blockTitle, blockCode, highlightCode, renderLineNumbers]);
+
 
   const canCodePen = blockComplete && isCodePenSupported(inferredCodeLanguage, isSVG);
   const canJSFiddle = blockComplete && isJSFiddleSupported(inferredCodeLanguage, blockCode);
@@ -307,7 +309,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
             {/* Line Numbers toggle */}
             {renderCode && (
               <Tooltip title={optimizeLightweight ? null : 'Toggle Line Numbers'}>
-                <OverlayButton disabled={!canRenderLineNumbers || !renderCode} variant={(renderLineNumbers && renderCode) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
+                <OverlayButton disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderCode) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
                   <NumbersRoundedIcon />
                 </OverlayButton>
               </Tooltip>
