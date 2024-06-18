@@ -175,6 +175,7 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
+  onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
@@ -239,7 +240,12 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const { onMessageFragmentReplace } = props;
+  const { onMessageFragmentDelete, onMessageFragmentReplace } = props;
+
+  const handleFragmentDelete = React.useCallback((fragmentId: DMessageFragmentId) => {
+    setIsEditing(false);
+    onMessageFragmentDelete?.(messageId, fragmentId);
+  }, [messageId, onMessageFragmentDelete]);
 
   const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newContent: DMessageContentFragment) => {
     setIsEditing(false);
@@ -616,6 +622,7 @@ export function ChatMessage(props: {
                     imageRefPart={fragment.part}
                     fragmentId={fragment.fId}
                     contentScaling={contentScaling}
+                    onFragmentDelete={messageFragments.length > 1 ? handleFragmentDelete : undefined}
                     onFragmentReplace={handleFragmentReplace}
                   />
                 );

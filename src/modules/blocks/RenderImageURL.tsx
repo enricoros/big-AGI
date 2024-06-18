@@ -3,6 +3,8 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Box, IconButton, Sheet } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -76,6 +78,7 @@ export const RenderImageURL = (props: {
   description?: React.ReactNode,
   infoText?: string,
   onOpenInNewTab?: (e: React.MouseEvent) => void,
+  onImageDelete?: () => void,
   onImageRegenerate?: () => void,
   scaledImageSx?: SxProps,
   className?: string,
@@ -84,6 +87,7 @@ export const RenderImageURL = (props: {
   // state
   const [infoOpen, setInfoOpen] = React.useState(false);
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
+  const [deleteArmed, setDeleteArmed] = React.useState(false);
   const [regenArmed, setRegenArmed] = React.useState(false);
   const [showDalleAlert, setShowDalleAlert] = React.useState(true);
 
@@ -94,24 +98,33 @@ export const RenderImageURL = (props: {
   }, []);
 
   // handlers
-  const { onImageRegenerate, onOpenInNewTab } = props;
+  const { onImageDelete, onImageRegenerate, onOpenInNewTab } = props;
 
   const handleToggleInfoOpen = React.useCallback(() => {
+    setDeleteArmed(false);
     setRegenArmed(false);
     setInfoOpen(open => !open);
   }, []);
 
   const handleOpenInNewTab = React.useCallback((e: React.MouseEvent) => {
+    setDeleteArmed(false);
     setRegenArmed(false);
     onOpenInNewTab?.(e);
   }, [onOpenInNewTab]);
 
+  const handleToggleDeleteArmed = React.useCallback(() => {
+    setRegenArmed(false);
+    setDeleteArmed(armed => !armed);
+  }, []);
+
   const handleImageRegenerate = React.useCallback(() => {
+    setDeleteArmed(false);
     setRegenArmed(false);
     onImageRegenerate?.();
   }, [onImageRegenerate]);
 
   const handleToggleRegenArmed = React.useCallback(() => {
+    setDeleteArmed(false);
     setRegenArmed(armed => !armed);
   }, []);
 
@@ -235,16 +248,35 @@ export const RenderImageURL = (props: {
             </GoodTooltip>
           )}
 
-          {/* Regenerate [armed, arming] buttons */}
-          {regenArmed && (
-            <GoodTooltip title='Confirm Regeneration'>
-              <OverlayButton variant='soft' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '1' }}>
-                <ReplayIcon />
+
+          {/* Deletion */}
+
+          {!!onImageDelete && !regenArmed && (
+            <GoodTooltip title={deleteArmed ? 'Cancel Deletion' : 'Delete Image'}>
+              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
+                {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
               </OverlayButton>
             </GoodTooltip>
           )}
 
-          {!!onImageRegenerate && (
+          {deleteArmed && !regenArmed && (
+            <GoodTooltip title='Confirm Deletion'>
+              <OverlayButton variant='soft' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '2' }}>
+                <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+              </OverlayButton>
+            </GoodTooltip>
+          )}
+
+          {/* Regenerate [armed, arming] buttons */}
+          {regenArmed && !deleteArmed && (
+            <GoodTooltip title='Confirm Regeneration'>
+              <OverlayButton variant='soft' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '1' }}>
+                <ReplayIcon sx={{ color: 'success.solidBg' }} />
+              </OverlayButton>
+            </GoodTooltip>
+          )}
+
+          {!!onImageRegenerate && !deleteArmed && (
             <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the current drawing configuration'}>
               <OverlayButton variant={regenArmed ? 'solid' : 'soft'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
                 {regenArmed

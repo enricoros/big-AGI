@@ -40,7 +40,8 @@ function ContentPartImageRefDBlob(props: {
   imageWidth?: number,
   imageHeight?: number,
   onOpenInNewTab: () => void
-  onReplaceFragment: (newFragment: DMessageContentFragment) => void,
+  onDeleteFragment?: () => void,
+  onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
   scaledImageSx?: SxProps,
 }) {
 
@@ -58,10 +59,10 @@ function ContentPartImageRefDBlob(props: {
     enabled: false,
     queryKey: ['regen-image-asset', props.dataRefDBlobAssetId, recreationPrompt],
     queryFn: async ({ signal }) => {
-      if (signal?.aborted || !recreationPrompt) return;
+      if (signal?.aborted || !recreationPrompt || !props.onReplaceFragment) return;
       const newImageFragments = await t2iGenerateImageContentFragments(null, recreationPrompt, 1, 'global', 'app-chat');
       if (newImageFragments.length === 1)
-        props.onReplaceFragment(newImageFragments[0]);
+        props.onReplaceFragment?.(newImageFragments[0]);
     },
   });
 
@@ -116,7 +117,8 @@ function ContentPartImageRefDBlob(props: {
       infoText={altText}
       description={overlayText}
       onOpenInNewTab={props.onOpenInNewTab}
-      onImageRegenerate={(!!recreationPrompt && !isRegenerating) ? handleImageRegenerate : undefined}
+      onImageDelete={props.onDeleteFragment}
+      onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
       className={isRegenerating ? 'agi-border-4' : undefined}
       scaledImageSx={props.scaledImageSx}
     />
@@ -139,14 +141,19 @@ export function ContentPartImageRef(props: {
   imageRefPart: DMessageImageRefPart,
   fragmentId: DMessageFragmentId,
   contentScaling: ContentScaling,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
 
   // derived state
-  const { fragmentId, imageRefPart, onFragmentReplace } = props;
+  const { fragmentId, imageRefPart, onFragmentDelete, onFragmentReplace } = props;
   const { dataRef } = imageRefPart;
 
   // event handlers
+  const handleDeleteFragment = React.useCallback(() => {
+    onFragmentDelete?.(fragmentId);
+  }, [fragmentId, onFragmentDelete]);
+
   const handleReplaceFragment = React.useCallback((newImageFragment: DMessageContentFragment) => {
     onFragmentReplace?.(fragmentId, newImageFragment);
   }, [fragmentId, onFragmentReplace]);
@@ -174,7 +181,8 @@ export function ContentPartImageRef(props: {
           imageWidth={imageRefPart.width}
           imageHeight={imageRefPart.height}
           onOpenInNewTab={handleOpenInNewTab}
-          onReplaceFragment={handleReplaceFragment}
+          onDeleteFragment={onFragmentDelete ? handleDeleteFragment : undefined}
+          onReplaceFragment={onFragmentReplace ? handleReplaceFragment : undefined}
           scaledImageSx={scaledImageSx}
         />
       ) : dataRef.reftype === 'url' ? (
