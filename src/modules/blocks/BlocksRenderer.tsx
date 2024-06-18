@@ -120,6 +120,8 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
       fontVariantLigatures: 'none',
       lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+      minWidth: 260,
+      minHeight: '2.75rem',
     }
   ), [fromAssistant, props.contentScaling, props.specialDiagramMode]);
 
