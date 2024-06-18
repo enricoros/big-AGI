@@ -28,7 +28,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -41,6 +41,7 @@ import { useChatShowTextDiff } from '../../store-app-chat';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
 import { ContentPartText } from './ContentPartText';
+import { ContentPartTextEdit } from './ContentPartTextEdit';
 import { ReplyToBubble } from './ReplyToBubble';
 
 
@@ -147,6 +148,7 @@ export function makeMessageAvatar(messageAvatarUrl: string | null, messageRole: 
   return <Avatar alt={messageSender} />;
 }
 
+type TextContentEditState = { [fragmentId: DMessageFragmentId]: string };
 
 export const ChatMessageMemo = React.memo(ChatMessage);
 
@@ -193,7 +195,7 @@ export function ChatMessage(props: {
   const [bubbleAnchor, setBubbleAnchor] = React.useState<HTMLElement | null>(null);
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [textContentEditState, setTextContentEditState] = React.useState<TextContentEditState | null>(null);
 
   // external state
   const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
@@ -243,14 +245,35 @@ export function ChatMessage(props: {
   const { onMessageFragmentDelete, onMessageFragmentReplace } = props;
 
   const handleFragmentDelete = React.useCallback((fragmentId: DMessageFragmentId) => {
-    setIsEditing(false);
     onMessageFragmentDelete?.(messageId, fragmentId);
   }, [messageId, onMessageFragmentDelete]);
 
   const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newContent: DMessageContentFragment) => {
-    setIsEditing(false);
     onMessageFragmentReplace?.(messageId, fragmentId, newContent);
   }, [messageId, onMessageFragmentReplace]);
+
+
+  // Text Editing
+
+  const isEditingText = !!textContentEditState;
+
+  const handleEditsApply = React.useCallback(() => {
+    const state = textContentEditState || {};
+    setTextContentEditState(null);
+    Object.entries(state).forEach(([fragmentId, editedText]) => {
+      if (editedText.length > 0)
+        handleFragmentReplace(fragmentId, createTextContentFragment(editedText));
+      else
+        handleFragmentDelete(fragmentId);
+    });
+  }, [handleFragmentDelete, handleFragmentReplace, textContentEditState]);
+
+  const handleEditsBegin = React.useCallback(() => setTextContentEditState({}), []);
+
+  const handleEditsCancel = React.useCallback(() => setTextContentEditState(null), []);
+
+  const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string) =>
+    setTextContentEditState((prev): TextContentEditState => ({ ...prev, [fragmentId]: editedText || '' })), []);
 
 
   // Message Operations Menu
@@ -272,12 +295,13 @@ export function ChatMessage(props: {
     closeBubble();
   };
 
-  const handleOpsEdit = React.useCallback((e: React.MouseEvent) => {
-    if (messagePendingIncomplete && !isEditing) return; // don't allow editing while incomplete
-    setIsEditing(!isEditing);
+  const handleOpsEditToggle = React.useCallback((e: React.MouseEvent) => {
+    if (messagePendingIncomplete && !isEditingText) return; // don't allow editing while incomplete
+    if (isEditingText) handleEditsCancel();
+    else handleEditsBegin();
     e.preventDefault();
     handleCloseOpsMenu();
-  }, [handleCloseOpsMenu, isEditing, messagePendingIncomplete]);
+  }, [handleCloseOpsMenu, handleEditsBegin, handleEditsCancel, isEditingText, messagePendingIncomplete]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, 'starred');
@@ -464,8 +488,8 @@ export function ChatMessage(props: {
   }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    doubleClickToEdit && props.onMessageFragmentReplace && handleOpsEdit(event);
-  }, [doubleClickToEdit, handleOpsEdit, props.onMessageFragmentReplace]);
+    doubleClickToEdit && props.onMessageFragmentReplace && handleOpsEditToggle(event);
+  }, [doubleClickToEdit, handleOpsEditToggle, props.onMessageFragmentReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
     handleOpenBubble(event.nativeEvent);
@@ -568,7 +592,7 @@ export function ChatMessage(props: {
         <Box sx={{
           // v-center content if there's any gap
           my: 'auto',
-          flexGrow: isEditing ? 1 : 0,
+          flexGrow: isEditingText ? 1 : 0,
 
           // v-layout
           display: 'grid',
@@ -597,15 +621,22 @@ export function ChatMessage(props: {
 
             switch (fragment.part.pt) {
               case 'text':
-                return (
+                return textContentEditState ? (
+                  <ContentPartTextEdit
+                    key={'edit-' + fragment.fId}
+                    textPart={fragment.part}
+                    fragmentId={fragment.fId}
+                    contentScaling={contentScaling}
+                    editedText={textContentEditState[fragment.fId]}
+                    setEditedText={handleEditSetText}
+                    onApplyEdits={handleEditsApply}
+                    onCancelEdits={handleEditsCancel}
+                  />
+                ) : (
                   <ContentPartText
                     key={fragment.fId}
                     // ref={blocksRendererRef}
                     textPart={fragment.part}
-                    fragmentId={fragment.fId}
-                    isEditingContent={isEditing}
-                    setIsEditingContent={setIsEditing}
-                    onFragmentReplace={handleFragmentReplace}
                     messageRole={messageRole}
                     messageOriginLLM={messageOriginLLM}
                     contentScaling={contentScaling}
@@ -699,7 +730,7 @@ export function ChatMessage(props: {
 
 
       {/* Overlay copy icon */}
-      {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditing && (
+      {ENABLE_COPY_MESSAGE_OVERLAY && !fromSystem && !isEditingText && (
         <Tooltip title={messagePendingIncomplete ? null : (fromAssistant ? 'Copy message' : 'Copy input')} variant='solid'>
           <IconButton
             variant='outlined' onClick={handleOpsCopy}
@@ -733,10 +764,10 @@ export function ChatMessage(props: {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {/* Edit */}
             {!!props.onMessageFragmentReplace && (
-              <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEdit} sx={{ flex: 1 }}>
+              <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEditToggle} sx={{ flex: 1 }}>
                 <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
-                {isEditing ? 'Discard' : 'Edit'}
-                {/*{!isEditing && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
+                {isEditingText ? 'Discard' : 'Edit'}
+                {/*{!isEditingText && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
               </MenuItem>
             )}
             {/* Copy */}
