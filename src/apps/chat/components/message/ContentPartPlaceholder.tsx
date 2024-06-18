@@ -12,7 +12,9 @@ export function ContentPartPlaceholder(props: {
   contentScaling: ContentScaling,
   showAsDanger?: boolean,
   showAsItalic?: boolean,
+  // showAsProgress?: boolean,
 }) {
+  // const placeholder = (
   return (
     <BlocksRenderer
       text={props.placeholderText}
@@ -24,4 +26,12 @@ export function ContentPartPlaceholder(props: {
       renderTextAsMarkdown={false}
     />
   );
+  //
+  // return props.showAsProgress ? (
+  //   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+  //     <CircularProgress color='neutral' size='sm' sx={{ ml: 1.5, '--CircularProgress-size': '16px', '--CircularProgress-trackThickness': '2px' }} /> {placeholder}
+  //   </Box>
+  // ) : (
+  //   placeholder
+  // );
 }
