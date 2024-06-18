@@ -12,6 +12,8 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 const textEditAreaSx: SxProps = {
   ...blocksRendererSx,
+  // just shrink padding tiny bit
+  py: 0.5,
   // make the editing stand out a bit more
   boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
   outline: '1px solid',
