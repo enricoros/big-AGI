@@ -65,10 +65,10 @@ import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
-import { ChatModeMenu } from './ChatModeMenu';
 import { ReplyToBubble } from '../message/ReplyToBubble';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
+import { chatModeCanAttach, ChatModeMenu } from './ChatModeMenu';
 import { useComposerStartupText } from './store-composer';
 
 
@@ -169,6 +169,7 @@ export function Composer(props: {
   const isDesktop = !props.isMobile;
   const noConversation = !props.conversationId;
   const noLLM = !props.chatLLM;
+  const showLLMAttachments = chatModeCanAttach(chatModeId);
 
 
   // tokens derived state
@@ -216,6 +217,8 @@ export function Composer(props: {
   const handleSendAction = React.useCallback((_chatModeId: ChatModeId, composerText: string): boolean => {
     if (!conversationId)
       return false;
+
+    // const canAttach = chatModeCanAttach(_chatModeId);
 
     // TODO: move to the new pure-Fragment behavior
     // Inline all Text Fragments into the main message - this is the V1 approach
@@ -321,26 +324,26 @@ export function Composer(props: {
     }
   }, [props.composerTextAreaRef, setComposeText]);
 
-  const onActileMessageAttach = React.useCallback(async (item: StarredMessageItem) => {
+  const onActileEmbedMessage = React.useCallback(async (item: StarredMessageItem) => {
     // get the message
     const conversation = getConversation(item.conversationId);
-    const messageToAttach = conversation?.messages.find(m => m.id === item.messageId);
-    if (conversation && messageToAttach) {
-      const contentToAttach = duplicateDMessageFragments(messageToAttach.fragments)
+    const messageToEmbed = conversation?.messages.find(m => m.id === item.messageId);
+    if (conversation && messageToEmbed) {
+      const contentToEmbed = duplicateDMessageFragments(messageToEmbed.fragments)
         .filter(isContentFragment);
-      if (contentToAttach.length) {
+      if (contentToEmbed.length) {
         const chatTitle = conversationTitle(conversation);
-        const messageText = messageFragmentsReduceText(contentToAttach);
+        const messageText = messageFragmentsReduceText(contentToEmbed);
         const refLabel = `${chatTitle} > ${messageText.slice(0, 10)}...`;
         const refId = `${item.messageId} - ${chatTitle}`;
-        await attachAppendEgoContent(refLabel, refId, contentToAttach);
+        await attachAppendEgoContent(refLabel, refId, contentToEmbed);
       }
     }
   }, [attachAppendEgoContent]);
 
   const actileProviders = React.useMemo(() => {
-    return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileMessageAttach)];
-  }, [onActileCommandPaste, onActileMessageAttach]);
+    return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileEmbedMessage)];
+  }, [onActileCommandPaste, onActileEmbedMessage]);
 
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
 
@@ -483,15 +486,15 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
-  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftId: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
+  const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
     switch (action) {
       case 'copy-text':
-        const copyTextFragments = attachmentsTakeTextFragments(attachmentDraftId, false);
+        const copyTextFragments = attachmentsTakeTextFragments(attachmentDraftIdOrAll, false);
         const copyTextString = attachmentInlineTextFragments(null, copyTextFragments, false, '\n\n---\n\n');
-        copyToClipboard(copyTextString, attachmentDraftId ? 'Attachment Text' : 'Attachments Text');
+        copyToClipboard(copyTextString, attachmentDraftIdOrAll ? 'Attachment Text' : 'Attachments Text');
         break;
       case 'inline-text':
-        const inlineTextFragments = attachmentsTakeTextFragments(attachmentDraftId, true);
+        const inlineTextFragments = attachmentsTakeTextFragments(attachmentDraftIdOrAll, true);
         setComposeText(currentText => attachmentInlineTextFragments(currentText, inlineTextFragments, 'markdown-code', '\n\n'));
         break;
     }
@@ -552,23 +555,23 @@ export function Composer(props: {
   const showChatReplyTo = !!replyToGenerateText;
   const showChatExtras = isText && !showChatReplyTo;
 
-  const buttonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
+  const sendButtonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
-  const buttonColor: ColorPaletteProp =
+  const sendButtonColor: ColorPaletteProp =
     assistantAbortible ? 'warning'
       : isReAct ? 'success'
         : isTextBeam ? 'primary'
           : isDraw ? 'warning'
             : 'primary';
 
-  const buttonText =
+  const sendButtonText =
     isAppend ? 'Write'
       : isReAct ? 'ReAct'
         : isTextBeam ? 'Beam'
           : isDraw ? 'Draw'
             : 'Chat';
 
-  const buttonIcon =
+  const sendButtonIcon =
     micContinuation ? <AutoModeIcon />
       : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
         : isReAct ? <PsychologyIcon />
@@ -597,45 +600,50 @@ export function Composer(props: {
     <Box aria-label='User Message' component='section' sx={props.sx}>
       <Grid container spacing={{ xs: 1, md: 2 }}>
 
+        {/* [Mobile: top, Desktop: left] */}
         <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
 
-          {/* Start buttons column */}
-          <Box sx={{
-            flexGrow: 0,
-            display: 'grid', gap: 1,
-          }}>
-            {isMobile ? <>
+          {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
+          {isMobile && (
+            <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
 
               {/* [mobile] Mic button */}
               {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
               {/* [mobile] [+] button */}
-              <Dropdown>
-                <MenuButton slots={{ root: IconButton }}>
-                  <AddCircleOutlineIcon />
-                </MenuButton>
-                <Menu>
-                  {/* Responsive Camera OCR button */}
-                  <MenuItem>
-                    <ButtonAttachCameraMemo onOpenCamera={openCamera} />
-                  </MenuItem>
+              {showLLMAttachments && (
+                <Dropdown>
+                  <MenuButton slots={{ root: IconButton }}>
+                    <AddCircleOutlineIcon />
+                  </MenuButton>
+                  <Menu>
+                    {/* Responsive Camera OCR button */}
+                    <MenuItem>
+                      <ButtonAttachCameraMemo onOpenCamera={openCamera} />
+                    </MenuItem>
 
-                  {/* Responsive Open Files button */}
-                  <MenuItem>
-                    <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
-                  </MenuItem>
+                    {/* Responsive Open Files button */}
+                    <MenuItem>
+                      <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
+                    </MenuItem>
 
-                  {/* Responsive Paste button */}
-                  {supportsClipboardRead && <MenuItem>
-                    <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
-                  </MenuItem>}
-                </Menu>
-              </Dropdown>
+                    {/* Responsive Paste button */}
+                    {supportsClipboardRead && <MenuItem>
+                      <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
+                    </MenuItem>}
+                  </Menu>
+                </Dropdown>
+              )}
 
               {/* [Mobile] MultiChat button */}
               {props.isMulticast !== null && <ButtonMultiChatMemo isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
-            </> : <>
+            </Box>
+          )}
+
+          {/* [Desktop, Col1] Insert Multi-modal content buttons */}
+          {isDesktop && showLLMAttachments && (
+            <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
 
               {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
               {/*  Attach*/}
@@ -653,22 +661,24 @@ export function Composer(props: {
               {/* Responsive Camera OCR button */}
               {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
 
-            </>}
-          </Box>
+            </Box>)}
 
-          {/* [ Textarea + Overlays + Mic | Attachment Drafts ] */}
+
+          {/* Top: Textarea & Mic & Overlays, Bottom, Attachment Drafts */}
           <Box sx={{
             flexGrow: 1,
             // layout
-            display: 'flex', flexDirection: 'column', gap: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
             minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
           }}>
 
-            {/* Textarea + Mic buttons + Mic/Drag overlay */}
-            <Box sx={{ position: 'relative' }}>
+            {/* Text Edit + Mic buttons + MicOverlay & DragOverlay */}
+            <Box sx={{ position: 'relative' /* for overlays */ }}>
 
               {/* Edit box with inner Token Progress bar */}
-              <Box sx={{ position: 'relative' }}>
+              <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */ }}>
 
                 <Textarea
                   variant='outlined'
@@ -784,7 +794,7 @@ export function Composer(props: {
             </Box>
 
             {/* Render any Attachments & menu items */}
-            {!!conversationOverlayStore && (
+            {!!conversationOverlayStore && showLLMAttachments && (
               <LLMAttachmentsList
                 attachmentDraftsStoreApi={conversationOverlayStore}
                 llmAttachmentDrafts={llmAttachmentDrafts}
@@ -797,6 +807,7 @@ export function Composer(props: {
         </Box></Grid>
 
 
+        {/* [Mobile: bottom, Desktop: right] */}
         <Grid xs={12} md={3}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' } as const}>
 
@@ -814,12 +825,12 @@ export function Composer(props: {
 
               {/* Responsive Send/Stop buttons */}
               <ButtonGroup
-                variant={buttonVariant}
-                color={buttonColor}
+                variant={sendButtonVariant}
+                color={sendButtonColor}
                 sx={{
                   flexGrow: 1,
-                  backgroundColor: (isMobile && buttonVariant === 'outlined') ? 'background.popup' : undefined,
-                  boxShadow: (isMobile && buttonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${buttonColor}-mainChannel) / 20%)`,
+                  backgroundColor: (isMobile && sendButtonVariant === 'outlined') ? 'background.popup' : undefined,
+                  boxShadow: (isMobile && sendButtonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${sendButtonColor}-mainChannel) / 20%)`,
                 }}
               >
                 {!assistantAbortible ? (
@@ -827,10 +838,10 @@ export function Composer(props: {
                     key='composer-act'
                     fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
                     onClick={handleSendClicked}
-                    endDecorator={buttonIcon}
+                    endDecorator={sendButtonIcon}
                     sx={{ '--Button-gap': '1rem' }}
                   >
-                    {micContinuation && 'Voice '}{buttonText}
+                    {micContinuation && 'Voice '}{sendButtonText}
                   </Button>
                 ) : (
                   <Button
@@ -882,7 +893,7 @@ export function Composer(props: {
             {/* [desktop] Multicast switch (under the Chat button) */}
             {isDesktop && props.isMulticast !== null && <ButtonMultiChatMemo multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
 
-            {/* [desktop] secondary buttons (aligned to bottom for now, and mutually exclusive) */}
+            {/* [desktop] secondary bottom-buttons (aligned to bottom for now, and mutually exclusive) */}
             {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
               {/* [desktop] Call secondary button */}
@@ -898,7 +909,7 @@ export function Composer(props: {
 
       </Grid>
 
-      {/* Mode selector */}
+      {/* Mode Menu */}
       {!!chatModeMenuAnchor && (
         <ChatModeMenu
           isMobile={isMobile}
@@ -908,10 +919,10 @@ export function Composer(props: {
         />
       )}
 
-      {/* Camera */}
+      {/* Camera (when open) */}
       {cameraCaptureComponent}
 
-      {/* Actile */}
+      {/* Actile (when open) */}
       {actileComponent}
 
     </Box>
