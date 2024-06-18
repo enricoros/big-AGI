@@ -16,44 +16,59 @@ export function heuristicIsBlockTextHTML(text: string): boolean {
   return ['<!DOCTYPE html', '<!doctype html', '<head'].some((start) => text.startsWith(start));
 }
 
+const simpleCssReset = `
+*, *::before, *::after { box-sizing: border-box; }
+body, html { margin: 0; padding: 0; }
+body { min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+img, picture, svg, video { display: block;max-width: 100%; }
+`;
+
+function renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
+  // Note: not using this for now (2024-06-15), or it would remove the JS code
+  // which is what makes the HTML interactive.
+  // Sanitize the HTML string to remove any potentially harmful content
+  // const sanitizedHtml = DOMPurify.sanitize(props.htmlString);
+
+  // Inject the CSS reset
+  const modifiedHtml = htmlString.replace(/<style/i, `<style>${simpleCssReset}</style><style`);
+
+  // Write the HTML to the iframe
+  iframeDoc.open();
+  try {
+    iframeDoc.write(modifiedHtml);
+  } catch (error) {
+    console.error('Error writing to iframe:', error);
+  }
+  iframeDoc.close();
+
+  // Enhanced Security with Content Security Policy
+  // NOTE: 2024-06-15 disabled until we understand exactly all the implications
+  // In theory we want script from self, images from everywhere, and styles from self
+  // const meta = iframeDoc.createElement('meta');
+  // meta.httpEquiv = 'Content-Security-Policy';
+  // // meta.content = 'default-src \'self\'; script-src \'self\';';
+  // meta.content = 'script-src \'self\' \'unsafe-inline\';';
+  // iframeDoc.head.appendChild(meta);
+
+  // Adding this event listener to prevent arrow keys from scrolling the parent page
+  iframeDoc.addEventListener('keydown', (event: any) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      event.preventDefault();
+    }
+  });
+}
+
 
 export const IFrameComponent = (props: { htmlString: string }) => {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   React.useEffect(() => {
-    if (iframeRef.current) {
-      const iframeDoc = iframeRef.current.contentWindow?.document;
-      if (iframeDoc) {
-        // Note: not using this for now (2024-06-15), or it would remove the JS code
-        // which is what makes the HTML interactive.
-        // Sanitize the HTML string to remove any potentially harmful content
-        // const sanitizedHtml = DOMPurify.sanitize(props.htmlString);
-
-        iframeDoc.open();
-        try {
-          iframeDoc.write(props.htmlString);
-        } catch (error) {
-          console.error('Error writing to iframe:', error);
-        }
-        iframeDoc.close();
-
-        // Enhanced Security with Content Security Policy
-        // NOTE: 2024-06-15 disabled until we understand exactly all the implications
-        // In theory we want script from self, images from everywhere, and styles from self
-        // const meta = iframeDoc.createElement('meta');
-        // meta.httpEquiv = 'Content-Security-Policy';
-        // // meta.content = 'default-src \'self\'; script-src \'self\';';
-        // meta.content = 'script-src \'self\' \'unsafe-inline\';';
-        // iframeDoc.head.appendChild(meta);
-
-        // Adding this event listener to prevent arrow keys from scrolling the parent page
-        iframeDoc.addEventListener('keydown', (event) => {
-          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-            event.preventDefault();
-          }
-        });
-      }
-    }
+    // Coalesce the rendering of the HTML content to prevent flickering and work around the React StrictMode
+    const timeoutId = setTimeout(() => {
+      const iframeDoc = iframeRef.current?.contentWindow?.document;
+      iframeDoc && !!props.htmlString && renderHtmlInIFrame(iframeDoc, props.htmlString);
+    }, 200);
+    return () => clearTimeout(timeoutId);
   }, [props.htmlString]);
 
   return (
