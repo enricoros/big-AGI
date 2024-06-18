@@ -572,7 +572,13 @@ export function ChatMessage(props: {
 
           // v-layout
           display: 'grid',
-          gap: { xs: 0, md: 1 },
+          gap: 1, // gap in between the fragments (if > 1)
+
+          // horizontal separator between messages (second part+ and before)
+          // '& > *:not(:first-child)': {
+          //   borderTop: '1px solid',
+          //   borderTopColor: 'background.level3',
+          // },
         }}>
 
           {/* Optional Message date */}
