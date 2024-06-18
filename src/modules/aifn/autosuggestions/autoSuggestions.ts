@@ -2,8 +2,8 @@ import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modul
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { attachmentWrapText } from '~/common/stores/chat/chat.tokens';
 import { createErrorContentFragment, createPlaceholderContentFragment, createTextContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -158,7 +158,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   // Execute the following follow-ups in parallel
   // const assistantMessageId = assistantMessage.id;
 
-  const wrappedPersonaSystemText = attachmentWrapText(messageFragmentsReduceText(systemMessage.fragments), '', 'markdown-code');
+  const wrappedPersonaSystemText = marshallWrapText(messageFragmentsReduceText(systemMessage.fragments), '', 'markdown-code');
   const userMessageText = messageFragmentsReduceText(userMessage.fragments);
   const assistantMessageText = messageFragmentsReduceText(assistantMessage.fragments);
 
@@ -208,7 +208,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // PlantUML Text Content to replace the placeholder
           const fileName = `${type}.diagram`;
-          const codeBlock = attachmentWrapText(plantUML, /*'[Auto Diagram] ' +*/ fileName, 'markdown-code');
+          const codeBlock = marshallWrapText(plantUML, /*'[Auto Diagram] ' +*/ fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock);
           cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;
@@ -253,7 +253,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // HTML UI Text Content to replace the placeholder
           const fileName = (file_name || 'ui').trim().replace(/[^a-zA-Z0-9-]/g, '') + '.html';
-          const codeBlock = attachmentWrapText(htmlUI, /*'[Generative UI] ' +*/ fileName, 'markdown-code');
+          const codeBlock = marshallWrapText(htmlUI, /*'[Generative UI] ' +*/ fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock); // `Example of Generative User Interface ("Auto UI" setting):\n${codeBlock}`
           cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;

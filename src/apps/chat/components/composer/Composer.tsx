@@ -30,7 +30,7 @@ import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, duplicateDMessageFragments, isContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { estimateTextTokens, glueForMessageTokens } from '~/common/stores/chat/chat.tokens';
+import { estimateTextTokens, glueForMessageTokens, marshallWrapTextFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
@@ -52,7 +52,7 @@ import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/LLMAttachmentsList';
-import { attachmentInlineTextFragments, useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
+import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
@@ -218,7 +218,8 @@ export function Composer(props: {
     if (!conversationId)
       return false;
 
-    // const canAttach = chatModeCanAttach(_chatModeId);
+    const canAttach = chatModeCanAttach(_chatModeId);
+
 
     // TODO: move to the new pure-Fragment behavior
     // Inline all Text Fragments into the main message - this is the V1 approach
@@ -230,7 +231,7 @@ export function Composer(props: {
       else
         otherFragments.push(attachmentFragment);
     }
-    const inlinedText = attachmentInlineTextFragments(composerText, textFragments, 'markdown-code', '\n\n');
+    const inlinedText = marshallWrapTextFragments(composerText, textFragments, 'markdown-code', '\n\n');
 
     // content fragments
     const contentFragments: DMessageContentFragment[] = inlinedText ? [createTextContentFragment(inlinedText)] : [];
@@ -456,7 +457,7 @@ export function Composer(props: {
   }, [toggleRecording, micContinuationTrigger]);
 
 
-  // Attachment Drafts
+  // Attachment Up
 
   const handleAttachCtrlV = React.useCallback((event: React.ClipboardEvent) => {
     if (attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
@@ -467,11 +468,11 @@ export function Composer(props: {
     void attachAppendFile('camera', file);
   }, [attachAppendFile]);
 
+  const { openCamera, cameraCaptureComponent } = useCameraCaptureModal(handleAttachCameraImage);
+
   const handleAttachScreenCapture = React.useCallback((file: File) => {
     void attachAppendFile('screencapture', file);
   }, [attachAppendFile]);
-
-  const { openCamera, cameraCaptureComponent } = useCameraCaptureModal(handleAttachCameraImage);
 
   const handleAttachFilePicker = React.useCallback(async () => {
     try {
@@ -486,16 +487,19 @@ export function Composer(props: {
 
   useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
 
+
+  // Attachments Down
+
   const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
     switch (action) {
       case 'copy-text':
         const copyTextFragments = attachmentsTakeTextFragments(attachmentDraftIdOrAll, false);
-        const copyTextString = attachmentInlineTextFragments(null, copyTextFragments, false, '\n\n---\n\n');
+        const copyTextString = marshallWrapTextFragments(null, copyTextFragments, false, '\n\n---\n\n');
         copyToClipboard(copyTextString, attachmentDraftIdOrAll ? 'Attachment Text' : 'Attachments Text');
         break;
       case 'inline-text':
         const inlineTextFragments = attachmentsTakeTextFragments(attachmentDraftIdOrAll, true);
-        setComposeText(currentText => attachmentInlineTextFragments(currentText, inlineTextFragments, 'markdown-code', '\n\n'));
+        setComposeText(currentText => marshallWrapTextFragments(currentText, inlineTextFragments, 'markdown-code', '\n\n'));
         break;
     }
   }, [attachmentsTakeTextFragments, setComposeText]);
