@@ -200,7 +200,7 @@ export function Composer(props: {
 
   // Overlay actions
 
-  const handleReplyToCleared = React.useCallback(() => {
+  const handleReplyToClear = React.useCallback(() => {
     conversationOverlayStore?.getState().setReplyToText(null);
   }, [conversationOverlayStore]);
 
@@ -214,46 +214,35 @@ export function Composer(props: {
 
   const { conversationId, onAction } = props;
 
+  const handleClear = React.useCallback(() => {
+    setComposeText('');
+    attachmentsClear();
+    handleReplyToClear();
+  }, [attachmentsClear, handleReplyToClear, setComposeText]);
+
   const handleSendAction = React.useCallback((_chatModeId: ChatModeId, composerText: string): boolean => {
     if (!conversationId)
       return false;
 
+    // prepare the fragments: content (if any) and attachments (if allowed, and any)
+    const fragments: (DMessageContentFragment | DMessageAttachmentFragment)[] = [];
+    if (composerText)
+      fragments.push(createTextContentFragment(composerText));
     const canAttach = chatModeCanAttach(_chatModeId);
-
-
-    // TODO: move to the new pure-Fragment behavior
-    // Inline all Text Fragments into the main message - this is the V1 approach
-    const textFragments: DMessageAttachmentFragment[] = [];
-    const otherFragments: DMessageAttachmentFragment[] = [];
-    for (const attachmentFragment of attachmentsTakeAllFragments(false)) {
-      if (attachmentFragment.part.pt === 'text')
-        textFragments.push(attachmentFragment);
-      else
-        otherFragments.push(attachmentFragment);
-    }
-    const inlinedText = marshallWrapTextFragments(composerText, textFragments, 'markdown-code', '\n\n');
-
-    // content fragments
-    const contentFragments: DMessageContentFragment[] = inlinedText ? [createTextContentFragment(inlinedText)] : [];
-
-    // stop if no content
-    if (!contentFragments.length && !otherFragments.length)
+    if (canAttach)
+      fragments.push(...attachmentsTakeAllFragments(false));
+    if (!fragments.length) {
+      // addSnackbar({ key: 'chat-composer-empty', message: 'Nothing to send', type: 'info' });
       return false;
-
-    // metadata
-    const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
-
-    // send the message
-    const enqueued = onAction(conversationId, _chatModeId, [...contentFragments, ...otherFragments], metadata);
-    if (enqueued) {
-      // TODO: move the state of the DBlob Refs, to avoid the GC
-      attachmentsClear();
-      handleReplyToCleared();
-      setComposeText('');
     }
 
+    // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
+    const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
+    const enqueued = onAction(conversationId, _chatModeId, fragments, metadata);
+    if (enqueued)
+      handleClear();
     return enqueued;
-  }, [attachmentsClear, attachmentsTakeAllFragments, conversationId, handleReplyToCleared, onAction, replyToGenerateText, setComposeText]);
+  }, [attachmentsTakeAllFragments, conversationId, handleClear, onAction, replyToGenerateText]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -699,7 +688,7 @@ export function Composer(props: {
                   onPasteCapture={handleAttachCtrlV}
                   // onFocusCapture={handleFocusModeOn}
                   // onBlurCapture={handleFocusModeOff}
-                  endDecorator={showChatReplyTo && <ReplyToBubble replyToText={replyToGenerateText} onClear={handleReplyToCleared} className='reply-to-bubble' />}
+                  endDecorator={showChatReplyTo && <ReplyToBubble replyToText={replyToGenerateText} onClear={handleReplyToClear} className='reply-to-bubble' />}
                   slotProps={{
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
