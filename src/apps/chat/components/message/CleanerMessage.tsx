@@ -8,6 +8,7 @@ import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.
 
 import { TokenBadgeMemo } from '../composer/TokenBadge';
 import { makeMessageAvatar, messageBackground } from './ChatMessage';
+import { isErrorChatMessage } from './explainServiceErrors';
 
 
 /**
@@ -58,7 +59,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
 
   const fromAssistant = messageRole === 'assistant';
 
-  const isAssistantError = fromAssistant && (messageText.startsWith('[Issue] ') || messageText.startsWith('[OpenAI Issue]'));
+  const isAssistantError = fromAssistant && isErrorChatMessage(messageText);
 
   const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
 

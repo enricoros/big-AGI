@@ -20,14 +20,14 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
   try {
     const page = await callBrowseFetchPage(url);
 
-    const pageContent = page.content.markdown || page.content.text || page.content.html || 'Issue: page load did not produce an answer: no text found';
+    const pageContent = page.content.markdown || page.content.text || page.content.html || 'Issue: Browsing did not produce a page content.';
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(pageContent), true);
 
     return true;
   } catch (error: any) {
     console.error(error);
 
-    const pageError = 'Issue: browse did not produce an answer (error: ' + (error?.message || error?.toString() || 'unknown') + ').';
+    const pageError = 'Issue: Browsing did not produce a page.\n(error: ' + (error?.message || error?.toString() || 'unknown') + ').';
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(pageError), true);
 
     return false;
