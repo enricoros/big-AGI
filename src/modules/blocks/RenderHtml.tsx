@@ -30,7 +30,11 @@ export const IFrameComponent = (props: { htmlString: string }) => {
         // const sanitizedHtml = DOMPurify.sanitize(props.htmlString);
 
         iframeDoc.open();
-        iframeDoc.write(props.htmlString);
+        try {
+          iframeDoc.write(props.htmlString);
+        } catch (error) {
+          console.error('Error writing to iframe:', error);
+        }
         iframeDoc.close();
 
         // Enhanced Security with Content Security Policy

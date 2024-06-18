@@ -628,6 +628,7 @@ export function ChatMessage(props: {
                     messageRole={messageRole}
                     contentScaling={contentScaling}
                     showAsItalic
+                    // showAsProgress
                   />
                 );
 

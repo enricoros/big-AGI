@@ -174,7 +174,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the diagram
-    const placeholderFragment = createPlaceholderContentFragment('Evaluating Auto-Diagram...');
+    const placeholderFragment = createPlaceholderContentFragment('Auto-Diagram ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     const instructions: VChatMessageIn[] = [
@@ -219,7 +219,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   if (suggestHTMLUI && !['<html', '<HTML', '<Html'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the UI
-    const placeholderFragment = createPlaceholderContentFragment('Evaluating Auto-UI...');
+    const placeholderFragment = createPlaceholderContentFragment('Auto-UI ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     const instructions: VChatMessageIn[] = [
