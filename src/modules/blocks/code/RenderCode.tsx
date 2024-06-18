@@ -276,21 +276,23 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
             </ButtonGroup>
           )}
 
-          {/* Soft Wrap toggle */}
-          <Tooltip title='Toggle Soft Wrap'>
-            <OverlayButton disabled={renderHTML || renderMermaid || renderPlantUML || renderSVG} variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(!softWrap)}>
-              <WrapTextIcon />
-            </OverlayButton>
-          </Tooltip>
-
-          {/* Copy */}
-          {props.noCopyButton !== true && (
-            <Tooltip title={optimizeLightweight ? null : 'Copy Code'}>
-              <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
-                <ContentCopyIcon />
+          <ButtonGroup aria-label='Text Options'>
+            {/* Soft Wrap toggle */}
+            <Tooltip title='Toggle Soft Wrap'>
+              <OverlayButton disabled={renderHTML || renderMermaid || renderPlantUML || renderSVG} variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(!softWrap)}>
+                <WrapTextIcon />
               </OverlayButton>
             </Tooltip>
-          )}
+
+            {/* Copy */}
+            {props.noCopyButton !== true && (
+              <Tooltip title={optimizeLightweight ? null : 'Copy Code'}>
+                <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
+                  <ContentCopyIcon />
+                </OverlayButton>
+              </Tooltip>
+            )}
+          </ButtonGroup>
         </Box>
 
       </Box>
