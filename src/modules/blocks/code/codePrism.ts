@@ -77,12 +77,21 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
   return detectedLanguage;
 }
 
-export function highlightCode(inferredCodeLanguage: string | null, blockCode: string): string {
+export function highlightCode(inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean): string {
   // NOTE: to save power, we could skip highlighting until the block is complete (future feature)
   const safeHighlightLanguage = inferredCodeLanguage || 'typescript';
-  return Prism.highlight(
+  const code = Prism.highlight(
     blockCode,
     Prism.languages[safeHighlightLanguage] || Prism.languages.typescript,
     safeHighlightLanguage,
   );
+  // add line numbers to the code block
+  if (addLineNumbers) {
+    // https://stackoverflow.com/questions/59508413/static-html-generation-with-prismjs-how-to-enable-line-numbers
+    const linesMatcher = code.match(/\n(?!$)/g);
+    const linesCount = linesMatcher ? linesMatcher.length + 1 : 1;
+    const linesSpans = new Array(linesCount + 1).join('<span></span>');
+    return code + `<span aria-hidden='true' class='line-numbers-rows'>${linesSpans}</span>`;
+  }
+  return code;
 }

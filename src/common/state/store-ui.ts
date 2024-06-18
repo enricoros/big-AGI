@@ -32,6 +32,9 @@ interface UIPreferencesStore {
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
+  renderCodeLineNumbers: boolean;
+  setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => void;
+
   renderCodeSoftWrap: boolean;
   setRenderCodeSoftWrap: (renderCodeSoftWrap: boolean) => void;
 
@@ -77,6 +80,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
+
+      renderCodeLineNumbers: false,
+      setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => set({ renderCodeLineNumbers }),
 
       renderCodeSoftWrap: false,
       setRenderCodeSoftWrap: (renderCodeSoftWrap: boolean) => set({ renderCodeSoftWrap }),

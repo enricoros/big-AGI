@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, IconButton, Sheet, styled, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
+import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import WrapTextIcon from '@mui/icons-material/WrapText';
@@ -20,6 +22,10 @@ import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
 import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
 import { heuristicIsBlockTextHTML, IFrameComponent } from '../RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
+
+
+// style for line-numbers
+import './RenderCode.css';
 
 
 export function getPlantUmlServerUrl(): string {
@@ -96,7 +102,7 @@ interface RenderCodeBaseProps {
 }
 
 interface RenderCodeImplProps extends RenderCodeBaseProps {
-  highlightCode: (inferredCodeLanguage: string | null, blockCode: string) => string,
+  highlightCode: (inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
 }
 
@@ -108,7 +114,12 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
-  const [softWrap, setSoftWrap] = useUIPreferencesStore(state => [state.renderCodeSoftWrap, state.setRenderCodeSoftWrap]);
+  const { showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
+    showLineNumbers: state.renderCodeLineNumbers,
+    showSoftWrap: state.renderCodeSoftWrap,
+    setShowLineNumbers: state.setRenderCodeLineNumbers,
+    setShowSoftWrap: state.setRenderCodeSoftWrap,
+  })));
 
   // derived props
   const {
@@ -116,13 +127,15 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
     highlightCode, inferCodeLanguage,
     optimizeLightweight,
   } = props;
+  const canRenderLineNumbers = !showSoftWrap;
+  const renderLineNumbers = showLineNumbers && canRenderLineNumbers;
 
   // heuristic for language, and syntax highlight
   const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
     const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
-    const highlightedCode = highlightCode(inferredCodeLanguage, blockCode);
+    const highlightedCode = highlightCode(inferredCodeLanguage, blockCode, renderLineNumbers);
     return { highlightedCode, inferredCodeLanguage };
-  }, [inferCodeLanguage, blockTitle, blockCode, highlightCode]);
+  }, [inferCodeLanguage, blockTitle, blockCode, highlightCode, renderLineNumbers]);
 
 
   // heuristics for specialized rendering
@@ -153,6 +166,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const renderSVG = isSVG && showSVG;
   const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
+  const renderCode = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
 
   const canCodePen = blockComplete && isCodePenSupported(inferredCodeLanguage, isSVG);
   const canJSFiddle = blockComplete && isJSFiddleSupported(inferredCodeLanguage, blockCode);
@@ -175,11 +189,11 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
       {/* Code render */}
       <Box
         component='code'
-        className={`language-${inferredCodeLanguage || 'unknown'}`}
+        className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
         sx={{
           p: (renderHTML && !showBlockTitle) ? 0 : 1.5, // this block gets a thicker border (but we 'fullscreen' html in case there's no title)
           overflowX: 'auto', // ensure per-block x-scrolling
-          whiteSpace: softWrap ? 'break-spaces' : 'pre',
+          whiteSpace: showSoftWrap ? 'break-spaces' : 'pre',
 
           // layout
           display: 'flex',
@@ -212,6 +226,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           : renderMermaid
             ? <RenderCodeMermaid mermaidCode={blockCode} fitScreen={fitScreen} />
             : <Box component='div'
+                   className='code-container'
                    dangerouslySetInnerHTML={{
                      __html:
                        renderSVG
@@ -281,11 +296,22 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 
           <ButtonGroup aria-label='Text Options'>
             {/* Soft Wrap toggle */}
-            <Tooltip title='Toggle Soft Wrap'>
-              <OverlayButton disabled={renderHTML || renderMermaid || renderPlantUML || renderSVG} variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(!softWrap)}>
-                <WrapTextIcon />
-              </OverlayButton>
-            </Tooltip>
+            {renderCode && (
+              <Tooltip title={optimizeLightweight ? null : 'Toggle Soft Wrap'}>
+                <OverlayButton disabled={!renderCode} variant={(showSoftWrap && renderCode) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
+                  <WrapTextIcon />
+                </OverlayButton>
+              </Tooltip>
+            )}
+
+            {/* Line Numbers toggle */}
+            {renderCode && (
+              <Tooltip title={optimizeLightweight ? null : 'Toggle Line Numbers'}>
+                <OverlayButton disabled={!canRenderLineNumbers || !renderCode} variant={(renderLineNumbers && renderCode) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
+                  <NumbersRoundedIcon />
+                </OverlayButton>
+              </Tooltip>
+            )}
 
             {/* Copy */}
             {props.noCopyButton !== true && (
