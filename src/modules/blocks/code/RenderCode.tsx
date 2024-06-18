@@ -184,7 +184,6 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           flexDirection: 'column',
           // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
           overflowX: 'auto',
-          minWidth: 160,
           '&:hover > .overlay-buttons': { opacity: 1 },
           ...(props.sx || {}),
           // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
