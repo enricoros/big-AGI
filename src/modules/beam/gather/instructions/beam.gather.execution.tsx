@@ -3,7 +3,7 @@ import { Typography } from '@mui/joy';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { createDMessageEmpty, DMessage, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createPlaceholderContentFragment, DMessage } from '~/common/stores/chat/chat.message';
 
 import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
 import { ChatGenerateInstruction, executeChatGenerate } from './ChatGenerateInstruction';
@@ -74,7 +74,7 @@ export function gatherStartFusion(
     updateProgressComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingProgressComponent: component }),
     updateInstructionComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingInstructionComponent: component }),
     // output1 -> input2
-    intermediateDMessage: pendDMessage(createDMessageEmpty('assistant'), GATHER_PLACEHOLDER), // [state] assistant:Fusion_pending
+    intermediateDMessage: createDMessageEmpty('assistant'), // [state] assistant:Fusion_pending
   };
 
 
@@ -109,8 +109,8 @@ export function gatherStartFusion(
       );
 
       // reset the intermediate message
-      inputState.intermediateDMessage.fragments = [];
-      pendDMessage(inputState.intermediateDMessage);
+      inputState.intermediateDMessage.fragments = [createPlaceholderContentFragment(GATHER_PLACEHOLDER)];
+      inputState.intermediateDMessage.pendingIncomplete = true;
       inputState.intermediateDMessage.updated = null;
 
       // return the promise from the instruction

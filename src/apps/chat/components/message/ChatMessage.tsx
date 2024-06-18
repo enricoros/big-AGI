@@ -210,7 +210,6 @@ export function ChatMessage(props: {
     role: messageRole,
     fragments: messageFragments,
     pendingIncomplete: messagePendingIncomplete,
-    pendingPlaceholderText: messagePendingPlaceholderText,
     avatar: messageAvatar,
     sender: messageSender,
     purposeId: messagePurposeId,
@@ -575,16 +574,6 @@ export function ChatMessage(props: {
             <Typography level='body-sm' sx={{ mx: 1.5, textAlign: fromAssistant ? 'left' : 'right' }}>
               <TimeAgo date={messageUpdated || messageCreated} />
             </Typography>
-          )}
-
-          {/* No Content but Placeholder Text */}
-          {!!messagePendingPlaceholderText?.length && !messageFragments.length && (
-            <ContentPartPlaceholder
-              placeholderText={messagePendingPlaceholderText}
-              messageRole={messageRole}
-              contentScaling={contentScaling}
-              showAsItalic
-            />
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}

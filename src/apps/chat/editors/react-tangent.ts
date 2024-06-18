@@ -3,6 +3,7 @@ import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.message';
 
 // configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
@@ -13,13 +14,13 @@ const EPHEMERAL_DELETION_DELAY = 5 * 1000;
  */
 export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId) {
   if (!question) {
-    cHandler.appendMessageAssistantText('Issue: no question provided.', 'issue');
+    cHandler.messageAppendAssistantText('Issue: no question provided.', 'issue');
     return false;
   }
 
   // create an assistant placeholder message - to be filled when we're done
   const assistantModelLabel = 'react-' + assistantLlmId; //.slice(4, 7); // HACK: this is used to change the Avatar animation
-  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
+  const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
     '...',
     { originLLM: assistantModelLabel },
   );
@@ -41,7 +42,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     const agent = new Agent();
     const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
-    cHandler.messageAppendTextContentFragment(assistantMessageId, reactResult, true, true);
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(reactResult), true);
 
     setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
 
@@ -51,7 +52,8 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
 
     logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
 
-    cHandler.messageAppendErrorContentFragment(assistantMessageId, 'Issue: ReAct couldn\'t answer your question.', true, false);
+    const reactError = `Issue: ReAct couldn't answer your question. ${error?.message || error?.toString() || 'Unknown error'}`;
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(reactError), true);
 
     return false;
   }

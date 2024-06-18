@@ -6,7 +6,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { agiUuid } from '~/common/util/idUtils';
-import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createPlaceholderContentFragment, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
@@ -61,7 +61,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
         ...ray.message,
         ...incrementalMessage,
         ...(incrementalMessage.fragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
-        ...(completed ? { pendingIncomplete: undefined, pendingPlaceholderText: undefined } : {}), // clear the pending flag once the message is complete
+        ...(completed ? { pendingIncomplete: undefined } : {}), // clear the pending flag once the message is complete
       },
     }));
   };
@@ -85,14 +85,18 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
       _syncRaysStateToScatter();
     });
 
+  const newMessage: DMessage = {
+    ...ray.message,
+    fragments: [createPlaceholderContentFragment(SCATTER_PLACEHOLDER)],
+    pendingIncomplete: true,
+    created: Date.now(),
+    updated: null,
+  };
+
   return {
     rayId: ray.rayId,
     status: 'scattering',
-    message: pendDMessage({
-      ...ray.message,
-      created: Date.now(),
-      updated: null,
-    }, SCATTER_PLACEHOLDER),
+    message: newMessage,
     rayLlmId: llmId,
     scatterIssue: undefined,
     genAbortController: abortController,

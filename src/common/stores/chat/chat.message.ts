@@ -13,7 +13,6 @@ export interface DMessage {
 
   // pending state (not stored)
   pendingIncomplete?: boolean;        // if true, the message is incomplete (e.g. tokens won't be computed)
-  pendingPlaceholderText?: string;    // text being typed, not yet sent
 
   // identity
   avatar: string | null;              // image URL, or null
@@ -130,6 +129,13 @@ export function createDMessageTextContent(role: DMessageRole, text: string): DMe
   return createDMessageFromFragments(role, [createTextContentFragment(text)]);
 }
 
+export function createDMessagePlaceholderIncomplete(role: DMessageRole, placeholderText: string): { message: DMessage, placeholderFragmentId: DMessageFragmentId } {
+  const placeholderFragment = createPlaceholderContentFragment(placeholderText);
+  const message = createDMessageFromFragments(role, [placeholderFragment]);
+  message.pendingIncomplete = true;
+  return { message, placeholderFragmentId: placeholderFragment.fId };
+}
+
 export function createDMessageFromFragments(role: DMessageRole, fragments: DMessageFragment[]): DMessage {
   return {
     id: agiUuid('chat-dmessage'),
@@ -138,8 +144,7 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
     fragments,
 
     // pending state
-    // pendingIncomplete: false,
-    // pendingPlaceholderText: undefined,
+    // pendingIncomplete: false,  // we leave it undefined, same as false
 
     // identity
     avatar: null,
@@ -157,15 +162,6 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
     created: Date.now(),
     updated: null,
   };
-}
-
-export function pendDMessage(message: DMessage, placeholderText?: string): DMessage {
-  message.pendingIncomplete = true;
-  if (placeholderText)
-    message.pendingPlaceholderText = placeholderText;
-  else
-    delete message.pendingPlaceholderText;
-  return message;
 }
 
 
@@ -257,7 +253,6 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     fragments: duplicateDMessageFragments(message.fragments),
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
-    ...(message.pendingPlaceholderText ? { pendingPlaceholderText: message.pendingPlaceholderText } : {}),
 
     avatar: message.avatar,
     sender: message.sender,
