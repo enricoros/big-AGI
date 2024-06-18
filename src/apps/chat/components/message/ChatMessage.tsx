@@ -6,7 +6,9 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearIcon from '@mui/icons-material/Clear';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -552,8 +554,22 @@ export function ChatMessage(props: {
         gap: { xs: 0, md: 1 },
       }}>
 
+        {/* Editing: Apply */}
+        {isEditingText && (
+          <Box sx={personaSx}>
+            <Tooltip arrow disableInteractive title='Apply Edits'>
+              <IconButton variant='solid' color='warning' onClick={handleEditsApply}>
+                <CheckRoundedIcon />
+              </IconButton>
+            </Tooltip>
+            {/*<Typography level='body-xs' sx={{ overflowWrap: 'anywhere' }}>*/}
+            {/*  Save*/}
+            {/*</Typography>*/}
+          </Box>
+        )}
+
         {/* Avatar (Persona) */}
-        {showAvatar && (
+        {showAvatar && !isEditingText && (
           <Box sx={personaSx}>
 
             {/* Persona Avatar or Menu Button */}
@@ -726,6 +742,20 @@ export function ChatMessage(props: {
 
         </Box>
 
+        {/* Editing: Cancel */}
+        {isEditingText && (
+          <Box sx={personaSx}>
+            <Tooltip arrow disableInteractive title='Discard Edits'>
+              <IconButton onClick={handleEditsCancel} sx={avatarIconSx}>
+                <CloseRoundedIcon />
+              </IconButton>
+            </Tooltip>
+            {/*<Typography level='body-xs' sx={{ overflowWrap: 'anywhere' }}>*/}
+            {/*  Close*/}
+            {/*</Typography>*/}
+          </Box>
+        )}
+
       </Box>
 
 
@@ -765,9 +795,8 @@ export function ChatMessage(props: {
             {/* Edit */}
             {!!props.onMessageFragmentReplace && (
               <MenuItem variant='plain' disabled={!!messagePendingIncomplete} onClick={handleOpsEditToggle} sx={{ flex: 1 }}>
-                <ListItemDecorator><EditRoundedIcon /></ListItemDecorator>
+                <ListItemDecorator>{isEditingText ? <CloseRoundedIcon /> : <EditRoundedIcon />}</ListItemDecorator>
                 {isEditingText ? 'Discard' : 'Edit'}
-                {/*{!isEditingText && <span style={{ opacity: 0.5, marginLeft: '8px' }}>{doubleClickToEdit ? '(double-click)' : ''}</span>}*/}
               </MenuItem>
             )}
             {/* Copy */}
