@@ -177,19 +177,23 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
-          whiteSpace: softWrap ? 'break-spaces' : 'pre', // was 'break-spaces' before we implemented per-block scrolling
-          mx: 0,
-          p: (renderHTML && !showBlockTitle) ? 0 : 1.5, // this block gets a thicker border (but we zoom html in a special no-title case)
+          p: (renderHTML && !showBlockTitle) ? 0 : 1.5, // this block gets a thicker border (but we 'fullscreen' html in case there's no title)
+          overflowX: 'auto', // ensure per-block x-scrolling
+          whiteSpace: softWrap ? 'break-spaces' : 'pre',
+
+          // layout
           display: 'flex',
           flexDirection: 'column',
           // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
-          overflowX: 'auto',
-          '&:hover > .overlay-buttons': { opacity: 1 },
-          ...(props.sx || {}),
+
           // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
-          '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? {
-            backgroundColor: 'neutral.300',
-          } : {},
+          '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? { backgroundColor: 'neutral.400' } : {},
+
+          // fade in children buttons
+          '&:hover > .overlay-buttons': { opacity: 1 },
+
+          // lots more style, incl font, background, embossing, radius, etc.
+          ...props.sx,
         }}>
 
         {/* Markdown Title (File/Type) */}
