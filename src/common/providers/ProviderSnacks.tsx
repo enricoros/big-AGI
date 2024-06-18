@@ -20,6 +20,13 @@ const defaultTypeConfig: {
     clickAway: false,
     closeButton: true,
   },
+  info: {
+    color: 'primary',
+    variant: 'soft',
+    autoHideDuration: 2000,
+    clickAway: false,
+    closeButton: true,
+  },
   issue: {
     color: 'warning',
     variant: 'solid',
