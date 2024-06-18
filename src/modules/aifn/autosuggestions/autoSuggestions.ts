@@ -78,7 +78,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 
 const suggestUIFunctionName = 'generate_web_ui';
 
-export const suggestUIMixin = `Web UI generation: only via the \`${suggestUIFunctionName}\` function, IF defined`;
+export const suggestUIMixin = `Web UI code generation: only via the \`${suggestUIFunctionName}\` function, IF DEFINED`;
 
 const suggestUISystemPrompt = `
 You are a helpful AI assistant skilled in creating user interfaces. Analyze the conversation and user persona below to determine if an HTML user interface would complement or enhance the user's understanding.
@@ -207,8 +207,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           }
 
           // PlantUML Text Content to replace the placeholder
-          const fileName = `[Auto Diagram] ${type}.diagram`;
-          const codeBlock = attachmentWrapText(plantUML, fileName, 'markdown-code');
+          const fileName = `${type}.diagram`;
+          const codeBlock = attachmentWrapText(plantUML, /*'[Auto Diagram] ' +*/ fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock);
           cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;
@@ -253,7 +253,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // HTML UI Text Content to replace the placeholder
           const fileName = (file_name || 'ui').trim().replace(/[^a-zA-Z0-9-]/g, '') + '.html';
-          const codeBlock = attachmentWrapText(htmlUI, '[Generative UI] ' + fileName, 'markdown-code');
+          const codeBlock = attachmentWrapText(htmlUI, /*'[Generative UI] ' +*/ fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock); // `Example of Generative User Interface ("Auto UI" setting):\n${codeBlock}`
           cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;
