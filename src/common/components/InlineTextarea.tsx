@@ -8,8 +8,9 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 export function InlineTextarea(props: {
   initialText: string,
+  disableAutoSaveOnBlur?: boolean
   placeholder?: string,
-  decolor?: boolean
+  decolor?: boolean,
   invertedColors?: boolean,
   minRows?: number,
   onEdit: (text: string) => void,
@@ -35,7 +36,10 @@ export function InlineTextarea(props: {
     }
   };
 
-  const handleEditBlur = () => props.onEdit(text);
+  const handleEditBlur = () => {
+    if (!props.disableAutoSaveOnBlur)
+      props.onEdit(text);
+  };
 
   return (
     <Textarea
@@ -44,9 +48,10 @@ export function InlineTextarea(props: {
       autoFocus={!props.decolor}
       minRows={props.minRows !== undefined ? props.minRows : 1}
       placeholder={props.placeholder}
-      value={text} onChange={handleEditTextChanged}
-      onBlur={handleEditBlur}
+      value={text}
+      onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
+      onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       slotProps={{
         textarea: {
           enterKeyHint: enterIsNewline ? 'enter' : 'done',

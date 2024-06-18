@@ -42,14 +42,16 @@ export function ContentPartText(props: {
 }) {
 
   // derived state
-  const { onFragmentReplace, fragmentId } = props;
+  const { onFragmentReplace, fragmentId, setIsEditingContent } = props;
   const messageText = props.textPart.text;
   const fromAssistant = props.messageRole === 'assistant';
 
   const handleTextEdit = React.useCallback((newText: string) => {
     if (messageText !== newText)
       onFragmentReplace?.(fragmentId, createTextContentFragment(newText));
-  }, [fragmentId, messageText, onFragmentReplace]);
+    else
+      setIsEditingContent(false);
+  }, [fragmentId, messageText, onFragmentReplace, setIsEditingContent]);
 
   const errorMessage = React.useMemo(
     () => explainServiceErrors(messageText, fromAssistant, props.messageOriginLLM),
@@ -69,7 +71,10 @@ export function ContentPartText(props: {
   if (props.isEditingContent) {
     return (
       <InlineTextarea
-        initialText={messageText} onEdit={handleTextEdit}
+        initialText={messageText}
+        disableAutoSaveOnBlur
+        onEdit={handleTextEdit}
+        onCancel={() => setIsEditingContent(false)}
         sx={blocksRendererSx}
       />
     );
