@@ -3,14 +3,14 @@ import * as React from 'react';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
 
-import type { ChatMessageTextContentEditState } from './ChatMessage';
+import type { ChatMessageTextContentEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
 import { ContentPartText } from './ContentPartText';
 import { ContentPartTextEdit } from './ContentPartTextEdit';
 
 
-export function ContentFragmentsList(props: {
+export function ContentFragments(props: {
 
   fragments: DMessageFragment[]
 

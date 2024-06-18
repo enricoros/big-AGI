@@ -38,8 +38,8 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ContentFragmentsList } from './ContentFragmentsList';
-import { ContentPartPlaceholder } from './ContentPartPlaceholder';
+import { AttachmentFragments } from './fragments-attachments/AttachmentFragments';
+import { ContentFragments } from './fragments-content/ContentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -626,7 +626,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}
-          <ContentFragmentsList
+          <ContentFragments
             fragments={messageFragments}
 
             contentScaling={contentScaling}
@@ -652,18 +652,13 @@ export function ChatMessage(props: {
           />
 
           {/* Attachment Fragments */}
-          {hasAttachments && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {attachmentFragments.map((fragment, attachmentNumber) => (
-                <ContentPartPlaceholder
-                  key={'attachment-part-' + attachmentNumber}
-                  placeholderText={`Attachment Placeholder: ${fragment.part.pt}`}
-                  messageRole={messageRole}
-                  contentScaling={contentScaling}
-                />
-              ))}
-            </Box>
-          )}
+          {/*{hasAttachments && (*/}
+          <AttachmentFragments
+            attachmentFragments={[]}
+            messageRole={messageRole}
+            contentScaling={contentScaling}
+          />
+          {/*)}*/}
 
           {/* Reply-To Bubble */}
           {!!messageMetadata?.inReplyToText && (

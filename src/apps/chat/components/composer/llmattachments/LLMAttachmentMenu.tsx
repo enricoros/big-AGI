@@ -11,7 +11,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
-import { showImageDataRefInNewTab } from '../../message/ContentPartImageRef';
+import { showImageDataRefInNewTab } from '../../message/fragments-content/ContentPartImageRef';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';

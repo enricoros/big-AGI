@@ -8,7 +8,7 @@ import type { DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.m
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 
-import { explainServiceErrors } from './explainServiceErrors';
+import { explainServiceErrors } from '../explainServiceErrors';
 
 /**
  * The OG part, comprised of text, which can be markdown, have code blocks, etc.
