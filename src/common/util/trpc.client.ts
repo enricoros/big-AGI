@@ -6,7 +6,7 @@
  *
  * We also create a few inference helpers for input and output types.
  */
-import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
+import { createTRPCClient, httpBatchLink, httpLink, loggerLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 
 import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
@@ -30,7 +30,7 @@ export const apiQuery = createTRPCNext<AppRouterEdge>({
     return {
       links: [
         loggerLink({ enabled: enableLoggerLink }),
-        httpBatchLink({
+        httpLink({
           url: `${getBaseUrl()}/api/trpc-edge`,
           transformer: transformer,
           // You can pass any HTTP headers you wish here
@@ -62,7 +62,7 @@ export const apiQuery = createTRPCNext<AppRouterEdge>({
 export const apiAsync = createTRPCClient<AppRouterEdge>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
-    httpBatchLink({
+    httpLink({
       url: `${getBaseUrl()}/api/trpc-edge`,
       transformer: transformer,
     }),
@@ -76,7 +76,7 @@ export const apiAsync = createTRPCClient<AppRouterEdge>({
 export const apiAsyncNode = createTRPCClient<AppRouterNode>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
-    httpBatchLink({
+    httpLink({
       url: `${getBaseUrl()}/api/trpc-node`,
       transformer: transformer,
     }),
