@@ -1,12 +1,22 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Textarea } from '@mui/joy';
 
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
+import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId, DMessageTextPart } from '~/common/stores/chat/chat.message';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
-import type { ContentScaling } from '~/common/app.theme';
+
+
+const textEditAreaSx: SxProps = {
+  ...blocksRendererSx,
+  // make the editing stand out a bit more
+  boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
+  outline: '1px solid',
+  outlineColor: 'warning.solidBg',
+};
 
 
 /**
@@ -72,7 +82,7 @@ export function ContentPartTextEdit(props: {
           enterKeyHint: enterIsNewline ? 'enter' : 'done',
         },
       }}
-      sx={blocksRendererSx}
+      sx={textEditAreaSx}
     />
   );
 }
