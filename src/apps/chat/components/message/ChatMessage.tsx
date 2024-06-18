@@ -38,13 +38,10 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { useChatShowTextDiff } from '../../store-app-chat';
-
-import { ContentPartImageRef } from './ContentPartImageRef';
+import { ContentFragmentsList } from './ContentFragmentsList';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { ContentPartText } from './ContentPartText';
-import { ContentPartTextEdit } from './ContentPartTextEdit';
 import { ReplyToBubble } from './ReplyToBubble';
+import { useChatShowTextDiff } from '../../store-app-chat';
 
 
 // Enable the menu on text selection
@@ -150,7 +147,7 @@ export function makeMessageAvatar(messageAvatarUrl: string | null, messageRole: 
   return <Avatar alt={messageSender} />;
 }
 
-type TextContentEditState = { [fragmentId: DMessageFragmentId]: string };
+export type ChatMessageTextContentEditState = { [fragmentId: DMessageFragmentId]: string };
 
 export const ChatMessageMemo = React.memo(ChatMessage);
 
@@ -197,7 +194,7 @@ export function ChatMessage(props: {
   const [bubbleAnchor, setBubbleAnchor] = React.useState<HTMLElement | null>(null);
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [textContentEditState, setTextContentEditState] = React.useState<TextContentEditState | null>(null);
+  const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextContentEditState | null>(null);
 
   // external state
   const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
@@ -275,7 +272,7 @@ export function ChatMessage(props: {
   const handleEditsCancel = React.useCallback(() => setTextContentEditState(null), []);
 
   const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string) =>
-    setTextContentEditState((prev): TextContentEditState => ({ ...prev, [fragmentId]: editedText || '' })), []);
+    setTextContentEditState((prev): ChatMessageTextContentEditState => ({ ...prev, [fragmentId]: editedText || '' })), []);
 
 
   // Message Operations Menu
@@ -629,93 +626,30 @@ export function ChatMessage(props: {
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}
-          {messageFragments.map((fragment) => {
+          <ContentFragmentsList
+            fragments={messageFragments}
 
-            // only proceed with DMessageContentFragment
-            if (fragment.ft !== 'content')
-              return null;
+            contentScaling={contentScaling}
+            fitScreen={props.fitScreen}
+            isBottom={props.isBottom}
+            messageOriginLLM={messageOriginLLM}
+            messageRole={messageRole}
+            optiAllowSubBlocksMemo={!!messagePendingIncomplete}
+            renderTextAsMarkdown={renderMarkdown}
+            showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
+            showUnsafeHtml={props.showUnsafeHtml}
 
-            switch (fragment.part.pt) {
-              case 'text':
-                return textContentEditState ? (
-                  <ContentPartTextEdit
-                    key={'edit-' + fragment.fId}
-                    textPart={fragment.part}
-                    fragmentId={fragment.fId}
-                    contentScaling={contentScaling}
-                    editedText={textContentEditState[fragment.fId]}
-                    setEditedText={handleEditSetText}
-                    onApplyEdits={handleEditsApply}
-                    onCancelEdits={handleEditsCancel}
-                  />
-                ) : (
-                  <ContentPartText
-                    key={fragment.fId}
-                    // ref={blocksRendererRef}
-                    textPart={fragment.part}
-                    messageRole={messageRole}
-                    messageOriginLLM={messageOriginLLM}
-                    contentScaling={contentScaling}
-                    fitScreen={props.fitScreen}
-                    isBottom={props.isBottom}
-                    renderTextAsMarkdown={renderMarkdown}
-                    // renderTextDiff={textDiffs || undefined}
-                    showUnsafeHtml={props.showUnsafeHtml}
-                    showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
-                    optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-                    onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
-                    onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
-                  />
-                );
+            textEditsState={textContentEditState}
+            setEditedText={handleEditSetText}
+            onEditsApply={handleEditsApply}
+            onEditsCancel={handleEditsCancel}
 
-              case 'image_ref':
-                return (
-                  <ContentPartImageRef
-                    key={fragment.fId}
-                    imageRefPart={fragment.part}
-                    fragmentId={fragment.fId}
-                    contentScaling={contentScaling}
-                    onFragmentDelete={messageFragments.length > 1 ? handleFragmentDelete : undefined}
-                    onFragmentReplace={handleFragmentReplace}
-                  />
-                );
+            onFragmentDelete={handleFragmentDelete}
+            onFragmentReplace={handleFragmentReplace}
 
-              case 'ph':
-                return (
-                  <ContentPartPlaceholder
-                    key={fragment.fId}
-                    placeholderText={fragment.part.pText}
-                    messageRole={messageRole}
-                    contentScaling={contentScaling}
-                    showAsItalic
-                    // showAsProgress
-                  />
-                );
-
-              case 'error':
-                return (
-                  <ContentPartPlaceholder
-                    key={fragment.fId}
-                    placeholderText={fragment.part.error}
-                    messageRole={messageRole}
-                    contentScaling={contentScaling}
-                    showAsDanger
-                    showAsItalic
-                  />
-                );
-
-              default:
-                return (
-                  <ContentPartPlaceholder
-                    key={fragment.fId}
-                    placeholderText={`Unknown Content fragment: ${fragment.part.pt}`}
-                    messageRole={messageRole}
-                    contentScaling={contentScaling}
-                    showAsDanger
-                  />
-                );
-            }
-          })}
+            onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
+            onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+          />
 
           {/* Attachment Fragments */}
           {hasAttachments && (
