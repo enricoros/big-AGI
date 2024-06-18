@@ -21,7 +21,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // assistant placeholder
-  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
+  const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     '...',
     { originLLM: assistantLlmId, purposeId: history[0].purposeId },
   );
@@ -31,8 +31,8 @@ export async function runAssistantUpdatingState(conversationId: string, history:
   cHandler.setAbortController(abortController);
 
   // stream the assistant's messages directly to the state store
-  const onMessageUpdated = (incrementalMessage: Partial<DMessage>, completed: boolean) => {
-    cHandler.messageEdit(assistantMessageId, incrementalMessage, completed, false);
+  const overwriteMessageParts = (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
+    cHandler.messageEdit(assistantMessageId, incrementalMessage, messageComplete, false);
   };
   let instructions: VChatMessageIn[];
   try {
@@ -48,12 +48,12 @@ export async function runAssistantUpdatingState(conversationId: string, history:
     conversationId,
     parallelViewCount,
     autoSpeak,
-    onMessageUpdated,
+    overwriteMessageParts,
     abortController.signal,
   );
 
   // clear to send, again
-  // FIXME: race condition?
+  // FIXME: race condition? (for sure!)
   cHandler.setAbortController(null);
 
   if (autoTitleChat) {
@@ -69,6 +69,7 @@ export async function runAssistantUpdatingState(conversationId: string, history:
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
+type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
 
 export async function streamAssistantMessage(
   llmId: DLLMId,
@@ -77,7 +78,7 @@ export async function streamAssistantMessage(
   contextRef: VChatContextRef,
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
   autoSpeak: ChatAutoSpeakType,
-  onMessageUpdated: (incrementalMessage: Partial<DMessage>, completed: boolean) => void,
+  onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
   abortSignal: AbortSignal,
 ): Promise<StreamMessageStatus> {
 
@@ -95,7 +96,7 @@ export async function streamAssistantMessage(
   if (throttleUnits > 1)
     throttleDelay = Math.round(throttleDelay * Math.sqrt(throttleUnits));
 
-  function throttledEditMessage(updatedMessage: Partial<DMessage>) {
+  function throttledEditMessage(updatedMessage: Partial<StreamMessageUpdate>) {
     const now = Date.now();
     if (throttleUnits === 0 || now - lastCallTime >= throttleDelay) {
       onMessageUpdated(updatedMessage, false);
@@ -104,7 +105,7 @@ export async function streamAssistantMessage(
   }
 
   // TODO: should clean this up once we have multi-fragment streaming/recombination
-  const incrementalAnswer: Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete' | 'pendingPlaceholderText'> = {
+  const incrementalAnswer: StreamMessageUpdate = {
     fragments: [],
   };
 
@@ -113,13 +114,10 @@ export async function streamAssistantMessage(
       const textSoFar = update.textSoFar;
 
       // grow the incremental message
-      if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
       if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, textSoFar);
-      if (update.typing !== undefined) {
+      if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
+      if (update.typing !== undefined)
         incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
-        if (!update.typing)
-          incrementalAnswer.pendingPlaceholderText = undefined;
-      }
 
       // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
       // This can be toggled from the settings
@@ -150,7 +148,7 @@ export async function streamAssistantMessage(
   }
 
   // Ensure the last content is flushed out, and mark as complete
-  onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined, pendingPlaceholderText: undefined }, true);
+  onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined }, true);
 
   // 📢 TTS: all
   if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {

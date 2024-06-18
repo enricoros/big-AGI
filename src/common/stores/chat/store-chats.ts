@@ -214,10 +214,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               ...(touchUpdated && { updated: Date.now() }),
             };
 
-            if (removePendingState) {
+            if (removePendingState)
               delete updatedMessage.pendingIncomplete;
-              delete updatedMessage.pendingPlaceholderText;
-            }
 
             if (!updatedMessage.pendingIncomplete)
               updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(incomplete=false)');
@@ -368,7 +366,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             message.fragments = message.fragments.filter(f => f.ft !== 'content' || f.part.pt !== 'ph');
             // cleanup pre-v4 properties
             delete message.pendingIncomplete;
-            delete message.pendingPlaceholderText;
             delete (message as any).typing;
           }
         }

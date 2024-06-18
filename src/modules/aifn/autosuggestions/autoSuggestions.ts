@@ -174,7 +174,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the diagram
-    const fragmentId = cHandler.messageAppendContentFragment(assistantMessageId, createPlaceholderContentFragment('Evaluating Auto-Diagram...'), false, false);
+    const placeholderFragment = createPlaceholderContentFragment('Evaluating Auto-Diagram...');
+    cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     const instructions: VChatMessageIn[] = [
       { role: 'system', content: suggestPlantUMLSystemPrompt.replace('{{personaSystemPrompt}}', wrappedPersonaSystemText) },
@@ -203,14 +204,14 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           const fileName = `[Auto Diagram] ${type}.diagram`;
           const codeBlock = attachmentWrapText(plantUML, fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock);
-          cHandler.messageReplaceFragment(assistantMessageId, fragmentId, fragment, false, true);
+          cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;
         }
       }
       // no diagram generated
-      cHandler.messageDeleteFragment(assistantMessageId, fragmentId, false, false);
+      cHandler.messageFragmentDelete(assistantMessageId, placeholderFragment.fId, false, false);
     }).catch(error => {
-      cHandler.messageReplaceFragment(assistantMessageId, fragmentId, createErrorContentFragment(`Auto-Diagram generation issue: ${error?.message || error}`), false, false);
+      cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, createErrorContentFragment(`Auto-Diagram generation issue: ${error?.message || error}`), false);
     });
   }
 
@@ -218,7 +219,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   if (suggestHTMLUI && !['<html', '<HTML', '<Html'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the UI
-    const fragmentId = cHandler.messageAppendContentFragment(assistantMessageId, createPlaceholderContentFragment('Evaluating Auto-UI...'), false, false);
+    const placeholderFragment = createPlaceholderContentFragment('Evaluating Auto-UI...');
+    cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     const instructions: VChatMessageIn[] = [
       { role: 'system', content: suggestUISystemPrompt.replace('{{personaSystemPrompt}}', wrappedPersonaSystemText) },
@@ -247,14 +249,14 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
           const fileName = (file_name || 'ui').trim().replace(/[^a-zA-Z0-9-]/g, '') + '.html';
           const codeBlock = attachmentWrapText(htmlUI, '[Auto UI] ' + fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock); // `Example of Generative User Interface ("Auto UI" setting):\n${codeBlock}`
-          cHandler.messageReplaceFragment(assistantMessageId, fragmentId, fragment, false, true);
+          cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;
         }
       }
       // no UI generated
-      cHandler.messageDeleteFragment(assistantMessageId, fragmentId, false, false);
+      cHandler.messageFragmentDelete(assistantMessageId, placeholderFragment.fId, false, false);
     }).catch(error => {
-      cHandler.messageReplaceFragment(assistantMessageId, fragmentId, createErrorContentFragment(`Auto-UI generation issue: ${error?.message || error}`), false, false);
+      cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, createErrorContentFragment(`Auto-UI generation issue: ${error?.message || error}`), false);
     });
   }
 

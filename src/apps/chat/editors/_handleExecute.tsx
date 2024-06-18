@@ -70,7 +70,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
               cHandler.replaceMessages([]);
             } else {
               cHandler.replaceMessages(history);
-              cHandler.appendMessageAssistantText('Issue: this command requires the \'all\' parameter to confirm the operation.', 'issue');
+              cHandler.messageAppendAssistantText('Issue: this command requires the \'all\' parameter to confirm the operation.', 'issue');
             }
             return true;
           }
@@ -86,7 +86,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
             .map(cmd => ` - ${cmd.primary}` + (cmd.alternatives?.length ? ` (${cmd.alternatives.join(', ')})` : '') + `: ${cmd.description}`)
             .join('\n');
           cHandler.replaceMessages(history);
-          cHandler.appendMessageAssistantText('Available Chat Commands:\n' + chatCommandsText, 'help');
+          cHandler.messageAppendAssistantText('Available Chat Commands:\n' + chatCommandsText, 'help');
           return true;
 
         case 'mode-beam':
@@ -102,7 +102,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
         default:
           cHandler.replaceMessages(history);
-          cHandler.appendMessageAssistantText('This command is not supported', 'help');
+          cHandler.messageAppendAssistantText('This command is not supported', 'help');
           return false;
       }
     }
@@ -112,7 +112,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   // get the system purpose (note: we don't react to it, or it would invalidate half UI components..)
   if (!getConversationSystemPurposeId(conversationId)) {
     cHandler.replaceMessages(history);
-    cHandler.appendMessageAssistantText('Issue: no Persona selected.', 'issue');
+    cHandler.messageAppendAssistantText('Issue: no Persona selected.', 'issue');
     return 'err-no-persona';
   }
 

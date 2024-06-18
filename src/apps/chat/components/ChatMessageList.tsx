@@ -124,11 +124,11 @@ export function ChatMessageList(props: {
   }, [conversationId, props.conversationHandler]);
 
   const handleMessageDelete = React.useCallback((messageId: DMessageId) => {
-    props.conversationHandler?.messageDelete(messageId);
+    props.conversationHandler?.messagesDelete([messageId]);
   }, [props.conversationHandler]);
 
   const handleMessageReplaceFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    props.conversationHandler?.messageReplaceFragment(messageId, fragmentId, newFragment, false, true);
+    props.conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, false);
   }, [props.conversationHandler]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag) => {

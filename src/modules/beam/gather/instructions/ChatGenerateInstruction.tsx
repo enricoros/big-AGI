@@ -61,10 +61,8 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
     Object.assign(inputs.intermediateDMessage, incrementalMessage);
     if (incrementalMessage.fragments?.length)
       inputs.intermediateDMessage.updated = Date.now();
-    if (completed) {
+    if (completed)
       delete inputs.intermediateDMessage.pendingIncomplete;
-      delete inputs.intermediateDMessage.pendingPlaceholderText;
-    }
 
     switch (_i.display) {
       case 'mute':

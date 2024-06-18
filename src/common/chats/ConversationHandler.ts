@@ -8,7 +8,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessageTextContent, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, pendDMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, createTextContentFragment, DMessage, DMessageFragment, DMessageFragmentId, DMessageId } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -78,27 +78,21 @@ export class ConversationHandler {
    * @param text assistant text
    * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
    */
-  appendMessageAssistantText(text: string, llmLabel: DLLMId | string) {
+  messageAppendAssistantText(text: string, llmLabel: DLLMId | string) {
     const assistantMessage: DMessage = createDMessageTextContent('assistant', text);
     assistantMessage.originLLM = llmLabel;
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
   }
 
-  appendMessageAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): string {
-    const assistantMessage: DMessage = createDMessageEmpty('assistant');
-    pendDMessage(assistantMessage, placeholderText);
+  messageAppendAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): { assistantMessageId: DMessageId, placeholderFragmentId: DMessageFragmentId } {
+    const { message: assistantMessage, placeholderFragmentId } = createDMessagePlaceholderIncomplete('assistant', placeholderText);
     update && Object.assign(assistantMessage, update);
     this.chatActions.appendMessage(this.conversationId, assistantMessage);
-    return assistantMessage.id;
+    return { assistantMessageId: assistantMessage.id, placeholderFragmentId };
   }
 
-  messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), complete: boolean, touch: boolean) {
-    this.chatActions.editMessage(this.conversationId, messageId, update, complete, touch);
-  }
-
-  messageDelete(messageId: DMessageId): void {
-    this.chatActions.deleteMessage(this.conversationId, messageId);
-    void gcChatImageAssets(); // fire/forget
+  messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), messageComplete: boolean, touch: boolean) {
+    this.chatActions.editMessage(this.conversationId, messageId, update, messageComplete, touch);
   }
 
   messagesDelete(messageIds: DMessageId[]): void {
@@ -107,25 +101,16 @@ export class ConversationHandler {
     void gcChatImageAssets(); // fire/forget
   }
 
-  messageAppendTextContentFragment(messageId: string, text: string, complete: boolean, touch: boolean) {
-    this.messageAppendContentFragment(messageId, createTextContentFragment(text), complete, touch);
-  }
-
-  messageAppendErrorContentFragment(messageId: string, errorMessage: string, complete: boolean, touch: boolean) {
-    this.messageAppendTextContentFragment(messageId, errorMessage, complete, touch);
-  }
-
-  messageAppendContentFragment(messageId: string, fragment: DMessageContentFragment, complete: boolean, touch: boolean): DMessageFragmentId {
+  messageFragmentAppend(messageId: string, fragment: DMessageFragment, complete: boolean, touch: boolean) {
     this.chatActions.appendMessageFragment(this.conversationId, messageId, fragment, complete, touch);
-    return fragment.fId;
   }
 
-  messageDeleteFragment(messageId: string, fragmentId: string, complete: boolean, touch: boolean) {
+  messageFragmentDelete(messageId: string, fragmentId: string, complete: boolean, touch: boolean) {
     this.chatActions.deleteMessageFragment(this.conversationId, messageId, fragmentId, complete, touch);
   }
 
-  messageReplaceFragment(messageId: string, fragmentId: string, newFragment: DMessageFragment, complete: boolean, touch: boolean) {
-    this.chatActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, complete, touch);
+  messageFragmentReplace(messageId: string, fragmentId: string, newFragment: DMessageFragment, messageComplete: boolean) {
+    this.chatActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
   }
 
   replaceMessages(messages: DMessage[]): void {

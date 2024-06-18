@@ -1,17 +1,18 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.message';
 
 
 export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandler, url?: string) => {
   if (!url) {
-    cHandler.appendMessageAssistantText('Issue: no URL provided.', 'issue');
+    cHandler.messageAppendAssistantText('Issue: no URL provided.', 'issue');
     return false;
   }
 
   // noinspection HttpUrlsUsage
   const shortUrl = url.replace('https://www.', '').replace('https://', '').replace('http://', '').replace('www.', '');
-  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
+  const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
     `Loading page at ${shortUrl}...`,
     { originLLM: 'web' },
   );
@@ -20,14 +21,14 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
     const page = await callBrowseFetchPage(url);
 
     const pageContent = page.content.markdown || page.content.text || page.content.html || 'Issue: page load did not produce an answer: no text found';
-    cHandler.messageAppendTextContentFragment(assistantMessageId, pageContent, true, true);
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(pageContent), true);
 
     return true;
   } catch (error: any) {
     console.error(error);
 
     const pageError = 'Issue: browse did not produce an answer (error: ' + (error?.message || error?.toString() || 'unknown') + ').';
-    cHandler.messageAppendErrorContentFragment(assistantMessageId, pageError, true, false);
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(pageError), true);
 
     return false;
   }

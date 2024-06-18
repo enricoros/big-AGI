@@ -4,6 +4,7 @@ import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments }
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { createErrorContentFragment } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -12,7 +13,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
  */
 export async function runImageGenerationUpdatingState(cHandler: ConversationHandler, imageText?: string) {
   if (!imageText) {
-    cHandler.appendMessageAssistantText('Issue: no image description provided.', 'issue');
+    cHandler.messageAppendAssistantText('Issue: no image description provided.', 'issue');
     return false;
   }
 
@@ -21,7 +22,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   try {
     t2iProvider = getActiveTextToImageProviderOrThrow();
   } catch (error: any) {
-    cHandler.appendMessageAssistantText(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, 'issue');
+    cHandler.messageAppendAssistantText(`[Issue] Sorry, I can't generate images right now. ${error?.message || error?.toString() || 'Unknown error'}.`, 'issue');
     return 'err-t2i-unconfigured';
   }
 
@@ -31,7 +32,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   if (repeat > 1)
     imageText = imageText.replace(/x(\d+)$|\[(\d+)]$/, '').trim(); // Remove the "xN" or "[N]" part from the imageText
 
-  const assistantMessageId = cHandler.appendMessageAssistantPlaceholder(
+  const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
     `Give me ${t2iProvider.vendor === 'openai' ? 'a dozen' : 'a few'} seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`,
     { originLLM: t2iProvider.painter },
   );
@@ -41,13 +42,15 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
 
     // add the image content fragments to the message
     for (const imageContentFragment of imageContentFragments)
-      cHandler.messageAppendContentFragment(assistantMessageId, imageContentFragment, true, true);
+      cHandler.messageFragmentAppend(assistantMessageId, imageContentFragment, false, false);
+
+    cHandler.messageFragmentDelete(assistantMessageId, placeholderFragmentId, true, true);
 
     return true;
   } catch (error: any) {
 
-    const errorMessage = error?.message || error?.toString() || 'Unknown error';
-    cHandler.messageAppendErrorContentFragment(assistantMessageId, `Issue: Sorry, I couldn't create an image for you. ${errorMessage}`, true, false);
+    const drawError = `Issue: Sorry, I couldn't create an image for you. ${error?.message || error?.toString() || 'Unknown error'}`;
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(drawError), true);
 
     return false;
   }
