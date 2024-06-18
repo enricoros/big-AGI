@@ -596,7 +596,7 @@ export function ChatMessage(props: {
 
           // v-layout
           display: 'grid',
-          gap: 1, // gap in between the fragments (if > 1)
+          gap: isEditingText ? 2 : 1, // gap in between the fragments (if > 1)
 
           // horizontal separator between messages (second part+ and before)
           // '& > *:not(:first-child)': {
