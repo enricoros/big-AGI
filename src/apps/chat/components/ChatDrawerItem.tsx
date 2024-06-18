@@ -21,7 +21,7 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/jsUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
-import { ANIM_BUSY_TYPING } from './message/ChatMessage';
+import { ANIM_BUSY_TYPING } from './message/messageUtils';
 import { CHAT_NOVEL_TITLE } from '../AppChat';
 
 

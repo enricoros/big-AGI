@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -12,35 +12,31 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import Face6Icon from '@mui/icons-material/Face6';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
-import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
-import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import { SystemPurposeId, SystemPurposes } from '../../../../data';
-
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { createTextContentFragment, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageRole, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { createTextContentFragment, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { AttachmentFragments } from './fragments-attachments/AttachmentFragments';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
+import { avatarIconSx, makeMessageAvatar, messageBackground, personaColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
 
@@ -52,100 +48,6 @@ const BUBBLE_MIN_TEXT_LENGTH = 3;
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
-// Animations
-const ANIM_BUSY_DOWNLOADING = 'https://i.giphy.com/26u6dIwIphLj8h10A.webp'; // hourglass: https://i.giphy.com/TFSxpAIYz5inJGuY8f.webp, small-lq: https://i.giphy.com/131tNuGktpXGhy.webp, floppy: https://i.giphy.com/RxR1KghIie2iI.webp
-const ANIM_BUSY_PAINTING = 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.webp';
-const ANIM_BUSY_THINKING = 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp';
-export const ANIM_BUSY_TYPING = 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp';
-
-
-export function messageBackground(messageRole: DMessageRole | string, wasEdited: boolean, isAssistantIssue: boolean): string {
-  switch (messageRole) {
-    case 'user':
-      return 'primary.plainHoverBg'; // was .background.level1
-    case 'assistant':
-      return isAssistantIssue ? 'danger.softBg' : 'background.surface';
-    case 'system':
-      return wasEdited ? 'warning.softHoverBg' : 'neutral.softBg';
-    default:
-      return '#ff0000';
-  }
-}
-
-const avatarIconSx = {
-  width: 36,
-  height: 36,
-};
-
-const personaSx: SxProps = {
-  // make this stick to the top of the screen
-  position: 'sticky',
-  top: 0,
-
-  // flexBasis: 0, // this won't let the item grow
-  minWidth: { xs: 50, md: 64 },
-  maxWidth: 80,
-  textAlign: 'center',
-  // layout
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-};
-
-
-export function makeMessageAvatar(messageAvatarUrl: string | null, messageRole: DMessageRole | string, messageOriginLLM: string | undefined, messagePurposeId: SystemPurposeId | string | undefined, messageSender: string, messageIncomplete: boolean, larger?: boolean): React.JSX.Element {
-  if (typeof messageAvatarUrl === 'string' && messageAvatarUrl)
-    return <Avatar alt={messageSender} src={messageAvatarUrl} />;
-
-  const mascotSx = larger ? { width: 64, height: 64 } : avatarIconSx;
-  switch (messageRole) {
-    case 'system':
-      return <SettingsSuggestIcon sx={avatarIconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
-
-    case 'user':
-      return <Face6Icon sx={avatarIconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
-
-    case 'assistant':
-      const isDownload = messageOriginLLM === 'web';
-      const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
-      const isReact = messageOriginLLM?.startsWith('react-');
-
-      // animation on incomplete messages
-      if (messageIncomplete)
-        return <Avatar
-          alt={messageSender} variant='plain'
-          src={isDownload ? ANIM_BUSY_DOWNLOADING
-            : isTextToImage ? ANIM_BUSY_PAINTING
-              : isReact ? ANIM_BUSY_THINKING
-                : ANIM_BUSY_TYPING}
-          sx={{ ...mascotSx, borderRadius: 'sm' }}
-        />;
-
-      // icon: text-to-image
-      if (isTextToImage)
-        return <FormatPaintOutlinedIcon sx={{
-          ...avatarIconSx,
-          animation: `${animationColorRainbow} 1s linear 2.66`,
-        }} />;
-
-      // purpose symbol (if present)
-      const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
-      if (symbol)
-        return <Box sx={{
-          fontSize: '24px',
-          textAlign: 'center',
-          width: '100%',
-          minWidth: `${avatarIconSx.width}px`,
-          lineHeight: `${avatarIconSx.height}px`,
-        }}>
-          {symbol}
-        </Box>;
-
-      // default assistant avatar
-      return <SmartToyOutlinedIcon sx={avatarIconSx} />; // https://mui.com/static/images/avatar/2.jpg
-  }
-  return <Avatar alt={messageSender} />;
-}
 
 export type ChatMessageTextContentEditState = { [fragmentId: DMessageFragmentId]: string };
 
@@ -234,7 +136,6 @@ export function ChatMessage(props: {
   const couldSpeak = couldImagine;
 
   const attachmentFragments = messageFragments.filter(f => f.ft === 'attachment') as DMessageAttachmentFragment[];
-  const hasAttachments = attachmentFragments.length > 0;
 
 
   // TODO: fix the diffing
@@ -553,7 +454,7 @@ export function ChatMessage(props: {
 
         {/* Editing: Apply */}
         {isEditingText && (
-          <Box sx={personaSx}>
+          <Box sx={personaColumnSx}>
             <Tooltip arrow disableInteractive title='Apply Edits'>
               <IconButton variant='solid' color='warning' onClick={handleEditsApply}>
                 <CheckRoundedIcon />
@@ -567,7 +468,7 @@ export function ChatMessage(props: {
 
         {/* Avatar (Persona) */}
         {showAvatar && !isEditingText && (
-          <Box sx={personaSx}>
+          <Box sx={personaColumnSx}>
 
             {/* Persona Avatar or Menu Button */}
             <Box
@@ -654,7 +555,7 @@ export function ChatMessage(props: {
           {/* Attachment Fragments */}
           {/*{hasAttachments && (*/}
           <AttachmentFragments
-            attachmentFragments={[]}
+            attachmentFragments={attachmentFragments}
             messageRole={messageRole}
             contentScaling={contentScaling}
           />
@@ -673,9 +574,9 @@ export function ChatMessage(props: {
 
         {/* Editing: Cancel */}
         {isEditingText && (
-          <Box sx={personaSx}>
+          <Box sx={personaColumnSx}>
             <Tooltip arrow disableInteractive title='Discard Edits'>
-              <IconButton onClick={handleEditsCancel} sx={avatarIconSx}>
+              <IconButton onClick={handleEditsCancel}>
                 <CloseRoundedIcon />
               </IconButton>
             </Tooltip>

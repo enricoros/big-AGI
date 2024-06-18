@@ -7,8 +7,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { TokenBadgeMemo } from '../composer/TokenBadge';
-import { makeMessageAvatar, messageBackground } from './ChatMessage';
 import { isErrorChatMessage } from './explainServiceErrors';
+import { makeMessageAvatar, messageBackground } from './messageUtils';
 
 
 /**
