@@ -78,22 +78,28 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 
 const suggestUIFunctionName = 'generate_web_ui';
 
-export const suggestUIMixin = `User inferace generation: only via the \`${suggestUIFunctionName}\` function, IF defined`;
+export const suggestUIMixin = `Web UI generation: only via the \`${suggestUIFunctionName}\` function, IF defined`;
 
 const suggestUISystemPrompt = `
 You are a helpful AI assistant skilled in creating user interfaces. Analyze the conversation and user persona below to determine if an HTML user interface would complement or enhance the user's understanding.
 
-Rate the UI's usefulness (1-5): 1: Misleading, unnecessary or duplicate, 2: Not a fit or trivial, 3: Potentially useful or thought provoking to the user, 4: Very useful, 5: Essential.
+**Rating System**
+Rate the UI's usefulness (1-5): 1. Misleading, unnecessary, or duplicate, 2. Not a fit or trivial, 3. Potentially useful or thought-provoking to the user, 4. Very useful, 5. Essential
 
 Only if the rating is 3, 4, or 5, generate the HTML code. Ensure the generated UI is visual and interactive to enhance user engagement.
 
-Assistant personality type:
+**Assistant Personality Type**
 {{personaSystemPrompt}}
 
-Analyze the following short exchange and call the function \`${suggestUIFunctionName}\` with the HTML code only if the score is 3, 4 or 5.
+**Instructions**
+Analyze the following short exchange and call the function \`${suggestUIFunctionName}\` with the HTML code only if the score is 3, 4, or 5.
 
-I want you to consider this as an exercise in creativity and problem-solving to enhance the user experience. Try hard to think of a great UI to visualize or solve the problem at hand.
-`.trim();
+Please follow closely the following requirements:
+- Generate Web UIs such as: interactive games, blueprints and mockups, data visualizations, dashboards and tutorials.
+- You must write HTML comments after the DOCTYPE to explain your brief concept choices and short implementation guidelines.
+- Must be a frontend-only architecture and code, self-contained (can use external images), and must not require backend or environment setup.
+- Must solve a problem for the user, demonstrate a complete feature or concept, be visually impressive, and renderable in isolation. 
+`.trim(); // 'renderable in isolation'?
 
 const suggestUIFn: VChatFunctionIn = {
   name: suggestUIFunctionName,
@@ -107,7 +113,7 @@ const suggestUIFn: VChatFunctionIn = {
       },
       rating_short_reason: {
         type: 'string',
-        description: 'A 4-10 words reason on whether the UI would be desired by the user or not.',
+        description: 'A 4-10 word reason on whether the UI would be desired by the user or not.',
       },
       rating_number: {
         type: 'number',
@@ -247,7 +253,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
           // HTML UI Text Content to replace the placeholder
           const fileName = (file_name || 'ui').trim().replace(/[^a-zA-Z0-9-]/g, '') + '.html';
-          const codeBlock = attachmentWrapText(htmlUI, '[Auto UI] ' + fileName, 'markdown-code');
+          const codeBlock = attachmentWrapText(htmlUI, '[Generative UI] ' + fileName, 'markdown-code');
           const fragment = createTextContentFragment(codeBlock); // `Example of Generative User Interface ("Auto UI" setting):\n${codeBlock}`
           cHandler.messageFragmentReplace(assistantMessageId, placeholderFragment.fId, fragment, false);
           return;
