@@ -6,33 +6,31 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { KeyStroke, platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ChatModeId } from '../../AppChat';
+import type { ChatModeId } from '../../AppChat';
 
 
-interface ChatModeDescription {
-  label: string;
-  description: string | React.JSX.Element;
-  highlight?: boolean;
-  shortcut?: string;
-  hideOnDesktop?: boolean;
-  requiresTTI?: boolean;
+export function chatModeCanAttach(chatModeId: ChatModeId) {
+  return !!ChatModeItems[chatModeId]?.canAttach;
 }
 
 const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
   'generate-text': {
     label: 'Chat',
     description: 'Persona replies',
+    canAttach: true,
   },
   'generate-text-beam': {
     label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
     description: 'Combine multiple models', // Smarter: combine...
     shortcut: 'Ctrl + Enter',
+    canAttach: true,
     hideOnDesktop: true,
   },
   'append-user': {
     label: 'Write',
     description: 'Append a message',
     shortcut: 'Alt + Enter',
+    canAttach: true,
   },
   'generate-image': {
     label: 'Draw',
@@ -44,6 +42,16 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     description: 'Answer questions in multiple steps',
   },
 };
+
+interface ChatModeDescription {
+  label: string;
+  description: string | React.JSX.Element;
+  canAttach?: boolean;
+  highlight?: boolean;
+  shortcut?: string;
+  hideOnDesktop?: boolean;
+  requiresTTI?: boolean;
+}
 
 
 function fixNewLineShortcut(shortcut: string, enterIsNewLine: boolean) {
