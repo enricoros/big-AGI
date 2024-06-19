@@ -238,7 +238,7 @@ export function AppChat() {
       if (metadata) userMessage.metadata = duplicateDMessageMetadata(metadata);
 
       // fire/forget
-      void handleExecuteAndOutcome(chatModeId, conversation.id, [...conversation.messages, userMessage]);
+      void handleExecuteAndOutcome(chatModeId /* various */, conversation.id, [...conversation.messages, userMessage]);
     }
 
     return true;
