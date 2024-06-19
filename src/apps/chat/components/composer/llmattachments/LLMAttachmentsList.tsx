@@ -74,7 +74,7 @@ export function LLMAttachmentsList(props: {
   const handleOverallClearConfirmed = React.useCallback(() => {
     handleOverallMenuHide();
     setConfirmClearAttachmentDrafts(false);
-    props.attachmentDraftsStoreApi.getState().clearAttachmentsDrafts();
+    props.attachmentDraftsStoreApi.getState().removeAllAttachmentDrafts();
   }, [handleOverallMenuHide, props.attachmentDraftsStoreApi]);
 
 

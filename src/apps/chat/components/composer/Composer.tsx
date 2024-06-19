@@ -155,9 +155,9 @@ export function Composer(props: {
 
   // attachments-overlay: comes from the attachments slice of the conversation overlay
   const {
-    attachmentDrafts,
-    attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoContent, attachAppendFile,
-    attachmentsClear, attachmentsTakeAllFragments, attachmentsTakeTextFragments,
+    /* items */ attachmentDrafts,
+    /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoContent, attachAppendFile,
+    /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeTextFragments,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
   // attachments derived state
@@ -216,9 +216,9 @@ export function Composer(props: {
 
   const handleClear = React.useCallback(() => {
     setComposeText('');
-    attachmentsClear();
+    attachmentsRemoveAll();
     handleReplyToClear();
-  }, [attachmentsClear, handleReplyToClear, setComposeText]);
+  }, [attachmentsRemoveAll, handleReplyToClear, setComposeText]);
 
   const handleSendAction = React.useCallback((_chatModeId: ChatModeId, composerText: string): boolean => {
     if (!isValidConversation(targetConversationId)) return false;
@@ -228,8 +228,10 @@ export function Composer(props: {
     if (composerText)
       fragments.push(createTextContentFragment(composerText));
     const canAttach = chatModeCanAttach(_chatModeId);
-    if (canAttach)
-      fragments.push(...attachmentsTakeAllFragments(false));
+    if (canAttach) {
+      const attachmentFragments = await attachmentsTakeAllFragments('global', 'app-chat');
+      fragments.push(...attachmentFragments);
+    }
     if (!fragments.length) {
       // addSnackbar({ key: 'chat-composer-empty', message: 'Nothing to send', type: 'info' });
       return false;

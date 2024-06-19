@@ -104,6 +104,15 @@ export async function removeAttachmentOwnedDBAsset(fragment: DMessageAttachmentF
 }
 
 /**
+ * Move the DBlob items associated with the given DMessageAttachmentFragment to a new context and scope
+ */
+export async function transferAttachmentOwnedDBAsset(fragment: DMessageAttachmentFragment, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
+  if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
+    await transferDBAssetContextScope(fragment.part.dataRef.dblobAssetId, contextId, scopeId);
+  }
+}
+
+/**
  * GC Functions for Attachment DBlobs systems: remove leftover drafts
  */
 export async function gcAttachmentDBlobs() {

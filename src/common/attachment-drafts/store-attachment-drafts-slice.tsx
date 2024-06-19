@@ -7,7 +7,7 @@ import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.messa
 
 import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
 import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './attachment.pipeline';
-import { removeDBlobItemFromAttachmentFragment } from './attachment.dblobs';
+import { removeAttachmentOwnedDBAsset, transferAttachmentOwnedDBAsset } from './attachment.dblobs';
 
 
 /// Attachment Draft Slice: per-conversation attachments store ///
@@ -21,15 +21,16 @@ interface AttachmentDraftsState {
 export interface AttachmentsDraftsStore extends AttachmentDraftsState {
 
   createAttachmentDraft: (source: AttachmentDraftSource) => Promise<void>;
-  clearAttachmentsDrafts: () => void;
+  removeAllAttachmentDrafts: () => void;
   removeAttachmentDraft: (attachmentDraftId: AttachmentDraftId) => void;
   moveAttachmentDraft: (attachmentDraftId: AttachmentDraftId, delta: 1 | -1) => void;
   setAttachmentDraftConverterIdxAndConvert: (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => Promise<void>;
 
   /**
-   * Extracts all fragments from the all drafts and clears the store.
+   * Extracts all fragments from the all drafts and transfers ownership to the caller.
+   * This store is cleared.
    */
-  takeAllFragments: (removeFragments: boolean) => DMessageAttachmentFragment[];
+  takeAllFragments: (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => Promise<DMessageAttachmentFragment[]>;
 
   /**
    * Extracts text fragments from the attachment drafts and optionally removes them from the store.
@@ -79,17 +80,17 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     await setAttachmentDraftConverterIdxAndConvert(attachmentDraftId, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
   },
 
-  clearAttachmentsDrafts: () =>
-    _set(_state => {
-      // NOTE: commented because right now the attachments are not moved to a different scope
-      //       because this function is actually used to clear the attachments when the message is sent
-      // TODO: do not use clearAttachments when the message is sent, figure out another way0
-      // Remove the DBlob items associated with the removed fragments
-      // for (let draft of _state.attachmentDrafts) {
-      //   for (let fragment of draft.outputFragments) {
-      //     void removeDBlobItemFromAttachmentFragment(fragment);
-      //   }
-      // }
+  removeAllAttachmentDrafts: () =>
+    _set(state => {
+
+      // remove the associated DBlob items, as we still ahve
+      for (const attachmentDraft of state.attachmentDrafts) {
+        // Remove the DBlob items associated with the removed fragments
+        for (let removedFragment of attachmentDraft.outputFragments) {
+          void removeAttachmentOwnedDBAsset(removedFragment);
+        }
+      }
+
       return {
         attachmentDrafts: [],
       };
@@ -103,7 +104,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
 
         // Remove the DBlob items associated with the removed fragments
         for (let removedFragment of attachment.outputFragments) {
-          void removeDBlobItemFromAttachmentFragment(removedFragment);
+          void removeAttachmentOwnedDBAsset(removedFragment);
         }
 
         // Remove the draft
@@ -136,16 +137,19 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     await attachmentPerformConversion(attachmentDraft, converterIdx, _editAttachment, _replaceAttachmentOutputFragments);
   },
 
-  takeAllFragments: (removeFragments: boolean): DMessageAttachmentFragment[] => {
-    const allFragments: DMessageAttachmentFragment[] = [];
-    _get().attachmentDrafts.forEach(draft => {
-      allFragments.push(...draft.outputFragments);
-    });
+  takeAllFragments: async (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => {
+    // get all the fragments
+    const transferredFragments: DMessageAttachmentFragment[] =
+      _get().attachmentDrafts.flatMap(draft => draft.outputFragments);
 
-    if (removeFragments)
-      _set({ attachmentDrafts: [] });
+    // transfer ownership (await for transferAttachmentOwnedDBAsset)
+    for (const transferredFragment of transferredFragments)
+      await transferAttachmentOwnedDBAsset(transferredFragment, newContextId, newScopeId);
 
-    return allFragments;
+    // clear state
+    _set({ attachmentDrafts: [] });
+
+    return transferredFragments;
   },
 
   takeTextFragments: (attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean): DMessageAttachmentFragment[] => {
@@ -174,7 +178,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
 
       // Removal: rmeove associated DBlob items
       for (let removedFragment of extractedTextFragments) {
-        void removeDBlobItemFromAttachmentFragment(removedFragment);
+        void removeAttachmentOwnedDBAsset(removedFragment);
       }
 
       // Removal: leave non-text fragments in the draft
@@ -216,7 +220,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
 
         // remove the DBlob items associated with the removed fragments
         for (let removedFragment of removedFragments) {
-          void removeDBlobItemFromAttachmentFragment(removedFragment);
+          void removeAttachmentOwnedDBAsset(removedFragment);
         }
 
         return {
