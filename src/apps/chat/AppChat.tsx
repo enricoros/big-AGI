@@ -33,13 +33,13 @@ import { useRouterQuery } from '~/common/app.routes';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { ChatBarAltBeam } from './components/ChatBarAltBeam';
-import { ChatBarAltTitle } from './components/ChatBarAltTitle';
-import { ChatBarDropdowns } from './components/ChatBarDropdowns';
+import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
+import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
+import { ChatBarDropdowns } from './components/layout-bar/ChatBarDropdowns';
 import { ChatBeamWrapper } from './components/ChatBeamWrapper';
-import { ChatDrawerMemo } from './components/ChatDrawer';
+import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
-import { ChatPageMenuItems } from './components/ChatPageMenuItems';
+import { ChatPageMenuItems } from './components/layout-menu/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 

@@ -17,8 +17,8 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
-import { useChatShowSystemMessages } from '../store-app-chat';
-import { usePaneDuplicateOrClose } from './panes/usePanesManager';
+import { useChatShowSystemMessages } from '../../store-app-chat';
+import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
 
 
 export function ChatPageMenuItems(props: {

@@ -29,8 +29,8 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
-import { ClearFolderText } from './folders/useFolderDropdown';
-import { useChatDrawerFilters } from '../store-app-chat';
+import { ClearFolderText } from '../layout-bar/useFolderDropdown';
+import { useChatDrawerFilters } from '../../store-app-chat';
 
 
 // this is here to make shallow comparisons work on the next hook

@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { SystemPurposeId, SystemPurposes } from '../../../data';
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { usePurposeStore } from './persona-selector/store-purposes';
+import { usePurposeStore } from '../persona-selector/store-purposes';
 
 
 function PersonaDropdown(props: {
