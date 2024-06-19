@@ -11,7 +11,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 
-import { SystemPurposeId, SystemPurposes } from '../../../data';
+import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
@@ -21,8 +21,8 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/jsUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
-import { ANIM_BUSY_TYPING } from './message/messageUtils';
-import { CHAT_NOVEL_TITLE } from '../AppChat';
+import { ANIM_BUSY_TYPING } from '../message/messageUtils';
+import { CHAT_NOVEL_TITLE } from '../../AppChat';
 
 
 // set to true to display the conversation IDs

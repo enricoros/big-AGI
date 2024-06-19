@@ -8,9 +8,9 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
-import { CHAT_NOVEL_TITLE } from '../AppChat';
+import { CHAT_NOVEL_TITLE } from '../../AppChat';
 
-import { FadeInButton } from './ChatDrawerItem';
+import { FadeInButton } from '../layout-drawer/ChatDrawerItem';
 
 
 export function ChatBarAltTitle(props: {
