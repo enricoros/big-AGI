@@ -17,14 +17,14 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessageTextContent, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, duplicateDMessageFragments, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -120,19 +120,23 @@ export function AppChat() {
     setFocusedPaneIndex,
   } = usePanesManager();
 
-  const chatHandlers = React.useMemo(() => chatPanes.map(pane => {
-    return pane.conversationId ? ConversationsManager.getHandler(pane.conversationId) : null;
-  }), [chatPanes]);
+  const { paneUniqueConversationIds, paneHandlers, paneBeamStores } = React.useMemo(() => {
+    const paneConversationIds: (DConversationId | null)[] = chatPanes.map(pane => pane.conversationId || null);
+    const paneHandlers = paneConversationIds.map(cId => cId ? ConversationsManager.getHandler(cId) : null);
+    const paneBeamStores = paneHandlers.map(handler => handler?.getBeamStore() ?? null);
+    const paneUniqueConversationIds = Array.from(new Set(paneConversationIds.filter(Boolean))) as DConversationId[];
+    return {
+      paneHandlers: paneHandlers,
+      paneBeamStores: paneBeamStores,
+      paneUniqueConversationIds: paneUniqueConversationIds,
+    };
+  }, [chatPanes]);
 
-  const beamsStores = React.useMemo(() => chatHandlers.map(handler => {
-    return handler?.getBeamStore() ?? null;
-  }), [chatHandlers]);
-
-  const beamsOpens = useAreBeamsOpen(beamsStores);
+  const beamsOpens = useAreBeamsOpen(paneBeamStores);
   const beamOpenStoreInFocusedPane = React.useMemo(() => {
     const open = focusedPaneIndex !== null ? (beamsOpens?.[focusedPaneIndex] ?? false) : false;
-    return open ? beamsStores?.[focusedPaneIndex!] ?? null : null;
-  }, [beamsOpens, beamsStores, focusedPaneIndex]);
+    return open ? paneBeamStores?.[focusedPaneIndex!] ?? null : null;
+  }, [beamsOpens, focusedPaneIndex, paneBeamStores]);
 
   const {
     // focused
@@ -164,7 +168,7 @@ export function AppChat() {
 
   const isMultiPane = chatPanes.length >= 2;
   const isMultiAddable = chatPanes.length < 4;
-  const isMultiConversationId = isMultiPane && new Set(chatPanes.map((pane) => pane.conversationId)).size >= 2;
+  const isMultiConversationId = paneUniqueConversationIds.length >= 2;
   const willMulticast = isComposerMulticast && isMultiConversationId;
   const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
@@ -213,40 +217,32 @@ export function AppChat() {
   }, [openModelsSetup, openPreferencesTab]);
 
   const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
-    // validate inputs
-    if (fragments.length !== 1 || fragments[0].part.pt !== 'text') {
-      addSnackbar({
-        key: 'chat-composer-action-invalid',
-        message: 'Only a single text fragment is supported for now.',
-        type: 'issue',
-        overrides: {
-          autoHideDuration: 2000,
-        },
-      });
-      return false;
-    }
-    const userText = fragments[0].part.text;
 
-    // multicast: send the message to all the panes
-    const uniqueConversationIds = new Set([conversationId]);
-    if (willMulticast)
-      chatPanes.forEach(pane => pane.conversationId && uniqueConversationIds.add(pane.conversationId));
+    // [multicast] send the message to all the panes
+    const uniqueConversationIds = willMulticast
+      ? Array.from(new Set([conversationId, ...paneUniqueConversationIds]))
+      : [conversationId];
+
+    // validate conversation existence
+    const uniqueConverations = uniqueConversationIds.map(cId => getConversation(cId)).filter(Boolean) as DConversation[];
+    if (!uniqueConverations.length)
+      return false;
+
+    // TODO: TAKE OWNERSHIP OF THE FRAGMENTS IN CASE OF FORECASTED SUCCESS!
 
     // we loop to handle both the normal and multicast modes
-    let enqueuedAny = false;
-    for (const _cId of uniqueConversationIds) {
-      const history = getConversation(_cId)?.messages;
-      if (!history) continue;
+    for (const conversation of uniqueConverations) {
 
-      const newUserMessage = createDMessageTextContent('user', userText); // [chat] append user:message
-      if (metadata) newUserMessage.metadata = metadata;
+      // create the user:message
+      const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(fragments)); // [chat] create user:message
+      if (metadata) userMessage.metadata = duplicateDMessageMetadata(metadata);
 
       // fire/forget
-      void handleExecuteAndOutcome(chatModeId, _cId, [...history, newUserMessage]);
-      enqueuedAny = true;
+      void handleExecuteAndOutcome(chatModeId, conversation.id, [...conversation.messages, userMessage]);
     }
-    return enqueuedAny;
-  }, [chatPanes, handleExecuteAndOutcome, willMulticast]);
+
+    return true;
+  }, [paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]) => {
     await handleExecuteAndOutcome('generate-text', conversationId, history);
@@ -439,7 +435,7 @@ export function AppChat() {
         isMobile={isMobile}
         activeConversationId={focusedPaneConversationId}
         activeFolderId={activeFolderId}
-        chatPanesConversationIds={chatPanes.map(pane => pane.conversationId).filter(Boolean) as DConversationId[]}
+        chatPanesConversationIds={paneUniqueConversationIds}
         disableNewButton={disableNewButton}
         onConversationActivate={handleOpenConversationInFocusedPane}
         onConversationBranch={handleConversationBranch}
@@ -449,7 +445,7 @@ export function AppChat() {
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isMobile],
+    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isMobile, paneUniqueConversationIds],
   );
 
   const focusedMenuItems = React.useMemo(() =>
@@ -481,8 +477,8 @@ export function AppChat() {
       {chatPanes.map((pane, idx) => {
         const _paneIsFocused = idx === focusedPaneIndex;
         const _paneConversationId = pane.conversationId;
-        const _paneChatHandler = chatHandlers[idx] ?? null;
-        const _paneBeamStore = beamsStores[idx] ?? null;
+        const _paneChatHandler = paneHandlers[idx] ?? null;
+        const _paneBeamStore = paneBeamStores[idx] ?? null;
         const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStore;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${pane.paneId}`;
