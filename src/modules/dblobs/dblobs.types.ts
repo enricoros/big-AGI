@@ -7,9 +7,12 @@ import { agiUuid } from '~/common/util/idUtils';
  * This is the asset when stored/loaded in the DB. Carries some more context out of band from the asset itself.
  */
 export type DBlobDBAsset = {
-  contextId: 'global';
-  scopeId: 'app-chat' | 'app-draw' | 'attachment-drafts';
+  contextId: DBlobDBContextId;
+  scopeId: DBlobDBScopeId;
 } & DBlobAsset;
+
+export type DBlobDBContextId = 'global';
+export type DBlobDBScopeId = 'app-chat' | 'app-draw' | 'attachment-drafts';
 
 
 // Assets

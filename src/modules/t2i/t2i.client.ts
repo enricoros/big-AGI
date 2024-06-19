@@ -3,7 +3,7 @@ import { shallow } from 'zustand/shallow';
 import { useShallow } from 'zustand/react/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
-import type { DBlobDBAsset } from '~/modules/dblobs/dblobs.types';
+import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { DLLM, DModelSource, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
@@ -122,7 +122,7 @@ async function _t2iGenerateImagesOrThrow({ providerId, vendor }: TextToImageProv
  */
 export async function t2iGenerateImageContentFragments(
   t2iProvider: TextToImageProvider | null, prompt: string, count: number,
-  contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId'],
+  contextId: DBlobDBContextId, scopeId: DBlobDBScopeId,
 ): Promise<DMessageContentFragment[]> {
 
   // T2I: Use the active provider if null

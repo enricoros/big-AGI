@@ -1,13 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
-import type { DBlobAsset, DBlobAssetId, DBlobDBAsset } from './dblobs.types';
+import type { DBlobAsset, DBlobAssetId, DBlobDBAsset, DBlobDBContextId, DBlobDBScopeId } from './dblobs.types';
 import { getDBAsset, getDBAssetsByScopeAndType } from './dblobs.db';
 
 
-// export function useDBlobItems<T extends DBlobItem>(assetType: T['assetType']): [T[] | undefined, (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => Promise<void>, (id: DBlobAssetId) => Promise<void>] {
+// export function useDBlobItems<T extends DBlobItem>(assetType: T['assetType']): [T[] | undefined, (item: T, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) => Promise<void>, (id: DBlobAssetId) => Promise<void>] {
 //   const items = useLiveQuery(() => getAssetsByType<T>(assetType), [assetType]);
 //
-//   const addDBlobItemHandler = async (item: T, contextId: DBlobDBItem['contextId'], scopeId: DBlobDBItem['scopeId']) => {
+//   const addDBlobItemHandler = async (item: T, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) => {
 //     await addDBlobItem(item, contextId, scopeId);
 //   };
 //
@@ -24,15 +24,15 @@ import { getDBAsset, getDBAssetsByScopeAndType } from './dblobs.db';
  */
 export function useDBAssetsByScopeAndType<TAsset extends DBlobAsset = DBlobDBAsset>(
   assetType: TAsset['assetType'],
-  contextId: DBlobDBAsset['contextId'],
-  scopeId: DBlobDBAsset['scopeId'],
-): [TAsset[] | undefined, /*(item: TAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) => Promise<DBlobAssetId>, (id: DBlobAssetId) => Promise<void>*/] {
+  contextId: DBlobDBContextId,
+  scopeId: DBlobDBScopeId,
+): [TAsset[] | undefined, /*(item: TAsset, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) => Promise<DBlobAssetId>, (id: DBlobAssetId) => Promise<void>*/] {
   const items = useLiveQuery(
     () => getDBAssetsByScopeAndType<TAsset>(assetType, contextId, scopeId),
     [assetType, contextId, scopeId],
   );
 
-  // const addDBlobItemHandler = async (item: TAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobAssetId> => {
+  // const addDBlobItemHandler = async (item: TAsset, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId): Promise<DBlobAssetId> => {
   //   return await addDBAsset(item, contextId, scopeId);
   // };
 

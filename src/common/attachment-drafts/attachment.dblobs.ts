@@ -1,8 +1,8 @@
+import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
 import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
-import { deleteDBAsset, gcDBAssetsByScope } from '~/modules/dblobs/dblobs.db';
+import { deleteDBAsset, gcDBAssetsByScope, transferDBAssetContextScope } from '~/modules/dblobs/dblobs.db';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
-
 import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraftSource } from './attachment.types';
@@ -97,7 +97,7 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
 /**
  * Remove the DBlob item associated with the given DMessageAttachmentFragment
  */
-export async function removeDBlobItemFromAttachmentFragment(fragment: DMessageAttachmentFragment) {
+export async function removeAttachmentOwnedDBAsset(fragment: DMessageAttachmentFragment) {
   if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
     await deleteDBAsset(fragment.part.dataRef.dblobAssetId);
   }

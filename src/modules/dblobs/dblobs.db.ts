@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-import { DBlobAsset, DBlobAssetId, DBlobAssetType, DBlobDBAsset } from './dblobs.types';
+import type { DBlobAsset, DBlobAssetId, DBlobAssetType, DBlobDBAsset, DBlobDBContextId, DBlobDBScopeId } from './dblobs.types';
 
 
 /**
@@ -40,7 +40,7 @@ const assetsTable = _db.largeAssets;
 
 // CRUD
 
-export async function _addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobAssetId> {
+export async function _addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId): Promise<DBlobAssetId> {
   try {
     // returns the id of the added asset
     return await assetsTable.add({
@@ -61,7 +61,7 @@ export async function _addDBAsset<T extends DBlobAsset>(asset: T, contextId: DBl
 //   return assetsTable.toCollection().primaryKeys();
 // }
 
-// async function _getDBlobAssetIdsByScope(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobAssetId[]> {
+// async function _getDBlobAssetIdsByScope(contextId: DBlobDBContextId, scopeId: DBlobDBScopeId): Promise<DBlobAssetId[]> {
 //   return assetsTable.where({
 //     contextId: contextId,
 //     scopeId: scopeId,
@@ -84,7 +84,7 @@ export async function getDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobA
 /**
  * Warning: this function all the matching assets data in memory - not suitable for large datasets.
  */
-export async function getDBAssetsByScopeAndType<T extends DBlobAsset = DBlobDBAsset>(assetType: T['assetType'], contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
+export async function getDBAssetsByScopeAndType<T extends DBlobAsset = DBlobDBAsset>(assetType: T['assetType'], contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
   const assets = await assetsTable.where({
     assetType: assetType, contextId: contextId, scopeId: scopeId,
   }).sortBy('createdAt');
@@ -94,8 +94,12 @@ export async function getDBAssetsByScopeAndType<T extends DBlobAsset = DBlobDBAs
 
 // UPDATE
 
-export async function updateDBAsset<T extends DBlobAsset = DBlobDBAsset>(id: DBlobAssetId, updates: Partial<T>) {
+async function _updateDBAsset<T extends DBlobDBAsset = DBlobDBAsset>(id: DBlobAssetId, updates: Partial<T>) {
   return assetsTable.update(id, updates);
+}
+
+export async function transferDBAssetContextScope(id: DBlobAssetId, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
+  await _updateDBAsset(id, { contextId, scopeId });
 }
 
 
@@ -109,14 +113,14 @@ export async function deleteDBAsset(id: DBlobAssetId) {
 //   return assetsTable.bulkDelete(ids);
 // }
 
-// export async function deleteAllScopedAssets(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']) {
+// export async function deleteAllScopedAssets(contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
 //   return (contextId && scopeId) ? assetsTable.where({
 //     contextId: contextId,
 //     scopeId: scopeId,
 //   }).delete() : 0;
 // }
 
-export async function gcDBAssetsByScope(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId'], assetType: DBlobAssetType | null, keepIds: DBlobAssetId[]) {
+export async function gcDBAssetsByScope(contextId: DBlobDBContextId, scopeId: DBlobDBScopeId, assetType: DBlobAssetType | null, keepIds: DBlobAssetId[]) {
   // get all the DB keys
   const dbAssetIds = await assetsTable.where((assetType !== null) ? {
     assetType: assetType,
