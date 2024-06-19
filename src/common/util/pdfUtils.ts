@@ -1,3 +1,6 @@
+// configuration
+const SKIP_LOADING_IN_DEV = true;
+
 /**
  * Extracts text from a PDF file
  *
@@ -110,7 +113,7 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
 async function dynamicImportPdfJs() {
   // https://github.com/vercel/turbo/issues/4795#issuecomment-2153074851
   // Disable loading 'pdfjs-dist' during development to make --turbo work
-  if (process.env.NODE_ENV === 'development') {
+  if (SKIP_LOADING_IN_DEV && process.env.NODE_ENV === 'development') {
     return { getDocument: null };
   } else {
     // Dynamically import the 'pdfjs-dist' library [nextjs]
