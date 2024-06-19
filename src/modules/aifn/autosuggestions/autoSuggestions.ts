@@ -38,12 +38,12 @@ You are a helpful AI assistant skilled in creating diagrams. Analyze the convers
 
 Rate the diagram's usefulness (1-5): 1: Misleading, unnecessary or duplicate, 2: Not a fit or trivial, 3: Potentially useful to the user, 4: Very useful, 5: Essential.
 
-Only if the rating is 3, 4, or 5, generate the diagram code.
+Only if the rating is 4, or 5, generate the diagram code.
 
 Assistant personality type:
 {{personaSystemPrompt}}
 
-Analyze the following short exchange and call the function \`${suggestDiagramFunctionName}\` with the diagram code only if the score is 3, 4 or 5.
+Analyze the following short exchange and call the function \`${suggestDiagramFunctionName}\` with the diagram code only if the score is 4 or 5.
 `.trim();
 
 const suggestPlantUMLFn: VChatFunctionIn = {
@@ -58,7 +58,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
       },
       rating_number: {
         type: 'number',
-        description: 'The relevance of the diagram to the conversation, on a scale of 1 to 5. If 1 or 2, do not proceed and stop right here.',
+        description: 'The relevance of the diagram to the conversation, on a scale of 1 to 5. If 1, 2 or 3, do not proceed and stop right here.',
       },
       type: {
         type: 'string',
@@ -78,7 +78,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 
 const suggestUIFunctionName = 'generate_web_ui';
 
-export const suggestUIMixin = `Web UI code generation: only via the \`${suggestUIFunctionName}\` function, IF DEFINED`;
+export const suggestUIMixin = `Do not generate code, unless via the \`${suggestUIFunctionName}\` function call, IF DEFINED`;
 
 const suggestUISystemPrompt = `
 You are a helpful AI assistant skilled in creating user interfaces. Analyze the conversation and user persona below to determine if an HTML user interface would complement or enhance the user's understanding.
