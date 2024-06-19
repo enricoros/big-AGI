@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
+import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
 import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
@@ -39,7 +40,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
         // GC: Remove chat dblobs (not persisted in chat fragments)
         void gcChatImageAssets(); // fire/forget
         // GC: Remove old attachment drafts (not persisted in chats)
-        // void gcAttachmentDBlobs(); // fire/forget
+        void gcAttachmentDBlobs(); // fire/forget
       });
   }, []);
 

@@ -220,7 +220,7 @@ export function Composer(props: {
     handleReplyToClear();
   }, [attachmentsRemoveAll, handleReplyToClear, setComposeText]);
 
-  const handleSendAction = React.useCallback((_chatModeId: ChatModeId, composerText: string): boolean => {
+  const handleSendAction = React.useCallback(async (_chatModeId: ChatModeId, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
 
     // prepare the fragments: content (if any) and attachments (if allowed, and any)
@@ -245,12 +245,12 @@ export function Composer(props: {
     return enqueued;
   }, [attachmentsTakeAllFragments, handleClear, onAction, replyToGenerateText, targetConversationId]);
 
-  const handleSendClicked = React.useCallback(() => {
-    handleSendAction(chatModeId, composeText);
+  const handleSendClicked = React.useCallback(async () => {
+    await handleSendAction(chatModeId, composeText); // 'chat/write/...' button
   }, [chatModeId, composeText, handleSendAction]);
 
-  const handleSendTextBeamClicked = React.useCallback(() => {
-    handleSendAction('generate-text-beam', composeText);
+  const handleSendTextBeamClicked = React.useCallback(async () => {
+    await handleSendAction('generate-text-beam', composeText); // 'beam' button
   }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
@@ -345,7 +345,7 @@ export function Composer(props: {
     isMobile && actileInterceptTextChange(e.target.value);
   }, [actileInterceptTextChange, isMobile, setComposeText]);
 
-  const handleTextareaKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleTextareaKeyDown = React.useCallback(async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // disable keyboard handling if the actile is visible
     if (actileInterceptKeydown(e))
       return;
@@ -355,14 +355,14 @@ export function Composer(props: {
 
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey) {
-        if (handleSendAction('append-user', composeText))
+        if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
           touchAltEnter();
         return e.preventDefault();
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
-        if (handleSendAction('generate-text-beam', composeText))
+        if (await handleSendAction('generate-text-beam', composeText)) // 'ctrl+enter' -> beam
           touchCtrlEnter();
         return e.preventDefault();
       }
@@ -372,7 +372,7 @@ export function Composer(props: {
         touchShiftEnter();
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         if (!assistantAbortible)
-          handleSendAction(chatModeId, composeText);
+          await handleSendAction(chatModeId, composeText); // enter -> send
         return e.preventDefault();
       }
     }
@@ -408,7 +408,7 @@ export function Composer(props: {
     if (autoSend) {
       if (notUserStop)
         playSoundUrl('/sounds/mic-off-mid.mp3');
-      handleSendAction(chatModeId, nextText);
+      void handleSendAction(chatModeId, nextText); // fire/forget
     } else {
       if (!micContinuation && notUserStop)
         playSoundUrl('/sounds/mic-off-mid.mp3');

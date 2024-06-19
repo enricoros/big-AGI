@@ -228,12 +228,12 @@ export function AppChat() {
     if (!uniqueConverations.length)
       return false;
 
-    // TODO: TAKE OWNERSHIP OF THE FRAGMENTS IN CASE OF FORECASTED SUCCESS!
-
     // we loop to handle both the normal and multicast modes
     for (const conversation of uniqueConverations) {
 
       // create the user:message
+      // NOTE: this can lead to multiple chat messages with data refs that are referring to the same dblobs,
+      //       however, we already got transferred ownership of the dblobs at this point.
       const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(fragments)); // [chat] create user:message
       if (metadata) userMessage.metadata = duplicateDMessageMetadata(metadata);
 
