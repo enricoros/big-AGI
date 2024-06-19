@@ -1,14 +1,14 @@
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 import { _addDBAsset, gcDBAssetsByScope, getDBAsset } from './dblobs.db';
-import { _createAssetObject, DBlobAssetId, DBlobAssetType, DBlobDBAsset, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
+import { _createAssetObject, DBlobAssetId, DBlobAssetType, DBlobDBContextId, DBlobDBScopeId, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
 
 
 // C
 
 export async function addDBImageAsset(
-  contextId: DBlobDBAsset['contextId'],
-  scopeId: DBlobDBAsset['scopeId'],
+  contextId: DBlobDBContextId,
+  scopeId: DBlobDBScopeId,
   image: {
     label: string,
     data: DBlobImageAsset['data'],
@@ -23,7 +23,7 @@ export async function addDBImageAsset(
   return _addDBImageAsset(imageAsset, contextId, scopeId);
 }
 
-async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId']): Promise<DBlobAssetId> {
+async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId): Promise<DBlobAssetId> {
 
   // Auto-Thumbnail: when adding an image, generate a thumbnail-256 cache level
   if (!imageAsset.cache?.thumb256) {
@@ -87,6 +87,6 @@ export async function getImageAssetAsBlobURL(id: DBlobAssetId) {
 
 // D
 
-export async function gcDBImageAssets(contextId: DBlobDBAsset['contextId'], scopeId: DBlobDBAsset['scopeId'], keepIds: DBlobAssetId[]) {
+export async function gcDBImageAssets(contextId: DBlobDBContextId, scopeId: DBlobDBScopeId, keepIds: DBlobAssetId[]) {
   await gcDBAssetsByScope(contextId, scopeId, DBlobAssetType.IMAGE, keepIds);
 }

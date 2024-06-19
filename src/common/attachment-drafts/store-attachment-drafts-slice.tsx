@@ -1,6 +1,8 @@
 import type { StoreApi } from 'zustand';
 import type { StateCreator } from 'zustand/vanilla';
 
+import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
+
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
 
 import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
