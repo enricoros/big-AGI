@@ -175,7 +175,10 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const canStackBlitz = blockComplete && isStackBlitzSupported(inferredCodeLanguage);
 
 
-  const showBlockTitle = blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://'));
+  let showBlockTitle = blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://'));
+  // disable the block title when rendering HTML
+  if (renderHTML)
+    showBlockTitle = false;
 
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
