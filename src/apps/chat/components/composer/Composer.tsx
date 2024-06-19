@@ -31,7 +31,7 @@ import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.co
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, duplicateDMessageFragments, isContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapTextFragments } from '~/common/stores/chat/chat.tokens';
-import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
@@ -98,7 +98,7 @@ export function Composer(props: {
   isMobile?: boolean;
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
-  conversationId: DConversationId | null;
+  targetConversationId: DConversationId | null;
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
@@ -131,7 +131,7 @@ export function Composer(props: {
   const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
   const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
-    const conversation = state.conversations.find(_c => _c.id === props.conversationId);
+    const conversation = state.conversations.find(_c => _c.id === props.targetConversationId);
     return {
       assistantAbortible: conversation ? !!conversation.abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
@@ -141,8 +141,9 @@ export function Composer(props: {
   }));
 
   // external overlay state (extra conversationId-dependent state)
-  const conversationHandler = props.conversationId ? ConversationsManager.getHandler(props.conversationId) : null;
-  const conversationOverlayStore = conversationHandler?.getOverlayStore() ?? null;
+  const conversationOverlayStore = props.targetConversationId
+    ? ConversationsManager.getHandler(props.targetConversationId)?.getOverlayStore() || null
+    : null;
 
   // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
@@ -165,9 +166,10 @@ export function Composer(props: {
 
   // derived state
 
+  const { composerTextAreaRef, targetConversationId, onAction, onTextImagine } = props;
   const isMobile = !!props.isMobile;
   const isDesktop = !props.isMobile;
-  const noConversation = !props.conversationId;
+  const noConversation = !targetConversationId;
   const noLLM = !props.chatLLM;
   const showLLMAttachments = chatModeCanAttach(chatModeId);
 
@@ -206,13 +208,11 @@ export function Composer(props: {
 
   React.useEffect(() => {
     if (replyToGenerateText)
-      setTimeout(() => props.composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
-  }, [replyToGenerateText, props.composerTextAreaRef]);
+      setTimeout(() => composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
+  }, [composerTextAreaRef, replyToGenerateText]);
 
 
   // Primary button
-
-  const { conversationId, onAction } = props;
 
   const handleClear = React.useCallback(() => {
     setComposeText('');
@@ -221,8 +221,7 @@ export function Composer(props: {
   }, [attachmentsClear, handleReplyToClear, setComposeText]);
 
   const handleSendAction = React.useCallback((_chatModeId: ChatModeId, composerText: string): boolean => {
-    if (!conversationId)
-      return false;
+    if (!isValidConversation(targetConversationId)) return false;
 
     // prepare the fragments: content (if any) and attachments (if allowed, and any)
     const fragments: (DMessageContentFragment | DMessageAttachmentFragment)[] = [];
@@ -238,11 +237,11 @@ export function Composer(props: {
 
     // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
     const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
-    const enqueued = onAction(conversationId, _chatModeId, fragments, metadata);
+    const enqueued = onAction(targetConversationId, _chatModeId, fragments, metadata);
     if (enqueued)
       handleClear();
     return enqueued;
-  }, [attachmentsTakeAllFragments, conversationId, handleClear, onAction, replyToGenerateText]);
+  }, [attachmentsTakeAllFragments, handleClear, onAction, replyToGenerateText, targetConversationId]);
 
   const handleSendClicked = React.useCallback(() => {
     handleSendAction(chatModeId, composeText);
@@ -253,26 +252,25 @@ export function Composer(props: {
   }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
-    !!props.conversationId && abortConversationTemp(props.conversationId);
-  }, [abortConversationTemp, props.conversationId]);
+    targetConversationId && abortConversationTemp(targetConversationId);
+  }, [abortConversationTemp, targetConversationId]);
 
 
   // Secondary buttons
 
   const handleCallClicked = React.useCallback(() => {
-    props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
-  }, [props.conversationId, systemPurposeId]);
+    targetConversationId && systemPurposeId && launchAppCall(targetConversationId, systemPurposeId);
+  }, [systemPurposeId, targetConversationId]);
 
   const handleDrawOptionsClicked = React.useCallback(() => {
     openPreferencesTab(PreferencesTab.Draw);
   }, [openPreferencesTab]);
 
   const handleTextImagineClicked = React.useCallback(() => {
-    if (!composeText || !props.conversationId)
-      return;
-    props.onTextImagine(props.conversationId, composeText);
+    if (!composeText || !targetConversationId) return;
+    onTextImagine(targetConversationId, composeText);
     setComposeText('');
-  }, [composeText, props, setComposeText]);
+  }, [composeText, onTextImagine, setComposeText, targetConversationId]);
 
 
   // Mode menu
@@ -294,8 +292,8 @@ export function Composer(props: {
   // Actiles
 
   const onActileCommandPaste = React.useCallback((item: ActileItem) => {
-    if (props.composerTextAreaRef.current) {
-      const textArea = props.composerTextAreaRef.current;
+    if (composerTextAreaRef.current) {
+      const textArea = composerTextAreaRef.current;
       const currentText = textArea.value;
       const cursorPos = textArea.selectionStart;
 
@@ -312,12 +310,12 @@ export function Composer(props: {
       const newCursorPos = commandStart + item.label.length + 1;
       textArea.setSelectionRange(newCursorPos, newCursorPos);
     }
-  }, [props.composerTextAreaRef, setComposeText]);
+  }, [composerTextAreaRef, setComposeText]);
 
-  const onActileEmbedMessage = React.useCallback(async (item: StarredMessageItem) => {
+  const onActileEmbedMessage = React.useCallback(async (starredItem: StarredMessageItem) => {
     // get the message
-    const conversation = getConversation(item.conversationId);
-    const messageToEmbed = conversation?.messages.find(m => m.id === item.messageId);
+    const conversation = getConversation(starredItem.conversationId);
+    const messageToEmbed = conversation?.messages.find(m => m.id === starredItem.messageId);
     if (conversation && messageToEmbed) {
       const contentToEmbed = duplicateDMessageFragments(messageToEmbed.fragments)
         .filter(isContentFragment);
@@ -325,7 +323,7 @@ export function Composer(props: {
         const chatTitle = conversationTitle(conversation);
         const messageText = messageFragmentsReduceText(contentToEmbed);
         const refLabel = `${chatTitle} > ${messageText.slice(0, 10)}...`;
-        const refId = `${item.messageId} - ${chatTitle}`;
+        const refId = `${starredItem.messageId} - ${chatTitle}`;
         await attachAppendEgoContent(refLabel, refId, contentToEmbed);
       }
     }
@@ -335,7 +333,7 @@ export function Composer(props: {
     return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileEmbedMessage)];
   }, [onActileCommandPaste, onActileEmbedMessage]);
 
-  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, props.composerTextAreaRef);
+  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, composerTextAreaRef);
 
 
   // Type...
@@ -403,7 +401,7 @@ export function Composer(props: {
     nextText = nextText ? nextText + ' ' + transcript : transcript;
 
     // auto-send (mic continuation mode) if requested
-    const autoSend = micContinuation && nextText.length >= 1 && !!props.conversationId; //&& assistantAbortible;
+    const autoSend = micContinuation && nextText.length >= 1 && !noConversation; //&& assistantAbortible;
     const notUserStop = result.doneReason !== 'manual';
     if (autoSend) {
       if (notUserStop)
@@ -413,11 +411,11 @@ export function Composer(props: {
       if (!micContinuation && notUserStop)
         playSoundUrl('/sounds/mic-off-mid.mp3');
       if (nextText) {
-        props.composerTextAreaRef.current?.focus();
+        composerTextAreaRef.current?.focus();
         setComposeText(nextText);
       }
     }
-  }, [chatModeId, composeText, handleSendAction, micContinuation, props.composerTextAreaRef, props.conversationId, setComposeText]);
+  }, [chatModeId, composeText, composerTextAreaRef, handleSendAction, micContinuation, noConversation, setComposeText]);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
     useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
@@ -696,7 +694,7 @@ export function Composer(props: {
                         ...(isSpeechEnabled && { pr: { md: 5 } }),
                         // mb: 0.5, // no need; the outer container already has enough p (for TokenProgressbar)
                       },
-                      ref: props.composerTextAreaRef,
+                      ref: composerTextAreaRef,
                     },
                   }}
                   sx={{
