@@ -259,7 +259,7 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
 
     purposeId: message.purposeId,
     originLLM: message.originLLM,
-    metadata: message.metadata ? { ...message.metadata } : undefined,
+    metadata: message.metadata ? duplicateDMessageMetadata(message.metadata) : undefined,
     userFlags: message.userFlags ? [...message.userFlags] : undefined,
 
     tokenCount: message.tokenCount,
@@ -325,6 +325,11 @@ function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
     // default: // unreachable, we'd get a compiler error before this
     //   throw new Error('Invalid reference');
   }
+}
+
+export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
+  // TODO: deep copy this?
+  return { ...metadata };
 }
 
 
