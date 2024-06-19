@@ -409,11 +409,17 @@ function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceU
 }
 
 
-export const getConversation = (conversationId: DConversationId | null): DConversation | null =>
-  conversationId ? useChatStore.getState().conversations.find(_c => _c.id === conversationId) ?? null : null;
+export function isValidConversation(conversationId?: DConversationId | null): conversationId is DConversationId {
+  return !!conversationId && getConversation(conversationId) !== null;
+}
 
-export const getConversationSystemPurposeId = (conversationId: DConversationId | null): SystemPurposeId | null =>
-  getConversation(conversationId)?.systemPurposeId || null;
+export function getConversation(conversationId: DConversationId | null): DConversation | null {
+  return conversationId ? useChatStore.getState().conversations.find(_c => _c.id === conversationId) ?? null : null;
+}
+
+export function getConversationSystemPurposeId(conversationId: DConversationId | null): SystemPurposeId | null {
+  return getConversation(conversationId)?.systemPurposeId || null;
+}
 
 
 export const useConversation = (conversationId: DConversationId | null) => useChatStore(useShallow(state => {
