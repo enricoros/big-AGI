@@ -72,7 +72,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       increaseContentScaling: () => set((state) => state.contentScaling === 'md' ? state : { contentScaling: state.contentScaling === 'xs' ? 'sm' : 'md' }),
       decreaseContentScaling: () => set((state) => state.contentScaling === 'xs' ? state : { contentScaling: state.contentScaling === 'md' ? 'sm' : 'xs' }),
 
-      doubleClickToEdit: true,
+      doubleClickToEdit: false,
       setDoubleClickToEdit: (doubleClickToEdit: boolean) => set({ doubleClickToEdit }),
 
       enterIsNewline: false,
