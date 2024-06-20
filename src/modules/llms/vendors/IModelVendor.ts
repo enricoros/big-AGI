@@ -18,7 +18,7 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
   readonly location: 'local' | 'cloud';
   readonly instanceLimit: number;
   readonly hasFreeModels?: boolean;
-  readonly hasBackendCapFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'geen checkmark' in the list of vendors when adding sources
+  readonly hasBackendCapFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding sources
   readonly hasBackendCapKey?: keyof BackendCapabilities;
 
   // components
@@ -36,20 +36,20 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
 
   getRateLimitDelay?(llm: TDLLM, setup: Partial<TSourceSetup>): number;
 
-  rpcUpdateModelsOrThrow: (
+  rpcUpdateModelsOrThrow(
     access: TAccess,
-  ) => Promise<{ models: ModelDescriptionSchema[] }>;
+  ): Promise<{ models: ModelDescriptionSchema[] }>;
 
-  rpcChatGenerateOrThrow: (
+  rpcChatGenerateOrThrow(
     access: TAccess,
     llmOptions: TLLMOptions,
     messages: VChatMessageIn[],
     contextName: VChatGenerateContextName, contextRef: VChatContextRef | null,
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     maxTokens?: number,
-  ) => Promise<VChatMessageOut | VChatMessageOrFunctionCallOut>;
+  ): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut>;
 
-  streamingChatGenerateOrThrow: (
+  streamingChatGenerateOrThrow(
     access: TAccess,
     llmId: DLLMId,
     llmOptions: TLLMOptions,
@@ -58,6 +58,6 @@ export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOpt
     functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
     abortSignal: AbortSignal,
     onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
-  ) => Promise<void>;
+  ): Promise<void>;
 
 }
