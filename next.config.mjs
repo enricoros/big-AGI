@@ -43,8 +43,11 @@ let nextConfig = {
     }
 
     // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
-    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize)
+    // noinspection JSUnresolvedReference
+    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize) {
+      // noinspection JSUnresolvedReference
       config.optimization.splitChunks.minSize = 40 * 1024;
+    }
 
     return config;
   },

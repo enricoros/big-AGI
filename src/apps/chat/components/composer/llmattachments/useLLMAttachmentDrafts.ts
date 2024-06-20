@@ -29,7 +29,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
     // LLM-dependent multi-modal enablement
     const supportsImages = !!chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
     const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = supportsImages ? ['image_ref', 'text'] : ['text'];
-    const supportedTextTypes = supportedTypes.filter(pt => pt === 'text');
+    const supportedTextTypes: DMessageAttachmentFragment['part']['pt'][] = supportedTypes.filter(pt => pt === 'text');
 
     // Add LLM-specific properties to each attachment draft
     const llmAttachmentDrafts = attachmentDrafts.map((a): LLMAttachmentDraft => ({

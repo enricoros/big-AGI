@@ -5,7 +5,6 @@ import { SxProps } from '@mui/joy/styles/types';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { formLabelStartWidth } from '~/common/app.theme';
 
 
 /**

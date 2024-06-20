@@ -7,7 +7,7 @@ import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContex
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, useModelsStore } from './store-llms';
 import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
-import { StreamingClientUpdate, unifiedStreamingClient } from './vendors/unifiedStreamingClient';
+import { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
 import { findAccessForSourceOrThrow, findVendorForLlmOrThrow } from './vendors/vendors.registry';
 
 
