@@ -19,7 +19,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
       },
       title: {
         type: 'string',
-        description: 'Very brief title, e.g. Meaning of Life',
+        description: 'Very brief title, e.g., Meaning of Life',
       },
     },
     required: ['question_as_user', 'title'],
@@ -38,7 +38,7 @@ You are a helpful AI assistant skilled in creating diagrams. Analyze the convers
 
 Rate the diagram's usefulness (1-5): 1: Misleading, unnecessary or duplicate, 2: Not a fit or trivial, 3: Potentially useful to the user, 4: Very useful, 5: Essential.
 
-Only if the rating is 4, or 5, generate the diagram code.
+Only if the rating is 4 or 5, generate the diagram code.
 
 Assistant personality type:
 {{personaSystemPrompt}}
@@ -54,7 +54,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
     properties: {
       rating_short_reason: {
         type: 'string',
-        description: 'A 4-10 words reason on whether the diagram would desired by the user or not.',
+        description: 'A 4-10 words reason on whether the diagram would be desired by the user or not.',
       },
       rating_number: {
         type: 'number',
@@ -87,7 +87,7 @@ You are a helpful AI assistant skilled in creating user interfaces. Analyze the 
 **Rating System**
 Rate the UI's usefulness (1-5): 1. Misleading, unnecessary, or duplicate, 2. Not a fit or trivial, 3. Potentially useful or thought-provoking to the user, 4. Very useful, 5. Essential
 
-Only if the rating is 3, 4, or 5, generate the HTML code. Ensure the generated UI is visual, interactive, resilient and engaging the user.
+Only if the rating is 3, 4, or 5, generate the HTML code. Ensure the generated UI is visual, interactive, resilient, and engaging.
 
 **Assistant Personality Type**
 {{personaSystemPrompt}}
@@ -96,23 +96,23 @@ Only if the rating is 3, 4, or 5, generate the HTML code. Ensure the generated U
 Analyze the following short exchange and call the function \`${suggestUIFunctionName}\` with the HTML code only if the score is 3, 4, or 5.
 
 Please follow closely the following requirements:
-- **Generate Web UIs** such as interactive games, blueprints and mockups, data visualizations, dashboards, and tutorials.
-- **Code Quality and Resilience:** The single-file HTML, CSS, and JavaScript code must be correct as there will be no opportunity to modify the code after.
+- **Generate Web UIs** such as interactive games, blueprints, mockups, data visualizations, dashboards, and tutorials.
+- **Code Quality and Resilience:** The single-file HTML, CSS, and JavaScript code must be correct and resilient, as there will be no opportunity to modify it after.
 - **Include HTML Comments:** After the DOCTYPE, explain your brief concept choices and short implementation guidelines.
 - **Frontend-Only Architecture:** The code should be self-contained, using HTML, CSS, and JavaScript only. External images are allowed. Must not require backend or environment setup.
 - **Include Tailwind CSS:** Add \`<script src='https://cdn.tailwindcss.com/3.4.3'></script>\` in the \`<head>\` section.
-- **Functional Requirements:** This UI must solve the user's problem, demonstrate a complete feature or concept, be visually impressive, and renderable in isolation. 
-`.trim(); // 'renderable in isolation'?
+- **Functional Requirements:** The UI must solve the user's problem, demonstrate a complete feature or concept, be visually impressive, and renderable in isolation.
+`.trim();
 
 const suggestUIFn: VChatFunctionIn = {
   name: suggestUIFunctionName,
-  description: 'Renders a web UI when provided with a single concise HTML5 string (can include CSS and JS), if applicable, relevant, and no other UIs are present.',
+  description: 'Renders a web UI when provided with a single concise HTML5 string (can include CSS and JS), if applicable and relevant.',
   parameters: {
     type: 'object',
     properties: {
       possible_ui_requirements: {
         type: 'string',
-        description: 'Brief (10 words) to medium length (40 words) requirements for the UI. Include the main features, looks, layout.',
+        description: 'Brief (10 words) to medium length (40 words) requirements for the UI. Include main features, looks, and layout.',
       },
       rating_short_reason: {
         type: 'string',
@@ -137,7 +137,7 @@ const suggestUIFn: VChatFunctionIn = {
 
 
 /**
- * Formulates proposals for follow-up questions, prompts, and counterpoints, based on the last 2 chat messages
+ * Formulates proposals for follow-up questions, prompts, and counterpoints, based on the last 2 chat messages.
  */
 export function autoSuggestions(conversationId: string, assistantMessageId: string, suggestDiagrams: boolean, suggestHTMLUI: boolean, suggestQuestions: boolean) {
 
@@ -198,8 +198,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
       // cheap way to check if the function was supported
       if ('function_arguments' in chatResponse && chatResponse.function_arguments) {
-        const functionArguments = chatResponse.function_arguments;
-        const { code, type } = functionArguments as { code: string, type: string };
+        const { code, type } = chatResponse.function_arguments as { code: string, type: string };
         if (code && type) {
 
           // validate the code
@@ -243,8 +242,7 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
       // cheap way to check if the function was supported
       if ('function_arguments' in chatResponse && chatResponse.function_arguments) {
-        const functionArguments = chatResponse.function_arguments;
-        const { html, file_name } = functionArguments as { html: string, file_name: string };
+        const { html, file_name } = chatResponse.function_arguments as { html: string, file_name: string };
         if (html) {
 
           // validate the code
