@@ -7,7 +7,6 @@ import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId, DMessageTextPart } from '~/common/stores/chat/chat.message';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 const textEditAreaSx: SxProps = {
@@ -42,8 +41,10 @@ export function ContentPartTextEdit(props: {
   onEscapePressed: () => void,
 }) {
 
-  // external state
-  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  // external
+  // NOTE: we disabled `useUIPreferencesStore(state => state.enterIsNewline)` on 2024-06-19, as it's
+  //       not a good pattern for this kind of editing and we have buttons to take care of Save/Cancel
+  const enterIsNewline = false;
 
   // derived state
   const { fragmentId, setEditedText, onEnterPressed, onEscapePressed } = props;
