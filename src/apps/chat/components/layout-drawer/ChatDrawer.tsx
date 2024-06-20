@@ -165,7 +165,7 @@ function ChatDrawer(props: {
           <ListItem>
             <Typography level='body-sm'>Group By</Typography>
           </ListItem>
-          {(['date', 'persona'] as const).map(_gName => (
+          {(['date', 'persona', 'dimension'] as Exclude<ChatNavGrouping, false>[]).map(_gName => (
             <MenuItem
               key={'group-' + _gName}
               aria-label={`Group by ${_gName}`}

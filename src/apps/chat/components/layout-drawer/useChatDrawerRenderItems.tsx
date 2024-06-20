@@ -13,7 +13,7 @@ import type { ChatNavigationItemData } from './ChatDrawerItem';
 const SEARCH_MIN_CHARS = 3;
 
 
-export type ChatNavGrouping = false | 'date' | 'persona';
+export type ChatNavGrouping = false | 'date' | 'persona' | 'dimension';
 
 export type ChatSearchSorting = 'frequency' | 'date';
 
@@ -183,25 +183,53 @@ export function useChatDrawerRenderItems(
       // [grouping] group by date or persona
       else if (grouping) {
 
-        // [grouping/date]: sort by update time
-        const midnightTime = getNextMidnightTime();
-        if (grouping === 'date')
-          chatNavItems.sort((a, b) => b.updatedAt - a.updatedAt);
+        switch (grouping) {
+          // [grouping/date or persona]: sort by last updated
+          case 'date':
+          case 'persona':
+            chatNavItems.sort((a, b) => b.updatedAt - a.updatedAt);
+            break;
+          // [grouping/dimension]: sort by message count
+          case 'dimension':
+            chatNavItems.sort((a, b) => b.messageCount - a.messageCount);
+            break;
+        }
 
-        // Array.groupBy(...)
+        const midnightTime = getNextMidnightTime();
         const grouped = chatNavItems.reduce((acc, item) => {
 
-          const groupName = grouping === 'date'
-            ? getTimeBucketEn(item.updatedAt || midnightTime, midnightTime)
-            : item.systemPurposeId;
+          // derive the bucket name
+          let bucket: string;
+          switch (grouping) {
+            case 'date':
+              bucket = getTimeBucketEn(item.updatedAt || midnightTime, midnightTime);
+              break;
+            case 'persona':
+              bucket = item.systemPurposeId;
+              break;
+            case 'dimension':
+              if (item.messageCount > 20)
+                bucket = 'Large chats';
+              else if (item.messageCount > 10)
+                bucket = 'Medium chats';
+              else if (item.messageCount > 5)
+                bucket = 'Small chats';
+              else if (item.messageCount > 1)
+                bucket = 'Tiny chats';
+              else if (item.messageCount === 1)
+                bucket = 'Single message';
+              else
+                bucket = 'Empty chats';
+              break;
+          }
 
-          if (!acc[groupName])
-            acc[groupName] = [];
-          acc[groupName].push(item);
+          if (!acc[bucket])
+            acc[bucket] = [];
+          acc[bucket].push(item);
           return acc;
         }, {} as { [groupName: string]: ChatNavigationItemData[] });
 
-        // prepend groups
+        // prepend group names as special items
         renderNavItems = Object.entries(grouped).flatMap(([groupName, items]) => [
           { type: 'nav-item-group', title: groupName },
           ...items,
@@ -212,7 +240,7 @@ export function useChatDrawerRenderItems(
       if (!renderNavItems.length)
         renderNavItems.push({
           type: 'nav-item-info-message',
-          message: (filterHasStars && filterHasImageAssets) ? 'No starred or image results'
+          message: (filterHasStars && filterHasImageAssets) ? 'No starred results with images'
             : filterHasImageAssets ? 'No image results'
               : filterHasStars ? 'No starred results'
                 : isSearching ? 'No results found'
