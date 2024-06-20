@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 
 import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
@@ -132,10 +133,10 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             llm id: {llm.id}<br />
             context tokens: <b>{llm.contextTokens ? llm.contextTokens.toLocaleString() : 'not provided'}</b>{` · `}
             max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br />
-            {!!llm.created && <>created: {(new Date(llm.created * 1000)).toLocaleString()}<br /></>}
+            {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
             {!!llm.pricing && <>pricing: $<b>{llm.pricing.chatIn || '(unk) '}</b>/M in, $<b>{llm.pricing.chatOut || '(unk) '}</b>/M out<br /></>}
-            {!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}
+            {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
             config: {JSON.stringify(llm.options)}
           </Typography>
         </Box>}
