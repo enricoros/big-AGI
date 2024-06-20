@@ -61,7 +61,7 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.16.2',
+    versionCode: '1.16.3',
     versionName: 'Crystal Clear',
     versionDate: new Date('2024-06-07T05:00:00Z'),
     // versionDate: new Date('2024-05-13T19:00:00Z'),
@@ -77,8 +77,9 @@ export const NewsItems: NewsItem[] = [
       { text: <>More: <B issue={517}>code soft-wrap</B>, selection toolbar, <B issue={507}>3x faster</B> on Apple silicon</>, issue: 507 },
       { text: <>Updated <B>Anthropic</B>*, <B>Groq</B>, <B>Ollama</B>, <B>OpenAI</B>*, <B>OpenRouter</B>*, and <B>Perplexity</B></> },
       { text: <>Developers: update LLMs data structures</>, dev: true },
-      { text: <>1.16.1: Support for <B>OpenAI</B> <B href='https://openai.com/index/hello-gpt-4o/'>GPT-4o</B> (refresh your OpenAI models)</> },
+      { text: <>1.16.1: Support for <B>OpenAI</B> <B href='https://openai.com/index/hello-gpt-4o/'>GPT-4o</B></> },
       { text: <>1.16.2: Proper <B>Gemini</B> support, <B>HTML/Markdown</B> downloads, and latest <B>Mistral</B></> },
+      { text: <>1.16.3: Support for <B href='https://www.anthropic.com/news/claude-3-5-sonnet'>Claude 3.5 Sonnet</B> (refresh your <B>Anthropic</B> models)</> },
     ],
   },
   {
