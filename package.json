@@ -27,7 +27,7 @@
     "@mui/material": "^5.15.20",
     "@next/bundle-analyzer": "^14.2.4",
     "@next/third-parties": "^14.2.4",
-    "@prisma/client": "^5.15.0",
+    "@prisma/client": "^5.15.1",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.45.1",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "0.0.11",
-    "@types/node": "^20.14.2",
+    "@types/node": "^20.14.7",
     "@types/nprogress": "^0.2.3",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.4",
@@ -85,8 +85,8 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.4",
     "prettier": "^3.3.2",
-    "prisma": "^5.15.0",
-    "typescript": "^5.4.5"
+    "prisma": "^5.15.1",
+    "typescript": "^5.5.2"
   },
   "engines": {
     "node": "^20.0.0 || ^18.0.0"
