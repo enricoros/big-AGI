@@ -6,7 +6,7 @@
  *
  * We also create a few inference helpers for input and output types.
  */
-import { createTRPCClient, httpBatchLink, httpLink, loggerLink } from '@trpc/client';
+import { createTRPCClient, httpLink, loggerLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 
 import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
