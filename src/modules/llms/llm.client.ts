@@ -2,11 +2,12 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
+import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
 import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
 import type { OpenAIWire } from './server/openai/openai.wiretypes';
-import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
 import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, useModelsStore } from './store-llms';
 import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
+import { StreamingClientUpdate, unifiedStreamingClient } from './vendors/unifiedStreamingClient';
 import { findAccessForSourceOrThrow, findVendorForLlmOrThrow } from './vendors/vendors.registry';
 
 
@@ -147,7 +148,11 @@ export async function llmChatGenerateOrThrow<TSourceSetup = unknown, TAccess = u
 }
 
 
-export async function llmStreamingChatGenerate<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown>(
+export async function llmStreamingChatGenerate<
+  TSourceSetup = unknown,
+  TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access'],
+  TLLMOptions = unknown
+>(
   llmId: DLLMId,
   messages: VChatMessageIn[],
   contextName: VChatStreamContextName,
@@ -174,5 +179,6 @@ export async function llmStreamingChatGenerate<TSourceSetup = unknown, TAccess =
     await new Promise(resolve => setTimeout(resolve, delay));
 
   // execute via the vendor
+  // return await unifiedStreamingClient(access, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
   return await vendor.streamingChatGenerateOrThrow(access, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
 }

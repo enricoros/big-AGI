@@ -1,8 +1,8 @@
 import { getChatLLMId } from '~/modules/llms/store-llms';
 import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
