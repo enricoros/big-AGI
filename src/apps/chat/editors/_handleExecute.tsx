@@ -3,7 +3,7 @@ import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { messageFragmentsReplaceLastContentText, DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -46,7 +46,14 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
   const lastMessage = history.length > 0 ? history[history.length - 1] : null;
-  const lastMessageText = lastMessage ? messageSingleTextOrThrow(lastMessage) : '';
+  let lastMessageText: string;
+  try {
+    lastMessageText = lastMessage ? messageSingleTextOrThrow(lastMessage) : '';
+  } catch (error) {
+    cHandler.replaceMessages(history);
+    console.error('Chat execute: issue running', chatModeId, conversationId, lastMessage);
+    throw error;
+  }
   if (lastMessage?.role === 'user') {
     const chatCommand = extractChatCommand(lastMessageText)[0];
     if (chatCommand && chatCommand.type === 'cmd') {
