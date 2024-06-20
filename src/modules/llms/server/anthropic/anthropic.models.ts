@@ -58,7 +58,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
 
   // Claude 3 models
   {
-    id: 'claude-3-opus', // claude-3-opus-20240229
+    id: 'claude-3-opus-20240229',
     label: 'Claude 3 Opus',
     created: roundTime('2024-02-29'),
     description: 'Powerful model for complex tasks',
@@ -70,7 +70,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     benchmark: { cbaElo: 1256, cbaMmlu: 86.8 },
   },
   {
-    id: 'claude-3-sonnet', // claude-3-sonnet-20240229
+    id: 'claude-3-sonnet-20240229',
     label: 'Claude 3 Sonnet',
     created: roundTime('2024-02-29'),
     description: 'Balance of speed, cost, and performance',
@@ -83,7 +83,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     hidden: true,
   },
   {
-    id: 'claude-3-haiku', // claude-3-haiku-20240307
+    id: 'claude-3-haiku-20240307',
     label: 'Claude 3 Haiku',
     created: roundTime('2024-03-07'),
     description: 'Fastest, most cost-effective model',
