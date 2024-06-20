@@ -5,10 +5,12 @@ import { Textarea } from '@mui/joy';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-
+/**
+ * TODO: P3: use Buttons when possible instead of the Blur action. Should add them to the bottom? See `ContentPartTextEdit` for a newer impl.
+ */
 export function InlineTextarea(props: {
   initialText: string,
-  disableAutoSaveOnBlur?: boolean
+  disableAutoSaveOnBlur?: boolean // NOTE: this will disable the enter=newline as well
   placeholder?: string,
   decolor?: boolean,
   invertedColors?: boolean,
@@ -19,7 +21,7 @@ export function InlineTextarea(props: {
 }) {
 
   const [text, setText] = React.useState(props.initialText);
-  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  const enterIsNewline = useUIPreferencesStore(state => (!props.disableAutoSaveOnBlur && state.enterIsNewline));
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value);
 
