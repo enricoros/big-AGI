@@ -12,6 +12,8 @@ const pricingSchema = z.object({
 const benchmarkSchema = z.object({
   cbaElo: z.number().optional(),
   cbaMmlu: z.number().optional(),
+  heCode: z.number().optional(), // HumanEval, code, 0-shot
+  vqaMmmu: z.number().optional(), // Visual Question Answering, MMMU, 0-shot
 });
 
 // const rateLimitsSchema = z.object({
