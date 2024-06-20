@@ -6,8 +6,8 @@ import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
-import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, createTextContentFragment, DMessage, DMessageFragment, DMessageFragmentId, DMessageId } from '~/common/stores/chat/chat.message';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
