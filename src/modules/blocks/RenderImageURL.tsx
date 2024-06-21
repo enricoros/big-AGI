@@ -130,6 +130,7 @@ export const RenderImageURL = (props: {
 
 
   // derived state
+  const isLikelyCard = !props.onImageRegenerate;
   const isTempDalleUrl = props.imageURL?.startsWith('https://oaidalle') || false;
 
 
@@ -137,14 +138,15 @@ export const RenderImageURL = (props: {
     <Box>
 
       <Sheet
-        variant='solid'
+        color={isLikelyCard ? 'primary' : undefined}
+        variant={isLikelyCard ? 'outlined' : 'solid'}
         className={props.className}
         sx={{
           // style
-          mx: 1.5,
+          mx: 1.5,  // 1.5 like the other 'Render*' components
           minWidth: 256,
           minHeight: 128,
-          boxShadow: 'md',
+          // boxShadow: 'md',
 
           // enable anchoring
           position: 'relative',
@@ -156,16 +158,17 @@ export const RenderImageURL = (props: {
           '&:hover .overlay-text': { opacity: 1 },
 
           // layout
-          display: 'grid',
-          justifyContent: 'center',
+          display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'center',
 
           // this shall apply font scaling and maybe margins, not much
           ...props.scaledImageSx,
         }}
       >
 
-        {/* Main */}
+        {/* Image and Overlay */}
         <Box sx={{ position: 'relative' }}>
 
           {/* Image / Loading Indicator */}
@@ -188,7 +191,7 @@ export const RenderImageURL = (props: {
             </Box>
           )}
 
-          {/* Description Overlay */}
+          {/* [overlay] Description */}
           {!!props.description && (
             <Box className='overlay-text' sx={{
               position: 'absolute',
@@ -206,7 +209,7 @@ export const RenderImageURL = (props: {
           )}
         </Box>
 
-        {/* Information */}
+        {/* Bottom Expander: information */}
         {!!props.infoText && infoOpen && (
           <Box sx={{
             p: { xs: 1, md: 2 },
@@ -217,7 +220,7 @@ export const RenderImageURL = (props: {
           </Box>
         )}
 
-        {/* (overlay) Image Buttons */}
+        {/* [overlay] Buttons */}
         <Box className='overlay-buttons' sx={{
           ...overlayButtonsSx,
           p: 0.5,
@@ -228,7 +231,7 @@ export const RenderImageURL = (props: {
 
           {!!props.infoText && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
-              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
+              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} color={isLikelyCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
                 <InfoOutlinedIcon />
               </OverlayButton>
             </GoodTooltip>
@@ -237,11 +240,11 @@ export const RenderImageURL = (props: {
           {!!props.imageURL && (
             <GoodTooltip title='Open in new tab'>
               {props.onOpenInNewTab ? (
-                <OverlayButton variant='soft' onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OverlayButton variant='soft' color={isLikelyCard ? 'primary' : undefined} onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : props.imageURL.startsWith('http') ? (
-                <OverlayButton variant='soft' component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OverlayButton variant='soft' color={isLikelyCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : <span />}
@@ -261,14 +264,14 @@ export const RenderImageURL = (props: {
 
           {!!onImageDelete && !regenArmed && (
             <GoodTooltip title={deleteArmed ? 'Cancel Deletion' : 'Delete Image'}>
-              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
+              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} color={isLikelyCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
                 {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
               </OverlayButton>
             </GoodTooltip>
           )}
 
           {!!onImageRegenerate && !deleteArmed && (
-            <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the current drawing configuration'}>
+            <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the present configuration'}>
               <OverlayButton variant={regenArmed ? 'solid' : 'soft'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
                 {regenArmed
                   ? <CloseRoundedIcon />
