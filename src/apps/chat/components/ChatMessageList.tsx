@@ -277,7 +277,7 @@ export function ChatMessageList(props: {
               message={message}
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
-              isMobileForAvatar={props.isMobile}
+              isMobile={props.isMobile}
               isBottom={idx === count - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}

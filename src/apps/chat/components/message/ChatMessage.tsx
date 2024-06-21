@@ -65,7 +65,7 @@ export function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
   fitScreen: boolean,
-  isMobileForAvatar?: boolean,
+  isMobile?: boolean,
   isBottom?: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
@@ -474,8 +474,8 @@ export function ChatMessage(props: {
             <Box
               onClick={handleOpsMenuToggle}
               onContextMenu={handleOpsMenuToggle}
-              onMouseEnter={props.isMobileForAvatar ? undefined : () => setIsHovering(true)}
-              onMouseLeave={props.isMobileForAvatar ? undefined : () => setIsHovering(false)}
+              onMouseEnter={props.isMobile ? undefined : () => setIsHovering(true)}
+              onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
               sx={{ display: 'flex' }}
             >
               {(isHovering || opsMenuAnchor) ? (
