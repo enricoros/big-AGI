@@ -226,9 +226,9 @@ export const RenderImageURL = (props: {
           gap: 0.5,
         }}>
 
-          {(!!props.infoText || !!props.description) && (
+          {!!props.infoText && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
-              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} onClick={handleToggleInfoOpen}>
+              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
                 <InfoOutlinedIcon />
               </OverlayButton>
             </GoodTooltip>
@@ -237,11 +237,11 @@ export const RenderImageURL = (props: {
           {!!props.imageURL && (
             <GoodTooltip title='Open in new tab'>
               {props.onOpenInNewTab ? (
-                <OverlayButton variant='soft' onClick={handleOpenInNewTab}>
+                <OverlayButton variant='soft' onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : props.imageURL.startsWith('http') ? (
-                <OverlayButton variant='soft' component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank'>
+                <OverlayButton variant='soft' component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : <span />}
@@ -251,18 +251,29 @@ export const RenderImageURL = (props: {
 
           {/* Deletion */}
 
+          {deleteArmed && !regenArmed && (
+            <GoodTooltip title='Confirm Deletion'>
+              <OverlayButton variant='soft' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '1' }}>
+                <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+              </OverlayButton>
+            </GoodTooltip>
+          )}
+
           {!!onImageDelete && !regenArmed && (
             <GoodTooltip title={deleteArmed ? 'Cancel Deletion' : 'Delete Image'}>
-              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
+              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
                 {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
               </OverlayButton>
             </GoodTooltip>
           )}
 
-          {deleteArmed && !regenArmed && (
-            <GoodTooltip title='Confirm Deletion'>
-              <OverlayButton variant='soft' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '2' }}>
-                <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+          {!!onImageRegenerate && !deleteArmed && (
+            <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the current drawing configuration'}>
+              <OverlayButton variant={regenArmed ? 'solid' : 'soft'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
+                {regenArmed
+                  ? <CloseRoundedIcon />
+                  : <ReplayIcon />
+                }
               </OverlayButton>
             </GoodTooltip>
           )}
@@ -270,19 +281,8 @@ export const RenderImageURL = (props: {
           {/* Regenerate [armed, arming] buttons */}
           {regenArmed && !deleteArmed && (
             <GoodTooltip title='Confirm Regeneration'>
-              <OverlayButton variant='soft' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '1' }}>
+              <OverlayButton variant='soft' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
                 <ReplayIcon sx={{ color: 'success.solidBg' }} />
-              </OverlayButton>
-            </GoodTooltip>
-          )}
-
-          {!!onImageRegenerate && !deleteArmed && (
-            <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the current drawing configuration'}>
-              <OverlayButton variant={regenArmed ? 'solid' : 'soft'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
-                {regenArmed
-                  ? <CloseRoundedIcon />
-                  : <ReplayIcon />
-                }
               </OverlayButton>
             </GoodTooltip>
           )}
