@@ -28,15 +28,15 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
-import { classifyMessageFragments, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { classifyMessageFragments, createTextContentFragment, DMessage, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
+import { DocumentFragments } from './fragments-attachment-text/DocumentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
-import { TextAttachmentFragments } from './fragments-attachment-text/TextAttachmentFragments';
 import { avatarIconSx, makeMessageAvatar, messageBackground, personaColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -50,7 +50,7 @@ const BUBBLE_MIN_TEXT_LENGTH = 3;
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
 
-export type ChatMessageTextContentEditState = { [fragmentId: DMessageFragmentId]: string };
+export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: string };
 
 export const ChatMessageMemo = React.memo(ChatMessage);
 
@@ -98,7 +98,7 @@ export function ChatMessage(props: {
   const [bubbleAnchor, setBubbleAnchor] = React.useState<HTMLElement | null>(null);
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextContentEditState | null>(null);
+  const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
 
   // external state
   const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
@@ -154,7 +154,7 @@ export function ChatMessage(props: {
     onMessageFragmentDelete?.(messageId, fragmentId);
   }, [messageId, onMessageFragmentDelete]);
 
-  const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newContent: DMessageContentFragment) => {
+  const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newContent: DMessageFragment) => {
     onMessageFragmentReplace?.(messageId, fragmentId, newContent);
   }, [messageId, onMessageFragmentReplace]);
 
@@ -179,7 +179,7 @@ export function ChatMessage(props: {
   const handleEditsCancel = React.useCallback(() => setTextContentEditState(null), []);
 
   const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string) =>
-    setTextContentEditState((prev): ChatMessageTextContentEditState => ({ ...prev, [fragmentId]: editedText || '' })), []);
+    setTextContentEditState((prev): ChatMessageTextPartEditState => ({ ...prev, [fragmentId]: editedText || '' })), []);
 
 
   // Message Operations Menu
@@ -584,13 +584,14 @@ export function ChatMessage(props: {
 
           {/* Attachment Fragments */}
           {nonImageAttachments.length >= 1 && (
-            <TextAttachmentFragments
-              textFragments={nonImageAttachments}
+            <DocumentFragments
+              attachmentFragments={nonImageAttachments}
               messageRole={messageRole}
               contentScaling={contentScaling}
               isMobile={props.isMobile}
               renderTextAsMarkdown={renderMarkdown}
               onFragmentDelete={handleFragmentDelete}
+              onFragmentReplace={handleFragmentReplace}
             />
           )}
 

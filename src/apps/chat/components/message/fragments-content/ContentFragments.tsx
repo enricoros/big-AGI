@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
 
-import type { ChatMessageTextContentEditState } from '../ChatMessage';
+import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
 import { ContentPartText } from './ContentPartText';
@@ -23,7 +23,7 @@ export function ContentFragments(props: {
   showTopWarning?: string,
   showUnsafeHtml?: boolean,
 
-  textEditsState: ChatMessageTextContentEditState | null,
+  textEditsState: ChatMessageTextPartEditState | null,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
   onEditsApply: () => void,
   onEditsCancel: () => void,
