@@ -6,7 +6,7 @@ import { Box } from '@mui/joy';
 import type { DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
-import { PartImageRefDBlob, showImageDataRefInNewTab } from '../fragments-content/ContentPartImageRef';
+import { PartImageRefDBlob, showImageDataRefInNewTab } from '../fragments-content/PartImageRefDBlob';
 
 
 // configuration
@@ -34,6 +34,7 @@ const imageSheetPatchSx: SxProps = {
   minWidth: CARD_MIN_SQR,
   minHeight: CARD_MIN_SQR,
   boxShadow: 'sm',
+  // border: 'none',
 
   // style
   // backgroundColor: 'background.popup',
