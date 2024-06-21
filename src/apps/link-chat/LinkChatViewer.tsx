@@ -137,7 +137,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                 key={'msg-' + message.id}
                 message={message}
                 fitScreen={isMobile}
-                isMobileForAvatar={isMobile}
+                isMobile={isMobile}
                 showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
                 onMessageFragmentReplace={(_messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
                   message.fragments = message.fragments.map(f => (f.fId === fragmentId) ? newFragment : f);
