@@ -16,7 +16,6 @@ export function ContentFragments(props: {
 
   contentScaling: ContentScaling,
   fitScreen: boolean,
-  isBottom?: boolean,
   messageOriginLLM?: string,
   messageRole: DMessageRole,
   optiAllowSubBlocksMemo?: boolean,
@@ -62,12 +61,11 @@ export function ContentFragments(props: {
           <ContentPartText
             key={fragment.fId}
             // ref={blocksRendererRef}
-            textPart={fragment.part}
+            textPartText={fragment.part.text}
             messageRole={props.messageRole}
             messageOriginLLM={props.messageOriginLLM}
             contentScaling={props.contentScaling}
             fitScreen={props.fitScreen}
-            isBottom={props.isBottom}
             renderTextAsMarkdown={props.renderTextAsMarkdown}
             // renderTextDiff={textDiffs || undefined}
             showUnsafeHtml={props.showUnsafeHtml}

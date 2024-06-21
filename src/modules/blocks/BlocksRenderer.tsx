@@ -57,8 +57,7 @@ type BlocksRendererProps = {
   fromRole: DMessageRole;
 
   contentScaling: ContentScaling;
-  fitScreen: boolean;
-  isBottom?: boolean;
+  fitScreen?: boolean;
   showAsDanger?: boolean;
   showAsItalic?: boolean;
   showTopWarning?: string;

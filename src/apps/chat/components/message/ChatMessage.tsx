@@ -563,7 +563,6 @@ export function ChatMessage(props: {
 
             contentScaling={contentScaling}
             fitScreen={props.fitScreen}
-            isBottom={props.isBottom}
             messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
@@ -590,6 +589,7 @@ export function ChatMessage(props: {
               messageRole={messageRole}
               contentScaling={contentScaling}
               isMobile={props.isMobile}
+              renderTextAsMarkdown={renderMarkdown}
               onFragmentDelete={handleFragmentDelete}
             />
           )}
