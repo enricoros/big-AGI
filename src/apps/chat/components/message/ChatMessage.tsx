@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -33,10 +33,10 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { AttachmentFragments } from './fragments-attachment-text/TextAttachmentFragments';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
+import { TextAttachmentFragments } from './fragments-attachment-text/TextAttachmentFragments';
 import { avatarIconSx, makeMessageAvatar, messageBackground, personaColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -79,14 +79,15 @@ export function ChatMessage(props: {
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
+  onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
   onReplyTo?: (messageId: string, selectedText: string) => void,
-  onTextDiagram?: (messageId: string, text: string) => Promise<void>
-  onTextImagine?: (text: string) => Promise<void>
-  onTextSpeak?: (text: string) => Promise<void>
+  onTextDiagram?: (messageId: string, text: string) => Promise<void>,
+  onTextImagine?: (text: string) => Promise<void>,
+  onTextSpeak?: (text: string) => Promise<void>,
   sx?: SxProps,
 }) {
 
@@ -125,7 +126,7 @@ export function ChatMessage(props: {
   } = props.message;
 
   // split the fragments: image attachments are first, then content fragments, then other attachment fragments
-  const [contentFragments, imageAttachments, otherAttachments] = classifyMessageFragments(messageFragments);
+  const [contentFragments, imageAttachments, nonImageAttachments] = classifyMessageFragments(messageFragments);
 
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
@@ -143,7 +144,11 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const { onMessageFragmentDelete, onMessageFragmentReplace } = props;
+  const { onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;
+
+  const handleFragmentNew = React.useCallback(() => {
+    onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
+  }, [messageId, onMessageFragmentAppend]);
 
   const handleFragmentDelete = React.useCallback((fragmentId: DMessageFragmentId) => {
     onMessageFragmentDelete?.(messageId, fragmentId);
@@ -535,9 +540,20 @@ export function ChatMessage(props: {
             <ImageAttachmentFragments
               imageAttachments={imageAttachments}
               contentScaling={contentScaling}
+              messageRole={messageRole}
               isMobile={props.isMobile}
               onFragmentDelete={handleFragmentDelete}
             />
+          )}
+
+          {/* If editing and there's no content, have a button to create a new TextContentFragment */}
+          {isEditingText && !contentFragments.length && (
+            <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{
+              ml: fromAssistant ? undefined : 'auto',
+              mr: fromAssistant ? 'auto' : undefined,
+            }}>
+              Add text
+            </Button>
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}
@@ -567,13 +583,15 @@ export function ChatMessage(props: {
           />
 
           {/* Attachment Fragments */}
-          {/*{hasAttachments && (*/}
-          <AttachmentFragments
-            attachmentFragments={otherAttachments}
-            messageRole={messageRole}
-            contentScaling={contentScaling}
-          />
-          {/*)}*/}
+          {nonImageAttachments.length >= 1 && (
+            <TextAttachmentFragments
+              textFragments={nonImageAttachments}
+              messageRole={messageRole}
+              contentScaling={contentScaling}
+              isMobile={props.isMobile}
+              onFragmentDelete={handleFragmentDelete}
+            />
+          )}
 
           {/* Reply-To Bubble */}
           {!!messageMetadata?.inReplyToText && (

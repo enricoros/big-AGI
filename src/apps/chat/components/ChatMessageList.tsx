@@ -127,6 +127,10 @@ export function ChatMessageList(props: {
     props.conversationHandler?.messagesDelete([messageId]);
   }, [props.conversationHandler]);
 
+  const handleMessageAppendFragment = React.useCallback((messageId: DMessageId, fragment: DMessageFragment) => {
+    props.conversationHandler?.messageFragmentAppend(messageId, fragment, false, false);
+  }, [props.conversationHandler]);
+
   const handleMessageDeleteFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
     props.conversationHandler?.messageFragmentDelete(messageId, fragmentId, false, true);
   }, [props.conversationHandler]);
@@ -286,6 +290,7 @@ export function ChatMessageList(props: {
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}
               onMessageDelete={handleMessageDelete}
+              onMessageFragmentAppend={handleMessageAppendFragment}
               onMessageFragmentDelete={handleMessageDeleteFragment}
               onMessageFragmentReplace={handleMessageReplaceFragment}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
