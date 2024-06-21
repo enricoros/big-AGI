@@ -206,7 +206,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
             : block.type === 'imageb'
               ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt}
                                 onImageRegenerate={undefined /* because there could be many of these URL images in a fragment, and we miss the whole partial-edit logic in a text fragment */}
-                                scaledImageSx={scaledImageSx} />
+                                scaledImageSx={scaledImageSx} variant='content-part' />
               : block.type === 'diffb'
                 ? <RenderTextDiff key={'text-diff-' + index} diffBlock={block} sx={scaledTypographySx} />
                 : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)

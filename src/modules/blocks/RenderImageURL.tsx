@@ -82,6 +82,7 @@ export const RenderImageURL = (props: {
   onImageRegenerate?: () => void,
   scaledImageSx?: SxProps,
   className?: string,
+  variant: 'content-part' | 'attachment-card',
 }) => {
 
   // state
@@ -136,7 +137,7 @@ export const RenderImageURL = (props: {
 
 
   // derived state
-  const isLikelyCard = !props.onImageRegenerate;
+  const isCard = props.variant === 'attachment-card';
   const isTempDalleUrl = props.imageURL?.startsWith('https://oaidalle') || false;
 
 
@@ -144,15 +145,15 @@ export const RenderImageURL = (props: {
     <Box>
 
       <Sheet
-        color={isLikelyCard ? 'primary' : undefined}
-        variant={isLikelyCard ? 'outlined' : 'solid'}
+        color={isCard ? 'primary' : undefined}
+        variant={isCard ? 'outlined' : 'solid'}
         className={props.className}
         sx={{
           // style
           mx: 1.5,  // 1.5 like the other 'Render*' components
           minWidth: 256,
           minHeight: 128,
-          // boxShadow: 'md',
+          boxShadow: isCard ? undefined : 'md',
 
           // enable anchoring
           position: 'relative',
@@ -237,7 +238,7 @@ export const RenderImageURL = (props: {
 
           {!!props.infoText && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
-              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} color={isLikelyCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
+              <OverlayButton variant={infoOpen ? 'solid' : 'soft'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
                 <InfoOutlinedIcon />
               </OverlayButton>
             </GoodTooltip>
@@ -246,11 +247,11 @@ export const RenderImageURL = (props: {
           {!!props.imageURL && (
             <GoodTooltip title='Open in new tab'>
               {props.onOpenInNewTab ? (
-                <OverlayButton variant='soft' color={isLikelyCard ? 'primary' : undefined} onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OverlayButton variant='soft' color={isCard ? 'primary' : undefined} onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : props.imageURL.startsWith('http') ? (
-                <OverlayButton variant='soft' color={isLikelyCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OverlayButton variant='soft' color={isCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : <span />}
@@ -270,7 +271,7 @@ export const RenderImageURL = (props: {
 
           {!!onImageDelete && !regenArmed && (
             <GoodTooltip title={deleteArmed ? 'Cancel Deletion' : 'Delete Image'}>
-              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} color={isLikelyCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
+              <OverlayButton variant={deleteArmed ? 'solid' : 'soft'} color={isCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
                 {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
               </OverlayButton>
             </GoodTooltip>
