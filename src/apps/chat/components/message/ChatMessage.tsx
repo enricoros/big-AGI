@@ -512,7 +512,7 @@ export function ChatMessage(props: {
         )}
 
         {/* Fragments vertical (grid) layout */}
-        <Box sx={{
+        <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={{
           // v-center content if there's any gap
           my: 'auto',
           flexGrow: isEditingText ? 1 : 0,
