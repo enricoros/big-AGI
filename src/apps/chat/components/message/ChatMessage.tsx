@@ -519,6 +519,7 @@ export function ChatMessage(props: {
 
           // v-layout
           display: 'grid',
+          justifyItems: !fromAssistant ? 'flex-end' : 'flex-start',
           gap: isEditingText ? 2 : 1, // gap in between the fragments (if > 1)
 
           // horizontal separator between messages (second part+ and before)

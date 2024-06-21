@@ -27,7 +27,13 @@ const USER_COLLAPSED_LINES: number = 7;
  * contained within a singe Grid (1fr) in the Message component.
  */
 export const blocksRendererSx: SxProps = {
-  // important, as the parent container is a Grid, and this takes up to the Grid's width
+  // the parent is a Grid, and this takes up to the Grid's width
+  // - maxWidth: '100%' makes sure we don't x-scroll the whole chat window
+  // - width: '100%' would also maximize the fragment width to the containing grid even if smaller
+  // NOTE 1: we choose just `maxWidth` to allow the grid to place this towards the start/end of the message
+  // however see `ContentPartTextEdit` where we set the width to 100% as we need a large editor
+  // NOTE 2: after seeing html/code fragments smaller than the text fragments before them, we're back
+  // to using width: 100% to make sure the fragments are all the same width (we lose the alignment unfortunately)
   width: '100%',
 
   // enables children's x-scrollbars (clips to the Fragment, so sub-parts will stay within this)
