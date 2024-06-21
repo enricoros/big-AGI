@@ -112,10 +112,13 @@ export const RenderImageURL = (props: {
     onOpenInNewTab?.(e);
   }, [onOpenInNewTab]);
 
-  const handleToggleDeleteArmed = React.useCallback(() => {
+  const handleToggleDeleteArmed = React.useCallback((event: React.MouseEvent) => {
+    // immediate deletion if shift is pressed
+    if (!deleteArmed && event.shiftKey) // immediately delete:image
+      return onImageDelete?.();
     setRegenArmed(false);
     setDeleteArmed(armed => !armed);
-  }, []);
+  }, [deleteArmed, onImageDelete]);
 
   const handleImageRegenerate = React.useCallback(() => {
     setDeleteArmed(false);
@@ -123,10 +126,13 @@ export const RenderImageURL = (props: {
     onImageRegenerate?.();
   }, [onImageRegenerate]);
 
-  const handleToggleRegenArmed = React.useCallback(() => {
+  const handleToggleRegenArmed = React.useCallback((event: React.MouseEvent) => {
+    // imemdiate regeneration if shift is presset
+    if (!regenArmed && event.shiftKey) // immediately regenerate:image
+      return handleImageRegenerate();
     setDeleteArmed(false);
     setRegenArmed(armed => !armed);
-  }, []);
+  }, [handleImageRegenerate, regenArmed]);
 
 
   // derived state

@@ -174,7 +174,7 @@ function ChatDrawerItem(props: {
   const { onConversationDeleteNoConfirmation } = props;
   const handleDeleteButtonShow = React.useCallback((event: React.MouseEvent) => {
     // special case: if 'Shift' is pressed, delete immediately
-    if (event.shiftKey) {
+    if (event.shiftKey) { // immediately delete:conversation
       event.stopPropagation();
       onConversationDeleteNoConfirmation(conversationId);
       return;
