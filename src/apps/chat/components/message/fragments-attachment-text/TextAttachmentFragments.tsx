@@ -9,7 +9,21 @@ import type { DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } fro
 import { ContentPartPlaceholder } from '../fragments-content/ContentPartPlaceholder';
 
 
-const layoutSx: SxProps = {};
+const attachmentFragmentsLayoutSx: SxProps = {
+  // the container is a grid, in ChatMessage
+  height: '100%',
+  overflowX: 'auto',
+  pr: 5,
+
+  // layout
+  display: 'flex',
+  gap: 1,
+
+  '& *': {
+    // border imporant! debug
+    border: '1px solid red!important',
+  },
+};
 
 
 /**
@@ -25,21 +39,46 @@ export function TextAttachmentFragments(props: {
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
 }) {
 
-  if (!props.textFragments.length)
-    return null;
+  // state
+  const [selectedFragmentId, setSelectedFragmentId] = React.useState<DMessageFragmentId | null>(null);
+
 
   return (
-    <Box aria-label={`${props.textFragments.length} image(s)`} sx={layoutSx}>
+    <Box aria-label={`${props.textFragments.length} text attachments`}>
 
-      {/* render each text attachment */}
-      {props.textFragments.map((fragment, attachmentNumber) => (
-        <ContentPartPlaceholder
-          key={'attachment-part-' + attachmentNumber}
-          placeholderText={`Attachment Placeholder: ${fragment.part.pt}`}
-          messageRole={props.messageRole}
-          contentScaling={props.contentScaling}
-        />
-      ))}
+      {/* Horizontally scrollable Attachments */}
+      <Box sx={attachmentFragmentsLayoutSx}>
+
+        {/* render each text attachment */}
+        {props.textFragments.map((attachmentFragment) => {
+          // only operate on text
+          if (attachmentFragment.part.pt !== 'text')
+            throw new Error('Unexpected part type: ' + attachmentFragment.part.pt);
+
+          return (
+            <ContentPartPlaceholder
+              key={'att-txt-' + attachmentFragment.fId}
+              placeholderText={`Attachment Placeholder: ${attachmentFragment.part.text}`}
+              messageRole={props.messageRole}
+              contentScaling={props.contentScaling}
+            />
+          );
+        })}
+
+
+        {/*{llmAttachmentDrafts.map((llmAttachment) =>*/}
+        {/*  <LLMAttachmentItem*/}
+        {/*    key={llmAttachment.attachmentDraft.id}*/}
+        {/*    llmAttachment={llmAttachment}*/}
+        {/*    menuShown={llmAttachment.attachmentDraft.id === itemMenuAttachmentDraftId}*/}
+        {/*    onToggleMenu={handleDraftMenuToggle}*/}
+        {/*  />,*/}
+        {/*)}*/}
+
+      </Box>
+
+      {/* Viewer for the selected attachment */}
+
 
     </Box>
   );

@@ -28,7 +28,7 @@ const bubbleComposerSx: SxProps = {
   alignItems: 'start',
 };
 
-const inlineUserMessageSx: SxProps = {
+export const inlineMessageBubbleSx: SxProps = {
   ...bubbleComposerSx,
 
   // redefine
@@ -57,7 +57,7 @@ export function ReplyToBubble(props: {
   className?: string,
 }) {
   return (
-    <Box className={props.className} sx={!props.inlineUserMessage ? bubbleComposerSx : inlineUserMessageSx}>
+    <Box className={props.className} sx={!props.inlineUserMessage ? bubbleComposerSx : inlineMessageBubbleSx}>
       <Tooltip disableInteractive arrow title='Referring to this assistant text' placement='top'>
         <ReplyRoundedIcon sx={{
           color: props.inlineUserMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',

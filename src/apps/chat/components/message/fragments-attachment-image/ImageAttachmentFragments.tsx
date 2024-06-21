@@ -81,6 +81,7 @@ export function ImageAttachmentFragments(props: {
 
       {/* render each image attachment */}
       {props.imageAttachments.map(attachmentFragment => {
+        // only operate on image_ref
         if (attachmentFragment.part.pt !== 'image_ref')
           throw new Error('Unexpected part type: ' + attachmentFragment.part.pt);
 
