@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 import { ContentPartImageRefDBlob, showImageDataRefInNewTab } from '../fragments-content/ContentPartImageRef';
@@ -23,11 +23,8 @@ const layoutSx: SxProps = {
   // layout
   display: 'flex',
   flexWrap: 'wrap',
-  // alignItems: 'center',
-  justifyContent: 'flex-end',
-
-  // display: 'grid',
-  // gridTemplateColumns: 'repeat(auto-fit, minmax(max(min(100%, 400px), 100%/5), 1fr))',
+  // alignItems: 'center',        // commented to keep them to the top
+  // justifyContent: 'flex-end',  // commented as we do it dynamically
   gap: { xs: 0.5, md: 1 },
 };
 
@@ -48,8 +45,6 @@ const imageSheetPatchSx: SxProps = {
     // override the style in RenderImageURL
     maxWidth: CARD_MAX_WIDTH, // very important to keep the aspect ratio
     maxHeight: CARD_MAX_HEIGHT, // very important to keep the aspect ratio
-
-    // style
     // width: '100%',
     // height: '100%',
     // objectFit: 'cover',
@@ -58,18 +53,23 @@ const imageSheetPatchSx: SxProps = {
 
 
 /**
- * Shows image attachments in a Grid (responsive), similarly to
+ * Shows image attachments in a flexbox that wraps the images (overflowing by rows)
+ * Also see `TextAttachmentFragments` for the text version, and 'ContentFragments'.
  */
 export function ImageAttachmentFragments(props: {
   imageAttachments: DMessageAttachmentFragment[],
   contentScaling: ContentScaling,
+  messageRole: DMessageRole,
   isMobile?: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
 }) {
 
+  const layoutSxMemo = React.useMemo((): SxProps => ({
+    ...layoutSx,
+    justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
+  }), [props.messageRole]);
 
-  // memo the scaled image style
-  const scaledImageCardSx = React.useMemo((): SxProps => ({
+  const cardStyleSxMemo = React.useMemo((): SxProps => ({
     fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
     lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
     ...imageSheetPatchSx,
@@ -77,7 +77,7 @@ export function ImageAttachmentFragments(props: {
 
 
   return (
-    <Box aria-label={`${props.imageAttachments.length} image(s)`} sx={layoutSx}>
+    <Box aria-label={`${props.imageAttachments.length} image(s)`} sx={layoutSxMemo}>
 
       {/* render each image attachment */}
       {props.imageAttachments.map(attachmentFragment => {
@@ -99,7 +99,7 @@ export function ImageAttachmentFragments(props: {
               imageHeight={imageRefPart.height}
               onOpenInNewTab={() => showImageDataRefInNewTab(dataRef)}
               onDeleteFragment={() => props.onFragmentDelete(attachmentFragment.fId)}
-              scaledImageSx={scaledImageCardSx}
+              scaledImageSx={cardStyleSxMemo}
               variant='attachment-card'
             />
           );
