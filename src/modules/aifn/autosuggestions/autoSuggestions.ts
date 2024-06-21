@@ -2,7 +2,7 @@ import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modul
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { createErrorContentFragment, createPlaceholderContentFragment, createTextContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, createPlaceholderContentFragment, createTextContentFragment, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -154,9 +154,10 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
   // find the index of the assistant message
   const assistantMessageIndex = conversation.messages.findIndex(m => m.id === assistantMessageId);
   if (assistantMessageIndex < 2) return;
+  const systemMessage = conversation.messages[0];
+  const preAssistantMessage = conversation.messages[assistantMessageIndex - 2] as DMessage || undefined;
   const userMessage = conversation.messages[assistantMessageIndex - 1];
   const assistantMessage = conversation.messages[assistantMessageIndex];
-  const systemMessage = conversation.messages[0];
   if (!(systemMessage?.role === 'system') || !(userMessage?.role === 'user') || !(assistantMessage?.role === 'assistant')) return;
 
   // Execute the following follow-ups in parallel
@@ -187,11 +188,15 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
     const placeholderFragment = createPlaceholderContentFragment('Auto-Diagram ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
+    // instructions: 3 or 4 messages
     const instructions: VChatMessageIn[] = [
       { role: 'system', content: suggestPlantUMLSystemPrompt.replace('{{personaSystemPrompt}}', wrappedPersonaSystemText) },
       { role: 'user', content: userMessageText },
       { role: 'assistant', content: assistantMessageText },
     ];
+    if (preAssistantMessage)
+      instructions.splice(1, 0, { role: preAssistantMessage.role, content: messageFragmentsReduceText(preAssistantMessage.fragments) });
+
     llmChatGenerateOrThrow(
       funcLLMId, instructions, 'chat-followup-diagram', conversationId,
       [suggestPlantUMLFn], suggestDiagramFunctionName,
