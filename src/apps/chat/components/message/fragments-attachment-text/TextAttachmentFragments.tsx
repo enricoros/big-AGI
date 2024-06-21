@@ -6,7 +6,11 @@ import type { DMessageAttachmentFragment, DMessageRole } from '~/common/stores/c
 
 import { ContentPartPlaceholder } from '../fragments-content/ContentPartPlaceholder';
 
-
+/**
+ * Displays a list of 'cards' which are buttons with a mutually exclusive active state.
+ * When one is active, there is a content part just right under (with the collapse mechanism in case it's a user role).
+ * If one is clicked the content part (use ContentFragments with a single Fragment) is displayed.
+ */
 export function AttachmentFragments(props: {
   attachmentFragments: DMessageAttachmentFragment[],
   messageRole: DMessageRole,
