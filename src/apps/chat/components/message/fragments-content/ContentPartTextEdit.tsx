@@ -11,6 +11,8 @@ import type { DMessageFragmentId, DMessageTextPart } from '~/common/stores/chat/
 
 const textEditAreaSx: SxProps = {
   ...blocksRendererSx,
+  // very important: back to a 100% width
+  width: '100%',
   // just shrink padding tiny bit
   py: 0.5,
   // make the editing stand out a bit more
