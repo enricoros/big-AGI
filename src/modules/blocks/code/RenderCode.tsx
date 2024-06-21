@@ -4,12 +4,12 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, IconButton, Sheet, styled, Tooltip, Typography } from '@mui/joy';
+import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SchemaIcon from '@mui/icons-material/Schema';
-import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -176,9 +176,10 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 
 
   let showBlockTitle = blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://'));
-  // disable the block title when rendering HTML
+  // hide the block title when rendering HTML
   if (renderHTML)
     showBlockTitle = false;
+  const isBorderless = (renderHTML || renderSVG) && !showBlockTitle;
 
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
@@ -196,7 +197,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
         sx={{
-          p: (renderHTML && !showBlockTitle) ? 0 : 1.5, // this block gets a thicker border (but we 'fullscreen' html in case there's no title)
+          p: isBorderless ? 0 : 1.5, // this block gets a thicker border (but we 'fullscreen' html in case there's no title)
           overflowX: 'auto', // ensure per-block x-scrolling
           whiteSpace: showSoftWrap ? 'break-spaces' : 'pre',
 
@@ -261,7 +262,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           {isSVG && (
             <Tooltip title={optimizeLightweight ? null : renderSVG ? 'Show Code' : 'Render SVG'}>
               <OverlayButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
-                <ShapeLineOutlinedIcon />
+                <ChangeHistoryTwoToneIcon />
               </OverlayButton>
             </Tooltip>
           )}

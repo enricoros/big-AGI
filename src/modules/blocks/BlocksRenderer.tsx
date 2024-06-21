@@ -197,7 +197,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
         return block.type === 'htmlb'
           ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
           : block.type === 'codeb'
-            ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={!optimizeSubBlockWithMemo} sx={scaledCodeSx} />
+            ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={false /*!optimizeSubBlockWithMemo*/} sx={scaledCodeSx} />
             : block.type === 'imageb'
               ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt}
                                 onImageRegenerate={undefined /* because there could be many of these URL images in a fragment, and we miss the whole partial-edit logic in a text fragment */}
