@@ -4,7 +4,7 @@ import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageRole, DMessageTextPart } from '~/common/stores/chat/chat.message';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 
@@ -15,14 +15,13 @@ import { explainServiceErrors } from '../explainServiceErrors';
  * Uses BlocksRenderer to render the markdown/code/html/text, etc.
  */
 export function ContentPartText(props: {
-  textPart: DMessageTextPart,
+  textPartText: string,
 
   messageRole: DMessageRole,
   messageOriginLLM?: string,
 
   contentScaling: ContentScaling,
   fitScreen: boolean,
-  isBottom?: boolean,
   renderTextAsMarkdown: boolean,
   renderTextDiff?: TextDiff[];
 
@@ -36,7 +35,7 @@ export function ContentPartText(props: {
 }) {
 
   // derived state
-  const messageText = props.textPart.text;
+  const messageText = props.textPartText;
   const fromAssistant = props.messageRole === 'assistant';
 
   const errorMessage = React.useMemo(
@@ -59,7 +58,6 @@ export function ContentPartText(props: {
       fromRole={props.messageRole}
       contentScaling={props.contentScaling}
       fitScreen={props.fitScreen}
-      isBottom={props.isBottom}
       showUnsafeHtml={props.showUnsafeHtml}
       showTopWarning={props.showTopWarning}
       specialDiagramMode={false}
