@@ -28,13 +28,14 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
+import { classifyMessageFragments, createTextContentFragment, DMessage, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessage, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { AttachmentFragments } from './fragments-attachments/AttachmentFragments';
+import { AttachmentFragments } from './fragments-attachment-text/TextAttachmentFragments';
 import { ContentFragments } from './fragments-content/ContentFragments';
+import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
 import { avatarIconSx, makeMessageAvatar, messageBackground, personaColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
@@ -123,20 +124,20 @@ export function ChatMessage(props: {
     updated: messageUpdated,
   } = props.message;
 
+  // split the fragments: image attachments are first, then content fragments, then other attachment fragments
+  const [contentFragments, imageAttachments, otherAttachments] = classifyMessageFragments(messageFragments);
+
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const wasEdited = !!messageUpdated;
 
-  const textSel = selText ? selText : messageFragmentsReduceText(messageFragments);
+  const textSel = selText ? selText : messageFragmentsReduceText(contentFragments);
   const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
   const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
   const couldImagine = textSel.length >= 3 && !isSpecialT2I;
   const couldSpeak = couldImagine;
-
-  const attachmentFragments = messageFragments.filter(f => f.ft === 'attachment') as DMessageAttachmentFragment[];
-
 
   // TODO: fix the diffing
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
@@ -526,9 +527,19 @@ export function ChatMessage(props: {
             </Typography>
           )}
 
+          {/* Image Attachment Fragments (just for a prettier display on top of the message) */}
+          {imageAttachments.length >= 1 && (
+            <ImageAttachmentFragments
+              imageAttachments={imageAttachments}
+              contentScaling={contentScaling}
+              isMobile={props.isMobile}
+              onFragmentDelete={handleFragmentDelete}
+            />
+          )}
+
           {/* Content Fragments (iterating all to preserve the index) */}
           <ContentFragments
-            fragments={messageFragments}
+            fragments={contentFragments}
 
             contentScaling={contentScaling}
             fitScreen={props.fitScreen}
@@ -555,7 +566,7 @@ export function ChatMessage(props: {
           {/* Attachment Fragments */}
           {/*{hasAttachments && (*/}
           <AttachmentFragments
-            attachmentFragments={attachmentFragments}
+            attachmentFragments={otherAttachments}
             messageRole={messageRole}
             contentScaling={contentScaling}
           />

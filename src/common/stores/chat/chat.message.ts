@@ -343,6 +343,16 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment): fragm
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
+export function classifyMessageFragments(fragments: DMessageFragment[]):
+  [DMessageContentFragment[], DMessageAttachmentFragment[], DMessageAttachmentFragment[], DMessageFragment[]] {
+  return [
+    fragments.filter(f => f.ft === 'content') as DMessageContentFragment[],
+    fragments.filter(f => f.ft === 'attachment' && f.part.pt === 'image_ref') as DMessageAttachmentFragment[],
+    fragments.filter(f => f.ft === 'attachment' && f.part.pt !== 'image_ref') as DMessageAttachmentFragment[],
+    fragments.filter(f => f.ft !== 'content' && f.ft !== 'attachment'),
+  ];
+}
+
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
   return fragments
     .map(fragment => (isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'text') ? fragment.part.text : '')
