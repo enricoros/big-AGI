@@ -473,7 +473,10 @@ export function ChatMessage(props: {
 
             {/* Persona Avatar or Menu Button */}
             <Box
-              onClick={handleOpsMenuToggle}
+              onClick={(e) => {
+                e.shiftKey && console.log(props.message);
+                handleOpsMenuToggle(e);
+              }}
               onContextMenu={handleOpsMenuToggle}
               onMouseEnter={props.isMobile ? undefined : () => setIsHovering(true)}
               onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
@@ -648,10 +651,12 @@ export function ChatMessage(props: {
             {/* Starred */}
             {!!onMessageToggleUserFlag && (
               <MenuItem onClick={handleOpsToggleStarred} sx={{ flexGrow: 0, px: 1 }}>
-                {isUserStarred
-                  ? <StarRoundedIcon color='primary' sx={{ fontSize: 'xl2' }} />
-                  : <StarOutlineRoundedIcon sx={{ fontSize: 'xl2' }} />
-                }
+                <Tooltip disableInteractive title={!isUserStarred ? 'Star message - use @ to refer to it later' : 'Unstar'}>
+                  {isUserStarred
+                    ? <StarRoundedIcon color='primary' sx={{ fontSize: 'xl2' }} />
+                    : <StarOutlineRoundedIcon sx={{ fontSize: 'xl2' }} />
+                  }
+                </Tooltip>
               </MenuItem>
             )}
           </Box>
