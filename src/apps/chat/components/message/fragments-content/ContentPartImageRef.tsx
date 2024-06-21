@@ -33,7 +33,7 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
 }
 
 
-export function ContentPartImageRefDBlob(props: {
+export function PartImageRefDBlob(props: {
   dataRefDBlobAssetId: DBlobAssetId,
   dataRefMimeType: string,
   imageAltText?: string,
@@ -43,7 +43,7 @@ export function ContentPartImageRefDBlob(props: {
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
   scaledImageSx?: SxProps,
-  variant: 'content-part' | 'attachment-card',
+  partVariant: 'content-part' | 'attachment-card',
 }) {
 
   // external state from the DB
@@ -79,7 +79,7 @@ export function ContentPartImageRefDBlob(props: {
     }
 
     // [attachment card] only return the data
-    if (props.variant === 'attachment-card') {
+    if (props.partVariant === 'attachment-card') {
       return {
         dataUrlMemo: `data:${imageItem.data.mimeType};base64,${imageItem.data.base64}`,
       };
@@ -129,7 +129,7 @@ export function ContentPartImageRefDBlob(props: {
       altText: props.imageAltText || imageItem.metadata?.description || imageItem.label || '',
       overlayText: overlayText,
     };
-  }, [imageItem, props.dataRefMimeType, props.imageAltText, props.imageHeight, props.imageWidth, props.variant]);
+  }, [imageItem, props.dataRefMimeType, props.imageAltText, props.imageHeight, props.imageWidth, props.partVariant]);
 
   return (
     <RenderImageURL
@@ -141,6 +141,7 @@ export function ContentPartImageRefDBlob(props: {
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
       className={isRegenerating ? 'agi-border-4' : undefined}
       scaledImageSx={props.scaledImageSx}
+      variant={props.partVariant}
     />
   );
 }
@@ -152,6 +153,7 @@ function ContentPartImageRefURL(props: { dataRefUrl: string, imageAltText?: stri
       imageURL={props.dataRefUrl}
       infoText={props.imageAltText}
       scaledImageSx={props.scaledImageSx}
+      variant='content-part'
     />
   );
 }
@@ -194,7 +196,7 @@ export function ContentPartImageRef(props: {
   return (
     <Box sx={blocksRendererSx}>
       {dataRef.reftype === 'dblob' ? (
-        <ContentPartImageRefDBlob
+        <PartImageRefDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
           imageAltText={imageRefPart.altText}
@@ -204,7 +206,7 @@ export function ContentPartImageRef(props: {
           onDeleteFragment={onFragmentDelete ? handleDeleteFragment : undefined}
           onReplaceFragment={onFragmentReplace ? handleReplaceFragment : undefined}
           scaledImageSx={scaledImageSx}
-          variant='content-part'
+          partVariant='content-part'
         />
       ) : dataRef.reftype === 'url' ? (
         <ContentPartImageRefURL
