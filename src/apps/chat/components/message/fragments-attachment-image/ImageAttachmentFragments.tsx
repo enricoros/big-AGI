@@ -33,7 +33,7 @@ const imageSheetPatchSx: SxProps = {
   m: 0,
   minWidth: CARD_MIN_SQR,
   minHeight: CARD_MIN_SQR,
-  boxShadow: 'sm',
+  boxShadow: 'xs',
   // border: 'none',
 
   // style
