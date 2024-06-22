@@ -523,7 +523,7 @@ export function ChatMessage(props: {
           // layout
           display: 'flex',
           flexDirection: 'column',
-          gap: 2,       // 2 because we give a bit more space between the 'classes' of fragments (content, attachments, etc.)
+          gap: 1.5,     // we give a bit more space between the 'classes' of fragments (content, attachments, etc.)
         }}>
 
           {/* (optional) Message date */}
