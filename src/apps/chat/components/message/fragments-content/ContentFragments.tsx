@@ -15,7 +15,7 @@ import { ContentPartTextEdit } from './ContentPartTextEdit';
 
 const editLayoutSx: SxProps = {
   display: 'grid',
-  gap: 1,
+  gap: 1.5,     // see why we give more space on ChatMessage
 
   // horizontal separator between messages (second part+ and before)
   // '& > *:not(:first-child)': {
