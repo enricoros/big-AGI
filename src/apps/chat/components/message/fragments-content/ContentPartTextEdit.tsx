@@ -46,7 +46,7 @@ export function ContentPartTextEdit(props: {
   // external
   // NOTE: we disabled `useUIPreferencesStore(state => state.enterIsNewline)` on 2024-06-19, as it's
   //       not a good pattern for this kind of editing and we have buttons to take care of Save/Cancel
-  const enterIsNewline = false;
+  const enterIsNewline = true;
 
   // derived state
   const { fragmentId, setEditedText, onEnterPressed, onEscapePressed } = props;
