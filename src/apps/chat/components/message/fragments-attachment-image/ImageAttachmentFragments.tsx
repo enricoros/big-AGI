@@ -78,7 +78,7 @@ export function ImageAttachmentFragments(props: {
 
 
   return (
-    <Box aria-label={`${props.imageAttachments.length} image(s)`} sx={layoutSxMemo}>
+    <Box aria-label={`${props.imageAttachments.length} images`} sx={layoutSxMemo}>
 
       {/* render each image attachment */}
       {props.imageAttachments.map(attachmentFragment => {
