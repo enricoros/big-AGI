@@ -65,7 +65,7 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   const isMonoFragment = props.fragments.length < 2;
 
-  return <Box sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
+  return <Box aria-label='message body' sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
     {props.fragments.map((fragment) => {
 
       // only proceed with DMessageContentFragment
