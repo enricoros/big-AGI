@@ -65,6 +65,7 @@ export function DocumentFragments(props: {
           <DocumentFragmentButton
             key={attachmentFragment.fId}
             fragment={attachmentFragment}
+            contentScaling={props.contentScaling}
             isSelected={selectedFragmentId === attachmentFragment.fId}
             toggleSelected={handleToggleSelected}
           />,
