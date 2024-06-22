@@ -228,6 +228,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
             contentScaling={adjustContentScaling(contentScaling, -1)}
             fitScreen={isMobile}
             renderTextAsMarkdown={false}
+            specialCodePlain
             specialDiagramMode
             // Edit is moved from the BlocksRenderer to the ContentPartText
             // onMessageEdit={(text) => setMessage({ ...message, text })}
