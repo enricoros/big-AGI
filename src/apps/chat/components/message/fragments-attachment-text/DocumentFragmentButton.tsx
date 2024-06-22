@@ -4,42 +4,44 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Button } from '@mui/joy';
 
 import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.message';
+import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
-
-
-const buttonPressedSx: SxProps = {
-  minHeight: '2.25rem',
-  minWidth: '5rem',
-  fontSize: 'sm',
-  border: '1px solid',
-  borderColor: 'neutral.solidBg',
-  boxShadow: 'xs',
-};
-
-const buttonSx: SxProps = {
-  ...buttonPressedSx,
-  borderColor: 'primary.outlinedBorder',
-  backgroundColor: 'background.surface',
-};
 
 
 export function DocumentFragmentButton(props: {
   fragment: DMessageAttachmentFragment,
+  contentScaling: ContentScaling,
   isSelected: boolean,
-  toggleSelected: (fragmentId: DMessageFragmentId) => void
+  toggleSelected: (fragmentId: DMessageFragmentId) => void,
 }) {
 
   // derived state
   const { fragment, isSelected, toggleSelected } = props;
+
+  // only operate on text
+  if (fragment.part.pt !== 'text')
+    throw new Error('Unexpected part type: ' + fragment.part.pt);
 
   // handlers
   const handleSelectFragment = React.useCallback(() => {
     toggleSelected(fragment.fId);
   }, [fragment.fId, toggleSelected]);
 
-  // only operate on text
-  if (fragment.part.pt !== 'text')
-    throw new Error('Unexpected part type: ' + fragment.part.pt);
+  // memos
+  const buttonSx = React.useMemo((): SxProps => ({
+    minHeight: '2.5em',
+    minWidth: '4rem',
+    fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
+    border: '1px solid',
+    borderRadius: 'sm',
+    boxShadow: 'xs',
+    ...isSelected ? {
+      borderColor: 'neutral.solidBg',
+    } : {
+      borderColor: 'primary.outlinedBorder',
+      backgroundColor: 'background.surface',
+    },
+  }), [isSelected, props.contentScaling]);
 
   const buttonText = ellipsizeMiddle(fragment.title || 'Text', 28 /* totally arbitrary length */);
 
@@ -49,7 +51,7 @@ export function DocumentFragmentButton(props: {
       variant={isSelected ? 'solid' : 'soft'}
       color={isSelected ? 'neutral' : 'neutral'}
       onClick={handleSelectFragment}
-      sx={isSelected ? buttonPressedSx : buttonSx}
+      sx={buttonSx}
     >
       {buttonText}
     </Button>
