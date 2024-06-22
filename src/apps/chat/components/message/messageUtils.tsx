@@ -20,7 +20,7 @@ const ANIM_BUSY_THINKING = 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.we
 export const ANIM_BUSY_TYPING = 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp';
 
 
-export const personaColumnSx: SxProps = {
+export const messageAsideColumnSx: SxProps = {
   // make this stick to the top of the screen
   position: 'sticky',
   top: 0,

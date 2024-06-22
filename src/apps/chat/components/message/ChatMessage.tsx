@@ -37,7 +37,7 @@ import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentFragments } from './fragments-attachment-text/DocumentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
-import { avatarIconSx, makeMessageAvatar, messageBackground, personaColumnSx } from './messageUtils';
+import { avatarIconSx, makeMessageAvatar, messageAsideColumnSx, messageBackground } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
 
@@ -450,17 +450,18 @@ export function ChatMessage(props: {
       {/* (Optional) underlayed top decorator */}
       {props.topDecorator}
 
-      {/* Message Row: Avatar, Fragment[] */}
-      <Box sx={{
+      {/* Message Row: Aside, Fragment[][], Aside2 */}
+      <Box role={undefined /* aside | message | ops */} sx={{
         display: 'flex',
         flexDirection: !fromAssistant ? 'row-reverse' : 'row',
-        alignItems: 'flex-start',
+        alignItems: 'flex-start', // avatars at the top, and honor 'static' position
         gap: { xs: 0, md: 1 },
       }}>
 
-        {/* Editing: Apply */}
+
+        {/* [aside A] Editing: Apply */}
         {isEditingText && (
-          <Box sx={personaColumnSx}>
+          <Box sx={messageAsideColumnSx}>
             <Tooltip arrow disableInteractive title='Apply Edits'>
               <IconButton variant='solid' color='warning' onClick={handleEditsApply}>
                 <CheckRoundedIcon />
@@ -472,9 +473,9 @@ export function ChatMessage(props: {
           </Box>
         )}
 
-        {/* Avatar (Persona) */}
+        {/* [aside B] Avatar (Persona) */}
         {showAvatar && !isEditingText && (
-          <Box sx={personaColumnSx}>
+          <Box sx={messageAsideColumnSx}>
 
             {/* Persona Avatar or Menu Button */}
             <Box
@@ -511,25 +512,21 @@ export function ChatMessage(props: {
           </Box>
         )}
 
-        {/* Fragments vertical (grid) layout */}
+
+        {/* (many-type) Fragment Classes  */}
         <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={{
-          // v-center content if there's any gap
-          my: 'auto',
-          flexGrow: isEditingText ? 1 : 0,
+          // style
+          flexGrow: 1,  // capture all the space, for edit modes
+          minWidth: 0,  // VERY important, otherwise very wide messages will overflow the container, causing scroll on the whole page
+          my: 'auto',   // v-center content if there's any gap (e.g. single line of text)
 
-          // v-layout
-          display: 'grid',
-          justifyItems: !fromAssistant ? 'flex-end' : 'flex-start',
-          gap: isEditingText ? 2 : 1, // gap in between the fragments (if > 1)
-
-          // horizontal separator between messages (second part+ and before)
-          // '& > *:not(:first-child)': {
-          //   borderTop: '1px solid',
-          //   borderTopColor: 'background.level3',
-          // },
+          // layout
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
         }}>
 
-          {/* Optional Message date */}
+          {/* (optional) Message date */}
           {(props.showBlocksDate === true && !!(messageUpdated || messageCreated)) && (
             <Typography level='body-sm' sx={{ mx: 1.5, textAlign: fromAssistant ? 'left' : 'right' }}>
               <TimeAgo date={messageUpdated || messageCreated} />
@@ -545,16 +542,6 @@ export function ChatMessage(props: {
               isMobile={props.isMobile}
               onFragmentDelete={handleFragmentDelete}
             />
-          )}
-
-          {/* If editing and there's no content, have a button to create a new TextContentFragment */}
-          {isEditingText && !contentFragments.length && (
-            <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{
-              ml: fromAssistant ? undefined : 'auto',
-              mr: fromAssistant ? 'auto' : undefined,
-            }}>
-              Add text
-            </Button>
           )}
 
           {/* Content Fragments (iterating all to preserve the index) */}
@@ -582,7 +569,17 @@ export function ChatMessage(props: {
             onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
           />
 
-          {/* Attachment Fragments */}
+          {/* If editing and there's no content, have a button to create a new TextContentFragment */}
+          {isEditingText && !contentFragments.length && (
+            <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{
+              ml: fromAssistant ? undefined : 'auto',
+              mr: fromAssistant ? 'auto' : undefined,
+            }}>
+              Add text
+            </Button>
+          )}
+
+          {/* Document Fragments */}
           {nonImageAttachments.length >= 1 && (
             <DocumentFragments
               attachmentFragments={nonImageAttachments}
@@ -608,7 +605,7 @@ export function ChatMessage(props: {
 
         {/* Editing: Cancel */}
         {isEditingText && (
-          <Box sx={personaColumnSx}>
+          <Box sx={messageAsideColumnSx}>
             <Tooltip arrow disableInteractive title='Discard Edits'>
               <IconButton onClick={handleEditsCancel}>
                 <CloseRoundedIcon />

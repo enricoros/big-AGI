@@ -236,7 +236,7 @@ export function ChatMessageList(props: {
     );
 
   return (
-    <List sx={{
+    <List role='chat-messages-list' sx={{
       p: 0,
       ...(props.sx || {}),
 
