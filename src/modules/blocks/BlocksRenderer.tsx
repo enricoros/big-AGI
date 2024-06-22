@@ -62,6 +62,7 @@ type BlocksRendererProps = {
   showAsItalic?: boolean;
   showTopWarning?: string;
   showUnsafeHtml?: boolean;
+  specialCodePlain?: boolean;
   specialDiagramMode?: boolean;
 
   renderTextAsMarkdown: boolean;
@@ -116,9 +117,9 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
 
   const scaledCodeSx: SxProps = React.useMemo(() => (
     {
-      my: props.specialDiagramMode ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
-      backgroundColor: props.specialDiagramMode ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-      boxShadow: props.specialDiagramMode ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
+      my: props.specialCodePlain ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
+      backgroundColor: props.specialCodePlain ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+      boxShadow: props.specialCodePlain ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
       borderRadius: 'sm',
       fontFamily: 'code',
       fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
@@ -128,7 +129,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       minWidth: 260,
       minHeight: '2.75rem',
     }
-  ), [fromAssistant, props.contentScaling, props.specialDiagramMode]);
+  ), [fromAssistant, props.contentScaling, props.specialCodePlain]);
 
   const scaledImageSx: SxProps = React.useMemo(() => (
     {
@@ -214,10 +215,18 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
                   : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
       })}
 
-      {isTextCollapsed ? (
-        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextUncollapse} startDecorator={<ExpandMoreIcon />} sx={{ minWidth: 120 }}>Expand</Button></Box>
-      ) : forceUserExpanded && (
-        <Box sx={{ textAlign: 'right' }}><Button variant='soft' size='sm' onClick={handleTextCollapse} startDecorator={<ExpandLessIcon />} sx={{ minWidth: 120 }}>Collapse</Button></Box>
+      {(isTextCollapsed || forceUserExpanded) && (
+        <Box sx={{ textAlign: 'right' }}>
+          <Button
+            variant={props.specialCodePlain ? 'plain' : 'soft'}
+            color={props.specialCodePlain ? 'neutral' : undefined}
+            size='sm'
+            onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
+            startDecorator={isTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+          >
+            {isTextCollapsed ? 'Show more' : 'Show less'}
+          </Button>
+        </Box>
       )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}

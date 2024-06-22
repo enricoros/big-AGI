@@ -60,7 +60,6 @@ export function ContentPartText(props: {
       fitScreen={props.fitScreen}
       showUnsafeHtml={props.showUnsafeHtml}
       showTopWarning={props.showTopWarning}
-      specialDiagramMode={false}
       renderTextAsMarkdown={props.renderTextAsMarkdown}
       renderTextDiff={props.renderTextDiff}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
