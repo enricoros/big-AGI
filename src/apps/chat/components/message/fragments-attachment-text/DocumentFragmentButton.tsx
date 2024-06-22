@@ -8,8 +8,9 @@ import { ellipsizeMiddle } from '~/common/util/textUtils';
 
 
 const buttonPressedSx: SxProps = {
-  minHeight: '2rem',
+  minHeight: '2.25rem',
   minWidth: '5rem',
+  fontSize: 'sm',
   border: '1px solid',
   borderColor: 'neutral.solidBg',
   boxShadow: 'xs',
