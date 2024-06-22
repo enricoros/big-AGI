@@ -37,6 +37,13 @@ export function DocumentFragments(props: {
     setSelectedFragmentId(prevId => prevId === fragmentId ? null : fragmentId);
   }, []);
 
+  const handleSetEditedText = React.useCallback((fragmentId: DMessageFragmentId, value: string) => {
+    setTextAttachmentsEditState(prevState => ({
+      ...prevState,
+      [fragmentId]: value,
+    }));
+  }, []);
+
   const selectedFragment = props.attachmentFragments.find(fragment => fragment.fId === selectedFragmentId);
 
   return (
@@ -52,8 +59,7 @@ export function DocumentFragments(props: {
 
       {/* Horizontally scrollable Attachments */}
       <Box sx={{
-        // px: '4px', // to show the button shadow
-        pb: '4px', // to show the button shadow
+        pb: 0.5, // 4px:  to show the button shadow
 
         // layout
         display: 'flex',
@@ -78,6 +84,7 @@ export function DocumentFragments(props: {
           fragment={selectedFragment}
           messageRole={props.messageRole}
           editedText={textAttachmentsEditState?.[selectedFragment.fId]}
+          setEditedText={handleSetEditedText}
           contentScaling={props.contentScaling}
           isMobile={props.isMobile}
           renderTextAsMarkdown={props.renderTextAsMarkdown}
