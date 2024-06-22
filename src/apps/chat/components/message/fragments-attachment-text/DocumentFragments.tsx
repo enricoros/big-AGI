@@ -48,16 +48,12 @@ export function DocumentFragments(props: {
 
   return (
     <Box aria-label={`${props.attachmentFragments.length} attachments`} sx={{
-      //
-      maxWidth: '100%',
-      overflowX: 'auto',
-
       // layout
       display: 'flex',
       flexDirection: 'column',
     }}>
 
-      {/* Horizontally scrollable Attachments */}
+      {/* Horizontally scrollable Document buttons */}
       <Box sx={{
         pb: 0.5, // 4px:  to show the button shadow
 
@@ -78,7 +74,7 @@ export function DocumentFragments(props: {
         )}
       </Box>
 
-      {/* Viewer for the selected attachment */}
+      {/* Document Viewer & Editor */}
       {!!selectedFragment && (
         <DocumentFragmentEditor
           fragment={selectedFragment}
