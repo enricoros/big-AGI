@@ -534,7 +534,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Image Attachment Fragments (just for a prettier display on top of the message) */}
-          {imageAttachments.length >= 1 && (
+          {imageAttachments.length >= 1 && !isEditingText && (
             <ImageAttachmentFragments
               imageAttachments={imageAttachments}
               contentScaling={contentScaling}
@@ -580,7 +580,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Document Fragments */}
-          {nonImageAttachments.length >= 1 && (
+          {nonImageAttachments.length >= 1 && !isEditingText && (
             <DocumentFragments
               attachmentFragments={nonImageAttachments}
               messageRole={messageRole}
