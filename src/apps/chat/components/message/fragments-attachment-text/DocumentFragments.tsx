@@ -25,26 +25,26 @@ export function DocumentFragments(props: {
 }) {
 
   // state
-  const [selectedFragmentId, setSelectedFragmentId] = React.useState<DMessageFragmentId | null>(null);
-  const [textAttachmentsEditState, setTextAttachmentsEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
+  const [activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
+  const [editState, setEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
+
+
+  // selection
+
+  const handleToggleSelectedId = React.useCallback((fragmentId: DMessageFragmentId) => setActiveFragmentId(prevId => prevId === fragmentId ? null : fragmentId), []);
+
+  const selectedFragment = props.attachmentFragments.find(fragment => fragment.fId === activeFragmentId);
+
+
+  // editing
+
+  const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, value: string) => setEditState(prevState => ({ ...prevState, [fragmentId]: value })), []);
 
   // [effect] clear edits on onmount
   React.useEffect(() => {
-    return () => setTextAttachmentsEditState(null);
+    return () => setEditState(null);
   }, []);
 
-  const handleToggleSelected = React.useCallback((fragmentId: DMessageFragmentId) => {
-    setSelectedFragmentId(prevId => prevId === fragmentId ? null : fragmentId);
-  }, []);
-
-  const handleSetEditedText = React.useCallback((fragmentId: DMessageFragmentId, value: string) => {
-    setTextAttachmentsEditState(prevState => ({
-      ...prevState,
-      [fragmentId]: value,
-    }));
-  }, []);
-
-  const selectedFragment = props.attachmentFragments.find(fragment => fragment.fId === selectedFragmentId);
 
   return (
     <Box aria-label={`${props.attachmentFragments.length} attachments`} sx={{
@@ -68,8 +68,8 @@ export function DocumentFragments(props: {
             key={attachmentFragment.fId}
             fragment={attachmentFragment}
             contentScaling={props.contentScaling}
-            isSelected={selectedFragmentId === attachmentFragment.fId}
-            toggleSelected={handleToggleSelected}
+            isSelected={activeFragmentId === attachmentFragment.fId}
+            toggleSelected={handleToggleSelectedId}
           />,
         )}
       </Box>
@@ -79,8 +79,8 @@ export function DocumentFragments(props: {
         <DocumentFragmentEditor
           fragment={selectedFragment}
           messageRole={props.messageRole}
-          editedText={textAttachmentsEditState?.[selectedFragment.fId]}
-          setEditedText={handleSetEditedText}
+          editedText={editState?.[selectedFragment.fId]}
+          setEditedText={handleEditSetText}
           contentScaling={props.contentScaling}
           isMobile={props.isMobile}
           renderTextAsMarkdown={props.renderTextAsMarkdown}

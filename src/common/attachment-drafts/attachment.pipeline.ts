@@ -316,12 +316,12 @@ export async function attachmentPerformConversion(
 
     // text as-is
     case 'text':
-      newFragments.push(createTextAttachmentFragment(inputDataToString(input.data), ref));
+      newFragments.push(createTextAttachmentFragment(ref, inputDataToString(input.data)));
       break;
 
     // html as-is
     case 'rich-text':
-      newFragments.push(createTextAttachmentFragment(input.altData!, ref || '\n<!DOCTYPE html>'));
+      newFragments.push(createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!));
       break;
 
     // html to markdown table
@@ -333,7 +333,7 @@ export async function attachmentPerformConversion(
         // fallback to text/plain
         mdTable = inputDataToString(input.data);
       }
-      newFragments.push(createTextAttachmentFragment(mdTable, ref));
+      newFragments.push(createTextAttachmentFragment(ref, mdTable));
       break;
 
     // image resized (default mime/quality, openai-high-res)
@@ -397,7 +397,7 @@ export async function attachmentPerformConversion(
           },
         });
         const imageText = result.data.text;
-        newFragments.push(createTextAttachmentFragment(imageText, ref));
+        newFragments.push(createTextAttachmentFragment(ref, imageText));
       } catch (error) {
         console.error(error);
       }
@@ -413,7 +413,7 @@ export async function attachmentPerformConversion(
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData = new Uint8Array(input.data.slice(0));
       const pdfText = await pdfToText(pdfData);
-      newFragments.push(createTextAttachmentFragment(pdfText, ref));
+      newFragments.push(createTextAttachmentFragment(ref, pdfText));
       break;
 
     // pdf to images
