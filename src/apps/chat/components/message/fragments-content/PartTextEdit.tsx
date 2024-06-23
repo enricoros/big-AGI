@@ -6,7 +6,7 @@ import { Textarea } from '@mui/joy';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageFragmentId, DMessageTextPart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 
 
 const textEditAreaSx: SxProps = {
@@ -26,9 +26,9 @@ const textEditAreaSx: SxProps = {
  * Very similar to <InlineTextArea /> but with externally controlled state rather than internal.
  * Made it for as the editing alternative for <ContentPartText />.
  */
-export function ContentPartTextEdit(props: {
+export function PartTextEdit(props: {
   // current value
-  textPart: DMessageTextPart,
+  textPartText: string,
   fragmentId: DMessageFragmentId,
 
   // visual
@@ -77,7 +77,7 @@ export function ContentPartTextEdit(props: {
       size={props.contentScaling !== 'md' ? 'sm' : undefined}
       value={(props.editedText !== undefined)
         ? props.editedText /* self-text */
-        : props.textPart.text /* DMessageTextPart text */
+        : props.textPartText /* DMessageTextPart text */
       }
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
