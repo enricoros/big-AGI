@@ -479,9 +479,9 @@ export function ChatMessage(props: {
 
             {/* Persona Avatar or Menu Button */}
             <Box
-              onClick={(e) => {
-                e.shiftKey && console.log(props.message);
-                handleOpsMenuToggle(e);
+              onClick={(event) => {
+                event.shiftKey && console.log(props.message);
+                handleOpsMenuToggle(event);
               }}
               onContextMenu={handleOpsMenuToggle}
               onMouseEnter={props.isMobile ? undefined : () => setIsHovering(true)}
