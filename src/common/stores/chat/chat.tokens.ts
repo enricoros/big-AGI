@@ -42,6 +42,7 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
 
     case 'ph':
     case 'error':
+    case '_pt_sentinel':
       // purely UI elements, no tokens
       return 0;
 

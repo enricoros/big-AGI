@@ -1,5 +1,5 @@
 // configuration
-const SKIP_LOADING_IN_DEV = true;
+const SKIP_LOADING_IN_DEV = false;
 
 /**
  * Extracts text from a PDF file

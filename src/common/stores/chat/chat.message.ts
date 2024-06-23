@@ -46,14 +46,20 @@ export type DMessageFragment =
   | DMessageAttachmentFragment
 // | DMessageBeamFragment
 // | DMessageMetadataV1Fragment
-  | DMessageSentinelFragment
-  ;
+  | _DMessageSentinelFragment;
 
 // expected a list of one or more per message, of similar or different types
 export type DMessageContentFragment = {
   ft: 'content',
   fId: DMessageFragmentId;
-  part: DMessageTextPart | DMessageImageRefPart | DMessageToolCallPart | DMessageToolResponsePart | DMessagePlaceholderPart | DMessageErrorPart;
+  part:
+    | DMessageTextPart
+    | DMessageImageRefPart
+    | DMessageToolCallPart
+    | DMessageToolResponsePart
+    | DMessagePlaceholderPart
+    | DMessageErrorPart
+    | _DMessageSentinelPart;
 }
 
 // displayed at the bottom of the message, zero or more
@@ -73,10 +79,9 @@ export type DMessageAttachmentFragment = {
 // }
 
 // here just to foce the typesystem to work and detect corner cases
-export type DMessageSentinelFragment = {
-  ft: 'sentinel',
+type _DMessageSentinelFragment = {
+  ft: '_ft_sentinel',
   fId: DMessageFragmentId;
-  warningNoPart: boolean;
 }
 
 // this id is not unique, just 8 bytes
@@ -92,6 +97,7 @@ export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Re
 export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
 export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
 export type DMessageErrorPart = { pt: 'error', error: string };
+type _DMessageSentinelPart = { pt: '_pt_sentinel' };
 
 
 // Data Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
@@ -184,7 +190,7 @@ export function createErrorContentFragment(error: string): DMessageContentFragme
 }
 
 function createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
-  return { ft: 'content', fId: agiId('chat-dfragment'), part };
+  return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
 }
 
 
@@ -197,12 +203,12 @@ export function createImageAttachmentFragment(title: string, dataRef: DMessageDa
 }
 
 export function createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
-  return { ft: 'attachment', fId: agiId('chat-dfragment'), title, part };
+  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, part };
 }
 
 
-function createSentinelFragment(justAnOption: boolean): DMessageSentinelFragment {
-  return { ft: 'sentinel', fId: agiId('chat-dfragment'), warningNoPart: justAnOption };
+function createSentinelFragment(): _DMessageSentinelFragment {
+  return { ft: '_ft_sentinel', fId: agiId('chat-dfragment' /* -_sentinel */) };
 }
 
 
@@ -230,6 +236,10 @@ function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceho
 
 function createDMessageErrorPart(error: string): DMessageErrorPart {
   return { pt: 'error', error };
+}
+
+function createSentinelPart(): _DMessageSentinelPart {
+  return { pt: '_pt_sentinel' };
 }
 
 // data references
@@ -281,8 +291,8 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
     case 'attachment':
       return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
 
-    case 'sentinel':
-      return createSentinelFragment(fragment.warningNoPart);
+    case '_ft_sentinel':
+      return createSentinelFragment();
 
     // default:
     //   throw new Error('Invalid fragment');
@@ -308,6 +318,9 @@ function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentF
 
     case 'error':
       return createDMessageErrorPart(part.error) as T;
+
+    case '_pt_sentinel':
+      return createSentinelPart() as T;
 
     // default:
     //   throw new Error('Invalid part');

@@ -140,6 +140,9 @@ export function ContentFragments(props: {
             />
           );
 
+        case 'tool_call':
+        case 'tool_response':
+        case '_pt_sentinel':
         default:
           return (
             <ContentPartPlaceholder
