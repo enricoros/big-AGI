@@ -8,7 +8,7 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
 import { showImageDataRefInNewTab } from '../../message/fragments-content/PartImageRefDBlob';
@@ -150,7 +150,7 @@ export function LLMAttachmentMenu(props: {
                 <Typography level='body-sm'>🡒 ...</Typography>
               ) : (
                 draft.outputFragments.map(({ part }, index) => {
-                  if (part.pt === 'image_ref') {
+                  if (isImageRefPart(part)) {
                     const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'unknown resolution';
                     const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
                     return (

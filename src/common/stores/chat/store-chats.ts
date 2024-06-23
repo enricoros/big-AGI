@@ -12,7 +12,7 @@ import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
-import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment } from './chat.fragments';
+import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isImageRefPart } from './chat.fragments';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -351,10 +351,10 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           conversation.abortController = null;
           // fixup messages
           for (const message of conversation.messages) {
-            // cleanup within-v4
+            // cleanup within-v4 - TODO: remove at 2.0.0 ?
             for (const fragment of message.fragments) {
               // fixup rename of fragment's dblobId to dblobAssetId
-              if (isContentFragment(fragment) && fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob' && (fragment.part.dataRef as any)['dblobId']) {
+              if (isContentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef.reftype === 'dblob' && (fragment.part.dataRef as any)['dblobId']) {
                 fragment.part.dataRef.dblobAssetId = (fragment.part.dataRef as any)['dblobId'];
                 delete (fragment.part.dataRef as any)['dblobId'];
               }

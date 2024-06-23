@@ -30,7 +30,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -126,12 +126,19 @@ export function ChatMessage(props: {
     updated: messageUpdated,
   } = props.message;
 
-  // split the fragments: image attachments are first, then content fragments, then other attachment fragments
-  const [contentFragments, imageAttachments, nonImageAttachments] = [
-    messageFragments.filter(isContentFragment) as DMessageContentFragment[],
-    messageFragments.filter(f => isAttachmentFragment(f) && f.part.pt === 'image_ref') as DMessageAttachmentFragment[],
-    messageFragments.filter(f => isAttachmentFragment(f) && f.part.pt !== 'image_ref') as DMessageAttachmentFragment[],
-  ];
+
+  // split the fragments: Image Attachments are rendered as cards, Content is the body (sequence of parts), and other attachment fragments as documents
+  const contentFragments: DMessageContentFragment[] = [];
+  const imageAttachments: DMessageAttachmentFragment[] = [];
+  const nonImageAttachments: DMessageAttachmentFragment[] = [];
+  messageFragments.forEach(fragment => {
+    if (isContentFragment(fragment)) contentFragments.push(fragment);
+    else if (isAttachmentFragment(fragment)) {
+      if (isImageRefPart(fragment.part)) imageAttachments.push(fragment);
+      else nonImageAttachments.push(fragment);
+    } else
+      console.warn('Unexpected fragment type:', fragment.ft);
+  });
 
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
