@@ -4,7 +4,7 @@ import { agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import { createContentPartAttachmentFragment, createTextAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createContentPartAttachmentFragment, createTextAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
@@ -444,7 +444,7 @@ export async function attachmentPerformConversion(
         break;
       }
       for (const contentFragment of input.data) {
-        if (contentFragment.part.pt === 'text' || contentFragment.part.pt === 'image_ref')
+        if (contentFragment.part.pt === 'text' || isImageRefPart(contentFragment.part))
           newFragments.push(createContentPartAttachmentFragment(source.media === 'ego' ? source.refId : 'Message', contentFragment.part));
         else
           console.log('Unhandled ego-contents-inlined part:', contentFragment.part.pt);

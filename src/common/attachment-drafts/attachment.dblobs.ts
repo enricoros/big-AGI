@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import { deleteDBAsset, gcDBAssetsByScope, transferDBAssetContextScope } from '~/modules/dblobs/dblobs.db';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
-import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraftSource } from './attachment.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './attachment.pipeline';
@@ -97,18 +97,18 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
 /**
  * Remove the DBlob item associated with the given DMessageAttachmentFragment
  */
-export async function removeAttachmentOwnedDBAsset(fragment: DMessageAttachmentFragment) {
-  if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
-    await deleteDBAsset(fragment.part.dataRef.dblobAssetId);
+export async function removeAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment) {
+  if (isImageRefPart(part) && part.dataRef.reftype === 'dblob') {
+    await deleteDBAsset(part.dataRef.dblobAssetId);
   }
 }
 
 /**
  * Move the DBlob items associated with the given DMessageAttachmentFragment to a new context and scope
  */
-export async function transferAttachmentOwnedDBAsset(fragment: DMessageAttachmentFragment, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
-  if (fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob') {
-    await transferDBAssetContextScope(fragment.part.dataRef.dblobAssetId, contextId, scopeId);
+export async function transferAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment, contextId: DBlobDBContextId, scopeId: DBlobDBScopeId) {
+  if (isImageRefPart(part) && part.dataRef.reftype === 'dblob') {
+    await transferDBAssetContextScope(part.dataRef.dblobAssetId, contextId, scopeId);
   }
 }
 

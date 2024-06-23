@@ -128,12 +128,29 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
 }
 
 
-// helpers during the transition from V3
+// helpers - user flags
 
+const flag2EmojiMap: Record<DMessageUserFlag, string> = {
+  starred: '⭐️',
+};
 
-export function messageHasImageFragments(message: DMessage): boolean {
-  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'image_ref' /*&& fragment.part.dataRef.reftype === 'dblob'*/);
+export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
+  return flag2EmojiMap[flag] || '❓';
 }
+
+export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {
+  return message.userFlags?.includes(flag) ?? false;
+}
+
+export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag): DMessageUserFlag[] {
+  if (message.userFlags?.includes(flag))
+    return message.userFlags.filter(_f => _f !== flag);
+  else
+    return [...(message.userFlags || []), flag];
+}
+
+
+// helpers during the transition from V3
 
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
   return fragments
@@ -157,7 +174,7 @@ export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMess
   );
 }
 
-// TODO: remove once the port is fully done
+// TODO: remove once the port is fully done - at 2.0.0 ?
 export function messageSingleTextOrThrow(message: DMessage): string {
   if (message.fragments.length !== 1)
     throw new Error('Expected single fragment');
@@ -166,26 +183,4 @@ export function messageSingleTextOrThrow(message: DMessage): string {
   if (message.fragments[0].part.pt !== 'text')
     throw new Error('Expected a text part');
   return message.fragments[0].part.text;
-}
-
-
-// helpers - user flags
-
-const flag2EmojiMap: Record<DMessageUserFlag, string> = {
-  starred: '⭐️',
-};
-
-export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
-  return flag2EmojiMap[flag] || '❓';
-}
-
-export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {
-  return message.userFlags?.includes(flag) ?? false;
-}
-
-export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag): DMessageUserFlag[] {
-  if (message.userFlags?.includes(flag))
-    return message.userFlags.filter(_f => _f !== flag);
-  else
-    return [...(message.userFlags || []), flag];
 }

@@ -2,8 +2,9 @@ import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DFolder } from '~/common/state/store-folders';
-import { DMessageUserFlag, messageFragmentsReduceText, messageHasImageFragments, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { isContentOrAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';
@@ -111,10 +112,14 @@ export function useChatDrawerRenderItems(
       // filter 2: preparation: lowercase the query
       const { isSearching, lcTextQuery } = isDrawerSearching(filterByQuery);
 
+      function messageHasImageFragments(message: DMessage): boolean {
+        return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) /*&& fragment.part.dataRef.reftype === 'dblob'*/);
+      }
+
       // transform (the conversations into ChatNavigationItemData) + filter2 (if searching)
       const chatNavItems = selectedConversations
         .filter(_c => !filterHasStars || _c.messages.some(m => messageHasUserFlag(m, 'starred')))
-        .filter(_c => !filterHasImageAssets || _c.messages.some(m => messageHasImageFragments(m)))
+        .filter(_c => !filterHasImageAssets || _c.messages.some(messageHasImageFragments))
         .map((_c): ChatNavigationItemData => {
           // rich properties
           const title = conversationTitle(_c);

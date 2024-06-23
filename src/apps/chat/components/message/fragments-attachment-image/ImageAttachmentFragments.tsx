@@ -3,9 +3,9 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
+import { DMessageAttachmentFragment, DMessageFragmentId, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import { PartImageRefDBlob, showImageDataRefInNewTab } from '../fragments-content/PartImageRefDBlob';
 
@@ -84,7 +84,7 @@ export function ImageAttachmentFragments(props: {
       {/* render each image attachment */}
       {props.imageAttachments.map(attachmentFragment => {
         // only operate on image_ref
-        if (attachmentFragment.part.pt !== 'image_ref')
+        if (!isImageRefPart(attachmentFragment.part))
           throw new Error('Unexpected part type: ' + attachmentFragment.part.pt);
 
         const { title, part: imageRefPart } = attachmentFragment;

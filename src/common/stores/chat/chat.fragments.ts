@@ -107,6 +107,10 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
+export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
+  return part.pt === 'image_ref';
+}
+
 
 /// Helpers - Fragments Creation
 
@@ -142,6 +146,7 @@ export function createImageAttachmentFragment(title: string, dataRef: DMessageDa
 export function createContentPartAttachmentFragment(title: string, part: DMessageContentFragment['part']): DMessageAttachmentFragment {
   if (part.pt === 'text' || part.pt === 'image_ref' || part.pt === '_pt_sentinel')
     return _createAttachmentFragment(title, _duplicatePart(part));
+  // TODO: review the 'ego' attachments
   return createTextAttachmentFragment(title, `Attaching a message with content part '${part.pt}' is not supported yet.`);
 }
 
