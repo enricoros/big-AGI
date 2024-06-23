@@ -366,7 +366,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             // replace the Content.Pl[part.pt='ph'] fragments with Error fragments, to show the aborted ops (instead of just empty blocks)
             message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment =>
               (isContentFragment(fragment) && fragment.part.pt === 'ph')
-                ? createErrorContentFragment(`Interrupted: ${fragment.part.pText}`)
+                ? createErrorContentFragment(`${fragment.part.pText} (did not complete)`)
                 : fragment,
             );
             // cleanup pre-v4 properties

@@ -474,14 +474,15 @@ export function ChatMessage(props: {
         {/* [aside A] Editing: Apply */}
         {isEditingText && (
           <Box sx={messageAsideColumnSx}>
+            {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
             <Tooltip arrow disableInteractive title='Apply Edits'>
-              <IconButton variant='solid' color='warning' onClick={handleEditsApply}>
+              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApply} sx={{ mt: 0.25 }}>
                 <CheckRoundedIcon />
               </IconButton>
             </Tooltip>
-            {/*<Typography level='body-xs' sx={{ overflowWrap: 'anywhere' }}>*/}
-            {/*  Save*/}
-            {/*</Typography>*/}
+            <Typography level='body-xs' sx={{ overflowWrap: 'anywhere', mt: 0.25 }}>
+              Done
+            </Typography>
           </Box>
         )}
 
@@ -583,11 +584,8 @@ export function ChatMessage(props: {
 
           {/* If editing and there's no content, have a button to create a new TextContentFragment */}
           {isEditingText && !contentFragments.length && (
-            <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{
-              ml: fromAssistant ? undefined : 'auto',
-              mr: fromAssistant ? 'auto' : undefined,
-            }}>
-              Add text
+            <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{ justifyContent: 'flex-start' }}>
+              add text ...
             </Button>
           )}
 
@@ -618,14 +616,15 @@ export function ChatMessage(props: {
         {/* Editing: Cancel */}
         {isEditingText && (
           <Box sx={messageAsideColumnSx}>
+            {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
             <Tooltip arrow disableInteractive title='Discard Edits'>
-              <IconButton onClick={handleEditsCancel}>
+              <IconButton size='md' onClick={handleEditsCancel}>
                 <CloseRoundedIcon />
               </IconButton>
             </Tooltip>
-            {/*<Typography level='body-xs' sx={{ overflowWrap: 'anywhere' }}>*/}
-            {/*  Close*/}
-            {/*</Typography>*/}
+            <Typography level='body-xs' sx={{ overflowWrap: 'anywhere' }}>
+              Cancel
+            </Typography>
           </Box>
         )}
 

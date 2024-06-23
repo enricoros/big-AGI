@@ -188,7 +188,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     blockFontSize: 'xs',
     blockImageGap: 1,
     blockLineHeight: 1.666667,
-    chatMessagePadding: 1.25,
+    chatMessagePadding: 1,
     fragmentButtonFontSize: 'xs',
     chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },          // 36px
     chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },     // 40px

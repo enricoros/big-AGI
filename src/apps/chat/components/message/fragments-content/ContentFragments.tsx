@@ -11,7 +11,7 @@ import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
 import { ContentPartText } from './ContentPartText';
-import { ContentPartTextEdit } from './ContentPartTextEdit';
+import { PartTextEdit } from './PartTextEdit';
 
 
 const editLayoutSx: SxProps = {
@@ -66,6 +66,10 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   const isMonoFragment = props.fragments.length < 2;
 
+  // if no fragments, don't box them
+  if (!props.fragments.length)
+    return null;
+
   return <Box aria-label='message body' sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
     {props.fragments.map((fragment) => {
 
@@ -76,9 +80,9 @@ export function ContentFragments(props: {
       switch (fragment.part.pt) {
         case 'text':
           return props.textEditsState ? (
-            <ContentPartTextEdit
+            <PartTextEdit
               key={'edit-' + fragment.fId}
-              textPart={fragment.part}
+              textPartText={fragment.part.text}
               fragmentId={fragment.fId}
               contentScaling={props.contentScaling}
               editedText={props.textEditsState[fragment.fId]}
@@ -125,12 +129,22 @@ export function ContentFragments(props: {
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
               showAsItalic
-              // showAsProgress
             />
           );
 
         case 'error':
-          return (
+          return props.textEditsState ? (
+            <PartTextEdit
+              key={'edit-' + fragment.fId}
+              textPartText={fragment.part.error}
+              fragmentId={fragment.fId}
+              contentScaling={props.contentScaling}
+              editedText={props.textEditsState[fragment.fId]}
+              setEditedText={props.setEditedText}
+              onEnterPressed={props.onEditsApply}
+              onEscapePressed={props.onEditsCancel}
+            />
+          ) : (
             <ContentPartPlaceholder
               key={fragment.fId}
               placeholderText={fragment.part.error}

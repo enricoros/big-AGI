@@ -33,7 +33,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
     imageText = imageText.replace(/x(\d+)$|\[(\d+)]$/, '').trim(); // Remove the "xN" or "[N]" part from the imageText
 
   const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
-    `Give me ${t2iProvider.vendor === 'openai' ? 'a dozen' : 'a few'} seconds while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'}...`,
+    `Give me ${t2iProvider.vendor === 'openai' ? 'a minute' : 'a few seconds'} while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'} with ${t2iProvider.painter}...`,
     { originLLM: t2iProvider.painter },
   );
 
