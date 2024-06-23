@@ -9,7 +9,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
+import { createTextAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEdit } from '../fragments-content/ContentPartTextEdit';
@@ -28,7 +28,7 @@ export function DocumentFragmentEditor(props: {
 }) {
 
   // derived state
-  const { fragment, onFragmentDelete, onFragmentReplace } = props;
+  const { editedText, fragment, onFragmentDelete, onFragmentReplace } = props;
   const [isEditing, setIsEditing] = React.useState(false);
   const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
 
@@ -36,34 +36,39 @@ export function DocumentFragmentEditor(props: {
   const fragmentTitle = fragment.title;
   const part = fragment.part;
 
-  // handlers
-
-  const handleDeleteFragment = React.useCallback(() => {
-    onFragmentDelete(fragmentId);
-  }, [fragmentId, onFragmentDelete]);
-
-  const handleReplaceFragment = React.useCallback((newFragment: DMessageAttachmentFragment) => {
-    onFragmentReplace(fragmentId, newFragment);
-  }, [fragmentId, onFragmentReplace]);
-
-
   if (part.pt !== 'text')
     throw new Error('Unexpected part type: ' + part.pt);
 
-  const handleEditToggle = React.useCallback(() => {
+  // delete
+
+  const handleToggleDeleteArmed = React.useCallback(() => {
+    // setIsEditing(false);
+    setIsDeleteArmed(on => !on);
+  }, []);
+
+  const handleFragmentDelete = React.useCallback(() => {
+    onFragmentDelete(fragmentId);
+  }, [fragmentId, onFragmentDelete]);
+
+
+  // edit
+
+  const handleToggleEdit = React.useCallback(() => {
     setIsDeleteArmed(false);
     setIsEditing(on => !on);
   }, []);
 
-  const handleEditEnterPressed = React.useCallback(() => {
-    // setIsEditing(false);
-    // TODO...
-  }, []);
-
-  const handleDeleteArmedToggle = React.useCallback(() => {
-    setIsEditing(false);
-    setIsDeleteArmed(on => !on);
-  }, []);
+  const handleEditApply = React.useCallback(() => {
+    setIsDeleteArmed(false);
+    if (editedText === undefined)
+      return;
+    if (editedText?.length > 0) {
+      onFragmentReplace(fragmentId, createTextAttachmentFragment(fragmentTitle, editedText));
+      // NOTE: since the former function changes the ID of the fragment, the
+      // whole editor will disappear as a side effect
+    } else
+      handleFragmentDelete();
+  }, [editedText, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
 
 
   return (
@@ -85,8 +90,8 @@ export function DocumentFragmentEditor(props: {
           contentScaling={props.contentScaling}
           editedText={props.editedText}
           setEditedText={props.setEditedText}
-          onEnterPressed={handleEditEnterPressed}
-          onEscapePressed={handleEditToggle}
+          onEnterPressed={handleEditApply}
+          onEscapePressed={handleToggleEdit}
         />
       ) : (
         // Document viewer, including collapse/expand
@@ -103,19 +108,18 @@ export function DocumentFragmentEditor(props: {
 
       {/* Edit / Delete commands */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}>
-
         <Box sx={{ display: 'flex', gap: 1 }}>
           {isDeleteArmed ? (
-            <Button variant='solid' color='neutral' size='sm' onClick={handleDeleteArmedToggle} startDecorator={<CloseRoundedIcon />}>
+            <Button variant='solid' color='neutral' size='sm' onClick={handleToggleDeleteArmed} startDecorator={<CloseRoundedIcon />}>
               Cancel
             </Button>
           ) : (
-            <Button variant='plain' color='neutral' size='sm' onClick={handleDeleteArmedToggle} startDecorator={<DeleteOutlineIcon />}>
+            <Button variant='plain' color='neutral' size='sm' onClick={handleToggleDeleteArmed} startDecorator={<DeleteOutlineIcon />}>
               Delete
             </Button>
           )}
           {isDeleteArmed && (
-            <Button variant='plain' color='danger' size='sm' onClick={handleDeleteFragment} startDecorator={<DeleteForeverIcon />}>
+            <Button variant='plain' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
               Delete
             </Button>
           )}
@@ -123,23 +127,21 @@ export function DocumentFragmentEditor(props: {
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
           {isEditing ? (
-            <Button variant='plain' color='neutral' size='sm' onClick={handleEditToggle} startDecorator={<CloseRoundedIcon />}>
+            <Button variant='plain' color='neutral' size='sm' onClick={handleToggleEdit} startDecorator={<CloseRoundedIcon />}>
               Cancel
             </Button>
           ) : (
-            <Button variant='plain' color='neutral' size='sm' onClick={handleEditToggle} startDecorator={<EditRoundedIcon />}>
+            <Button variant='plain' color='neutral' size='sm' onClick={handleToggleEdit} startDecorator={<EditRoundedIcon />}>
               Edit
             </Button>
           )}
           {isEditing && (
-            <Button variant='plain' color='success' onClick={undefined} size='sm' startDecorator={<CheckRoundedIcon />}>
+            <Button variant='plain' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
               Save
             </Button>
           )}
         </Box>
-
       </Box>
-
 
     </Box>
   );

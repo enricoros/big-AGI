@@ -188,7 +188,7 @@ function createContentFragment(part: DMessageContentFragment['part']): DMessageC
 }
 
 
-export function createTextAttachmentFragment(text: string, title: string): DMessageAttachmentFragment {
+export function createTextAttachmentFragment(title: string, text: string): DMessageAttachmentFragment {
   return createAttachmentFragment(title, createDMessageTextPart(text));
 }
 
