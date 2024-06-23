@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DLLM, LLM_IF_OAI_Vision } from '~/modules/llms/store-llms';
 
 import type { AttachmentDraft } from '~/common/attachment-drafts/attachment.types';
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { estimateTokensForFragments } from '~/common/stores/chat/chat.tokens';
 
 

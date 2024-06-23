@@ -6,7 +6,8 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { agiUuid } from '~/common/util/idUtils';
-import { createDMessageEmpty, createPlaceholderContentFragment, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createPlaceholderContentFragment } from '~/common/stores/chat/chat.fragments';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';

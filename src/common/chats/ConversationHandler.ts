@@ -8,7 +8,8 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, createTextContentFragment, DMessage, DMessageFragment, DMessageFragmentId, DMessageId } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 
 import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';

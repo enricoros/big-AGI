@@ -1,6 +1,6 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
-import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Attachment Draft

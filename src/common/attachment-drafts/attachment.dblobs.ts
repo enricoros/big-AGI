@@ -3,7 +3,7 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import { deleteDBAsset, gcDBAssetsByScope, transferDBAssetContextScope } from '~/modules/dblobs/dblobs.db';
 
 import { convertBase64Image, getImageDimensions, LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
-import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import { createDMessageDataRefDBlob, createImageAttachmentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraftSource } from './attachment.types';
 import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './attachment.pipeline';

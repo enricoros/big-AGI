@@ -9,7 +9,8 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
-import { createTextAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { createTextAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEdit } from '../fragments-content/ContentPartTextEdit';

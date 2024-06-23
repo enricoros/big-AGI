@@ -11,7 +11,7 @@ import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
-import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.message';
+import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
 
 
 /**

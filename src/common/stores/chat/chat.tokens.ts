@@ -2,7 +2,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/util/token-counter';
 
-import { DMessageAttachmentFragment, DMessageFragment, isContentOrAttachmentFragment } from './chat.message';
+import { DMessageAttachmentFragment, DMessageFragment, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
@@ -30,7 +30,7 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
     return 0;
   switch (fragment.part.pt) {
     case 'text':
-      if (fragment.ft === 'attachment') {
+      if (!isContentFragment(fragment)) {
         // NOTE: the wrapFormat could be llm-dependent
         const likelyBlockRendition = marshallWrapText(fragment.part.text, fragment.title, 'markdown-code');
         return estimateTextTokens(likelyBlockRendition, llm, debugFrom);

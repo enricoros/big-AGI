@@ -2,11 +2,12 @@ import * as React from 'react';
 import { Box } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
+import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { DocumentFragmentButton } from './DocumentFragmentButton';
 import { DocumentFragmentEditor } from './DocumentFragmentEditor';
-import { ChatMessageTextPartEditState } from '../ChatMessage';
 
 
 /**

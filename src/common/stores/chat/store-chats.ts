@@ -10,8 +10,9 @@ import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 import { agiId, agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
-import type { DMessage, DMessageFragment, DMessageFragmentId, DMessageId, DMessageMetadata } from './chat.message';
+import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
+import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment } from './chat.fragments';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -353,7 +354,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             // cleanup within-v4
             for (const fragment of message.fragments) {
               // fixup rename of fragment's dblobId to dblobAssetId
-              if (fragment.ft === 'content' && fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob' && (fragment.part.dataRef as any)['dblobId']) {
+              if (isContentFragment(fragment) && fragment.part.pt === 'image_ref' && fragment.part.dataRef.reftype === 'dblob' && (fragment.part.dataRef as any)['dblobId']) {
                 fragment.part.dataRef.dblobAssetId = (fragment.part.dataRef as any)['dblobId'];
                 delete (fragment.part.dataRef as any)['dblobId'];
               }
@@ -362,8 +363,12 @@ export const useChatStore = create<ConversationsStore>()(devtools(
                 fragment.fId = agiId('chat-dfragment');
               }
             }
-            // remove the placeholder parts
-            message.fragments = message.fragments.filter(f => f.ft !== 'content' || f.part.pt !== 'ph');
+            // replace the Content.Pl[part.pt='ph'] fragments with Error fragments, to show the aborted ops (instead of just empty blocks)
+            message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment =>
+              (isContentFragment(fragment) && fragment.part.pt === 'ph')
+                ? createErrorContentFragment(`Interrupted: ${fragment.part.pText}`)
+                : fragment,
+            );
             // cleanup pre-v4 properties
             delete message.pendingIncomplete;
             delete (message as any).typing;

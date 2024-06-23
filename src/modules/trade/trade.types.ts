@@ -1,7 +1,8 @@
 import type { DModelSource } from '~/modules/llms/store-llms';
 
 import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createTextContentFragment, DMessage } from '~/common/stores/chat/chat.message';
+import type { DMessage } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 /// STORED TYPES definitions ///

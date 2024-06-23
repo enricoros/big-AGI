@@ -6,7 +6,7 @@ import { Textarea } from '@mui/joy';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageFragmentId, DMessageTextPart } from '~/common/stores/chat/chat.message';
+import type { DMessageFragmentId, DMessageTextPart } from '~/common/stores/chat/chat.fragments';
 
 
 const textEditAreaSx: SxProps = {

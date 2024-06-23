@@ -10,7 +10,7 @@ import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
-import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.message';
+import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';

@@ -6,7 +6,7 @@ import { Box } from '@mui/joy';
 import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
-import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.message';
+import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 import { PartImageRefDBlob, showImageDataRefInNewTab } from './PartImageRefDBlob';
