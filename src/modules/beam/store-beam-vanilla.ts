@@ -2,7 +2,8 @@ import { createStore, StateCreator } from 'zustand/vanilla';
 
 import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
 
-import type { DMessage, DMessageFragment, DMessageFragmentId, DMessageId } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 
 import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
 import { SCATTER_RAY_DEF } from './beam.config';

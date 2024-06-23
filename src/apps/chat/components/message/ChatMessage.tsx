@@ -25,11 +25,12 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { DMessage, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
-import { classifyMessageFragments, createTextContentFragment, DMessage, DMessageFragment, DMessageFragmentId, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -126,7 +127,11 @@ export function ChatMessage(props: {
   } = props.message;
 
   // split the fragments: image attachments are first, then content fragments, then other attachment fragments
-  const [contentFragments, imageAttachments, nonImageAttachments] = classifyMessageFragments(messageFragments);
+  const [contentFragments, imageAttachments, nonImageAttachments] = [
+    messageFragments.filter(isContentFragment) as DMessageContentFragment[],
+    messageFragments.filter(f => isAttachmentFragment(f) && f.part.pt === 'image_ref') as DMessageAttachmentFragment[],
+    messageFragments.filter(f => isAttachmentFragment(f) && f.part.pt !== 'image_ref') as DMessageAttachmentFragment[],
+  ];
 
   const isUserStarred = messageHasUserFlag(props.message, 'starred');
 

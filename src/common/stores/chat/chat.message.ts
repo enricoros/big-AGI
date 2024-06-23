@@ -1,6 +1,5 @@
-import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
-
-import { agiId, agiUuid } from '~/common/util/idUtils';
+import { agiUuid } from '~/common/util/idUtils';
+import { createPlaceholderContentFragment, createTextContentFragment, createTextContentOverFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Message
@@ -36,80 +35,6 @@ export interface DMessage {
 
 export type DMessageId = string;
 export type DMessageRole = 'user' | 'assistant' | 'system';
-
-
-// Message Fragments
-// - mostly Parts with a purpose and extra information, with forward compatibility
-
-export type DMessageFragment =
-  | DMessageContentFragment
-  | DMessageAttachmentFragment
-// | DMessageBeamFragment
-// | DMessageMetadataV1Fragment
-  | _DMessageSentinelFragment;
-
-// expected a list of one or more per message, of similar or different types
-export type DMessageContentFragment = {
-  ft: 'content',
-  fId: DMessageFragmentId;
-  part:
-    | DMessageTextPart
-    | DMessageImageRefPart
-    | DMessageToolCallPart
-    | DMessageToolResponsePart
-    | DMessagePlaceholderPart
-    | DMessageErrorPart
-    | _DMessageSentinelPart;
-}
-
-// displayed at the bottom of the message, zero or more
-export type DMessageAttachmentFragment = {
-  ft: 'attachment',
-  fId: DMessageFragmentId;
-  title: string;
-  part: DMessageTextPart | DMessageImageRefPart;
-}
-
-// up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
-// could not be the data store itself, but only used for save/reload
-// export type DMessageBeamFragment = {
-//   ft: 'beam',
-//   fId: DMessageFragmentId;
-//   beam: { rays: any[], merges: any[], ... };
-// }
-
-// here just to foce the typesystem to work and detect corner cases
-type _DMessageSentinelFragment = {
-  ft: '_ft_sentinel',
-  fId: DMessageFragmentId;
-}
-
-// this id is not unique, just 8 bytes
-export type DMessageFragmentId = string;
-
-
-// Message Fragment Parts
-// - small and efficient (larger objects need to only be referred to)
-
-export type DMessageTextPart = { pt: 'text', text: string };
-export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
-export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
-export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
-export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
-export type DMessageErrorPart = { pt: 'error', error: string };
-type _DMessageSentinelPart = { pt: '_pt_sentinel' };
-
-
-// Data Reference - we use a Ref and the DBlob framework to store media locally, or remote URLs
-
-export type DMessageDataRef =
-  | { reftype: 'url'; url: string } // remotely accessible URL
-  | { reftype: 'dblob'; dblobAssetId: DBlobAssetId, mimeType: string; bytesSize: number; } // reference to a DBlob
-  ;
-
-// type DDataInline =
-//   | { stype: 'base64'; mimeType: string; base64Data: string }
-//   ;
 
 
 // Metadata
@@ -171,88 +96,6 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
 }
 
 
-// fragments - each message has fragments (zero or more) each of a single type and with a single part
-
-export function createTextContentFragment(text: string): DMessageContentFragment {
-  return createContentFragment(createDMessageTextPart(text));
-}
-
-export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
-  return createContentFragment(createDMessageImagePart(dataRef, altText, width, height));
-}
-
-export function createPlaceholderContentFragment(placeholderText: string): DMessageContentFragment {
-  return createContentFragment(createDMessagePlaceholderPart(placeholderText));
-}
-
-export function createErrorContentFragment(error: string): DMessageContentFragment {
-  return createContentFragment(createDMessageErrorPart(error));
-}
-
-function createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
-  return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
-}
-
-
-export function createTextAttachmentFragment(title: string, text: string): DMessageAttachmentFragment {
-  return createAttachmentFragment(title, createDMessageTextPart(text));
-}
-
-export function createImageAttachmentFragment(title: string, dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return createAttachmentFragment(title, createDMessageImagePart(dataRef, altText, width, height));
-}
-
-export function createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
-  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, part };
-}
-
-
-function createSentinelFragment(): _DMessageSentinelFragment {
-  return { ft: '_ft_sentinel', fId: agiId('chat-dfragment' /* -_sentinel */) };
-}
-
-
-// parts - each fragment has a part
-
-function createDMessageTextPart(text: string): DMessageTextPart {
-  return { pt: 'text', text };
-}
-
-function createDMessageImagePart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
-  return { pt: 'image_ref', dataRef, altText, width, height };
-}
-
-function createDMessageToolCallPart(functionName: string, args: Record<string, any>): DMessageToolCallPart {
-  return { pt: 'tool_call', function: functionName, args };
-}
-
-function createDMessageToolResponsePart(functionName: string, response: Record<string, any>): DMessageToolResponsePart {
-  return { pt: 'tool_response', function: functionName, response };
-}
-
-function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceholderPart {
-  return { pt: 'ph', pText: placeholderText };
-}
-
-function createDMessageErrorPart(error: string): DMessageErrorPart {
-  return { pt: 'error', error };
-}
-
-function createSentinelPart(): _DMessageSentinelPart {
-  return { pt: '_pt_sentinel' };
-}
-
-// data references
-
-export function createDMessageDataRefUrl(url: string): DMessageDataRef {
-  return { reftype: 'url', url };
-}
-
-export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType: string, bytesSize: number): DMessageDataRef {
-  return { reftype: 'dblob', dblobAssetId: dblobAssetId, mimeType, bytesSize };
-}
-
-
 // helpers - duplication
 
 export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
@@ -279,67 +122,6 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
   };
 }
 
-export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
-  return fragments.map(_duplicateFragment);
-}
-
-function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
-  switch (fragment.ft) {
-    case 'content':
-      return createContentFragment(_duplicatePart(fragment.part));
-
-    case 'attachment':
-      return createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
-
-    case '_ft_sentinel':
-      return createSentinelFragment();
-
-    // default:
-    //   throw new Error('Invalid fragment');
-  }
-}
-
-function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: T): T {
-  switch (part.pt) {
-    case 'text':
-      return createDMessageTextPart(part.text) as T;
-
-    case 'image_ref':
-      return createDMessageImagePart(_duplicateReference(part.dataRef), part.altText, part.width, part.height) as T;
-
-    case 'tool_call':
-      return createDMessageToolCallPart(part.function, { ...part.args }) as T;
-
-    case 'tool_response':
-      return createDMessageToolResponsePart(part.function, { ...part.response }) as T;
-
-    case 'ph':
-      return createDMessagePlaceholderPart(part.pText) as T;
-
-    case 'error':
-      return createDMessageErrorPart(part.error) as T;
-
-    case '_pt_sentinel':
-      return createSentinelPart() as T;
-
-    // default:
-    //   throw new Error('Invalid part');
-  }
-}
-
-function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
-  switch (ref.reftype) {
-    case 'url':
-      return createDMessageDataRefUrl(ref.url);
-
-    case 'dblob':
-      return createDMessageDataRefDBlob(ref.dblobAssetId, ref.mimeType, ref.bytesSize);
-
-    // default: // unreachable, we'd get a compiler error before this
-    //   throw new Error('Invalid reference');
-  }
-}
-
 export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
   // TODO: deep copy this?
   return { ...metadata };
@@ -348,22 +130,9 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
 
 // helpers during the transition from V3
 
-export function isContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment {
-  return fragment.ft === 'content';
-}
 
-export function isContentOrAttachmentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment | DMessageAttachmentFragment {
-  return fragment.ft === 'content' || fragment.ft === 'attachment';
-}
-
-export function classifyMessageFragments(fragments: DMessageFragment[]):
-  [DMessageContentFragment[], DMessageAttachmentFragment[], DMessageAttachmentFragment[], DMessageFragment[]] {
-  return [
-    fragments.filter(f => f.ft === 'content') as DMessageContentFragment[],
-    fragments.filter(f => f.ft === 'attachment' && f.part.pt === 'image_ref') as DMessageAttachmentFragment[],
-    fragments.filter(f => f.ft === 'attachment' && f.part.pt !== 'image_ref') as DMessageAttachmentFragment[],
-    fragments.filter(f => f.ft !== 'content' && f.ft !== 'attachment'),
-  ];
+export function messageHasImageFragments(message: DMessage): boolean {
+  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'image_ref' /*&& fragment.part.dataRef.reftype === 'dblob'*/);
 }
 
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
@@ -376,14 +145,14 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
 export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMessageFragment[]>, newText: string, appendText?: boolean): DMessageFragment[] {
 
   // if there's no text fragment, create it
-  const lastTextFragment = fragments.findLast(f => f.ft === 'content' && f.part.pt === 'text') as DMessageContentFragment | undefined;
+  const lastTextFragment = fragments.findLast(f => isContentFragment(f) && f.part.pt === 'text') as DMessageContentFragment | undefined;
   if (!lastTextFragment)
     return [...fragments, createTextContentFragment(newText)];
 
   // append/replace the last text fragment
   return fragments.map(fragment =>
     (fragment === lastTextFragment)
-      ? { ...fragment, part: createDMessageTextPart((appendText && fragment.part.pt === 'text') ? fragment.part.text + newText : newText) }
+      ? createTextContentOverFragment(lastTextFragment, (appendText && lastTextFragment.part.pt === 'text') ? lastTextFragment.part.text + newText : newText)
       : fragment,
   );
 }
@@ -419,8 +188,4 @@ export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag)
     return message.userFlags.filter(_f => _f !== flag);
   else
     return [...(message.userFlags || []), flag];
-}
-
-export function messageHasImageFragments(message: DMessage): boolean {
-  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'image_ref' /*&& fragment.part.dataRef.reftype === 'dblob'*/);
 }

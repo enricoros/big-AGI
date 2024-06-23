@@ -3,7 +3,8 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import type { DMessageAttachmentFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 import { PartImageRefDBlob, showImageDataRefInNewTab } from '../fragments-content/PartImageRefDBlob';

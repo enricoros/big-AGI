@@ -24,12 +24,13 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageMetadata, duplicateDMessageFragments, isContentFragment, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments, isContentFragment } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapTextFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';

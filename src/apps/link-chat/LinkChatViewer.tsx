@@ -7,8 +7,9 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { Brand } from '~/common/app.config';
-import { DMessageFragment, DMessageFragmentId, DMessageId, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { DMessageId, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';

@@ -1,7 +1,7 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandler, url?: string) => {

@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Button } from '@mui/joy';
 
-import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 

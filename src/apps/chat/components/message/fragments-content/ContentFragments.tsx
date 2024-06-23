@@ -4,7 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageContentFragment, DMessageFragment, DMessageFragmentId, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
@@ -69,7 +70,7 @@ export function ContentFragments(props: {
     {props.fragments.map((fragment) => {
 
       // only proceed with DMessageContentFragment
-      if (fragment.ft !== 'content')
+      if (!isContentFragment(fragment))
         return null;
 
       switch (fragment.part.pt) {

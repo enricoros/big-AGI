@@ -7,7 +7,7 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
-import type { DMessageContentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';

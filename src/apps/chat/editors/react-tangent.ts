@@ -3,7 +3,7 @@ import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
-import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 // configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;

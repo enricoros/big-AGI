@@ -8,7 +8,7 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.message';
+import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
 import { showImageDataRefInNewTab } from '../../message/fragments-content/PartImageRefDBlob';

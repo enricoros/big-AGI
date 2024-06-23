@@ -4,7 +4,7 @@ import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments }
 
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
-import { createErrorContentFragment } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
@@ -67,7 +67,7 @@ export async function gcChatImageAssets() {
   for (const chat of chatStore.conversations) {
     for (const message of chat.messages) {
       for (const fragment of message.fragments) {
-        if (fragment.ft !== 'content' && fragment.ft !== 'attachment')
+        if (!isContentOrAttachmentFragment(fragment))
           continue;
         if (fragment.part.pt !== 'image_ref')
           continue;
