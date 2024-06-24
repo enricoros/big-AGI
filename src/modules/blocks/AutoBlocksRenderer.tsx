@@ -11,7 +11,7 @@ import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 import type { Block, CodeBlock, HtmlBlock, ImageBlock, TextBlock } from './blocks.types';
 import { BlocksContainer } from './BlocksContainer';
-import { RenderChatText } from './text/RenderChatText';
+import { RenderPlainChatText } from '~/modules/blocks/plaintext/RenderPlainChatText';
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
@@ -277,7 +277,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
               : block.type === 'diffb' ? <RenderTextDiff key={'text-diff-' + index} textDiffBlock={block} sx={scaledTypographySx} />
                 : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
                   ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                  : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+                  : <RenderPlainChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
       })}
 
       {(isTextCollapsed || forceUserExpanded) && (

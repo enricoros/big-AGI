@@ -12,7 +12,7 @@ import type { TextBlock } from '../blocks.types';
  * Renders a text block with chat commands.
  * NOTE: should remove the commands parsing dependency.
  */
-export const RenderChatText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
+export const RenderPlainChatText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
 
   const elements = extractChatCommand(props.textBlock.content);
 
