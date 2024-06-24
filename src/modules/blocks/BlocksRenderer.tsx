@@ -297,16 +297,10 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
         const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== blocks.length - 1;
         const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
         const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
-        return block.type === 'htmlb'
-          ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
-          : block.type === 'codeb'
-            ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={false /*!optimizeSubBlockWithMemo*/} sx={scaledCodeSx} />
-            : block.type === 'imageb'
-              ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt}
-                                onImageRegenerate={undefined /* because there could be many of these URL images in a fragment, and we miss the whole partial-edit logic in a text fragment */}
-                                scaledImageSx={scaledImageSx} variant='content-part' />
-              : block.type === 'diffb'
-                ? <RenderTextDiff key={'text-diff-' + index} textDiffBlock={block} sx={scaledTypographySx} />
+        return block.type === 'htmlb' ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
+          : block.type === 'codeb' ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={false /*!optimizeSubBlockWithMemo*/} sx={scaledCodeSx} />
+            : block.type === 'imageb' ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt} onImageRegenerate={undefined /* we'd need to have selective fragment editing as there could be many of these URL images in a fragment */} scaledImageSx={scaledImageSx} variant='content-part' />
+              : block.type === 'diffb' ? <RenderTextDiff key={'text-diff-' + index} textDiffBlock={block} sx={scaledTypographySx} />
                 : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
                   ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
                   : <RenderChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;

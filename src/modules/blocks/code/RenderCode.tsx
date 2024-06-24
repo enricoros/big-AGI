@@ -20,7 +20,8 @@ import type { CodeBlock } from '../blocks.types';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
 import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
 import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
-import { heuristicIsBlockTextHTML, IFrameComponent } from '../html/RenderHtml';
+import { RenderCodeIFrame } from './RenderCodeIFrame';
+import { heuristicIsBlockTextHTML } from '../html/RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
 
@@ -228,7 +229,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 
         {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
         {renderHTML
-          ? <IFrameComponent htmlString={blockCode} />
+          ? <RenderCodeIFrame htmlCode={blockCode} />
           : renderMermaid
             ? <RenderCodeMermaid mermaidCode={blockCode} fitScreen={fitScreen} />
             : <Box component='div'
