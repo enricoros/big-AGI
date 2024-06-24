@@ -198,11 +198,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
     case 'ego':
       edit({
         label: source.label,
-        ref: source.refId,
+        ref: `${source.refMessageId} - ${source.refConversationTitle}`,
         input: {
-          mimeType: 'ego/contents',
-          data: source.contents,
-          dataSize: source.contents.length,
+          mimeType: 'application/vnd.agi.ego.fragments',
+          data: source.fragments,
+          dataSize: source.fragments.length,
         },
       });
       break;
@@ -262,8 +262,8 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       break;
 
     // EGO
-    case input.mimeType === 'ego/contents':
-      converters.push({ id: 'ego-contents-inlined', name: 'Message' });
+    case input.mimeType === 'application/vnd.agi.ego.fragments':
+      converters.push({ id: 'ego-fragments-inlined', name: 'Message' });
       break;
 
     // catch-all
@@ -438,16 +438,16 @@ export async function attachmentPerformConversion(
 
 
     // self: message
-    case 'ego-contents-inlined':
+    case 'ego-fragments-inlined':
       if (!Array.isArray(input.data)) {
-        console.log('Expected DMessageContentFragment[] for ego-contents-inlined, got:', typeof input.data);
+        console.log('Expected DMessageContentFragment[] for ego-fragments-inlined, got:', typeof input.data);
         break;
       }
       for (const contentFragment of input.data) {
         if (contentFragment.part.pt === 'text' || isImageRefPart(contentFragment.part))
           newFragments.push(createContentPartAttachmentFragment(source.media === 'ego' ? source.refId : 'Message', contentFragment.part));
         else
-          console.log('Unhandled ego-contents-inlined part:', contentFragment.part.pt);
+          console.log('Unhandled ego-fragments-inlined part:', contentFragment.part.pt);
       }
       break;
 

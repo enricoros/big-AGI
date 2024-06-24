@@ -1,6 +1,8 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageId } from '~/common/stores/chat/chat.message';
 
 
 // Attachment Draft
@@ -51,10 +53,13 @@ export type AttachmentDraftSource = {
 } | {
   // special type for attachments thar are references to self (ego, application) objects
   media: 'ego';
-  method: 'ego-contents';
-  contents: DMessageContentFragment[];
+  method: 'ego-fragments';
   label: string;
-  refId: string; // message ID where the context came from (unused..)
+  // this is overfit to fragments for now
+  fragments: DMessageContentFragment[];
+  refConversationTitle: string;
+  refConversationId: DConversationId;
+  refMessageId: DMessageId;
 };
 
 export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentDraftSourceOriginDTO;
@@ -92,7 +97,7 @@ export type AttachmentDraftConverterType =
   | 'text' | 'rich-text' | 'rich-text-table'
   | 'pdf-text' | 'pdf-images'
   | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-default'
-  | 'ego-contents-inlined'
+  | 'ego-fragments-inlined'
   | 'unhandled';
 
 

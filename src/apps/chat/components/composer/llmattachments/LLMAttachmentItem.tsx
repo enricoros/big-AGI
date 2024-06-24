@@ -80,7 +80,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
   'image-to-default': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
-  'ego-contents-inlined': TelegramIcon,
+  'ego-fragments-inlined': TelegramIcon,
   'unhandled': TextureIcon,
 };
 

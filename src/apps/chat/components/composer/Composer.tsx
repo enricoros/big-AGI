@@ -157,7 +157,7 @@ export function Composer(props: {
   // attachments-overlay: comes from the attachments slice of the conversation overlay
   const {
     /* items */ attachmentDrafts,
-    /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoContent, attachAppendFile,
+    /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile,
     /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeTextFragments,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
@@ -315,22 +315,21 @@ export function Composer(props: {
     }
   }, [composerTextAreaRef, setComposeText]);
 
-  const onActileEmbedMessage = React.useCallback(async (starredItem: StarredMessageItem) => {
+  const onActileEmbedMessage = React.useCallback(async ({ conversationId, messageId }: StarredMessageItem) => {
     // get the message
-    const conversation = getConversation(starredItem.conversationId);
-    const messageToEmbed = conversation?.messages.find(m => m.id === starredItem.messageId);
+    const conversation = getConversation(conversationId);
+    const messageToEmbed = conversation?.messages.find(m => m.id === messageId);
     if (conversation && messageToEmbed) {
-      const contentToEmbed = duplicateDMessageFragments(messageToEmbed.fragments)
+      const fragmentsCopy = duplicateDMessageFragments(messageToEmbed.fragments)
         .filter(isContentFragment);
-      if (contentToEmbed.length) {
+      if (fragmentsCopy.length) {
         const chatTitle = conversationTitle(conversation);
-        const messageText = messageFragmentsReduceText(contentToEmbed);
-        const refLabel = `${chatTitle} > ${messageText.slice(0, 10)}...`;
-        const refId = `${starredItem.messageId} - ${chatTitle}`;
-        await attachAppendEgoContent(refLabel, refId, contentToEmbed);
+        const messageText = messageFragmentsReduceText(fragmentsCopy);
+        const label = `${chatTitle} > ${messageText.slice(0, 10)}...`;
+        await attachAppendEgoFragments(fragmentsCopy, label, chatTitle, conversationId, messageId);
       }
     }
-  }, [attachAppendEgoContent]);
+  }, [attachAppendEgoFragments]);
 
   const actileProviders = React.useMemo(() => {
     return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileEmbedMessage)];
