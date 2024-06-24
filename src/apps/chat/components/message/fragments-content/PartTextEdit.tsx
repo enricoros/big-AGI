@@ -1,25 +1,28 @@
 import * as React from 'react';
 
-import type { SxProps } from '@mui/joy/styles/types';
-import { Textarea } from '@mui/joy';
+import { styled, Textarea } from '@mui/joy';
 
-import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
+import { blocksTextStyleSx } from '~/modules/blocks/blocks.styles';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 
 
-const textEditAreaSx: SxProps = {
-  ...blocksRendererSx,
-  // very important: back to a 100% width
+export const BlocksTextarea = styled(Textarea)({
+  // very important: back to a 100% width - the parent is a Grid - see why we need this in BlocksContainer
   width: '100%',
+
   // just shrink padding tiny bit
   py: 0.5,
+
   // make the editing stand out a bit more
   boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
   outline: '1px solid',
-  outlineColor: 'warning.solidBg',
-};
+  outlineColor: 'var(--joy-palette-warning-solidBg)',
+
+  // text style
+  ...blocksTextStyleSx,
+});
 
 
 /**
@@ -70,7 +73,7 @@ export function PartTextEdit(props: {
   }, [enterIsNewline, onEnterPressed, onEscapePressed]);
 
   return (
-    <Textarea
+    <BlocksTextarea
       variant={/*props.invertedColors ? 'plain' :*/ 'soft'}
       color={/*props.decolor ? undefined : props.invertedColors ? 'primary' :*/ 'warning'}
       autoFocus
@@ -87,7 +90,6 @@ export function PartTextEdit(props: {
           enterKeyHint: enterIsNewline ? 'enter' : 'done',
         },
       }}
-      sx={textEditAreaSx}
     />
   );
 }
