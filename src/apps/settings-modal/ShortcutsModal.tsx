@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
@@ -46,7 +46,7 @@ export function ShortcutsModal(props: { onClose: () => void }) {
 
   return (
     <GoodModal open title='Desktop Shortcuts' onClose={props.onClose}>
-      <BlocksRenderer
+      <AutoBlocksRenderer
         text={shortcutsMd}
         fromRole='assistant'
         contentScaling='sm'

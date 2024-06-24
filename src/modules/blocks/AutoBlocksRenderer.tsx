@@ -10,7 +10,7 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 import type { Block, CodeBlock, HtmlBlock, ImageBlock, TextBlock } from './blocks.types';
-import { BlocksContainer } from './blocks.styles';
+import { BlocksContainer } from './BlocksContainer';
 import { RenderChatText } from './text/RenderChatText';
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
@@ -157,7 +157,7 @@ type BlocksRendererProps = {
 /**
  * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
  */
-export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
+export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 
   // state
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
@@ -191,37 +191,7 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
   }, []);
 
 
-  // Memo the styles, to minimize re-renders
-
-  const scaledCodeSx: SxProps = React.useMemo(() => ({
-    my: props.specialCodePlain ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
-    backgroundColor: props.specialCodePlain ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-    boxShadow: props.specialCodePlain ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
-    borderRadius: 'sm',
-    fontFamily: 'code',
-    fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
-    fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
-    fontVariantLigatures: 'none',
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    minWidth: 260,
-    minHeight: '2.75rem',
-  }), [fromAssistant, props.contentScaling, props.specialCodePlain]);
-
-  const scaledImageSx: SxProps = React.useMemo(() => ({
-    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    marginBottom: themeScalingMap[props.contentScaling]?.blockImageGap ?? 1.5,
-  }), [props.contentScaling]);
-
-  const scaledTypographySx: SxProps = React.useMemo(() => ({
-    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    ...(props.showAsDanger ? { color: 'danger.500', fontWeight: 500 } : {}),
-    ...(props.showAsItalic ? { fontStyle: 'italic' } : {}),
-  }), [props.contentScaling, props.showAsDanger, props.showAsItalic]);
-
-
-  // Block splitter, with memoand special recycle of former blocks, to help React minimize render work
+  // Block splitter, with memo and special recycle of former blocks, to help React minimize render work
 
   const autoBlocksMemo = React.useMemo(() => {
     // split the complete input text into blocks
@@ -251,6 +221,36 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
       ? recycledBlocks.filter(block => block.type === 'codeb' || recycledBlocks.length === 1)
       : recycledBlocks;
   }, [fromSystem, props.specialDiagramMode, renderTextDiff, text]);
+
+
+  // Memo the styles, to minimize re-renders
+
+  const scaledCodeSx: SxProps = React.useMemo(() => ({
+    my: props.specialCodePlain ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
+    backgroundColor: props.specialCodePlain ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+    boxShadow: props.specialCodePlain ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
+    borderRadius: 'sm',
+    fontFamily: 'code',
+    fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
+    fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
+    fontVariantLigatures: 'none',
+    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+    minWidth: 260,
+    minHeight: '2.75rem',
+  }), [fromAssistant, props.contentScaling, props.specialCodePlain]);
+
+  const scaledImageSx: SxProps = React.useMemo(() => ({
+    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+    marginBottom: themeScalingMap[props.contentScaling]?.blockImageGap ?? 1.5,
+  }), [props.contentScaling]);
+
+  const scaledTypographySx: SxProps = React.useMemo(() => ({
+    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
+    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
+    ...(props.showAsDanger ? { color: 'danger.500', fontWeight: 500 } : {}),
+    ...(props.showAsItalic ? { fontStyle: 'italic' } : {}),
+  }), [props.contentScaling, props.showAsDanger, props.showAsItalic]);
 
 
   return (
@@ -304,4 +304,4 @@ export const BlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererPro
   );
 });
 
-BlocksRenderer.displayName = 'BlocksRenderer';
+AutoBlocksRenderer.displayName = 'AutoBlocksRenderer';

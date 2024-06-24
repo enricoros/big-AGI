@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { styled, Textarea } from '@mui/joy';
 
-import { blocksTextStyleSx } from '~/modules/blocks/blocks.styles';
+import { blocksTextStyleSx } from '~/modules/blocks/BlocksContainer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
@@ -13,7 +13,8 @@ export const BlocksTextarea = styled(Textarea)({
   width: '100%',
 
   // just shrink padding tiny bit
-  py: 0.5,
+  paddingBlock: '0.25rem',
+  // marginBlock: '-0.25rem',
 
   // make the editing stand out a bit more
   boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',

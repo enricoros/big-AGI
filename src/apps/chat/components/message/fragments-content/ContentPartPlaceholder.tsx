@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -16,7 +16,7 @@ export function ContentPartPlaceholder(props: {
 }) {
   // const placeholder = (
   return (
-    <BlocksRenderer
+    <AutoBlocksRenderer
       text={props.placeholderText}
       fromRole={props.messageRole}
       contentScaling={props.contentScaling}

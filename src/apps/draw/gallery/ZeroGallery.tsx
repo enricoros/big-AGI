@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Card } from '@mui/joy';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 
 const zeroGalleryMd = `
@@ -40,7 +40,7 @@ export function ZeroGallery(props: { domain: 'draw' | 'app' }) {
       {/*  {Brand.Title.Base} No Images */}
       {/*</Typography>*/}
       {/*<Typography level='title-sm' sx={{ whiteSpace: 'balance' }}>*/}
-      <BlocksRenderer
+      <AutoBlocksRenderer
         text={text}
         fromRole='assistant'
         contentScaling='sm'
