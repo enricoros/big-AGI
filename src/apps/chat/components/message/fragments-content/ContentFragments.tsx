@@ -10,7 +10,7 @@ import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isConten
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { ContentPartText } from './ContentPartText';
+import { PartTextBlocks } from './PartTextBlocks';
 import { PartTextEdit } from './PartTextEdit';
 
 
@@ -91,7 +91,7 @@ export function ContentFragments(props: {
               onEscapePressed={props.onEditsCancel}
             />
           ) : (
-            <ContentPartText
+            <PartTextBlocks
               key={fragment.fId}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}

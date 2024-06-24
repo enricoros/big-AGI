@@ -3,8 +3,8 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
+import { BlocksContainer } from '~/modules/blocks/blocks.styles';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
-import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
@@ -47,7 +47,7 @@ export function ContentPartImageRef(props: {
   }), [props.contentScaling]);
 
   return (
-    <Box sx={blocksRendererSx}>
+    <BlocksContainer>
       {dataRef.reftype === 'dblob' ? (
         <PartImageRefDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
@@ -73,6 +73,6 @@ export function ContentPartImageRef(props: {
           ContentPartImageRef: unknown reftype
         </Box>
       )}
-    </Box>
+    </BlocksContainer>
   );
 }
