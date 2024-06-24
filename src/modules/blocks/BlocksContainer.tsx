@@ -1,4 +1,4 @@
-import { Box, styled } from '@mui/joy';
+import { Box, styled, Textarea } from '@mui/joy';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
@@ -31,6 +31,26 @@ export const BlocksContainer = styled(Box)({
 
   // enables children's x-scrollbars (clips to the Fragment, so sub-parts will stay within this)
   overflowX: 'auto',
+
+  // text style
+  ...blocksTextStyleSx,
+});
+
+/**
+ * Use this TextArea for block-like looks while editing.
+ */
+export const BlocksTextarea = styled(Textarea)({
+  // very important: back to a 100% width - the parent is a Grid - see why we need this in BlocksContainer
+  width: '100%',
+
+  // just shrink padding tiny bit
+  paddingBlock: '0.25rem',
+  // marginBlock: '-0.25rem',
+
+  // make the editing stand out a bit more
+  boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
+  outline: '1px solid',
+  outlineColor: 'var(--joy-palette-warning-solidBg)',
 
   // text style
   ...blocksTextStyleSx,

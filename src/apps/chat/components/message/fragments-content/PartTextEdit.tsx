@@ -1,29 +1,9 @@
 import * as React from 'react';
 
-import { styled, Textarea } from '@mui/joy';
-
-import { blocksTextStyleSx } from '~/modules/blocks/BlocksContainer';
+import { BlocksTextarea } from '~/modules/blocks/BlocksContainer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-
-
-export const BlocksTextarea = styled(Textarea)({
-  // very important: back to a 100% width - the parent is a Grid - see why we need this in BlocksContainer
-  width: '100%',
-
-  // just shrink padding tiny bit
-  paddingBlock: '0.25rem',
-  // marginBlock: '-0.25rem',
-
-  // make the editing stand out a bit more
-  boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
-  outline: '1px solid',
-  outlineColor: 'var(--joy-palette-warning-solidBg)',
-
-  // text style
-  ...blocksTextStyleSx,
-});
 
 
 /**
