@@ -1,5 +1,5 @@
 import { agiUuid } from '~/common/util/idUtils';
-import { createPlaceholderContentFragment, createTextContentFragment, createTextContentOverFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderContentFragment, createTextContentFragment, specialOverwriteTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Message
@@ -169,7 +169,7 @@ export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMess
   // append/replace the last text fragment
   return fragments.map(fragment =>
     (fragment === lastTextFragment)
-      ? createTextContentOverFragment(lastTextFragment, (appendText && lastTextFragment.part.pt === 'text') ? lastTextFragment.part.text + newText : newText)
+      ? specialOverwriteTextContentFragment(lastTextFragment, (appendText && lastTextFragment.part.pt === 'text') ? lastTextFragment.part.text + newText : newText)
       : fragment,
   );
 }

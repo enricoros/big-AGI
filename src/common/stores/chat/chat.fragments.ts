@@ -49,6 +49,16 @@ export type DMessageAttachmentFragment = {
     | _DMessageSentinelPart;
 }
 
+//   title: string; // common presentation, without decoding parts
+//   type: 'TODO_CHANGE_TYPE',
+//   part:
+//     | DMessageArtifactPart
+//     | DMessageImageRefPart
+//     | _DMessageSentinelPart;
+// }
+//
+// type DMessageAttachmentMimeType;
+
 // force the typesystem to work, bark, and detect/reveal corner cases
 type _DMessageSentinelFragment = {
   ft: '_ft_sentinel',
@@ -70,7 +80,7 @@ type _DMessageSentinelFragment = {
 // Small and efficient (larger objects need to only be referred to)
 //
 
-// export type DMessageArtifactPart = { pt: 'artifact', data: DMessageDataInline, mimeType: DMessageArtifactMimeType, title: string, language?: string; namedId?: string };
+export type DMessageArtifactPart = { pt: 'artifact', data: DMessageDataInline, mimeType: DMessageArtifactMimeType, title: string, language?: string; namedId?: string };
 export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
@@ -79,15 +89,16 @@ export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Re
 export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
 type _DMessageSentinelPart = { pt: '_pt_sentinel' };
 
-// type DMessageArtifactMimeType =
-//   | 'application/vnd.agi.code' // Blocks > RenderCode
-//   | 'application/vnd.agi.plantuml'
-//   | 'image/svg+xml'
-//   | 'text/csv'  // table editor
-//   | 'text/html' // rich content paste, or blocks RenderCode[HTML]
-//   | 'text/markdown' // BlocksRenderer; note: can contain RenderCode blocks in triple-backticks
-//   | 'text/plain' // clipboard text paste
-//   ;
+type DMessageArtifactMimeType =
+  | 'application/vnd.agi.ego' // for attaching messages
+// | 'application/vnd.agi.code' // Blocks > RenderCode
+// | 'application/vnd.agi.plantuml'
+// | 'image/svg+xml'
+// | 'text/csv'  // table editor
+// | 'text/html' // rich content paste, or blocks RenderCode[HTML]
+// | 'text/markdown' // BlocksRenderer; note: can contain RenderCode blocks in triple-backticks
+// | 'text/plain' // clipboard text paste
+  ;
 
 
 //
@@ -101,7 +112,7 @@ export type DMessageDataRef =
   | { reftype: 'dblob'; dblobAssetId: DBlobAssetId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
 
-// type DMessageDataInline = { dt: 'text', text: string }; // | { dt: 'base64', base64: string }
+type DMessageDataInline = { dt: 'text', text: string }; // | { dt: 'base64', base64: string }
 
 
 /// Helpers - Fragment Type Guards - (we don't need 'fragment is X' since TypeScript 5.5.2)
@@ -125,24 +136,24 @@ export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageA
 
 /// Helpers - Fragments Creation
 
-export function createTextContentFragment(text: string): DMessageContentFragment {
-  return _createContentFragment(createDMessageTextPart(text));
-}
-
-export function createTextContentOverFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
-  return { ...copyFragment, part: createDMessageTextPart(text) };
+export function createErrorContentFragment(error: string): DMessageContentFragment {
+  return _createContentFragment(createDMessageErrorPart(error));
 }
 
 export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
-  return _createContentFragment(createDMessageImagePart(dataRef, altText, width, height));
+  return _createContentFragment(createDMessageImageRefPart(dataRef, altText, width, height));
 }
 
 export function createPlaceholderContentFragment(placeholderText: string): DMessageContentFragment {
   return _createContentFragment(createDMessagePlaceholderPart(placeholderText));
 }
 
-export function createErrorContentFragment(error: string): DMessageContentFragment {
-  return _createContentFragment(createDMessageErrorPart(error));
+export function createTextContentFragment(text: string): DMessageContentFragment {
+  return _createContentFragment(createDMessageTextPart(text));
+}
+
+export function specialOverwriteTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
+  return { ...copyFragment, part: createDMessageTextPart(text) };
 }
 
 
@@ -150,8 +161,12 @@ export function createTextAttachmentFragment(title: string, text: string): DMess
   return _createAttachmentFragment(title, createDMessageTextPart(text));
 }
 
+// export function createArtifactAttachmentFragment(title: string, data: DMessageDataInline, mimeType: DMessageArtifactMimeType, language?: string, namedId?: string): DMessageAttachmentFragment {
+//   return _createAttachmentFragment(title, createDMessageArtifactPart(data, mimeType, title, language, namedId));
+// }
+
 export function createImageAttachmentFragment(title: string, dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, createDMessageImagePart(dataRef, altText, width, height));
+  return _createAttachmentFragment(title, createDMessageImageRefPart(dataRef, altText, width, height));
 }
 
 export function createContentPartAttachmentFragment(title: string, part: DMessageContentFragment['part']): DMessageAttachmentFragment {
@@ -177,12 +192,24 @@ function _createSentinelFragment(): _DMessageSentinelFragment {
 
 /// Helpers - Parts Creation
 
-function createDMessageTextPart(text: string): DMessageTextPart {
-  return { pt: 'text', text };
+function createDMessageArtifactPart(data: DMessageDataInline, mimeType: DMessageArtifactMimeType, title: string, language?: string, namedId?: string): DMessageArtifactPart {
+  return { pt: 'artifact', data, mimeType, title, language, namedId };
 }
 
-function createDMessageImagePart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
+function createDMessageErrorPart(error: string): DMessageErrorPart {
+  return { pt: 'error', error };
+}
+
+function createDMessageImageRefPart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
   return { pt: 'image_ref', dataRef, altText, width, height };
+}
+
+function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceholderPart {
+  return { pt: 'ph', pText: placeholderText };
+}
+
+function createDMessageTextPart(text: string): DMessageTextPart {
+  return { pt: 'text', text };
 }
 
 function createDMessageToolCallPart(functionName: string, args: Record<string, any>): DMessageToolCallPart {
@@ -193,15 +220,7 @@ function createDMessageToolResponsePart(functionName: string, response: Record<s
   return { pt: 'tool_response', function: functionName, response };
 }
 
-function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceholderPart {
-  return { pt: 'ph', pText: placeholderText };
-}
-
-function createDMessageErrorPart(error: string): DMessageErrorPart {
-  return { pt: 'error', error };
-}
-
-function createSentinelPart(): _DMessageSentinelPart {
+function createDMessageSentinelPart(): _DMessageSentinelPart {
   return { pt: '_pt_sentinel' };
 }
 
@@ -245,7 +264,7 @@ function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentF
       return createDMessageTextPart(part.text) as T;
 
     case 'image_ref':
-      return createDMessageImagePart(_duplicateReference(part.dataRef), part.altText, part.width, part.height) as T;
+      return createDMessageImageRefPart(_duplicateReference(part.dataRef), part.altText, part.width, part.height) as T;
 
     case 'tool_call':
       return createDMessageToolCallPart(part.function, { ...part.args }) as T;
@@ -260,7 +279,7 @@ function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentF
       return createDMessageErrorPart(part.error) as T;
 
     case '_pt_sentinel':
-      return createSentinelPart() as T;
+      return createDMessageSentinelPart() as T;
 
     // default:
     //   throw new Error('Invalid part');
