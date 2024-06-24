@@ -7,7 +7,9 @@ import { asValidURL } from '~/common/util/urlUtils';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
@@ -184,12 +186,12 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
   /**
    * Append ego content to the attachments.
    */
-  const attachAppendEgoContent = React.useCallback((label: string, refId: string, contents: DMessageContentFragment[]) => {
+  const attachAppendEgoFragments = React.useCallback((fragments: DMessageContentFragment[], label: string, conversationTitle: string, conversationId: DConversationId, messageId: DMessageId) => {
     if (ATTACHMENTS_DEBUG_INTAKE)
-      console.log('attachAppendEgoContent', label, refId, contents);
+      console.log('attachAppendEgoContent', fragments, label, conversationId, messageId);
 
     return _createAttachmentDraft({
-      media: 'ego', method: 'ego-contents', label, refId, contents,
+      media: 'ego', method: 'ego-fragments', label, fragments, refConversationTitle: conversationTitle, refConversationId: conversationId, refMessageId: messageId,
     });
   }, [_createAttachmentDraft]);
 
@@ -201,7 +203,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     // create drafts
     attachAppendClipboardItems,
     attachAppendDataTransfer,
-    attachAppendEgoContent,
+    attachAppendEgoFragments,
     attachAppendFile,
 
     // manage attachments
