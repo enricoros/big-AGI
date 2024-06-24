@@ -273,7 +273,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
         const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
         return block.type === 'htmlb' ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
           : block.type === 'codeb' ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={false /*!optimizeSubBlockWithMemo*/} sx={scaledCodeSx} />
-            : block.type === 'imageb' ? <RenderImageURL key={'image-' + index} imageURL={block.url} infoText={block.alt} onImageRegenerate={undefined /* we'd need to have selective fragment editing as there could be many of these URL images in a fragment */} scaledImageSx={scaledImageSx} variant='content-part' />
+            : block.type === 'imageb' ? <RenderImageURL key={'image-' + index} imageURL={block.url} expandableText={block.alt} onImageRegenerate={undefined /* we'd need to have selective fragment editing as there could be many of these URL images in a fragment */} scaledImageSx={scaledImageSx} variant='content-part' />
               : block.type === 'diffb' ? <RenderTextDiff key={'text-diff-' + index} textDiffBlock={block} sx={scaledTypographySx} />
                 : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
                   ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />

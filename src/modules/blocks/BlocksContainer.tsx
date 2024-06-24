@@ -1,8 +1,9 @@
 import { Box, styled, Textarea } from '@mui/joy';
+
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
-export const blocksTextStyleSx = {
+const blocksTextStyleSx = {
   // note: this will be used for non-blocks mainly (errors and other strings ourside of RenderXYX)
   lineHeight: lineHeightChatTextMd,
 

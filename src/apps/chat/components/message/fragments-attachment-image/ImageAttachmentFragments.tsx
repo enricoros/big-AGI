@@ -3,11 +3,11 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
+import { RenderImageRefDBlob, showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
+
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DMessageAttachmentFragment, DMessageFragmentId, isImageRefPart } from '~/common/stores/chat/chat.fragments';
-
-import { PartImageRefDBlob, showImageDataRefInNewTab } from '../fragments-content/PartImageRefDBlob';
 
 
 // configuration
@@ -93,7 +93,7 @@ export function ImageAttachmentFragments(props: {
         // only support rendering DBLob images as cards for now
         if (dataRef.reftype === 'dblob') {
           return (
-            <PartImageRefDBlob
+            <RenderImageRefDBlob
               key={'att-img-' + attachmentFragment.fId}
               dataRefDBlobAssetId={dataRef.dblobAssetId}
               dataRefMimeType={dataRef.mimeType}
@@ -103,7 +103,7 @@ export function ImageAttachmentFragments(props: {
               onOpenInNewTab={() => showImageDataRefInNewTab(dataRef)}
               onDeleteFragment={() => props.onFragmentDelete(attachmentFragment.fId)}
               scaledImageSx={cardStyleSxMemo}
-              partVariant='attachment-card'
+              variant='attachment-card'
             />
           );
         }

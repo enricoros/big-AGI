@@ -8,10 +8,10 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
+
 import { DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-
-import { showImageDataRefInNewTab } from '../../message/fragments-content/PartImageRefDBlob';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';

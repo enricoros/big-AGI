@@ -10,8 +10,8 @@ import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isConten
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { PartTextAutoBlocks } from './PartTextAutoBlocks';
-import { PartTextEdit } from './PartTextEdit';
+import { ContentPartTextAutoBlocks } from './ContentPartTextAutoBlocks';
+import { ContentPartTextEditor } from './ContentPartTextEditor';
 
 
 const editLayoutSx: SxProps = {
@@ -80,7 +80,7 @@ export function ContentFragments(props: {
       // editing for text parts
       if (props.textEditsState && (fragment.part.pt === 'text' || fragment.part.pt === 'error')) {
         return (
-          <PartTextEdit
+          <ContentPartTextEditor
             key={'edit-' + fragment.fId}
             textPartText={fragment.part.pt === 'text' ? fragment.part.text : fragment.part.error}
             fragmentId={fragment.fId}
@@ -132,7 +132,7 @@ export function ContentFragments(props: {
 
         case 'text':
           return (
-            <PartTextAutoBlocks
+            <ContentPartTextAutoBlocks
               key={fragment.fId}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}

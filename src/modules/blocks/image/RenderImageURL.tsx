@@ -73,16 +73,18 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 }
 
 
+export type RenderImageURLVarint = 'content-part' | 'attachment-card';
+
 export const RenderImageURL = (props: {
-  imageURL: string | null, // remote URL, or data URL
-  description?: React.ReactNode,
-  infoText?: string,
+  imageURL: string | null,              // remote URL, or data URL
+  overlayText?: React.ReactNode, // bottom overlay text
+  expandableText?: string,          // expandable pane below the image
+  variant: RenderImageURLVarint,        // either a responsive Block image, or an inline Card
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
   onImageRegenerate?: () => void,
   scaledImageSx?: SxProps,
   className?: string,
-  variant: 'content-part' | 'attachment-card',
 }) => {
 
   // state
@@ -182,7 +184,7 @@ export const RenderImageURL = (props: {
           {props.imageURL ? (
             <picture>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={props.imageURL} alt={props.infoText ? `Generated Image: ${props.infoText}` : 'Generated Image'} />
+              <img src={props.imageURL} alt={props.expandableText ? `Generated Image: ${props.expandableText}` : 'Generated Image'} />
             </picture>
           ) : (
             <Box
@@ -199,7 +201,7 @@ export const RenderImageURL = (props: {
           )}
 
           {/* [overlay] Description */}
-          {!!props.description && (
+          {!!props.overlayText && (
             <Box className='overlay-text' sx={{
               position: 'absolute',
               bottom: 0,
@@ -211,19 +213,19 @@ export const RenderImageURL = (props: {
               opacity: infoOpen ? 1 : 0,
               transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
             }}>
-              {props.description}
+              {props.overlayText}
             </Box>
           )}
         </Box>
 
         {/* Bottom Expander: information */}
-        {!!props.infoText && infoOpen && (
+        {!!props.expandableText && infoOpen && (
           <Box sx={{
             p: { xs: 1, md: 2 },
             overflowWrap: 'anywhere',
             whiteSpace: 'break-spaces',
           }}>
-            {props.infoText}
+            {props.expandableText}
           </Box>
         )}
 
@@ -236,7 +238,7 @@ export const RenderImageURL = (props: {
           gap: 0.5,
         }}>
 
-          {!!props.infoText && (
+          {!!props.expandableText && (
             <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
               <OverlayButton variant={infoOpen ? 'solid' : 'soft'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
                 <InfoOutlinedIcon />
@@ -251,7 +253,7 @@ export const RenderImageURL = (props: {
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : props.imageURL.startsWith('http') ? (
-                <OverlayButton variant='soft' color={isCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.infoText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OverlayButton variant='soft' color={isCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.expandableText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
                   <OpenInNewIcon />
                 </OverlayButton>
               ) : <span />}

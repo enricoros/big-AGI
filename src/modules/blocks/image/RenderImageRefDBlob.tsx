@@ -6,12 +6,13 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
+
+import { RenderImageURL, RenderImageURLVarint } from './RenderImageURL';
 
 
 /**
@@ -31,17 +32,19 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
 }
 
 
-export function PartImageRefDBlob(props: {
+export function RenderImageRefDBlob(props: {
+  // from ImageRef
   dataRefDBlobAssetId: DBlobAssetId,
   dataRefMimeType: string,
   imageAltText?: string,
   imageWidth?: number,
   imageHeight?: number,
+  // others
+  variant: RenderImageURLVarint,
   onOpenInNewTab: () => void
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
   scaledImageSx?: SxProps,
-  partVariant: 'content-part' | 'attachment-card',
 }) {
 
   // external state from the DB
@@ -77,7 +80,7 @@ export function PartImageRefDBlob(props: {
     }
 
     // [attachment card] only return the data
-    if (props.partVariant === 'attachment-card') {
+    if (props.variant === 'attachment-card') {
       return {
         dataUrlMemo: `data:${imageItem.data.mimeType};base64,${imageItem.data.base64}`,
       };
@@ -127,19 +130,19 @@ export function PartImageRefDBlob(props: {
       altText: props.imageAltText || imageItem.metadata?.description || imageItem.label || '',
       overlayText: overlayText,
     };
-  }, [imageItem, props.dataRefMimeType, props.imageAltText, props.imageHeight, props.imageWidth, props.partVariant]);
+  }, [imageItem, props.dataRefMimeType, props.imageAltText, props.imageHeight, props.imageWidth, props.variant]);
 
   return (
     <RenderImageURL
       imageURL={dataUrlMemo}
-      infoText={altText}
-      description={overlayText}
+      expandableText={altText}
+      overlayText={overlayText}
       onOpenInNewTab={props.onOpenInNewTab}
       onImageDelete={props.onDeleteFragment}
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
       className={isRegenerating ? 'agi-border-4' : undefined}
       scaledImageSx={props.scaledImageSx}
-      variant={props.partVariant}
+      variant={props.variant}
     />
   );
 }
