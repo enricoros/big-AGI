@@ -27,12 +27,13 @@ export type DMessageContentFragment = {
   ft: 'content',
   fId: DMessageFragmentId;
   part:
-    | DMessageTextPart
-    | DMessageImageRefPart
-    | DMessageToolCallPart
-    | DMessageToolResponsePart
-    | DMessagePlaceholderPart
-    | DMessageErrorPart
+  //| DMessageArtifactPart - not yet, as we don't have the renderers, so let's keep it simple only on Attachments for now
+    | DMessageErrorPart         // red message, e.g. non-content application issues
+    | DMessageImageRefPart      // large image
+    | DMessagePlaceholderPart   // (non submitted) placeholder to be replaced by another part
+    | DMessageTextPart          // plain text or mixed content -> BlockRenderer
+    | DMessageToolCallPart      // shown to dev only, singature of the llm function call
+    | DMessageToolResponsePart  // shown to dev only, response of the llm
     | _DMessageSentinelPart;
 }
 
@@ -42,8 +43,9 @@ export type DMessageAttachmentFragment = {
   fId: DMessageFragmentId;
   title: string;
   part:
-    | DMessageTextPart
+  //| DMessageArtifactPart
     | DMessageImageRefPart
+    | DMessageTextPart
     | _DMessageSentinelPart;
 }
 
@@ -68,13 +70,24 @@ type _DMessageSentinelFragment = {
 // Small and efficient (larger objects need to only be referred to)
 //
 
-export type DMessageTextPart = { pt: 'text', text: string };
+// export type DMessageArtifactPart = { pt: 'artifact', data: DMessageDataInline, mimeType: DMessageArtifactMimeType, title: string, language?: string; namedId?: string };
+export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
+export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
+export type DMessageTextPart = { pt: 'text', text: string };
 export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
 export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
-export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
-export type DMessageErrorPart = { pt: 'error', error: string };
 type _DMessageSentinelPart = { pt: '_pt_sentinel' };
+
+// type DMessageArtifactMimeType =
+//   | 'application/vnd.agi.code' // Blocks > RenderCode
+//   | 'application/vnd.agi.plantuml'
+//   | 'image/svg+xml'
+//   | 'text/csv'  // table editor
+//   | 'text/html' // rich content paste, or blocks RenderCode[HTML]
+//   | 'text/markdown' // BlocksRenderer; note: can contain RenderCode blocks in triple-backticks
+//   | 'text/plain' // clipboard text paste
+//   ;
 
 
 //
@@ -88,9 +101,7 @@ export type DMessageDataRef =
   | { reftype: 'dblob'; dblobAssetId: DBlobAssetId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
 
-// type DDataInline =
-//   | { stype: 'base64'; mimeType: string; base64Data: string }
-//   ;
+// type DMessageDataInline = { dt: 'text', text: string }; // | { dt: 'base64', base64: string }
 
 
 /// Helpers - Fragment Type Guards - (we don't need 'fragment is X' since TypeScript 5.5.2)
