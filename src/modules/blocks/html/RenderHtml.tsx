@@ -7,8 +7,8 @@ import WebIcon from '@mui/icons-material/Web';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import type { HtmlBlock } from './blocks';
-import { OverlayButton, overlayButtonsSx } from './code/RenderCode';
+import type { HtmlBlock } from '../blocks.types';
+import { OverlayButton, overlayButtonsSx } from '../code/RenderCode';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)

@@ -5,7 +5,7 @@ import { Box, styled } from '@mui/joy';
 
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
-import type { TextBlock } from '../blocks';
+import type { TextBlock } from '../blocks.types';
 
 
 /*

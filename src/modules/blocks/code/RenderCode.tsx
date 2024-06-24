@@ -16,11 +16,11 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import type { CodeBlock } from '../blocks';
+import type { CodeBlock } from '../blocks.types';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
 import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
 import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
-import { heuristicIsBlockTextHTML, IFrameComponent } from '../RenderHtml';
+import { heuristicIsBlockTextHTML, IFrameComponent } from '../html/RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
 

@@ -1,13 +1,17 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Chip, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 
-import { extractChatCommand } from '../../apps/chat/commands/commands.registry';
+import { extractChatCommand } from '../../../apps/chat/commands/commands.registry';
 
-import type { TextBlock } from './blocks';
+import type { TextBlock } from '../blocks.types';
 
 
+/**
+ * Renders a text block with chat commands.
+ * NOTE: should remove the commands parsing dependency.
+ */
 export const RenderChatText = (props: { textBlock: TextBlock; sx?: SxProps; }) => {
 
   const elements = extractChatCommand(props.textBlock.content);
