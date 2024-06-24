@@ -6,7 +6,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import type { DBlobAssetId, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
+import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 import { getImageAssetAsBlobURL } from '~/modules/dblobs/dblobs.images';
 import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';

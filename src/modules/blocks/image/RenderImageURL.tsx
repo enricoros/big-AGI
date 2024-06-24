@@ -13,8 +13,8 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
-import type { ImageBlock } from './blocks';
-import { OverlayButton, overlayButtonsSx } from './code/RenderCode';
+import type { ImageBlock } from '../blocks.types';
+import { OverlayButton, overlayButtonsSx } from '../code/RenderCode';
 
 
 const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;

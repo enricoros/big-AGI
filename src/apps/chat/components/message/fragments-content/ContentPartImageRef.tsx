@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import { RenderImageURL } from '~/modules/blocks/RenderImageURL';
+import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 import { blocksRendererSx } from '~/modules/blocks/BlocksRenderer';
 
 import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';

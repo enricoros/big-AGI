@@ -4,7 +4,7 @@ import { cleanupEfficiency, Diff as TextDiff, DIFF_DELETE, DIFF_INSERT, makeDiff
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Typography, useTheme } from '@mui/joy';
 
-import type { DiffBlock } from './blocks';
+import type { TextDiffBlock } from '../blocks.types';
 
 
 export function useSanityTextDiffs(_text: string, _diffText: string | undefined, enabled: boolean) {
@@ -37,13 +37,13 @@ export function useSanityTextDiffs(_text: string, _diffText: string | undefined,
 }
 
 
-export const RenderTextDiff = (props: { diffBlock: DiffBlock; sx?: SxProps; }) => {
+export const RenderTextDiff = (props: { textDiffBlock: TextDiffBlock; sx?: SxProps; }) => {
 
   // external state
   const theme = useTheme();
 
   // derived state
-  const textDiffs: TextDiff[] = props.diffBlock.textDiffs;
+  const textDiffs: TextDiff[] = props.textDiffBlock.textDiffs;
 
   // text added
   const styleAdd = {
