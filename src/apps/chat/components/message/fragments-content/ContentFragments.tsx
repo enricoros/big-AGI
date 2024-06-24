@@ -10,7 +10,7 @@ import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isConten
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { PartTextBlocks } from './PartTextBlocks';
+import { PartTextAutoBlocks } from './PartTextAutoBlocks';
 import { PartTextEdit } from './PartTextEdit';
 
 
@@ -77,37 +77,35 @@ export function ContentFragments(props: {
       if (!isContentFragment(fragment))
         return null;
 
+      // editing for text parts
+      if (props.textEditsState && (fragment.part.pt === 'text' || fragment.part.pt === 'error')) {
+        return (
+          <PartTextEdit
+            key={'edit-' + fragment.fId}
+            textPartText={fragment.part.pt === 'text' ? fragment.part.text : fragment.part.error}
+            fragmentId={fragment.fId}
+            contentScaling={props.contentScaling}
+            editedText={props.textEditsState[fragment.fId]}
+            setEditedText={props.setEditedText}
+            onEnterPressed={props.onEditsApply}
+            onEscapePressed={props.onEditsCancel}
+          />
+        );
+      }
+
       switch (fragment.part.pt) {
-        case 'text':
-          return props.textEditsState ? (
-            <PartTextEdit
-              key={'edit-' + fragment.fId}
-              textPartText={fragment.part.text}
-              fragmentId={fragment.fId}
-              contentScaling={props.contentScaling}
-              editedText={props.textEditsState[fragment.fId]}
-              setEditedText={props.setEditedText}
-              onEnterPressed={props.onEditsApply}
-              onEscapePressed={props.onEditsCancel}
-            />
-          ) : (
-            <PartTextBlocks
+        case 'error':
+          return (
+            <ContentPartPlaceholder
               key={fragment.fId}
-              // ref={blocksRendererRef}
-              textPartText={fragment.part.text}
+              placeholderText={fragment.part.error}
               messageRole={props.messageRole}
-              messageOriginLLM={props.messageOriginLLM}
               contentScaling={props.contentScaling}
-              fitScreen={props.fitScreen}
-              renderTextAsMarkdown={props.renderTextAsMarkdown}
-              // renderTextDiff={textDiffs || undefined}
-              showUnsafeHtml={props.showUnsafeHtml}
-              showTopWarning={props.showTopWarning}
-              optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
-              onContextMenu={props.onContextMenu}
-              onDoubleClick={props.onDoubleClick}
+              showAsDanger
+              showAsItalic
             />
           );
+
 
         case 'image_ref':
           return (
@@ -132,26 +130,23 @@ export function ContentFragments(props: {
             />
           );
 
-        case 'error':
-          return props.textEditsState ? (
-            <PartTextEdit
-              key={'edit-' + fragment.fId}
-              textPartText={fragment.part.error}
-              fragmentId={fragment.fId}
-              contentScaling={props.contentScaling}
-              editedText={props.textEditsState[fragment.fId]}
-              setEditedText={props.setEditedText}
-              onEnterPressed={props.onEditsApply}
-              onEscapePressed={props.onEditsCancel}
-            />
-          ) : (
-            <ContentPartPlaceholder
+        case 'text':
+          return (
+            <PartTextAutoBlocks
               key={fragment.fId}
-              placeholderText={fragment.part.error}
+              // ref={blocksRendererRef}
+              textPartText={fragment.part.text}
               messageRole={props.messageRole}
+              messageOriginLLM={props.messageOriginLLM}
               contentScaling={props.contentScaling}
-              showAsDanger
-              showAsItalic
+              fitScreen={props.fitScreen}
+              renderTextAsMarkdown={props.renderTextAsMarkdown}
+              // renderTextDiff={textDiffs || undefined}
+              showUnsafeHtml={props.showUnsafeHtml}
+              showTopWarning={props.showTopWarning}
+              optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
+              onContextMenu={props.onContextMenu}
+              onDoubleClick={props.onDoubleClick}
             />
           );
 
