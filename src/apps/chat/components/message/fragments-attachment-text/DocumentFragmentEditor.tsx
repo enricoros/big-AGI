@@ -13,7 +13,7 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { createTextAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
-import { PartTextEdit } from '../fragments-content/PartTextEdit';
+import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
 
 
 export function DocumentFragmentEditor(props: {
@@ -85,7 +85,7 @@ export function DocumentFragmentEditor(props: {
 
       {isEditing ? (
         // Document Editor
-        <PartTextEdit
+        <ContentPartTextEditor
           textPartText={part.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}

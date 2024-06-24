@@ -4,12 +4,11 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainer';
+import { RenderImageRefDBlob, showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-
-import { PartImageRefDBlob, showImageDataRefInNewTab } from './PartImageRefDBlob';
 
 
 export function ContentPartImageRef(props: {
@@ -49,7 +48,7 @@ export function ContentPartImageRef(props: {
   return (
     <BlocksContainer>
       {dataRef.reftype === 'dblob' ? (
-        <PartImageRefDBlob
+        <RenderImageRefDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
           imageAltText={imageRefPart.altText}
@@ -59,12 +58,12 @@ export function ContentPartImageRef(props: {
           onDeleteFragment={onFragmentDelete ? handleDeleteFragment : undefined}
           onReplaceFragment={onFragmentReplace ? handleReplaceFragment : undefined}
           scaledImageSx={scaledImageSx}
-          partVariant='content-part'
+          variant='content-part'
         />
       ) : dataRef.reftype === 'url' ? (
         <RenderImageURL
           imageURL={dataRef.url}
-          infoText={imageRefPart.altText}
+          expandableText={imageRefPart.altText}
           scaledImageSx={scaledImageSx}
           variant='content-part'
         />

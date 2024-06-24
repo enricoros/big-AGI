@@ -10,7 +10,7 @@ import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
  * Very similar to <InlineTextArea /> but with externally controlled state rather than internal.
  * Made it for as the editing alternative for <ContentPartText />.
  */
-export function PartTextEdit(props: {
+export function ContentPartTextEditor(props: {
   // current value
   textPartText: string,
   fragmentId: DMessageFragmentId,
