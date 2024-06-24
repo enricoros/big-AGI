@@ -8,7 +8,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
@@ -230,7 +230,7 @@ export function ExplainerCarousel(props: {
               '--color-canvas-default': 'transparent!important',
             },
           }}>
-            <BlocksRenderer
+            <AutoBlocksRenderer
               text={mdText}
               fromRole='assistant'
               contentScaling='md'

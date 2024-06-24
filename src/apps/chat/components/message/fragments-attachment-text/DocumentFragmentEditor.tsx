@@ -6,7 +6,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -96,7 +96,7 @@ export function DocumentFragmentEditor(props: {
         />
       ) : (
         // Document viewer, including collapse/expand
-        <BlocksRenderer
+        <AutoBlocksRenderer
           text={marshallWrapText(part.text, '', 'markdown-code')}
           // text={selectedFragment.part.text}
           fromRole={props.messageRole}

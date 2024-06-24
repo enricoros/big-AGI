@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -53,7 +53,7 @@ export function PartTextBlocks(props: {
   }
 
   return (
-    <BlocksRenderer
+    <AutoBlocksRenderer
       text={messageText || ''}
       fromRole={props.messageRole}
       contentScaling={props.contentScaling}

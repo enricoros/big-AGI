@@ -9,7 +9,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 
 import { GoodModal } from '~/common/components/GoodModal';
@@ -222,7 +222,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           p: { xs: 1, md: 2 },
           overflow: 'hidden',
         }}>
-          <BlocksRenderer
+          <AutoBlocksRenderer
             text={diagramCode}
             fromRole='assistant'
             contentScaling={adjustContentScaling(contentScaling, -1)}
