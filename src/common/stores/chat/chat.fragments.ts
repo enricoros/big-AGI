@@ -41,23 +41,18 @@ export type DMessageContentFragment = {
 export type DMessageAttachmentFragment = {
   ft: 'attachment',
   fId: DMessageFragmentId;
-  title: string;
   part:
-  //| DMessageArtifactPart
+    | DMessageArtifactPart
     | DMessageImageRefPart
     | DMessageTextPart
     | _DMessageSentinelPart;
+  // duplicated information that makes it possible to shallow-present attachments without decoding the parts
+  title: string; // common presentation, without decoding parts (filename, ID, content overview, title..)
+  //type: DMessageAttachmentMimeType, // probably for the icon
+  //agiCodeLanguage?: string, // for ...
 }
 
-//   title: string; // common presentation, without decoding parts
-//   type: 'TODO_CHANGE_TYPE',
-//   part:
-//     | DMessageArtifactPart
-//     | DMessageImageRefPart
-//     | _DMessageSentinelPart;
-// }
-//
-// type DMessageAttachmentMimeType;
+// type DMessageAttachmentMimeType = DMessageArtifactMimeType | ...
 
 // force the typesystem to work, bark, and detect/reveal corner cases
 type _DMessageSentinelFragment = {
@@ -107,12 +102,13 @@ type DMessageArtifactMimeType =
 // We use a Ref and the DBlob framework to store media locally, or remote URLs
 //
 
+export type DMessageDataInline =
+  | { idt: 'text', text: string }; // | { idt: 'base64', base64: string };
+
 export type DMessageDataRef =
   | { reftype: 'url'; url: string } // remotely accessible URL - NOTE: not used right now, this is more of a sentinel
   | { reftype: 'dblob'; dblobAssetId: DBlobAssetId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
-
-type DMessageDataInline = { dt: 'text', text: string }; // | { dt: 'base64', base64: string }
 
 
 /// Helpers - Fragment Type Guards - (we don't need 'fragment is X' since TypeScript 5.5.2)
@@ -152,21 +148,21 @@ export function createTextContentFragment(text: string): DMessageContentFragment
   return _createContentFragment(createDMessageTextPart(text));
 }
 
-export function specialOverwriteTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
+export function specialShallowReplaceTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
   return { ...copyFragment, part: createDMessageTextPart(text) };
 }
 
 
-export function createTextAttachmentFragment(title: string, text: string): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, createDMessageTextPart(text));
+export function createArtifactAttachmentFragment(title: string, data: DMessageDataInline, mimeType: DMessageArtifactMimeType, language?: string, namedId?: string): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, createDMessageArtifactPart(data, mimeType, title, language, namedId));
 }
-
-// export function createArtifactAttachmentFragment(title: string, data: DMessageDataInline, mimeType: DMessageArtifactMimeType, language?: string, namedId?: string): DMessageAttachmentFragment {
-//   return _createAttachmentFragment(title, createDMessageArtifactPart(data, mimeType, title, language, namedId));
-// }
 
 export function createImageAttachmentFragment(title: string, dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageAttachmentFragment {
   return _createAttachmentFragment(title, createDMessageImageRefPart(dataRef, altText, width, height));
+}
+
+export function createTextAttachmentFragment(title: string, text: string): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, createDMessageTextPart(text));
 }
 
 export function createContentPartAttachmentFragment(title: string, part: DMessageContentFragment['part']): DMessageAttachmentFragment {
@@ -227,7 +223,11 @@ function createDMessageSentinelPart(): _DMessageSentinelPart {
 
 /// Helpers - Data Reference Creation
 
-export function createDMessageDataRefUrl(url: string): DMessageDataRef {
+function createDMessageDataInlineText(text: string): DMessageDataInline {
+  return { idt: 'text', text };
+}
+
+function createDMessageDataRefUrl(url: string): DMessageDataRef {
   return { reftype: 'url', url };
 }
 
@@ -258,43 +258,55 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   }
 }
 
-function _duplicatePart<T extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: T): T {
+function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
-    case 'text':
-      return createDMessageTextPart(part.text) as T;
-
-    case 'image_ref':
-      return createDMessageImageRefPart(_duplicateReference(part.dataRef), part.altText, part.width, part.height) as T;
-
-    case 'tool_call':
-      return createDMessageToolCallPart(part.function, { ...part.args }) as T;
-
-    case 'tool_response':
-      return createDMessageToolResponsePart(part.function, { ...part.response }) as T;
-
-    case 'ph':
-      return createDMessagePlaceholderPart(part.pText) as T;
+    case 'artifact':
+      return createDMessageArtifactPart(_duplicateInlineData(part.data), part.mimeType, part.title, part.language, part.namedId) as TPart;
 
     case 'error':
-      return createDMessageErrorPart(part.error) as T;
+      return createDMessageErrorPart(part.error) as TPart;
+
+    case 'image_ref':
+      return createDMessageImageRefPart(_duplicateDataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
+
+    case 'ph':
+      return createDMessagePlaceholderPart(part.pText) as TPart;
+
+    case 'text':
+      return createDMessageTextPart(part.text) as TPart;
+
+    case 'tool_call':
+      return createDMessageToolCallPart(part.function, _duplicateObjectWarning(part.args, 'tool_call')) as TPart;
+
+    case 'tool_response':
+      return createDMessageToolResponsePart(part.function, _duplicateObjectWarning(part.response, 'tool_response')) as TPart;
 
     case '_pt_sentinel':
-      return createDMessageSentinelPart() as T;
-
-    // default:
-    //   throw new Error('Invalid part');
+      return createDMessageSentinelPart() as TPart;
   }
 }
 
-function _duplicateReference(ref: DMessageDataRef): DMessageDataRef {
+function _duplicateInlineData(data: DMessageDataInline): DMessageDataInline {
+  switch (data.idt) {
+    case 'text':
+      return createDMessageDataInlineText(data.text);
+
+    // case 'base64':
+    //   return createDMessageDataInlineBase64(data.base64);
+  }
+}
+
+function _duplicateDataReference(ref: DMessageDataRef): DMessageDataRef {
   switch (ref.reftype) {
     case 'url':
       return createDMessageDataRefUrl(ref.url);
 
     case 'dblob':
       return createDMessageDataRefDBlob(ref.dblobAssetId, ref.mimeType, ref.bytesSize);
-
-    // default: // unreachable, we'd get a compiler error before this
-    //   throw new Error('Invalid reference');
   }
+}
+
+function _duplicateObjectWarning<T extends Record<string, any>>(obj: T, devPlace: string): T {
+  console.warn('[DEV]: implement deep copy for:', devPlace);
+  return { ...obj };
 }
