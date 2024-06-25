@@ -19,6 +19,11 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     description: 'Persona replies',
     canAttach: true,
   },
+  'generate-text-v1': {
+    label: 'Chat (1.16)',
+    description: 'Persona replies (stable)',
+    canAttach: true,
+  },
   'generate-text-beam': {
     label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
     description: 'Combine multiple models', // Smarter: combine...

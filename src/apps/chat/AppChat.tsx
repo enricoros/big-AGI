@@ -57,6 +57,7 @@ export const CHAT_NOVEL_TITLE = 'Chat';
  */
 export type ChatModeId =
   | 'generate-text'
+  | 'generate-text-v1'
   | 'generate-text-beam'
   | 'append-user'
   | 'generate-image'

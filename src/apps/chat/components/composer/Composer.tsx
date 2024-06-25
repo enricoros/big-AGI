@@ -148,7 +148,7 @@ export function Composer(props: {
 
   // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToGenerateText: chatModeId === 'generate-text' ? store.replyToText?.trim() || null : null,
+    replyToGenerateText: (chatModeId === 'generate-text' || chatModeId === 'generate-text-v1') ? store.replyToText?.trim() || null : null,
   })));
 
   // don't load URLs if the user is typing a command or there's no capability
@@ -546,7 +546,7 @@ export function Composer(props: {
   }, [attachAppendDataTransfer, eatDragEvent, setComposeText]);
 
 
-  const isText = chatModeId === 'generate-text';
+  const isText = chatModeId === 'generate-text' || chatModeId === 'generate-text-v1';
   const isTextBeam = chatModeId === 'generate-text-beam';
   const isAppend = chatModeId === 'append-user';
   const isReAct = chatModeId === 'generate-react';
