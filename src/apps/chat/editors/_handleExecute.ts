@@ -1,5 +1,5 @@
 import { getChatLLMId } from '~/modules/llms/store-llms';
-import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
+import { inlineUpdateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
@@ -18,7 +18,7 @@ import { runImageGenerationUpdatingState } from './image-generate';
 import { runReActUpdatingState } from './react-tangent';
 
 
-export async function _handleExecute(chatModeId: ChatModeId, conversationId: DConversationId, history: Readonly<DMessage[]>) {
+export async function _handleExecute(chatModeId: ChatModeId, conversationId: DConversationId, executeCallerNameDebug: string) {
 
   // Handle missing conversation
   if (!conversationId)
@@ -26,21 +26,22 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   const chatLLMId = getChatLLMId();
   const cHandler = ConversationsManager.getHandler(conversationId);
+  const initialHistory = cHandler.historyView(executeCallerNameDebug) as Readonly<DMessage[]>;
 
   // Update the system message from the active persona to the history
   // NOTE: this does NOT call setMessages anymore (optimization). make sure to:
   //       1. all the callers need to pass a new array
   //       2. all the exit points need to call setMessages
-  const _inplaceEditableHistory = [...history];
+  const _inplaceEditableHistory = [...initialHistory];
   cHandler.inlineUpdatePurposeInHistory(_inplaceEditableHistory, chatLLMId || undefined);
 
   // FIXME: shouldn't do this for all the code paths. The advantage for having it here (vs Composer output only) is re-executing history
   // TODO: move this to the server side after transferring metadata?
-  updateHistoryForReplyTo(_inplaceEditableHistory);
+  inlineUpdateHistoryForReplyTo(_inplaceEditableHistory);
 
   // Set the history - note that 'history' objects become invalid after this, and you'd have to
-  // re-read it from the store, such as with `cHandler.viewHistory()`
-  cHandler.replaceMessages(_inplaceEditableHistory);
+  // re-read it from the store, such as with `cHandler.historyView()`
+  cHandler.historyReplace(_inplaceEditableHistory);
 
 
   // Handle unconfigured
@@ -49,7 +50,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   // handle missing last user message (or fragment)
   // note that we use the initial history, as the user message could have been displaced on the edited versions
-  const lastMessage = history.length >= 1 ? history.slice(-1)[0] : null;
+  const lastMessage = initialHistory.length >= 1 ? initialHistory.slice(-1)[0] : null;
   const firstFragment = lastMessage?.fragments[0];
   if (!lastMessage || !firstFragment)
     return 'err-no-last-message';
@@ -71,13 +72,13 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   // synchronous long-duration tasks, which update the state as they go
   switch (chatModeId) {
     case 'generate-text':
-      return await runAssistantUpdatingState(conversationId, cHandler.viewHistory('generate-text'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+      return await runAssistantUpdatingState(conversationId, cHandler.historyView('generate-text'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
     case 'generate-text-v1':
-      return await runAssistantUpdatingState(conversationId, cHandler.viewHistory('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+      return await runAssistantUpdatingState(conversationId, cHandler.historyView('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
     case 'generate-text-beam':
-      cHandler.beamInvoke(cHandler.viewHistory('generate-text-beam'), [], null);
+      cHandler.beamInvoke(cHandler.historyView('generate-text-beam'), [], null);
       return true;
 
     case 'append-user':

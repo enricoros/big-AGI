@@ -118,8 +118,13 @@ export class ConversationHandler {
     this.chatActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
   }
 
-  replaceMessages(messages: DMessage[]): void {
-    this.chatActions.setMessages(this.conversationId, messages);
+  historyClear(): void {
+    this.historyReplace([]);
+  }
+
+  historyReplace(messages: DMessage[]): void {
+    this.chatActions.historyReplace(this.conversationId, messages);
+
     void gcChatImageAssets(); // fire/forget
 
     // if zeroing the messages, also terminate an active beam
@@ -127,8 +132,12 @@ export class ConversationHandler {
       this.beamStore.getState().terminateKeepingSettings();
   }
 
-  viewHistory(scope: string): Readonly<DMessage[]> {
-    const messages = this.chatActions.getCurrentMessages(this.conversationId);
+  historyTruncateTo(messageId: DMessageId, offset: number = 0): void {
+    this.chatActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
+  }
+
+  historyView(scope: string): Readonly<DMessage[]> {
+    const messages = this.chatActions.historyView(this.conversationId);
     if (messages === undefined)
       throw new Error(`allMessages: Conversation not found, ${scope}`);
     return messages;

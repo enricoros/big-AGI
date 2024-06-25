@@ -12,7 +12,7 @@ import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
-import { createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -38,7 +38,7 @@ export function ChatMessageList(props: {
   isMobile: boolean,
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
-  onConversationExecuteHistory: (conversationId: DConversationId, history: DMessage[]) => Promise<void>,
+  onConversationExecuteHistory: (conversationId: DConversationId) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
@@ -68,25 +68,27 @@ export function ChatMessageList(props: {
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
-  const { conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
+  const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
 
 
   // text actions
 
   const handleRunExample = React.useCallback(async (examplePrompt: string) => {
-    conversationId && await onConversationExecuteHistory(conversationId, [...conversationMessages, createDMessageTextContent('user', examplePrompt)]); // [chat] append user:persona question
-  }, [conversationId, conversationMessages, onConversationExecuteHistory]);
+    if (conversationId && conversationHandler) {
+      conversationHandler.messageAppend(createDMessageTextContent('user', examplePrompt)); // [chat] append user:persona question
+      await onConversationExecuteHistory(conversationId);
+    }
+  }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
 
   // message menu methods proxy
 
   const handleMessageAssistantFrom = React.useCallback(async (messageId: DMessageId, offset: number) => {
-    const messages = getConversation(conversationId)?.messages;
-    if (messages) {
-      const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + offset + 1);
-      conversationId && await onConversationExecuteHistory(conversationId, truncatedHistory);
+    if (conversationId && conversationHandler) {
+      conversationHandler.historyTruncateTo(messageId, offset);
+      await onConversationExecuteHistory(conversationId);
     }
-  }, [conversationId, onConversationExecuteHistory]);
+  }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
   const handleMessageBeam = React.useCallback(async (messageId: DMessageId) => {
     // Right-click menu Beam
@@ -117,12 +119,8 @@ export function ChatMessageList(props: {
   }, [conversationId, onConversationBranch]);
 
   const handleMessageTruncate = React.useCallback((messageId: DMessageId) => {
-    const messages = getConversation(conversationId)?.messages;
-    if (props.conversationHandler && messages) {
-      const truncatedHistory = messages.slice(0, messages.findIndex(m => m.id === messageId) + 1);
-      props.conversationHandler.replaceMessages(truncatedHistory);
-    }
-  }, [conversationId, props.conversationHandler]);
+    props.conversationHandler?.historyTruncateTo(messageId, 0);
+  }, [props.conversationHandler]);
 
   const handleMessageDelete = React.useCallback((messageId: DMessageId) => {
     props.conversationHandler?.messagesDelete([messageId]);

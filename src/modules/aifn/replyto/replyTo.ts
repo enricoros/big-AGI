@@ -11,7 +11,7 @@ const replyToSystemPrompt = `The user is referring to this in particular:
  *
  * Only works with OpenAI and a couple more right now. Fix it by making it vendor-agnostic
  */
-export function updateHistoryForReplyTo(history: DMessage[]) {
+export function inlineUpdateHistoryForReplyTo(history: DMessage[]) {
   if (history?.length < 1)
     return;
 
