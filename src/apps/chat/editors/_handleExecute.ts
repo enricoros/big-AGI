@@ -84,7 +84,6 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
           // /assistant, /system
           lastMessage.role = chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user';
           lastMessage.fragments = messageFragmentsReplaceLastContentText(lastMessage.fragments, chatCommand.params || ''); // [chat] assistant|system: content
-          lastMessage.sender = 'Bot';
           cHandler.replaceMessages(history);
           return true;
 

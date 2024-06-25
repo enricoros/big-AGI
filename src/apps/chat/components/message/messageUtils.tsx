@@ -46,12 +46,12 @@ export function makeMessageAvatar(
   messageRole: DMessageRole | string,
   messageOriginLLM: string | undefined,
   messagePurposeId: SystemPurposeId | string | undefined,
-  messageSender: string,
   messageIncomplete: boolean,
   larger?: boolean,
 ): React.JSX.Element {
+  const nameByRole = messageRole === 'user' ? 'You' : messageRole === 'assistant' ? 'Assistant' : 'System';
   if (typeof messageAvatarUrl === 'string' && messageAvatarUrl)
-    return <Avatar alt={messageSender} src={messageAvatarUrl} />;
+    return <Avatar alt={nameByRole} src={messageAvatarUrl} />;
 
   const mascotSx = larger ? { width: 48, height: 48 } : avatarIconSx;
   switch (messageRole) {
@@ -69,7 +69,7 @@ export function makeMessageAvatar(
       // animation on incomplete messages
       if (messageIncomplete)
         return <Avatar
-          alt={messageSender} variant='plain'
+          alt={nameByRole} variant='plain'
           src={isDownload ? ANIM_BUSY_DOWNLOADING
             : isTextToImage ? ANIM_BUSY_PAINTING
               : isReact ? ANIM_BUSY_THINKING
@@ -100,7 +100,7 @@ export function makeMessageAvatar(
       // default assistant avatar
       return <SmartToyOutlinedIcon sx={avatarIconSx} />; // https://mui.com/static/images/avatar/2.jpg
   }
-  return <Avatar alt={messageSender} />;
+  return <Avatar alt={nameByRole} />;
 }
 
 

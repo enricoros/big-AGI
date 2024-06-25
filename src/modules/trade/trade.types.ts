@@ -61,7 +61,7 @@ type ImportDMessageV3 = {
 export function convertDMessageV3_to_V4(message: (DMessage | ImportDMessageV3)): DMessage {
   if (isDMessageV4(message))
     return message;
-  const { text, typing, ...rest } = message;
+  const { text, typing, sender, ...rest } = message;
   return {
     ...rest,
     fragments: [createTextContentFragment(text || '')],
