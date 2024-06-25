@@ -16,6 +16,7 @@ export interface DMessage {
   // identity
   avatar: string | null;              // image URL, or null
 
+  // TODO: @deprecated - move to a Persona ID of the persona who wrote it, and still, could be teamwork...
   purposeId?: string;                 // only assistant/system
   originLLM?: string;                 // only assistant - model that generated this message, goes beyond known models
 
