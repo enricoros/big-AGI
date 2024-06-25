@@ -4,7 +4,7 @@ import { updateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -82,7 +82,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
     case 'generate-image':
       // verify we were called with a single DMessageTextContent
-      if (firstFragment.ft !== 'content' || firstFragment.part.pt !== 'text')
+      if (!isContentFragment(firstFragment) || !isTextPart(firstFragment.part))
         return false;
       const imagePrompt = firstFragment.part.text;
       cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
@@ -90,7 +90,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
     case 'generate-react':
       // verify we were called with a single DMessageTextContent
-      if (firstFragment.ft !== 'content' || firstFragment.part.pt !== 'text')
+      if (!isContentFragment(firstFragment) || !isTextPart(firstFragment.part))
         return false;
       const reactPrompt = firstFragment.part.text;
       cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(reactPrompt)), true);

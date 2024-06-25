@@ -1,5 +1,5 @@
 import { agiUuid } from '~/common/util/idUtils';
-import { createPlaceholderContentFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderContentFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Message
@@ -180,14 +180,14 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
 export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMessageFragment[]>, newText: string, appendText?: boolean): DMessageFragment[] {
 
   // if there's no text fragment, create it
-  const lastTextFragment = fragments.findLast(f => isContentFragment(f) && f.part.pt === 'text') as DMessageContentFragment | undefined;
+  const lastTextFragment = fragments.findLast(f => isContentFragment(f) && isTextPart(f.part)) as DMessageContentFragment | undefined;
   if (!lastTextFragment)
     return [...fragments, createTextContentFragment(newText)];
 
   // append/replace the last text fragment
   return fragments.map(fragment =>
     (fragment === lastTextFragment)
-      ? specialShallowReplaceTextContentFragment(lastTextFragment, (appendText && lastTextFragment.part.pt === 'text') ? lastTextFragment.part.text + newText : newText)
+      ? specialShallowReplaceTextContentFragment(lastTextFragment, (appendText && isTextPart(lastTextFragment.part)) ? lastTextFragment.part.text + newText : newText)
       : fragment,
   );
 }
