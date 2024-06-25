@@ -30,7 +30,7 @@ export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
 
-      labsAttachScreenCapture: false,
+      labsAttachScreenCapture: true,
       setLabsAttachScreenCapture: (labsAttachScreenCapture: boolean) => set({ labsAttachScreenCapture }),
 
       labsCameraDesktop: false,
@@ -48,6 +48,16 @@ export const useUXLabsStore = create<UXLabsStore>()(
     }),
     {
       name: 'app-ux-labs',
+
+      // Migrations:
+      // - 1: turn on the screen capture by default
+      version: 1,
+      migrate: (state: any, fromVersion: number): UXLabsStore => {
+        // 0 -> 1: turn on the screen capture by default
+        if (state && fromVersion < 1 && !state.labsAttachScreenCapture)
+          return { ...state, labsAttachScreenCapture: true };
+        return state;
+      },
     },
   ),
 );
