@@ -92,6 +92,10 @@ export class ConversationHandler {
     return { assistantMessageId: assistantMessage.id, placeholderFragmentId };
   }
 
+  messageAppend(message: DMessage) {
+    this.chatActions.appendMessage(this.conversationId, message);
+  }
+
   messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), messageComplete: boolean, touch: boolean) {
     this.chatActions.editMessage(this.conversationId, messageId, update, messageComplete, touch);
   }
@@ -156,7 +160,7 @@ export class ConversationHandler {
         newMessage.originLLM = llmId;
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
         // TODO: put the other rays in the metadata?! (reqby @Techfren)
-        this.replaceMessages([...viewHistory, newMessage]);
+        this.messageAppend(newMessage);
       }
 
       // close beam

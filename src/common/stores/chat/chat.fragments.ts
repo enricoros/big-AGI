@@ -130,6 +130,10 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
+export function isTextPart(part: DMessageContentFragment['part']) {
+  return part.pt === 'text';
+}
+
 export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'image_ref';
 }
@@ -175,15 +179,11 @@ export function createImageAttachmentFragment(title: string, caption: string, da
 }
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
-  if (contentPart.pt === 'text')
+  if (isTextPart(contentPart))
     return createDocAttachmentFragment(title, caption, 'text/plain', createDMessageDataInlineText(contentPart.text), ref, docMeta);
-  if (contentPart.pt === 'image_ref')
+  if (isImageRefPart(contentPart))
     return createImageAttachmentFragment(title, caption, _duplicateDataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
   return createDocAttachmentFragment('Error', 'Content to Attachment', 'text/plain', createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`), ref, docMeta);
-}
-
-export function specialShallowReplaceDocData(part: DMessageDocPart, newData: DMessageDataInline): DMessageDocPart {
-  return createDMessageDocPart(part.type, newData, part.ref, part.meta);
 }
 
 

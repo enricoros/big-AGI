@@ -5,7 +5,7 @@ import { Box } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
@@ -78,11 +78,11 @@ export function ContentFragments(props: {
         return null;
 
       // editing for text parts
-      if (props.textEditsState && (fragment.part.pt === 'text' || fragment.part.pt === 'error')) {
+      if (props.textEditsState && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
         return (
           <ContentPartTextEditor
             key={'edit-' + fragment.fId}
-            textPartText={fragment.part.pt === 'text' ? fragment.part.text : fragment.part.error}
+            textPartText={isTextPart(fragment.part) ? fragment.part.text : fragment.part.error}
             fragmentId={fragment.fId}
             contentScaling={props.contentScaling}
             editedText={props.textEditsState[fragment.fId]}
