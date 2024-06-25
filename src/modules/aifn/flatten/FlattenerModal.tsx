@@ -139,8 +139,10 @@ export function FlattenerModal(props: {
     if (branch)
       newConversationId = props.onConversationBranch(props.conversationId, null);
     if (newConversationId) {
+      const ncHandler = ConversationsManager.getHandler(newConversationId);
       const newRootMessage = createDMessageTextContent('user', flattenedText);// [new chat] user:former chat summary
-      ConversationsManager.getHandler(newConversationId)?.replaceMessages([newRootMessage]);
+      ncHandler.historyClear();
+      ncHandler.messageAppend(newRootMessage);
     }
     props.onClose();
   };

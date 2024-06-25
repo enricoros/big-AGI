@@ -33,8 +33,9 @@ export interface ChatActions {
   // within a conversation
   setAbortController: (cId: DConversationId, abortController: AbortController | null) => void;
   abortConversationTemp: (cId: DConversationId) => void;
-  getCurrentMessages: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
-  setMessages: (cId: DConversationId, messages: DMessage[]) => void;
+  historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
+  historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
+  historyView: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
   editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) => void;
@@ -162,10 +163,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           };
         }),
 
-      getCurrentMessages: (conversationId: DConversationId) =>
-        _get().conversations.find(_c => _c.id === conversationId)?.messages ?? undefined,
 
-      setMessages: (conversationId: DConversationId, newMessages: DMessage[]) =>
+      historyReplace: (conversationId: DConversationId, newMessages: DMessage[]) =>
         _get()._editConversation(conversationId, conversation => {
           conversation.abortController?.abort();
           return {
@@ -173,11 +172,33 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             ...(!!newMessages.length ? {} : {
               autoTitle: undefined,
             }),
-            tokenCount: updateMessagesTokenCounts(newMessages, false, 'setMessages'),
+            tokenCount: updateMessagesTokenCounts(newMessages, false, 'historyReplace'),
             updated: Date.now(),
             abortController: null,
           };
         }),
+
+      historyTruncateToIncluded: (conversationId: DConversationId, messageId: DMessageId, offset: number) =>
+        _get()._editConversation(conversationId, conversation => {
+          const messageIndex = conversation.messages.findIndex(m => m.id === messageId);
+          if (messageIndex < 0 || messageIndex + 1 + offset >= conversation.messages.length)
+            return {};
+
+          conversation.abortController?.abort();
+
+          const truncatedMessages = conversation.messages.slice(0, Math.max(0, messageIndex + 1 + offset));
+
+          return {
+            messages: truncatedMessages,
+            tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
+            updated: Date.now(),
+            abortController: null,
+          };
+        }),
+
+      historyView: (conversationId: DConversationId) =>
+        _get().conversations.find(_c => _c.id === conversationId)?.messages ?? undefined,
+
 
       appendMessage: (conversationId: DConversationId, message: DMessage) =>
         _get()._editConversation(conversationId, conversation => {
@@ -234,6 +255,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             updated: touchUpdated ? Date.now() : conversation.updated,
           };
         }),
+
 
       appendMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) =>
         _get().editMessage(conversationId, messageId, message => ({

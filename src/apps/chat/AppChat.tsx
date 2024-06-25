@@ -25,7 +25,7 @@ import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/com
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
@@ -205,8 +205,8 @@ export function AppChat() {
 
   // Execution
 
-  const handleExecuteAndOutcome = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
-    const outcome = await _handleExecute(chatModeId, conversationId, history);
+  const handleExecuteAndOutcome = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, callerNameDebug: string) => {
+    const outcome = await _handleExecute(chatModeId, conversationId, callerNameDebug);
     if (outcome === 'err-no-chatllm')
       openModelsSetup();
     else if (outcome === 'err-t2i-unconfigured')
@@ -241,23 +241,26 @@ export function AppChat() {
       const userMessage = createDMessageFromFragments('user', duplicateDMessageFragments(fragments)); // [chat] create user:message
       if (metadata) userMessage.metadata = duplicateDMessageMetadata(metadata);
 
+      ConversationsManager.getHandler(conversation.id).messageAppend(userMessage); // [chat] append user message in each conversation
+
       // fire/forget
-      void handleExecuteAndOutcome(chatModeId /* various */, conversation.id, [...conversation.messages, userMessage]);
+      void handleExecuteAndOutcome(chatModeId /* various */, conversation.id, 'chat-composer-action'); // append user message, then '*-*'
     }
 
     return true;
   }, [paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]) => {
-    await handleExecuteAndOutcome('generate-text', conversationId, history);
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
+    await handleExecuteAndOutcome('generate-text', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-text'
   }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedPaneConversationId);
-    if (focusedConversation?.messages?.length) {
+    if (focusedPaneConversationId && focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      const history = lastMessage.role === 'assistant' ? focusedConversation.messages.slice(0, -1) : [...focusedConversation.messages];
-      await handleExecuteAndOutcome('generate-text', focusedConversation.id, history);
+      if (lastMessage.role === 'assistant')
+        ConversationsManager.getHandler(focusedPaneConversationId).historyTruncateTo(lastMessage.id, -1);
+      await handleExecuteAndOutcome('generate-text', focusedConversation.id, 'chat-regenerate-last'); // truncate if assistant, then gen-text
     }
   }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
@@ -275,15 +278,14 @@ export function AppChat() {
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
-  const handleTextImagine = React.useCallback(async (conversationId: DConversationId, messageText: string) => {
+  const handleImagineFromText = React.useCallback(async (conversationId: DConversationId, messageText: string) => {
     const conversation = getConversation(conversationId);
     if (!conversation)
       return;
     const imaginedPrompt = await imaginePromptFromText(messageText, conversationId) || 'An error sign.';
-    await handleExecuteAndOutcome('generate-image', conversationId, [
-      ...conversation.messages,
-      createDMessageTextContent('user', imaginedPrompt), // [chat] append user:imagine prompt
-    ]);
+    const imaginePrompMessage = createDMessageTextContent('user', imaginedPrompt);
+    ConversationsManager.getHandler(conversationId).messageAppend(imaginePrompMessage);  // [chat] append user:imagine prompt
+    await handleExecuteAndOutcome('generate-image', conversationId, 'chat-imagine-from-text'); // append message for 'imagine', then generate-image
   }, [handleExecuteAndOutcome]);
 
   const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
@@ -366,7 +368,7 @@ export function AppChat() {
 
   const handleConfirmedClearConversation = React.useCallback(() => {
     if (clearConversationId) {
-      ConversationsManager.getHandler(clearConversationId).replaceMessages([]);
+      ConversationsManager.getHandler(clearConversationId).historyClear();
       setClearConversationId(null);
     }
   }, [clearConversationId]);
@@ -547,7 +549,7 @@ export function AppChat() {
                   onConversationBranch={handleConversationBranch}
                   onConversationExecuteHistory={handleConversationExecuteHistory}
                   onTextDiagram={handleTextDiagram}
-                  onTextImagine={handleTextImagine}
+                  onTextImagine={handleImagineFromText}
                   onTextSpeak={handleTextSpeak}
                   sx={{
                     flexGrow: 1,
@@ -594,7 +596,7 @@ export function AppChat() {
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
       isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
-      onTextImagine={handleTextImagine}
+      onTextImagine={handleImagineFromText}
       setIsMulticast={setIsComposerMulticast}
       sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
     />
