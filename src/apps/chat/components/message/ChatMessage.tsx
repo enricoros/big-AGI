@@ -166,8 +166,8 @@ export function ChatMessage(props: {
     onMessageFragmentDelete?.(messageId, fragmentId);
   }, [messageId, onMessageFragmentDelete]);
 
-  const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newContent: DMessageFragment) => {
-    onMessageFragmentReplace?.(messageId, fragmentId, newContent);
+  const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+    onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
   }, [messageId, onMessageFragmentReplace]);
 
 

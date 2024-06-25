@@ -162,10 +162,10 @@ export function LLMAttachmentMenu(props: {
                         </Link>
                       </Typography>
                     );
-                  } else if (part.pt === 'text') {
+                  } else if (part.pt === 'embed') {
                     return (
                       <Typography key={index} level='body-sm'>
-                        🡒 text: {part.text.length.toLocaleString()} bytes
+                        🡒 text: {part.data.text.length.toLocaleString()} bytes
                       </Typography>
                     );
                   } else {

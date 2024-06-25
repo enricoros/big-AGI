@@ -22,7 +22,7 @@ export function DocumentFragments(props: {
   isMobile?: boolean,
   renderTextAsMarkdown: boolean;
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
-  onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
+  onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
 }) {
 
   // state

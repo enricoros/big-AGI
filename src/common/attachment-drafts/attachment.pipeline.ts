@@ -4,11 +4,11 @@ import { agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import { createContentPartAttachmentFragment, createTextAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, createEmbedAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment, specialContentPartToEmbedAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
-import { attachmentImageToFragmentViaDBlob } from './attachment.dblobs';
+import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
 
 
 // configuration
@@ -276,6 +276,67 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
   edit({ converters });
 }
 
+function prettyOriginText(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>): string | undefined {
+  const inputMime = input.mimeType || '';
+  switch (source.media) {
+
+    // Downloaded URL as Text, Markdown, or HTML
+    case 'url':
+      if (inputMime === 'text/markdown')
+        return 'Markdown from page';
+      if (inputMime === 'text/html')
+        return 'HTML from page';
+      if (inputMime === 'text/plain')
+        return 'Text from page';
+      return `Downloaded ${source.refUrl}`;
+
+    // File of various kinds and coming from various sources
+    case 'file':
+      const filePath = source.refPath || '';
+      const mayBeImage = inputMime.startsWith('image/');
+      const fileKind = mayBeImage ? 'Image' : 'File';
+      switch (source.origin) {
+        case 'camera':
+          return 'Photo from camera';
+        case 'screencapture':
+          return `Screen capture`;
+        case 'file-open':
+          return `Uploaded ${fileKind}`;
+        case 'clipboard-read':
+          return `${fileKind} from clipboard`;
+        case 'drop':
+          return `${fileKind} dropped`;
+        case 'paste':
+          return `${fileKind} pasted`;
+        default:
+          return `${fileKind}: ${filePath}`;
+      }
+
+    // Text from clipboard, drop, or paste
+    case 'text':
+      switch (source.method) {
+        case 'clipboard-read':
+          return 'Text from clipboard';
+        case 'drop':
+          return 'Dropped text';
+        case 'paste':
+          return 'Pasted text';
+        default:
+          return 'Text';
+      }
+
+    // The application attaching pieces of itself
+    case 'ego':
+      switch (source.method) {
+        case 'ego-fragments':
+          return 'From Chat: ' + source.refConversationTitle;
+        default:
+          return 'Other application/vnd.agi.ego.*';
+      }
+
+  }
+}
+
 
 /**
  * Converts the input of an AttachmentDraft object based on the selected converter.
@@ -297,10 +358,12 @@ export async function attachmentPerformConversion(
   edit(attachment.id, {
     converterIdx: converterIdx,
   });
+
+  // clear outputs
   replaceOutputFragments(attachment.id, []);
 
   // get converter
-  const { source, ref, input } = attachment;
+  const { input, source } = attachment;
   const converter = converterIdx !== null ? attachment.converters[converterIdx] : null;
   if (!converter || !input)
     return;
@@ -309,6 +372,9 @@ export async function attachmentPerformConversion(
     outputsConverting: true,
   });
 
+  let title = attachment.label || attachment.ref || converter.id;
+  let caption = prettyOriginText(source, input) || '';
+  const embedMeta = attachment.ref ? { namedRef: attachment.ref } : undefined;
 
   // apply converter to the input
   const newFragments: DMessageAttachmentFragment[] = [];
@@ -316,24 +382,29 @@ export async function attachmentPerformConversion(
 
     // text as-is
     case 'text':
-      newFragments.push(createTextAttachmentFragment(ref, inputDataToString(input.data)));
+      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(inputDataToString(input.data), input.mimeType), 'text/plain', embedMeta));
       break;
 
     // html as-is
     case 'rich-text':
-      newFragments.push(createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!));
+      // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
+      //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
+      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(input.altData || '', input.altMimeType), 'text/html', embedMeta));
       break;
 
     // html to markdown table
     case 'rich-text-table':
       let mdTable: string;
+      let tableMimeType;
       try {
         mdTable = htmlTableToMarkdown(input.altData!, false);
+        tableMimeType = 'text/markdown';
       } catch (error) {
         // fallback to text/plain
         mdTable = inputDataToString(input.data);
+        tableMimeType = input.mimeType;
       }
-      newFragments.push(createTextAttachmentFragment(ref, mdTable));
+      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(mdTable, tableMimeType), tableMimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', embedMeta));
       break;
 
     // image resized (default mime/quality, openai-high-res)
@@ -342,7 +413,7 @@ export async function attachmentPerformConversion(
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
         return null;
       }
-      const imageHighF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-high-res');
+      const imageHighF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-high-res');
       if (imageHighF)
         newFragments.push(imageHighF);
       break;
@@ -353,7 +424,7 @@ export async function attachmentPerformConversion(
         console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
         return null;
       }
-      const imageLowF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, 'openai-low-res');
+      const imageLowF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-low-res');
       if (imageLowF)
         newFragments.push(imageLowF);
       break;
@@ -364,7 +435,7 @@ export async function attachmentPerformConversion(
         console.log('Expected ArrayBuffer for image-original, got:', typeof input.data);
         return null;
       }
-      const imageOrigF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, false, false);
+      const imageOrigF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, false);
       if (imageOrigF)
         newFragments.push(imageOrigF);
       break;
@@ -375,7 +446,7 @@ export async function attachmentPerformConversion(
         console.log('Expected ArrayBuffer for image-to-default, got:', typeof input.data);
         return null;
       }
-      const imageCastF = await attachmentImageToFragmentViaDBlob(input.mimeType, input.data, source, ref, ref, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
+      const imageCastF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
       if (imageCastF)
         newFragments.push(imageCastF);
       break;
@@ -397,7 +468,8 @@ export async function attachmentPerformConversion(
           },
         });
         const imageText = result.data.text;
-        newFragments.push(createTextAttachmentFragment(ref, imageText));
+        // NOTE: shall one of the two mimes hint at the OCR process for the
+        newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(imageText, 'text/plain'), 'application/vnd.agi.ocr', { ...embedMeta, ocrSource: 'image' }));
       } catch (error) {
         console.error(error);
       }
@@ -413,7 +485,7 @@ export async function attachmentPerformConversion(
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData = new Uint8Array(input.data.slice(0));
       const pdfText = await pdfToText(pdfData);
-      newFragments.push(createTextAttachmentFragment(ref, pdfText));
+      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(pdfText, 'text/plain'), 'application/vnd.agi.ocr', { ...embedMeta, ocrSource: 'pdf' }));
       break;
 
     // pdf to images
@@ -427,7 +499,7 @@ export async function attachmentPerformConversion(
       try {
         const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
         for (const pdfPageImage of imageDataURLs) {
-          const pdfPageImageF = await attachmentImageToFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `Page ${newFragments.length + 1}`, ref, false, false);
+          const pdfPageImageF = await imageDataToImageAttachmentFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `${title} (pg. ${newFragments.length + 1})`, caption, false, false);
           if (pdfPageImageF)
             newFragments.push(pdfPageImageF);
         }
@@ -443,11 +515,9 @@ export async function attachmentPerformConversion(
         console.log('Expected DMessageContentFragment[] for ego-fragments-inlined, got:', typeof input.data);
         break;
       }
+      title = `Chat Message: ${attachment.label}`;
       for (const contentFragment of input.data) {
-        if (contentFragment.part.pt === 'text' || isImageRefPart(contentFragment.part))
-          newFragments.push(createContentPartAttachmentFragment(source.media === 'ego' ? source.refId : 'Message', contentFragment.part));
-        else
-          console.log('Unhandled ego-fragments-inlined part:', contentFragment.part.pt);
+        newFragments.push(specialContentPartToEmbedAttachmentFragment(title, caption, contentFragment.part, embedMeta));
       }
       break;
 

@@ -1,5 +1,5 @@
 import { agiUuid } from '~/common/util/idUtils';
-import { createPlaceholderContentFragment, createTextContentFragment, specialShallowReplaceTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderContentFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Message
@@ -153,8 +153,27 @@ export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag)
 // helpers during the transition from V3
 
 export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
+
   return fragments
-    .map(fragment => (isContentOrAttachmentFragment(fragment) && fragment.part.pt === 'text') ? fragment.part.text : '')
+    .map(fragment => {
+      if (isContentFragment(fragment)) {
+        switch (fragment.part.pt) {
+          case 'text':
+            return fragment.part.text;
+          case 'error':
+            return fragment.part.error;
+        }
+      } else if (isAttachmentFragment(fragment)) {
+        switch (fragment.part.pt) {
+          case 'embed':
+            return fragment.part.data.text;
+          case 'image_ref':
+            return '';
+        }
+      }
+      console.warn('DEV: messageFragmentsReduceText: unexpected content fragment', fragment);
+      return '';
+    })
     .filter(text => !!text)
     .join(fragmentSeparator);
 }

@@ -10,7 +10,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { createTextAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, DMessageAttachmentFragment, DMessageFragmentId, specialShallowReplaceEmbedAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
@@ -35,9 +35,10 @@ export function DocumentFragmentEditor(props: {
 
   const fragmentId = fragment.fId;
   const fragmentTitle = fragment.title;
+  const fragmentCaption = fragment.caption;
   const part = fragment.part;
 
-  if (part.pt !== 'text')
+  if (part.pt !== 'embed')
     throw new Error('Unexpected part type: ' + part.pt);
 
   // delete
@@ -64,12 +65,13 @@ export function DocumentFragmentEditor(props: {
     if (editedText === undefined)
       return;
     if (editedText?.length > 0) {
-      onFragmentReplace(fragmentId, createTextAttachmentFragment(fragmentTitle, editedText));
+      const newEmbedFragment = specialShallowReplaceEmbedAttachmentFragment(fragment, createDMessageDataInlineText(editedText));
+      onFragmentReplace(fragmentId, newEmbedFragment);
       // NOTE: since the former function changes the ID of the fragment, the
       // whole editor will disappear as a side effect
     } else
       handleFragmentDelete();
-  }, [editedText, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
+  }, [editedText, fragment, fragmentId, handleFragmentDelete, onFragmentReplace]);
 
 
   return (
@@ -86,7 +88,7 @@ export function DocumentFragmentEditor(props: {
       {isEditing ? (
         // Document Editor
         <ContentPartTextEditor
-          textPartText={part.text}
+          textPartText={part.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}
           editedText={props.editedText}
@@ -97,7 +99,7 @@ export function DocumentFragmentEditor(props: {
       ) : (
         // Document viewer, including collapse/expand
         <AutoBlocksRenderer
-          text={marshallWrapText(part.text, '', 'markdown-code')}
+          text={marshallWrapText(part.data.text, part.emeta?.namedRef || '', 'markdown-code')}
           // text={selectedFragment.part.text}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}

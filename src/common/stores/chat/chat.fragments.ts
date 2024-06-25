@@ -24,10 +24,9 @@ export type DMessageFragment =
 
 // expected a list of one or more per message, of similar or different types
 export type DMessageContentFragment = {
-  ft: 'content',
+  ft: 'content';
   fId: DMessageFragmentId;
   part:
-  //| DMessageArtifactPart - not yet, as we don't have the renderers, so let's keep it simple only on Attachments for now
     | DMessageErrorPart         // red message, e.g. non-content application issues
     | DMessageImageRefPart      // large image
     | DMessagePlaceholderPart   // (non submitted) placeholder to be replaced by another part
@@ -35,28 +34,24 @@ export type DMessageContentFragment = {
     | DMessageToolCallPart      // shown to dev only, singature of the llm function call
     | DMessageToolResponsePart  // shown to dev only, response of the llm
     | _DMessageSentinelPart;
-}
+};
 
 // displayed at the bottom of the message, zero or more
 export type DMessageAttachmentFragment = {
-  ft: 'attachment',
+  ft: 'attachment';
   fId: DMessageFragmentId;
+  title: string;                // label of the attachment (filename, named id, content overview, title..)
+  caption: string;              // additional information, such as provenance, content preview, etc.
+  created: number;
   part:
-    | DMessageArtifactPart
+    | DMessageEmbedPart
     | DMessageImageRefPart
-    | DMessageTextPart
     | _DMessageSentinelPart;
-  // duplicated information that makes it possible to shallow-present attachments without decoding the parts
-  title: string; // common presentation, without decoding parts (filename, ID, content overview, title..)
-  //type: DMessageAttachmentMimeType, // probably for the icon
-  //agiCodeLanguage?: string, // for ...
-}
-
-// type DMessageAttachmentMimeType = DMessageArtifactMimeType | ...
+};
 
 // force the typesystem to work, bark, and detect/reveal corner cases
 type _DMessageSentinelFragment = {
-  ft: '_ft_sentinel',
+  ft: '_ft_sentinel';
   fId: DMessageFragmentId;
 }
 
@@ -75,7 +70,7 @@ type _DMessageSentinelFragment = {
 // Small and efficient (larger objects need to only be referred to)
 //
 
-export type DMessageArtifactPart = { pt: 'artifact', data: DMessageDataInline, mimeType: DMessageArtifactMimeType, title: string, language?: string; namedId?: string };
+export type DMessageEmbedPart = { pt: 'embed', data: DMessageDataInline, emime: DMessageEmbedMimeType, emeta?: DMessageEmbedMeta };
 export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
@@ -84,16 +79,27 @@ export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Re
 export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
 type _DMessageSentinelPart = { pt: '_pt_sentinel' };
 
-type DMessageArtifactMimeType =
-  | 'application/vnd.agi.ego' // for attaching messages
+
+type DMessageEmbedMimeType =
+  | 'text/plain'                      // e.g. clipboard paste
+  | 'text/html'                       // can be rendered as htm;
+  | 'text/markdown'                   // can be rendered as markdown (note that text/plain can also)
+  | 'application/vnd.agi.ocr'         // images/pdfs converted as text
+  | 'application/vnd.agi.ego'         // for attaching messages
+// | 'application/vnd.agi.imageRef'    // for image attachments with da - NO: shall not be, because Embed by defintion doesn't have a Ref
 // | 'application/vnd.agi.code' // Blocks > RenderCode
 // | 'application/vnd.agi.plantuml'
 // | 'image/svg+xml'
 // | 'text/csv'  // table editor
 // | 'text/html' // rich content paste, or blocks RenderCode[HTML]
 // | 'text/markdown' // BlocksRenderer; note: can contain RenderCode blocks in triple-backticks
-// | 'text/plain' // clipboard text paste
   ;
+
+type DMessageEmbedMeta = {
+  namedRef?: string;
+  codeLanguage?: string;
+  ocrSource?: 'image' | 'pdf';
+}
 
 
 //
@@ -103,7 +109,7 @@ type DMessageArtifactMimeType =
 //
 
 export type DMessageDataInline =
-  | { idt: 'text', text: string }; // | { idt: 'base64', base64: string };
+  | { idt: 'text', text: string, mimeType?: string /* optional, assuming the upper layers have mime already */ }; // | { idt: 'base64', base64: string };
 
 export type DMessageDataRef =
   | { reftype: 'url'; url: string } // remotely accessible URL - NOTE: not used right now, this is more of a sentinel
@@ -132,6 +138,10 @@ export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageA
 
 /// Helpers - Fragments Creation
 
+function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
+  return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
+}
+
 export function createErrorContentFragment(error: string): DMessageContentFragment {
   return _createContentFragment(createDMessageErrorPart(error));
 }
@@ -153,33 +163,30 @@ export function specialShallowReplaceTextContentFragment(copyFragment: DMessageC
 }
 
 
-export function createArtifactAttachmentFragment(title: string, data: DMessageDataInline, mimeType: DMessageArtifactMimeType, language?: string, namedId?: string): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, createDMessageArtifactPart(data, mimeType, title, language, namedId));
+function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
+  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part };
 }
 
-export function createImageAttachmentFragment(title: string, dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, createDMessageImageRefPart(dataRef, altText, width, height));
+export function createEmbedAttachmentFragment(title: string, caption: string, data: DMessageDataInline, embedMimeType: DMessageEmbedMimeType, embedMeta?: DMessageEmbedMeta): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, caption, createDMessageEmbedPart(data, embedMimeType, embedMeta));
 }
 
-export function createTextAttachmentFragment(title: string, text: string): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, createDMessageTextPart(text));
+export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, caption, createDMessageImageRefPart(dataRef, imgAltText, width, height));
 }
 
-export function createContentPartAttachmentFragment(title: string, part: DMessageContentFragment['part']): DMessageAttachmentFragment {
-  if (part.pt === 'text' || part.pt === 'image_ref' || part.pt === '_pt_sentinel')
-    return _createAttachmentFragment(title, _duplicatePart(part));
-  // TODO: review the 'ego' attachments
-  return createTextAttachmentFragment(title, `Attaching a message with content part '${part.pt}' is not supported yet.`);
+export function specialContentPartToEmbedAttachmentFragment(title: string, caption: string, part: DMessageContentFragment['part'], embedMeta?: DMessageEmbedMeta): DMessageAttachmentFragment {
+  if (part.pt === 'text')
+    return createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(part.text), 'application/vnd.agi.ego', embedMeta);
+  if (part.pt === 'image_ref' || part.pt === '_pt_sentinel')
+    return _createAttachmentFragment(title, caption, _duplicatePart(part));
+  return createEmbedAttachmentFragment('Error', 'Content to Attachment', createDMessageDataInlineText(`Conversion of '${part.pt}' is not supported yet.`), 'application/vnd.agi.ego', embedMeta);
 }
 
-
-function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
-  return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
+export function specialShallowReplaceEmbedAttachmentFragment(copyFragment: DMessageAttachmentFragment, newData: DMessageDataInline): DMessageAttachmentFragment {
+  return createEmbedAttachmentFragment(copyFragment.title, copyFragment.caption, newData, copyFragment.part.pt === 'embed' ? copyFragment.part.emime : 'text/plain', copyFragment.part.pt === 'embed' ? copyFragment.part.emeta : undefined);
 }
 
-function _createAttachmentFragment(title: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
-  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, part };
-}
 
 function _createSentinelFragment(): _DMessageSentinelFragment {
   return { ft: '_ft_sentinel', fId: agiId('chat-dfragment' /* -_sentinel */) };
@@ -188,8 +195,8 @@ function _createSentinelFragment(): _DMessageSentinelFragment {
 
 /// Helpers - Parts Creation
 
-function createDMessageArtifactPart(data: DMessageDataInline, mimeType: DMessageArtifactMimeType, title: string, language?: string, namedId?: string): DMessageArtifactPart {
-  return { pt: 'artifact', data, mimeType, title, language, namedId };
+function createDMessageEmbedPart(data: DMessageDataInline, embedMimeType: DMessageEmbedMimeType, embedMeta?: DMessageEmbedMeta): DMessageEmbedPart {
+  return { pt: 'embed', data, emime: embedMimeType, emeta: embedMeta };
 }
 
 function createDMessageErrorPart(error: string): DMessageErrorPart {
@@ -223,8 +230,8 @@ function createDMessageSentinelPart(): _DMessageSentinelPart {
 
 /// Helpers - Data Reference Creation
 
-function createDMessageDataInlineText(text: string): DMessageDataInline {
-  return { idt: 'text', text };
+export function createDMessageDataInlineText(text: string, mimeType?: string): DMessageDataInline {
+  return { idt: 'text', text, mimeType };
 }
 
 function createDMessageDataRefUrl(url: string): DMessageDataRef {
@@ -248,7 +255,7 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
       return _createContentFragment(_duplicatePart(fragment.part));
 
     case 'attachment':
-      return _createAttachmentFragment(fragment.title, _duplicatePart(fragment.part));
+      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicatePart(fragment.part));
 
     case '_ft_sentinel':
       return _createSentinelFragment();
@@ -260,8 +267,8 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
 
 function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
-    case 'artifact':
-      return createDMessageArtifactPart(_duplicateInlineData(part.data), part.mimeType, part.title, part.language, part.namedId) as TPart;
+    case 'embed':
+      return createDMessageEmbedPart(_duplicateInlineData(part.data), part.emime, part.emeta) as TPart;
 
     case 'error':
       return createDMessageErrorPart(part.error) as TPart;
@@ -289,7 +296,7 @@ function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachm
 function _duplicateInlineData(data: DMessageDataInline): DMessageDataInline {
   switch (data.idt) {
     case 'text':
-      return createDMessageDataInlineText(data.text);
+      return createDMessageDataInlineText(data.text, data.mimeType);
 
     // case 'base64':
     //   return createDMessageDataInlineBase64(data.base64);

@@ -362,6 +362,14 @@ export const useChatStore = create<ConversationsStore>()(devtools(
               if (!fragment.fId) {
                 fragment.fId = agiId('chat-dfragment');
               }
+              // fixup: convert 'text' attachment fragments to embed
+              if (fragment.ft === 'attachment' && (fragment.part.pt as any) === 'text') {
+                fragment.part = { pt: 'embed', data: { idt: 'text', text: (fragment.part as any).text }, emime: 'text/plain' };
+              }
+              // fixup, for attachments without date, use the message date
+              if (fragment.ft === 'attachment' && !fragment.created) {
+                fragment.created = message.updated || message.created;
+              }
             }
             // replace the Content.Pl[part.pt='ph'] fragments with Error fragments, to show the aborted ops (instead of just empty blocks)
             message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment =>
