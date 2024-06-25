@@ -42,6 +42,7 @@ const fetchPageInputSchema = z.object({
 
 const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
+  title: z.string(),
   content: z.record(pageTransformSchema, z.string()),
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
@@ -77,6 +78,7 @@ export const browseRouter = createTRPCRouter({
           ? result.value
           : {
             url: requests[index].url,
+            title: '',
             content: {},
             error: result.reason?.message || 'Unknown fetch error',
             stopReason: 'error',
@@ -106,6 +108,7 @@ async function workerPuppeteer(
 
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
+    title: '',
     content: {},
     error: undefined,
     stopReason: 'error',
@@ -139,6 +142,15 @@ async function workerPuppeteer(
     result.stopReason = isTimeout ? 'timeout' : 'error';
     if (!isTimeout) {
       result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown goto error');
+    }
+  }
+
+  // Get the page title after successful navigation
+  if (result.stopReason !== 'error') {
+    try {
+      result.title = await page.title();
+    } catch (error: any) {
+      // result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown title error');
     }
   }
 
