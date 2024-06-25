@@ -123,6 +123,13 @@ export class ConversationHandler {
       this.beamStore.getState().terminateKeepingSettings();
   }
 
+  viewHistory(scope: string): Readonly<DMessage[]> {
+    const messages = this.chatActions.getCurrentMessages(this.conversationId);
+    if (messages === undefined)
+      throw new Error(`allMessages: Conversation not found, ${scope}`);
+    return messages;
+  }
+
 
   // Beam
 

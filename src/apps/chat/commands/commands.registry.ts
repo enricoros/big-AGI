@@ -8,20 +8,20 @@ import { CommandsHelp } from './CommandsHelp';
 import { CommandsReact } from './CommandsReact';
 
 
-export type CommandsProviderId = 'ass-browse' | 'ass-t2i' | 'ass-react' | 'chat-alter' | 'cmd-help' | 'mode-beam';
+export type CommandsProviderId = 'cmd-ass-browse' | 'cmd-ass-t2i' | 'cmd-chat-alter' | 'cmd-help' | 'cmd-mode-beam' | 'cmd-mode-react';
 
 type TextCommandPiece =
   | { type: 'nocmd'; value: string; }
-  | { type: 'cmd'; providerId: CommandsProviderId, command: string; params?: string, isError?: boolean };
+  | { type: 'cmd'; providerId: CommandsProviderId, command: string; params?: string, isErrorNoArgs?: boolean };
 
 
 const ChatCommandsProviders: Record<CommandsProviderId, ICommandsProvider> = {
-  'ass-browse': CommandsBrowse,
-  'ass-react': CommandsReact,
-  'ass-t2i': CommandsDraw,
-  'chat-alter': CommandsAlter,
+  'cmd-ass-browse': CommandsBrowse,
+  'cmd-ass-t2i': CommandsDraw,
+  'cmd-chat-alter': CommandsAlter,
   'cmd-help': CommandsHelp,
-  'mode-beam': CommandsBeam,
+  'cmd-mode-beam': CommandsBeam,
+  'cmd-mode-react': CommandsReact,
 };
 
 export function findAllChatCommands(): ChatCommand[] {
@@ -29,6 +29,12 @@ export function findAllChatCommands(): ChatCommand[] {
     .sort((a, b) => a.rank - b.rank)
     .map(p => p.getCommands())
     .flat();
+}
+
+export function helpPrettyChatCommands() {
+  return findAllChatCommands()
+    .map(cmd => ` - ${cmd.primary}` + (cmd.alternatives?.length ? ` (${cmd.alternatives.join(', ')})` : '') + `: ${cmd.description}`)
+    .join('\n');
 }
 
 export function extractChatCommand(input: string): TextCommandPiece[] {
@@ -56,7 +62,7 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
           providerId: provider.id,
           command: potentialCommand,
           params: textAfterCommand || undefined,
-          isError: !textAfterCommand || undefined,
+          isErrorNoArgs: !textAfterCommand,
         }];
 
         // command without arguments, treat any text after as a separate text piece

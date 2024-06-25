@@ -7,11 +7,12 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { getConversation } from '~/common/stores/chat/store-chats';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
@@ -139,7 +140,7 @@ export function FlattenerModal(props: {
       newConversationId = props.onConversationBranch(props.conversationId, null);
     if (newConversationId) {
       const newRootMessage = createDMessageTextContent('user', flattenedText);// [new chat] user:former chat summary
-      useChatStore.getState().setMessages(newConversationId, [newRootMessage]);
+      ConversationsManager.getHandler(newConversationId)?.replaceMessages([newRootMessage]);
     }
     props.onClose();
   };

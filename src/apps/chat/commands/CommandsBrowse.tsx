@@ -3,7 +3,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import type { ICommandsProvider } from './ICommandsProvider';
 
 export const CommandsBrowse: ICommandsProvider = {
-  id: 'ass-browse',
+  id: 'cmd-ass-browse',
   rank: 20,
 
   getCommands: () => [{

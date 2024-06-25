@@ -214,6 +214,8 @@ export function AppChat() {
       addSnackbar({ key: 'chat-no-persona', message: 'No persona selected.', type: 'issue' });
     else if (outcome === 'err-no-conversation')
       addSnackbar({ key: 'chat-no-conversation', message: 'No active conversation.', type: 'issue' });
+    else if (outcome === 'err-no-last-message')
+      addSnackbar({ key: 'chat-no-conversation', message: 'No conversation history.', type: 'issue' });
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
