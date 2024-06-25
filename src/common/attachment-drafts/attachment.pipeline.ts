@@ -125,9 +125,9 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       try {
         const page = await callBrowseFetchPage(source.url);
         edit(
-          page.content.markdown ? { input: { mimeType: 'text/markdown', data: page.content.markdown, dataSize: page.content.markdown.length } }
-            : page.content.text ? { input: { mimeType: 'text/plain', data: page.content.text, dataSize: page.content.text.length } }
-              : page.content.html ? { input: { mimeType: 'text/html', data: page.content.html, dataSize: page.content.html.length } }
+          page.content.markdown ? { input: { mimeType: 'text/markdown', data: page.content.markdown, dataSize: page.content.markdown.length, altData: page.title } }
+            : page.content.text ? { input: { mimeType: 'text/plain', data: page.content.text, dataSize: page.content.text.length, altData: page.title } }
+              : page.content.html ? { input: { mimeType: 'text/html', data: page.content.html, dataSize: page.content.html.length, altData: page.title } }
                 : { inputError: 'No content found at this link' },
         );
       } catch (error: any) {
