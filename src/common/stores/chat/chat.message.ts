@@ -159,6 +159,8 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
             return fragment.part.text;
           case 'error':
             return fragment.part.error;
+          case 'ph':
+            return 0;
         }
       } else if (isAttachmentFragment(fragment)) {
         switch (fragment.part.pt) {
