@@ -73,6 +73,9 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
     case 'generate-text':
       return await runAssistantUpdatingState(conversationId, cHandler.viewHistory('generate-text'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
+    case 'generate-text-v1':
+      return await runAssistantUpdatingState(conversationId, cHandler.viewHistory('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+
     case 'generate-text-beam':
       cHandler.beamInvoke(cHandler.viewHistory('generate-text-beam'), [], null);
       return true;
