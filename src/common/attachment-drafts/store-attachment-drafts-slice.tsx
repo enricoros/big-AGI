@@ -33,10 +33,10 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
   takeAllFragments: (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => Promise<DMessageAttachmentFragment[]>;
 
   /**
-   * Extracts embed fragments from the attachment drafts and optionally removes them from the store.
+   * Extracts typed fragments from the attachment drafts and optionally removes them from the store.
    * If `attachmentDraftId` is null, all the attachments are processed, otherwise only this.
    */
-  takeEmbedFragments: (attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
+  takeFragmentsByType: (fragmentsType: DMessageAttachmentFragment['part']['pt'], attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
 
   _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>> | ((attachment: AttachmentDraft) => Partial<Omit<AttachmentDraft, 'outputFragments'>>)) => void;
   _replaceAttachmentOutputFragments: (attachmentDraftId: AttachmentDraftId, outputFragments: DMessageAttachmentFragment[]) => void;
@@ -152,7 +152,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     return transferredFragments;
   },
 
-  takeEmbedFragments: (attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean): DMessageAttachmentFragment[] => {
+  takeFragmentsByType: (fragmentsType: DMessageAttachmentFragment['part']['pt'], attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean): DMessageAttachmentFragment[] => {
     const { attachmentDrafts } = _get();
 
     const textFragments: DMessageAttachmentFragment[] = [];
@@ -167,7 +167,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
       }
 
       // Extract text fragments
-      const extractedTextFragments = draft.outputFragments.filter(fragment => fragment.part.pt === 'embed');
+      const extractedTextFragments = draft.outputFragments.filter(fragment => fragment.part.pt === fragmentsType);
       textFragments.push(...extractedTextFragments);
 
       // keep as-is if there's nothing to remove
@@ -182,7 +182,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
       }
 
       // Removal: leave non-text fragments in the draft
-      const keptFragments = draft.outputFragments.filter(fragment => fragment.part.pt !== 'embed');
+      const keptFragments = draft.outputFragments.filter(fragment => fragment.part.pt !== fragmentsType);
       if (keptFragments.length || draft.outputsConverting) {
         keptDrafts.push({
           ...draft,

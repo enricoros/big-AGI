@@ -40,6 +40,13 @@ export function agiId(scope: Extract<UidScope, 'chat-dfragment'>) {
 }
 
 /*
+ * Seldomly used
+ */
+export function agiCustomId(digits: number) {
+  return nanoid(digits);
+}
+
+/*
 // Similar to the above but makes sure there's no collision with the given list of IDs
 export function agiUuidUncollided(scope: Extract<UidScope, 'chat-dfragment'>, existingIds: string[]) {
   const characters = scope === 'chat-dfragment' ? 8 : 21;

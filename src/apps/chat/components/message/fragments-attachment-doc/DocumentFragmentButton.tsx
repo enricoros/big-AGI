@@ -17,8 +17,8 @@ import { ellipsizeMiddle } from '~/common/util/textUtils';
 
 function iconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
   switch (part.pt) {
-    case 'embed':
-      switch (part.emime) {
+    case 'doc':
+      switch (part.type) {
         case 'text/plain':
           return TextFieldsIcon;
         case 'text/html':
@@ -26,7 +26,7 @@ function iconForFragment({ part }: DMessageAttachmentFragment): React.ComponentT
         case 'text/markdown':
           return CodeIcon;
         case 'application/vnd.agi.ocr':
-          return part.emeta?.ocrSource === 'image' ? AbcIcon : PictureAsPdfIcon;
+          return part.meta?.srcOcrFrom === 'image' ? AbcIcon : PictureAsPdfIcon;
         case 'application/vnd.agi.ego':
           return TelegramIcon;
         default:
@@ -50,8 +50,8 @@ export function DocumentFragmentButton(props: {
   // derived state
   const { fragment, isSelected, toggleSelected } = props;
 
-  // only operate on embeds
-  if (fragment.part.pt !== 'embed')
+  // only operate on doc fragments
+  if (fragment.part.pt !== 'doc')
     throw new Error('Unexpected part type: ' + fragment.part.pt);
 
   // handlers
@@ -84,7 +84,7 @@ export function DocumentFragmentButton(props: {
   }), [isSelected, props.contentScaling]);
 
   const buttonText = ellipsizeMiddle(fragment.title || 'Text', 28 /* totally arbitrary length */);
-  const buttonCaption = fragment.caption;
+  // const buttonCaption = fragment.caption;
 
   const Icon = iconForFragment(fragment);
 

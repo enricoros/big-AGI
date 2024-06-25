@@ -33,9 +33,9 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
   if (fragment.ft === 'attachment') {
     const aPart = fragment.part;
     switch (aPart.pt) {
-      case 'embed':
-        const likelyEmbedRendition = marshallWrapText(aPart.data.text, aPart.emeta?.namedRef || undefined, 'markdown-code');
-        return estimateTextTokens(likelyEmbedRendition, llm, debugFrom);
+      case 'doc':
+        const likelyRendition = marshallWrapText(aPart.data.text, aPart.ref, 'markdown-code');
+        return estimateTextTokens(likelyRendition, llm, debugFrom);
       case 'image_ref':
         return _imagePartTokens(aPart.width, aPart.height, fragment.title, llm);
     }
@@ -77,11 +77,11 @@ export function marshallWrapText(text: string, blockTitle: string | undefined, w
 /**
  * API Note: you should not use this function much, as it lowers the grade of higher level information
  */
-export function marshallWrapEmbedFragments(initialText: string | null, fragments: (/*DMessageContentFragment |*/ DMessageAttachmentFragment)[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
+export function marshallWrapDocFragments(initialText: string | null, fragments: (/*DMessageContentFragment |*/ DMessageAttachmentFragment)[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
   let inlinedText = initialText || '';
   for (const fragment of fragments) {
     // warn on non-text fragments, which are not handled - it's an API error to call this function to non-text-part fragments
-    if (fragment.part.pt !== 'embed') {
+    if (fragment.part.pt !== 'doc') {
       console.warn('marshallWrapTextFragments: unhandled part type:', fragment.part.pt);
       continue;
     }
@@ -89,8 +89,8 @@ export function marshallWrapEmbedFragments(initialText: string | null, fragments
     if (inlinedText.length)
       inlinedText += separator;
 
-    const embedPart = fragment.part;
-    inlinedText += marshallWrapText(embedPart.data.text, embedPart.emeta?.namedRef || undefined, wrapFormat);
+    const docPart = fragment.part;
+    inlinedText += marshallWrapText(docPart.data.text, docPart.ref, wrapFormat);
   }
   return inlinedText;
 }

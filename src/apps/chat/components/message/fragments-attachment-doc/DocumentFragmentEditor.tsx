@@ -10,7 +10,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { createDMessageDataInlineText, DMessageAttachmentFragment, DMessageFragmentId, specialShallowReplaceEmbedAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, DMessageAttachmentFragment, DMessageFragmentId, specialShallowReplaceDocData } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
@@ -38,7 +38,7 @@ export function DocumentFragmentEditor(props: {
   const fragmentCaption = fragment.caption;
   const part = fragment.part;
 
-  if (part.pt !== 'embed')
+  if (part.pt !== 'doc')
     throw new Error('Unexpected part type: ' + part.pt);
 
   // delete
@@ -64,9 +64,8 @@ export function DocumentFragmentEditor(props: {
     setIsDeleteArmed(false);
     if (editedText === undefined)
       return;
-    if (editedText?.length > 0) {
-      const newEmbedFragment = specialShallowReplaceEmbedAttachmentFragment(fragment, createDMessageDataInlineText(editedText));
-      onFragmentReplace(fragmentId, newEmbedFragment);
+    if (editedText?.length > 0 && fragment.part.pt === 'doc') {
+      onFragmentReplace(fragmentId, { ...fragment, part: specialShallowReplaceDocData(fragment.part, createDMessageDataInlineText(editedText)) });
       // NOTE: since the former function changes the ID of the fragment, the
       // whole editor will disappear as a side effect
     } else
@@ -99,7 +98,7 @@ export function DocumentFragmentEditor(props: {
       ) : (
         // Document viewer, including collapse/expand
         <AutoBlocksRenderer
-          text={marshallWrapText(part.data.text, part.emeta?.namedRef || '', 'markdown-code')}
+          text={marshallWrapText(part.data.text, /*fragment.title ||*/ part.meta?.srcFileName || part.ref, 'markdown-code')}
           // text={selectedFragment.part.text}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}

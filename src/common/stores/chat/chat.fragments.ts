@@ -44,7 +44,7 @@ export type DMessageAttachmentFragment = {
   caption: string;              // additional information, such as provenance, content preview, etc.
   created: number;
   part:
-    | DMessageEmbedPart
+    | DMessageDocPart
     | DMessageImageRefPart
     | _DMessageSentinelPart;
 };
@@ -70,7 +70,7 @@ type _DMessageSentinelFragment = {
 // Small and efficient (larger objects need to only be referred to)
 //
 
-export type DMessageEmbedPart = { pt: 'embed', data: DMessageDataInline, emime: DMessageEmbedMimeType, emeta?: DMessageEmbedMeta };
+export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta };
 export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
@@ -80,25 +80,24 @@ export type DMessageToolResponsePart = { pt: 'tool_response', function: string, 
 type _DMessageSentinelPart = { pt: '_pt_sentinel' };
 
 
-type DMessageEmbedMimeType =
-  | 'text/plain'                      // e.g. clipboard paste
-  | 'text/html'                       // can be rendered as htm;
-  | 'text/markdown'                   // can be rendered as markdown (note that text/plain can also)
-  | 'application/vnd.agi.ocr'         // images/pdfs converted as text
+type DMessageDocMimeType =
   | 'application/vnd.agi.ego'         // for attaching messages
-// | 'application/vnd.agi.imageRef'    // for image attachments with da - NO: shall not be, because Embed by defintion doesn't have a Ref
-// | 'application/vnd.agi.code' // Blocks > RenderCode
-// | 'application/vnd.agi.plantuml'
-// | 'image/svg+xml'
-// | 'text/csv'  // table editor
-// | 'text/html' // rich content paste, or blocks RenderCode[HTML]
-// | 'text/markdown' // BlocksRenderer; note: can contain RenderCode blocks in triple-backticks
+  // | 'application/vnd.agi.code'        // Blocks > RenderCode
+  // | 'application/vnd.agi.imageRef'    // for image attachments with da - NO: makes no sense, as doc contains data
+  | 'application/vnd.agi.ocr'         // images/pdfs converted as text
+  // | 'application/vnd.agi.plantuml'
+  // | 'image/svg+xml'
+  // | 'text/csv'                        // table editor
+  | 'text/html'                       // can be rendered in iframes (RenderCode[HTML])
+  | 'text/markdown'                   // can be rendered as markdown (note that text/plain can also)
+  | 'text/plain'                      // e.g. clipboard paste
   ;
 
-type DMessageEmbedMeta = {
-  namedRef?: string;
+type DMessageDocMeta = {
   codeLanguage?: string;
-  ocrSource?: 'image' | 'pdf';
+  srcFileName?: string;
+  srcFileSize?: number;
+  srcOcrFrom?: 'image' | 'pdf';
 }
 
 
@@ -167,24 +166,24 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
   return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part };
 }
 
-export function createEmbedAttachmentFragment(title: string, caption: string, data: DMessageDataInline, embedMimeType: DMessageEmbedMimeType, embedMeta?: DMessageEmbedMeta): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, createDMessageEmbedPart(data, embedMimeType, embedMeta));
+export function createDocAttachmentFragment(title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, caption, createDMessageDocPart(type, data, ref, meta));
 }
 
 export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
   return _createAttachmentFragment(title, caption, createDMessageImageRefPart(dataRef, imgAltText, width, height));
 }
 
-export function specialContentPartToEmbedAttachmentFragment(title: string, caption: string, part: DMessageContentFragment['part'], embedMeta?: DMessageEmbedMeta): DMessageAttachmentFragment {
-  if (part.pt === 'text')
-    return createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(part.text), 'application/vnd.agi.ego', embedMeta);
-  if (part.pt === 'image_ref' || part.pt === '_pt_sentinel')
-    return _createAttachmentFragment(title, caption, _duplicatePart(part));
-  return createEmbedAttachmentFragment('Error', 'Content to Attachment', createDMessageDataInlineText(`Conversion of '${part.pt}' is not supported yet.`), 'application/vnd.agi.ego', embedMeta);
+export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
+  if (contentPart.pt === 'text')
+    return createDocAttachmentFragment(title, caption, 'text/plain', createDMessageDataInlineText(contentPart.text), ref, docMeta);
+  if (contentPart.pt === 'image_ref')
+    return createImageAttachmentFragment(title, caption, _duplicateDataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
+  return createDocAttachmentFragment('Error', 'Content to Attachment', 'text/plain', createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`), ref, docMeta);
 }
 
-export function specialShallowReplaceEmbedAttachmentFragment(copyFragment: DMessageAttachmentFragment, newData: DMessageDataInline): DMessageAttachmentFragment {
-  return createEmbedAttachmentFragment(copyFragment.title, copyFragment.caption, newData, copyFragment.part.pt === 'embed' ? copyFragment.part.emime : 'text/plain', copyFragment.part.pt === 'embed' ? copyFragment.part.emeta : undefined);
+export function specialShallowReplaceDocData(part: DMessageDocPart, newData: DMessageDataInline): DMessageDocPart {
+  return createDMessageDocPart(part.type, newData, part.ref, part.meta);
 }
 
 
@@ -195,8 +194,8 @@ function _createSentinelFragment(): _DMessageSentinelFragment {
 
 /// Helpers - Parts Creation
 
-function createDMessageEmbedPart(data: DMessageDataInline, embedMimeType: DMessageEmbedMimeType, embedMeta?: DMessageEmbedMeta): DMessageEmbedPart {
-  return { pt: 'embed', data, emime: embedMimeType, emeta: embedMeta };
+function createDMessageDocPart(type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta): DMessageDocPart {
+  return { pt: 'doc', type, data, ref, meta };
 }
 
 function createDMessageErrorPart(error: string): DMessageErrorPart {
@@ -267,8 +266,8 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
 
 function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
-    case 'embed':
-      return createDMessageEmbedPart(_duplicateInlineData(part.data), part.emime, part.emeta) as TPart;
+    case 'doc':
+      return createDMessageDocPart(part.type, _duplicateInlineData(part.data), part.ref, part.meta) as TPart;
 
     case 'error':
       return createDMessageErrorPart(part.error) as TPart;

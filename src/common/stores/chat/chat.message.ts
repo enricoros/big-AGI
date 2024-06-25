@@ -162,7 +162,7 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
         }
       } else if (isAttachmentFragment(fragment)) {
         switch (fragment.part.pt) {
-          case 'embed':
+          case 'doc':
             return fragment.part.data.text;
           case 'image_ref':
             return '';
