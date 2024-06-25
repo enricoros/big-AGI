@@ -23,12 +23,12 @@ const ATTACHMENTS_DEBUG_INTAKE = false;
 export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean) => {
 
   // state
-  const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeEmbedFragments } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
+  const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
     _createAttachmentDraft: state.createAttachmentDraft,
     attachmentDrafts: state.attachmentDrafts,
     attachmentsRemoveAll: state.removeAllAttachmentDrafts,
     attachmentsTakeAllFragments: state.takeAllFragments,
-    attachmentsTakeEmbedFragments: state.takeEmbedFragments,
+    attachmentsTakeFragmentsByType: state.takeFragmentsByType,
   })));
 
 
@@ -209,6 +209,6 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     // manage attachments
     attachmentsRemoveAll,
     attachmentsTakeAllFragments,
-    attachmentsTakeEmbedFragments,
+    attachmentsTakeFragmentsByType,
   };
 };

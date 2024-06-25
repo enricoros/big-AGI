@@ -35,7 +35,7 @@ import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
-import { DocumentFragments } from './fragments-attachment-text/DocumentFragments';
+import { DocumentFragments } from './fragments-attachment-doc/DocumentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
 import { avatarIconSx, makeMessageAvatar, messageAsideColumnSx, messageBackground } from './messageUtils';

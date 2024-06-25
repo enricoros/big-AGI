@@ -31,7 +31,7 @@ import { animationEnterBelow } from '~/common/util/animUtils';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments, isContentFragment } from '~/common/stores/chat/chat.fragments';
-import { estimateTextTokens, glueForMessageTokens, marshallWrapEmbedFragments } from '~/common/stores/chat/chat.tokens';
+import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
@@ -158,7 +158,7 @@ export function Composer(props: {
   const {
     /* items */ attachmentDrafts,
     /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile,
-    /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeEmbedFragments,
+    /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
   // attachments derived state
@@ -482,16 +482,16 @@ export function Composer(props: {
   const handleAttachmentDraftsAction = React.useCallback((attachmentDraftIdOrAll: AttachmentDraftId | null, action: LLMAttachmentDraftsAction) => {
     switch (action) {
       case 'copy-text':
-        const copyEmbedFragments = attachmentsTakeEmbedFragments(attachmentDraftIdOrAll, false);
-        const copyEmbedString = marshallWrapEmbedFragments(null, copyEmbedFragments, false, '\n\n---\n\n');
-        copyToClipboard(copyEmbedString, attachmentDraftIdOrAll ? 'Attachment Text' : 'Attachments Text');
+        const copyFragments = attachmentsTakeFragmentsByType('doc', attachmentDraftIdOrAll, false);
+        const copyString = marshallWrapDocFragments(null, copyFragments, false, '\n\n---\n\n');
+        copyToClipboard(copyString, attachmentDraftIdOrAll ? 'Attachment Text' : 'Attachments Text');
         break;
       case 'inline-text':
-        const inlineEmbedFragments = attachmentsTakeEmbedFragments(attachmentDraftIdOrAll, true);
-        setComposeText(currentText => marshallWrapEmbedFragments(currentText, inlineEmbedFragments, 'markdown-code', '\n\n'));
+        const inlineFragments = attachmentsTakeFragmentsByType('doc', attachmentDraftIdOrAll, true);
+        setComposeText(currentText => marshallWrapDocFragments(currentText, inlineFragments, 'markdown-code', '\n\n'));
         break;
     }
-  }, [attachmentsTakeEmbedFragments, setComposeText]);
+  }, [attachmentsTakeFragmentsByType, setComposeText]);
 
 
   // Drag & Drop

@@ -1,10 +1,11 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import { agiUuid } from '~/common/util/idUtils';
+import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
+import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import { createDMessageDataInlineText, createEmbedAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment, specialContentPartToEmbedAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageDataInline, DMessageDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
@@ -124,10 +125,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       edit({ label: source.refUrl, ref: source.refUrl });
       try {
         const page = await callBrowseFetchPage(source.url);
+        const titleObject: Partial<AttachmentDraftInput> | undefined = page.title ? { altMimeType: 'application/vnd.agi.title', altData: page.title } : undefined;
         edit(
-          page.content.markdown ? { input: { mimeType: 'text/markdown', data: page.content.markdown, dataSize: page.content.markdown.length, altData: page.title } }
-            : page.content.text ? { input: { mimeType: 'text/plain', data: page.content.text, dataSize: page.content.text.length, altData: page.title } }
-              : page.content.html ? { input: { mimeType: 'text/html', data: page.content.html, dataSize: page.content.html.length, altData: page.title } }
+          page.content.markdown ? { input: { mimeType: 'text/markdown', data: page.content.markdown, dataSize: page.content.markdown.length, ...titleObject } }
+            : page.content.text ? { input: { mimeType: 'text/plain', data: page.content.text, dataSize: page.content.text.length, ...titleObject } }
+              : page.content.html ? { input: { mimeType: 'text/html', data: page.content.html, dataSize: page.content.html.length, ...titleObject } }
                 : { inputError: 'No content found at this link' },
         );
       } catch (error: any) {
@@ -276,64 +278,86 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
   edit({ converters });
 }
 
-function prettyOriginText(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>): string | undefined {
+
+function lowCollisionRefString(prefix: string, digits: number): string {
+  return `${prefix} ${agiCustomId(digits)}`;
+}
+
+
+function prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterName: string): {
+  title: string;
+  caption: string;
+  refString: string;
+  docMeta?: DMessageDocPart['meta'];
+} {
   const inputMime = input.mimeType || '';
   switch (source.media) {
 
     // Downloaded URL as Text, Markdown, or HTML
     case 'url':
-      if (inputMime === 'text/markdown')
-        return 'Markdown from page';
-      if (inputMime === 'text/html')
-        return 'HTML from page';
-      if (inputMime === 'text/plain')
-        return 'Text from page';
-      return `Downloaded ${source.refUrl}`;
+      let pageTitle = input.altMimeType === 'application/vnd.agi.title' ? inputDataToString(input.altData) : '';
+      if (!pageTitle)
+        pageTitle = `Page from ${source.refUrl}`;
+      return {
+        title: pageTitle,
+        caption: inputMime === 'text/markdown' ? 'As Markdown' : inputMime === 'text/html' ? 'As HTML' : 'As Text',
+        refString: humanReadableHyphenated(pageTitle),
+      };
 
     // File of various kinds and coming from various sources
     case 'file':
-      const filePath = source.refPath || '';
       const mayBeImage = inputMime.startsWith('image/');
-      const fileKind = mayBeImage ? 'Image' : 'File';
+
+      let fileTitle = lowCollisionRefString(mayBeImage ? 'Image' : 'File', 4);
+      let fileCaption = '';
+      const fileMeta: DMessageDocPart['meta'] = {
+        srcFileName: source.fileWithHandle.name,
+        srcFileSize: input.dataSize,
+      };
+
       switch (source.origin) {
         case 'camera':
-          return 'Photo from camera';
+          fileTitle = source.refPath || lowCollisionRefString('Camera Photo', 6);
+          break;
         case 'screencapture':
-          return `Screen capture`;
+          fileTitle = source.refPath || lowCollisionRefString('Screen Capture', 6);
+          fileCaption = 'Screen Capture';
+          break;
         case 'file-open':
-          return `Uploaded ${fileKind}`;
+          fileTitle = source.refPath || lowCollisionRefString('Uploaded File', 6);
+          break;
         case 'clipboard-read':
-          return `${fileKind} from clipboard`;
-        case 'drop':
-          return `${fileKind} dropped`;
         case 'paste':
-          return `${fileKind} pasted`;
-        default:
-          return `${fileKind}: ${filePath}`;
+          fileTitle = source.refPath || lowCollisionRefString('Pasted File', 6);
+          break;
+        case 'drop':
+          fileTitle = source.refPath || lowCollisionRefString('Dropped File', 6);
+          break;
       }
+      return {
+        title: fileTitle,
+        caption: fileCaption,
+        refString: humanReadableHyphenated(fileTitle),
+        docMeta: fileMeta,
+      };
 
     // Text from clipboard, drop, or paste
     case 'text':
-      switch (source.method) {
-        case 'clipboard-read':
-          return 'Text from clipboard';
-        case 'drop':
-          return 'Dropped text';
-        case 'paste':
-          return 'Pasted text';
-        default:
-          return 'Text';
-      }
+      const textRef = lowCollisionRefString('doc', 6);
+      return {
+        title: converterName || 'Text',
+        caption: source.method === 'drop' ? 'Dropped' : 'Pasted',
+        refString: humanReadableHyphenated(textRef),
+      };
 
     // The application attaching pieces of itself
     case 'ego':
-      switch (source.method) {
-        case 'ego-fragments':
-          return 'From Chat: ' + source.refConversationTitle;
-        default:
-          return 'Other application/vnd.agi.ego.*';
-      }
-
+      const egoTitle = source.method === 'ego-fragments' ? 'Chat Message' : 'Application';
+      return {
+        title: egoTitle,
+        caption: 'From Chat: ' + source.refConversationTitle,
+        refString: humanReadableHyphenated(lowCollisionRefString('ego-' + egoTitle, 6)),
+      };
   }
 }
 
@@ -372,9 +396,8 @@ export async function attachmentPerformConversion(
     outputsConverting: true,
   });
 
-  let title = attachment.label || attachment.ref || converter.id;
-  let caption = prettyOriginText(source, input) || '';
-  const embedMeta = attachment.ref ? { namedRef: attachment.ref } : undefined;
+  // prepare the doc data
+  let { title, caption, refString, docMeta } = prepareDocData(source, input, converter.name);
 
   // apply converter to the input
   const newFragments: DMessageAttachmentFragment[] = [];
@@ -382,29 +405,29 @@ export async function attachmentPerformConversion(
 
     // text as-is
     case 'text':
-      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(inputDataToString(input.data), input.mimeType), 'text/plain', embedMeta));
+      const textData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
+      newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textData, refString, docMeta));
       break;
 
     // html as-is
     case 'rich-text':
       // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
       //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
-      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(input.altData || '', input.altMimeType), 'text/html', embedMeta));
+      const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
+      newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', richTextData, refString, docMeta));
       break;
 
     // html to markdown table
     case 'rich-text-table':
-      let mdTable: string;
-      let tableMimeType;
+      let tableData: DMessageDataInline;
       try {
-        mdTable = htmlTableToMarkdown(input.altData!, false);
-        tableMimeType = 'text/markdown';
+        const mdTable = htmlTableToMarkdown(input.altData!, false);
+        tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
       } catch (error) {
         // fallback to text/plain
-        mdTable = inputDataToString(input.data);
-        tableMimeType = input.mimeType;
+        tableData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
       }
-      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(mdTable, tableMimeType), tableMimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', embedMeta));
+      newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', tableData, refString, docMeta));
       break;
 
     // image resized (default mime/quality, openai-high-res)
@@ -468,8 +491,7 @@ export async function attachmentPerformConversion(
           },
         });
         const imageText = result.data.text;
-        // NOTE: shall one of the two mimes hint at the OCR process for the
-        newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(imageText, 'text/plain'), 'application/vnd.agi.ocr', { ...embedMeta, ocrSource: 'image' }));
+        newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(imageText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'image' }));
       } catch (error) {
         console.error(error);
       }
@@ -485,7 +507,7 @@ export async function attachmentPerformConversion(
       // duplicate the ArrayBuffer to avoid mutation
       const pdfData = new Uint8Array(input.data.slice(0));
       const pdfText = await pdfToText(pdfData);
-      newFragments.push(createEmbedAttachmentFragment(title, caption, createDMessageDataInlineText(pdfText, 'text/plain'), 'application/vnd.agi.ocr', { ...embedMeta, ocrSource: 'pdf' }));
+      newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
       break;
 
     // pdf to images
@@ -517,7 +539,7 @@ export async function attachmentPerformConversion(
       }
       title = `Chat Message: ${attachment.label}`;
       for (const contentFragment of input.data) {
-        newFragments.push(specialContentPartToEmbedAttachmentFragment(title, caption, contentFragment.part, embedMeta));
+        newFragments.push(specialContentPartToDocAttachmentFragment(title, caption, contentFragment.part, refString, docMeta));
       }
       break;
 
