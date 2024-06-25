@@ -20,8 +20,7 @@ export async function runPersonaUpdatingState(
   const history = cHandler.historyView('runPersonaUpdatingState') as Readonly<DMessage[]>;
 
   const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
-
-
+  
   // ai follow-up operations (fire/forget)
   // const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
@@ -93,7 +92,7 @@ export async function streamPersonaMessage(
   };
 
   // speak once
-  let spokenLine = false;
+  // let spokenLine = false;
 
   // Throttling setup
   let lastCallTime = 0;
