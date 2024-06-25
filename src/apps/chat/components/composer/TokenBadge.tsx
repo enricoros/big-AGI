@@ -122,20 +122,33 @@ function TokenBadge(props: {
   tokenPriceIn?: number,
   tokenPriceOut?: number,
 
+  enableHover?: boolean,
   showCost?: boolean
   showExcess?: boolean,
   absoluteBottomRight?: boolean,
   inline?: boolean,
 }) {
 
+  // state
+  const [isHovering, setIsHovering] = React.useState(false);
+
   const { message, color, remainingTokens, costMax, costMin } =
     tokensPrettyMath(props.limit, props.direct, props.history, props.responseMax, props.tokenPriceIn, props.tokenPriceOut);
+
+
+  // handlers
+  const handleHoverEnter = React.useCallback(() => setIsHovering(true), []);
+
+  const handleHoverLeave = React.useCallback(() => setIsHovering(false), []);
+
 
   let badgeValue: string;
 
   const showAltCosts = !!props.showCost && !!costMax && costMin !== undefined;
   if (showAltCosts) {
-    badgeValue = '< ' + formatCost(costMax);
+    badgeValue = (!props.enableHover || isHovering)
+      ? '< ' + formatCost(costMax)
+      : '> ' + formatCost(costMin);
   } else {
 
     // show the direct tokens, unless we exceed the limit and 'showExcess' is enabled
@@ -154,6 +167,8 @@ function TokenBadge(props: {
       <Badge
         variant='soft' color={color} max={1000000}
         // invisible={shallHide}
+        onMouseEnter={props.enableHover ? handleHoverEnter : undefined}
+        onMouseLeave={props.enableHover ? handleHoverLeave : undefined}
         badgeContent={badgeValue}
         slotProps={{
           root: {
