@@ -10,7 +10,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { createDMessageDataInlineText, DMessageAttachmentFragment, DMessageFragmentId, specialShallowReplaceDocData } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
@@ -64,12 +64,24 @@ export function DocumentFragmentEditor(props: {
     setIsDeleteArmed(false);
     if (editedText === undefined)
       return;
-    if (editedText?.length > 0 && fragment.part.pt === 'doc') {
-      onFragmentReplace(fragmentId, { ...fragment, part: specialShallowReplaceDocData(fragment.part, createDMessageDataInlineText(editedText)) });
-      // NOTE: since the former function changes the ID of the fragment, the
-      // whole editor will disappear as a side effect
-    } else
+
+    // only edit DOCs
+    if (fragment.part.pt !== 'doc') {
+      console.warn('handleEditApply: unexpected part type:', fragment.part.pt);
+      return;
+    }
+
+    if (editedText.length > 0) {
+      const newData = createDMessageDataInlineText(editedText, fragment.part.data.mimeType);
+      const newAttachment = createDocAttachmentFragment(fragment.title, fragment.caption, fragment.part.type, newData, fragment.part.ref, fragment.part.meta);
+      // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
+      newAttachment.fId = fragmentId;
+      onFragmentReplace(fragmentId, newAttachment);
+      setIsEditing(false);
+    } else {
+      // if the user deleted all text, let's remove the part
       handleFragmentDelete();
+    }
   }, [editedText, fragment, fragmentId, handleFragmentDelete, onFragmentReplace]);
 
 

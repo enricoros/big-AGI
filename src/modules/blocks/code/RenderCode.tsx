@@ -96,9 +96,9 @@ export const overlayButtonsSx: SxProps = {
 interface RenderCodeBaseProps {
   codeBlock: CodeBlock,
   fitScreen?: boolean,
+  initialShowHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
-  initialShowHTML?: boolean,
   sx?: SxProps,
 }
 
@@ -176,7 +176,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const canStackBlitz = blockComplete && isStackBlitzSupported(inferredCodeLanguage);
 
 
-  let showBlockTitle = blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://'));
+  let showBlockTitle = (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
   // hide the block title when rendering HTML
   if (renderHTML)
     showBlockTitle = false;
