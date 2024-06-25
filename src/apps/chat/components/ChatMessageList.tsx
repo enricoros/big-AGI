@@ -296,7 +296,7 @@ export function ChatMessageList(props: {
               onMessageFragmentReplace={handleMessageReplaceFragment}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
-              // onReplyTo={handleReplyTo}
+              onReplyTo={handleReplyTo}
               onTextDiagram={handleTextDiagram}
               onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
               onTextSpeak={isSpeakable ? handleTextSpeak : undefined}
