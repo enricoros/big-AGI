@@ -10,9 +10,17 @@ import { DEFAULT_ADRAFT_IMAGE_MIMETYPE, DEFAULT_ADRAFT_IMAGE_QUALITY } from './a
 
 
 /**
- * Convert an image input to a DBlob and return a DMessageAttachmentFragment
+ * Converts an image input to a DBlob and return a DMessageAttachmentFragment
  */
-export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputData: string | ArrayBuffer | unknown, source: AttachmentDraftSource, title: string, altText: string, convertToMimeType: false | string, resizeMode: false | LLMImageResizeMode): Promise<DMessageAttachmentFragment | null> {
+export async function imageDataToImageAttachmentFragmentViaDBlob(
+  mimeType: string,
+  inputData: string | ArrayBuffer | unknown,
+  source: AttachmentDraftSource,
+  title: string,
+  caption: string,
+  convertToMimeType: false | string,
+  resizeMode: false | LLMImageResizeMode,
+): Promise<DMessageAttachmentFragment | null> {
   let base64Data: string;
   let inputLength: number;
 
@@ -81,13 +89,11 @@ export async function attachmentImageToFragmentViaDBlob(mimeType: string, inputD
       },
     });
 
-    // return a new Image Attachment Fragment
-    return createImageAttachmentFragment(
-      title,
-      createDMessageDataRefDBlob(dblobAssetId, mimeType, inputLength),
-      altText,
-      dimensions?.width, dimensions?.height,
-    );
+    // create a data reference for the image
+    const imageAssetDataRef = createDMessageDataRefDBlob(dblobAssetId, mimeType, inputLength);
+
+    // return an Image Attachment Fragment
+    return createImageAttachmentFragment(title, caption, imageAssetDataRef, undefined, dimensions?.width, dimensions?.height);
   } catch (error) {
     console.error('imageAttachment: Error processing image:', error);
     return null;

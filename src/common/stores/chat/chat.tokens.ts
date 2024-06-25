@@ -2,7 +2,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/util/token-counter';
 
-import { DMessageAttachmentFragment, DMessageFragment, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
@@ -26,31 +26,37 @@ export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): 
 
 function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: string): number {
   // non content/attachment fragments are ignored
-  if (!isContentOrAttachmentFragment(fragment))
+  if (!isContentOrAttachmentFragment(fragment) || fragment.part.pt === '_pt_sentinel')
     return 0;
-  switch (fragment.part.pt) {
-    case 'text':
-      if (!isContentFragment(fragment)) {
-        // NOTE: the wrapFormat could be llm-dependent
-        const likelyBlockRendition = marshallWrapText(fragment.part.text, fragment.title, 'markdown-code');
-        return estimateTextTokens(likelyBlockRendition, llm, debugFrom);
-      }
-      return estimateTextTokens(fragment.part.text, llm, debugFrom);
 
-    case 'image_ref':
-      return _imagePartTokens(fragment.part.width, fragment.part.height, fragment.ft === 'attachment' ? fragment.title : '', llm);
-
-    case 'ph':
-    case 'error':
-    case '_pt_sentinel':
-      // purely UI elements, no tokens
-      return 0;
-
-    case 'tool_call':
-    case 'tool_response':
-    default:
-      console.warn('Unhandled token preview for content type:', fragment.part.pt);
-      return 0;
+  // attachment fragments
+  if (fragment.ft === 'attachment') {
+    const aPart = fragment.part;
+    switch (aPart.pt) {
+      case 'embed':
+        const likelyEmbedRendition = marshallWrapText(aPart.data.text, aPart.emeta?.namedRef || undefined, 'markdown-code');
+        return estimateTextTokens(likelyEmbedRendition, llm, debugFrom);
+      case 'image_ref':
+        return _imagePartTokens(aPart.width, aPart.height, fragment.title, llm);
+    }
+  } else if (fragment.ft === 'content') {
+    const cPart = fragment.part;
+    switch (cPart.pt) {
+      case 'error':
+        return estimateTextTokens(cPart.error, llm, debugFrom);
+      case 'image_ref':
+        return _imagePartTokens(cPart.width, cPart.height, debugFrom, llm);
+      case 'text':
+        return estimateTextTokens(cPart.text, llm, debugFrom);
+      case 'ph':
+      case 'tool_call':
+      case 'tool_response':
+        console.warn('Unhandled token preview for content type:', cPart.pt);
+        return 0;
+    }
+  } else {
+    console.warn('Unhandled token preview for fragment type:', (fragment as any).ft);
+    return 0;
   }
 }
 
@@ -62,20 +68,20 @@ export type TextAttachmentWrapFormat = false | 'markdown-code';
 /**
  * API Note: you should not use this function much, as it lowers the grade of higher level information
  */
-export function marshallWrapText(text: string, title: string | undefined, wrapFormat: TextAttachmentWrapFormat): string {
+export function marshallWrapText(text: string, blockTitle: string | undefined, wrapFormat: TextAttachmentWrapFormat): string {
   if (wrapFormat === 'markdown-code')
-    return `\`\`\`${title || ''}\n${text}\n\`\`\``;
+    return `\`\`\`${blockTitle || ''}\n${text}\n\`\`\``;
   return text;
 }
 
 /**
  * API Note: you should not use this function much, as it lowers the grade of higher level information
  */
-export function marshallWrapTextFragments(initialText: string | null, fragments: (/*DMessageContentFragment |*/ DMessageAttachmentFragment)[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
+export function marshallWrapEmbedFragments(initialText: string | null, fragments: (/*DMessageContentFragment |*/ DMessageAttachmentFragment)[], wrapFormat: TextAttachmentWrapFormat, separator: string): string {
   let inlinedText = initialText || '';
   for (const fragment of fragments) {
     // warn on non-text fragments, which are not handled - it's an API error to call this function to non-text-part fragments
-    if (fragment.part.pt !== 'text') {
+    if (fragment.part.pt !== 'embed') {
       console.warn('marshallWrapTextFragments: unhandled part type:', fragment.part.pt);
       continue;
     }
@@ -83,7 +89,8 @@ export function marshallWrapTextFragments(initialText: string | null, fragments:
     if (inlinedText.length)
       inlinedText += separator;
 
-    inlinedText += marshallWrapText(fragment.part.text, fragment.title, wrapFormat);
+    const embedPart = fragment.part;
+    inlinedText += marshallWrapText(embedPart.data.text, embedPart.emeta?.namedRef || undefined, wrapFormat);
   }
   return inlinedText;
 }
