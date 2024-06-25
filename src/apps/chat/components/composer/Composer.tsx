@@ -224,15 +224,22 @@ export function Composer(props: {
   const handleSendAction = React.useCallback(async (_chatModeId: ChatModeId, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
 
+    // validate some chat mode inputs
+    const isBlank = !composerText.trim();
+    if (_chatModeId === 'generate-image' && isBlank)
+      return false;
+
     // prepare the fragments: content (if any) and attachments (if allowed, and any)
     const fragments: (DMessageContentFragment | DMessageAttachmentFragment)[] = [];
     if (composerText)
       fragments.push(createTextContentFragment(composerText));
+
     const canAttach = chatModeCanAttach(_chatModeId);
     if (canAttach) {
       const attachmentFragments = await attachmentsTakeAllFragments('global', 'app-chat');
       fragments.push(...attachmentFragments);
     }
+
     if (!fragments.length) {
       // addSnackbar({ key: 'chat-composer-empty', message: 'Nothing to send', type: 'info' });
       return false;

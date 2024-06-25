@@ -12,7 +12,7 @@ import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
-import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isImageRefPart } from './chat.fragments';
+import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment } from './chat.fragments';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -33,6 +33,7 @@ export interface ChatActions {
   // within a conversation
   setAbortController: (cId: DConversationId, abortController: AbortController | null) => void;
   abortConversationTemp: (cId: DConversationId) => void;
+  getCurrentMessages: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
   setMessages: (cId: DConversationId, messages: DMessage[]) => void;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
@@ -160,6 +161,9 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             abortController: null,
           };
         }),
+
+      getCurrentMessages: (conversationId: DConversationId) =>
+        _get().conversations.find(_c => _c.id === conversationId)?.messages ?? undefined,
 
       setMessages: (conversationId: DConversationId, newMessages: DMessage[]) =>
         _get()._editConversation(conversationId, conversation => {

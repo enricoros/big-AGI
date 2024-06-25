@@ -31,7 +31,7 @@ export const RenderPlainChatText = (props: { textBlock: TextBlock; sx?: SxProps;
         <React.Fragment key={index}>
           {element.type === 'cmd'
             ? <>
-              <Chip component='span' size='md' variant='solid' color={element.isError ? 'danger' : 'neutral'} sx={{ mr: 1 }}>
+              <Chip component='span' size='md' variant='solid' color={element.isErrorNoArgs ? 'danger' : 'neutral'} sx={{ mr: 1 }}>
                 {element.command}
               </Chip>
               <span>{element.params}</span>
