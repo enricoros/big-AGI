@@ -2,7 +2,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/util/token-counter';
 
-import { DMessageAttachmentFragment, DMessageFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
@@ -39,16 +39,17 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
       case 'image_ref':
         return _imagePartTokens(aPart.width, aPart.height, fragment.title, llm);
     }
-  } else if (fragment.ft === 'content') {
+  } else if (isContentFragment(fragment)) {
     const cPart = fragment.part;
     switch (cPart.pt) {
       case 'error':
         return estimateTextTokens(cPart.error, llm, debugFrom);
       case 'image_ref':
         return _imagePartTokens(cPart.width, cPart.height, debugFrom, llm);
+      case 'ph':
+        return 0;
       case 'text':
         return estimateTextTokens(cPart.text, llm, debugFrom);
-      case 'ph':
       case 'tool_call':
       case 'tool_response':
         console.warn('Unhandled token preview for content type:', cPart.pt);
