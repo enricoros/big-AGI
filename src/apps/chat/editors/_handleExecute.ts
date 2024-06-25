@@ -13,8 +13,9 @@ import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
 import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
-import { runAssistantUpdatingState } from './chat-stream';
+import { runAssistantUpdatingStateV1 } from './chat-stream-v1';
 import { runImageGenerationUpdatingState } from './image-generate';
+import { runPersonaUpdatingState } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
 
 
@@ -72,10 +73,10 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   // synchronous long-duration tasks, which update the state as they go
   switch (chatModeId) {
     case 'generate-text':
-      return await runAssistantUpdatingState(conversationId, cHandler.historyView('generate-text'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+      return await runPersonaUpdatingState(conversationId,  chatLLMId);
 
     case 'generate-text-v1':
-      return await runAssistantUpdatingState(conversationId, cHandler.historyView('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+      return await runAssistantUpdatingStateV1(conversationId, cHandler.historyView('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
     case 'generate-text-beam':
       cHandler.beamInvoke(cHandler.historyView('generate-text-beam'), [], null);

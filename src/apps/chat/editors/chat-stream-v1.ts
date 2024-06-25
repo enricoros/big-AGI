@@ -14,7 +14,7 @@ import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 /**
  * The main "chat" function. TODO: this is here so we can soon move it to the data model.
  */
-export async function runAssistantUpdatingState(
+export async function runAssistantUpdatingStateV1(
   conversationId: string,
   history: Readonly<DMessage[]>,
   assistantLlmId: DLLMId,
@@ -46,7 +46,7 @@ export async function runAssistantUpdatingState(
     console.error('runAssistantUpdatingState: error:', error, history);
     throw error;
   }
-  const messageStatus = await streamAssistantMessage(
+  const messageStatus = await streamAssistantMessageV1(
     assistantLlmId,
     instructions,
     'conversation',
@@ -77,7 +77,7 @@ type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
 type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
 
-export async function streamAssistantMessage(
+export async function streamAssistantMessageV1(
   llmId: DLLMId,
   messagesHistory: VChatMessageIn[],
   contextName: VChatStreamContextName,

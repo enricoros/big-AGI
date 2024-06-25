@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Typography } from '@mui/joy';
 
 import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessage';
-import { streamAssistantMessage } from '../../../../apps/chat/editors/chat-stream';
+import { streamAssistantMessageV1 } from '../../../../apps/chat/editors/chat-stream-v1';
 
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
@@ -91,7 +91,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
   };
 
   // LLM Streaming generation
-  return streamAssistantMessage(inputs.llmId, history, 'beam-gather', inputs.contextRef, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdated, inputs.chainAbortController.signal)
+  return streamAssistantMessageV1(inputs.llmId, history, 'beam-gather', inputs.contextRef, getUXLabsHighPerformance() ? 0 : 1, 'off', onMessageUpdated, inputs.chainAbortController.signal)
     .then((status) => {
       // re-throw errors, as streamAssistantMessage catches internally
       if (status.outcome === 'aborted') {
