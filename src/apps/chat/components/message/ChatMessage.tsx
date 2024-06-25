@@ -817,11 +817,11 @@ export function ChatMessage(props: {
                   <AccountTreeOutlinedIcon sx={{ color: couldDiagram ? 'primary' : 'neutral.plainDisabledColor' }} />
                 </IconButton>
               </Tooltip>}
-              {/*{!!props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>*/}
-              {/*  <IconButton onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>*/}
-              {/*    {!props.isImagining ? <FormatPaintOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}*/}
-              {/*  </IconButton>*/}
-              {/*</Tooltip>}*/}
+              {!!props.onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>
+                <IconButton onClick={handleOpsImagine} disabled={!couldImagine || props.isImagining}>
+                  {!props.isImagining ? <FormatPaintOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
+                </IconButton>
+              </Tooltip>}
               {!!props.onTextSpeak && <Tooltip disableInteractive arrow placement='top' title='Speak'>
                 <IconButton onClick={handleOpsSpeak} disabled={!couldSpeak || props.isSpeaking}>
                   {!props.isSpeaking ? <RecordVoiceOverOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
