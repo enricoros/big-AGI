@@ -45,7 +45,6 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   // derived state
   const {
     id: messageId,
-    sender: messageSender,
     avatar: messageAvatar,
     pendingIncomplete: messagePendingIncomplete,
     role: messageRole,
@@ -64,8 +63,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
 
   const avatarEl: React.JSX.Element | null = React.useMemo(() =>
-      makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, !!messagePendingIncomplete),
-    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, messageSender],
+      makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete),
+    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole],
   );
 
   const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) =>

@@ -182,7 +182,7 @@ export async function downloadConversation(conversation: DConversation, format: 
     blob = new Blob([json], { type: 'application/json' });
     extension = '.json';
   } else if (format == 'markdown') {
-    const exportableMarkdown = conversationToMarkdown(conversation, false, true, (sender: string) => `## ${sender} ##`);
+    const exportableMarkdown = conversationToMarkdown(conversation, false, true, (name: string) => `## ${name} ##`);
     blob = new Blob([exportableMarkdown], { type: 'text/markdown' });
     extension = '.md';
   } else {
@@ -207,24 +207,24 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     ? `# ${capitalizeFirstLetter(conversationTitle(conversation, Brand.Title.Common + ' Chat'))}\nA ${Brand.Title.Common} conversation, updated on ${(new Date(conversation.updated || conversation.created)).toLocaleString()}.\n\n`
     : '';
   return mdTitle + conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
-    let sender: string = message.sender;
+    let senderName: string = message.role === 'user' ? 'You' : 'Bot'; // from role
     let text = messageFragmentsReduceText(message.fragments);
     switch (message.role) {
       case 'system':
-        sender = '✨ System message';
+        senderName = '✨ System message';
         text = '<img src="https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp" width="48" height="48" alt="meme"/>\n\n' + '*' + text + '*';
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;
-        sender = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || '')}*`.trim();
+        senderName = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || '')}*`.trim();
         if (purpose && purpose in SystemPurposes)
-          sender = `${SystemPurposes[purpose as SystemPurposeId]?.symbol || ''} ${sender}`.trim();
+          senderName = `${SystemPurposes[purpose as SystemPurposeId]?.symbol || ''} ${senderName}`.trim();
         break;
       case 'user':
-        sender = '👤 You';
+        senderName = '👤 You';
         break;
     }
-    return (senderWrap?.(sender) || `### ${sender}`) + `\n\n${text}\n\n`;
+    return (senderWrap?.(senderName) || `### ${senderName}`) + `\n\n${text}\n\n`;
   }).join('---\n\n');
 
 }

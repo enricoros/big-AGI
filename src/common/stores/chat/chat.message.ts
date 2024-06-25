@@ -15,7 +15,6 @@ export interface DMessage {
 
   // identity
   avatar: string | null;              // image URL, or null
-  sender: 'You' | 'Bot' | string;     // pretty name @deprecated
 
   purposeId?: string;                 // only assistant/system
   originLLM?: string;                 // only assistant - model that generated this message, goes beyond known models
@@ -79,7 +78,6 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
 
     // identity
     avatar: null,
-    sender: role === 'user' ? 'You' : 'Bot',
 
     // absent
     // purposeId: undefined,
@@ -108,7 +106,6 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
 
     avatar: message.avatar,
-    sender: message.sender,
 
     purposeId: message.purposeId,
     originLLM: message.originLLM,

@@ -351,6 +351,13 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           conversation.abortController = null;
           // fixup messages
           for (const message of conversation.messages) {
+            // reset transient properties
+            delete message.pendingIncomplete;
+
+            // cleanup pre-v4 properties (if reimported somehow)
+            delete (message as any).sender;
+            delete (message as any).typing;
+
             // cleanup within-v4 - TODO: remove at 2.0.0 ?
             for (const fragment of message.fragments) {
               // fixup rename of fragment's dblobId to dblobAssetId
@@ -377,9 +384,6 @@ export const useChatStore = create<ConversationsStore>()(devtools(
                 ? createErrorContentFragment(`${fragment.part.pText} (did not complete)`)
                 : fragment,
             );
-            // cleanup pre-v4 properties
-            delete message.pendingIncomplete;
-            delete (message as any).typing;
           }
         }
       },

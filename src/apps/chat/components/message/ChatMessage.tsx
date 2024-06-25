@@ -118,7 +118,6 @@ export function ChatMessage(props: {
     fragments: messageFragments,
     pendingIncomplete: messagePendingIncomplete,
     avatar: messageAvatar,
-    sender: messageSender,
     purposeId: messagePurposeId,
     originLLM: messageOriginLLM,
     metadata: messageMetadata,
@@ -419,8 +418,8 @@ export function ChatMessage(props: {
 
   // avatar
   const avatarEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatar ? makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, messageSender, !!messagePendingIncomplete, true) : null,
-    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, messageSender, showAvatar],
+    () => showAvatar ? makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
+    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatar],
   );
 
 
