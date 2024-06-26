@@ -277,7 +277,7 @@ export function AppChat() {
     const conversation = getConversation(conversationId);
     if (!conversation)
       return;
-    const imaginedPrompt = await imaginePromptFromText(messageText) || 'An error sign.';
+    const imaginedPrompt = await imaginePromptFromText(messageText, conversationId) || 'An error sign.';
     await handleExecuteAndOutcome('generate-image', conversationId, [
       ...conversation.messages,
       createDMessage('user', imaginedPrompt),

@@ -3,7 +3,7 @@ import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
-import type { VChatMessageOrFunctionCallOut } from '../../llm.client';
+import type { VChatContextRef, VChatGenerateContextName, VChatMessageOrFunctionCallOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
@@ -60,7 +60,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmOpenAI.listModels.query({ access }),
 
   // Chat Generate (non-streaming) with Functions
-  rpcChatGenerateOrThrow: async (access, llmOptions, messages, functions, forceFunctionName, maxTokens) => {
+  rpcChatGenerateOrThrow: async (access, llmOptions, messages, contextName: VChatGenerateContextName, contextRef: VChatContextRef | null, functions, forceFunctionName, maxTokens) => {
     const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
     try {
       return await apiAsync.llmOpenAI.chatGenerateWithFunctions.mutate({
@@ -73,6 +73,11 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
         functions: functions ?? undefined,
         forceFunctionName: forceFunctionName ?? undefined,
         history: messages,
+        context: contextRef ? {
+          method: 'chat-generate',
+          name: contextName,
+          ref: contextRef,
+        } : undefined,
       }) as VChatMessageOrFunctionCallOut;
     } catch (error: any) {
       const errorMessage = error?.message || error?.toString() || 'OpenAI Chat Generate Error';

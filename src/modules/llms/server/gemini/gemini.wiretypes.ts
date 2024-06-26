@@ -18,6 +18,7 @@ const geminiModelSchema = z.object({
   inputTokenLimit: z.number().int().min(1),
   outputTokenLimit: z.number().int().min(1),
   supportedGenerationMethods: z.array(z.enum([
+    'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
     'countMessageTokens',
     'countTextTokens',
     'countTokens',

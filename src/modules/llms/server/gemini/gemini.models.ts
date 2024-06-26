@@ -3,6 +3,10 @@ import type { ModelDescriptionSchema } from '../llm.server.types';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 
 
+// dev options
+const DEV_DEBUG_GEMINI_MODELS = false;
+
+
 // supported interfaces
 const geminiChatInterfaces: GeminiModelSchema['supportedGenerationMethods'] = ['generateContent'];
 
@@ -174,6 +178,9 @@ export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
 
 export function geminiModelToModelDescription(geminiModel: GeminiModelSchema): ModelDescriptionSchema {
   const { description, displayName, name: modelId, supportedGenerationMethods } = geminiModel;
+
+  if (DEV_DEBUG_GEMINI_MODELS)
+    console.log('geminiModelToModelDescription', geminiModel);
 
   // find known manual mapping
   const knownModel = _knownGeminiModels.find(m => m.id === modelId);

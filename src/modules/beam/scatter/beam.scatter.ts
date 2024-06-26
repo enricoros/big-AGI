@@ -67,7 +67,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   // stream the assistant's messages
   const messagesHistory: VChatMessageIn[] = inputHistory.map(({ role, text }) => ({ role, content: text }));
-  streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
+  streamAssistantMessage(llmId, messagesHistory, 'beam-scatter', ray.rayId, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
     .then((status) => {
       _rayUpdate(ray.rayId, {
         status: (status.outcome === 'success') ? 'success'

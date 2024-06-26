@@ -1,4 +1,4 @@
-import { llmChatGenerateOrThrow, VChatFunctionIn } from '~/modules/llms/llm.client';
+import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { useChatStore } from '~/common/state/store-chats';
@@ -83,13 +83,18 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
 
   // Follow-up: Auto-Diagrams
   if (suggestDiagrams) {
-    void llmChatGenerateOrThrow(funcLLMId, [
-        { role: 'system', content: systemMessage.text },
-        { role: 'user', content: userMessage.text },
-        { role: 'assistant', content: assistantMessageText },
-      ], [suggestPlantUMLFn], 'draw_plantuml_diagram',
+    const instructions: VChatMessageIn[] = [
+      { role: 'system', content: systemMessage.text },
+      { role: 'user', content: userMessage.text },
+      { role: 'assistant', content: assistantMessageText },
+    ];
+    llmChatGenerateOrThrow(
+      funcLLMId,
+      instructions,
+      'chat-followup-diagram', conversationId,
+      [suggestPlantUMLFn], 'draw_plantuml_diagram',
     ).then(chatResponse => {
-
+      // cheap way to check if the function was supported
       if (!('function_arguments' in chatResponse))
         return;
 
@@ -110,7 +115,8 @@ export function autoSuggestions(conversationId: string, assistantMessageId: stri
         }
       }
     }).catch(err => {
-      console.error('autoSuggestions::diagram:', err);
+      // Likely the model did not support function calling
+      // console.log('autoSuggestions: diagram error:', err);
     });
   }
 
