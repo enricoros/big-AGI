@@ -10,13 +10,14 @@ type SupabaseConversation = {
     systemPurposeId: SystemPurposeId;
     userTitle?: string;
     autoTitle?: string;
+    tokenCount: number; 
     created: number;
     updated: number | null;
   }
 
-
-
 export const isValidSupabaseConnection = (url?: string, key?: string) => !!url && !!key;
+
+const superbase_conversation_tablename = 'user_conversation'; // old sync it was conversation
 
 function logInfo(message: string) {
     console.log(`[INFO]: ${message}`);
@@ -53,7 +54,9 @@ export function getSupabaseClient(): SupabaseClient<any, "public", any> | null {
         
         supabaseClientInstance = createClient(supabaseUrl, supabaseKey, {
             auth: {
-                persistSession: true
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
             }
         });
         lastSupabaseClientKey = supabaseKey;
@@ -65,7 +68,7 @@ export function getSupabaseClient(): SupabaseClient<any, "public", any> | null {
 
 export async function getSupabaseSession(): Promise<Session | null> {
 
-    if (!supabaseSession) {
+    if (supabaseSession) {
         return supabaseSession;
     }
 
@@ -80,12 +83,12 @@ export async function getSupabaseSession(): Promise<Session | null> {
     return supabaseSession;
 }
 
-export function supabaseSignOut(): void
-{
-    supabaseSession = null;
-    if (supabaseClientInstance) {
-        supabaseClientInstance.auth.signOut();
+export async function supabaseSignOut(): Promise<void> {
+    const supaClient = getSupabaseClient();
+    if (supaClient) {
+      await supaClient.auth.signOut();
     }
+    supabaseSession = null;
 }
 
 export async function getSupabaseUserName(): Promise<string | null> {
@@ -94,43 +97,35 @@ export async function getSupabaseUserName(): Promise<string | null> {
     return session?.user.email ?? null;
 }
 
-// async function signIn(): Promise<void> {
-//     const { supabaseUrl, supabaseKey } = useSupabaseSyncStore.getState();
-//     if (!isValidSupabaseConnection(supabaseUrl, supabaseKey)) {
-//         throw new Error('Invalid Supabase Connection');
-//     }
-//
-//     const supabase = createSupabaseClient();
-//     const { data, error } = await supabase
-//        .auth.signInWithPassword();
-//       
-//     if (error) {
-//         throw error;
-//     }
-//
-//     if (!data) {
-//         throw new Error('Invalid Supabase Connection');
-//     }
-// }
+export async function supabaseSignIn(email: string, password: string): Promise<string> {
+    const supaClient = getSupabaseClient();
+    if (!supaClient) {
+        throw new Error('Invalid Supabase Connection');
+    }
 
-// async function getServersLastSyncTime(supabase: SupabaseClient): Promise<number> {
-//     const { data, error } = await supabase
-//         .from('conversation')
-//         .select('updated')
-//         .order('updated', { ascending: false })
-//         .limit(1);
-//
-//     if (error) {
-//         console.error('Error fetching lastSyncTime:', error);
-//         return 0;
-//     }
-//
-//     if (data && data.length > 0) {
-//         return data[0].updated;
-//     } else {
-//         return 0;
-//     }
-// }
+    try {
+        const response = await supaClient.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (response.error) {
+            throw response.error;
+        }
+
+        supabaseSession = response.data.session;
+        return supabaseSession.user.email ?? "";
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes('CORS')) {
+                throw new Error('CORS error: Ensure your application domain is allowed in Supabase settings and you\'re using HTTPS.');
+            } else if (error.message.includes('NetworkError')) {
+                throw new Error('Network error: Check your internet connection and ensure Supabase URL is correct.');
+            }
+        }
+        throw error;
+    }
+}
 
 async function syncToServer(supabase: SupabaseClient, conversations: DConversation[], lastSyncTime: number): Promise<number> {
     // find all conversations that have been updated since the last sync
@@ -149,7 +144,7 @@ async function syncToServer(supabase: SupabaseClient, conversations: DConversati
     console.log(`Syncing ${updatedConversations.length} conversations`);
 
     const { data, error } = await supabase
-       .from('conversation')
+       .from(superbase_conversation_tablename)
        .upsert(updatedConversations);
 
     if (error) {
@@ -165,7 +160,7 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
     console.log(`Fetching conversations from server > ${lastSyncTime}`);
 
     const { data, error } = await supabase
-        .from('conversation')
+        .from(superbase_conversation_tablename)
         .select("*")
         .gt('updated', lastSyncTime);
     
@@ -225,7 +220,7 @@ export async function syncAllConversations(setMessage?: (message: string | null)
             setMessage?.('Please configure Supabase and log in before Syncing');
             return 0;
         }
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await getSupabaseSession();
         if (!session) {
             setMessage?.('Please log in before Syncing');
             return 0;
