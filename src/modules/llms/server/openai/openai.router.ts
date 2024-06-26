@@ -49,7 +49,11 @@ export const openAIHistorySchema = z.array(z.object({
 export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
 
 export const openAIFunctionsSchema = z.array(z.object({
-  name: z.string(),
+  name: z.string()
+    .regex(/^[a-zA-Z0-9_-]{1,64}$/, {
+      // constraint gotten from Anthropic: https://docs.anthropic.com/en/docs/build-with-claude/tool-use
+      message: 'Tool name must be 1-64 characters long and contain only letters, numbers, underscores, and hyphens',
+    }),
   description: z.string().optional(),
   parameters: z.object({
     type: z.literal('object'),

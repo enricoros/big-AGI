@@ -127,6 +127,8 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
     max_tokens: model.maxTokens || DEFAULT_MAX_TOKENS,
     stream: stream,
     ...(model.temperature !== undefined && { temperature: model.temperature }),
+    // ...(tools && { tools: tools }),
+    // ...(forceToolChoice && { tool_choice: forceToolChoice }),
     // metadata: not useful to us
     // stop_sequences: not useful to us
     // top_p: not useful to us
@@ -160,8 +162,7 @@ const chatGenerateInputSchema = z.object({
   access: anthropicAccessSchema,
   model: openAIModelSchema,
   history: openAIHistorySchema,
-  // functions: openAIFunctionsSchema.optional(),
-  // forceFunctionName: z.string().optional(),
+  // tools: llmsToolsSchema.optional(),
   context: llmsGenerateContextSchema.optional(),
 });
 

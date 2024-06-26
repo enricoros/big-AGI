@@ -48,23 +48,21 @@ export const llmsListModelsOutputSchema = z.object({
 });
 
 
-// Chat Generation Input (some parts of)
+// chat context
 
-const generateContextNameSchema = z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-followup-htmlui', 'chat-react-turn', 'draw-expand-prompt']);
-export type GenerateContextNameSchema = z.infer<typeof generateContextNameSchema>;
 export const llmsGenerateContextSchema = z.object({
   method: z.literal('chat-generate'),
-  name: generateContextNameSchema,
+  name: z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-followup-htmlui', 'chat-react-turn', 'draw-expand-prompt']),
   ref: z.string(),
 });
+export type GenerateContextNameSchema = z.infer<typeof llmsGenerateContextSchema>['name'];
 
-const streamingContextNameSchema = z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']);
-export type StreamingContextNameSchema = z.infer<typeof streamingContextNameSchema>;
 export const llmsStreamingContextSchema = z.object({
   method: z.literal('chat-stream'),
-  name: streamingContextNameSchema,
+  name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
   ref: z.string(),
 });
+export type StreamingContextNameSchema = z.infer<typeof llmsStreamingContextSchema>['name'];
 
 
 // (non-streaming) Chat Generation Output
@@ -72,7 +70,7 @@ export const llmsStreamingContextSchema = z.object({
 export const llmsChatGenerateOutputSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
   content: z.string(),
-  finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
+  finish_reason: z.enum(['stop', 'length']).nullable(),
 });
 
 export const llmsChatGenerateWithFunctionsOutputSchema = z.union([

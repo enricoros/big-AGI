@@ -51,7 +51,7 @@ type AIStreamParser = (data: string, eventType?: string) => { text: string, clos
 
 
 const chatStreamingInputSchema = z.object({
-  access: z.union([anthropicAccessSchema, geminiAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
+  access: z.discriminatedUnion('dialect', [anthropicAccessSchema, geminiAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
   model: openAIModelSchema,
   history: openAIHistorySchema,
   // NOTE: made it optional for now as we have some old requests without it
