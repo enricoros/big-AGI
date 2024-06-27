@@ -160,7 +160,7 @@ export async function downloadAllConversationsJson() {
 
   // save file
   await fileSave(blob, {
-    fileName: `conversations_${window?.location?.hostname || 'all'}_${payload.conversations.length}_${prettyTimestampForFilenames(false)}.agi.json`,
+    fileName: `backup_chats_${window?.location?.hostname || 'all'}_${payload.conversations.length}_${prettyTimestampForFilenames(false)}.agi.json`,
     // mimeTypes: ['application/json', 'application/big-agi'],
     extensions: ['.json'],
   });
