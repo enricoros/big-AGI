@@ -22,15 +22,12 @@ import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
-
-const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
+const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
   <>
-
     <Head>
       <title>{Brand.Title.Common}</title>
-      <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no' />
+      <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no" />
     </Head>
-
     <ProviderTheming emotionCache={emotionCache}>
       <ProviderSingleTab>
         <ProviderTRPCQuerySettings>
@@ -49,8 +46,8 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     {isVercelFromFrontend && <VercelAnalytics debug={false} />}
     {isVercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
-
-  </>;
+  </>
+);
 
 // enables the React Query API invocation
 export default apiQuery.withTRPC(MyApp);
