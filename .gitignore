@@ -11,6 +11,9 @@
 # testing
 /coverage
 
+#Analysis
+/Analysis
+
 # next.js
 /.next/
 /dist/
@@ -42,3 +45,4 @@ next-env.d.ts
 
 # other
 .idea/
+.vercel
