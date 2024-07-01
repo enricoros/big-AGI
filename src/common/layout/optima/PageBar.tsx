@@ -135,7 +135,7 @@ export function PageBar(props: {
             minHeight: 'var(--Bar)',
             display: 'flex',
             flexFlow: 'row wrap',
-            justifyContent: 'center',
+            justifyContent: 'left',
             alignItems: 'center',
             my: 'auto',
             gap: props.isMobile ? 0 : 1,

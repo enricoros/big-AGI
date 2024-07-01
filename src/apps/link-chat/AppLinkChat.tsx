@@ -25,49 +25,52 @@ import { LinkChatViewer } from './LinkChatViewer';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { navigateToChatLinkList } from '~/common/app.routes';
 
-
 const SPECIAL_LIST_PAGE_ID = 'list';
 
-
-const Centerer = (props: { backgroundColor: string, children?: React.ReactNode }) =>
-  <Box sx={{
-    backgroundColor: props.backgroundColor,
-    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    flexGrow: 1,
-  }}>
+const Centerer = (props: { backgroundColor: string; children?: React.ReactNode }) => (
+  <Box
+    sx={{
+      backgroundColor: props.backgroundColor,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexGrow: 1,
+    }}
+  >
     {props.children}
-  </Box>;
+  </Box>
+);
 
-const ListPlaceholder = (props: { hasLinks: boolean }) =>
+const ListPlaceholder = (props: { hasLinks: boolean }) => (
   <Box sx={{ p: { xs: 3, md: 6 } }}>
     <Card>
       <CardContent>
-        <Typography level='title-md'>
-          Shared Conversations
-        </Typography>
-        <Typography level='body-sm'>
+        <Typography level="title-md">Shared Conversations</Typography>
+        <Typography level="body-sm">
           {props.hasLinks
             ? 'Here you can see formely exported shared conversations. Please select a conversation from the drawer.'
             : 'No shared conversations found. Please export a conversation from this browser first.'}
         </Typography>
       </CardContent>
     </Card>
-  </Box>;
+  </Box>
+);
 
-
-const ShowLoading = () =>
+const ShowLoading = () => (
   <Centerer backgroundColor={themeBgAppDarker}>
     <LogoProgress showProgress={true} />
-    <Typography level='title-sm' sx={{ mt: 2 }}>
+    <Typography level="title-sm" sx={{ mt: 2 }}>
       Loading Chat...
     </Typography>
-  </Centerer>;
+  </Centerer>
+);
 
-const ShowError = (props: { error: any }) =>
+const ShowError = (props: { error: any }) => (
   <Centerer backgroundColor={themeBgAppDarker}>
-    <InlineError error={props.error} severity='warning' />
-  </Centerer>;
-
+    <InlineError error={props.error} severity="warning" />
+  </Centerer>
+);
 
 /**
  * Fetches the object using tRPC
@@ -75,30 +78,24 @@ const ShowError = (props: { error: any }) =>
  *       and wrap it in a react-query hook
  */
 async function fetchStoredChatV1(objectId: string | null) {
-  if (!objectId)
-    throw new Error('No Stored Chat');
+  if (!objectId) throw new Error('No Stored Chat');
 
   // fetch
   const result = await apiAsyncNode.trade.storageGet.query({ objectId });
-  if (result.type === 'error')
-    throw result.error;
+  if (result.type === 'error') throw result.error;
 
   // validate a CHAT_V1
   const { dataType, dataObject, storedAt, expiresAt } = result;
-  if (dataType !== 'CHAT_V1')
-    throw new Error('Unsupported data type: ' + dataType);
+  if (typeof dataType === 'string' && dataType !== 'CHAT_V1') throw new Error('Unsupported data type: ' + dataType);
 
   // convert to DConversation
   const restored = createConversationFromJsonV1(dataObject as any);
-  if (!restored)
-    throw new Error('Could not restore conversation');
+  if (!restored) throw new Error('Could not restore conversation');
 
   return { conversation: restored, storedAt, expiresAt };
 }
 
-
 export function AppLinkChat(props: { chatLinkId: string | null }) {
-
   // state
   const [deleteConfirmId, setDeleteConfirmId] = React.useState<string | null>(null);
   const [deleteConfirmKey, setDeleteConfirmKey] = React.useState<string | null>(null);
@@ -121,7 +118,6 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
   const hasLinks = sharedChatLinkItems.length > 0;
   const pageTitle = (data?.conversation && conversationTitle(data.conversation)) || 'Shared Chat'; // also the (nav) App title
 
-
   const handleDelete = React.useCallback(async (objectId: string, deletionKey: string) => {
     setDeleteConfirmId(null);
     setDeleteConfirmKey(null);
@@ -130,15 +126,13 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     let err: string | null = null;
     try {
       const response = await apiAsyncNode.trade.storageDelete.mutate({ objectId, deletionKey });
-      if (response.type === 'error')
-        err = response.error || 'unknown error';
+      if (response.type === 'error') err = response.error || 'unknown error';
     } catch (error: any) {
       err = error?.message ?? error?.toString() ?? 'unknown error';
     }
 
     // delete from local store
-    if (!err)
-      forgetChatLinkItem(objectId);
+    if (!err) forgetChatLinkItem(objectId);
 
     // UI feedback
     addSnackbar({
@@ -148,10 +142,8 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     });
 
     // move to the list page
-    if (!err)
-      void navigateToChatLinkList();
+    if (!err) void navigateToChatLinkList();
   }, []);
-
 
   // Delete: ID confirmation
 
@@ -165,10 +157,9 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     if (!deleteConfirmId) return;
 
     // if we already have the key, we can delete right away
-    const item = sharedChatLinkItems.find(i => i.objectId === deleteConfirmId);
-    let deletionKey = (item && item.deletionKey) ? item.deletionKey : null;
-    if (deletionKey)
-      return handleDelete(deleteConfirmId, deletionKey);
+    const item = sharedChatLinkItems.find((i) => i.objectId === deleteConfirmId);
+    let deletionKey = item && item.deletionKey ? item.deletionKey : null;
+    if (deletionKey) return handleDelete(deleteConfirmId, deletionKey);
 
     // otherwise ask for the key
     setDeleteConfirmKey('');
@@ -183,81 +174,90 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     deleteConfirmId && deleteConfirmKey && handleDelete(deleteConfirmId, deleteConfirmKey);
   }, [deleteConfirmId, deleteConfirmKey, handleDelete]);
 
-
   // pluggable UI
 
-  const drawerContent = React.useMemo(() => <LinkChatDrawer
-    activeLinkId={linkId}
-    sharedChatLinkItems={sharedChatLinkItems}
-    onDeleteLink={handleConfirmDeletion}
-  />, [handleConfirmDeletion, linkId, sharedChatLinkItems]);
+  const drawerContent = React.useMemo(
+    () => (
+      <LinkChatDrawer
+        activeLinkId={linkId}
+        sharedChatLinkItems={sharedChatLinkItems}
+        onDeleteLink={handleConfirmDeletion}
+      />
+    ),
+    [handleConfirmDeletion, linkId, sharedChatLinkItems],
+  );
 
-  const pageMenuItems = React.useMemo(() => <LinkChatPageMenuItems
-    activeLinkId={linkId}
-    onDeleteLink={handleConfirmDeletion}
-  />, [handleConfirmDeletion, linkId]);
+  const pageMenuItems = React.useMemo(
+    () => <LinkChatPageMenuItems activeLinkId={linkId} onDeleteLink={handleConfirmDeletion} />,
+    [handleConfirmDeletion, linkId],
+  );
 
   usePluggableOptimaLayout(drawerContent, null, pageMenuItems, 'AppChatLink');
 
+  return (
+    <>
+      <Head>
+        <title>
+          {capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀
+        </title>
+      </Head>
 
-  return <>
+      {isListPage ? (
+        <ListPlaceholder hasLinks={hasLinks} />
+      ) : isLoading ? (
+        <ShowLoading />
+      ) : isError ? (
+        <ShowError error={error} />
+      ) : !!data?.conversation ? (
+        <LinkChatViewer conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
+      ) : (
+        <Centerer backgroundColor={themeBgAppDarker} />
+      )}
 
-    <Head>
-      <title>{capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀</title>
-    </Head>
-
-    {isListPage
-      ? <ListPlaceholder hasLinks={hasLinks} />
-      : isLoading
-        ? <ShowLoading />
-        : isError
-          ? <ShowError error={error} />
-          : !!data?.conversation
-            ? <LinkChatViewer conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
-            : <Centerer backgroundColor={themeBgAppDarker} />}
-
-
-    {/* Delete confirmation */}
-    {!!deleteConfirmId && (deleteConfirmKey === null) && (
-      <ConfirmationModal
-        onClose={handleCancelDeletion} onPositive={handleConfirmDeletionKey}
-        confirmationText='Are you sure you want to delete this link?'
-        positiveActionText={'Yes, Delete'}
-      />
-    )}
-
-    {/* Deletion Key Input */}
-    {!!deleteConfirmId && (deleteConfirmKey !== null) && (
-      <GoodModal
-        open title='Enter Deletion Key'
-        titleStartDecorator={<WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />}
-        onClose={handleCancelDeletionKey}
-        hideBottomClose
-      >
-        <Divider />
-        <Typography level='body-md'>
-          You need to enter the original deletion key to delete this conversation.
-        </Typography>
-        <Input
-          value={deleteConfirmKey}
-          onChange={event => setDeleteConfirmKey(event.target.value)}
-          sx={{ flexGrow: 1 }}
+      {/* Delete confirmation */}
+      {!!deleteConfirmId && deleteConfirmKey === null && (
+        <ConfirmationModal
+          onClose={handleCancelDeletion}
+          onPositive={handleConfirmDeletionKey}
+          confirmationText="Are you sure you want to delete this link?"
+          positiveActionText={'Yes, Delete'}
         />
-        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
-          <Button autoFocus variant='plain' color='neutral' onClick={handleCancelDeletionKey}>
-            Cancel
-          </Button>
-          <Button
-            variant='solid' color='danger'
-            disabled={!deleteConfirmKey.trim()}
-            onClick={handleDeletionKeyConfirmed}
-            sx={{ lineHeight: '1.5em' }}
-          >
-            Delete
-          </Button>
-        </Box>
-      </GoodModal>
-    )}
+      )}
 
-  </>;
+      {/* Deletion Key Input */}
+      {!!deleteConfirmId && deleteConfirmKey !== null && (
+        <GoodModal
+          open
+          title="Enter Deletion Key"
+          titleStartDecorator={<WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />}
+          onClose={handleCancelDeletionKey}
+          hideBottomClose
+        >
+          <Divider />
+          <Typography level="body-md">
+            You need to enter the original deletion key to delete this conversation.
+          </Typography>
+          <Input
+            value={deleteConfirmKey}
+            onChange={(event) => setDeleteConfirmKey(event.target.value)}
+            sx={{ flexGrow: 1 }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
+            <Button autoFocus variant="plain" color="neutral" onClick={handleCancelDeletionKey}>
+              Cancel
+            </Button>
+            <Button
+              variant="solid"
+              color="danger"
+              disabled={!deleteConfirmKey.trim()}
+              onClick={handleDeletionKeyConfirmed}
+              sx={{ lineHeight: '1.5em' }}
+            >
+              Delete
+            </Button>
+          </Box>
+        </GoodModal>
+      )}
+    </>
+  );
 }
