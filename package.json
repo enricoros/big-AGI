@@ -2,13 +2,21 @@
   "name": "big-agi",
   "version": "1.16.0",
   "private": true,
-  "author": "Enrico Ros <enrico.ros@gmail.com>",
-  "repository": "https://github.com/enricoros/big-agi",
+  "author": "Eric Friday <EricFriday@gmail.com>",
+  "repository": "https://github.com/ericbfriday/big-agi",
+  "engines": {
+    "node": "^20.0.0 || ^18.0.0"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "volta": {
+    "node": "20.13.1"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "preinstall": "npx only-allow pnpm",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -18,6 +26,7 @@
     "schema": "src/server/prisma/schema.prisma"
   },
   "dependencies": {
+    "@clerk/nextjs": "^5.1.6",
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.4",
     "@emotion/server": "^11.11.0",
@@ -87,8 +96,5 @@
     "prettier": "^3.2.5",
     "prisma": "^5.13.0",
     "typescript": "^5.4.5"
-  },
-  "engines": {
-    "node": "^20.0.0 || ^18.0.0"
   }
 }
