@@ -7,6 +7,7 @@ import { ClerkProvider, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
 
 import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 
 import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
@@ -22,6 +23,7 @@ import { ProviderTRPCQuerySettings } from '~/common/providers/ProviderTRPCQueryS
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
+import { Box, Button } from '@mui/joy';
 
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
   <>
@@ -32,7 +34,25 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
     <ClerkProvider>
       <ProviderTheming emotionCache={emotionCache}>
         <SignedOut>
-          <SignInButton />
+          <Box
+            sx={{
+              display: 'flex',
+              'justify-content': 'center',
+              'align-items': 'center',
+              height: '100vh',
+              width: '100vw',
+            }}
+          >
+            {/* <div> */}
+            <Box>
+              <SignInButton>
+                <Button variant="outlined" startDecorator={<FavoriteBorder />} endDecorator={<FavoriteBorder />}>
+                  Sign In
+                </Button>
+              </SignInButton>
+            </Box>
+            {/* </div> */}
+          </Box>
         </SignedOut>
         <SignedIn>
           <ProviderSingleTab>

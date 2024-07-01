@@ -131,11 +131,13 @@ export function PageBar(props: {
       <InvertedBar component={props.component} direction="horizontal" sx={props.sx}>
         <Box
           sx={{
+            paddingLeft: '.5rem',
             flexGrow: 1,
             minHeight: 'var(--Bar)',
             display: 'flex',
             flexFlow: 'row wrap',
             justifyContent: 'left',
+            justifyItems: 'center',
             alignItems: 'center',
             my: 'auto',
             gap: props.isMobile ? 0 : 1,
