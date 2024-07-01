@@ -1,5 +1,5 @@
-import { createClient, SupabaseClient, Session } from "@supabase/supabase-js";
-import { useSupabaseSyncStore } from "./store-module-supabase-sync";
+import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
+import { useSupabaseSyncStore } from './store-module-supabase-sync';
 import { conversationToJsonV1 } from '~/modules/trade/trade.client';
 import { DConversation, DMessage, useChatStore, createDConversation } from '~/common/state/store-chats';
 import { SystemPurposeId } from '../../data';
