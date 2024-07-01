@@ -14,9 +14,6 @@ interface ModuleSupabaseSyncStore {
     lastSyncTime: number;
     setLastSyncTime: (lastSyncTime: number) => void;
 
-    userEmail: string;
-    setUserEmail: (userEmail: string) => void;
-
 }
 
 export const useSupabaseSyncStore = create<ModuleSupabaseSyncStore>()(
@@ -33,9 +30,6 @@ export const useSupabaseSyncStore = create<ModuleSupabaseSyncStore>()(
 
             lastSyncTime: 0,
             setLastSyncTime: (lastSyncTime: number) => set({lastSyncTime: lastSyncTime}),
-
-            userEmail: '',
-            setUserEmail: (userEmail: string) => set({userEmail: userEmail}),
 
         }),
         {

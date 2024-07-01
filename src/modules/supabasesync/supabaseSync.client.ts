@@ -10,10 +10,10 @@ type SupabaseConversation = {
     systemPurposeId: SystemPurposeId;
     userTitle?: string;
     autoTitle?: string;
-    tokenCount: number; 
+    tokenCount: number;
     created: number;
     updated: number | null;
-  }
+}
 
 export const isValidSupabaseConnection = (url?: string, key?: string) => !!url && !!key;
 
@@ -40,7 +40,7 @@ export function getSupabaseClient(): SupabaseClient<any, "public", any> | null {
     if (!isValidSupabaseConnection(supabaseUrl, supabaseKey)) {
         return null;
     }
-    
+
     // if the url or key is not set the return null
     if (supabaseClientInstance && lastSupabaseClientKey === supabaseKey) {
         return supabaseClientInstance;
@@ -51,7 +51,7 @@ export function getSupabaseClient(): SupabaseClient<any, "public", any> | null {
         //     await supabaseClientInstance.auth.signOut();
         //     supabaseClientInstance = null;
         // }
-        
+
         supabaseClientInstance = createClient(supabaseUrl, supabaseKey, {
             auth: {
                 persistSession: true,
@@ -86,7 +86,7 @@ export async function getSupabaseSession(): Promise<Session | null> {
 export async function supabaseSignOut(): Promise<void> {
     const supaClient = getSupabaseClient();
     if (supaClient) {
-      await supaClient.auth.signOut();
+        await supaClient.auth.signOut();
     }
     supabaseSession = null;
 }
@@ -134,8 +134,8 @@ async function syncToServer(supabase: SupabaseClient, conversations: DConversati
     // sync time needs to be the last time this instance synced with the server
 
     const updatedConversations = conversations
-       .filter(conversation => conversation.updated && conversation.updated > lastSyncTime && conversation.messages.length > 0)
-       .map(conversationToJsonV1); // this removes some of the fields we want to sync
+        .filter(conversation => conversation.updated && conversation.updated > lastSyncTime && conversation.messages.length > 0)
+        .map(conversationToJsonV1); // this removes some of the fields we want to sync
 
     if (updatedConversations.length === 0) {
         return 0;
@@ -144,8 +144,8 @@ async function syncToServer(supabase: SupabaseClient, conversations: DConversati
     console.log(`Syncing ${updatedConversations.length} conversations`);
 
     const { data, error } = await supabase
-       .from(superbase_conversation_tablename)
-       .upsert(updatedConversations);
+        .from(superbase_conversation_tablename)
+        .upsert(updatedConversations);
 
     if (error) {
         console.error('Error syncing conversations:', error);
@@ -163,7 +163,7 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
         .from(superbase_conversation_tablename)
         .select("*")
         .gt('updated', lastSyncTime);
-    
+
     if (error) {
         console.error('Error fetching conversations from Server:', error);
         return 0;
@@ -172,12 +172,12 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
     if (data && data.length > 0) {
         console.debug(`Found ${data.length} conversations from server`);
         const conversationsFromServer: SupabaseConversation[] = data.map(record => ({ ...record }));
-        
+
         const importConversation = useChatStore.getState().importConversation;
         let importCount = 0;
         conversationsFromServer.forEach(conversationFromServer => {
             let conversation = conversations.find(conversation => conversation.id === conversationFromServer.id);
-            
+
             if (conversation) {
                 // we may have just sent this to the server, in which case we don't need to update it
                 // is it already updated (e.g. did we just push that to the server?)
@@ -188,7 +188,7 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
                 conversation = createDConversation();
                 conversation.id = conversationFromServer.id;
                 conversation.created = conversationFromServer.created;
-             
+
                 //conversations.push(conversation); // insert the new conversation into the current working array
             }
 
@@ -209,6 +209,27 @@ async function syncFromServerToClient(supabase: SupabaseClient, conversations: D
     return 0;
 }
 
+async function isValidSupabaseDatabase(supabase: SupabaseClient<any, "public", any> | null): Promise<string> {
+    if (!supabase) {
+        return 'Please configure Supabase and log in before Syncing';
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from(superbase_conversation_tablename)
+            .select('*')
+            .limit(1);
+
+        // could validate schema as well?
+        if (error)
+            return `Database Setup Error: ${error.message}`;
+
+        return '';
+    } catch (error) {
+        return `Database Setup Exception: ${error}`;
+    }
+}
+
 export async function syncAllConversations(setMessage?: (message: string | null) => void): Promise<number> {
     const { lastSyncTime, setLastSyncTime } = useSupabaseSyncStore.getState();
     const conversations = useChatStore.getState().conversations;
@@ -216,8 +237,9 @@ export async function syncAllConversations(setMessage?: (message: string | null)
 
     //const { folders, enableFolders } = useFolderStore.getState(); // ToDo: folder Sync ?
     try {
-        if (!supabase) {
-            setMessage?.('Please configure Supabase and log in before Syncing');
+        const invalidDbMessage = await isValidSupabaseDatabase(supabase);
+        if (invalidDbMessage !== '') {
+            setMessage?.(invalidDbMessage);
             return 0;
         }
         const session = await getSupabaseSession();
@@ -233,7 +255,7 @@ export async function syncAllConversations(setMessage?: (message: string | null)
         logInfo('Starting sync from server to client...');
         const pulledCount = await syncFromServerToClient(supabase, conversations, lastSyncTime);
         logInfo('Sync from server to client completed.');
-        
+
         setLastSyncTime(updatedSyncTime);
         logInfo(`Sync completed. Last sync time updated to ${updatedSyncTime}.`);
         setMessage?.(`Sync Successful, ${pushedCount} pushed, ${pulledCount} pulled`);

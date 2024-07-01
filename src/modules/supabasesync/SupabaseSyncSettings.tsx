@@ -42,6 +42,7 @@ export function SupabaseSyncSettings() {
     // derived state
     const isValidUrl = supabaseUrl ? isValidSupabaseConnection(supabaseUrl, supabaseKey) : backendHasSupabaseSync;
     const isValidAnonKey = isValidUrl;
+    const canSync = isValidAnonKey && supabaseUserName;
     const [syncAllState, setSyncAllState] = useState<'ok' | 'fail' | null>(null);
     const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
@@ -85,6 +86,11 @@ export function SupabaseSyncSettings() {
         }
     }
 
+    const handleCancelLogin = () => {
+        setLoginError(null);
+        setLoginDialogIsOpen(false);
+    }
+
     const handleSupaUserSignIn = async () => {
         if (!email || !password) {
             setLoginError('Please enter both email and password.');
@@ -101,16 +107,10 @@ export function SupabaseSyncSettings() {
             if (error) {
                 setLoginError(error.message);
             } else {
-                setLoginDialogIsOpen(false);
                 const name = await getSupabaseUserName();
                 setSupabaseUserName(name);
+                handleCancelLogin();
             }
-        }
-    }
-
-    const handleSignUp = () => {
-        if (isValidAnonKey) {
-            setLoginDialogIsOpen(true);
         }
     }
 
@@ -168,51 +168,26 @@ export function SupabaseSyncSettings() {
             WARNING: Resetting Last Synced to 0 will force push all exiting chats to the server and will overwrite
             them.
         </FormHelperText>
-        {supabaseUserName && (
-            <Typography level='body-sm'>
-                Logged in as {supabaseUserName}
-            </Typography>
-        )}
+        <Typography level='h5'>
+            {supabaseUserName ? `Logged in as ${supabaseUserName}` : 'Please Sign In'}
+        </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%', gap: 2 }}>
-            {supabaseUserName && (
-                <Button
-                    variant='soft'
-                    color='primary'
-                    sx={{ flex: 1, justifyContent: 'center' }}
-                    onClick={handleSignOut}
-                >
-                    Sign Out
-                </Button>
-            )}
-            {!supabaseUserName && (
-                <>
-                    <Button
-                        variant='soft'
-                        color='primary'
-                        sx={{ flex: 1, justifyContent: 'center' }}
-                        onClick={handleSignUp}
-                        disabled={!isValidAnonKey}
-                    >
-                        Sign Up (New User)
-                    </Button>
-                    <Button
-                        variant='soft'
-                        color='primary'
-                        sx={{ flex: 1, justifyContent: 'center' }}
-                        onClick={handleLogin}
-                        disabled={!isValidAnonKey}
-                    >
-                        Login
-                    </Button>
-                </>
-            )}
+            <Button
+                variant='soft'
+                color='primary'
+                sx={{ flex: 1, justifyContent: 'center' }}
+                onClick={supabaseUserName ? handleSignOut : handleLogin}
+                disabled={!isValidAnonKey}
+            >
+                {supabaseUserName ? 'Sign Out' : 'Login'}
+            </Button>
             <Button
                 variant='soft'
                 color={syncAllState === 'ok' ? 'success' : syncAllState === 'fail' ? 'warning' : 'primary'}
                 endDecorator={syncAllState === 'ok' ? <DoneIcon /> : syncAllState === 'fail' ? '✘' : <SyncIcon />}
                 sx={{ flex: 1, justifyContent: 'center' }}
                 onClick={handleSyncAllConversations}
-                disabled={!isValidAnonKey}
+                disabled={!canSync}
             >
                 Sync
             </Button>
@@ -262,7 +237,7 @@ export function SupabaseSyncSettings() {
                     <Button
                         variant='soft'
                         color='neutral'
-                        onClick={() => setLoginDialogIsOpen(false)}
+                        onClick={handleCancelLogin}
                     >
                         Cancel
                     </Button>
