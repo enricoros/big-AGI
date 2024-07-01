@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { MyAppProps } from 'next/app';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
+import { ClerkProvider, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs';
 
 import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
@@ -28,20 +29,27 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
       <title>{Brand.Title.Common}</title>
       <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no" />
     </Head>
-    <ProviderTheming emotionCache={emotionCache}>
-      <ProviderSingleTab>
-        <ProviderTRPCQuerySettings>
-          <ProviderBackendCapabilities>
-            {/* ^ SSR boundary */}
-            <ProviderBootstrapLogic>
-              <ProviderSnacks>
-                <Component {...pageProps} />
-              </ProviderSnacks>
-            </ProviderBootstrapLogic>
-          </ProviderBackendCapabilities>
-        </ProviderTRPCQuerySettings>
-      </ProviderSingleTab>
-    </ProviderTheming>
+    <ClerkProvider>
+      <ProviderTheming emotionCache={emotionCache}>
+        <SignedOut>
+          <SignInButton />
+        </SignedOut>
+        <SignedIn>
+          <ProviderSingleTab>
+            <ProviderTRPCQuerySettings>
+              <ProviderBackendCapabilities>
+                {/* ^ SSR boundary */}
+                <ProviderBootstrapLogic>
+                  <ProviderSnacks>
+                    <Component {...pageProps} />
+                  </ProviderSnacks>
+                </ProviderBootstrapLogic>
+              </ProviderBackendCapabilities>
+            </ProviderTRPCQuerySettings>
+          </ProviderSingleTab>
+        </SignedIn>
+      </ProviderTheming>
+    </ClerkProvider>
 
     {isVercelFromFrontend && <VercelAnalytics debug={false} />}
     {isVercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}

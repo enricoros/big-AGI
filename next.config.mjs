@@ -1,7 +1,9 @@
 // Non-default build types
 const buildType =
-  process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone'
-    : process.env.BIG_AGI_BUILD === 'static' ? 'export'
+  process.env.BIG_AGI_BUILD === 'standalone'
+    ? 'standalone'
+    : process.env.BIG_AGI_BUILD === 'static'
+      ? 'export'
       : undefined;
 
 buildType && console.log(`   🧠 big-AGI: building for ${buildType}...\n`);
@@ -11,7 +13,7 @@ let nextConfig = {
   reactStrictMode: true,
 
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
-  ...buildType && {
+  ...(buildType && {
     output: buildType,
     distDir: 'dist',
 
@@ -20,7 +22,7 @@ let nextConfig = {
 
     // Optional: Change links `/me` -> `/me/` and emit `/me.html` -> `/me/index.html`
     // trailingSlash: true,
-  },
+  }),
 
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
   experimental: {
@@ -62,7 +64,7 @@ let nextConfig = {
 await import('./src/server/env.mjs');
 
 // conditionally enable the nextjs bundle analyzer
-if (process.env.ANALYZE_BUNDLE) {
+if (process.env.ANALYZE_BUNDLE === 'true') {
   const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer');
   nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig);
 }
