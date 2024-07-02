@@ -24,12 +24,16 @@ import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 import { Box, Button } from '@mui/joy';
+import { Confetti } from '~/common/components/confetti/Confetti';
 
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
   <>
     <Head>
       <title>{Brand.Title.Common}</title>
-      <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no" />
+      <meta
+        name="viewport"
+        content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
+      />
     </Head>
     <ClerkProvider>
       <ProviderTheming emotionCache={emotionCache}>
@@ -37,21 +41,39 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
           <Box
             sx={{
               display: 'flex',
-              'justify-content': 'center',
-              'align-items': 'center',
+              justifContent: 'center',
+              alignItems: 'center',
               height: '100vh',
               width: '100vw',
             }}
           >
-            {/* <div> */}
-            <Box>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                width: '100vw',
+              }}
+            >
+              <Confetti />
               <SignInButton>
-                <Button variant="outlined" startDecorator={<FavoriteBorder />} endDecorator={<FavoriteBorder />}>
+                <Button
+                  sx={{
+                    margin: 'auto',
+                    backgroundColor: 'greenyellow',
+                    height: '3rem',
+                    width: '10rem',
+                  }}
+                  variant="solid"
+                  // color="seconary"
+                  startDecorator={<FavoriteBorder />}
+                  endDecorator={<FavoriteBorder />}
+                >
                   Sign In
                 </Button>
               </SignInButton>
             </Box>
-            {/* </div> */}
           </Box>
         </SignedOut>
         <SignedIn>

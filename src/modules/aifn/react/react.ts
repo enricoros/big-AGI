@@ -10,7 +10,6 @@ import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.clien
 
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
-
 // prompt to implement the ReAct paradigm: https://arxiv.org/abs/2210.03629
 const reActPrompt = (enableBrowse: boolean): string =>
   `You are a Question Answering AI with reasoning ability.
@@ -32,11 +31,15 @@ e.g. google: Django
 Returns google custom search results
 ALWAYS look up on google when the question is related to live events or factual information, such as sports, news, or weather.
 
-` + (enableBrowse ? `loadUrl:
+` +
+  (enableBrowse
+    ? `loadUrl:
 e.g. loadUrl: https://arxiv.org/abs/1706.03762
 Opens the given URL and displays it
 
-` : '') + `calculate:
+`
+    : '') +
+  `calculate:
 e.g. calculate: 4 * 7 / 3
 Runs a calculation and returns the number - uses Python so be sure to use floating point syntax if necessary
 
@@ -60,9 +63,7 @@ You then output:
 Answer: The capital of France is Paris
 `;
 
-
 const actionRe = /^Action: (\w+): (.*)$/;
-
 
 /**
  * State - Abstraction used for serialization, save/restore, inspection, debugging, rendering, etc.
@@ -79,11 +80,15 @@ interface State {
 }
 
 export class Agent {
-
   // NOTE: this is here for demo, but the whole loop could be moved to the caller's event loop
-  async reAct(question: string, llmId: DLLMId, maxTurns = 5, enableBrowse = false,
-              appendLog: (...data: any[]) => void = console.log,
-              showState: (state: object) => void): Promise<string> {
+  async reAct(
+    question: string,
+    llmId: DLLMId,
+    maxTurns = 5,
+    enableBrowse = false,
+    appendLog: (...data: any[]) => void = console.log,
+    showState: (state: object) => void
+  ): Promise<string> {
     let i = 0;
     // TODO: to initialize with previous chat messages to provide context.
     const S: State = this.initialize(`Question: ${question}`, llmId, enableBrowse, appendLog);
@@ -97,22 +102,39 @@ export class Agent {
     // return only the 'Answer: ' part of the result
     if (S.result) {
       const idx = S.result.indexOf('Answer: ');
-      if (idx !== -1)
-        return S.result.slice(idx + 8);
+      if (idx !== -1) return S.result.slice(idx + 8);
     }
     return S.result || 'No result';
   }
 
-  initialize(question: string, assistantLLMId: DLLMId, enableBrowse: boolean, log: (...data: any[]) => void = console.log): State {
+  initialize(
+    question: string,
+    assistantLLMId: DLLMId,
+    enableBrowse: boolean,
+    log: (...data: any[]) => void = console.log
+  ): State {
     const state: State = {
-      messages: [{ role: 'system', content: bareBonesPromptMixer(reActPrompt(enableBrowse), assistantLLMId) }],
+      messages: [
+        {
+          role: 'system',
+          content: bareBonesPromptMixer(reActPrompt(enableBrowse), assistantLLMId),
+        },
+      ],
       nextPrompt: question,
       lastObservation: '',
       result: undefined,
     };
     log('## Prepare Buffer');
     for (let i = 0; i < state.messages.length; i++)
-      log('→ ' + state.messages[i].role + ' [' + (i + 1) + ']: "' + state.messages[i].content.slice(0, 86).replaceAll('\n', ' ') + ' ..."');
+      log(
+        '→ ' +
+          state.messages[i].role +
+          ' [' +
+          (i + 1) +
+          ']: "' +
+          state.messages[i].content.slice(0, 86).replaceAll('\n', ' ') +
+          ' ..."'
+      );
     return state;
   }
 
@@ -132,7 +154,9 @@ export class Agent {
     S.messages.push({ role: 'user', content: prompt });
     let content: string;
     try {
-      content = (await llmChatGenerateOrThrow(llmId, S.messages, 'chat-react-turn', null, null, null, 500)).content;
+      content = (
+        await llmChatGenerateOrThrow(llmId, S.messages, 'chat-react-turn', null, null, null, 500)
+      ).content;
     } catch (error: any) {
       content = `Error in llmChatGenerateOrThrow: ${error}`;
     }
@@ -143,9 +167,17 @@ export class Agent {
   }
 
   async step(S: State, llmId: DLLMId, log: (...data: any[]) => void = console.log) {
-    log('→ ' + (S.lastObservation ? 'action' : 'user') + ' [' + (S.messages.length + 1) + ']: "' + S.nextPrompt + '"');
+    log(
+      '→ ' +
+        (S.lastObservation ? 'action' : 'user') +
+        ' [' +
+        (S.messages.length + 1) +
+        ']: "' +
+        S.nextPrompt +
+        '"'
+    );
     const result = await this.chat(S, S.nextPrompt, llmId);
-    log('← reAct [' + (S.messages.length) + ']: "' + result + '"');
+    log('← reAct [' + S.messages.length + ']: "' + result + '"');
     const actions = result
       .split('\n')
       .map((a: string) => actionRe.exec(a))
@@ -170,15 +202,14 @@ export class Agent {
   }
 }
 
-
 type ActionFunction = (input: string) => Promise<string>;
 
 async function wikipedia(q: string): Promise<string> {
   const response = await frontendSideFetch(
-    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`,
+    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`
   );
   const data = await response.json();
-  return data.query.search[0].snippet;
+  return (data as any)?.query?.search[0].snippet;
 }
 
 async function search(query: string): Promise<string> {
@@ -187,7 +218,10 @@ async function search(query: string): Promise<string> {
     return JSON.stringify(data);
   } catch (error: any) {
     console.error('Error fetching search results:', error);
-    return 'An error occurred while searching the internet. Missing Google API Key? Google error: ' + (error?.message || error?.toString() || 'Unknown error');
+    return (
+      'An error occurred while searching the internet. Missing Google API Key? Google error: ' +
+      (error?.message || error?.toString() || 'Unknown error')
+    );
   }
 }
 
@@ -195,7 +229,9 @@ async function browse(url: string): Promise<string> {
   try {
     const page = await callBrowseFetchPage(url);
     const pageContent = page.content.markdown || page.content.text || page.content.html || '';
-    return JSON.stringify(pageContent ? { text: pageContent } : { error: 'Issue reading the page' });
+    return JSON.stringify(
+      pageContent ? { text: pageContent } : { error: 'Issue reading the page' }
+    );
   } catch (error) {
     console.error('Error browsing:', (error as Error).message);
     return 'An error occurred while browsing to the URL. Missing WSS Key?';

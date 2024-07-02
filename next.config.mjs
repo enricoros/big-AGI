@@ -40,23 +40,26 @@ let nextConfig = {
     };
 
     // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
-    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize)
+    if (
+      typeof config.optimization.splitChunks === 'object' &&
+      config.optimization.splitChunks.minSize
+    )
       config.optimization.splitChunks.minSize = 40 * 1024;
 
     return config;
   },
 
   // Note: disabled to check whether the project becomes slower with this
-  // modularizeImports: {
-  //   '@mui/icons-material': {
-  //     transform: '@mui/icons-material/{{member}}',
-  //   },
-  // },
+  modularizeImports: {
+    '@mui/icons-material': {
+      transform: '@mui/icons-material/{{member}}',
+    },
+  },
 
   // Uncomment the following leave console messages in production
-  // compiler: {
-  //   removeConsole: false,
-  // },
+  compiler: {
+    removeConsole: false,
+  },
 };
 
 // Validate environment variables, if set at build time. Will be actually read and used at runtime.

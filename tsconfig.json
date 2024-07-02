@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    /* Base Options: */
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2022",
@@ -9,35 +8,29 @@
     "moduleDetection": "force",
     "isolatedModules": true,
 
-    /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": false,
     "checkJs": true,
 
-    /* Bundled projects */
     "lib": ["dom", "dom.iterable", "ESNext"],
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
-    "plugins": [{"name": "next"}],
+    "plugins": [{ "name": "next" }],
     "incremental": true,
 
-    /* Custom options */
     "forceConsistentCasingInFileNames": true,
     "jsxImportSource": "@emotion/react",
 
-    /* Path Aliases */
     "baseUrl": ".",
     "paths": {
       "~/common/*": ["src/common/*"],
       "~/modules/*": ["src/modules/*"],
-      "~/server/*": ["src/server/*"]
+      "~/server/*": ["src/server/*"],
+      "~/winxp/*": ["src/winxp/src/WinXP/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts",
-    // this is here only because otherwise, during standalone build the process would update this file
-    "dist/types/**/*.ts"
-  ],
-  "exclude": ["node_modules", "dist", "electron"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "dist/types/**/*.ts"],
+  "exclude": ["node_modules", "dist", "electron", "src/winxp/"]
 }

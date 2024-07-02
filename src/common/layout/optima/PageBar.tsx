@@ -1,7 +1,16 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Typography, useColorScheme } from '@mui/joy';
+import {
+  Box,
+  Button,
+  IconButton,
+  ListDivider,
+  ListItemDecorator,
+  MenuItem,
+  Typography,
+  useColorScheme,
+} from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -34,7 +43,9 @@ const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) => (
       <AgiSquircleIcon inverted sx={{ width: 32, height: 32, color: 'white' }} />
     </Link>
 
-    <Typography level="title-md">{props.currentApp?.barTitle || props.currentApp?.name || Brand.Title.Base}</Typography>
+    <Typography level="title-md">
+      {props.currentApp?.barTitle || props.currentApp?.name || Brand.Title.Base}
+    </Typography>
   </Box>
 );
 
@@ -111,7 +122,7 @@ export function PageBar(props: {
       event.preventDefault(); // added for the Right mouse click (to prevent the menu)
       openPageMenu();
     },
-    [openPageMenu],
+    [openPageMenu]
   );
 
   // [Desktop] hide the app bar if the current app doesn't use it
@@ -147,6 +158,25 @@ export function PageBar(props: {
           }}
         >
           <UserButton />
+        </Box>
+        <Box
+          sx={{
+            paddingLeft: '.5rem',
+            flexGrow: 1,
+            minHeight: 'var(--Bar)',
+            display: 'flex',
+            flexFlow: 'row wrap',
+            justifyContent: 'left',
+            justifyItems: 'center',
+            alignItems: 'center',
+            my: 'auto',
+            gap: props.isMobile ? 0 : 1,
+            // [electron] make the blank part of the bar draggable (and not the contents)
+            WebkitAppRegion: 'drag',
+            '& > *': { WebkitAppRegion: 'no-drag' },
+          }}
+        >
+          <a href="/user-profile">Profile</a>
         </Box>
         {/* [Mobile] Drawer button */}
         {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (

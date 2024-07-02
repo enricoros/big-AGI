@@ -2,14 +2,17 @@ import { TRPCError } from '@trpc/server';
 
 import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/server/wire';
 
-
 // JSON fetcher
-export const fetchJsonOrTRPCError: <TOut extends object, TPostBody extends object | undefined = undefined /* undefined for GET requests */>(
+// @ts-expect-error Unknown vs Any vs Typed shenanigans.
+export const fetchJsonOrTRPCError: <
+  TOut extends object,
+  TPostBody extends object | undefined = undefined /* undefined for GET requests */,
+>(
   url: string,
   method: 'GET' | 'POST',
   headers: HeadersInit,
   body: TPostBody,
-  moduleName: string,
+  moduleName: string
 ) => Promise<TOut> = createFetcherFromTRPC(async (response) => await response.json(), 'json');
 
 // Text fetcher
@@ -18,12 +21,20 @@ export const fetchTextOrTRPCError: <TPostBody extends object | undefined>(
   method: 'GET' | 'POST' | 'DELETE',
   headers: HeadersInit,
   body: TPostBody,
-  moduleName: string,
+  moduleName: string
 ) => Promise<string> = createFetcherFromTRPC(async (response) => await response.text(), 'text');
 
-
 // internal safe fetch implementation
-function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => Promise<TOut>, parserName: string): (url: string, method: 'GET' | 'POST' | 'DELETE', headers: HeadersInit, body: TPostBody | undefined, moduleName: string) => Promise<TOut> {
+function createFetcherFromTRPC<TPostBody, TOut>(
+  parser: (response: Response) => Promise<TOut>,
+  parserName: string
+): (
+  url: string,
+  method: 'GET' | 'POST' | 'DELETE',
+  headers: HeadersInit,
+  body: TPostBody | undefined,
+  moduleName: string
+) => Promise<TOut> {
   return async (url, method, headers, body, moduleName) => {
     // Fetch
     let response: Response;
@@ -31,16 +42,26 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
       if (SERVER_DEBUG_WIRE)
         console.log('-> tRPC', debugGenerateCurlCommand(method, url, headers, body as any));
 
-      response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+      response = await fetch(url, {
+        method,
+        headers,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
     } catch (error: any) {
       const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
-      console.error(`[${method}] ${moduleName} error (fetch):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
+      console.error(
+        `[${method}] ${moduleName} error (fetch):`,
+        errorCause || error /* circular struct, don't use JSON.stringify.. */
+      );
       // HTTP 400
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[Issue] ${moduleName}: (network): ${safeErrorString(error) || 'unknown fetch error'}`
-          + (errorCause ? ` - ${errorCause?.toString()}` : '')
-          + ((errorCause && (errorCause as any)?.code === 'ECONNREFUSED') ? ` - is "${url}" accessible by the server?` : ''),
+        message:
+          `[Issue] ${moduleName}: (network): ${safeErrorString(error) || 'unknown fetch error'}` +
+          (errorCause ? ` - ${errorCause?.toString()}` : '') +
+          (errorCause && (errorCause as any)?.code === 'ECONNREFUSED'
+            ? ` - is "${url}" accessible by the server?`
+            : ''),
         cause: errorCause,
       });
     }
@@ -51,17 +72,22 @@ function createFetcherFromTRPC<TPostBody, TOut>(parser: (response: Response) => 
      */
     if (!response.ok) {
       let payload: any | null = await response.json().catch(() => null);
-      if (payload === null)
-        payload = await response.text().catch(() => null);
-      console.error(`[${method}] ${moduleName} error (upstream):`, response.status, response.statusText, payload);
+      if (payload === null) payload = await response.text().catch(() => null);
+      console.error(
+        `[${method}] ${moduleName} error (upstream):`,
+        response.status,
+        response.statusText,
+        payload
+      );
       // HTTP 400
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `[Issue] ${moduleName}: ${response.statusText}` // (${response.status})`
-          + (payload ? ` - ${safeErrorString(payload)}` : '')
-          + (response.status === 403 ? ` - is "${url}" accessible by the server?` : '')
-          + (response.status === 404 ? ` - "${url}" cannot be found by the server` : '')
-          + (response.status === 502 ? ` - is "${url}" not available?` : ''),
+        message:
+          `[Issue] ${moduleName}: ${response.statusText}` + // (${response.status})`
+          (payload ? ` - ${safeErrorString(payload)}` : '') +
+          (response.status === 403 ? ` - is "${url}" accessible by the server?` : '') +
+          (response.status === 404 ? ` - "${url}" cannot be found by the server` : '') +
+          (response.status === 502 ? ` - is "${url}" not available?` : ''),
       });
     }
 

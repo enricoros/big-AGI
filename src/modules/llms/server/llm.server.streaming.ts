@@ -1,35 +1,70 @@
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
-import { createParser as createEventsourceParser, EventSourceParseCallback, EventSourceParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
+import {
+  createParser as createEventsourceParser,
+  EventSourceParseCallback,
+  EventSourceParser,
+  ParsedEvent,
+  ReconnectInterval,
+} from 'eventsource-parser';
 
-import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetchOrThrow, safeErrorString, SERVER_DEBUG_WIRE, serverCapitalizeFirstLetter, ServerFetchError } from '~/server/wire';
-
+import {
+  createEmptyReadableStream,
+  debugGenerateCurlCommand,
+  nonTrpcServerFetchOrThrow,
+  safeErrorString,
+  SERVER_DEBUG_WIRE,
+  serverCapitalizeFirstLetter,
+  ServerFetchError,
+} from '~/server/wire';
 
 // Anthropic server imports
-import { AnthropicWireMessagesResponse, anthropicWireMessagesResponseSchema } from './anthropic/anthropic.wiretypes';
-import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
+import {
+  AnthropicWireMessagesResponse,
+  anthropicWireMessagesResponseSchema,
+} from './anthropic/anthropic.wiretypes';
+import {
+  anthropicAccess,
+  anthropicAccessSchema,
+  anthropicMessagesPayloadOrThrow,
+} from './anthropic/anthropic.router';
 
 // Gemini server imports
-import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } from './gemini/gemini.router';
-import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
+import {
+  geminiAccess,
+  geminiAccessSchema,
+  geminiGenerateContentTextPayload,
+} from './gemini/gemini.router';
+import {
+  geminiGeneratedContentResponseSchema,
+  geminiModelsStreamGenerateContentPath,
+} from './gemini/gemini.wiretypes';
 
 // Ollama server imports
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
-import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
+import {
+  OLLAMA_PATH_CHAT,
+  ollamaAccess,
+  ollamaAccessSchema,
+  ollamaChatCompletionPayload,
+} from './ollama/ollama.router';
 
 // OpenAI server imports
 import type { OpenAIWire } from './openai/openai.wiretypes';
-import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
-
+import {
+  openAIAccess,
+  openAIAccessSchema,
+  openAIChatCompletionPayload,
+  openAIHistorySchema,
+  openAIModelSchema,
+} from './openai/openai.router';
 
 import { llmsStreamingContextSchema } from './llm.server.types';
-
 
 // configuration
 const USER_SYMBOL_MAX_TOKENS = '🧱';
 const USER_SYMBOL_PROMPT_BLOCKED = '🚫';
 // const USER_SYMBOL_NO_DATA_RECEIVED_BROKEN = '🔌';
-
 
 /**
  * Event stream formats
@@ -37,7 +72,6 @@ const USER_SYMBOL_PROMPT_BLOCKED = '🚫';
  *  - 'json-nl' is used by Ollama
  */
 type MuxingFormat = 'sse' | 'json-nl';
-
 
 /**
  * Vendor stream parsers
@@ -47,11 +81,15 @@ type MuxingFormat = 'sse' | 'json-nl';
  * The peculiarity of our parser is the injection of a JSON structure at the beginning of the stream, to
  * communicate parameters before the text starts flowing to the client.
  */
-type AIStreamParser = (data: string, eventType?: string) => { text: string, close: boolean };
-
+type AIStreamParser = (data: string, eventType?: string) => { text: string; close: boolean };
 
 const chatStreamingInputSchema = z.object({
-  access: z.union([anthropicAccessSchema, geminiAccessSchema, ollamaAccessSchema, openAIAccessSchema]),
+  access: z.union([
+    anthropicAccessSchema,
+    geminiAccessSchema,
+    ollamaAccessSchema,
+    openAIAccessSchema,
+  ]),
   model: openAIModelSchema,
   history: openAIHistorySchema,
   // NOTE: made it optional for now as we have some old requests without it
@@ -73,53 +111,71 @@ const chatStreamingFirstOutputPacketSchema = z.object({
 });
 export type ChatStreamingPreambleModelSchema = z.infer<typeof chatStreamingFirstOutputPacketSchema>;
 
-
 export async function llmStreamingRelayHandler(req: NextRequest): Promise<Response> {
-
   // Parse the request
   const body = await req.json();
   const _chatStreamingInput: ChatStreamingInputSchema = chatStreamingInputSchema.parse(body);
   const { dialect: accessDialect } = _chatStreamingInput.access;
   const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
 
-
   // Prepare the upstream API request and demuxer/parser
   let requestData: ReturnType<typeof _prepareRequestData>;
   try {
     requestData = _prepareRequestData(_chatStreamingInput);
   } catch (error: any) {
-    console.error(`[POST] /api/llms/stream: ${prettyDialect}: prepareRequestData issue:`, safeErrorString(error));
-    return new NextResponse(`**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown streaming error'}`, {
-      status: 422,
-    });
+    console.error(
+      `[POST] /api/llms/stream: ${prettyDialect}: prepareRequestData issue:`,
+      safeErrorString(error)
+    );
+    return new NextResponse(
+      `**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown streaming error'}`,
+      {
+        status: 422,
+      }
+    );
   }
 
   // Connect to the upstream (blocking)
   let upstreamResponse: Response;
   try {
-
     if (SERVER_DEBUG_WIRE)
-      console.log('-> streaming:', debugGenerateCurlCommand('POST', requestData.url, requestData.headers, requestData.body));
+      console.log(
+        '-> streaming:',
+        debugGenerateCurlCommand('POST', requestData.url, requestData.headers, requestData.body)
+      );
 
     // POST to our API route
     // [MAY TIMEOUT] on Vercel Edge calls; this times out on long requests to Anthropic, on 2024-04-23.
     // The solution would be to return a new response with a 200 status code, and then stream the data
     // in a new request, but we'll lose back-pressure and complicates logic.
-    upstreamResponse = await nonTrpcServerFetchOrThrow(requestData.url, 'POST', requestData.headers, requestData.body);
-
+    upstreamResponse = await nonTrpcServerFetchOrThrow(
+      requestData.url,
+      'POST',
+      requestData.headers,
+      requestData.body
+    );
   } catch (error: any) {
-
     // server-side admins message
     const capDialect = serverCapitalizeFirstLetter(accessDialect);
-    const fetchOrVendorError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-    console.error(`[POST] /api/llms/stream: ${capDialect}: fetch issue:`, fetchOrVendorError, requestData?.url);
+    const fetchOrVendorError =
+      safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
+    console.error(
+      `[POST] /api/llms/stream: ${capDialect}: fetch issue:`,
+      fetchOrVendorError,
+      requestData?.url
+    );
 
     // client-side users visible message
-    const statusCode = ((error instanceof ServerFetchError) && (error.statusCode >= 400)) ? error.statusCode : 422;
-    const devMessage = process.env.NODE_ENV === 'development' ? ` [DEV_URL: ${requestData?.url}]` : '';
-    return new NextResponse(`**[Service Issue] ${capDialect}**: ${fetchOrVendorError}${devMessage}`, {
-      status: statusCode,
-    });
+    const statusCode =
+      error instanceof ServerFetchError && error.statusCode >= 400 ? error.statusCode : 422;
+    const devMessage =
+      process.env.NODE_ENV === 'development' ? ` [DEV_URL: ${requestData?.url}]` : '';
+    return new NextResponse(
+      `**[Service Issue] ${capDialect}**: ${fetchOrVendorError}${devMessage}`,
+      {
+        status: statusCode,
+      }
+    );
   }
 
   /* The following code is heavily inspired by the Vercel AI SDK, but simplified to our needs and in full control.
@@ -132,12 +188,14 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
    * a 'healthy' level of inventory (i.e., pre-buffering) on the pipe to the client.
    */
   const transformUpstreamToBigAgiClient = createUpstreamTransformer(
-    requestData.vendorMuxingFormat, requestData.vendorStreamParser, accessDialect,
+    requestData.vendorMuxingFormat,
+    requestData.vendorStreamParser,
+    accessDialect
   );
 
-  const chatResponseStream =
-    (upstreamResponse.body || createEmptyReadableStream())
-      .pipeThrough(transformUpstreamToBigAgiClient);
+  const chatResponseStream = (upstreamResponse.body || createEmptyReadableStream()).pipeThrough(
+    transformUpstreamToBigAgiClient
+  );
 
   return new NextResponse(chatResponseStream, {
     status: 200,
@@ -147,13 +205,13 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
   });
 }
 
-
 // Event Stream Transformers
 
 /**
  * The default demuxer for EventSource upstreams.
  */
-const _createDemuxerEventSource: (onParse: EventSourceParseCallback) => EventSourceParser = createEventsourceParser;
+const _createDemuxerEventSource: (onParse: EventSourceParseCallback) => EventSourceParser =
+  createEventsourceParser;
 
 /**
  * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
@@ -166,7 +224,7 @@ function _createDemuxerJsonNewline(onParse: EventSourceParseCallback): EventSour
     feed: (chunk: string): void => {
       accumulator += chunk;
       if (accumulator.endsWith('\n')) {
-        for (const jsonString of accumulator.split('\n').filter(line => !!line)) {
+        for (const jsonString of accumulator.split('\n').filter((line) => !!line)) {
           const mimicEvent: ParsedEvent = {
             type: 'event',
             id: undefined,
@@ -190,7 +248,11 @@ function _createDemuxerJsonNewline(onParse: EventSourceParseCallback): EventSour
  * Creates a TransformStream that parses events from an EventSource stream using a custom parser.
  * @returns {TransformStream<Uint8Array, string>} TransformStream parsing events.
  */
-function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser: AIStreamParser, dialectLabel: string): TransformStream<Uint8Array, Uint8Array> {
+function createUpstreamTransformer(
+  muxingFormat: MuxingFormat,
+  vendorTextParser: AIStreamParser,
+  dialectLabel: string
+): TransformStream<Uint8Array, Uint8Array> {
   const textDecoder = new TextDecoder();
   const textEncoder = new TextEncoder();
   let eventSourceParser: EventSourceParser;
@@ -198,7 +260,6 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
 
   return new TransformStream({
     start: async (controller): Promise<void> => {
-
       // Send initial packet indicating the start of the stream
       const startPacket: ChatStreamingPreambleStartSchema = { type: 'start' };
       controller.enqueue(textEncoder.encode(JSON.stringify(startPacket)));
@@ -215,8 +276,7 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
         }
 
         // ignore 'reconnect-interval' and events with no data
-        if (event.type !== 'event' || !('data' in event))
-          return;
+        if (event.type !== 'event' || !('data' in event)) return;
 
         // event stream termination, close our transformed stream
         if (event.data === '[DONE]') {
@@ -226,20 +286,21 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
 
         try {
           const { text, close } = vendorTextParser(event.data, event.event);
-          if (text)
-            controller.enqueue(textEncoder.encode(text));
-          if (close)
-            controller.terminate();
+          if (text) controller.enqueue(textEncoder.encode(text));
+          if (close) controller.terminate();
         } catch (error: any) {
           if (SERVER_DEBUG_WIRE)
             console.log(' - E: parse issue:', event.data, error?.message || error);
-          controller.enqueue(textEncoder.encode(` **[Stream Issue] ${serverCapitalizeFirstLetter(dialectLabel)}**: ${safeErrorString(error) || 'Unknown stream parsing error'}`));
+          controller.enqueue(
+            textEncoder.encode(
+              ` **[Stream Issue] ${serverCapitalizeFirstLetter(dialectLabel)}**: ${safeErrorString(error) || 'Unknown stream parsing error'}`
+            )
+          );
           controller.terminate();
         }
       };
 
-      if (muxingFormat === 'sse')
-        eventSourceParser = _createDemuxerEventSource(onNewEvent);
+      if (muxingFormat === 'sse') eventSourceParser = _createDemuxerEventSource(onNewEvent);
       else if (muxingFormat === 'json-nl')
         eventSourceParser = _createDemuxerJsonNewline(onNewEvent);
     },
@@ -254,13 +315,16 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
       // if we get a flush() without having received any data, we should terminate the stream
       // NOTE: happens with Gemini on 2024-03-14
       if (!hasReceivedData) {
-        controller.enqueue(textEncoder.encode(` **[Service Issue] ${serverCapitalizeFirstLetter(dialectLabel)}**: No data was sent by the server.`));
+        controller.enqueue(
+          textEncoder.encode(
+            ` **[Service Issue] ${serverCapitalizeFirstLetter(dialectLabel)}**: No data was sent by the server.`
+          )
+        );
         controller.terminate();
       }
     },
   });
 }
-
 
 /// Stream Parsers
 
@@ -286,8 +350,8 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
       // Initialize the message content for a new message
       case 'message_start':
         const firstMessage = !responseMessage;
-        const { message } = JSON.parse(data);
-        responseMessage = anthropicWireMessagesResponseSchema.parse(message);
+        const parsed = JSON.parse(data) as null | { message: string };
+        responseMessage = anthropicWireMessagesResponseSchema.parse(parsed?.message);
         // hack: prepend the model name to the first packet
         if (firstMessage) {
           const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };
@@ -298,45 +362,52 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
       // Initialize content block if needed
       case 'content_block_start':
         if (responseMessage) {
-          const { index, content_block } = JSON.parse(data);
+          const parsed = JSON.parse(data) as null | { index: any; content_block: any };
+          if (!parsed || !parsed.index || !parsed.content_block)
+            throw new Error('Unexpected content block start');
+          const { index, content_block } = parsed;
           if (responseMessage.content[index] === undefined)
             responseMessage.content[index] = content_block;
           text = responseMessage.content[index].text;
-        } else
-          throw new Error('Unexpected content block start');
+        } else throw new Error('Unexpected content block start');
         break;
 
       // Append delta text to the current message content
       case 'content_block_delta':
         if (responseMessage) {
-          const { index, delta } = JSON.parse(data);
-          if (delta.type !== 'text_delta')
-            throw new Error(`Unexpected content block non-text delta (${delta.type})`);
+          const parsed = JSON.parse(data) as null | { index: any; delta: any };
+          if (!parsed || !parsed.delta || !parsed.index)
+            throw new Error('Unexpected content block delta');
+
+          const { index, delta } = parsed as { index: any; delta: any };
+          if (delta?.type !== 'text_delta')
+            throw new Error(`Unexpected content block non-text delta (${delta?.type})`);
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block delta location (${index})`);
-          responseMessage.content[index].text += delta.text;
-          text = delta.text;
-        } else
-          throw new Error('Unexpected content block delta');
+          responseMessage.content[index].text += delta?.text;
+          text = delta?.text;
+        } else throw new Error('Unexpected content block delta');
         break;
 
       // Finalize content block if needed.
       case 'content_block_stop':
         if (responseMessage) {
-          const { index } = JSON.parse(data);
-          if (responseMessage.content[index] === undefined)
+          const parsed = JSON.parse(data) as null | { index: 'type' | 'text' };
+          if (!parsed) throw new Error('Unexpected content block stop');
+
+          const { index }: { index: 'type' | 'text' } = parsed;
+          if (responseMessage.content[index as any] === undefined)
             throw new Error(`Unexpected content block end location (${index})`);
-        } else
-          throw new Error('Unexpected content block stop');
+        } else throw new Error('Unexpected content block stop');
         break;
 
       // Optionally handle top-level message changes. Example: updating stop_reason
       case 'message_delta':
         if (responseMessage) {
-          const { delta } = JSON.parse(data);
-          Object.assign(responseMessage, delta);
-        } else
-          throw new Error('Unexpected message delta');
+          const parsed = JSON.parse(data) as null | { delta: Partial<typeof responseMessage> };
+          if (!parsed || !parsed.delta) throw new Error('Unexpected message delta');
+          Object.assign(responseMessage, parsed.delta);
+        } else throw new Error('Unexpected message delta');
         break;
 
       // We can now close the message
@@ -346,8 +417,12 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
       // Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
       case 'error':
         hasErrored = true;
-        const { error } = JSON.parse(data);
-        const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
+        const parsedData = JSON.parse(data) as null | { error: any };
+        const parsedDataError = (parsedData || ({} as Record<string, any>)).error;
+        const errorText =
+          parsedDataError?.type && parsedDataError?.message
+            ? `${parsedDataError?.type}: ${parsedDataError?.message}`
+            : safeErrorString(parsedDataError);
         return { text: `[Anthropic Server Error] ${errorText}`, close: true };
 
       default:
@@ -363,22 +438,27 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
 
   // this can throw, it's catched upstream
   return (data: string) => {
-
     // parse the JSON chunk
-    const wireGenerationChunk = JSON.parse(data);
+    const wireGenerationChunk = JSON.parse(data) as null | unknown;
     let generationChunk: ReturnType<typeof geminiGeneratedContentResponseSchema.parse>;
     try {
       generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
     } catch (error: any) {
       // log the malformed data to the console, and rethrow to transmit as 'error'
-      console.log(`/api/llms/stream: Gemini parsing issue: ${error?.message || error}`, wireGenerationChunk);
+      console.log(
+        `/api/llms/stream: Gemini parsing issue: ${error?.message || error}`,
+        wireGenerationChunk
+      );
       throw error;
     }
 
     // Prompt Safety Errors: pass through errors from Gemini
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return { text: `${USER_SYMBOL_PROMPT_BLOCKED} [Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}`, close: true };
+      return {
+        text: `${USER_SYMBOL_PROMPT_BLOCKED} [Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}`,
+        close: true,
+      };
     }
 
     // expect a single completion
@@ -392,11 +472,16 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
         return { text: ` ${USER_SYMBOL_MAX_TOKENS}`, close: true };
       if (singleCandidate.finishReason === 'RECITATION')
         throw new Error('generation stopped due to RECITATION');
-      throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
+      throw new Error(
+        `server response missing content (finishReason: ${singleCandidate?.finishReason})`
+      );
     }
 
     // expect a single part
-    if (singleCandidate.content.parts?.length !== 1 || !('text' in singleCandidate.content.parts[0]))
+    if (
+      singleCandidate.content.parts?.length !== 1 ||
+      !('text' in singleCandidate.content.parts[0])
+    )
       throw new Error(`expected 1 text part, got ${singleCandidate.content.parts?.length}`);
 
     // expect a single text in the part
@@ -417,11 +502,10 @@ function createStreamParserOllama(): AIStreamParser {
   let hasBegun = false;
 
   return (data: string) => {
-
     // parse the JSON chunk
     let wireJsonChunk: any;
     try {
-      wireJsonChunk = JSON.parse(data);
+      wireJsonChunk = JSON.parse(data) as null | unknown;
     } catch (error: any) {
       // log the malformed data to the console, and rethrow to transmit as 'error'
       console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, data);
@@ -432,8 +516,7 @@ function createStreamParserOllama(): AIStreamParser {
     const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
 
     // pass through errors from Ollama
-    if ('error' in chunk)
-      throw new Error(chunk.error);
+    if ('error' in chunk) throw new Error(chunk.error);
 
     // process output
     let text = chunk.message?.content || /*chunk.response ||*/ '';
@@ -454,12 +537,12 @@ function createStreamParserOpenAI(): AIStreamParser {
   let hasWarned = false;
 
   return (data: string) => {
-
-    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(
+      data
+    ) as OpenAIWire.ChatCompletion.ResponseStreamingChunk;
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
-    if (json.error)
-      return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
+    if (json.error) return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
 
     // [OpenAI] if there's a warning, log it once
     if (json.warning && !hasWarned) {
@@ -475,7 +558,11 @@ function createStreamParserOpenAI(): AIStreamParser {
     }
 
     const index = json.choices[0].index;
-    if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
+    if (
+      index !== 0 &&
+      index !==
+        undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */
+    )
       throw new Error(`Expected completion index 0, got ${index}`);
     let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
@@ -492,8 +579,12 @@ function createStreamParserOpenAI(): AIStreamParser {
   };
 }
 
-
-function _prepareRequestData({ access, model, history, context: _context }: ChatStreamingInputSchema): {
+function _prepareRequestData({
+  access,
+  model,
+  history,
+  context: _context,
+}: ChatStreamingInputSchema): {
   headers: HeadersInit;
   url: string;
   body: object;

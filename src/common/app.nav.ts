@@ -28,52 +28,47 @@ import { DiscordIcon } from '~/common/components/icons/3rdparty/DiscordIcon';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-
 import { Brand } from '~/common/app.config';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { hasNoChatLinkItems } from '~/modules/trade/link/store-link';
-
 
 // enable to show all items, for layout development
 const SHOW_ALL_APPS = false;
 
 const SPECIAL_DIVIDER = '__DIVIDER__';
 
-
 // Nav items
 
 interface ItemBase {
-  name: string,
-  icon: FunctionComponent,
-  iconActive?: FunctionComponent,
-  tooltip?: string,
+  name: string;
+  icon: FunctionComponent;
+  iconActive?: FunctionComponent;
+  tooltip?: string;
 }
 
 export interface NavItemApp extends ItemBase {
-  type: 'app',
-  route: string,
-  landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
-  barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
-  hideOnMobile?: boolean, // set to true to hide the icon on mobile, unless this is the active app
-  hideIcon?: boolean
-    | (() => boolean),    // set to true to hide the icon, unless this is the active app
-  hideBar?: boolean,      // set to true to hide the page bar
-  hideDrawer?: boolean,   // set to true to hide the drawer
-  hideNav?: boolean
-    | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
-  fullWidth?: boolean,    // set to true to override the user preference
-  isDev?: boolean,        // show a 'dev mode' badge
-  _delete?: boolean,      // delete from the UI
+  type: 'app';
+  route: string;
+  landingRoute?: string; // specify a different route than the nextjs page router route, to land to
+  barTitle?: string; // set to override the name as the bar title (unless custom bar content is used)
+  hideOnMobile?: boolean; // set to true to hide the icon on mobile, unless this is the active app
+  hideIcon?: boolean | (() => boolean); // set to true to hide the icon, unless this is the active app
+  hideBar?: boolean; // set to true to hide the page bar
+  hideDrawer?: boolean; // set to true to hide the drawer
+  hideNav?: boolean | (() => boolean); // set to hide the Nav bar (note: must have a way to navigate back)
+  fullWidth?: boolean; // set to true to override the user preference
+  isDev?: boolean; // show a 'dev mode' badge
+  _delete?: boolean; // delete from the UI
 }
 
 export interface NavItemModal extends ItemBase {
-  type: 'modal',
-  overlayId: 'settings' | 'models',
+  type: 'modal';
+  overlayId: 'settings' | 'models';
 }
 
 export interface NavItemExtLink extends ItemBase {
-  type: 'extLink',
-  href: string,
+  type: 'extLink';
+  href: string;
 }
 
 // interface MenuItemAction extends ItemBase {
@@ -81,13 +76,11 @@ export interface NavItemExtLink extends ItemBase {
 //   action: () => void,
 // }
 
-
 export const navItems: {
-  apps: NavItemApp[],
-  modals: NavItemModal[],
-  links: NavItemExtLink[],
+  apps: NavItemApp[];
+  modals: NavItemModal[];
+  links: NavItemExtLink[];
 } = {
-
   // User-chosen apps
   apps: [
     {
@@ -240,25 +233,30 @@ export const navItems: {
       icon: DiscordIcon,
       href: Brand.URIs.SupportInvite,
     },
-    {
-      type: 'extLink',
-      name: 'GitHub',
-      icon: GitHubIcon,
-      href: Brand.URIs.OpenRepo,
-    },
+    // {
+    //   type: 'extLink',
+    //   name: 'GitHub',
+    //   icon: GitHubIcon,
+    //   href: Brand.URIs.OpenRepo,
+    // },
   ],
-
 };
 
 // apply UI filtering right away - do it here, once, and for all
-navItems.apps = navItems.apps.filter(app => !app._delete || SHOW_ALL_APPS);
+navItems.apps = navItems.apps.filter((app) => !app._delete || SHOW_ALL_APPS);
 
 export function checkDivider(app?: NavItemApp) {
   return app?.name === SPECIAL_DIVIDER;
 }
 
 export function checkVisibileIcon(app: NavItemApp, isMobile: boolean, currentApp?: NavItemApp) {
-  return app.hideOnMobile && isMobile ? false : app === currentApp ? true : typeof app.hideIcon === 'function' ? !app.hideIcon() : !app.hideIcon;
+  return app.hideOnMobile && isMobile
+    ? false
+    : app === currentApp
+      ? true
+      : typeof app.hideIcon === 'function'
+        ? !app.hideIcon()
+        : !app.hideIcon;
 }
 
 export function checkVisibleNav(app?: NavItemApp) {

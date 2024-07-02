@@ -20,5 +20,8 @@
     "titleBar.inactiveForeground": "#15202b99"
   },
   "peacock.color": "#F8981D",
-  "find-it-faster.general.useTerminalInEditor": true
+  "find-it-faster.general.useTerminalInEditor": true,
+
+  "github.copilot.chat.scopeSelection": true,
+  "github.copilot.chat.localeOverride": "en"
 }
