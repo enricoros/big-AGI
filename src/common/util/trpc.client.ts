@@ -6,7 +6,7 @@
  *
  * We also create a few inference helpers for input and output types.
  */
-import { createTRPCClient, httpLink, loggerLink } from '@trpc/client';
+import { createTRPCClient, httpLink, loggerLink, unstable_httpBatchStreamLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 
 import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
@@ -83,3 +83,16 @@ export const apiAsyncNode = createTRPCClient<AppRouterNode>({
   ],
 });
 
+
+/**
+ * Stream API: uses tRPC streaming to transfer partial updates to the client
+ */
+export const apiStream = createTRPCClient<AppRouterEdge>({
+  links: [
+    loggerLink({ enabled: enableLoggerLink }),
+    unstable_httpBatchStreamLink({
+      url: `${getBaseUrl()}/api/trpc-edge`,
+      transformer: transformer,
+    }),
+  ],
+});
