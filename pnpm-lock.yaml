@@ -165,6 +165,9 @@ importers:
       '@cloudflare/puppeteer':
         specifier: 0.0.5
         version: 0.0.5
+      '@total-typescript/ts-reset':
+        specifier: ^0.5.1
+        version: 0.5.1
       '@types/node':
         specifier: ^20.12.11
         version: 20.14.9
@@ -912,6 +915,9 @@ packages:
         optional: true
       react-native:
         optional: true
+
+  '@total-typescript/ts-reset@0.5.1':
+    resolution: {integrity: sha512-AqlrT8YA1o7Ff5wPfMOL0pvL+1X+sw60NN6CcOCqs658emD6RfiXhF7Gu9QcfKBH7ELY2nInLhKSCWVoNL70MQ==}
 
   '@trpc/client@10.44.1':
     resolution: {integrity: sha512-vTWsykNcgz1LnwePVl2fKZnhvzP9N3GaaLYPkfGINo314ZOS0OBqe9x0ytB2LLUnRVTAAZ2WoONzARd8nHiqrA==}
@@ -3944,6 +3950,8 @@ snapshots:
       use-sync-external-store: 1.2.2(react@18.3.1)
     optionalDependencies:
       react-dom: 18.3.1(react@18.3.1)
+
+  '@total-typescript/ts-reset@0.5.1': {}
 
   '@trpc/client@10.44.1(@trpc/server@10.44.1)':
     dependencies:
