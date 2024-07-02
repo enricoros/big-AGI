@@ -1,13 +1,21 @@
 import { apiAsync } from '~/common/util/trpc.client';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
-import type { ChatStreamingInputSchema, ChatStreamingPreambleModelSchema, ChatStreamingPreambleStartSchema } from '../server/llm.server.streaming';
+import type {
+  ChatStreamingInputSchema,
+  ChatStreamingPreambleModelSchema,
+  ChatStreamingPreambleStartSchema,
+} from '../server/llm.server.streaming';
 import type { DLLMId } from '../store-llms';
-import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '../llm.client';
+import type {
+  VChatContextRef,
+  VChatFunctionIn,
+  VChatMessageIn,
+  VChatStreamContextName,
+} from '../llm.client';
 
 import type { OpenAIAccessSchema } from '../server/openai/openai.router';
 import type { OpenAIWire } from '../server/openai/openai.wiretypes';
-
 
 export type StreamingClientUpdate = Partial<{
   textSoFar: string;
@@ -29,12 +37,13 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
   llmId: DLLMId,
   llmOptions: TLLMOptions,
   messages: VChatMessageIn[],
-  contextName: VChatStreamContextName, contextRef: VChatContextRef,
-  functions: VChatFunctionIn[] | null, forceFunctionName: string | null,
+  contextName: VChatStreamContextName,
+  contextRef: VChatContextRef,
+  functions: VChatFunctionIn[] | null,
+  forceFunctionName: string | null,
   abortSignal: AbortSignal,
-  onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
+  onUpdate: (update: StreamingClientUpdate, done: boolean) => void
 ): Promise<void> {
-
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = (llmOptions as any) || {};
   if (!llmRef || llmTemperature === undefined)
@@ -43,8 +52,7 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
   if (access.dialect === 'openai' && access.moderationCheck) {
     const moderationUpdate = await _openAIModerationCheck(access, messages.at(-1) ?? null);
-    if (moderationUpdate)
-      return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
+    if (moderationUpdate) return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
   }
 
   // prepare the input, similarly to the tRPC openAI.chatGenerate
@@ -98,7 +106,6 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
 
     // we have two packets with a serialized flat json object at the start; this is side data, before the text flow starts
     while ((!parsedPreambleStart || !parsedPreableModel) && incrementalText.startsWith('{')) {
-
       // extract a complete JSON object, if present
       const endOfJson = incrementalText.indexOf('}');
       if (endOfJson === -1) break;
@@ -109,9 +116,16 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
       if (!parsedPreambleStart) {
         parsedPreambleStart = true;
         try {
-          const parsed: ChatStreamingPreambleStartSchema = JSON.parse(jsonString);
-          if (parsed.type !== 'start')
-            console.log('unifiedStreamingClient: unexpected preamble type:', parsed?.type, 'time:', performance.now() - timeFetch);
+          const parsed: ChatStreamingPreambleStartSchema = JSON.parse(
+            jsonString
+          ) as ChatStreamingPreambleStartSchema;
+          if (parsed?.type !== 'start')
+            console.log(
+              'unifiedStreamingClient: unexpected preamble type:',
+              parsed?.type,
+              'time:',
+              performance.now() - timeFetch
+            );
         } catch (e) {
           // error parsing JSON, ignore
           console.log('unifiedStreamingClient: error parsing start JSON:', e);
@@ -123,7 +137,9 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
       if (!parsedPreableModel) {
         parsedPreableModel = true;
         try {
-          const parsed: ChatStreamingPreambleModelSchema = JSON.parse(jsonString);
+          const parsed: ChatStreamingPreambleModelSchema = JSON.parse(
+            jsonString
+          ) as ChatStreamingPreambleModelSchema;
           onUpdate({ originLLM: parsed.model }, false);
         } catch (e) {
           // error parsing JSON, ignore
@@ -132,11 +148,9 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
       }
     }
 
-    if (incrementalText)
-      onUpdate({ textSoFar: incrementalText }, false);
+    if (incrementalText) onUpdate({ textSoFar: incrementalText }, false);
   }
 }
-
 
 /**
  * OpenAI-specific moderation check. This is a separate function, as it's not part of the
@@ -144,18 +158,21 @@ export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions
  *
  * @returns null if the message is safe, or a string with the user message if it's not safe
  */
-async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: VChatMessageIn | null): Promise<string | null> {
-  if (!lastMessage || lastMessage.role !== 'user')
-    return null;
+async function _openAIModerationCheck(
+  access: OpenAIAccessSchema,
+  lastMessage: VChatMessageIn | null
+): Promise<string | null> {
+  if (!lastMessage || lastMessage.role !== 'user') return null;
 
   try {
-    const moderationResult: OpenAIWire.Moderation.Response = await apiAsync.llmOpenAI.moderation.mutate({
-      access, text: lastMessage.content,
-    });
+    const moderationResult: OpenAIWire.Moderation.Response =
+      await apiAsync.llmOpenAI.moderation.mutate({
+        access,
+        text: lastMessage.content,
+      });
     const issues = moderationResult.results.reduce((acc, result) => {
       if (result.flagged) {
-        Object
-          .entries(result.categories)
+        Object.entries(result.categories)
           .filter(([_, value]) => value)
           .forEach(([key, _]) => acc.add(key));
       }
@@ -164,7 +181,7 @@ async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: V
 
     // if there's any perceived violation, we stop here
     if (issues.size) {
-      const categoriesText = [...issues].map(c => `\`${c}\``).join(', ');
+      const categoriesText = [...issues].map((c) => `\`${c}\``).join(', ');
       // do not proceed with the streaming request
       return `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`;
     }

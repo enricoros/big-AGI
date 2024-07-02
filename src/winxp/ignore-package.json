@@ -1,0 +1,46 @@
+{
+  "name": "winXP",
+  "version": "0.1.0",
+  "private": true,
+  "author": "ShizukuIchi <shizukuichi@gmail.com>",
+  "homepage": "https://winxp.now.sh",
+  "dependencies": {
+    "lodash.samplesize": "^4.2.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-scripts": "^5.0.1",
+    "react-use": "^7.0.1",
+    "styled-components": "^4.2.0",
+    "webamp": "^1.3.2-beta.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "now-build": "react-scripts build",
+    "lint": "eslint src"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "plugin:prettier/recommended"
+    ]
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "devDependencies": {
+    "eslint": "^6.4.0",
+    "eslint-config-prettier": "^6.3.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-prettier": "^3.1.0",
+    "prettier": "^1.18.2"
+  },
+  "engines": {
+    "node": ">=10.16.0"
+  }
+}

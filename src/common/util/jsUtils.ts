@@ -1,3 +1,4 @@
+declare function freeze<Type>(obj: Type): Readonly<Type>;
 /*
  * Custom implementation of deep equality check for objects and arrays.
  * Note that some libs provide it, but we don't want another dependency and this
@@ -17,7 +18,7 @@ export function isDeepEqual<T>(a: Readonly<T>, b: Readonly<T>): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++)
-      if (!isDeepEqual(a[i], b[i])) return false;
+      if (!isDeepEqual(a[i] as Readonly<unknown>, b[i] as Readonly<unknown>)) return false;
     return true;
   }
 

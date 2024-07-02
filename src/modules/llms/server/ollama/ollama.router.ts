@@ -10,12 +10,26 @@ import { LLM_IF_OAI_Chat } from '../../store-llms';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import {
+  OpenAIHistorySchema,
+  openAIHistorySchema,
+  OpenAIModelSchema,
+  openAIModelSchema,
+} from '../openai/openai.router';
+import {
+  llmsChatGenerateOutputSchema,
+  llmsGenerateContextSchema,
+  llmsListModelsOutputSchema,
+  ModelDescriptionSchema,
+} from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
-import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
-
+import {
+  WireOllamaChatCompletionInput,
+  wireOllamaChunkedOutputSchema,
+  wireOllamaListModelsSchema,
+  wireOllamaModelInfoSchema,
+} from './ollama.wiretypes';
 
 // Default hosts
 const DEFAULT_OLLAMA_HOST = 'http://127.0.0.1:11434';
@@ -23,12 +37,16 @@ export const OLLAMA_PATH_CHAT = '/api/chat';
 const OLLAMA_PATH_TAGS = '/api/tags';
 const OLLAMA_PATH_SHOW = '/api/show';
 
-
 // Mappers
 
-export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
-
-  const ollamaHost = fixupHost(access.ollamaHost || env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
+export function ollamaAccess(
+  access: OllamaAccessSchema,
+  apiPath: string
+): { headers: HeadersInit; url: string } {
+  const ollamaHost = fixupHost(
+    access.ollamaHost || env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST,
+    apiPath
+  );
 
   return {
     headers: {
@@ -36,11 +54,14 @@ export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { hea
     },
     url: ollamaHost + apiPath,
   };
-
 }
 
-
-export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, jsonOutput: boolean, stream: boolean): WireOllamaChatCompletionInput => ({
+export const ollamaChatCompletionPayload = (
+  model: OpenAIModelSchema,
+  history: OpenAIHistorySchema,
+  jsonOutput: boolean,
+  stream: boolean
+): WireOllamaChatCompletionInput => ({
   model: model.id,
   messages: history,
   options: {
@@ -52,7 +73,6 @@ export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: O
   // function_call: ...
   stream,
 });
-
 
 /* Unused: switched to the Chat endpoint (above). The implementation is left here for reference.
 https://github.com/jmorganca/ollama/blob/main/docs/api.md#generate-a-completion
@@ -86,16 +106,22 @@ export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenA
   };
 }*/
 
-async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function ollamaGET<TOut extends object>(
+  access: OllamaAccessSchema,
+  apiPath: string /*, signal?: AbortSignal*/
+): Promise<TOut> {
   const { headers, url } = ollamaAccess(access, apiPath);
   return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Ollama');
 }
 
-async function ollamaPOST<TOut extends object, TPostBody extends object>(access: OllamaAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function ollamaPOST<TOut extends object, TPostBody extends object>(
+  access: OllamaAccessSchema,
+  body: TPostBody,
+  apiPath: string /*, signal?: AbortSignal*/
+): Promise<TOut> {
   const { headers, url } = ollamaAccess(access, apiPath);
   return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Ollama');
 }
-
 
 // Input/Output Schemas
 
@@ -125,19 +151,19 @@ const chatGenerateInputSchema = z.object({
 });
 
 const listPullableOutputSchema = z.object({
-  pullable: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    tag: z.string(),
-    description: z.string(),
-    pulls: z.number(),
-    isNew: z.boolean(),
-  })),
+  pullable: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      tag: z.string(),
+      description: z.string(),
+      pulls: z.number(),
+      isNew: z.boolean(),
+    })
+  ),
 });
 
-
 export const llmOllamaRouter = createTRPCRouter({
-
   /* Ollama: models that can be pulled */
   adminListPullable: publicProcedure
     .input(accessOnlySchema)
@@ -156,63 +182,75 @@ export const llmOllamaRouter = createTRPCRouter({
     }),
 
   /* Ollama: pull a model */
-  adminPull: publicProcedure
-    .input(adminPullModelSchema)
-    .mutation(async ({ input }) => {
+  adminPull: publicProcedure.input(adminPullModelSchema).mutation(async ({ input }) => {
+    // fetch as a large text buffer, made of JSONs separated by newlines
+    const { headers, url } = ollamaAccess(input.access, '/api/pull');
+    const pullRequest = await fetchTextOrTRPCError(
+      url,
+      'POST',
+      headers,
+      { name: input.name },
+      'Ollama::pull'
+    );
 
-      // fetch as a large text buffer, made of JSONs separated by newlines
-      const { headers, url } = ollamaAccess(input.access, '/api/pull');
-      const pullRequest = await fetchTextOrTRPCError(url, 'POST', headers, { 'name': input.name }, 'Ollama::pull');
+    // accumulate status and error messages
+    let lastStatus: string = 'unknown';
+    let lastError: string | undefined = undefined;
+    for (let string of pullRequest.trim().split('\n')) {
+      const message = JSON.parse(string) as { status: string; error: string };
+      if (!message || typeof message !== 'object') throw new Error('Ollama pull issue');
+      if (message.status) lastStatus = input.name + ': ' + message.status;
+      if (message.error) lastError = message.error;
+    }
 
-      // accumulate status and error messages
-      let lastStatus: string = 'unknown';
-      let lastError: string | undefined = undefined;
-      for (let string of pullRequest.trim().split('\n')) {
-        const message = JSON.parse(string);
-        if (message.status)
-          lastStatus = input.name + ': ' + message.status;
-        if (message.error)
-          lastError = message.error;
-      }
-
-      return { status: lastStatus, error: lastError };
-    }),
+    return { status: lastStatus, error: lastError };
+  }),
 
   /* Ollama: delete a model */
-  adminDelete: publicProcedure
-    .input(adminPullModelSchema)
-    .mutation(async ({ input }) => {
-      const { headers, url } = ollamaAccess(input.access, '/api/delete');
-      const deleteOutput = await fetchTextOrTRPCError(url, 'DELETE', headers, { 'name': input.name }, 'Ollama::delete');
-      if (deleteOutput?.length && deleteOutput !== 'null')
-        throw new Error('Ollama delete issue: ' + deleteOutput);
-    }),
-
+  adminDelete: publicProcedure.input(adminPullModelSchema).mutation(async ({ input }) => {
+    const { headers, url } = ollamaAccess(input.access, '/api/delete');
+    const deleteOutput = await fetchTextOrTRPCError(
+      url,
+      'DELETE',
+      headers,
+      { name: input.name },
+      'Ollama::delete'
+    );
+    if (deleteOutput?.length && deleteOutput !== 'null')
+      throw new Error('Ollama delete issue: ' + deleteOutput);
+  }),
 
   /* Ollama: List the Models available */
   listModels: publicProcedure
     .input(accessOnlySchema)
     .output(llmsListModelsOutputSchema)
     .query(async ({ input }) => {
-
       // get the models
       const wireModels = await ollamaGET(input.access, OLLAMA_PATH_TAGS);
       let models = wireOllamaListModelsSchema.parse(wireModels).models;
 
       // retrieve info for each of the models (/api/show, post call, in parallel)
-      const detailedModels = await Promise.all(models.map(async model => {
-        const wireModelInfo = await ollamaPOST(input.access, { 'name': model.name }, OLLAMA_PATH_SHOW);
-        const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
-        return { ...model, ...modelInfo };
-      }));
+      const detailedModels = await Promise.all(
+        models.map(async (model) => {
+          const wireModelInfo = await ollamaPOST(
+            input.access,
+            { name: model.name },
+            OLLAMA_PATH_SHOW
+          );
+          const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
+          return { ...model, ...modelInfo };
+        })
+      );
 
       return {
-        models: detailedModels.map(model => {
+        models: detailedModels.map((model) => {
           // the model name is in the format "name:tag" (default tag = 'latest')
           const [modelName, modelTag] = model.name.split(':');
 
           // pretty label and description
-          const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` · ${modelTag}` : '');
+          const label =
+            capitalizeFirstLetter(modelName) +
+            (modelTag && modelTag !== 'latest' ? ` · ${modelTag}` : '');
           const description = OLLAMA_BASE_MODELS[modelName]?.description ?? 'Model unknown';
 
           /* Find the context window from the 'num_ctx' line in the parameters string, if present
@@ -223,13 +261,14 @@ export const llmOllamaRouter = createTRPCRouter({
           let contextWindow = OLLAMA_BASE_MODELS[modelName]?.contextWindow || 8192;
           if (model.parameters) {
             // split the parameters into lines, and find one called "num_ctx ...spaces... number"
-            const paramsNumCtx = model.parameters.split('\n').find(line => line.startsWith('num_ctx '));
+            const paramsNumCtx = model.parameters
+              .split('\n')
+              .find((line) => line.startsWith('num_ctx '));
             if (paramsNumCtx) {
               const numCtxValue: string = paramsNumCtx.split(/\s+/)[1];
               if (numCtxValue) {
                 const numCtxNumber: number = parseInt(numCtxValue);
-                if (!isNaN(numCtxNumber))
-                  contextWindow = numCtxNumber;
+                if (!isNaN(numCtxNumber)) contextWindow = numCtxNumber;
               }
             }
           }
@@ -254,8 +293,11 @@ export const llmOllamaRouter = createTRPCRouter({
     .input(chatGenerateInputSchema)
     .output(llmsChatGenerateOutputSchema)
     .mutation(async ({ input: { access, history, model } }) => {
-
-      const wireGeneration = await ollamaPOST(access, ollamaChatCompletionPayload(model, history, access.ollamaJson, false), OLLAMA_PATH_CHAT);
+      const wireGeneration = await ollamaPOST(
+        access,
+        ollamaChatCompletionPayload(model, history, access.ollamaJson, false),
+        OLLAMA_PATH_CHAT
+      );
       const generation = wireOllamaChunkedOutputSchema.parse(wireGeneration);
 
       if ('error' in generation)
@@ -276,5 +318,4 @@ export const llmOllamaRouter = createTRPCRouter({
         finish_reason: generation.done ? 'stop' : null,
       };
     }),
-
 });

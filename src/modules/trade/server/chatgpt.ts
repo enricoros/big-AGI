@@ -1,7 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-
 const chatGptMessageSchema = z.object({
   id: z.string(),
   author: z.object({
@@ -65,10 +64,11 @@ const chatGptSharedChatPage = z.object({
   }),
 });
 
-
 export function chatGptParseConversation(htmlPage: string) {
   // extract embedded JSON string
-  const jsonString = htmlPage.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/)?.[1];
+  const jsonString = htmlPage.match(
+    /<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/
+  )?.[1];
   if (!jsonString)
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -78,7 +78,7 @@ export function chatGptParseConversation(htmlPage: string) {
   // parse the string to JSON
   let jsonObject: object;
   try {
-    jsonObject = JSON.parse(jsonString);
+    jsonObject = JSON.parse(jsonString) as object;
   } catch (error: any) {
     throw new TRPCError({
       code: 'BAD_REQUEST',

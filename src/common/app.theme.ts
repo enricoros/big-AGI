@@ -3,7 +3,6 @@ import createCache from '@emotion/cache';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
-
 // CSS utils
 export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 // export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
@@ -11,11 +10,15 @@ export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 // Dimensions
 export const formLabelStartWidth = 140;
 
-
 // Theme & Fonts
 
 const font = Inter({
-  weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
+  weight: [
+    /* '300', sm */ '400' /* (undefined, default) */,
+    '500' /* md */,
+    '600' /* lg */,
+    '700' /* xl */,
+  ],
   subsets: ['latin'],
   display: 'swap',
   fallback: ['Helvetica', 'Arial', 'sans-serif'],
@@ -38,14 +41,14 @@ export const appTheme = extendTheme({
     light: {
       palette: {
         neutral: {
-          plainColor: 'var(--joy-palette-neutral-800)',     // [700 -> 800] Dropdown menu: increase text contrast a bit
-          solidBg: 'var(--joy-palette-neutral-700)',        // [500 -> 700] PageBar background & Button[solid]
-          solidHoverBg: 'var(--joy-palette-neutral-800)',   // [600 -> 800] Buttons[solid]:hover
+          plainColor: 'var(--joy-palette-neutral-800)', // [700 -> 800] Dropdown menu: increase text contrast a bit
+          solidBg: 'var(--joy-palette-neutral-700)', // [500 -> 700] PageBar background & Button[solid]
+          solidHoverBg: 'var(--joy-palette-neutral-800)', // [600 -> 800] Buttons[solid]:hover
         },
         // primary [800] > secondary [700 -> 800] > tertiary [600] > icon [500 -> 700]
         text: {
-          icon: 'var(--joy-palette-neutral-700)',           // <IconButton color='neutral' /> icon color
-          secondary: 'var(--joy-palette-neutral-800)',      // increase contrast a bit
+          icon: 'var(--joy-palette-neutral-700)', // <IconButton color='neutral' /> icon color
+          secondary: 'var(--joy-palette-neutral-800)', // increase contrast a bit
           // tertiary: 'var(--joy-palette-neutral-700)',       // increase contrast a bit
         },
         // popup [white] > surface [50] > level1 [100] > level2 [200] > level3 [300 -> unused] > body [white -> 300]
@@ -62,6 +65,18 @@ export const appTheme = extendTheme({
     },
     dark: {
       palette: {
+        primary: {
+          '50': '#f0fdf4',
+          '100': '#dcfce7',
+          '200': '#bbf7d0',
+          '300': '#86efac',
+          '400': '#4ade80',
+          '500': '#22c55e',
+          '600': '#16a34a',
+          '700': '#15803d',
+          '800': '#166534',
+          '900': '#14532d',
+        },
         text: {
           // do not increase contrast - text.primary would scream at you
           // secondary: 'var(--joy-palette-neutral-100, #EAEEF6)',
@@ -154,7 +169,6 @@ export const themeZIndexOverMobileDrawer = 1301;
 
 export const themeBreakpoints = appTheme.breakpoints.values;
 
-
 // Dyanmic UI Sizing
 export type ContentScaling = 'xs' | 'sm' | 'md';
 
@@ -176,8 +190,8 @@ interface ContentScalingOptions {
   // ChatMessage
   chatMessagePadding: number;
   // ChatDrawer
-  chatDrawerItemSx: { '--ListItem-minHeight': string, fontSize: string };
-  chatDrawerItemFolderSx: { '--ListItem-minHeight': string, fontSize: string };
+  chatDrawerItemSx: { '--ListItem-minHeight': string; fontSize: string };
+  chatDrawerItemFolderSx: { '--ListItem-minHeight': string; fontSize: string };
 }
 
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
@@ -188,8 +202,8 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     blockImageGap: 1,
     blockLineHeight: 1.666667,
     chatMessagePadding: 1.25,
-    chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },          // 36px
-    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },     // 40px
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' }, // 36px
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' }, // 40px
   },
   sm: {
     blockCodeFontSize: '0.75rem',
@@ -208,14 +222,13 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     blockImageGap: 2,
     blockLineHeight: 1.75,
     chatMessagePadding: 2,
-    chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },           // 40px
-    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.75rem', fontSize: 'md' },    // 44px
+    chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' }, // 40px
+    chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.75rem', fontSize: 'md' }, // 44px
   },
   // lg: {
   //   chatDrawerFoldersLineHeight: '3rem',
   // },
 };
-
 
 // Emotion Cache (with insertion point on the SSR pass)
 
@@ -228,7 +241,7 @@ export function createEmotionCache() {
     // On the client side, _document.tsx has a meta tag with the name "emotion-insertion-point" at the top of the <head>.
     // This assures that MUI styles are loaded first, and allows allows developers to easily override MUI styles with other solutions like CSS modules.
     const emotionInsertionPoint = document.querySelector<HTMLMetaElement>(
-      'meta[name="emotion-insertion-point"]',
+      'meta[name="emotion-insertion-point"]'
     );
     insertionPoint = emotionInsertionPoint ?? undefined;
   }
