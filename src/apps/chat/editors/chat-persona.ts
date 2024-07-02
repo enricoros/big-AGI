@@ -137,39 +137,46 @@ export async function streamPersonaMessage(
 
   let totalSize = 0;
 
-  for await (const i of xIterable) {
-    if (!i.size) {
-      if (i.partial) {
-        console.log('Received - partial', i.partial);
+  try {
+    for await (const i of xIterable) {
+      if (!i.size) {
+        if (i.partial) {
+          console.log('Received - partial', i.partial);
+          continue;
+        }
+        // console.log('Received - special', i);
         continue;
       }
-      console.log('Received - special', i);
-      continue;
+
+
+      console.log(`Received - Sequence: ${i.sequenceNumber}, Size: ${(i.size / (1024 * 1024)).toFixed(2)} MB, Checksum: ${i.checksum}`);
+
+      const actualSize = i.data.length;
+      const calculatedChecksum = simpleChecksum(i.data);
+
+      if (actualSize !== i.size) {
+        console.warn(`  Size mismatch! Expected: ${i.size}, Actual: ${actualSize}`);
+      }
+      if (calculatedChecksum !== i.checksum) {
+        console.warn(`  Checksum mismatch! Expected: ${i.checksum}, Calculated: ${calculatedChecksum}`);
+      }
+
+      totalSize += i.size;
+
+      // Log progress for larger sizes
+      if (i.size > 1024 * 1024) {
+        // console.log(`  Progress: ${(totalSize / (1024 * 1024)).toFixed(2)} MB received so far`);
+      }
     }
-
-
-    // console.log(`Received - Sequence: ${i.sequenceNumber}, Size: ${(i.size / (1024 * 1024)).toFixed(2)} MB, Checksum: ${i.checksum}`);
-
-    const actualSize = i.data.length;
-    const calculatedChecksum = simpleChecksum(i.data);
-
-    if (actualSize !== i.size) {
-      console.warn(`  Size mismatch! Expected: ${i.size}, Actual: ${actualSize}`);
-    }
-    if (calculatedChecksum !== i.checksum) {
-      console.warn(`  Checksum mismatch! Expected: ${i.checksum}, Calculated: ${calculatedChecksum}`);
-    }
-
-    totalSize += i.size;
-
-    // Log progress for larger sizes
-    if (i.size > 1024 * 1024) {
-      // console.log(`  Progress: ${(totalSize / (1024 * 1024)).toFixed(2)} MB received so far`);
-    }
+  } catch (error: any) {
+    console.error('Fetch request error:', error);
+    returnStatus.outcome = 'errored';
+    returnStatus.errorMessage = error.message;
   }
 
 
-  console.log(`Done. Total size received: ${(totalSize / (1024 * 1024)).toFixed(2)} MB`);
+  console.log(`Done. Total size received: ${(totalSize / (1024 * 1024)).toFixed(2)} MB`, xIterable);
+  console.log(`Done. Total size received: ${(totalSize / (1024 * 1024)).toFixed(2)} MB`, await xIterable);
 
   function simpleChecksum(str: string): number {
     let sum = 0;
