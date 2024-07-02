@@ -1,0 +1,16 @@
+{
+    "recommendations": [
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "yoavbls.pretty-ts-errors",
+        "editorconfig.editorconfig",
+        "dbaeumer.vscode-eslint",
+        "tomrijndorp.find-it-faster",
+        "github.copilot",
+        "github.copilot-chat",
+        "johnpapa.vscode-peacock",
+        "prisma.prisma",
+        "orta.vscode-twoslash-queries",
+        "arcanis.vscode-zipfs"
+    ]
+}

@@ -1,0 +1,25 @@
+{
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#faaf4e",
+        "activityBar.background": "#faaf4e",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#047c47",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#15202b99",
+        "sash.hoverBorder": "#faaf4e",
+        "statusBar.background": "#f8981d",
+        "statusBar.foreground": "#15202b",
+        "statusBarItem.hoverBackground": "#db7e07",
+        "statusBarItem.remoteBackground": "#f8981d",
+        "statusBarItem.remoteForeground": "#15202b",
+        "tab.activeBorder": "#faaf4e",
+        "titleBar.activeBackground": "#f8981d",
+        "titleBar.activeForeground": "#15202b",
+        "titleBar.inactiveBackground": "#f8981d99",
+        "titleBar.inactiveForeground": "#15202b99"
+    },
+    "peacock.color": "#F8981D",
+    "find-it-faster.general.useTerminalInEditor": true
+}
