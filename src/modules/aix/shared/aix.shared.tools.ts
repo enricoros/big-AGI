@@ -91,39 +91,62 @@ const aixToolGeminiCodeInterpreterSchema = z.object({
 // AIX Tools - Preprocessor //
 
 /**
- * We only have 1 processor so far, which is the Anthropic Artifacts processor.
+ * We only have 1 preprocessor so far, which is the Anthropic Artifacts processor.
  * This tool will inject parts of the system prompt to force the llm to think about the problem
  * and then emit code and other artifacts in special xml blocks which we'll parse to send to
  * the client as special message parts.
  *
- * In the future we can have multiple processors, such as data retrieval and generation (rag), etc.
+ * In the future we can have multiple preprocessors, such as data retrieval and generation (rag), etc.
  */
-const aixToolProcessorSchema = z.object({
-  type: z.literal('processor'),
+const aixToolPreprocessorSchema = z.object({
+  type: z.literal('preprocessor'),
   pname: z.literal('anthropic_artifacts'),
 });
 
 
 // AIX Tools Schema //
 
-export const aixToolsSchema = z.object({
-  /**
-   * Tools that the model can use.
-   * - now: function calls to the rest of the software (or generic JSON input)
-   * - later: code interpreter calls
-   * - later: RAG calls
-   * - ...
-   */
-  tools: z.array(z.discriminatedUnion('type', [
-    aixToolFunctionCallSchema,
-    aixToolGeminiCodeInterpreterSchema,
-    aixToolProcessorSchema,
-  ])),
+/**
+ * Describe 'Tools' available to the model.
+ *
+ * __Function calls__
+ * The model requests for a function to be called and creates a JSON object to fill-in
+ * the input parameters, provided a schema
+ *
+ * __Gemini Code Interpreter__
+ * Models of the Gemini family will execute a sandboxed code interpreter on the generated code
+ * and then resume execution of the code, inline.
+ *
+ * __Preprocessor__
+ * Preprocessors are tools that modify the input of the model before it is processed.
+ *
+ * - Right now, we only have the Anthropic Artifacts preprocessor, which injects parts of the
+ *   system prompt into the input to force the llm to think about the problem and then emit
+ *   code and other artifacts in special xml blocks which we'll parse.
+ *
+ * @example
+ * [
+ *  { type: 'function_call', function: { name: 'get_stock_price', description: 'Retrieves the current stock price for a given ticker symbol.', input_schema: { type: 'object', properties: { ticker: { type: 'string', description: 'The ticker symbol of the stock to get the price for.' } } } } },
+ *  { type: 'gemini_code_interpreter' },
+ *  { type: 'preprocessor', pname: 'anthropic_artifacts' },
+ * ]
+ */
+export const aixToolsSchema = z.array(z.discriminatedUnion('type', [
+  aixToolFunctionCallSchema,
+  aixToolGeminiCodeInterpreterSchema,
+  aixToolPreprocessorSchema,
+]));
 
-  force: z.discriminatedUnion('type', [
-    z.object({ type: z.literal('auto') }), // default behavior: can use a tool or not
-    z.object({ type: z.literal('any') }),  // must use one tool at least
-    z.object({ type: z.literal('function'), function: z.object({ name: z.string() }) }),
-    z.object({ type: z.literal('none') }), // same as not giving the model any function
-  ]).optional(),
-});
+/**
+ * Policy for tools that the model can use:
+ * - any: must use one tool at least
+ * - auto: can use a tool or not (default, same as not specifying a policy)
+ * - function: must use a specific Function Tool
+ * - none: same as not giving the model any tool
+ */
+export const aixToolsPolicySchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('any') /*, parallel: z.boolean()*/ }),
+  z.object({ type: z.literal('auto') }),
+  z.object({ type: z.literal('function'), function: z.object({ name: z.string() }) }),
+  z.object({ type: z.literal('none') }),
+]);
