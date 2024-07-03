@@ -1,3 +1,13 @@
+/* This file contains test code for the AIX router from July 2024, which we don't end up using
+ * because of two reasons:
+ *
+ * 1. Abort is not working when invoking the procedure
+ * 2. Throwing an exception from the route does not close the connection
+ *
+ * We keep this for reference, but it's all commented out.
+ */
+
+/*
 // Pre-generate a large random string to use as a source
 import { TRPCError } from '@trpc/server';
 
@@ -249,3 +259,22 @@ abcdefghijklmnopqrstuvwxyz1234
 
   return sequenceNumber - 1;
 }
+*/
+
+// this is how the router would look like
+// export const aixRouter = createTRPCRouter({
+//   testStreamStress: publicProcedure.mutation(() => testStreamStress(false)),
+// });
+
+//
+// Stream API: uses tRPC streaming to transfer partial updates to the client
+//
+// export const apiStream = createTRPCClient<AppRouterEdge>({
+//   links: [
+//     loggerLink({ enabled: enableLoggerLink }),
+//     unstable_httpBatchStreamLink({
+//       url: `${getBaseUrl()}/api/trpc-edge`,
+//       transformer: transformer,
+//     }),
+//   ],
+// });
