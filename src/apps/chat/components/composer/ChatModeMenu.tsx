@@ -14,17 +14,17 @@ export function chatModeCanAttach(chatModeId: ChatModeId) {
 }
 
 const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
-  'generate-text': {
+  'generate-content': {
     label: 'Chat',
     description: 'Persona replies',
     canAttach: true,
   },
   'generate-text-v1': {
-    label: 'Chat (1.16)',
-    description: 'Persona replies (stable)',
+    label: 'Chat (Stable)',
+    description: 'Model replies (stable)',
     canAttach: true,
   },
-  'generate-text-beam': {
+  'beam-content': {
     label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
     description: 'Combine multiple models', // Smarter: combine...
     shortcut: 'Ctrl + Enter',
@@ -42,7 +42,7 @@ const ChatModeItems: { [key in ChatModeId]: ChatModeDescription } = {
     description: 'AI Image Generation',
     requiresTTI: true,
   },
-  'generate-react': {
+  'react-content': {
     label: 'Reason + Act', //  · α
     description: 'Answer questions in multiple steps',
   },

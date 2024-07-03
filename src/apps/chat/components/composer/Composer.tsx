@@ -110,7 +110,7 @@ export function Composer(props: {
 }) {
 
   // state
-  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-text');
+  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-content');
   const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
@@ -148,7 +148,7 @@ export function Composer(props: {
 
   // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToGenerateText: (chatModeId === 'generate-text' || chatModeId === 'generate-text-v1') ? store.replyToText?.trim() || null : null,
+    replyToGenerateText: (chatModeId === 'generate-content' || chatModeId === 'generate-text-v1') ? store.replyToText?.trim() || null : null,
   })));
 
   // don't load URLs if the user is typing a command or there's no capability
@@ -225,8 +225,9 @@ export function Composer(props: {
     if (!isValidConversation(targetConversationId)) return false;
 
     // validate some chat mode inputs
+    const isDraw = _chatModeId === 'generate-image';
     const isBlank = !composerText.trim();
-    if (_chatModeId === 'generate-image' && isBlank)
+    if (isDraw && isBlank)
       return false;
 
     // prepare the fragments: content (if any) and attachments (if allowed, and any)
@@ -258,7 +259,7 @@ export function Composer(props: {
   }, [chatModeId, composeText, handleSendAction]);
 
   const handleSendTextBeamClicked = React.useCallback(async () => {
-    await handleSendAction('generate-text-beam', composeText); // 'beam' button
+    await handleSendAction('beam-content', composeText); // 'beam' button
   }, [composeText, handleSendAction]);
 
   const handleStopClicked = React.useCallback(() => {
@@ -369,7 +370,7 @@ export function Composer(props: {
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
-        if (await handleSendAction('generate-text-beam', composeText)) // 'ctrl+enter' -> beam
+        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
           touchCtrlEnter();
         return e.preventDefault();
       }
@@ -546,10 +547,10 @@ export function Composer(props: {
   }, [attachAppendDataTransfer, eatDragEvent, setComposeText]);
 
 
-  const isText = chatModeId === 'generate-text' || chatModeId === 'generate-text-v1';
-  const isTextBeam = chatModeId === 'generate-text-beam';
+  const isText = chatModeId === 'generate-content' || chatModeId === 'generate-text-v1';
+  const isTextBeam = chatModeId === 'beam-content';
   const isAppend = chatModeId === 'append-user';
-  const isReAct = chatModeId === 'generate-react';
+  const isReAct = chatModeId === 'react-content';
   const isDraw = chatModeId === 'generate-image';
 
   const showChatReplyTo = !!replyToGenerateText;
