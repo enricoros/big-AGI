@@ -44,6 +44,8 @@ export function useChatExecuteMode(capabilityHasT2I: boolean, isMobile: boolean)
   return {
     chatExecuteMode,
     chatExecuteMenuComponent,
+    chatExecuteModeSendColor: ExecuteModeItems[chatExecuteMode]?.sendColor || 'primary',
+    chatExecuteModeSendLabel: ExecuteModeItems[chatExecuteMode]?.sendText || 'Send',
     chatExecuteMenuShown: !!chatExecuteModeMenuAnchor,
     showChatExecuteMenu: handleMenuShow,
   };
