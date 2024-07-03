@@ -72,14 +72,14 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
   // synchronous long-duration tasks, which update the state as they go
   switch (chatModeId) {
-    case 'generate-text':
-      return await runPersonaUpdatingState(conversationId,  chatLLMId);
+    case 'generate-content':
+      return await runPersonaUpdatingState(conversationId, chatLLMId);
 
     case 'generate-text-v1':
       return await runAssistantUpdatingStateV1(conversationId, cHandler.historyView('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
-    case 'generate-text-beam':
-      cHandler.beamInvoke(cHandler.historyView('generate-text-beam'), [], null);
+    case 'beam-content':
+      cHandler.beamInvoke(cHandler.historyView('beam-content'), [], null);
       return true;
 
     case 'append-user':
@@ -93,7 +93,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
       cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
       return await runImageGenerationUpdatingState(cHandler, imagePrompt);
 
-    case 'generate-react':
+    case 'react-content':
       // verify we were called with a single DMessageTextContent
       if (!isContentFragment(firstFragment) || !isTextPart(firstFragment.part))
         return false;

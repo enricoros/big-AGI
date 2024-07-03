@@ -56,12 +56,13 @@ export const CHAT_NOVEL_TITLE = 'Chat';
  * Mode: how to treat the input from the Composer
  */
 export type ChatModeId =
-  | 'generate-text'
-  | 'generate-text-v1'
-  | 'generate-text-beam'
   | 'append-user'
+  | 'beam-content'
+  | 'generate-content'
   | 'generate-image'
-  | 'generate-react';
+  | 'generate-text-v1'
+  | 'react-content'
+  ;
 
 
 export interface AppChatIntent {
@@ -251,7 +252,7 @@ export function AppChat() {
   }, [paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
-    await handleExecuteAndOutcome('generate-text', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-text'
+    await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-text'
   }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
@@ -260,7 +261,7 @@ export function AppChat() {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
       if (lastMessage.role === 'assistant')
         ConversationsManager.getHandler(focusedPaneConversationId).historyTruncateTo(lastMessage.id, -1);
-      await handleExecuteAndOutcome('generate-text', focusedConversation.id, 'chat-regenerate-last'); // truncate if assistant, then gen-text
+      await handleExecuteAndOutcome('generate-content', focusedConversation.id, 'chat-regenerate-last'); // truncate if assistant, then gen-text
     }
   }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
