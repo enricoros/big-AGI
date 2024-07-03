@@ -146,8 +146,12 @@ export async function aixStreamGenerateDirect<TSourceSetup = unknown>(
   const textDecoder = new TextDecoder('utf-8');
   while (true) {
 
-    // read until done
-    const { value, done } = await responseReader.read();
+    // read until done - can THROW (e.g. when the stream is aborted)
+    const { value, done } = await responseReader.read().catch((test) => {
+      // Error reading stream (e.g. aborted by the user, network disconnect/timeout, etc.)
+      // we just rethrow the error for now
+      throw test;
+    });
     if (done) {
       if (value?.length)
         console.log('aixStreamGenerateDirect: unexpected value in the last packet:', value?.length);
