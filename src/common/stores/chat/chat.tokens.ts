@@ -1,8 +1,9 @@
 import type { DLLM } from '~/modules/llms/store-llms';
 
-import { textTokensForLLM } from '~/common/util/token-counter';
+import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
 import { DMessageAttachmentFragment, DMessageFragment, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 
 
 export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
@@ -21,6 +22,10 @@ export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): 
   return textTokensForLLM(text, llm, debugFrom) ?? 0;
 }
 
+function estimateImageTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM): number {
+  return imageTokensForLLM(width, height, debugTitle, llm);
+}
+
 
 // Content Parts
 
@@ -37,7 +42,7 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
         const likelyRendition = marshallWrapText(aPart.data.text, aPart.ref, 'markdown-code');
         return estimateTextTokens(likelyRendition, llm, debugFrom);
       case 'image_ref':
-        return _imagePartTokens(aPart.width, aPart.height, fragment.title, llm);
+        return estimateImageTokens(aPart.width, aPart.height, fragment.title, llm);
     }
   } else if (isContentFragment(fragment)) {
     const cPart = fragment.part;
@@ -45,7 +50,7 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
       case 'error':
         return estimateTextTokens(cPart.error, llm, debugFrom);
       case 'image_ref':
-        return _imagePartTokens(cPart.width, cPart.height, debugFrom, llm);
+        return estimateImageTokens(cPart.width, cPart.height, debugFrom, llm);
       case 'ph':
         return 0;
       case 'text':
@@ -94,38 +99,6 @@ export function marshallWrapDocFragments(initialText: string | null, fragments: 
     inlinedText += marshallWrapText(docPart.data.text, docPart.ref, wrapFormat);
   }
   return inlinedText;
-}
-
-
-function _imagePartTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM) {
-  // for the guidelines, see `attachment.pipeline.ts` (lists the latest URLs)
-  switch (llm._source?.vId) {
-    case 'openai':
-      // missing values
-      if (!width || !height) {
-        console.log(`Missing width or height for openai image tokens calculation (${debugTitle || 'no title'})`);
-        return 85;
-      }
-      // 'detail: low' mode, has an image of (or up to) 512x512 -> 85 tokens
-      if (width <= 512 && height <= 512)
-        return 85;
-      // 'detail: high' mode, cover the image with 512x512 patches of 170 tokens, in addition to the 85
-      const patchesX = Math.ceil(width / 512);
-      const patchesY = Math.ceil(height / 512);
-      return 85 + patchesX * patchesY * 170;
-
-    case 'anthropic':
-      // Max case for Anthropic
-      return 1600;
-
-    case 'googleai':
-      // Inferred from the Gemini Videos description, but not sure
-      return 258;
-
-    default:
-      console.warn('Unhandled token preview for image with llm:', llm._source?.vId);
-      return 0;
-  }
 }
 
 

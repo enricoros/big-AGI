@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useKnowledgeOfBackendCaps } from '~/modules/backend/store-backend-capabilities';
 
 import { apiQuery } from '~/common/util/trpc.client';
-import { preloadTiktokenLibrary } from '~/common/util/token-counter';
+import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
 
 
 // configuration

@@ -3,9 +3,9 @@ import * as React from 'react';
 import { Box, Container, FormControl, Textarea, Typography } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { textTokensForEncodingId, preloadTiktokenLibrary } from '~/common/util/token-counter';
+import { textTokensForEncodingId, preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
 import { lineHeightTextareaMd } from '~/common/app.theme';
-import { useTokenizerSelect } from '~/common/components/forms/useTokenizerSelect';
+import { useTokenizerSelect } from '~/common/tokens/useTokenizerSelect';
 
 
 function generateColor(index: number) {
