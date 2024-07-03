@@ -8,7 +8,7 @@ import type { SourceSetupOpenRouter } from './vendors/openrouter/openrouter.vend
 /**
  * Large Language Model - description and configuration (data object, stored)
  */
-export interface DLLM<TSourceSetup = unknown, TLLMOptions = unknown> {
+export interface DLLM<TSourceSetup = unknown, TLLMOptions = Record<string, any>> {
   id: DLLMId;
 
   // editable properties (kept on update, if isEdited)

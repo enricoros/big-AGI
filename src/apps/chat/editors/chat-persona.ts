@@ -1,8 +1,11 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
+
 import { VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
+import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
+
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
@@ -114,43 +117,47 @@ export async function streamPersonaMessage(
 
   console.log('PERSONA HERE');
 
-  // try {
-  //   await llmStreamingChatGenerate(llmId, messagesHistory, contextName, contextRef, null, null, abortSignal, (update: StreamingClientUpdate) => {
-  //     const textSoFar = update.textSoFar;
-  //
-  //     // grow the incremental message
-  //     if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, textSoFar);
-  //     if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-  //     if (update.typing !== undefined)
-  //       incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
-  //
-  //     // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
-  //     // This can be toggled from the settings
-  //     throttledEditMessage(incrementalAnswer);
-  //
-  //     // 📢 TTS: first-line
-  //     // if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
-  //     //   let cutPoint = textSoFar.lastIndexOf('\n');
-  //     //   if (cutPoint < 0)
-  //     //     cutPoint = textSoFar.lastIndexOf('. ');
-  //     //   if (cutPoint > 100 && cutPoint < 400) {
-  //     //     spokenLine = true;
-  //     //     const firstParagraph = textSoFar.substring(0, cutPoint);
-  //     //     // fire/forget: we don't want to stall this loop
-  //     //     void speakText(firstParagraph);
-  //     //   }
-  //     // }
-  //   });
-  // } catch (error: any) {
-  //   if (error?.name !== 'AbortError') {
-  //     console.error('Fetch request error:', error);
-  //     const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-  //     incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, errorText, true);
-  //     returnStatus.outcome = 'errored';
-  //     returnStatus.errorMessage = error.message;
-  //   } else
-  //     returnStatus.outcome = 'aborted';
-  // }
+  try {
+    const onUpdate = (update: StreamingClientUpdate, done: boolean) => {
+      console.log('PERSONA UPDATE', update, done);
+      const textSoFar = update.textSoFar;
+
+      // grow the incremental message
+      if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, textSoFar);
+      if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
+      if (update.typing !== undefined)
+        incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
+
+      // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
+      // This can be toggled from the settings
+      throttledEditMessage(incrementalAnswer);
+
+      // 📢 TTS: first-line
+      // if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
+      //   let cutPoint = textSoFar.lastIndexOf('\n');
+      //   if (cutPoint < 0)
+      //     cutPoint = textSoFar.lastIndexOf('. ');
+      //   if (cutPoint > 100 && cutPoint < 400) {
+      //     spokenLine = true;
+      //     const firstParagraph = textSoFar.substring(0, cutPoint);
+      //     // fire/forget: we don't want to stall this loop
+      //     void speakText(firstParagraph);
+      //   }
+      // }
+    };
+
+    await aixStreamingChatGenerate(llmId, messagesHistory, contextName, contextRef, null, null, abortSignal, onUpdate);
+
+  } catch (error: any) {
+    if (error?.name !== 'AbortError') {
+      console.error('Fetch request error:', error);
+      const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
+      incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, errorText, true);
+      returnStatus.outcome = 'errored';
+      returnStatus.errorMessage = error.message;
+    } else
+      returnStatus.outcome = 'aborted';
+  }
 
   // Ensure the last content is flushed out, and mark as complete
   onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined }, true);
