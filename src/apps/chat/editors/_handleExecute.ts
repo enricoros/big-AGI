@@ -8,7 +8,7 @@ import { createTextContentFragment, isContentFragment, isTextPart } from '~/comm
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
-import type { ChatModeId } from '../AppChat';
+import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
@@ -19,7 +19,7 @@ import { runPersonaUpdatingState } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
 
 
-export async function _handleExecute(chatModeId: ChatModeId, conversationId: DConversationId, executeCallerNameDebug: string) {
+export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, executeCallerNameDebug: string) {
 
   // Handle missing conversation
   if (!conversationId)
@@ -46,7 +46,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
 
 
   // Handle unconfigured
-  if (!chatLLMId || !chatModeId)
+  if (!chatLLMId || !chatExecuteMode)
     return !chatLLMId ? 'err-no-chatllm' : 'err-no-chatmode';
 
   // handle missing last user message (or fragment)
@@ -71,7 +71,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
   }
 
   // synchronous long-duration tasks, which update the state as they go
-  switch (chatModeId) {
+  switch (chatExecuteMode) {
     case 'generate-content':
       return await runPersonaUpdatingState(conversationId, chatLLMId);
 
@@ -102,7 +102,7 @@ export async function _handleExecute(chatModeId: ChatModeId, conversationId: DCo
       return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId);
 
     default:
-      console.log('Chat execute: issue running', chatModeId, conversationId, lastMessage);
+      console.log('Chat execute: issue running', chatExecuteMode, conversationId, lastMessage);
       return false;
   }
 }

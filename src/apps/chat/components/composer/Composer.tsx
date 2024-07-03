@@ -15,7 +15,6 @@ import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import type { ChatModeId } from '../../AppChat';
 import { useChatMicTimeoutMsValue } from '../../store-app-chat';
 
 import type { DLLM } from '~/modules/llms/store-llms';
@@ -56,6 +55,9 @@ import { LLMAttachmentDraftsAction, LLMAttachmentsList } from './llmattachments/
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts';
 
+import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
+import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
+
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
@@ -69,7 +71,6 @@ import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ReplyToBubble } from '../message/ReplyToBubble';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
-import { chatModeCanAttach, ChatModeMenu } from './ChatModeMenu';
 import { useComposerStartupText } from './store-composer';
 
 
@@ -103,19 +104,19 @@ export function Composer(props: {
   capabilityHasT2I: boolean;
   isMulticast: boolean | null;
   isDeveloperMode: boolean;
-  onAction: (conversationId: DConversationId, chatModeId: ChatModeId, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
+  onAction: (conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata) => boolean;
   onTextImagine: (conversationId: DConversationId, text: string) => void;
   setIsMulticast: (on: boolean) => void;
   sx?: SxProps;
 }) {
 
   // state
-  const [chatModeId, setChatModeId] = React.useState<ChatModeId>('generate-content');
   const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [chatModeMenuAnchor, setChatModeMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const { chatExecuteMode, chatExecuteMenuShown, showChatExecuteMenu, chatExecuteMenuComponent } =
+    useChatExecuteMode(props.capabilityHasT2I, !!props.isMobile);
 
   // external state
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
@@ -148,7 +149,7 @@ export function Composer(props: {
 
   // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToGenerateText: (chatModeId === 'generate-content' || chatModeId === 'generate-text-v1') ? store.replyToText?.trim() || null : null,
+    replyToGenerateText: (chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1') ? store.replyToText?.trim() || null : null,
   })));
 
   // don't load URLs if the user is typing a command or there's no capability
@@ -172,7 +173,7 @@ export function Composer(props: {
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
   const noLLM = !props.chatLLM;
-  const showLLMAttachments = chatModeCanAttach(chatModeId);
+  const showLLMAttachments = chatExecuteModeCanAttach(chatExecuteMode);
 
 
   // tokens derived state
@@ -221,11 +222,12 @@ export function Composer(props: {
     handleReplyToClear();
   }, [attachmentsRemoveAll, handleReplyToClear, setComposeText]);
 
-  const handleSendAction = React.useCallback(async (_chatModeId: ChatModeId, composerText: string): Promise<boolean> => {
+
+  const handleSendAction = React.useCallback(async (_chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
 
     // validate some chat mode inputs
-    const isDraw = _chatModeId === 'generate-image';
+    const isDraw = _chatExecuteMode === 'generate-image';
     const isBlank = !composerText.trim();
     if (isDraw && isBlank)
       return false;
@@ -235,7 +237,7 @@ export function Composer(props: {
     if (composerText)
       fragments.push(createTextContentFragment(composerText));
 
-    const canAttach = chatModeCanAttach(_chatModeId);
+    const canAttach = chatExecuteModeCanAttach(_chatExecuteMode);
     if (canAttach) {
       const attachmentFragments = await attachmentsTakeAllFragments('global', 'app-chat');
       fragments.push(...attachmentFragments);
@@ -248,15 +250,16 @@ export function Composer(props: {
 
     // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
     const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
-    const enqueued = onAction(targetConversationId, _chatModeId, fragments, metadata);
+    const enqueued = onAction(targetConversationId, _chatExecuteMode, fragments, metadata);
     if (enqueued)
       handleClear();
     return enqueued;
   }, [attachmentsTakeAllFragments, handleClear, onAction, replyToGenerateText, targetConversationId]);
 
+
   const handleSendClicked = React.useCallback(async () => {
-    await handleSendAction(chatModeId, composeText); // 'chat/write/...' button
-  }, [chatModeId, composeText, handleSendAction]);
+    await handleSendAction(chatExecuteMode, composeText); // 'chat/write/...' button
+  }, [chatExecuteMode, composeText, handleSendAction]);
 
   const handleSendTextBeamClicked = React.useCallback(async () => {
     await handleSendAction('beam-content', composeText); // 'beam' button
@@ -282,22 +285,6 @@ export function Composer(props: {
     onTextImagine(targetConversationId, composeText);
     setComposeText('');
   }, [composeText, onTextImagine, setComposeText, targetConversationId]);
-
-
-  // Mode menu
-
-  const handleModeSelectorHide = React.useCallback(() => {
-    setChatModeMenuAnchor(null);
-  }, []);
-
-  const handleModeSelectorShow = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
-  }, []);
-
-  const handleModeChange = React.useCallback((_chatModeId: ChatModeId) => {
-    handleModeSelectorHide();
-    setChatModeId(_chatModeId);
-  }, [handleModeSelectorHide]);
 
 
   // Actiles
@@ -380,12 +367,12 @@ export function Composer(props: {
         touchShiftEnter();
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         if (!assistantAbortible)
-          await handleSendAction(chatModeId, composeText); // enter -> send
+          await handleSendAction(chatExecuteMode, composeText); // enter -> send
         return e.preventDefault();
       }
     }
 
-  }, [actileInterceptKeydown, assistantAbortible, chatModeId, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
+  }, [actileInterceptKeydown, assistantAbortible, chatExecuteMode, composeText, enterIsNewline, handleSendAction, touchAltEnter, touchCtrlEnter, touchShiftEnter]);
 
 
   // Focus mode
@@ -416,7 +403,7 @@ export function Composer(props: {
     if (autoSend) {
       if (notUserStop)
         playSoundUrl('/sounds/mic-off-mid.mp3');
-      void handleSendAction(chatModeId, nextText); // fire/forget
+      void handleSendAction(chatExecuteMode, nextText); // fire/forget
     } else {
       if (!micContinuation && notUserStop)
         playSoundUrl('/sounds/mic-off-mid.mp3');
@@ -425,7 +412,7 @@ export function Composer(props: {
         setComposeText(nextText);
       }
     }
-  }, [chatModeId, composeText, composerTextAreaRef, handleSendAction, micContinuation, noConversation, setComposeText]);
+  }, [chatExecuteMode, composeText, composerTextAreaRef, handleSendAction, micContinuation, noConversation, setComposeText]);
 
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
     useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
@@ -547,11 +534,11 @@ export function Composer(props: {
   }, [attachAppendDataTransfer, eatDragEvent, setComposeText]);
 
 
-  const isText = chatModeId === 'generate-content' || chatModeId === 'generate-text-v1';
-  const isTextBeam = chatModeId === 'beam-content';
-  const isAppend = chatModeId === 'append-user';
-  const isReAct = chatModeId === 'react-content';
-  const isDraw = chatModeId === 'generate-image';
+  const isText = chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1';
+  const isTextBeam = chatExecuteMode === 'beam-content';
+  const isAppend = chatExecuteMode === 'append-user';
+  const isReAct = chatExecuteMode === 'react-content';
+  const isDraw = chatExecuteMode === 'generate-image';
 
   const showChatReplyTo = !!replyToGenerateText;
   const showChatExtras = isText && !showChatReplyTo;
@@ -873,8 +860,8 @@ export function Composer(props: {
                 {/* Mode expander */}
                 <IconButton
                   variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
-                  disabled={noConversation || noLLM || !!chatModeMenuAnchor}
-                  onClick={handleModeSelectorShow}
+                  disabled={noConversation || noLLM || chatExecuteMenuShown}
+                  onClick={showChatExecuteMenu}
                 >
                   <ExpandLessIcon />
                 </IconButton>
@@ -911,14 +898,7 @@ export function Composer(props: {
       </Grid>
 
       {/* Mode Menu */}
-      {!!chatModeMenuAnchor && (
-        <ChatModeMenu
-          isMobile={isMobile}
-          anchorEl={chatModeMenuAnchor} onClose={handleModeSelectorHide}
-          chatModeId={chatModeId} onSetChatModeId={handleModeChange}
-          capabilityHasTTI={props.capabilityHasT2I}
-        />
-      )}
+      {chatExecuteMenuComponent}
 
       {/* Camera (when open) */}
       {cameraCaptureComponent}

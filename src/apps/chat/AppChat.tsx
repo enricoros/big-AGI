@@ -44,25 +44,14 @@ import { ChatPageMenuItems } from './components/layout-menu/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
+import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
+
 import { _handleExecute } from './editors/_handleExecute';
 import { gcChatImageAssets } from './editors/image-generate';
 
 
 // what to say when a chat is new and has no title
 export const CHAT_NOVEL_TITLE = 'Chat';
-
-
-/**
- * Mode: how to treat the input from the Composer
- */
-export type ChatModeId =
-  | 'append-user'
-  | 'beam-content'
-  | 'generate-content'
-  | 'generate-image'
-  | 'generate-text-v1'
-  | 'react-content'
-  ;
 
 
 export interface AppChatIntent {
@@ -206,8 +195,8 @@ export function AppChat() {
 
   // Execution
 
-  const handleExecuteAndOutcome = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, callerNameDebug: string) => {
-    const outcome = await _handleExecute(chatModeId, conversationId, callerNameDebug);
+  const handleExecuteAndOutcome = React.useCallback(async (chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, callerNameDebug: string) => {
+    const outcome = await _handleExecute(chatExecuteMode, conversationId, callerNameDebug);
     if (outcome === 'err-no-chatllm')
       openModelsSetup();
     else if (outcome === 'err-t2i-unconfigured')
@@ -221,7 +210,7 @@ export function AppChat() {
     return outcome === true;
   }, [openModelsSetup, openPreferencesTab]);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
 
     // [multicast] send the message to all the panes
     const uniqueConversationIds = willMulticast
@@ -245,7 +234,7 @@ export function AppChat() {
       ConversationsManager.getHandler(conversation.id).messageAppend(userMessage); // [chat] append user message in each conversation
 
       // fire/forget
-      void handleExecuteAndOutcome(chatModeId /* various */, conversation.id, 'chat-composer-action'); // append user message, then '*-*'
+      void handleExecuteAndOutcome(chatExecuteMode /* various */, conversation.id, 'chat-composer-action'); // append user message, then '*-*'
     }
 
     return true;
