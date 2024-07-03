@@ -115,8 +115,11 @@ export function Composer(props: {
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const { chatExecuteMode, chatExecuteMenuShown, showChatExecuteMenu, chatExecuteMenuComponent } =
-    useChatExecuteMode(props.capabilityHasT2I, !!props.isMobile);
+  const {
+    chatExecuteMode,
+    chatExecuteModeSendColor, chatExecuteModeSendLabel,
+    chatExecuteMenuComponent, chatExecuteMenuShown, showChatExecuteMenu,
+  } = useChatExecuteMode(props.capabilityHasT2I, !!props.isMobile);
 
   // external state
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
@@ -545,19 +548,9 @@ export function Composer(props: {
 
   const sendButtonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
-  const sendButtonColor: ColorPaletteProp =
-    assistantAbortible ? 'warning'
-      : isReAct ? 'success'
-        : isTextBeam ? 'primary'
-          : isDraw ? 'warning'
-            : 'primary';
+  const sendButtonColor: ColorPaletteProp = assistantAbortible ? 'warning' : chatExecuteModeSendColor;
 
-  const sendButtonText =
-    isAppend ? 'Write'
-      : isReAct ? 'ReAct'
-        : isTextBeam ? 'Beam'
-          : isDraw ? 'Draw'
-            : 'Chat';
+  const sendButtonLabel = chatExecuteModeSendLabel;
 
   const sendButtonIcon =
     micContinuation ? <AutoModeIcon />
@@ -829,7 +822,7 @@ export function Composer(props: {
                     endDecorator={sendButtonIcon}
                     sx={{ '--Button-gap': '1rem' }}
                   >
-                    {micContinuation && 'Voice '}{sendButtonText}
+                    {micContinuation && 'Voice '}{sendButtonLabel}
                   </Button>
                 ) : (
                   <Button
@@ -897,7 +890,7 @@ export function Composer(props: {
 
       </Grid>
 
-      {/* Mode Menu */}
+      {/* Execution Mode Menu */}
       {chatExecuteMenuComponent}
 
       {/* Camera (when open) */}
