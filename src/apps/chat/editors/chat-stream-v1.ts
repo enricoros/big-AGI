@@ -67,7 +67,7 @@ export async function runAssistantUpdatingStateV1(
   }
 
   if (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions)
-    autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
+    autoSuggestions(null, conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   return messageStatus.outcome === 'success';
 }

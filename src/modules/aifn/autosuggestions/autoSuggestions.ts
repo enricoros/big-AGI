@@ -1,5 +1,5 @@
 import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modules/llms/llm.client';
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { DLLMId, findLLMOrThrow, LLM_IF_OAI_Fn, useModelsStore } from '~/modules/llms/store-llms';
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -138,13 +138,34 @@ const suggestUIFn: VChatFunctionIn = {
 };
 
 
+function validateFunctionLLMId(funcLLMId: DLLMId | null): DLLMId | null {
+  // check if the model supports function calls
+  if (funcLLMId) {
+    try {
+
+      // check if the model supports the required interface
+      const funcLLM = findLLMOrThrow(funcLLMId);
+      if (funcLLM.interfaces.includes(LLM_IF_OAI_Fn))
+        return funcLLMId;
+
+      console.log(`validateFunctionLLMId: LLM ${funcLLMId} does not support the required interface ${LLM_IF_OAI_Fn}. dropping to the default Func LLM`);
+    } catch (error) {
+      console.log(`validateFunctionLLMId: LLM ${funcLLMId} not found. dropping to the default Func LLM`);
+    }
+  }
+
+  // if not provided, or provided but not a function llm, then use the default
+  return useModelsStore.getState().funcLLMId;
+}
+
+
 /**
  * Formulates proposals for follow-up questions, prompts, and counterpoints, based on the last 2 chat messages.
  */
-export function autoSuggestions(conversationId: string, assistantMessageId: string, suggestDiagrams: boolean, suggestHTMLUI: boolean, suggestQuestions: boolean) {
+export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId: string, assistantMessageId: string, suggestDiagrams: boolean, suggestHTMLUI: boolean, suggestQuestions: boolean) {
 
   // use valid fast model
-  const { funcLLMId } = useModelsStore.getState();
+  const funcLLMId = validateFunctionLLMId(suggestFuncLLMId);
   if (!funcLLMId) return;
 
   // only operate on valid conversations, without any title
