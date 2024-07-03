@@ -1,10 +1,27 @@
 import * as React from 'react';
+import type { TiktokenEncoding } from 'tiktoken';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { FormControl, Option, Select } from '@mui/joy';
 
-import { TiktokenTokenizers } from '~/common/util/token-counter';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+
+
+// Globals
+interface TiktokenTokenizer {
+  id: TiktokenEncoding;
+  label: string;
+  exampleNet?: string;
+}
+
+export const TiktokenTokenizers: TiktokenTokenizer[] = [
+  { id: 'o200k_base', label: 'O200k Base', exampleNet: 'GPT-4o' },
+  { id: 'cl100k_base', label: 'CL100k Base' },
+  { id: 'p50k_edit', label: 'P50k Edit' },
+  { id: 'p50k_base', label: 'P50k Base' },
+  { id: 'r50k_base', label: 'R50k Base' },
+  { id: 'gpt2', label: 'GPT-2' },
+];
 
 
 const tokenizerSelectSx: SxProps = {
