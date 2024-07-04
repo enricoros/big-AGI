@@ -1,13 +1,13 @@
 import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.streaming';
-import { DLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/modules/llms/store-llms';
 import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry';
-import { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
+import { apiStream } from '~/common/util/trpc.client';
 
-import { frontendSideFetch } from '~/common/util/clientFetchers';
-import { AixGenerateContentInput } from '~/modules/aix/shared/aix.shared.chat';
-import { AixAccess, AixHistory, AixModel, AixStreamGenerateContext } from '~/modules/aix/shared/aix.shared.types';
-import { AixToolPolicy, AixTools } from '~/modules/aix/shared/aix.shared.tools';
+import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
+
+import type { AixAccess, AixHistory, AixModel, AixStreamGenerateContext } from '../shared/aix.shared.types';
+import type { AixToolPolicy, AixTools } from '../shared/aix.shared.tools';
 
 
 export type StreamingClientUpdate = Partial<{
@@ -110,93 +110,33 @@ export async function aixStreamGenerateDirect<TSourceSetup = unknown>(
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
 ): Promise<void> {
 
-  // assemble the input object
-  const aixGenerateContentInput: AixGenerateContentInput = {
+  const x = await apiStream.aix.chatGenerateContentStream.mutate({
     access,
     model,
     history,
-    // tools: undefined,
-    // toolPolicy: undefined,
+    tools,
+    toolPolicy,
     context,
-  };
-
-  // connect to the server-side streaming endpoint
-  const timeFetch = performance.now();
-  const streamResponse = await frontendSideFetch('/api/llms/stream', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(aixGenerateContentInput),
-    signal: abortSignal,
-  });
-
-  // connection error to our backend
-  if (!streamResponse.ok || !streamResponse.body) {
-    const errorMessage = streamResponse.body ? await streamResponse.text().catch(() => 'No content from server') : 'No response from server';
-    onUpdate({ textSoFar: errorMessage, typing: false }, true);
-    return;
-  }
-
-  const responseReader = streamResponse.body.getReader();
+  }, { signal: abortSignal });
 
   let incrementalText = '';
-  let parsedPreambleStart = false;
-  let parsedPreableModel = false;
 
-  // loop forever until the read is done, or the abort controller is triggered
-  const textDecoder = new TextDecoder('utf-8');
-  while (true) {
-
-    // read until done - can THROW (e.g. when the stream is aborted)
-    const { value, done } = await responseReader.read().catch((test) => {
-      // Error reading stream (e.g. aborted by the user, network disconnect/timeout, etc.)
-      // we just rethrow the error for now
-      throw test;
-    });
-    if (done) {
-      if (value?.length)
-        console.log('aixStreamGenerateDirect: unexpected value in the last packet:', value?.length);
-      break;
-    }
-
-    incrementalText += textDecoder.decode(value, { stream: true });
-
-    // we have two packets with a serialized flat json object at the start; this is side data, before the text flow starts
-    // while ((!parsedPreambleStart || !parsedPreableModel) && incrementalText.startsWith('{')) {
-    //
-    //   // extract a complete JSON object, if present
-    //   const endOfJson = incrementalText.indexOf('}');
-    //   if (endOfJson === -1) break;
-    //   const jsonString = incrementalText.substring(0, endOfJson + 1);
-    //   incrementalText = incrementalText.substring(endOfJson + 1);
-    //
-    //   // first packet: preamble to let the Vercel edge function go over time
-    //   if (!parsedPreambleStart) {
-    //     parsedPreambleStart = true;
-    //     try {
-    //       const parsed: ChatStreamingPreambleStartSchema = JSON.parse(jsonString);
-    //       if (parsed.type !== 'start')
-    //         console.log('unifiedStreamingClient: unexpected preamble type:', parsed?.type, 'time:', performance.now() - timeFetch);
-    //     } catch (e) {
-    //       // error parsing JSON, ignore
-    //       console.log('unifiedStreamingClient: error parsing start JSON:', e);
-    //     }
-    //     continue;
-    //   }
-    //
-    //   // second packet: the model name
-    //   if (!parsedPreableModel) {
-    //     parsedPreableModel = true;
-    //     try {
-    //       const parsed: ChatStreamingPreambleModelSchema = JSON.parse(jsonString);
-    //       onUpdate({ originLLM: parsed.model }, false);
-    //     } catch (e) {
-    //       // error parsing JSON, ignore
-    //       console.log('unifiedStreamingClient: error parsing model JSON:', e);
-    //     }
-    //   }
-    // }
-
-    if (incrementalText)
-      onUpdate({ textSoFar: incrementalText }, false);
+  for await (const update of x) {
+    if ('t' in update) {
+      incrementalText += update.t;
+      onUpdate({ textSoFar: incrementalText, typing: true }, false);
+    } else if ('set' in update) {
+      if (update.set.model)
+        onUpdate({ originLLM: update.set.model }, false);
+      else
+        console.log('set:', update.set);
+    } else if ('issueId' in update) {
+      incrementalText += update.issueText;
+      onUpdate({ textSoFar: incrementalText, typing: true }, false);
+    } else
+      console.log('update:', update);
   }
+
+  onUpdate({ typing: false }, true);
+
 }

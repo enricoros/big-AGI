@@ -119,7 +119,7 @@ export async function streamPersonaMessage(
 
   try {
     const onUpdate = (update: StreamingClientUpdate, done: boolean) => {
-      console.log('PERSONA UPDATE', update, done);
+      // console.log('PERSONA UPDATE', update, done);
       const textSoFar = update.textSoFar;
 
       // grow the incremental message

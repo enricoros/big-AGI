@@ -158,7 +158,7 @@ export const aixRouter = createTRPCRouter({
           try {
             const parsedEvents = upstreamParser(demuxedEvent.data, demuxedEvent.name);
             for (const upe of parsedEvents) {
-              console.log('parsedEvents:', upe);
+              console.log('parsedUpstream:', upe);
               if (upe.op === 'parser-close') {
                 yield* downstreamHandler.yieldTermination('parser-done');
                 break;
