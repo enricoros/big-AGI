@@ -52,7 +52,7 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
 
 
   // execute via the vendor
-  return await aixStreamGenerateDirect(
+  return await aixStreamGenerateUnified(
     access,
     aixModelFromLLMOptions(llm.options, llmId),
     history,
@@ -97,7 +97,7 @@ function aixStreamGenerateContext(contextName: VChatStreamContextName, contextRe
  *
  * NOTE: onUpdate is callback when a piece of a message (text, model name, typing..) is received
  */
-export async function aixStreamGenerateDirect<TSourceSetup = unknown>(
+export async function aixStreamGenerateUnified<TSourceSetup = unknown>(
   // input
   access: AixAccess,
   model: AixModel,

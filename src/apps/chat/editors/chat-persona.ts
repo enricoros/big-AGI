@@ -1,15 +1,16 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
-
-import { VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
-
+import type { VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
+import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
-import { getChatAutoAI } from '../store-app-chat';
+import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
 
@@ -54,7 +55,7 @@ export async function runPersonaOnConversationHead(
     'conversation',
     conversationId,
     parallelViewCount,
-    // autoSpeak,
+    autoSpeak,
     (accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
       cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
     },
@@ -65,13 +66,13 @@ export async function runPersonaOnConversationHead(
   // FIXME: race condition? (for sure!)
   cHandler.setAbortController(null);
 
-  // if (autoTitleChat) {
-  // fire/forget, this will only set the title if it's not already set
-  // void autoConversationTitle(conversationId, false);
-  // }
+  if (autoTitleChat) {
+    // fire/forget, this will only set the title if it's not already set
+    void autoConversationTitle(conversationId, false);
+  }
 
-  // if (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions)
-  //   autoSuggestions(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
+  if (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions)
+    autoSuggestions(null, conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   return messageStatus.outcome === 'success';
 }
@@ -87,6 +88,7 @@ export async function llmGenerateContentStream(
   contextName: VChatStreamContextName,
   contextRef: VChatContextRef,
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
+  autoSpeak: ChatAutoSpeakType,
   onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
   abortSignal: AbortSignal,
 ): Promise<StreamMessageStatus> {
@@ -97,7 +99,7 @@ export async function llmGenerateContentStream(
   };
 
   // speak once
-  // let spokenLine = false;
+  let spokenLine = false;
 
   // Throttling setup
   let lastCallTime = 0;
@@ -137,17 +139,17 @@ export async function llmGenerateContentStream(
       throttledEditMessage(incrementalAnswer);
 
       // 📢 TTS: first-line
-      // if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
-      //   let cutPoint = textSoFar.lastIndexOf('\n');
-      //   if (cutPoint < 0)
-      //     cutPoint = textSoFar.lastIndexOf('. ');
-      //   if (cutPoint > 100 && cutPoint < 400) {
-      //     spokenLine = true;
-      //     const firstParagraph = textSoFar.substring(0, cutPoint);
-      //     // fire/forget: we don't want to stall this loop
-      //     void speakText(firstParagraph);
-      //   }
-      // }
+      if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
+        let cutPoint = textSoFar.lastIndexOf('\n');
+        if (cutPoint < 0)
+          cutPoint = textSoFar.lastIndexOf('. ');
+        if (cutPoint > 100 && cutPoint < 400) {
+          spokenLine = true;
+          const firstParagraph = textSoFar.substring(0, cutPoint);
+          // fire/forget: we don't want to stall this loop
+          void speakText(firstParagraph);
+        }
+      }
     };
 
     await aixStreamingChatGenerate(llmId, messagesHistory, contextName, contextRef, null, null, abortSignal, onUpdate);
@@ -167,11 +169,11 @@ export async function llmGenerateContentStream(
   onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined }, true);
 
   // 📢 TTS: all
-  // if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
-  //   const incrementalText = messageFragmentsReduceText(incrementalAnswer.fragments);
-  //   if (incrementalText.length > 0)
-  //     void speakText(incrementalText);
-  // }
+  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
+    const incrementalText = messageFragmentsReduceText(incrementalAnswer.fragments);
+    if (incrementalText.length > 0)
+      void speakText(incrementalText);
+  }
 
   return returnStatus;
 }
