@@ -3,14 +3,15 @@ import type { VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+import { isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
-import { ChatAutoSpeakType, getChatAutoAI } from '../store-app-chat';
+import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
 
@@ -37,6 +38,9 @@ export async function runPersonaOnConversationHead(
     { originLLM: assistantLlmId, purposeId: history[0].purposeId },
   );
 
+  // AutoSpeak
+  const autoSpeaker = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;
+
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
   cHandler.setAbortController(abortController);
@@ -55,12 +59,23 @@ export async function runPersonaOnConversationHead(
     'conversation',
     conversationId,
     parallelViewCount,
-    autoSpeak,
-    (accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
-      cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
-    },
     abortController.signal,
+    (accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
+      if (abortController.signal.aborted) return;
+
+      cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
+
+      if (autoSpeaker && accumulatedMessage.fragments?.length && isContentFragment(accumulatedMessage.fragments[0]) && isTextPart(accumulatedMessage.fragments[0].part)) {
+        if (messageComplete)
+          autoSpeaker.finalizeText(accumulatedMessage.fragments[0].part.text);
+        else
+          autoSpeaker.handleTextSoFar(accumulatedMessage.fragments[0].part.text);
+      }
+    },
   );
+
+  // check if aborted
+  const hasBeenAborted = abortController.signal.aborted;
 
   // clear to send, again
   // FIXME: race condition? (for sure!)
@@ -71,7 +86,7 @@ export async function runPersonaOnConversationHead(
     void autoConversationTitle(conversationId, false);
   }
 
-  if (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions)
+  if (!hasBeenAborted && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
     autoSuggestions(null, conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   return messageStatus.outcome === 'success';
@@ -88,18 +103,14 @@ export async function llmGenerateContentStream(
   contextName: VChatStreamContextName,
   contextRef: VChatContextRef,
   throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
-  autoSpeak: ChatAutoSpeakType,
-  onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
   abortSignal: AbortSignal,
+  onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
 ): Promise<StreamMessageStatus> {
 
   const returnStatus: StreamMessageStatus = {
     outcome: 'success',
     errorMessage: undefined,
   };
-
-  // speak once
-  let spokenLine = false;
 
   // Throttling setup
   let lastCallTime = 0;
@@ -137,19 +148,6 @@ export async function llmGenerateContentStream(
       // Update the data store, with optional max-frequency throttling (e.g. OpenAI is downsamped 50 -> 12Hz)
       // This can be toggled from the settings
       throttledEditMessage(incrementalAnswer);
-
-      // 📢 TTS: first-line
-      if (textSoFar && autoSpeak === 'firstLine' && !spokenLine) {
-        let cutPoint = textSoFar.lastIndexOf('\n');
-        if (cutPoint < 0)
-          cutPoint = textSoFar.lastIndexOf('. ');
-        if (cutPoint > 100 && cutPoint < 400) {
-          spokenLine = true;
-          const firstParagraph = textSoFar.substring(0, cutPoint);
-          // fire/forget: we don't want to stall this loop
-          void speakText(firstParagraph);
-        }
-      }
     };
 
     await aixStreamingChatGenerate(llmId, messagesHistory, contextName, contextRef, null, null, abortSignal, onUpdate);
@@ -167,13 +165,6 @@ export async function llmGenerateContentStream(
 
   // Ensure the last content is flushed out, and mark as complete
   onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined }, true);
-
-  // 📢 TTS: all
-  if ((autoSpeak === 'all' || autoSpeak === 'firstLine') && !spokenLine && !abortSignal.aborted) {
-    const incrementalText = messageFragmentsReduceText(incrementalAnswer.fragments);
-    if (incrementalText.length > 0)
-      void speakText(incrementalText);
-  }
 
   return returnStatus;
 }
