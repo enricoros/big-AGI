@@ -80,16 +80,17 @@ export class ConversationHandler {
    * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
    */
   messageAppendAssistantText(text: string, llmLabel: DLLMId | string) {
-    const assistantMessage: DMessage = createDMessageTextContent('assistant', text);
-    assistantMessage.originLLM = llmLabel;
-    this.chatActions.appendMessage(this.conversationId, assistantMessage);
+    const message = createDMessageTextContent('assistant', text);
+    message.originLLM = llmLabel;
+    this.messageAppend(message);
   }
 
   messageAppendAssistantPlaceholder(placeholderText: string, update?: Partial<DMessage>): { assistantMessageId: DMessageId, placeholderFragmentId: DMessageFragmentId } {
-    const { message: assistantMessage, placeholderFragmentId } = createDMessagePlaceholderIncomplete('assistant', placeholderText);
-    update && Object.assign(assistantMessage, update);
-    this.chatActions.appendMessage(this.conversationId, assistantMessage);
-    return { assistantMessageId: assistantMessage.id, placeholderFragmentId };
+    const message = createDMessagePlaceholderIncomplete('assistant', placeholderText);
+    if (update)
+      Object.assign(message, update);
+    this.messageAppend(message);
+    return { assistantMessageId: message.id, placeholderFragmentId: message.fragments[0].fId };
   }
 
   messageAppend(message: DMessage) {
@@ -136,7 +137,7 @@ export class ConversationHandler {
     this.chatActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
   }
 
-  historyView(scope: string): Readonly<DMessage[]> {
+  historyViewHead(scope: string): Readonly<DMessage[]> {
     const messages = this.chatActions.historyView(this.conversationId);
     if (messages === undefined)
       throw new Error(`allMessages: Conversation not found, ${scope}`);

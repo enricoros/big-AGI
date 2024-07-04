@@ -1,5 +1,5 @@
 import { agiUuid } from '~/common/util/idUtils';
-import { createPlaceholderContentFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderContentFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Message
@@ -60,11 +60,11 @@ export function createDMessageTextContent(role: DMessageRole, text: string): DMe
   return createDMessageFromFragments(role, [createTextContentFragment(text)]);
 }
 
-export function createDMessagePlaceholderIncomplete(role: DMessageRole, placeholderText: string): { message: DMessage, placeholderFragmentId: DMessageFragmentId } {
+export function createDMessagePlaceholderIncomplete(role: DMessageRole, placeholderText: string): DMessage {
   const placeholderFragment = createPlaceholderContentFragment(placeholderText);
   const message = createDMessageFromFragments(role, [placeholderFragment]);
   message.pendingIncomplete = true;
-  return { message, placeholderFragmentId: placeholderFragment.fId };
+  return message;
 }
 
 export function createDMessageFromFragments(role: DMessageRole, fragments: DMessageFragment[]): DMessage {

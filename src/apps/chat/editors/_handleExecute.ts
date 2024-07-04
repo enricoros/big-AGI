@@ -15,7 +15,7 @@ import { textToDrawCommand } from '../commands/CommandsDraw';
 import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
 import { runAssistantUpdatingStateV1 } from './chat-stream-v1';
 import { runImageGenerationUpdatingState } from './image-generate';
-import { runPersonaUpdatingState } from './chat-persona';
+import { runPersonaOnConversationHead } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
 
 
@@ -27,7 +27,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
   const chatLLMId = getChatLLMId();
   const cHandler = ConversationsManager.getHandler(conversationId);
-  const initialHistory = cHandler.historyView(executeCallerNameDebug) as Readonly<DMessage[]>;
+  const initialHistory = cHandler.historyViewHead(executeCallerNameDebug) as Readonly<DMessage[]>;
 
   // Update the system message from the active persona to the history
   // NOTE: this does NOT call setMessages anymore (optimization). make sure to:
@@ -73,13 +73,13 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   // synchronous long-duration tasks, which update the state as they go
   switch (chatExecuteMode) {
     case 'generate-content':
-      return await runPersonaUpdatingState(conversationId, chatLLMId);
+      return await runPersonaOnConversationHead(chatLLMId, conversationId);
 
     case 'generate-text-v1':
-      return await runAssistantUpdatingStateV1(conversationId, cHandler.historyView('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
+      return await runAssistantUpdatingStateV1(conversationId, cHandler.historyViewHead('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
     case 'beam-content':
-      cHandler.beamInvoke(cHandler.historyView('beam-content'), [], null);
+      cHandler.beamInvoke(cHandler.historyViewHead('beam-content'), [], null);
       return true;
 
     case 'append-user':
