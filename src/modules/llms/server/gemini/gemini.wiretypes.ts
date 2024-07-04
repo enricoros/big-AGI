@@ -185,7 +185,14 @@ export const geminiGeneratedContentResponseSchema = z.object({
     tokenCount: z.number().optional(),
     // groundingAttributions: z.array(GroundingAttribution).optional(), // This field is populated for GenerateAnswer calls.
   })).optional(),
-  // NOTE: promptFeedback is only send in the first chunk in a streaming response
+
+  usageMetadata: z.object({
+    promptTokenCount: z.number(),
+    candidatesTokenCount: z.number(),
+    totalTokenCount: z.number(),
+  }).optional(),
+
+// NOTE: promptFeedback is only send in the first chunk in a streaming response
   promptFeedback: z.object({
     blockReason: z.enum(['BLOCK_REASON_UNSPECIFIED', 'SAFETY', 'OTHER']).optional(),
     safetyRatings: z.array(geminiSafetyRatingSchema).optional(),

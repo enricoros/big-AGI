@@ -6,7 +6,7 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetch
 
 
 // Anthropic server imports
-import { AnthropicWireMessagesResponse, anthropicWireMessagesResponseSchema } from './anthropic/anthropic.wiretypes';
+import { AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from './anthropic/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
 
 // Gemini server imports
@@ -265,7 +265,7 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
 /// Stream Parsers
 
 function createStreamParserAnthropicMessages(): AIStreamParser {
-  let responseMessage: AnthropicWireMessagesResponse | null = null;
+  let responseMessage: AnthropicWireMessageResponse | null = null;
   let hasErrored = false;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
@@ -287,7 +287,7 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
       case 'message_start':
         const firstMessage = !responseMessage;
         const { message } = JSON.parse(data);
-        responseMessage = anthropicWireMessagesResponseSchema.parse(message);
+        responseMessage = anthropicWireMessageResponseSchema.parse(message);
         // hack: prepend the model name to the first packet
         if (firstMessage) {
           const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };
@@ -301,7 +301,7 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
           const { index, content_block } = JSON.parse(data);
           if (responseMessage.content[index] === undefined)
             responseMessage.content[index] = content_block;
-          text = responseMessage.content[index].text;
+          text = (responseMessage.content[index] as any).text;
         } else
           throw new Error('Unexpected content block start');
         break;
@@ -314,7 +314,7 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
             throw new Error(`Unexpected content block non-text delta (${delta.type})`);
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block delta location (${index})`);
-          responseMessage.content[index].text += delta.text;
+          (responseMessage.content[index] as any).text += delta.text;
           text = delta.text;
         } else
           throw new Error('Unexpected content block delta');

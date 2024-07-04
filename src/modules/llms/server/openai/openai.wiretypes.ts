@@ -105,6 +105,12 @@ export namespace OpenAIWire {
         param: string | null;
         code: string | null;
       };
+      // [OpenRouter/LocalAI] Extended usage statistics
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
     }
   }
 
