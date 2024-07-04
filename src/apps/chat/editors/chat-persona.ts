@@ -4,27 +4,31 @@ import { VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modul
 
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+
+import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
 
 /**
  * The main "chat" function.
  */
-export async function runPersonaUpdatingState(
-  conversationId: string,
+export async function runPersonaOnConversationHead(
   assistantLlmId: DLLMId,
-) {
+  conversationId: DConversationId,
+): Promise<boolean> {
 
   const cHandler = ConversationsManager.getHandler(conversationId);
-  const history = cHandler.historyView('runPersonaUpdatingState') as Readonly<DMessage[]>;
+
+  const history = cHandler.historyViewHead('runPersonaOnConversationHead') as Readonly<DMessage[]>;
 
   const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
 
   // ai follow-up operations (fire/forget)
-  // const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
+  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // assistant placeholder
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
@@ -37,9 +41,6 @@ export async function runPersonaUpdatingState(
   cHandler.setAbortController(abortController);
 
   // stream the assistant's messages directly to the state store
-  const overwriteMessageParts = (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
-    cHandler.messageEdit(assistantMessageId, incrementalMessage, messageComplete, false);
-  };
   let instructions: VChatMessageIn[];
   try {
     instructions = history.map((m): VChatMessageIn => ({ role: m.role, content: messageSingleTextOrThrow(m) /* BIG FIXME */ }));
@@ -47,14 +48,16 @@ export async function runPersonaUpdatingState(
     console.error('runAssistantUpdatingState: error:', error, history);
     throw error;
   }
-  const messageStatus = await streamPersonaMessage(
+  const messageStatus = await llmGenerateContentStream(
     assistantLlmId,
     instructions,
     'conversation',
     conversationId,
     parallelViewCount,
     // autoSpeak,
-    overwriteMessageParts,
+    (accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
+      cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
+    },
     abortController.signal,
   );
 
@@ -62,8 +65,8 @@ export async function runPersonaUpdatingState(
   // FIXME: race condition? (for sure!)
   cHandler.setAbortController(null);
 
-  // fire/forget, this will only set the title if it's not already set
   // if (autoTitleChat) {
+  // fire/forget, this will only set the title if it's not already set
   // void autoConversationTitle(conversationId, false);
   // }
 
@@ -78,12 +81,12 @@ type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
 type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
 
-export async function streamPersonaMessage(
+export async function llmGenerateContentStream(
   llmId: DLLMId,
   messagesHistory: VChatMessageIn[],
   contextName: VChatStreamContextName,
   contextRef: VChatContextRef,
-  throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce the message frequency with the square root
+  throttleUnits: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
   abortSignal: AbortSignal,
 ): Promise<StreamMessageStatus> {
@@ -118,6 +121,7 @@ export async function streamPersonaMessage(
   console.log('PERSONA HERE');
 
   try {
+
     const onUpdate = (update: StreamingClientUpdate, done: boolean) => {
       // console.log('PERSONA UPDATE', update, done);
       const textSoFar = update.textSoFar;
