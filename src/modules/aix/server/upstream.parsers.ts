@@ -1,8 +1,6 @@
 import { safeErrorString } from '~/server/wire';
-
-import type { ChatStreamingPreambleModelSchema } from '~/modules/llms/server/llm.server.streaming';
 import type { OpenAIWire } from '~/modules/llms/server/openai/openai.wiretypes';
-import { AnthropicWireMessagesResponse, anthropicWireMessagesResponseSchema } from '~/modules/llms/server/anthropic/anthropic.wiretypes';
+import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, AnthropicWireMessageResponse, anthropicWire_MessageDeltaEvent_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from '~/modules/llms/server/anthropic/anthropic.wiretypes';
 import { geminiGeneratedContentResponseSchema } from '~/modules/llms/server/gemini/gemini.wiretypes';
 import { wireOllamaChunkedOutputSchema } from '~/modules/llms/server/ollama/ollama.wiretypes';
 
@@ -13,71 +11,91 @@ const USER_SYMBOL_PROMPT_BLOCKED = '🚫';
 // const USER_SYMBOL_NO_DATA_RECEIVED_BROKEN = '🔌';
 
 
-/**
- * Vendor stream parsers
- * - The vendor can decide to terminate the connection (close: true), transmitting anything in 'text' before doing so
- * - The vendor can also throw from this function, which will error and terminate the connection
- *
- * The peculiarity of our parser is the injection of a JSON structure at the beginning of the stream, to
- * communicate parameters before the text starts flowing to the client.
- */
-export type UpstreamEventParseFunction = (eventData: string, eventName?: string) => { text: string, close: boolean };
+type UpstreamParsedEvent = {
+  op: 'text',
+  text: string;
+} | {
+  op: 'issue',
+  issue: string;
+} | {
+  op: 'parser-close';
+} | {
+  op: 'set';
+  value: {
+    model?: string;
+    stats?: {
+      chatInTokens?: number; // -1: unknown
+      chatOutTokens: number;
+      chatOutRate?: number;
+    }
+  };
+};
+
+export type UpstreamParser = (eventData: string, eventName?: string) => Generator<UpstreamParsedEvent>;
 
 
 /// Stream Parsers
 
-export function createStreamParserAnthropicMessages(): UpstreamEventParseFunction {
-  let responseMessage: AnthropicWireMessagesResponse | null = null;
+export function createUpstreamParserAnthropicMessages(): UpstreamParser {
+  let responseMessage: AnthropicWireMessageResponse;
   let hasErrored = false;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
   //       to the client. It is however building in parallel the responseMessage object, which is not
   //       yet used, but contains token counts, for instance.
-  return (data: string, eventName?: string) => {
-    let text = '';
+  return function* (eventData: string, eventName?: string): Generator<UpstreamParsedEvent> {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
-      console.log('Anthropic stream has errored already, but received more data:', data);
+      console.log('Anthropic stream has errored already, but received more data:', eventData);
 
     switch (eventName) {
       // Ignore pings
       case 'ping':
         break;
 
-      // Initialize the message content for a new message
+      // M1. Initialize the message content for a new message
       case 'message_start':
-        const firstMessage = !responseMessage;
-        const { message } = JSON.parse(data);
-        responseMessage = anthropicWireMessagesResponseSchema.parse(message);
-        // hack: prepend the model name to the first packet
-        if (firstMessage) {
-          const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };
-          text = JSON.stringify(firstPacket);
-        }
+        const isFirstMessage = !responseMessage;
+        responseMessage = anthropicWire_MessageStartEvent_Schema.parse(JSON.parse(eventData)).message;
+
+        // -> Model
+        if (isFirstMessage && responseMessage.model)
+          yield { op: 'set', value: { model: responseMessage.model } };
         break;
 
-      // Initialize content block if needed
+      // M2. Initialize content block if needed
       case 'content_block_start':
         if (responseMessage) {
-          const { index, content_block } = JSON.parse(data);
+          const { index, content_block } = anthropicWire_ContentBlockStartEvent_Schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] === undefined)
             responseMessage.content[index] = content_block;
-          text = responseMessage.content[index].text;
+
+          switch (responseMessage.content[index].type) {
+            case 'text':
+              yield { op: 'text', text: responseMessage.content[index].text };
+              break;
+            case 'tool_use':
+              yield { op: 'text', text: `TODO: [Tool Use] ${responseMessage.content[index].name} ${responseMessage.content[index].input}` };
+              break;
+          }
         } else
           throw new Error('Unexpected content block start');
         break;
 
-      // Append delta text to the current message content
+      // M3+. Append delta text to the current message content
       case 'content_block_delta':
         if (responseMessage) {
-          const { index, delta } = JSON.parse(data);
-          if (delta.type !== 'text_delta')
-            throw new Error(`Unexpected content block non-text delta (${delta.type})`);
+          const { index, delta } = anthropicWire_ContentBlockDeltaEvent_Schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block delta location (${index})`);
-          responseMessage.content[index].text += delta.text;
-          text = delta.text;
+
+          // text delta
+          if (delta.type === 'text_delta' && responseMessage.content[index].type === 'text') {
+            responseMessage.content[index].text += delta.text;
+            yield { op: 'text', text: delta.text };
+          } else
+            throw new Error(`Unexpected content block delta ${delta.type} for content block ${responseMessage.content[index].type}`);
         } else
           throw new Error('Unexpected content block delta');
         break;
@@ -85,7 +103,7 @@ export function createStreamParserAnthropicMessages(): UpstreamEventParseFunctio
       // Finalize content block if needed.
       case 'content_block_stop':
         if (responseMessage) {
-          const { index } = JSON.parse(data);
+          const { index } = anthropicWire_ContentBlockStopEvent_Schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block end location (${index})`);
         } else
@@ -95,39 +113,42 @@ export function createStreamParserAnthropicMessages(): UpstreamEventParseFunctio
       // Optionally handle top-level message changes. Example: updating stop_reason
       case 'message_delta':
         if (responseMessage) {
-          const { delta } = JSON.parse(data);
+          const { delta, usage } = anthropicWire_MessageDeltaEvent_Schema.parse(JSON.parse(eventData));
           Object.assign(responseMessage, delta);
+          if (usage?.output_tokens)
+            yield { op: 'set', value: { stats: { chatOutTokens: usage.output_tokens } } };
         } else
           throw new Error('Unexpected message delta');
         break;
 
       // We can now close the message
       case 'message_stop':
-        return { text: '', close: true };
+        anthropicWire_MessageStopEvent_Schema.parse(JSON.parse(eventData));
+        return yield { op: 'parser-close' };
 
-      // Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
+      // UNDOCUMENTED - Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
       case 'error':
         hasErrored = true;
-        const { error } = JSON.parse(data);
+        const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        return { text: `[Anthropic Server-side Error] ${errorText}`, close: true };
+        yield { op: 'issue', issue: errorText || 'unknown server issue.' };
+        return yield { op: 'parser-close' };
 
       default:
         throw new Error(`Unexpected event name: ${eventName}`);
     }
-
-    return { text, close: false };
   };
 }
 
-export function createStreamParserGemini(modelName: string): UpstreamEventParseFunction {
+
+export function createUpstreamParserGemini(modelName: string): UpstreamParser {
   let hasBegun = false;
 
   // this can throw, it's catched upstream
-  return (data: string) => {
+  return function* (eventData): Generator<UpstreamParsedEvent> {
 
     // parse the JSON chunk
-    const wireGenerationChunk = JSON.parse(data);
+    const wireGenerationChunk = JSON.parse(eventData);
     let generationChunk: ReturnType<typeof geminiGeneratedContentResponseSchema.parse>;
     try {
       generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
@@ -137,56 +158,66 @@ export function createStreamParserGemini(modelName: string): UpstreamEventParseF
       throw error;
     }
 
-    // Prompt Safety Errors: pass through errors from Gemini
+    // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return { text: `${USER_SYMBOL_PROMPT_BLOCKED} [Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}`, close: true };
+      yield { op: 'issue', issue: `${USER_SYMBOL_PROMPT_BLOCKED} [Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}` };
+      return yield { op: 'parser-close' };
     }
 
-    // expect a single completion
+    // expect: single completion
     const singleCandidate = generationChunk.candidates?.[0] ?? null;
     if (!singleCandidate)
       throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
 
     // no contents: could be an expected or unexpected condition
     if (!singleCandidate.content) {
-      if (singleCandidate.finishReason === 'MAX_TOKENS')
-        return { text: ` ${USER_SYMBOL_MAX_TOKENS}`, close: true };
-      if (singleCandidate.finishReason === 'RECITATION')
-        throw new Error('generation stopped due to RECITATION');
+      if (singleCandidate.finishReason === 'MAX_TOKENS') {
+        yield { op: 'text', text: ` ${USER_SYMBOL_MAX_TOKENS}` };
+        return yield { op: 'parser-close' };
+      }
+      if (singleCandidate.finishReason === 'RECITATION') {
+        yield { op: 'issue', issue: 'Generation stopped due to RECITATION' };
+        return yield { op: 'parser-close' };
+      }
       throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
     }
 
-    // expect a single part
+    // expect: single part
     if (singleCandidate.content.parts?.length !== 1 || !('text' in singleCandidate.content.parts[0]))
       throw new Error(`expected 1 text part, got ${singleCandidate.content.parts?.length}`);
 
-    // expect a single text in the part
-    let text = singleCandidate.content.parts[0].text || '';
-
-    // hack: prepend the model name to the first packet
-    if (!hasBegun) {
+    // -> Model
+    if (!hasBegun && modelName) {
       hasBegun = true;
-      const firstPacket: ChatStreamingPreambleModelSchema = { model: modelName };
-      text = JSON.stringify(firstPacket) + text;
+      yield { op: 'set', value: { model: modelName } };
     }
 
-    return { text, close: false };
+    // -> Text
+    let text = singleCandidate.content.parts[0].text || '';
+    yield { op: 'text', text };
+
+    // -> Stats
+    if (generationChunk.usageMetadata) {
+      // TODO: we should only return this on the last packet, once we have the full stats
+      // yield { op: 'set', value: { stats: { chatInTokens: generationChunk.usageMetadata.promptTokenCount ?? -1, chatOutTokens: generationChunk.usageMetadata.candidatesTokenCount ?? -1 } } };
+    }
   };
 }
 
-export function createStreamParserOllama(): UpstreamEventParseFunction {
+
+export function createUpstreamParserOllama(): UpstreamParser {
   let hasBegun = false;
 
-  return (data: string) => {
+  return function* (eventData: string): Generator<UpstreamParsedEvent> {
 
     // parse the JSON chunk
     let wireJsonChunk: any;
     try {
-      wireJsonChunk = JSON.parse(data);
+      wireJsonChunk = JSON.parse(eventData);
     } catch (error: any) {
       // log the malformed data to the console, and rethrow to transmit as 'error'
-      console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, data);
+      console.log(`/api/llms/stream: Ollama parsing issue: ${error?.message || error}`, eventData);
       throw error;
     }
 
@@ -194,34 +225,55 @@ export function createStreamParserOllama(): UpstreamEventParseFunction {
     const chunk = wireOllamaChunkedOutputSchema.parse(wireJsonChunk);
 
     // pass through errors from Ollama
-    if ('error' in chunk)
-      throw new Error(chunk.error);
-
-    // process output
-    let text = chunk.message?.content || /*chunk.response ||*/ '';
-
-    // hack: prepend the model name to the first packet
-    if (!hasBegun && chunk.model) {
-      hasBegun = true;
-      const firstPacket: ChatStreamingPreambleModelSchema = { model: chunk.model };
-      text = JSON.stringify(firstPacket) + text;
+    if ('error' in chunk) {
+      yield { op: 'issue', issue: chunk.error };
+      return yield { op: 'parser-close' };
     }
 
-    return { text, close: chunk.done };
+    // -> Model
+    if (!hasBegun && chunk.model) {
+      hasBegun = true;
+      yield { op: 'set', value: { model: chunk.model } };
+    }
+
+    // -> Text
+    let text = chunk.message?.content || /*chunk.response ||*/ '';
+    yield { op: 'text', text };
+
+    if (chunk.eval_count && chunk.eval_duration) {
+      const chatOutTokens = chunk.eval_count;
+      const chatOutTime = chunk.eval_duration / 1E+09;
+      const chatOutRate = Math.round(100 * (chatOutTime > 0 ? chatOutTokens / chatOutTime : 0)) / 100;
+      yield { op: 'set', value: { stats: { chatInTokens: chunk.prompt_eval_count || -1, chatOutTokens, chatOutRate } } };
+    }
+
+    if (chunk.done)
+      yield { op: 'parser-close' };
   };
 }
 
-export function createStreamParserOpenAI(): UpstreamEventParseFunction {
+
+export function createUpstreamParserOpenAI(): UpstreamParser {
   let hasBegun = false;
   let hasWarned = false;
+  // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
-  return (data: string) => {
+  return function* (eventData: string): Generator<UpstreamParsedEvent> {
 
-    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+    // Throws on malformed event data
+    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(eventData);
+
+    // -> Model
+    if (!hasBegun && json.model) {
+      hasBegun = true;
+      yield { op: 'set', value: { model: json.model } };
+    }
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
-    if (json.error)
-      return { text: `[OpenAI Issue] ${safeErrorString(json.error)}`, close: true };
+    if (json.error) {
+      yield { op: 'issue', issue: safeErrorString(json.error) || 'unknown.' };
+      return yield { op: 'parser-close' };
+    }
 
     // [OpenAI] if there's a warning, log it once
     if (json.warning && !hasWarned) {
@@ -229,27 +281,32 @@ export function createStreamParserOpenAI(): UpstreamEventParseFunction {
       console.log('/api/llms/stream: OpenAI upstream warning:', json.warning);
     }
 
+    // expect: 1 completion
     if (json.choices.length !== 1) {
-      // [Azure] we seem to 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
+      // [Azure] we seem to get 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
       if (json.id === '' && json.object === '' && json.model === '')
-        return { text: '', close: false };
+        return;
       throw new Error(`Expected 1 completion, got ${json.choices.length}`);
     }
 
+    // expect: index=0
     const index = json.choices[0].index;
-    if (index !== 0 && index !== undefined /* LocalAI hack/workaround until https://github.com/go-skynet/LocalAI/issues/788 */)
+    if (index !== 0)
       throw new Error(`Expected completion index 0, got ${index}`);
-    let text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
 
-    // hack: prepend the model name to the first packet
-    if (!hasBegun) {
-      hasBegun = true;
-      const firstPacket: ChatStreamingPreambleModelSchema = { model: json.model };
-      text = JSON.stringify(firstPacket) + text;
-    }
+    // -> Text
+    const text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
+    if (text?.length)
+      yield { op: 'text', text };
 
-    // [LocalAI] workaround: LocalAI doesn't send the [DONE] event, but similarly to OpenAI, it sends a "finish_reason" delta update
-    const close = !!json.choices[0].finish_reason;
-    return { text, close };
+
+    // -> Stats?
+    if (json.usage && json.usage.completion_tokens)
+      yield { op: 'set', value: { stats: { chatInTokens: json.usage.prompt_tokens || -1, chatOutTokens: json.usage.completion_tokens } } };
+
+    // Note: not needed anymore - Workaround for implementations that don't send the [DONE] event
+    // use the finish_reason to close the parser
+    // if (json.choices[0].finish_reason)
+    //   return yield { op: 'parser-close' };
   };
 }

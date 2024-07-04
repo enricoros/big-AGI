@@ -6,14 +6,14 @@ import { geminiAccess, geminiGenerateContentTextPayload } from '~/modules/llms/s
 import { geminiModelsStreamGenerateContentPath } from '~/modules/llms/server/gemini/gemini.wiretypes';
 import { openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/server/openai/openai.router';
 
-import { createStreamParserAnthropicMessages, createStreamParserGemini, createStreamParserOllama, createStreamParserOpenAI, UpstreamEventParseFunction } from './upstream.parsers';
 import { createUpstreamDemuxer } from './upstream.demuxers';
+import { createUpstreamParserAnthropicMessages, createUpstreamParserGemini, createUpstreamParserOllama, createUpstreamParserOpenAI, UpstreamParser } from './upstream.parsers';
 
 
 export function prepareUpstream(access: AixAccess, model: AixModel, history: AixHistory): {
   request: { url: string, headers: HeadersInit, body: object },
   demuxer: ReturnType<typeof createUpstreamDemuxer>;
-  parser: UpstreamEventParseFunction;
+  parser: UpstreamParser;
 } {
   switch (access.dialect) {
     case 'anthropic':
@@ -23,7 +23,7 @@ export function prepareUpstream(access: AixAccess, model: AixModel, history: Aix
           body: anthropicMessagesPayloadOrThrow(model, history, true),
         },
         demuxer: createUpstreamDemuxer('sse'),
-        parser: createStreamParserAnthropicMessages(),
+        parser: createUpstreamParserAnthropicMessages(),
       };
 
     case 'gemini':
@@ -33,7 +33,7 @@ export function prepareUpstream(access: AixAccess, model: AixModel, history: Aix
           body: geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1),
         },
         demuxer: createUpstreamDemuxer('sse'),
-        parser: createStreamParserGemini(model.id.replace('models/', '')),
+        parser: createUpstreamParserGemini(model.id.replace('models/', '')),
       };
 
     case 'ollama':
@@ -43,7 +43,7 @@ export function prepareUpstream(access: AixAccess, model: AixModel, history: Aix
           body: ollamaChatCompletionPayload(model, history, access.ollamaJson, true),
         },
         demuxer: createUpstreamDemuxer('json-nl'),
-        parser: createStreamParserOllama(),
+        parser: createUpstreamParserOllama(),
       };
 
     case 'azure':
@@ -62,7 +62,7 @@ export function prepareUpstream(access: AixAccess, model: AixModel, history: Aix
           body: openAIChatCompletionPayload(access.dialect, model, history, null, null, 1, true),
         },
         demuxer: createUpstreamDemuxer('sse'),
-        parser: createStreamParserOpenAI(),
+        parser: createUpstreamParserOpenAI(),
       };
   }
 }

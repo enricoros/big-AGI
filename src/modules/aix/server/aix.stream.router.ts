@@ -36,12 +36,6 @@ class DownstreamHandler {
     };
   }
 
-  * yieldEnd() {
-    yield {
-      type: 'end',
-    };
-  }
-
   * yieldTermination(reasonId: 'upstream-close' | 'event-done' | 'parser-done') {
     if (SERVER_DEBUG_WIRE || true)
       console.log('|terminate|', reasonId, this.downstreamTerminated ? '(WARNING: already terminated)' : '');
@@ -68,7 +62,7 @@ export const aixRouter = createTRPCRouter({
 
   chatGenerateContentStream: publicProcedure
     .input(aixGenerateContentInputSchema)
-    .mutation(async function* test({ input, ctx }) {
+    .mutation(async function* ({ input, ctx }) {
 
       // Derived state
       const { access, model, history } = input;
@@ -144,6 +138,13 @@ export const aixRouter = createTRPCRouter({
         for (const demuxedEvent of upstreamDemuxer(decodedChunk)) {
           downstreamHandler.onReceivedUpstreamEvent(demuxedEvent);
 
+          // ignore events post termination
+          if (downstreamHandler.downstreamTerminated) {
+            // warning on, because this is pretty important
+            console.warn('/api/llms/stream: Received event after termination:', demuxedEvent);
+            break; // inner for {}
+          }
+
           // ignore superfluos stream events
           if (demuxedEvent.type !== 'event')
             continue; // inner for {}
@@ -155,20 +156,31 @@ export const aixRouter = createTRPCRouter({
           }
 
           try {
-            const { text, close } = upstreamParser(demuxedEvent.data, demuxedEvent.name);
-            //       for (const data of parsedData) {
-            //         yield { completionChunk: data };
-            //       }
-            if (text) {
-              console.log(' - T:', text);
-              // controller.enqueue(textEncoder.encode(text))
-            }
-            if (close) {
-              yield* downstreamHandler.yieldTermination('parser-done');
-              break; // inner for {}, then outer do
+            const parsedEvents = upstreamParser(demuxedEvent.data, demuxedEvent.name);
+            for (const upe of parsedEvents) {
+              console.log('parsedEvents:', upe);
+              if (upe.op === 'parser-close') {
+                yield* downstreamHandler.yieldTermination('parser-done');
+                break;
+              } else if (upe.op === 'text') {
+                yield {
+                  t: upe.text,
+                };
+              } else if (upe.op === 'issue') {
+                yield {
+                  t: ` [${prettyDialect} Issue] ${upe.issue}`,
+                };
+              } else if (upe.op === 'set') {
+                yield {
+                  set: upe.value,
+                };
+              } else {
+                // shall never reach this
+                console.error('Unexpected stream event:', upe);
+              }
             }
           } catch (error: any) {
-            yield* downstreamHandler.yieldError('upstream-parse', ` **[Stream Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}`);
+            yield* downstreamHandler.yieldError('upstream-parse', ` **[Stream Parse Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}. Please open a support ticket.`);
             break; // inner for {}, then outer do
           }
         }
