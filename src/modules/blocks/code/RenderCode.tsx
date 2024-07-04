@@ -219,7 +219,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 
         {/* Markdown Title (File/Type) */}
         {showBlockTitle && (
-          <Sheet sx={{ backgroundColor: 'background.surface', boxShadow: 'xs', borderRadius: 'xs', m: -0.5, mb: 1.5 }}>
+          <Sheet sx={{ backgroundColor: 'background.popup', boxShadow: 'xs', borderRadius: 'sm', border: '1px solid var(--joy-palette-neutral-outlinedBorder)', m: -0.5, mb: 1.5 }}>
             <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }}>
               {blockTitle}
               {/*{inferredCodeLanguage}*/}
