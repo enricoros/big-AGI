@@ -62,10 +62,11 @@ export function DocumentFragmentButton(props: {
   // memos
   const buttonSx = React.useMemo((): SxProps => ({
     // from ATTACHMENT_MIN_STYLE
-    height: '100%',
-    minHeight: '40px',
+    // height: '100%',
+    minHeight: props.contentScaling === 'md' ? 40 : props.contentScaling === 'sm' ? 38 : 36,
     minWidth: '64px',
     maxWidth: '280px',
+    padding: 0,
 
     // style
     fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
@@ -80,29 +81,38 @@ export function DocumentFragmentButton(props: {
     },
 
     // from LLMAttachmentItem
-    display: 'flex', flexDirection: 'row', gap: 1,
+    display: 'flex', flexDirection: 'row',
   }), [isSelected, props.contentScaling]);
 
   const buttonText = ellipsizeMiddle(fragment.title || 'Text', 28 /* totally arbitrary length */);
-  // const buttonCaption = fragment.caption;
 
   const Icon = iconForFragment(fragment);
 
   return (
     <Button
-      size='sm'
+      size={props.contentScaling === 'md' ? 'md' : 'sm'}
       variant={isSelected ? 'solid' : 'soft'}
       color={isSelected ? 'neutral' : 'neutral'}
       onClick={handleSelectFragment}
       sx={buttonSx}
     >
-      {!!Icon && <Icon sx={{ width: 24, height: 24 }} />}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+      {!!Icon && (
+        <Box sx={{
+          height: '100%',
+          paddingX: '0.5rem',
+          borderRight: '1px solid',
+          borderRightColor: isSelected ? 'neutral.solidBg' : 'primary.outlinedBorder',
+          display: 'flex', alignItems: 'center',
+        }}>
+          <Icon />
+        </Box>
+      )}
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingX: '0.5rem' }}>
         <Box sx={{ whiteSpace: 'nowrap', fontWeight: 'md' }}>
           {buttonText}
         </Box>
         {/*<Box sx={{ fontSize: 'xs', fontWeight: 'sm' }}>*/}
-        {/*  {buttonCaption}*/}
+        {/*  {fragment.caption}*/}
         {/*</Box>*/}
       </Box>
     </Button>
