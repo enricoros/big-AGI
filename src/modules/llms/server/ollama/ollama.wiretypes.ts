@@ -101,10 +101,10 @@ export const wireOllamaChunkedOutputSchema = z.union([
     // only on the last message
     // context: z.array(z.number()), // non-chat endpoint
     // total_duration: z.number(),
-    // prompt_eval_count: z.number(),
+    prompt_eval_count: z.number().optional(),
     // prompt_eval_duration: z.number(),
-    // eval_count: z.number(),
-    // eval_duration: z.number(),
+    eval_count: z.number().optional(),
+    eval_duration: z.number().optional(),
 
   }),
   // Possible Error

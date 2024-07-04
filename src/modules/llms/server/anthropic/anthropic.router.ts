@@ -10,7 +10,7 @@ import { fixupHost } from '~/common/util/urlUtils';
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
 
-import { AnthropicWireMessagesRequest, anthropicWireMessagesRequestSchema, AnthropicWireMessagesResponse, anthropicWireMessagesResponseSchema } from './anthropic.wiretypes';
+import { AnthropicWireMessageCreate, anthropicWireMessageCreateSchema, AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from '~/modules/llms/server/anthropic/anthropic.wiretypes';
 import { hardcodedAnthropicModels } from './anthropic.models';
 
 
@@ -63,7 +63,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
   };
 }
 
-export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): AnthropicWireMessagesRequest {
+export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): AnthropicWireMessageCreate {
 
   // Take the System prompt, if it's the first message
   // But if it's the only message, treat it as a user message
@@ -79,7 +79,7 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
       // skip empty messages
       if (!historyItem.content.trim()) return acc;
 
-      const lastMessage: AnthropicWireMessagesRequest['messages'][number] | undefined = acc[acc.length - 1];
+      const lastMessage: AnthropicWireMessageCreate['messages'][number] | undefined = acc[acc.length - 1];
       const anthropicRole = historyItem.role === 'assistant' ? 'assistant' : 'user';
 
       if (index === 0 || anthropicRole !== lastMessage?.role) {
@@ -103,13 +103,13 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
         });
       } else {
         // Merge consecutive messages with the same role
-        (lastMessage.content as AnthropicWireMessagesRequest['messages'][number]['content']).push(
+        (lastMessage.content as AnthropicWireMessageCreate['messages'][number]['content']).push(
           { type: 'text', text: historyItem.content },
         );
       }
       return acc;
     },
-    [] as AnthropicWireMessagesRequest['messages'],
+    [] as AnthropicWireMessageCreate['messages'],
   );
 
   // NOTE: if the last message is 'assistant', then the API will perform a continuation - shall we add a user message? TBD
@@ -120,9 +120,9 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
   //   messages.push({ role: 'user', content: [{ type: 'text', text: '' }] });
 
   // Construct the request payload
-  const payload: AnthropicWireMessagesRequest = {
+  const payload: AnthropicWireMessageCreate = {
     model: model.id,
-    ...(systemPrompt !== undefined && { system: systemPrompt }),
+    ...(systemPrompt !== undefined && { system: [{ type: 'text', text: systemPrompt }] }),
     messages: messages,
     max_tokens: model.maxTokens || DEFAULT_MAX_TOKENS,
     stream: stream,
@@ -136,7 +136,7 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
   };
 
   // Validate the payload against the schema to ensure correctness
-  const validated = anthropicWireMessagesRequestSchema.safeParse(payload);
+  const validated = anthropicWireMessageCreateSchema.safeParse(payload);
   if (!validated.success)
     throw new Error(`Invalid message sequence for Anthropic models: ${validated.error.errors?.[0]?.message || validated.error}`);
 
@@ -187,8 +187,8 @@ export const llmAnthropicRouter = createTRPCRouter({
 
       // throw if the message sequence is not okay
       const payload = anthropicMessagesPayloadOrThrow(model, history, false);
-      const response = await anthropicPOST<AnthropicWireMessagesResponse, AnthropicWireMessagesRequest>(access, payload, '/v1/messages');
-      const completion = anthropicWireMessagesResponseSchema.parse(response);
+      const response = await anthropicPOST<AnthropicWireMessageResponse, AnthropicWireMessageCreate>(access, payload, '/v1/messages');
+      const completion = anthropicWireMessageResponseSchema.parse(response);
 
       // validate output
       if (!completion || completion.type !== 'message' || completion.role !== 'assistant' || completion.stop_reason === undefined)
