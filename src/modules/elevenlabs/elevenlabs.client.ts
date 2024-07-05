@@ -1,9 +1,9 @@
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
-import { AudioLivePlayer } from '~/common/util/AudioLivePlayer';
+import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
-import { playSoundBuffer } from '~/common/util/audioUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { SpeechInputSchema } from './elevenlabs.router';
@@ -38,7 +38,7 @@ export async function speakText(text: string, voiceId?: string) {
   try {
     const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, false);
     const audioBuffer = await edgeResponse.arrayBuffer();
-    await playSoundBuffer(audioBuffer);
+    await AudioPlayer.playBuffer(audioBuffer);
   } catch (error) {
     console.error('Error playing first text:', error);
   }

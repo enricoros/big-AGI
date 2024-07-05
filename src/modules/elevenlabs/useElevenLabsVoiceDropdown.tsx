@@ -4,9 +4,8 @@ import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { apiQuery } from '~/common/util/trpc.client';
-
-import { playSoundUrl } from '~/common/util/audioUtils';
 
 import { VoiceSchema } from './elevenlabs.router';
 import { isElevenLabsEnabled } from './elevenlabs.client';
@@ -82,7 +81,7 @@ export function useElevenLabsVoiceDropdown(autoSpeak: boolean, disabled?: boolea
   const previewUrl = (autoSpeak && voice?.previewUrl) || null;
   React.useEffect(() => {
     if (previewUrl)
-      playSoundUrl(previewUrl);
+      void AudioPlayer.playUrl(previewUrl);
   }, [previewUrl]);
 
   const voicesDropdown = React.useMemo(() =>

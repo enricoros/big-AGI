@@ -18,12 +18,12 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
-import { playSoundUrl, usePlaySoundUrl } from '~/common/util/audioUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
@@ -138,11 +138,11 @@ export function Telephone(props: {
 
   // pickup / hangup
   React.useEffect(() => {
-    !isRinging && playSoundUrl(isConnected ? '/sounds/chat-begin.mp3' : '/sounds/chat-end.mp3');
+    !isRinging && AudioPlayer.playUrl(isConnected ? '/sounds/chat-begin.mp3' : '/sounds/chat-end.mp3');
   }, [isRinging, isConnected]);
 
   // ringtone
-  usePlaySoundUrl(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
+  AudioPlayer.usePlayUrl(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
 
 
   /// CONNECTED
