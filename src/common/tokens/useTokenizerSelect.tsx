@@ -41,7 +41,7 @@ const tokenizerSelectSx: SxProps = {
  * @param isHorizontal if true, the select is horizontal (label - select)
  */
 export function useTokenizerSelect(
-  initialTokenizerId: string | null = null,
+  initialTokenizerId: TiktokenEncoding | null = null,
   label: string = 'Encoding',
   smaller: boolean = false,
   disabled: boolean = false,
