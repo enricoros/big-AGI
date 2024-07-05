@@ -21,6 +21,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -36,7 +37,6 @@ import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
-import { playSoundUrl } from '~/common/util/audioUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
@@ -405,11 +405,11 @@ export function Composer(props: {
     const notUserStop = result.doneReason !== 'manual';
     if (autoSend) {
       if (notUserStop)
-        playSoundUrl('/sounds/mic-off-mid.mp3');
+        void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3');
       void handleSendAction(chatExecuteMode, nextText); // fire/forget
     } else {
       if (!micContinuation && notUserStop)
-        playSoundUrl('/sounds/mic-off-mid.mp3');
+        void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3');
       if (nextText) {
         composerTextAreaRef.current?.focus();
         setComposeText(nextText);
