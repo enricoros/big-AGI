@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, Typography } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
 
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
@@ -9,7 +9,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
 
-import { DModelSourceId } from '../../store-llms';
+import { DModelSourceId, useModelsStore } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
@@ -42,6 +42,15 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
     // ...bye / see you soon at the callback location...
   };
 
+  const handleHideNonFreeLLMs = () => {
+    // A bit of a hack
+    const { llms, removeLLM } = useModelsStore.getState();
+    llms
+      .filter(llm => llm.sId === props.sourceId)
+      .filter(llm => llm.pricing?.chatIn !== 0 && llm.pricing?.chatOut !== 0)
+      // .forEach(llm => updateLLM(llm.id, { hidden: true }));
+      .forEach(llm => removeLLM(llm.id));
+  };
 
   return <>
 
@@ -73,13 +82,21 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
       leftButton={
-        <Button
-          color='neutral' variant={(needsUserKey && !keyValid) ? 'solid' : 'outlined'}
-          onClick={handleOpenRouterLogin}
-          endDecorator={(needsUserKey && !keyValid) ? '🎁' : undefined}
-        >
-          OpenRouter Login
-        </Button>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <Button
+            color='neutral' variant={(needsUserKey && !keyValid) ? 'solid' : 'outlined'}
+            onClick={handleOpenRouterLogin}
+            endDecorator={(needsUserKey && !keyValid) ? '🎁' : undefined}
+          >
+            OpenRouter Login
+          </Button>
+          <Button
+            color='neutral' variant='outlined'
+            onClick={handleHideNonFreeLLMs}
+          >
+            Remove Non-Free 🎁
+          </Button>
+        </Box>
       }
     />
 
