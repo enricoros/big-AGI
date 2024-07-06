@@ -2,335 +2,412 @@
 
 import { isBrowser } from '~/common/util/pwaUtils';
 
-/**
- * Audio Generator - only a Single instance is needed
- */
-export class AudioGenerator {
-  private ctx: AudioContext | null = null;
-  private masterGain: GainNode | null = null;
-  private muted: boolean = false;
+export namespace AudioGenerator {
 
+  interface SoundOptions {
+    volume?: number;
+    roomSize?: 'small' | 'large';
+  }
 
-  public playSound(soundName: keyof typeof Sounds): void {
-    const ctx = this.ensureContext();
-    if (!ctx || this.muted) return;
+  // Advanced Sounds (with room acoustics)
+  export function mouseClick(): void {
+    const ctx = singleContext();
+    if (!ctx) return;
 
-    const soundFunction = Sounds[soundName];
-    if (typeof soundFunction === 'function') {
-      soundFunction(ctx);
-    } else {
-      console.error(`Sound "${soundName}" not found.`);
+    const clickOsc = ctx.createOscillator();
+    const resonanceOsc = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+    const resonanceGain = ctx.createGain();
+
+    clickOsc.type = 'sine';
+    clickOsc.frequency.setValueAtTime(2000, ctx.currentTime);
+    clickOsc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.02);
+
+    resonanceOsc.type = 'sine';
+    resonanceOsc.frequency.setValueAtTime(800, ctx.currentTime);
+
+    // Use fixed gain values to match original
+    clickGain.gain.setValueAtTime(1, ctx.currentTime);
+    createEnvelope(ctx, clickGain.gain, 0.001, 0.02, 0, 0.01);
+
+    resonanceGain.gain.setValueAtTime(0.2, ctx.currentTime);
+    createEnvelope(ctx, resonanceGain.gain, 0.002, 0.05, 0, 0.03);
+
+    const merger = ctx.createChannelMerger(2);
+    clickOsc.connect(clickGain).connect(merger, 0, 0);
+    resonanceOsc.connect(resonanceGain).connect(merger, 0, 0);
+
+    applyRoomAcoustics(ctx, merger, 'small');
+
+    clickOsc.start();
+    resonanceOsc.start();
+    clickOsc.stop(ctx.currentTime + 0.1);
+    resonanceOsc.stop(ctx.currentTime + 0.1);
+  }
+
+  export function typewriterKeystroke(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+
+    const strikeNoise = createNoise(ctx, 0.02);
+    const inkNoise = createNoise(ctx, 0.05);
+    const mechanismOsc = ctx.createOscillator();
+
+    const strikeFilter = ctx.createBiquadFilter();
+    const inkFilter = ctx.createBiquadFilter();
+    const strikeGain = ctx.createGain();
+    const inkGain = ctx.createGain();
+    const mechanismGain = ctx.createGain();
+
+    strikeFilter.type = 'highpass';
+    strikeFilter.frequency.setValueAtTime(3000, ctx.currentTime);
+    strikeFilter.Q.setValueAtTime(10, ctx.currentTime);
+
+    inkFilter.type = 'lowpass';
+    inkFilter.frequency.setValueAtTime(500, ctx.currentTime);
+
+    mechanismOsc.type = 'triangle';
+    mechanismOsc.frequency.setValueAtTime(400, ctx.currentTime);
+    mechanismOsc.frequency.linearRampToValueAtTime(200, ctx.currentTime + 0.05);
+
+    createEnvelope(ctx, strikeGain.gain, 0.001, 0.01, 0, 0.01);
+    createEnvelope(ctx, inkGain.gain, 0.01, 0.03, 0.1, 0.02);
+    createEnvelope(ctx, mechanismGain.gain, 0.001, 0.03, 0, 0.02);
+
+    strikeGain.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime);
+    inkGain.gain.setValueAtTime((options.volume || 0.3) * 0.5, ctx.currentTime);
+    mechanismGain.gain.setValueAtTime((options.volume || 0.3) * 0.2, ctx.currentTime);
+
+    const merger = ctx.createChannelMerger(2);
+    strikeNoise.connect(strikeFilter).connect(strikeGain).connect(merger, 0, 0);
+    inkNoise.connect(inkFilter).connect(inkGain).connect(merger, 0, 0);
+    mechanismOsc.connect(mechanismGain).connect(merger, 0, 0);
+
+    applyRoomAcoustics(ctx, merger, options.roomSize || 'small');
+
+    strikeNoise.start();
+    inkNoise.start(ctx.currentTime + 0.01);
+    mechanismOsc.start();
+    mechanismOsc.stop(ctx.currentTime + 0.1);
+  }
+
+  export function smallFirework(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+
+    const launchNoise = createNoise(ctx, 0.5);
+    const explosionNoise = createNoise(ctx, 0.2);
+    const boomOsc = ctx.createOscillator();
+
+    const launchFilter = ctx.createBiquadFilter();
+    const explosionFilter = ctx.createBiquadFilter();
+    const launchGain = ctx.createGain();
+    const explosionGain = ctx.createGain();
+    const boomGain = ctx.createGain();
+
+    launchFilter.type = 'bandpass';
+    launchFilter.frequency.setValueAtTime(1000, ctx.currentTime);
+    launchFilter.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 0.5);
+
+    explosionFilter.type = 'lowpass';
+    explosionFilter.frequency.setValueAtTime(10000, ctx.currentTime + 0.5);
+    explosionFilter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 0.7);
+
+    boomOsc.type = 'sine';
+    boomOsc.frequency.setValueAtTime(100, ctx.currentTime + 0.5);
+    boomOsc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.7);
+
+    createEnvelope(ctx, launchGain.gain, 0.01, 0.1, 0.5, 0.39);
+    explosionGain.gain.setValueAtTime(0, ctx.currentTime);
+    explosionGain.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime + 0.5);
+    createEnvelope(ctx, explosionGain.gain, 0.001, 0.1, 0.3, 0.1);
+    boomGain.gain.setValueAtTime(0, ctx.currentTime);
+    boomGain.gain.setValueAtTime((options.volume || 0.3) * 0.5, ctx.currentTime + 0.5);
+    createEnvelope(ctx, boomGain.gain, 0.001, 0.1, 0.3, 0.2);
+
+    const merger = ctx.createChannelMerger(2);
+    launchNoise.connect(launchFilter).connect(launchGain).connect(merger, 0, 0);
+    explosionNoise.connect(explosionFilter).connect(explosionGain).connect(merger, 0, 0);
+    boomOsc.connect(boomGain).connect(merger, 0, 0);
+
+    // Add crackle sounds
+    for (let i = 0; i < 20; i++) {
+      const crackleNoise = createNoise(ctx, 0.05);
+      const crackleFilter = ctx.createBiquadFilter();
+      const crackleGain = ctx.createGain();
+
+      crackleFilter.type = 'bandpass';
+      crackleFilter.frequency.setValueAtTime(2000 + Math.random() * 3000, ctx.currentTime);
+
+      const startTime = ctx.currentTime + 0.55 + Math.random() * 0.4;
+      crackleGain.gain.setValueAtTime(0, startTime);
+      createEnvelope(ctx, crackleGain.gain, 0.001, 0.02, 0, 0.03);
+
+      crackleNoise.connect(crackleFilter).connect(crackleGain).connect(merger, 0, 0);
+      crackleNoise.start(startTime);
     }
+
+    applyRoomAcoustics(ctx, merger, options.roomSize || 'large');
+
+    launchNoise.start();
+    explosionNoise.start(ctx.currentTime + 0.5);
+    boomOsc.start(ctx.currentTime + 0.5);
+    boomOsc.stop(ctx.currentTime + 1);
   }
 
-  public setVolume(volume: number): void {
-    const ctx = this.ensureContext();
-    !!ctx && this.masterGain!.gain.setValueAtTime(volume, ctx.currentTime);
-  }
 
-  public mute(): void {
-    this.muted = true;
-    this.setVolume(0);
-  }
+  // Basic Sounds
 
-  public unmute(): void {
-    this.muted = false;
-    this.setVolume(1);
-  }
+  export function basicSound(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
 
-  private initContext(): boolean {
-    if (!isBrowser) return false;
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      this.masterGain = this.ctx.createGain();
-      this.masterGain.connect(this.ctx.destination);
-    }
-    return true;
-  }
+    o.type = 'sine';
+    o.frequency.setValueAtTime(440, ctx.currentTime);
 
-  private ensureContext(): AudioContext | null {
-    if (!this.initContext())
-      return null;
-    if (this.ctx!.state === 'suspended') {
-      // fire/forget
-      void this.ctx!.resume();
-    }
-    return this.ctx!;
-  }
-}
+    g.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
 
-
-// Sound Generation Functions
-namespace Sounds {
-
-  export function basicSound(ctx: AudioContext): void {
-    const o = Ops.createNode(ctx, 'Oscillator', {
-      type: 'sine',
-      frequency: 440,
-    });
-    const g = Ops.createNode(ctx, 'Gain', {
-      gain: [
-        ['setValueAtTime', 0.3, 0],
-        ['exponentialRampToValueAtTime', 0.001, 0.5],
-      ] as const,
-    });
-
-    Ops.connectNodes(o, g, ctx.destination);
+    o.connect(g).connect(ctx.destination);
     o.start();
     o.stop(ctx.currentTime + 0.5);
   }
-/*
-  export function randomSound(ctx: AudioContext): void {
-    const types = ['sine', 'square', 'sawtooth', 'triangle'] as OscillatorType[];
-    const baseFrequency = 200 + Math.random() * 500;
+
+  export function basicRandomSound(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const types: OscillatorType[] = ['sine', 'square', 'sawtooth', 'triangle'];
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = types[Math.floor(Math.random() * types.length)];
+    o.frequency.setValueAtTime(200 + Math.random() * 500, ctx.currentTime);
+
     const duration = 0.1 + Math.random() * 0.5;
+    g.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
-    const o = Ops.createNode(ctx, 'Oscillator', {
-      type: types[Math.floor(Math.random() * types.length)],
-      frequency: baseFrequency,
-    });
-    const g = Ops.createNode(ctx, 'Gain', {
-      gain: [
-        ['setValueAtTime', 0.3, 0],
-        ['exponentialRampToValueAtTime', 0.001, duration],
-      ] as const,
-    });
-
-    Ops.connectNodes(o, g, ctx.destination);
+    o.connect(g).connect(ctx.destination);
     o.start();
     o.stop(ctx.currentTime + duration);
   }
 
-  export function bubblingLava(ctx: AudioContext): void {
-    const noise = Ops.createNoise(ctx, 1);
-    const filter = Ops.createNode(ctx, 'BiquadFilter', {
-      type: 'lowpass',
-      frequency: [
-        ['setValueAtTime', 100, 0],
-        ['linearRampToValueAtTime', 1000, 0.5],
-      ] as const,
-    });
-    const g = Ops.createNode(ctx, 'Gain', {
-      gain: [
-        ['setValueAtTime', 0.15, 0],
-        ['linearRampToValueAtTime', 0, 1],
-      ] as const,
-    });
+  export function basicBubblingLava(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const noise = createNoise(ctx, 1);
+    const filter = ctx.createBiquadFilter();
+    const g = ctx.createGain();
 
-    Ops.connectNodes(noise, filter, g, ctx.destination);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(100, ctx.currentTime);
+    filter.frequency.linearRampToValueAtTime(1000, ctx.currentTime + 0.5);
+
+    g.gain.setValueAtTime(options.volume || 0.15, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+
+    noise.connect(filter).connect(g).connect(ctx.destination);
     noise.start();
     noise.stop(ctx.currentTime + 1);
   }
 
-  export function retroGlitch(ctx: AudioContext): void {
-    const o = Ops.createNode(ctx, 'Oscillator', {
-      type: 'sawtooth',
-      frequency: 110,
-    });
-    const g = Ops.createNode(ctx, 'Gain', {
-      gain: [
-        ['setValueAtTime', 0.15, 0],
-        ['linearRampToValueAtTime', 0, 0.5],
-      ] as const,
-    });
+  export function basicRetroGlitch(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
 
-    const frequencySchedule: Ops.AudioParamSchedule = Array.from({ length: 10 }, (_, i) =>
-      ['exponentialRampToValueAtTime', 110 * Math.pow(2, Math.random() * 3), i * 0.05] as const,
-    );
+    o.type = 'sawtooth';
     o.frequency.setValueAtTime(110, ctx.currentTime);
-    frequencySchedule.forEach(([method, ...args]) => {
-      (o.frequency[method] as Function).apply(o.frequency, [ctx.currentTime + (args[1] || 0), args[0]]);
-    });
 
-    Ops.connectNodes(o, g, ctx.destination);
+    g.gain.setValueAtTime(options.volume || 0.15, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+
+    for (let i = 0; i < 10; i++) {
+      o.frequency.exponentialRampToValueAtTime(
+        110 * Math.pow(2, Math.random() * 3),
+        ctx.currentTime + i * 0.05,
+      );
+    }
+
+    o.connect(g).connect(ctx.destination);
     o.start();
     o.stop(ctx.currentTime + 0.5);
   }
 
-  export function zenChimes(ctx: AudioContext): void {
-    [523.25, 587.33, 659.25, 698.46, 783.99].forEach((freq, i) => {
+  export function basicZenChimes(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const frequencies = [523.25, 587.33, 659.25, 698.46, 783.99];
+    frequencies.forEach((freq, i) => {
       setTimeout(() => {
-        const o = Ops.createNode(ctx, 'Oscillator', {
-          type: 'sine',
-          frequency: freq,
-        });
-        const g = Ops.createNode(ctx, 'Gain', {
-          gain: [
-            ['setValueAtTime', 0.15, 0],
-            ['exponentialRampToValueAtTime', 0.001, 1],
-          ] as const,
-        });
-        Ops.connectNodes(o, g, ctx.destination);
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, ctx.currentTime);
+
+        g.gain.setValueAtTime(options.volume || 0.15, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
+
+        o.connect(g).connect(ctx.destination);
         o.start();
         o.stop(ctx.currentTime + 1);
       }, i * 200);
     });
   }
 
-  export function astralChimes(ctx: AudioContext): void {
-    const f = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+  export function basicAstralChimes(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
     for (let i = 0; i < 20; i++) {
       setTimeout(() => {
-        const o = Ops.createNode(ctx, 'Oscillator', {
-          type: 'sine',
-          frequency: f[Math.floor(Math.random() * f.length)],
-        });
-        const g = Ops.createNode(ctx, 'Gain', {
-          gain: [
-            ['setValueAtTime', 0, 0],
-            ['linearRampToValueAtTime', 0.05, 0.01],
-            ['exponentialRampToValueAtTime', 0.001, 2],
-          ] as const,
-        });
-        Ops.connectNodes(o, g, ctx.destination);
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+
+        o.type = 'sine';
+        o.frequency.setValueAtTime(frequencies[Math.floor(Math.random() * frequencies.length)], ctx.currentTime);
+
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(options.volume || 0.05, ctx.currentTime + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
+
+        o.connect(g).connect(ctx.destination);
         o.start();
         o.stop(ctx.currentTime + 2);
       }, i * 150);
     }
   }
 
-  export function whisperGarden(ctx: AudioContext): void {
-    const noise = Ops.createNoise(ctx, 3);
-    const filter = Ops.createNode(ctx, 'BiquadFilter', {
-      type: 'lowpass',
-      frequency: 1000,
-    });
-    const g = Ops.createNode(ctx, 'Gain', {
-      gain: [
-        ['setValueAtTime', 0, 0],
-        ['linearRampToValueAtTime', 0.1, 0.5],
-        ['linearRampToValueAtTime', 0, 3],
-      ] as const,
-    });
+  export function basicWhisperGarden(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const noise = createNoise(ctx, 3);
+    const filter = ctx.createBiquadFilter();
+    const g = ctx.createGain();
 
-    Ops.connectNodes(noise, filter, g, ctx.destination);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, ctx.currentTime);
+
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(options.volume || 0.1, ctx.currentTime + 0.5);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 3);
+
+    noise.connect(filter).connect(g).connect(ctx.destination);
     noise.start();
     noise.stop(ctx.currentTime + 3);
   }
 
-  export function warmHearthEmbrace(ctx: AudioContext): void {
-    const noise = Ops.createNoise(ctx, 4);
-    const filter = Ops.createNode(ctx, 'BiquadFilter', {
-      type: 'bandpass',
-      frequency: 300,
-      Q: 10,
-    });
-    const g = Ops.createNode(ctx, 'Gain', {
-      gain: [
-        ['setValueAtTime', 0, 0],
-        ['linearRampToValueAtTime', 0.2, 0.5],
-        ['linearRampToValueAtTime', 0.1, 3.5],
-        ['linearRampToValueAtTime', 0, 4],
-      ] as const,
-    });
+  export function basicWarmHearthEmbrace(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const noise = createNoise(ctx, 4);
+    const filter = ctx.createBiquadFilter();
+    const g = ctx.createGain();
 
-    Ops.connectNodes(noise, filter, g, ctx.destination);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(300, ctx.currentTime);
+    filter.Q.setValueAtTime(10, ctx.currentTime);
+
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(options.volume || 0.2, ctx.currentTime + 0.5);
+    g.gain.linearRampToValueAtTime(options.volume ? options.volume / 2 : 0.1, ctx.currentTime + 3.5);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 4);
+
+    noise.connect(filter).connect(g).connect(ctx.destination);
     noise.start();
     noise.stop(ctx.currentTime + 4);
   }
-*/
+
 }
 
 
-// Sound Construction functions
-namespace Ops {
+/// Utility Functions ///
 
-  type AudioParamMethod = keyof {
-    [K in keyof AudioParam as AudioParam[K] extends (...args: any[]) => any ? K : never]: AudioParam[K]
-  };
+function applyRoomAcoustics(ctx: AudioContext, source: AudioNode, roomSize: 'small' | 'large' = 'small'): void {
+  const convolver = ctx.createConvolver();
+  const reverbTime = roomSize === 'large' ? 2 : 0.5;
+  const decayRate = roomSize === 'large' ? 0.5 : 2;
 
-  export type AudioParamScheduleItem = {
-    [T in AudioParamMethod]: [T, ...Parameters<AudioParam[T]>]
-  }[AudioParamMethod];
-
-  export type AudioParamSchedule = ReadonlyArray<AudioParamScheduleItem>;
-
-  export type AudioNodeType =
-    | OscillatorNode
-    | GainNode
-    | BiquadFilterNode
-    | AudioBufferSourceNode;
-
-  type AudioParamValue<T> = T extends AudioParam ? number | AudioParamSchedule : never;
-
-  export type AudioNodeOptions<T extends AudioNodeType> = {
-    [K in keyof T]?: T[K] extends AudioParam ? AudioParamValue<T[K]> : T[K];
-  };
-
-  type AudioNodeCreationMap = {
-    'Oscillator': OscillatorNode;
-    'Gain': GainNode;
-    'BiquadFilter': BiquadFilterNode;
-    'BufferSource': AudioBufferSourceNode;
-  };
-
-  export function createNode<T extends keyof AudioNodeCreationMap>(
-    ctx: AudioContext,
-    type: T,
-    options: AudioNodeOptions<AudioNodeCreationMap[T]> = {},
-  ): AudioNodeCreationMap[T] {
-    const node = ctx[`create${type}`]() as AudioNodeCreationMap[T];
-    Object.entries(options).forEach(([key, value]) => {
-      const nodeKey = key as keyof AudioNodeCreationMap[T];
-      if (node[nodeKey] instanceof AudioParam) {
-        const param = node[nodeKey] as AudioParam;
-        if (typeof value === 'number') {
-          param.setValueAtTime(value, ctx.currentTime);
-        } else if (Array.isArray(value)) {
-          setParamSchedule(ctx, param, value as AudioParamSchedule);
-        }
-      } else {
-        (node as any)[key] = value;
-      }
-    });
-    return node;
-  }
-
-  function setParamSchedule(
-    ctx: AudioContext,
-    param: AudioParam,
-    schedule: AudioParamSchedule,
-  ): void {
-    schedule.forEach(([method, ...args]) => {
-      (param[method] as Function).apply(param, [ctx.currentTime, ...args]);
-    });
-  }
-
-
-  export function createNoise(ctx: AudioContext, duration: number, type: 'white' | 'pink' = 'white'): AudioBufferSourceNode {
-    const bufferSize = ctx.sampleRate * duration;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    switch (type) {
-      case 'white':
-        for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1;
-        }
-        break;
-      case 'pink':
-        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-        for (let i = 0; i < bufferSize; i++) {
-          const white = Math.random() * 2 - 1;
-          b0 = 0.99886 * b0 + white * 0.0555179;
-          b1 = 0.99332 * b1 + white * 0.0750759;
-          b2 = 0.96900 * b2 + white * 0.1538520;
-          b3 = 0.86650 * b3 + white * 0.3104856;
-          b4 = 0.55000 * b4 + white * 0.5329522;
-          b5 = -0.7616 * b5 - white * 0.0168980;
-          data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-          data[i] *= 0.11;
-          b6 = white * 0.115926;
-        }
-        break;
+  const rate = ctx.sampleRate;
+  const length = rate * reverbTime;
+  const impulse = ctx.createBuffer(2, length, rate);
+  for (let channel = 0; channel < 2; channel++) {
+    const impulseData = impulse.getChannelData(channel);
+    for (let i = 0; i < length; i++) {
+      impulseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decayRate);
     }
+  }
+  convolver.buffer = impulse;
 
-    return createNode(ctx, 'BufferSource', { buffer }) as AudioBufferSourceNode;
+  const reverbGain = ctx.createGain();
+  reverbGain.gain.setValueAtTime(0.2, ctx.currentTime);
+
+  source.connect(convolver);
+  convolver.connect(reverbGain);
+  reverbGain.connect(agMasterGain);
+  source.connect(agMasterGain);
+}
+
+function createEnvelope(ctx: AudioContext, param: AudioParam, attackTime: number, decayTime: number, sustainLevel: number, releaseTime: number): void {
+  const now = ctx.currentTime;
+  param.setValueAtTime(0, now);
+  param.linearRampToValueAtTime(1, now + attackTime);
+  param.linearRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
+  param.linearRampToValueAtTime(0, now + attackTime + decayTime + releaseTime);
+}
+
+function createNoise(ctx: AudioContext, duration: number, type: 'white' | 'pink' = 'white') {
+  const bufferSize = ctx.sampleRate * duration;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  switch (type) {
+    case 'white':
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      break;
+
+    case 'pink':
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        data[i] *= 0.11;
+        b6 = white * 0.115926;
+      }
+      break;
   }
 
-  export function connectNodes(...nodes: AudioNode[]): AudioNode {
-    nodes.reduce((a, b) => a.connect(b));
-    return nodes[nodes.length - 1];
-  }
+  const noiseSource = ctx.createBufferSource();
+  noiseSource.buffer = buffer;
+  return noiseSource;
+}
 
+// (Single) Global Audio Generation Context
+let agCtx: AudioContext;
+let agMasterGain: GainNode;
+
+function singleContext() {
+  if (!isBrowser) return null;
+  if (!agCtx) {
+    agCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    agMasterGain = agCtx.createGain();
+    agMasterGain.connect(agCtx.destination);
+  }
+  if (agCtx.state === 'suspended') {
+    // fire/forget
+    void agCtx.resume();
+  }
+  return agCtx;
 }
