@@ -56,6 +56,10 @@ class DownstreamHandler {
     };
     this.downstreamTerminated = true;
   }
+
+  markTermination() {
+    this.downstreamTerminated = true;
+  }
 }
 
 
@@ -125,6 +129,7 @@ export const aixRouter = createTRPCRouter({
         // Read upstream chunk
         let decodedChunk: string;
         try {
+          // NOTE: this is going to break when the upstream stream is closed by the signal
           const { done, value } = await upstreamReader.read();
 
           // Handle normal stream termination
@@ -136,6 +141,12 @@ export const aixRouter = createTRPCRouter({
           // Decode the chunk - does Not throw (see the constructor for why)
           decodedChunk = upstreamDecoder.decode(value, { stream: true });
         } catch (error: any) {
+          // Handle expected upstream stream abortion - nothing to do, as the downstream is already closed
+          if (error && error?.name === 'ResponseAborted') {
+            downstreamHandler.markTermination();
+            break; // outer do {}
+          }
+
           // Handle abnormal stream termination
           yield* downstreamHandler.yieldError('upstream-read', `**[Streaming Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`);
           break; // outer do {}
@@ -167,6 +178,7 @@ export const aixRouter = createTRPCRouter({
             const parsedEvents = upstreamParser(demuxedEvent.data, demuxedEvent.name);
             for (const upe of parsedEvents) {
               console.log('parsedUpstream:', upe);
+              // TODO: massively rework this into a good protocol
               if (upe.op === 'parser-close') {
                 yield* downstreamHandler.yieldTermination('parser-done');
                 break;
@@ -195,8 +207,9 @@ export const aixRouter = createTRPCRouter({
 
       } while (!downstreamHandler.downstreamTerminated);
 
-      // End reached, with or without issues (but without unhandled exceptions!)
-      // NOTE: we already send the termination (good exit) or issue (bad exit) on all code paths
+      // End reached, with or without issues or downstream connectivity
+      // NOTE: we already send the termination (good exit) or issue (bad exit) on all code paths,
+      //       or the downstream has already closed to socket on us
       // yield* downstreamHandler.yieldEnd();
 
     }),
