@@ -17,7 +17,7 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
+import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -402,12 +402,12 @@ export function AppChat() {
     // focused conversation
     ['b', true, true, false, handleMessageBeamLastInFocusedPane],
     ['r', true, true, false, handleMessageRegenerateLastInFocusedPane],
-    ['n', true, false, isMacUser ? false : true, handleConversationNewInFocusedPane],
+    ['n', true, false, true, handleConversationNewInFocusedPane],
     ['o', true, false, false, handleFileOpenConversation],
     ['s', true, false, false, () => handleFileSaveConversation(focusedPaneConversationId)],
-    ['b', true, false, isMacUser ? false : true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationBranch(focusedPaneConversationId, null))],
-    ['x', true, false, isMacUser ? false : true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId))],
-    ['d', true, false, isMacUser ? false : true, () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false)],
+    ['b', true, false, true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationBranch(focusedPaneConversationId, null))],
+    ['x', true, false, true, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId))],
+    ['d', true, false, true, () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false)],
     [ShortcutKeyName.Left, true, false, true, () => handleNavigateHistoryInFocusedPane('back')],
     [ShortcutKeyName.Right, true, false, true, () => handleNavigateHistoryInFocusedPane('forward')],
     // global
