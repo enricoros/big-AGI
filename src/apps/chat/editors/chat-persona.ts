@@ -63,6 +63,10 @@ export async function runPersonaOnConversationHead(
     (accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
       if (abortController.signal.aborted) return;
 
+      // typing sound
+      // if (messageComplete)
+      //   AudioGenerator.basicAstralChimes({ volume: 0.4 }, 0, 2, 250);
+
       cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
 
       if (autoSpeaker && accumulatedMessage.fragments?.length && isContentFragment(accumulatedMessage.fragments[0]) && isTextPart(accumulatedMessage.fragments[0].part)) {
