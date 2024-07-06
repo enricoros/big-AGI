@@ -1,5 +1,6 @@
-import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetchOrThrow, safeErrorString, SERVER_DEBUG_WIRE, serverCapitalizeFirstLetter } from '~/server/wire';
+import { createEmptyReadableStream, safeErrorString, SERVER_DEBUG_WIRE, serverCapitalizeFirstLetter } from '~/server/wire';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import type { DemuxedEvent } from './upstream.demuxers';
 import { aixGenerateContentInputSchema } from '../shared/aix.shared.chat';
@@ -65,6 +66,7 @@ export const aixRouter = createTRPCRouter({
     .mutation(async function* ({ input, ctx }) {
 
       // Derived state
+      const clientAbortSignal = ctx.reqSignal;
       const { access, model, history } = input;
       const accessDialect = access.dialect;
       const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
@@ -85,11 +87,17 @@ export const aixRouter = createTRPCRouter({
       // Connect to the upstream
       let upstreamResponse: Response;
       try {
-        if (SERVER_DEBUG_WIRE)
-          console.log('-> upstream CURL:', debugGenerateCurlCommand('POST', upstreamData.request.url, upstreamData.request.headers, upstreamData.request.body));
 
         // Blocking fetch - may timeout, for instance with long Anthriopic requests (>25s on Vercel)
-        upstreamResponse = await nonTrpcServerFetchOrThrow(upstreamData.request.url, 'POST', upstreamData.request.headers, upstreamData.request.body);
+        upstreamResponse = await fetchResponseOrTRPCThrow({
+          url: upstreamData.request.url,
+          method: 'POST',
+          headers: upstreamData.request.headers,
+          body: upstreamData.request.body,
+          signal: clientAbortSignal,
+          name: `Aix.${prettyDialect}`,
+          throwWithoutName: true,
+        });
 
       } catch (error: any) {
 

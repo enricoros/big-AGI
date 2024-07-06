@@ -32,6 +32,7 @@ type RequestConfig<TBody extends object | undefined> = {
   headers?: HeadersInit;
   signal?: AbortSignal;
   name: string;
+  throwWithoutName?: boolean; // when throwing, do not add the module name (the caller will improve the output)
 } & (
   | { method?: 'GET' /* in case of GET, the method is optional, and no body */ }
   | { method: 'POST'; body: TBody }
@@ -50,7 +51,7 @@ async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
   parserName: 'json' | 'text' | 'response',
 ): Promise<TOut> {
 
-  const { url, method = 'GET', headers, name: moduleName, signal } = config;
+  const { url, method = 'GET', headers, name: moduleName, signal, throwWithoutName = false } = config;
   const body = 'body' in config ? config.body : undefined;
 
   // 1. Fetch a Response object
@@ -58,7 +59,7 @@ async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
   try {
 
     if (SERVER_DEBUG_WIRE)
-      console.log('-> tRPC', debugGenerateCurlCommand(method, url, headers, body as any));
+      console.log('-> upstream CURL:', debugGenerateCurlCommand(method, url, headers, body as any));
 
     // upstream request
     const request: RequestInit = { method };
@@ -78,7 +79,8 @@ async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
     // Handle Connection errors - HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: `[${moduleName} network issue]: ${safeErrorString(error) || 'unknown fetch error'}`
+      message: (throwWithoutName ? '' : `[${moduleName} network issue]: `)
+        + (safeErrorString(error) || 'unknown fetch error')
         + (errorCause
           ? ` - ${errorCause?.toString()}`
           : '')
@@ -105,7 +107,8 @@ async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
     // HTTP 400
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: `[${moduleName} issue]: ${response.statusText}`
+      message: (throwWithoutName ? '' : `[${moduleName} issue]: `)
+        + (response.statusText || '')
         + (payload
           ? ` - ${safeErrorString(payload)}` : '')
         + (response.status === 403
@@ -128,7 +131,8 @@ async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
     // HTTP 422
     throw new TRPCError({
       code: 'UNPROCESSABLE_CONTENT',
-      message: `[${moduleName} parsing issue]: ${safeErrorString(error) || 'unknown error'}`,
+      message: (throwWithoutName ? `cannot parse ${parserName}: ` : `[${moduleName} parsing issue]: `)
+        + (safeErrorString(error) || 'unknown error'),
     });
   }
 
