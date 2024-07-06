@@ -78,7 +78,7 @@ export const aixRouter = createTRPCRouter({
       try {
         upstreamData = prepareUpstream(access, model, history);
       } catch (error: any) {
-        yield* downstreamHandler.yieldError('upstream-prepare', `**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
+        yield* downstreamHandler.yieldError('upstream-prepare', `**[Service Prepare Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
         return; // exit
       }
 
@@ -168,7 +168,7 @@ export const aixRouter = createTRPCRouter({
                 };
               } else if (upe.op === 'issue') {
                 yield {
-                  t: ` [${prettyDialect} Issue] ${upe.issue}`,
+                  t: ` ${upe.symbol} **[${prettyDialect} Issue]:** ${upe.issue}`,
                 };
               } else if (upe.op === 'set') {
                 yield {
@@ -180,7 +180,7 @@ export const aixRouter = createTRPCRouter({
               }
             }
           } catch (error: any) {
-            yield* downstreamHandler.yieldError('upstream-parse', ` **[Stream Parse Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}. Please open a support ticket.`);
+            yield* downstreamHandler.yieldError('upstream-parse', ` **[Upstream Parse Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}. Please open a support ticket.`);
             break; // inner for {}, then outer do
           }
         }
