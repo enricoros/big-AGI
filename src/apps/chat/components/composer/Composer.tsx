@@ -39,7 +39,7 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chats/store-chat-overlay-vanilla';
 import { useDebouncer } from '~/common/components/useDebouncer';
-import { useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -399,7 +399,7 @@ export function Composer(props: {
   const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
     useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
 
-  useGlobalShortcut('m', true, false, false, toggleRecording);
+  useGlobalShortcuts([['m', true, false, false, toggleRecording]]);
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !isSpeechError;
@@ -451,7 +451,7 @@ export function Composer(props: {
     }
   }, [attachAppendFile]);
 
-  useGlobalShortcut(supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems);
+  useGlobalShortcuts([[supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems]]);
 
   const handleAttachmentInlineText = React.useCallback((attachmentId: AttachmentId) => {
     setComposeText(currentText => {

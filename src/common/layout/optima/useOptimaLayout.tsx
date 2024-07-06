@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { GlobalShortcutItem, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
+import { GlobalShortcutItem, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { isMacUser } from '~/common/util/pwaUtils';
 
 
