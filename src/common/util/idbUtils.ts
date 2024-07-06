@@ -103,7 +103,7 @@ class WriteScheduler {
   }
 }
 
-const writeScheduler = new WriteScheduler(1000, 400);
+const writeScheduler = new WriteScheduler(1200, 400);
 
 
 /**

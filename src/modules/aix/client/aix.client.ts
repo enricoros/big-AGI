@@ -121,21 +121,33 @@ export async function aixStreamGenerateUnified<TSourceSetup = unknown>(
 
   let incrementalText = '';
 
-  for await (const update of x) {
-    if ('t' in update) {
-      incrementalText += update.t;
-      onUpdate({ textSoFar: incrementalText, typing: true }, false);
-    } else if ('set' in update) {
-      if (update.set.model)
-        onUpdate({ originLLM: update.set.model }, false);
-      else
-        console.log('set:', update.set);
-    } else if ('issueId' in update) {
-      incrementalText += update.issueText;
-      onUpdate({ textSoFar: incrementalText, typing: true }, false);
-    } else
-      console.log('update:', update);
+  try {
+    for await (const update of x) {
+      console.log('cs update:', update);
+
+      if ('t' in update) {
+        incrementalText += update.t;
+        onUpdate({ textSoFar: incrementalText, typing: true }, false);
+      } else if ('set' in update) {
+        if (update.set.model)
+          onUpdate({ originLLM: update.set.model }, false);
+        else
+          console.log('set:', update.set);
+      } else if ('issueId' in update) {
+        incrementalText += update.issueText;
+        onUpdate({ textSoFar: incrementalText, typing: true }, false);
+      } else
+        console.log('update:', update);
+    }
+  } catch (error) {
+    if (error instanceof Error && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'))) {
+      console.log('client-side aborted 111111111111111111111111111222222');
+    } else {
+      console.error('Client catch:', (error as any).name, { error });
+    }
   }
+
+  console.log('HERE', abortSignal.aborted ? 'client-initiated ABORTED' : '');
 
   onUpdate({ typing: false }, true);
 
