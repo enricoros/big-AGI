@@ -145,6 +145,11 @@ export type GeminiGenerateContentRequest = z.infer<typeof geminiGenerateContentR
 
 // Response
 
+export function geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
+  const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
+  return order.indexOf(a.probability) - order.indexOf(b.probability);
+}
+
 const geminiHarmProbabilitySchema = z.enum([
   'HARM_PROBABILITY_UNSPECIFIED',
   'NEGLIGIBLE',
@@ -153,11 +158,12 @@ const geminiHarmProbabilitySchema = z.enum([
   'HIGH',
 ]);
 
-const geminiSafetyRatingSchema = z.object({
+export type GeminiSafetyRatings = z.infer<typeof geminiSafetyRatingsSchema>;
+const geminiSafetyRatingsSchema = z.array(z.object({
   'category': geminiHarmCategorySchema,
   'probability': geminiHarmProbabilitySchema,
   'blocked': z.boolean().optional(),
-});
+}));
 
 const geminiFinishReasonSchema = z.enum([
   'FINISH_REASON_UNSPECIFIED',
@@ -175,7 +181,7 @@ export const geminiGeneratedContentResponseSchema = z.object({
     index: z.number(),
     content: geminiContentSchema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     finishReason: geminiFinishReasonSchema.optional(),
-    safetyRatings: z.array(geminiSafetyRatingSchema).optional(), // undefined when finishReason is 'RECITATION'
+    safetyRatings: geminiSafetyRatingsSchema.optional(), // undefined when finishReason is 'RECITATION'
     citationMetadata: z.object({
       startIndex: z.number().optional(),
       endIndex: z.number().optional(),
@@ -195,6 +201,6 @@ export const geminiGeneratedContentResponseSchema = z.object({
 // NOTE: promptFeedback is only send in the first chunk in a streaming response
   promptFeedback: z.object({
     blockReason: z.enum(['BLOCK_REASON_UNSPECIFIED', 'SAFETY', 'OTHER']).optional(),
-    safetyRatings: z.array(geminiSafetyRatingSchema).optional(),
+    safetyRatings: geminiSafetyRatingsSchema.optional(),
   }).optional(),
 });

@@ -1,22 +1,26 @@
 import { safeErrorString } from '~/server/wire';
+
 import type { OpenAIWire } from '~/modules/llms/server/openai/openai.wiretypes';
+import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from '~/modules/llms/server/gemini/gemini.wiretypes';
 import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema, AnthropicWireMessageResponse } from '~/modules/llms/server/anthropic/anthropic.wiretypes';
-import { geminiGeneratedContentResponseSchema } from '~/modules/llms/server/gemini/gemini.wiretypes';
 import { wireOllamaChunkedOutputSchema } from '~/modules/llms/server/ollama/ollama.wiretypes';
+import { z } from 'zod';
 
 
 // configuration
-const USER_SYMBOL_MAX_TOKENS = '🧱';
-const USER_SYMBOL_PROMPT_BLOCKED = '🚫';
-// const USER_SYMBOL_NO_DATA_RECEIVED_BROKEN = '🔌';
+const ISSUE_SYMBOL = '❌';
+const ISSUE_SYMBOL_PROMPT_BLOCKED = '🚫';
+const ISSUE_SYMBOL_RECITATION = '🦜';
+const TEXT_SYMBOL_MAX_TOKENS = '🧱';
 
 
 type UpstreamParsedEvent = {
   op: 'text',
   text: string;
 } | {
-  op: 'issue',
+  op: 'issue';
   issue: string;
+  symbol: string;
 } | {
   op: 'parser-close';
 } | {
@@ -131,7 +135,7 @@ export function createUpstreamParserAnthropicMessages(): UpstreamParser {
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        yield { op: 'issue', issue: errorText || 'unknown server issue.' };
+        yield { op: 'issue', issue: errorText || 'unknown server issue.', symbol: ISSUE_SYMBOL };
         return yield { op: 'parser-close' };
 
       default:
@@ -141,6 +145,17 @@ export function createUpstreamParserAnthropicMessages(): UpstreamParser {
 }
 
 
+function explainGeminiSafetyIssues(safetyRatings?: GeminiSafetyRatings): string {
+  if (!safetyRatings || !safetyRatings.length)
+    return 'no safety ratings provided';
+  safetyRatings = (safetyRatings || []).sort(geminiHarmProbabilitySortFunction);
+  // only for non-neglegible probabilities
+  return safetyRatings
+    .filter(rating => rating.probability !== 'NEGLIGIBLE')
+    .map(rating => `${rating.category/*.replace('HARM_CATEGORY_', '')*/} (${rating.probability?.toLowerCase()})`)
+    .join(', ');
+}
+
 export function createUpstreamParserGemini(modelName: string): UpstreamParser {
   let hasBegun = false;
 
@@ -149,7 +164,7 @@ export function createUpstreamParserGemini(modelName: string): UpstreamParser {
 
     // parse the JSON chunk
     const wireGenerationChunk = JSON.parse(eventData);
-    let generationChunk: ReturnType<typeof geminiGeneratedContentResponseSchema.parse>;
+    let generationChunk: z.infer<typeof geminiGeneratedContentResponseSchema>;
     try {
       generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
     } catch (error: any) {
@@ -161,7 +176,7 @@ export function createUpstreamParserGemini(modelName: string): UpstreamParser {
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      yield { op: 'issue', issue: `${USER_SYMBOL_PROMPT_BLOCKED} [Gemini Prompt Blocked] ${blockReason}: ${JSON.stringify(safetyRatings || 'Unknown Safety Ratings', null, 2)}` };
+      yield { op: 'issue', issue: `Input not allowed: ${blockReason}: ${explainGeminiSafetyIssues(safetyRatings)}`, symbol: ISSUE_SYMBOL_PROMPT_BLOCKED };
       return yield { op: 'parser-close' };
     }
 
@@ -172,15 +187,19 @@ export function createUpstreamParserGemini(modelName: string): UpstreamParser {
 
     // no contents: could be an expected or unexpected condition
     if (!singleCandidate.content) {
-      if (singleCandidate.finishReason === 'MAX_TOKENS') {
-        yield { op: 'text', text: ` ${USER_SYMBOL_MAX_TOKENS}` };
-        return yield { op: 'parser-close' };
+      switch (singleCandidate.finishReason) {
+        case 'MAX_TOKENS':
+          yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS} [Interrupted]: MAX_TOKENS` };
+          return yield { op: 'parser-close' };
+        case 'RECITATION':
+          yield { op: 'issue', issue: `Generation stopped due to 'RECITATION'`, symbol: ISSUE_SYMBOL_RECITATION };
+          return yield { op: 'parser-close' };
+        case 'SAFETY':
+          yield { op: 'issue', issue: `Interrupted due to 'SAFETY' filtering: ${explainGeminiSafetyIssues(singleCandidate.safetyRatings)}`, symbol: ISSUE_SYMBOL };
+          return yield { op: 'parser-close' };
+        default:
+          throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
       }
-      if (singleCandidate.finishReason === 'RECITATION') {
-        yield { op: 'issue', issue: 'Generation stopped due to RECITATION' };
-        return yield { op: 'parser-close' };
-      }
-      throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
     }
 
     // expect: single part
@@ -226,7 +245,7 @@ export function createUpstreamParserOllama(): UpstreamParser {
 
     // pass through errors from Ollama
     if ('error' in chunk) {
-      yield { op: 'issue', issue: chunk.error };
+      yield { op: 'issue', issue: `Error: ${chunk.error}`, symbol: ISSUE_SYMBOL };
       return yield { op: 'parser-close' };
     }
 
@@ -271,7 +290,7 @@ export function createUpstreamParserOpenAI(): UpstreamParser {
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error) {
-      yield { op: 'issue', issue: safeErrorString(json.error) || 'unknown.' };
+      yield { op: 'issue', issue: safeErrorString(json.error) || 'unknown.', symbol: ISSUE_SYMBOL };
       return yield { op: 'parser-close' };
     }
 
