@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { LLM_IF_OAI_Chat } from '../../store-llms';
 
@@ -88,12 +88,12 @@ export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenA
 
 async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = ollamaAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Ollama');
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Ollama' });
 }
 
 async function ollamaPOST<TOut extends object, TPostBody extends object>(access: OllamaAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = ollamaAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Ollama');
+  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Ollama' });
 }
 
 
@@ -162,7 +162,7 @@ export const llmOllamaRouter = createTRPCRouter({
 
       // fetch as a large text buffer, made of JSONs separated by newlines
       const { headers, url } = ollamaAccess(input.access, '/api/pull');
-      const pullRequest = await fetchTextOrTRPCError(url, 'POST', headers, { 'name': input.name }, 'Ollama::pull');
+      const pullRequest = await fetchTextOrTRPCThrow({ url, method: 'POST', headers, body: { 'name': input.name }, name: 'Ollama::pull' });
 
       // accumulate status and error messages
       let lastStatus: string = 'unknown';
@@ -183,7 +183,7 @@ export const llmOllamaRouter = createTRPCRouter({
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
       const { headers, url } = ollamaAccess(input.access, '/api/delete');
-      const deleteOutput = await fetchTextOrTRPCError(url, 'DELETE', headers, { 'name': input.name }, 'Ollama::delete');
+      const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, body: { 'name': input.name }, name: 'Ollama::delete' });
       if (deleteOutput?.length && deleteOutput !== 'null')
         throw new Error('Ollama delete issue: ' + deleteOutput);
     }),

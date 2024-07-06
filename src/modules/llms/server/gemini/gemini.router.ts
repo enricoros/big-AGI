@@ -5,7 +5,7 @@ import { env } from '~/server/env.mjs';
 import packageJson from '../../../../../package.json';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
 import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
@@ -95,12 +95,12 @@ export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, histo
 
 async function geminiGET<TOut extends object>(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = geminiAccess(access, modelRefId, apiPath);
-  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Gemini');
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Gemini' });
 }
 
 async function geminiPOST<TOut extends object, TPostBody extends object>(access: GeminiAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = geminiAccess(access, modelRefId, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Gemini');
+  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Gemini' });
 }
 
 
