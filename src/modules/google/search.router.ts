@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { Search } from './search.types';
 
@@ -35,7 +35,11 @@ export const googleSearchRouter = createTRPCRouter({
         throw new Error('Missing API Key or Custom Search Engine ID');
 
       const url = `https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`;
-      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await fetchJsonOrTRPCError(url, 'GET', {}, undefined, 'Google Custom Search');
+      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await fetchJsonOrTRPCThrow({
+        url,
+        name: 'Google Custom Search',
+      });
+
       if (data.error)
         throw new TRPCError({
           code: 'BAD_REQUEST',

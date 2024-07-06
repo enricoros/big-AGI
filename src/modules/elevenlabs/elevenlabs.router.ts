@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 
 export const speechInputSchema = z.object({
@@ -49,7 +49,11 @@ export const elevenlabsRouter = createTRPCRouter({
       const { elevenKey } = input;
       const { headers, url } = elevenlabsAccess(elevenKey, '/v1/voices');
 
-      const voicesList = await fetchJsonOrTRPCError<ElevenlabsWire.VoicesList>(url, 'GET', headers, undefined, 'ElevenLabs');
+      const voicesList = await fetchJsonOrTRPCThrow<ElevenlabsWire.VoicesList>({
+        url,
+        headers,
+        name: 'ElevenLabs',
+      });
 
       // bring category != 'premade' to the top
       voicesList.voices.sort((a, b) => {
