@@ -23,6 +23,8 @@ export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request;
   return {
     // only used by Backend Analytics
     hostName: req.headers?.get('host') ?? 'localhost',
+    // enables cancelling upstream requests when the downstream request is aborted
+    reqSignal: req.signal,
   };
 };
 

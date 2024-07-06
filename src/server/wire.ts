@@ -16,8 +16,14 @@ export class ServerFetchError extends Error {
 /**
  * Fetches a URL, but throws an Error if the response is not ok.
  */
-export async function nonTrpcServerFetchOrThrow(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: object | undefined): Promise<Response> {
-  const response = await fetch(url, { method, headers, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+export async function nonTrpcServerFetchOrThrow(url: string, method: 'GET' | 'POST', headers: HeadersInit, body: object | undefined, signal?: AbortSignal): Promise<Response> {
+  // create the upstream request object
+  const response = await fetch(url, {
+    method,
+    headers,
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    ...(signal !== undefined ? { signal } : {}),
+  });
 
   // Throws an error if the response is not ok
   // Use in server-side code, and not tRPC code (which has utility functions in trpc.serverutils.ts)
