@@ -170,23 +170,24 @@ export function Fusion(props: {
           <GoodTooltip title='Use this message'>
             <IconButton
               size='sm'
-              // variant='solid'
+              // variant='plain'
               color={GATHER_COLOR}
               disabled={isFusing}
               onClick={handleFusionUse}
               // endDecorator={<TelegramIcon />}
               sx={{
                 // ...BEAM_BTN_SX,
-                // fontSize: 'xs',
+                fontSize: 'xs',
+                // '--Icon-fontSize': 'var(--joy-fontSize-xl)',
                 // backgroundColor: 'background.popup',
                 // border: '1px solid',
                 // borderColor: `${GATHER_COLOR}.outlinedBorder`,
                 // boxShadow: `0 4px 16px -4px rgb(var(--joy-palette-${GATHER_COLOR}-mainChannel) / 20%)`,
                 animation: `${animationEnterBelow} 0.1s ease-out`,
-                // whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap',
               }}
             >
-              {/*Ok*/}
+              {/*Use*/}
               <TelegramIcon />
             </IconButton>
           </GoodTooltip>

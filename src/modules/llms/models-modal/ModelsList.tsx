@@ -2,8 +2,9 @@ import * as React from 'react';
 import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
+import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
@@ -13,6 +14,10 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '../store-llms';
 import { IModelVendor } from '../vendors/IModelVendor';
 import { findVendorById } from '../vendors/vendors.registry';
+
+
+// configuration
+const SHOW_LLM_INTERFACES = false;
 
 
 const absorbListPadding: SxProps = { my: 'calc(var(--ListItem-paddingY) / -2)' };
@@ -50,14 +55,33 @@ function ModelItem(props: {
 
   let tooltip = llm._source.label;
   if (llm.description)
-    tooltip += ' - ' + llm.description;
-  tooltip += ' - ';
+    tooltip += ' · ' + llm.description;
+  tooltip += ' · ';
   if (llm.contextTokens) {
     tooltip += llm.contextTokens.toLocaleString() + ' tokens';
     if (llm.maxOutputTokens)
       tooltip += ' / ' + llm.maxOutputTokens.toLocaleString() + ' max output tokens';
   } else
     tooltip += 'token count not provided';
+
+  const chipsComponentsMemo = React.useMemo(() => {
+    if (!SHOW_LLM_INTERFACES)
+      return null;
+    return llm.interfaces.map((iface, i) => {
+      switch (iface) {
+        case 'oai-chat':
+          return <Chip key={i} size='sm' variant={props.chipChat ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}><TextsmsOutlinedIcon /></Chip>;
+        case 'oai-chat-fn':
+          return <Chip key={i} size='sm' variant={props.chipFunc ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}>{'{}'}</Chip>;
+        case 'oai-chat-vision':
+          return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><VisibilityOutlinedIcon />️</Chip>;
+        case 'oai-chat-json':
+          return null;
+        case 'oai-complete':
+          return null;
+      }
+    }).reverse();
+  }, [llm.interfaces, props.chipChat, props.chipFunc]);
 
   return (
     <ListItem>
@@ -83,9 +107,22 @@ function ModelItem(props: {
         </GoodTooltip>
 
         {/* Chips */}
-        {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
-        {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
-        {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
+        {SHOW_LLM_INTERFACES ? (chipsComponentsMemo && (
+          <Box sx={{
+            mr: 2,
+            display: 'flex', gap: 0.5,
+            // the following line is to absorb the padding of the list item
+            // my: 'calc(var(--ListItem-paddingY) / -2)',
+          }}>
+            {chipsComponentsMemo}
+          </Box>
+        )) : <>
+          {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
+          {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
+          {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
+        </>}
+
+        {/* Action Buttons */}
 
         <GoodTooltip title={llm.hidden ? 'Hidden' : 'Shown in Chat'}>
           <IconButton aria-label={llm.hidden ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={llm.hidden ? handleLLMUnhide : handleLLMHide} sx={absorbListPadding}>

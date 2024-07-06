@@ -67,7 +67,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   // stream the assistant's messages
   const messagesHistory: VChatMessageIn[] = inputHistory.map(({ role, text }) => ({ role, content: text }));
-  streamAssistantMessage(llmId, messagesHistory, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
+  streamAssistantMessage(llmId, messagesHistory, 'beam-scatter', ray.rayId, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
     .then((status) => {
       _rayUpdate(ray.rayId, {
         status: (status.outcome === 'success') ? 'success'
@@ -134,6 +134,7 @@ export function rayIsImported(ray: BRay | null): boolean {
 interface ScatterStateSlice {
 
   rays: BRay[];
+  hadImportedRays: boolean;
 
   // derived state
   isScattering: boolean; // true if any ray is scattering at the moment
@@ -148,6 +149,7 @@ export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => 
   return {
     // (remember) keep the same quantity of rays and same llms
     rays: prevRays.map(prevRay => createBRay(prevRay.rayLlmId)),
+    hadImportedRays: false,
 
     isScattering: false,
     raysReady: 0,
@@ -238,6 +240,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
         // append the other rays (excluding the ones to remove)
         ...rays.filter((ray) => !raysToRemove.includes(ray)),
       ],
+      hadImportedRays: messages.length > 0,
     });
     _storeLastScatterConfig();
     _syncRaysStateToScatter();

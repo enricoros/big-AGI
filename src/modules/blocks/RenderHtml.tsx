@@ -1,14 +1,14 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WebIcon from '@mui/icons-material/Web';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { HtmlBlock } from './blocks';
-import { overlayButtonsSx } from './code/RenderCode';
+import { OverlayButton, overlayButtonsSx } from './code/RenderCode';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)
@@ -99,14 +99,14 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
         {/* External HTML Buttons */}
         <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, p: 1.5 }}>
           <Tooltip title={showHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
-            <IconButton variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+            <OverlayButton variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
               <WebIcon />
-            </IconButton>
+            </OverlayButton>
           </Tooltip>
           <Tooltip title='Copy Code' variant='solid'>
-            <IconButton variant='outlined' onClick={handleCopyToClipboard}>
+            <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
               <ContentCopyIcon />
-            </IconButton>
+            </OverlayButton>
           </Tooltip>
         </Box>
 

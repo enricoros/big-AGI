@@ -23,6 +23,7 @@ interface ModuleBeamState {
   cardScrolling: boolean;
   scatterShowLettering: boolean;
   scatterShowPrevMessages: boolean;
+  gatherAutoStartAfterScatter: boolean;
   gatherShowAllPrompts: boolean;
 }
 
@@ -37,6 +38,7 @@ interface ModuleBeamStore extends ModuleBeamState {
   toggleCardScrolling: () => void;
   toggleScatterShowLettering: () => void;
   toggleScatterShowPrevMessages: () => void;
+  toggleGatherAutoStartAfterScatter: () => void;
   toggleGatherShowAllPrompts: () => void;
 }
 
@@ -50,6 +52,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     scatterShowLettering: false,
     scatterShowPrevMessages: false,
     gatherShowAllPrompts: false,
+    gatherAutoStartAfterScatter: false,
 
 
     addPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
@@ -85,6 +88,8 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     toggleScatterShowLettering: () => _set(state => ({ scatterShowLettering: !state.scatterShowLettering })),
 
     toggleScatterShowPrevMessages: () => _set(state => ({ scatterShowPrevMessages: !state.scatterShowPrevMessages })),
+
+    toggleGatherAutoStartAfterScatter: () => _set(state => ({ gatherAutoStartAfterScatter: !state.gatherAutoStartAfterScatter })),
 
     toggleGatherShowAllPrompts: () => _set(state => ({ gatherShowAllPrompts: !state.gatherShowAllPrompts })),
 

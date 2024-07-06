@@ -153,7 +153,11 @@ export function AttachmentMenu(props: {
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === aConverterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Typography level='body-xs'>
-              🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.type}, ${output.type === 'text-block' ? output.text.length.toLocaleString() : '(base64 image)'} bytes`).join(' · ')}
+              🡒 {isOutputMissing ? 'empty' : aOutputs.map(output => `${output.type}, ${output.type === 'text-block'
+              ? output.text.length.toLocaleString()
+              : output.type === 'image-part'
+                ? output.base64Url.length.toLocaleString()
+                : '(other)'} bytes`).join(' · ')}
             </Typography>
             {!!tokenCountApprox && <Typography level='body-xs'>
               🡒 {tokenCountApprox.toLocaleString()} tokens

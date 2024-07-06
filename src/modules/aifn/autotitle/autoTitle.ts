@@ -1,5 +1,5 @@
 import { getFastLLMId } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow } from '~/modules/llms/llm.client';
+import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { useChatStore } from '~/common/state/store-chats';
 
@@ -34,21 +34,23 @@ export async function conversationAutoTitle(conversationId: string, forceReplace
 
   try {
     // LLM chat-generate call
+    const instructions: VChatMessageIn[] = [
+      { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
+      {
+        role: 'user', content:
+          'Analyze the given short conversation (every line is truncated) and extract a concise chat title that ' +
+          'summarizes the conversation in as little as a couple of words.\n' +
+          'Only respond with the lowercase short title and nothing else.\n' +
+          '\n' +
+          '```\n' +
+          historyLines.join('\n') +
+          '```\n',
+      },
+    ];
     const chatResponse = await llmChatGenerateOrThrow(
       fastLLMId,
-      [
-        { role: 'system', content: `You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.` },
-        {
-          role: 'user', content:
-            'Analyze the given short conversation (every line is truncated) and extract a concise chat title that ' +
-            'summarizes the conversation in as little as a couple of words.\n' +
-            'Only respond with the lowercase short title and nothing else.\n' +
-            '\n' +
-            '```\n' +
-            historyLines.join('\n') +
-            '```\n',
-        },
-      ],
+      instructions,
+      'chat-ai-title', conversationId,
       null, null,
     );
 

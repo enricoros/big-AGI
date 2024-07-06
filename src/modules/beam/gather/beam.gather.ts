@@ -104,6 +104,7 @@ interface GatherStateSlice {
 
   // derived state (just acts as a cache to avoid re-calculating)
   isGatheringAny: boolean;
+  // fusionsReady: number;
 
 }
 
@@ -118,6 +119,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[], gatherLlmId: DLLM
     fusions: [],
 
     isGatheringAny: false,
+    // fusionsReady: 0,
   };
 };
 
@@ -170,10 +172,12 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
 
     // 'or' the status of all fusions
     const isGatheringAny = newFusions.some(fusionIsFusing);
+    // const fusionsReady = newFusions.filter(fusionIsUsableOutput).length;
 
     _set({
       fusions: newFusions,
       isGatheringAny,
+      // fusionsReady,
     });
   },
 

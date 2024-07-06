@@ -8,7 +8,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
-import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
@@ -120,8 +120,11 @@ const accessOnlySchema = z.object({
 
 const chatGenerateInputSchema = z.object({
   access: geminiAccessSchema,
-  model: openAIModelSchema, history: openAIHistorySchema,
-  // functions: openAIFunctionsSchema.optional(), forceFunctionName: z.string().optional(),
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
+  // functions: openAIFunctionsSchema.optional(),
+  // forceFunctionName: z.string().optional(),
+  context: llmsGenerateContextSchema.optional(),
 });
 
 
@@ -147,7 +150,7 @@ export const llmGeminiRouter = createTRPCRouter({
       // map to our output schema
       const models = detailedModels
         .filter(geminiFilterModels)
-        .map(geminiModel => geminiModelToModelDescription(geminiModel, detailedModels))
+        .map(geminiModel => geminiModelToModelDescription(geminiModel))
         .sort(geminiSortModels);
 
       return {

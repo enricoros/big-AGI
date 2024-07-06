@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TitleIcon from '@mui/icons-material/Title';
@@ -26,6 +27,7 @@ export function UxLabsSettings() {
     labsCameraDesktop, setLabsCameraDesktop,
     labsChatBarAlt, setLabsChatBarAlt,
     labsHighPerformance, setLabsHighPerformance,
+    labsShowCost, setLabsShowCost,
   } = useUXLabsStore();
 
   return <>
@@ -51,6 +53,11 @@ export function UxLabsSettings() {
       title={<><AddAPhotoIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} /> Webcam Capture</>} description={/*'v1.8 · ' +*/ (labsCameraDesktop ? 'Enabled' : 'Disabled')}
       checked={labsCameraDesktop} onChange={setLabsCameraDesktop}
     />}
+
+    <FormSwitchControl
+      title={<><LocalAtmOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Cost of messages</>} description={labsShowCost ? 'Show when available' : 'Disabled'}
+      checked={labsShowCost} onChange={setLabsShowCost}
+    />
 
     {/*
       Other Graduated (removed or backlog):

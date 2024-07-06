@@ -71,8 +71,8 @@ export function BeamScatterInput(props: {
   const userMessageDecorator = React.useMemo(() => {
     return (/*showHistoryMessage &&*/ otherHistoryCount >= 1 && scatterShowPrevMessages) ? (
       // <Chip color='primary' variant='outlined' endDecorator={<ChipDelete />} sx={{ my: 1 }}>
-      <Typography level='body-xs' sx={{ my: 1.5 }} onClick={undefined /*() => setShowHistoryMessage(on => !on)*/}>
-        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before this input ...
+      <Typography level='body-xs' sx={{ my: 1, textAlign: 'center', color: 'neutral.softColor' }} onClick={undefined /*() => setShowHistoryMessage(on => !on)*/}>
+        ... {otherHistoryCount === 1 ? (isFirstMessageSystem ? '1 system message' : '1 message') : `${otherHistoryCount} messages`} before this one ...
       </Typography>
       // </Chip>
     ) : null;

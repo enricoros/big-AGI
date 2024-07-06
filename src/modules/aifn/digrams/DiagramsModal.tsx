@@ -56,8 +56,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // state
   const [showOptions, setShowOptions] = React.useState(true);
   const [diagramCode, setDiagramCode] = React.useState<string | null>(null);
-  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Diagram');
-  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Syntax');
+  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('mind', diagramTypes, 'Diagram');
+  const [diagramLanguage, languageComponent, setDiagramLanguage] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Syntax');
   const [customInstruction, setCustomInstruction] = React.useState<string>('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
@@ -68,7 +68,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
 
   // derived state
-  const { conversationId, text: subject } = props.config;
+  const { conversationId, messageId, text: subject } = props.config;
+  const diagramLlmId = diagramLlm?.id;
 
 
   /**
@@ -97,7 +98,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
 
     try {
-      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, null, null, stepAbortController.signal,
+      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, 'ai-diagram', messageId, null, null, stepAbortController.signal,
         ({ textSoFar }) => textSoFar && setDiagramCode(diagramCode = textSoFar),
       );
     } catch (error: any) {
@@ -108,7 +109,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject, customInstruction]);
+  }, [abortController, conversationId, customInstruction, diagramLanguage, diagramLlm, diagramType, messageId, subject]);
 
 
   // [Effect] Auto-abort on unmount
@@ -122,17 +123,39 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   }, [abortController]);
 
 
-  const handleInsertAndClose = () => {
+  // custom instruction
+
+  const handleCustomInstructionKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void handleGenerateNew();
+    }
+  }, [handleGenerateNew]);
+
+  const handleCustomInstructionChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomInstruction(event.target.value);
+  }, []);
+
+
+  // done
+
+  const handleAppendMessageAndClose = React.useCallback(() => {
     if (!diagramCode)
       return setErrorMessage('Nothing to add to the conversation.');
 
     const diagramMessage = createDMessage('assistant', diagramCode);
     // diagramMessage.purposeId = conversation.systemPurposeId;
-    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlm?.id ? `-${diagramLlm.id}` : '');
+    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '');
 
     useChatStore.getState().appendMessage(conversationId, diagramMessage);
     props.onClose();
-  };
+  }, [conversationId, diagramCode, diagramLlmId, props]);
+
+
+  // [effect] Auto-switch language to match diagram type
+  React.useEffect(() => {
+    setDiagramLanguage(diagramType === 'mind' ? 'mermaid' : 'plantuml');
+  }, [diagramType, setDiagramLanguage]);
 
 
   return (
@@ -170,7 +193,14 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           <Grid xs={12} md={6}>
             <FormControl>
               <FormLabel>Customize</FormLabel>
-              <Input title='Custom Instruction' placeholder='e.g. visualize as state' value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} />
+              <Input
+                title='Custom Instruction'
+                placeholder='e.g. visualize as state'
+                value={customInstruction}
+                onKeyDown={handleCustomInstructionKeyDown}
+                onChange={handleCustomInstructionChange}
+                endDecorator={(abortController && customInstruction) ? <CircularProgress size='sm' /> : undefined}
+              />
             </FormControl>
           </Grid>
         </Grid>
@@ -208,7 +238,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between' }}>
 
         {/* Add Message to Chat (once complete) */}
-        <Button variant='soft' color='success' disabled={!diagramCode || !!abortController} endDecorator={<TelegramIcon />} onClick={handleInsertAndClose}>
+        <Button variant='soft' color='success' disabled={!diagramCode || !!abortController} endDecorator={<TelegramIcon />} onClick={handleAppendMessageAndClose}>
           Add To Chat
         </Button>
 

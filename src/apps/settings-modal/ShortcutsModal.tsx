@@ -56,4 +56,3 @@ export function ShortcutsModal(props: { onClose: () => void }) {
       />
     </GoodModal>
   );
-}

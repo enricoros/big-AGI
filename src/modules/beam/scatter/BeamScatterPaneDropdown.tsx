@@ -7,6 +7,8 @@ import DriveFileRenameOutlineRoundedIcon from '@mui/icons-material/DriveFileRena
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
+import { DEV_MODE_SETTINGS } from '../../../apps/settings-modal/UxLabsSettings';
+
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
@@ -69,6 +71,7 @@ export function BeamScatterDropdown(props: {
     cardScrolling, toggleCardScrolling,
     scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
+    gatherAutoStartAfterScatter, toggleGatherAutoStartAfterScatter,
     gatherShowAllPrompts, toggleGatherShowAllPrompts,
   } = useModuleBeamStore();
 
@@ -163,9 +166,14 @@ export function BeamScatterDropdown(props: {
           Response Numbers
         </MenuItem>
 
-        <ListItem onClick={() => handleClearLastConfig()}>
+        <ListItem onClick={DEV_MODE_SETTINGS ? () => handleClearLastConfig() : undefined}>
           <Typography level='body-sm'>Advanced</Typography>
         </ListItem>
+
+        <MenuItem onClick={toggleGatherAutoStartAfterScatter}>
+          <ListItemDecorator>{gatherAutoStartAfterScatter && <CheckRoundedIcon />}</ListItemDecorator>
+          Auto-Merge
+        </MenuItem>
 
         <MenuItem onClick={toggleGatherShowAllPrompts}>
           <ListItemDecorator>{gatherShowAllPrompts && <CheckRoundedIcon />}</ListItemDecorator>
