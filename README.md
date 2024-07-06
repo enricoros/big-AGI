@@ -17,18 +17,32 @@ Or fork & run on Vercel
 
 ## 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
+> Note: bigger better features (incl. Beam-2) are being cooked outside of `main`.
+
 [//]: # (big-AGI is an open book; see the **[ready-to-ship and future ideas]&#40;https://github.com/users/enricoros/projects/4/views/2&#41;** in our open roadmap)
 
-#### What's New in 1.15.1 · April 10, 2024 (minor release, models support)
+### What's New in 1.16.1...1.16.3 · Jun 20, 2024 (patch releases)
 
-- Support for the newly released Gemini Pro 1.5 models
-- Support for the new OpenAI 2024-04-09 Turbo models
-- Ctrl+S and Ctrl+O to save/load chats on desktop
-- Resilience fixes after the large success of 1.15.0
+- 1.16.3: Anthropic Claude 3.5 Sonnet model support
+- 1.16.2: Improve web downloads, as text, markdwon, or HTML
+- 1.16.2: Proper support for Gemini models
+- 1.16.2: Added the latest Mistral model
+- 1.16.2: Tokenizer support for gpt-4o
+- 1.16.2: Updates to Beam
+- 1.16.1: Support for the new OpenAI GPT-4o 2024-05-13 model
 
-> Note: Beam-2 and new larger features are being cooked outside of `main`.
+### What's New in 1.16.0 · May 9, 2024 · Crystal Clear
 
-### 3,000 Commits Milestone · April 7, 2024
+- [Beam](https://big-agi.com/blog/beam-multi-model-ai-reasoning) core and UX improvements based on user feedback
+- Chat cost estimation 💰 (enable it in Labs / hover the token counter)
+- Save/load chat files with Ctrl+S / Ctrl+O on desktop
+- Major enhancements to the Auto-Diagrams tool
+- YouTube Transcriber Persona for chatting with video content, [#500](https://github.com/enricoros/big-AGI/pull/500)
+- Improved formula rendering (LaTeX), and dark-mode diagrams, [#508](https://github.com/enricoros/big-AGI/issues/508), [#520](https://github.com/enricoros/big-AGI/issues/520)
+- Models update: **Anthropic**, **Groq**, **Ollama**, **OpenAI**, **OpenRouter**, **Perplexity**
+- Code soft-wrap, chat text selection toolbar, 3x faster on Apple silicon, and more [#517](https://github.com/enricoros/big-AGI/issues/517), [507](https://github.com/enricoros/big-AGI/pull/507)
+
+#### 3,000 Commits Milestone · April 7, 2024
 
 ![big-AGI Milestone](https://github.com/enricoros/big-AGI/assets/32999/47fddbb1-9bd6-4b58-ace4-781dfcb80923)
 
@@ -42,9 +56,11 @@ Or fork & run on Vercel
 - Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
 - Enhanced the default Persona
 - Fixes to Gemini models and SVGs, improvements to UI and icons
+- 1.15.1: Support for Gemini Pro 1.5 and OpenAI Turbo models
 - Beast release, over 430 commits, 10,000+ lines changed: [release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.15.0), and changes [v1.14.1...v1.15.0](https://github.com/enricoros/big-AGI/compare/v1.14.1...v1.15.0)
 
-### What's New in 1.14.1 · March 7, 2024 · Modelmorphic
+<details>
+<summary>What's New in 1.14.1 · March 7, 2024 · Modelmorphic</summary>
 
 - **Anthropic** [Claude-3](https://www.anthropic.com/news/claude-3-family) model family support. [#443](https://github.com/enricoros/big-AGI/issues/443)
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
@@ -54,7 +70,10 @@ Or fork & run on Vercel
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
 
-### What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind
+</details>
+
+<details>
+<summary>What's New in 1.13.0 · Feb 8, 2024 · Multi + Mind</summary>
 
 https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385686b13
 
@@ -65,6 +84,8 @@ https://github.com/enricoros/big-AGI/assets/32999/01732528-730e-41dc-adc7-511385
 - Dev2 Persona Technology Preview
 - Better looking chats with improved spacing, fonts, and menus
 - More: new video player, [LM Studio tutorial](https://github.com/enricoros/big-AGI/blob/main/docs/config-local-lmstudio.md) (thanks @aj47), [MongoDB support](https://github.com/enricoros/big-AGI/blob/main/docs/deploy-database.md) (thanks @ranfysvalle02), and speedups
+
+</details>
 
 <details>
 <summary>What's New in 1.12.0 · Jan 26, 2024 · AGI Hotline</summary>
@@ -122,7 +143,7 @@ You can easily configure 100s of AI models in big-AGI:
 
 | **AI models**       | _supported vendors_                                                                                                                                                                                                             |
 |:--------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.com) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                                                                   |
+| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                                                                   |
 | Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                               |
 | Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                  |
 | Language services   | [Anthropic](https://anthropic.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 

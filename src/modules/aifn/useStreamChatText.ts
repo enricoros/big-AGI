@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
-import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
 
 export function useStreamChatText() {
@@ -13,7 +13,7 @@ export function useStreamChatText() {
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
 
-  const startStreaming = React.useCallback(async (llmId: DLLMId, prompt: VChatMessageIn[]) => {
+  const startStreaming = React.useCallback(async (llmId: DLLMId, prompt: VChatMessageIn[], contextName: VChatStreamContextName, contextRef: VChatContextRef) => {
     setStreamError(null);
     setPartialText(null);
     setText(null);
@@ -24,7 +24,7 @@ export function useStreamChatText() {
 
     try {
       let lastText = '';
-      await llmStreamingChatGenerate(llmId, prompt, null, null, abortControllerRef.current.signal, ({ textSoFar }) => {
+      await llmStreamingChatGenerate(llmId, prompt, contextName, contextRef, null, null, abortControllerRef.current.signal, ({ textSoFar }) => {
         if (textSoFar) {
           lastText = textSoFar;
           setPartialText(lastText);

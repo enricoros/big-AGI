@@ -13,6 +13,7 @@ import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
+import { useModuleBeamStore } from '../store-module-beam';
 
 
 const gatherPaneClasses = {
@@ -57,7 +58,7 @@ export function BeamGatherPane(props: {
   beamStore: BeamStoreApi,
   canGather: boolean,
   isMobile: boolean,
-  onAddFusion: () => void,
+  // onAddFusion: () => void,
   raysReady: number,
 }) {
 
@@ -79,8 +80,9 @@ export function BeamGatherPane(props: {
     setCurrentFactoryId: state.setCurrentFactoryId,
     setCurrentGatherLlmId: state.setCurrentGatherLlmId,
   })));
+  const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
   const [_, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(
-    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true, !props.canGather,
+    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true, !props.canGather && !gatherAutoStartAfterScatter,
   );
 
   // derived state

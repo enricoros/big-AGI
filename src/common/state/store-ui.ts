@@ -32,6 +32,9 @@ interface UIPreferencesStore {
   renderMarkdown: boolean;
   setRenderMarkdown: (renderMarkdown: boolean) => void;
 
+  renderCodeSoftWrap: boolean;
+  setRenderCodeSoftWrap: (renderCodeSoftWrap: boolean) => void;
+
   // showPersonaExamples: boolean;
   // setShowPersonaExamples: (showPersonaExamples: boolean) => void;
 
@@ -74,6 +77,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       renderMarkdown: true,
       setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
+
+      renderCodeSoftWrap: false,
+      setRenderCodeSoftWrap: (renderCodeSoftWrap: boolean) => set({ renderCodeSoftWrap }),
 
       // showPersonaExamples: false,
       // setShowPersonaExamples: (showPersonaExamples: boolean) => set({ showPersonaExamples }),

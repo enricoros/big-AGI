@@ -9,6 +9,13 @@ export type ComposerOutputPart = {
   // TODO: not implemented yet
   type: 'image-part',
   base64Url: string,
+  metadata: {
+    title?: string,
+    generatedBy?: string,
+    altText?: string,
+    width?: number,
+    height?: number,
+  },
   collapsible: false,
 };
 

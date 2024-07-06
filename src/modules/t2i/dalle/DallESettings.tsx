@@ -57,7 +57,7 @@ export function DallESettings() {
 
     {isDallE3 && <FormRadioControl
       title='Style'
-      description={(isDallE3 && dalleStyle === 'vivid') ? 'Hyper-Real' : 'Relistic'}
+      description={(isDallE3 && dalleStyle === 'vivid') ? 'Hyper-Real' : 'Realistic'}
       disabled={!isDallE3}
       options={[
         { value: 'natural', label: 'Natural' },

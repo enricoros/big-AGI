@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-import { IconButton, Tooltip } from '@mui/joy';
+import { Tooltip } from '@mui/joy';
+
+import { OverlayButton } from './RenderCode';
 
 
 // JSFiidle is a web-based HTML, CSS, and JavaScript code editor
@@ -49,9 +51,9 @@ const handleOpenInJsFiddle = (code: string, language: string) => {
 export function ButtonJsFiddle(props: { code: string, language: string }): React.JSX.Element {
   return (
     <Tooltip title='Open in JSFiddle' variant='solid'>
-      <IconButton onClick={() => handleOpenInJsFiddle(props.code, props.language)}>
+      <OverlayButton variant='outlined' onClick={() => handleOpenInJsFiddle(props.code, props.language)}>
         JS
-      </IconButton>
+      </OverlayButton>
     </Tooltip>
   );
 }

@@ -277,7 +277,6 @@ function ChatDrawer(props: {
         <Button
           // variant='outlined'
           variant={disableNewButton ? undefined : 'soft'}
-          color='primary'
           disabled={disableNewButton}
           onClick={handleButtonNew}
           sx={{
@@ -285,16 +284,12 @@ function ChatDrawer(props: {
             justifyContent: 'flex-start',
             padding: '0px 0.75rem',
 
-            // text size
-            fontSize: 'sm',
-            fontWeight: 'lg',
-
             // style
-            // backgroundColor: 'background.popup',
             border: '1px solid',
             borderColor: 'neutral.outlinedBorder',
             borderRadius: 'sm',
             '--ListItemDecorator-size': 'calc(2.5rem - 1px)', // compensate for the border
+            // backgroundColor: 'background.popup',
             // boxShadow: (disableNewButton || props.isMobile) ? 'none' : 'xs',
             // transition: 'box-shadow 0.2s',
           }}
@@ -315,7 +310,7 @@ function ChatDrawer(props: {
               bottomBarBasis={filteredChatsBarBasis}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
-              onConversationDelete={handleConversationDeleteNoConfirmation}
+              onConversationDeleteNoConfirmation={handleConversationDeleteNoConfirmation}
               onConversationExport={onConversationsExportDialog}
               onConversationFolderChange={handleConversationFolderChange}
             />

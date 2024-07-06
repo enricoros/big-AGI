@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { BrowserContext, connect, ScreenshotOptions, TimeoutError } from '@cloudflare/puppeteer';
+
+import { BrowserContext, connect, ScreenshotOptions } from '@cloudflare/puppeteer';
+import { default as TurndownService } from 'turndown';
+import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
@@ -16,17 +19,22 @@ const browseAccessSchema = z.object({
   dialect: z.enum(['browse-wss']),
   wssEndpoint: z.string().trim().optional(),
 });
+type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
+
+const pageTransformSchema = z.enum(['html', 'text', 'markdown']);
+type PageTransformSchema = z.infer<typeof pageTransformSchema>;
 
 const fetchPageInputSchema = z.object({
   access: browseAccessSchema,
-  subjects: z.array(z.object({
+  requests: z.array(z.object({
     url: z.string().url(),
+    transforms: z.array(pageTransformSchema),
+    screenshot: z.object({
+      width: z.number(),
+      height: z.number(),
+      quality: z.number().optional(),
+    }).optional(),
   })),
-  screenshot: z.object({
-    width: z.number(),
-    height: z.number(),
-    quality: z.number().optional(),
-  }).optional(),
 });
 
 
@@ -34,16 +42,18 @@ const fetchPageInputSchema = z.object({
 
 const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
-  content: z.string(),
+  content: z.record(pageTransformSchema, z.string()),
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
   screenshot: z.object({
-    imageDataUrl: z.string().startsWith('data:image/'),
+    webpDataUrl: z.string().startsWith('data:image/webp'),
     mimeType: z.string().startsWith('image/'),
     width: z.number(),
     height: z.number(),
   }).optional(),
 });
+type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
+
 
 const fetchPagesOutputSchema = z.object({
   pages: z.array(fetchPageWorkerOutputSchema),
@@ -55,21 +65,23 @@ export const browseRouter = createTRPCRouter({
   fetchPages: publicProcedure
     .input(fetchPageInputSchema)
     .output(fetchPagesOutputSchema)
-    .mutation(async ({ input: { access, subjects, screenshot } }) => {
-      const pages: FetchPageWorkerOutputSchema[] = [];
+    .mutation(async ({ input: { access, requests } }) => {
 
-      for (const subject of subjects) {
-        try {
-          pages.push(await workerPuppeteer(access, subject.url, screenshot?.width, screenshot?.height, screenshot?.quality));
-        } catch (error: any) {
-          pages.push({
-            url: subject.url,
-            content: '',
-            error: error?.message || JSON.stringify(error) || 'Unknown fetch error',
+      const pagePromises = requests.map(request =>
+        workerPuppeteer(access, request.url, request.transforms, request.screenshot));
+
+      const results = await Promise.allSettled(pagePromises);
+
+      const pages: FetchPageWorkerOutputSchema[] = results.map((result, index) =>
+        result.status === 'fulfilled'
+          ? result.value
+          : {
+            url: requests[index].url,
+            content: {},
+            error: result.reason?.message || 'Unknown fetch error',
             stopReason: 'error',
-          });
-        }
-      }
+          },
+      );
 
       return { pages };
     }),
@@ -77,12 +89,13 @@ export const browseRouter = createTRPCRouter({
 });
 
 
-type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
-type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
+async function workerPuppeteer(
+  access: BrowseAccessSchema,
+  targetUrl: string,
+  transforms: PageTransformSchema[],
+  screenshotOptions?: { width: number, height: number, quality?: number },
+): Promise<FetchPageWorkerOutputSchema> {
 
-async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ssWidth: number | undefined, ssHeight: number | undefined, ssQuality: number | undefined): Promise<FetchPageWorkerOutputSchema> {
-
-  // access
   const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
   const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
   if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
@@ -93,7 +106,7 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ss
 
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
-    content: '',
+    content: {},
     error: undefined,
     stopReason: 'error',
     screenshot: undefined,
@@ -117,35 +130,49 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ss
     if (!isWebPage) {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(`Invalid content-type: ${contentType}`);
-    } else
+    } else {
       result.stopReason = 'end';
+    }
   } catch (error: any) {
-    const isTimeout: boolean = error instanceof TimeoutError;
+    // This was "error instanceof TimeoutError;" but threw some type error - trying the below instead
+    const isTimeout = error?.message?.includes('Navigation timeout') || false;
     result.stopReason = isTimeout ? 'timeout' : 'error';
-    if (!isTimeout)
-      result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown goto error';
+    if (!isTimeout) {
+      result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown goto error');
+    }
   }
 
   // transform the content of the page as text
   try {
     if (result.stopReason !== 'error') {
-      result.content = await page.evaluate(() => {
-        const content = document.body.innerText || document.textContent;
-        if (!content)
-          throw new Error('No content');
-        return content;
-      });
+      for (const transform of transforms) {
+        switch (transform) {
+          case 'html':
+            result.content.html = cleanHtml(await page.content());
+            break;
+          case 'text':
+            result.content.text = await page.evaluate(() => document.body.innerText || document.textContent || '');
+            break;
+          case 'markdown':
+            const html = await page.content();
+            const cleanedHtml = cleanHtml(html);
+            const turndownService = new TurndownService({ headingStyle: 'atx' });
+            result.content.markdown = turndownService.turndown(cleanedHtml);
+            break;
+        }
+      }
+      if (!Object.keys(result.content).length)
+        result.error = '[Puppeteer] Empty content';
     }
   } catch (error: any) {
-    result.error = '[Puppeteer] ' + error?.message || error?.toString() || 'Unknown evaluate error';
+    result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown content error');
   }
 
   // get a screenshot of the page
   try {
-    if (ssWidth && ssHeight) {
-      const width = ssWidth;
-      const height = ssHeight;
-      const scale = Math.round(100 * ssWidth / 1024) / 100;
+    if (screenshotOptions?.width && screenshotOptions?.height) {
+      const { width, height, quality } = screenshotOptions;
+      const scale = Math.round(100 * width / 1024) / 100;
 
       await page.setViewport({ width: width / scale, height: height / scale, deviceScaleFactor: scale });
 
@@ -156,10 +183,10 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ss
         type: imageType,
         encoding: 'base64',
         clip: { x: 0, y: 0, width: width / scale, height: height / scale },
-        ...(ssQuality && { quality: ssQuality }),
+        ...(quality && { quality }),
       }) as string;
 
-      result.screenshot = { imageDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
+      result.screenshot = { webpDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
     }
   } catch (error: any) {
     console.error('workerPuppeteer: page.screenshot', error);
@@ -191,4 +218,36 @@ async function workerPuppeteer(access: BrowseAccessSchema, targetUrl: string, ss
   }
 
   return result;
+}
+
+
+function cleanHtml(html: string) {
+  const $ = cheerioLoad(html);
+
+  // Remove standard unwanted elements
+  $('script, style, nav, aside, noscript, iframe, svg, canvas, .ads, .comments, link[rel="stylesheet"]').remove();
+
+  // Remove elements that might be specific to proxy services or injected by them
+  $('[id^="brightdata-"], [class^="brightdata-"]').remove();
+
+  // Remove comments
+  $('*').contents().filter(function() {
+    return this.type === 'comment';
+  }).remove();
+
+  // Remove empty elements
+  $('p, div, span').each(function() {
+    if ($(this).text().trim() === '' && $(this).children().length === 0) {
+      $(this).remove();
+    }
+  });
+
+  // Merge consecutive paragraphs
+  $('p + p').each(function() {
+    $(this).prev().append(' ' + $(this).text());
+    $(this).remove();
+  });
+
+  // Return the cleaned HTML
+  return $.html();
 }

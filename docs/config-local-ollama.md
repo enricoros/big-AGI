@@ -72,15 +72,19 @@ Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and a
 
 ```nginx
     location /ollama/ {
-        proxy_pass http://localhost:11434;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        proxy_pass http://127.0.0.1:11434/;
 
-        # Disable buffering for the streaming responses
+        # Disable buffering for the streaming responses (SSE)
+        proxy_set_header Connection '';
+        proxy_http_version 1.1;
+        chunked_transfer_encoding off;
         proxy_buffering off;
+        proxy_cache off;
+        
+        # Longer timeouts
+        proxy_read_timeout 3600;
+        proxy_connect_timeout 3600;
+        proxy_send_timeout 3600;
     }
 ```
 

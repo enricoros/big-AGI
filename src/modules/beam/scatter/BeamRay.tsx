@@ -16,6 +16,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
+import { animationEnterBelow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
@@ -109,7 +110,8 @@ function RayControls(props: {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  isRemovable: boolean
+  hadImportedRays: boolean
+  isRemovable: boolean,
   rayId: string,
   rayIndexWeak: number,
   // linkedLlmId: DLLMId | null,
@@ -240,16 +242,20 @@ export function BeamRay(props: {
             <GoodTooltip title='Choose this message'>
               <IconButton
                 size='sm'
+                // variant='plain'
                 color={GATHER_COLOR}
                 disabled={isImported || isScattering}
                 onClick={handleRayUse}
+                // endDecorator={!isImported ? <TelegramIcon /> : null}
                 sx={{
                   fontSize: 'xs',
+                  // '--Icon-fontSize': 'var(--joy-fontSize-xl)',
                   px: isImported ? 1 : undefined,
+                  animation: `${animationEnterBelow} 0.1s ease-out`,
                   whiteSpace: 'nowrap',
                 }}
               >
-                {isImported ? 'From Chat' : /*'Use'*/ <TelegramIcon />}
+                {isImported ? 'From Chat' : /*props.hadImportedRays ? 'Replace' : 'Use'*/ <TelegramIcon />}
               </IconButton>
             </GoodTooltip>
 

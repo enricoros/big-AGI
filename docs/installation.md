@@ -47,10 +47,10 @@ the same steps 1 and 2 as for [local development](#local-development).
    # .. repeat the steps above up to `npm install`, then:
    npm run build
    ```
-4. Start the production server:
+4. Start the production server (`npx` may be optional):
    ```bash
-    next start --port 3000
-    ```
+   npx next start --port 3000
+   ```
    Your big-AGI production instance is on `http://localhost:3000`.
 
 ### Advanced Customization

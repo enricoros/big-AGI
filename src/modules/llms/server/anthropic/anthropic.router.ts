@@ -8,7 +8,7 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
 
 import { AnthropicWireMessagesRequest, anthropicWireMessagesRequestSchema, AnthropicWireMessagesResponse, anthropicWireMessagesResponseSchema } from './anthropic.wiretypes';
 import { hardcodedAnthropicModels } from './anthropic.models';
@@ -158,7 +158,11 @@ const listModelsInputSchema = z.object({
 
 const chatGenerateInputSchema = z.object({
   access: anthropicAccessSchema,
-  model: openAIModelSchema, history: openAIHistorySchema,
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
+  // functions: openAIFunctionsSchema.optional(),
+  // forceFunctionName: z.string().optional(),
+  context: llmsGenerateContextSchema.optional(),
 });
 
 

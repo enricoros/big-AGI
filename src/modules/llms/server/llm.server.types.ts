@@ -12,6 +12,8 @@ const pricingSchema = z.object({
 const benchmarkSchema = z.object({
   cbaElo: z.number().optional(),
   cbaMmlu: z.number().optional(),
+  heCode: z.number().optional(), // HumanEval, code, 0-shot
+  vqaMmmu: z.number().optional(), // Visual Question Answering, MMMU, 0-shot
 });
 
 // const rateLimitsSchema = z.object({
@@ -43,6 +45,25 @@ export type ModelDescriptionSchema = z.infer<typeof modelDescriptionSchema>;
 
 export const llmsListModelsOutputSchema = z.object({
   models: z.array(modelDescriptionSchema),
+});
+
+
+// Chat Generation Input (some parts of)
+
+const generateContextNameSchema = z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-react-turn', 'draw-expand-prompt']);
+export type GenerateContextNameSchema = z.infer<typeof generateContextNameSchema>;
+export const llmsGenerateContextSchema = z.object({
+  method: z.literal('chat-generate'),
+  name: generateContextNameSchema,
+  ref: z.string(),
+});
+
+const streamingContextNameSchema = z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']);
+export type StreamingContextNameSchema = z.infer<typeof streamingContextNameSchema>;
+export const llmsStreamingContextSchema = z.object({
+  method: z.literal('chat-stream'),
+  name: streamingContextNameSchema,
+  ref: z.string(),
 });
 
 

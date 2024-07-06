@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 import { shallow } from 'zustand/shallow';
 
 import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
@@ -8,7 +9,6 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
 
 import { DLLMId, useModelsStore } from '../store-llms';
 import { findVendorById } from '../vendors/vendors.registry';
@@ -123,20 +123,20 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />
         {showDetails && <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography level='body-md'>
-            {llm.id}
-          </Typography>
+          {!!llm.description && <Typography level='body-sm'>
+            {llm.description}
+          </Typography>}
           {!!llm.tmpIsFree && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
-          {!!llm.description && <Typography level='body-xs'>
-            {llm.description}
-          </Typography>}
           <Typography level='body-xs'>
+            llm id: {llm.id}<br />
             context tokens: <b>{llm.contextTokens ? llm.contextTokens.toLocaleString() : 'not provided'}</b>{` · `}
             max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br />
-            {!!llm.created && `created: ${(new Date(llm.created * 1000)).toLocaleString()} · `}
+            {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
+            {!!llm.pricing && <>pricing: $<b>{llm.pricing.chatIn || '(unk) '}</b>/M in, $<b>{llm.pricing.chatOut || '(unk) '}</b>/M out<br /></>}
+            {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
             config: {JSON.stringify(llm.options)}
           </Typography>
         </Box>}

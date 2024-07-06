@@ -21,6 +21,9 @@ interface UXLabsStore {
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
 
+  labsShowCost: boolean;
+  setLabsShowCost: (labsShowCost: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -38,6 +41,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
+
+      labsShowCost: true, // release 1.16.0 with this enabled by default
+      setLabsShowCost: (labsShowCost: boolean) => set({ labsShowCost }),
 
     }),
     {
