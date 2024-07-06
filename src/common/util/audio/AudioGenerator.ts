@@ -259,26 +259,27 @@ export namespace AudioGenerator {
     });
   }
 
-  export function basicAstralChimes(options: SoundOptions = {}): void {
+  export function basicAstralChimes(options: SoundOptions = {}, start: number = 0, count: number = 20, stepMs: number = 150): void {
     const ctx = singleContext();
     if (!ctx) return;
     const frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < count; i++) {
       setTimeout(() => {
         const o = ctx.createOscillator();
         const g = ctx.createGain();
 
         o.type = 'sine';
-        o.frequency.setValueAtTime(frequencies[Math.floor(Math.random() * frequencies.length)], ctx.currentTime);
+        o.frequency.setValueAtTime(frequencies[Math.floor((start + i) % frequencies.length)], ctx.currentTime);
 
         g.gain.setValueAtTime(0, ctx.currentTime);
         g.gain.linearRampToValueAtTime(options.volume || 0.05, ctx.currentTime + 0.01);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
 
         o.connect(g).connect(ctx.destination);
+        // applyRoomAcoustics(ctx, g, 'small');
         o.start();
         o.stop(ctx.currentTime + 2);
-      }, i * 150);
+      }, i * stepMs);
     }
   }
 
