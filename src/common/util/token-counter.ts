@@ -2,7 +2,6 @@ import type { Tiktoken, TiktokenEncoding, TiktokenModel } from 'tiktoken';
 
 import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 
-
 // Do not set this to true in production, it's very verbose
 const DEBUG_TOKEN_COUNT = false;
 const fallbackEncodingId: TiktokenEncoding = 'cl100k_base';
@@ -23,7 +22,6 @@ export const TiktokenTokenizers: TiktokenTokenizer[] = [
   { id: 'gpt2', label: 'GPT-2' },
 ];
 
-
 // Global symbols to dynamically load the Tiktoken library
 let get_encoding: ((encoding: TiktokenEncoding) => Tiktoken) | null = null;
 let encoding_for_model: ((model: TiktokenModel) => Tiktoken) | null = null;
@@ -37,13 +35,12 @@ let informTheUser = false;
 export function preloadTiktokenLibrary(): Promise<void> {
   if (!preloadPromise) {
     preloadPromise = import('tiktoken')
-      .then(tiktoken => {
+      .then((tiktoken) => {
         get_encoding = tiktoken.get_encoding;
         encoding_for_model = tiktoken.encoding_for_model;
-        if (informTheUser)
-          console.warn('countModelTokens: Library loaded successfully');
+        if (informTheUser) console.warn('countModelTokens: Library loaded successfully');
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('countModelTokens: Failed to load Tiktoken library:', error);
         preloadPromise = null; // Allow retrying if the import fails
         throw error; // Re-throw the error to inform the caller
@@ -52,13 +49,11 @@ export function preloadTiktokenLibrary(): Promise<void> {
   return preloadPromise;
 }
 
-
 /**
  * Wrapper around the Tiktoken library to keep tokenizers for all models and tokenizers in a cache.
  */
 const tokenEncoders: { [modelId: string]: Tiktoken } = {};
 const tokenizerCache: { [encodingId: string]: Tiktoken } = {};
-
 
 /**
  * Counts the tokens in the given text for the specified model.
@@ -99,13 +94,14 @@ export function countModelTokens(text: string, llmId: DLLMId, debugFrom: string)
   try {
     count = tokenEncoders[openaiModel]?.encode(text, 'all', [])?.length || 0;
   } catch (e) {
-    console.error(`countModelTokens: Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`);
+    console.error(
+      `countModelTokens: Error tokenizing "${text.slice(0, 10)}..." with model '${openaiModel}': ${e}`
+    );
   }
   if (DEBUG_TOKEN_COUNT)
     console.log(`countModelTokens: ${debugFrom}, ${llmId}, "${text.slice(0, 10)}": ${count}`);
   return count;
 }
-
 
 /**
  * Counts the tokens in the given text for the specified tokenizer.
@@ -114,7 +110,11 @@ export function countModelTokens(text: string, llmId: DLLMId, debugFrom: string)
  * @param {string} debugFrom - Debug information.
  * @returns {Array<{ token: number, bytes: string }> | null} The detailed token information or null if not ready.
  */
-export function countTokenizerTokens(text: string, encodingId: string, debugFrom: string): Array<TokenChunk> | null {
+export function countTokenizerTokens(
+  text: string,
+  encodingId: string,
+  debugFrom: string
+): Array<TokenChunk> | null {
   // The library shall have been preloaded - if not, attempt to start its loading and return null to indicate we're not ready to count
   if (!get_encoding) {
     if (!informTheUser) {
@@ -137,7 +137,9 @@ export function countTokenizerTokens(text: string, encodingId: string, debugFrom
   try {
     const tokens = tokenizerCache[encodingId]?.encode(text, 'all', []) || new Uint32Array();
     if (DEBUG_TOKEN_COUNT)
-      console.log(`countTokenizerTokens: ${debugFrom}, ${encodingId}, "${text.slice(0, 10)}": ${tokens.length}`);
+      console.log(
+        `countTokenizerTokens: ${debugFrom}, ${encodingId}, "${text.slice(0, 10)}": ${tokens.length}`
+      );
 
     // for every token create an object {t:token, b: bytes}
     const tokenDetails: TokenChunk[] = [];
@@ -152,7 +154,9 @@ export function countTokenizerTokens(text: string, encodingId: string, debugFrom
     }
     return tokenDetails;
   } catch (e) {
-    console.error(`countTokenizerTokens: Error tokenizing "${text.slice(0, 10)}..." with tokenizer '${encodingId}': ${e}`);
+    console.error(
+      `countTokenizerTokens: Error tokenizing "${text.slice(0, 10)}..." with tokenizer '${encodingId}': ${e}`
+    );
     return null;
   }
 }

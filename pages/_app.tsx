@@ -1,13 +1,13 @@
 import * as React from 'react';
+
 import Head from 'next/head';
 import { MyAppProps } from 'next/app';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelSpeedInsights } from '@vercel/speed-insights/next';
-import { ClerkProvider, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs';
+import { ClerkProvider, SignedIn, SignedOut } from '@clerk/nextjs';
 
 import { Brand } from '~/common/app.config';
 import { apiQuery } from '~/common/util/trpc.client';
-import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 
 import 'katex/dist/katex.min.css';
 import '~/common/styles/CodePrism.css';
@@ -23,8 +23,7 @@ import { ProviderTRPCQuerySettings } from '~/common/providers/ProviderTRPCQueryS
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
-import { Box, Button } from '@mui/joy';
-import { Confetti } from '~/common/components/confetti/Confetti';
+import { LandingPageUnAuthed } from '~/common/components/LandingPageUnauthed';
 
 const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
   <>
@@ -38,43 +37,7 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => (
     <ClerkProvider>
       <ProviderTheming emotionCache={emotionCache}>
         <SignedOut>
-          <Box
-            sx={{
-              display: 'flex',
-              justifContent: 'center',
-              alignItems: 'center',
-              height: '100vh',
-              width: '100vw',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                width: '100vw',
-              }}
-            >
-              <Confetti />
-              <SignInButton>
-                <Button
-                  sx={{
-                    margin: 'auto',
-                    backgroundColor: 'greenyellow',
-                    height: '3rem',
-                    width: '10rem',
-                  }}
-                  variant="solid"
-                  // color="seconary"
-                  startDecorator={<FavoriteBorder />}
-                  endDecorator={<FavoriteBorder />}
-                >
-                  Sign In
-                </Button>
-              </SignInButton>
-            </Box>
-          </Box>
+          <LandingPageUnAuthed />
         </SignedOut>
         <SignedIn>
           <ProviderSingleTab>

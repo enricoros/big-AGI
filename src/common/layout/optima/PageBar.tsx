@@ -157,7 +157,7 @@ export function PageBar(props: {
             '& > *': { WebkitAppRegion: 'no-drag' },
           }}
         >
-          <UserButton />
+          {/* <UserButton /> */}
         </Box>
         <Box
           sx={{
