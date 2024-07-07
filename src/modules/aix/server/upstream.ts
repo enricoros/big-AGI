@@ -47,6 +47,7 @@ export function prepareUpstream(access: AixAccess, model: AixModel, history: Aix
       };
 
     case 'azure':
+    case 'deepseek':
     case 'groq':
     case 'lmstudio':
     case 'localai':
