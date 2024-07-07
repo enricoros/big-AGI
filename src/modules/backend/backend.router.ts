@@ -49,6 +49,7 @@ export const backendRouter = createTRPCRouter({
         hasImagingProdia: !!env.PRODIA_API_KEY,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
+        hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
         hasLlmGemini: !!env.GEMINI_API_KEY,
         hasLlmGroq: !!env.GROQ_API_KEY,
         hasLlmLocalAIHost: !!env.LOCALAI_API_HOST,
@@ -59,7 +60,6 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
-        hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
         llmConfigHash: generateLlmEnvConfigHash(env),
       };

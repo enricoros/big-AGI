@@ -13,6 +13,7 @@ export interface BackendCapabilities {
   hasImagingProdia: boolean;
   hasLlmAnthropic: boolean;
   hasLlmAzureOpenAI: boolean;
+  hasLlmDeepseek: boolean;
   hasLlmGemini: boolean;
   hasLlmGroq: boolean;
   hasLlmLocalAIHost: boolean;
@@ -23,7 +24,6 @@ export interface BackendCapabilities {
   hasLlmOpenRouter: boolean;
   hasLlmPerplexity: boolean;
   hasLlmTogetherAI: boolean;
-  hasLlmDeepseek: boolean;
   hasVoiceElevenLabs: boolean;
   llmConfigHash: string;
 }
@@ -43,6 +43,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasImagingProdia: false,
     hasLlmAnthropic: false,
     hasLlmAzureOpenAI: false,
+    hasLlmDeepseek: false,
     hasLlmGemini: false,
     hasLlmGroq: false,
     hasLlmLocalAIHost: false,
@@ -53,7 +54,6 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmOpenRouter: false,
     hasLlmPerplexity: false,
     hasLlmTogetherAI: false,
-    hasLlmDeepseek: false,
     hasVoiceElevenLabs: false,
     llmConfigHash: '',
 

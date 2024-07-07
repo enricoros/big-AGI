@@ -526,6 +526,7 @@ function _prepareRequestData({ access, model, history, context: _context }: Chat
       };
 
     case 'azure':
+    case 'deepseek':
     case 'groq':
     case 'lmstudio':
     case 'localai':
@@ -535,7 +536,6 @@ function _prepareRequestData({ access, model, history, context: _context }: Chat
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':
-    case 'deepseek':
       return {
         ...openAIAccess(access, model.id, '/v1/chat/completions'),
         body: openAIChatCompletionPayload(access.dialect, model, history, null, null, 1, true),

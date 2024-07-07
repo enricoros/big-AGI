@@ -11,7 +11,7 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
-import { azureModelToModelDescription, deepseekModelDescriptions, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -21,7 +21,7 @@ const ABERRATION_FIXUP_SQUASH = '\n\n\n---\n\n\n';
 
 
 const openAIDialects = z.enum([
-  'azure', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai', 'deepseek'
+  'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
 ]);
 type OpenAIDialects = z.infer<typeof openAIDialects>;
 
@@ -155,10 +155,6 @@ export const llmOpenAIRouter = createTRPCRouter({
       if (access.dialect === 'togetherai')
         return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
 
-      // [Deepseek] missing the .data property
-      if (access.dialect === 'deepseek')
-        return { models: deepseekModelDescriptions() };
-
       let openAIModels: OpenAIWire.Models.ModelDescription[] = openAIWireModelsResponse.data || [];
 
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
@@ -172,6 +168,11 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // every dialect has a different way to enumerate models - we execute the mapping on the server side
       switch (access.dialect) {
+
+        case 'deepseek':
+          models = openAIModels
+            .map(({ id }) => deepseekModelToModelDescription(id));
+          break;
 
         case 'groq':
           models = openAIModels
@@ -405,6 +406,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
@@ -412,7 +414,6 @@ const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
-const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
   switch (access.dialect) {
@@ -439,6 +440,22 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'api-key': azureKey,
         },
         url,
+      };
+
+
+    case 'deepseek':
+      // https://platform.deepseek.com/api-docs/
+      const deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
+      const deepseekHost = fixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
+      if (!deepseekKey || !deepseekHost)
+        throw new Error('Missing Deepseek API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${deepseekKey}`,
+          'Content-Type': 'application/json',
+        },
+        url: deepseekHost + apiPath,
       };
 
 
@@ -587,20 +604,6 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         url: togetherHost + apiPath,
       };
 
-    case 'deepseek':
-      const deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
-      const deepseekHost = fixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
-      if (!deepseekKey || !deepseekHost)
-        throw new Error('Missing Deepseek API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
-
-      return {
-        headers: {
-          'Authorization': `Bearer ${deepseekKey}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        url: deepseekHost + apiPath,
-      };
   }
 }
 

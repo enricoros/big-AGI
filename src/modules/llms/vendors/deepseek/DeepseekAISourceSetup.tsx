@@ -1,10 +1,7 @@
 import * as React from 'react';
 
-import { Alert, Typography } from '@mui/joy';
-
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
-import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
@@ -28,7 +25,7 @@ export function DeepseekAISourceSetup(props: { sourceId: DModelSourceId }) {
   // external state
   const {
     source, sourceHasLLMs, access,
-    partialSetup, sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
+    sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
   } = useSourceSetup(props.sourceId, ModelVendorDeepseek);
 
   // derived state
