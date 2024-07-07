@@ -38,6 +38,8 @@ export function DesktopNav(props: { component: React.ElementType; currentApp?: N
     useOptimaLayout();
   const noLLMs = useModelsStore((state) => !state.llms.length);
 
+  const userButtonKey = React.useId();
+
   // show/hide the pane when clicking on the logo
   const appUsesDrawer = !props.currentApp?.hideDrawer;
   const logoButtonTogglesPane = (appUsesDrawer && !isDrawerOpen) || isDrawerOpen;
@@ -91,7 +93,7 @@ export function DesktopNav(props: { component: React.ElementType; currentApp?: N
     /**
      * Add user button below hamburger menu.
      */
-    components.push(<UserButton />);
+    components.push(<UserButton key={userButtonKey} />);
 
     // Overflow dropdown menu
     if (overflowApps.length) {
@@ -123,7 +125,7 @@ export function DesktopNav(props: { component: React.ElementType; currentApp?: N
       );
     }
     return components;
-  }, [isDrawerOpen, props.currentApp, toggleDrawer]);
+  }, [isDrawerOpen, props.currentApp, toggleDrawer, userButtonKey]);
 
   // External link items
   const navExtLinkItems = React.useMemo(() => {

@@ -29,7 +29,7 @@ import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
-import { UserButton } from '@clerk/nextjs';
+import { SignedIn, UserButton } from '@clerk/nextjs';
 
 const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) => (
   <Box
@@ -80,6 +80,9 @@ function CommonPageMenuItems(props: { onClose: () => void }) {
           <SettingsIcon />
         </ListItemDecorator>
         Preferences
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
         <IconButton
           size="sm"
           variant="soft"
@@ -156,28 +159,7 @@ export function PageBar(props: {
             WebkitAppRegion: 'drag',
             '& > *': { WebkitAppRegion: 'no-drag' },
           }}
-        >
-          {/* <UserButton /> */}
-        </Box>
-        <Box
-          sx={{
-            paddingLeft: '.5rem',
-            flexGrow: 1,
-            minHeight: 'var(--Bar)',
-            display: 'flex',
-            flexFlow: 'row wrap',
-            justifyContent: 'left',
-            justifyItems: 'center',
-            alignItems: 'center',
-            my: 'auto',
-            gap: props.isMobile ? 0 : 1,
-            // [electron] make the blank part of the bar draggable (and not the contents)
-            WebkitAppRegion: 'drag',
-            '& > *': { WebkitAppRegion: 'no-drag' },
-          }}
-        >
-          <a href="/user-profile">Profile</a>
-        </Box>
+        ></Box>
         {/* [Mobile] Drawer button */}
         {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (
           <InvertedBarCornerItem>

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Droppable, type DroppableProps } from 'react-beautiful-dnd';
 
-
 /**
  * A wrapper around React-Beautiful-Dnd `Droppable` that skips the first render,
  */

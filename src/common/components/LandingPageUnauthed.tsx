@@ -4,6 +4,7 @@ import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import dynamic from 'next/dynamic';
 import React from 'react';
+import { confettiConfigs, ConfettiProvider } from './confetti/confetti-settings';
 
 const DynamicConfetti = dynamic(
   () => import('~/common/components/confetti/Confetti').then((m) => m.Confetti),
@@ -33,7 +34,10 @@ export function LandingPageUnAuthed(props: { children?: React.ReactNode }) {
             width: '100vw',
           }}
         >
-          <DynamicConfetti />
+          <ConfettiProvider value={confettiConfigs}>
+            <DynamicConfetti />
+          </ConfettiProvider>
+
           <SignInButton>
             <Button
               sx={{
