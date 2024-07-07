@@ -12,7 +12,7 @@ import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
-import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
+import { GlobalShortcutDefinition, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { animationTextShadowLimey } from '~/common/util/animUtils';
@@ -159,7 +159,7 @@ export function ExplainerCarousel(props: {
   }, [props.explainerId]);
 
 
-  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
+  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
     [ShortcutKeyName.Left, false, false, false, handlePrevPage],
     [ShortcutKeyName.Right, false, false, false, handleNextPage],
   ], [handleNextPage, handlePrevPage]);
