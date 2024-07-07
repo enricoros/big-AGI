@@ -321,6 +321,49 @@ export function azureModelToModelDescription(azureDeploymentRef: string, openAIM
 }
 
 
+// [Deepseek AI]
+const _knownDeepseekChatModels: ManualMappings = [
+  // [Models and Pricing](https://platform.deepseek.com/api-docs/pricing)
+  // [List Models](https://platform.deepseek.com/api-docs/api/list-models)
+  {
+    idPrefix: 'deepseek-chat',
+    label: 'Deepseek Chat V2',
+    description: 'Good at general tasks, 128K context length',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+    maxCompletionTokens: 4096,
+    pricing: {
+      chatIn: 0.14,
+      chatOut: 0.28,
+    },
+  },
+  {
+    idPrefix: 'deepseek-coder',
+    label: 'Deepseek Coder V2',
+    description: 'Good at coding and math tasks, 128K context length',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+    maxCompletionTokens: 4096,
+    pricing: {
+      chatIn: 0.14,
+      chatOut: 0.28,
+    },
+  },
+];
+
+export function deepseekModelToModelDescription(deepseekModelId: string): ModelDescriptionSchema {
+  return fromManualMapping(_knownDeepseekChatModels, deepseekModelId, undefined, undefined, {
+    idPrefix: deepseekModelId,
+    label: deepseekModelId.replaceAll(/[_-]/g, ' '),
+    description: 'New Deepseek Model',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat], // assume..
+    hidden: true,
+  });
+}
+
+
 // [LM Studio]
 export function lmStudioModelToModelDescription(modelId: string): ModelDescriptionSchema {
 
