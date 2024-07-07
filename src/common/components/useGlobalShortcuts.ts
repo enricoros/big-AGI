@@ -1,5 +1,7 @@
 import * as React from 'react';
+
 import { isMacUser } from '../util/pwaUtils';
+
 
 export const ShortcutKeyName = {
   Esc: 'Escape',
@@ -7,22 +9,26 @@ export const ShortcutKeyName = {
   Right: 'ArrowRight',
 };
 
-export type GlobalShortcutItem = [key: string | false, ctrl: boolean, shift: boolean, alt: boolean, action: () => void];
+export type GlobalShortcutDefinition = [key: string | false, useCtrl: boolean, useShift: boolean, useAltForNonMac: boolean, action: () => void];
 
 /**
- * Registers multiple global keyboard shortcuts to activate callbacks.
+ * Registers multiple global keyboard shortcuts -> function mappings.
  *
- * @param shortcuts An array of shortcut objects.
+ * Important notes below:
+ * - [MAC only] the Alt key is ignored even if defined in the shortcut
+ * - [MAC only] are not using the command key at the moment, as it interfered with browser shortcuts
+ * - stabilize the shortcuts definition (e.g. React.useMemo()) to avoid re-registering the shortcuts at every render
+ *
  */
-export const useGlobalShortcuts = (shortcuts: GlobalShortcutItem[]) => {
+export const useGlobalShortcuts = (shortcuts: GlobalShortcutDefinition[]) => {
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      for (const [key, useCtrl, useShift, useAlt, action] of shortcuts) {
+      for (const [key, useCtrl, useShift, useAltForNonMac, action] of shortcuts) {
         if (
           key &&
           (useCtrl === event.ctrlKey) &&
           (useShift === event.shiftKey) &&
-          (isMacUser ? true : useAlt === event.altKey) &&
+          (isMacUser /* Mac users won't need the Alt keys */ || useAltForNonMac === event.altKey) &&
           event.key.toLowerCase() === key.toLowerCase()
         ) {
           event.preventDefault();
