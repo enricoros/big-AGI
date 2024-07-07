@@ -775,6 +775,37 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
     .sort(togetherAIModelsSort);
 }
 
+const _knownDeepseekModels: ModelDescriptionSchema[] = [
+  {
+    id: 'deepseek-chat',
+    label: 'Deepseek Chat V2',
+    description: 'Good at general tasks, 128K context length',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+    maxCompletionTokens: 4096,
+    pricing: {
+      chatIn: 0.14,
+      chatOut: 0.28,
+    }
+  },
+  {
+    id: 'deepseek-code',
+    label: 'Deepseek Code V2',
+    description: 'Good at coding and math tasks, 128K context length',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat],
+    maxCompletionTokens: 4096,
+    pricing: {
+      chatIn: 0.14,
+      chatOut: 0.28,
+    }
+  }
+]
+
+export function deepseekModelDescriptions() {
+  // change this implementation once upstream implements some form of models listing
+  return _knownDeepseekModels;
+}
 
 // Perplexity
 
