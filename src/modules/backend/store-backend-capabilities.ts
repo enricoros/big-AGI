@@ -23,6 +23,7 @@ export interface BackendCapabilities {
   hasLlmOpenRouter: boolean;
   hasLlmPerplexity: boolean;
   hasLlmTogetherAI: boolean;
+  hasLlmDeepseek: boolean;
   hasVoiceElevenLabs: boolean;
   llmConfigHash: string;
 }
@@ -52,6 +53,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmOpenRouter: false,
     hasLlmPerplexity: false,
     hasLlmTogetherAI: false,
+    hasLlmDeepseek: false,
     hasVoiceElevenLabs: false,
     llmConfigHash: '',
 

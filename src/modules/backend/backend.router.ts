@@ -59,6 +59,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
+        hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
         llmConfigHash: generateLlmEnvConfigHash(env),
       };
