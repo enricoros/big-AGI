@@ -19,7 +19,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
-import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
+import { GlobalShortcutDefinition, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -394,7 +394,7 @@ export function AppChat() {
     openLlmOptions(chatLLMId);
   }, [openLlmOptions]);
 
-  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
+  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
     // focused conversation
     ['b', true, true, false, handleMessageBeamLastInFocusedPane],
     ['r', true, true, false, handleMessageRegenerateLastInFocusedPane],

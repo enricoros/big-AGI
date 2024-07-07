@@ -53,6 +53,9 @@ export const env = createEnv({
     // LLM: Toghether AI
     TOGETHERAI_API_KEY: z.string().optional(),
 
+    // LLM: Deepseek AI
+    DEEPSEEK_API_KEY: z.string().optional(),
+
     // Helicone - works on both OpenAI and Anthropic vendors
     HELICONE_API_KEY: z.string().optional(),
 
