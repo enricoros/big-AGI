@@ -17,7 +17,7 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
+import { GlobalShortcutDefinition, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -43,7 +43,6 @@ import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import { _handleExecute } from './editors/_handleExecute';
-import { isMacUser } from '~/common/util/pwaUtils';
 
 
 // what to say when a chat is new and has no title
@@ -398,7 +397,7 @@ export function AppChat() {
     openLlmOptions(chatLLMId);
   }, [openLlmOptions]);
 
-  const shortcuts = React.useMemo((): GlobalShortcutItem[] => [
+  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
     // focused conversation
     ['b', true, true, false, handleMessageBeamLastInFocusedPane],
     ['r', true, true, false, handleMessageRegenerateLastInFocusedPane],
