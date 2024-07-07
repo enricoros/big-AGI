@@ -14,6 +14,7 @@ import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
 
 import type { IModelVendor } from './IModelVendor';
 import { DLLMId, DModelSource, DModelSourceId, findLLMOrThrow, findSourceOrThrow } from '../store-llms';
+import { ModelVendorDeepseek } from './deepseek/deepseekai.vendor';
 
 export type ModelVendorId =
   | 'anthropic'
@@ -28,7 +29,8 @@ export type ModelVendorId =
   | 'openai'
   | 'openrouter'
   | 'perplexity'
-  | 'togetherai';
+  | 'togetherai'
+  | 'deepseek';
 
 /** Global: Vendor Instances Registry **/
 const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
@@ -45,6 +47,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
   togetherai: ModelVendorTogetherAI,
+  deepseek: ModelVendorDeepseek,
 } as Record<string, IModelVendor>;
 
 const MODEL_VENDOR_DEFAULT: ModelVendorId = 'openai';
