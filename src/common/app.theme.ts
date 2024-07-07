@@ -1,6 +1,6 @@
 import createCache from '@emotion/cache';
 
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
 // CSS utils
@@ -31,9 +31,21 @@ const jetBrainsMono = JetBrains_Mono({
   fallback: ['monospace'],
 });
 
+const dmSans = DM_Sans({
+  weight: [
+    /* '300', sm */ '400' /* (undefined, default) */,
+    '500' /* md */,
+    '600' /* lg */,
+    '700' /* xl */,
+  ],
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['Helvetica', 'Arial', 'sans-serif'],
+});
+
 export const appTheme = extendTheme({
   fontFamily: {
-    body: font.style.fontFamily,
+    body: dmSans.style.fontFamily, // font.style.fontFamily,
     display: font.style.fontFamily,
     code: jetBrainsMono.style.fontFamily,
   },

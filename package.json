@@ -5,11 +5,12 @@
   "author": "Eric Friday <EricFriday@gmail.com>",
   "repository": "https://github.com/ericbfriday/big-agi",
   "engines": {
-    "node": "^20.0.0 || ^18.0.0"
+    "node": "^20.13",
+    "pnpm": "^9.4"
   },
-  "packageManager": "pnpm@8.14.0",
   "volta": {
-    "node": "20.13.1"
+    "node": "20.13.1",
+    "pnpm": "9.4.0"
   },
   "scripts": {
     "dev": "next dev",
@@ -21,7 +22,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "vercel:env:pull": "pnpx vercel env pull .env.development.local",
-    "partytown": "partytown copylib public/~partytown"
+    "// partytown": "partytown copylib public/~partytown"
   },
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
