@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+      body {
+          background: #2e2c29;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          font-family: Arial, sans-serif;
+      }
+
+      .loader-container {
+          position: relative;
+          width: 100px;
+          height: 100px;
+      }
+
+      .spinner {
+          position: absolute;
+          top: 0;
+          left: 0;
+          border: 5px solid rgba(255, 255, 255, 0.3);
+          border-top: 5px solid #3498db;
+          border-radius: 50%;
+          width: 100px;
+          height: 100px;
+          animation: spin 2s linear infinite;
+      }
+
+      .logo {
+          position: absolute;
+          top: 15px;
+          left: 15px;
+          width: 80px;
+          height: 80px;
+          background: url('tray-icon.png') no-repeat center center;
+          background-size: contain;
+          animation: counter-spin 3.33s linear infinite;
+      }
+
+      @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+      }
+
+      @keyframes counter-spin {
+          0% { transform: rotate(360deg); }
+          100% { transform: rotate(0deg); }
+      }
+  </style>
+</head>
+<body>
+<div class="loader-container">
+  <div class="spinner"></div>
+  <div class="logo"></div>
+</div>
+</body>
+</html>

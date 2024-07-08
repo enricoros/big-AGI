@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeTheme, shell } = require('electron');
 const path = require('path');
 const startServer = require('./server.js');
 const { autoUpdater } = require('electron-updater');
@@ -9,33 +9,95 @@ const port = 3000;
 
 async function createWindow() {
   try {
-    // Start the Next.js server
+    console.log('Starting server...');
     await startServer(port);
+    console.log('Server started successfully');
+
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+    // // Set up a loading screen
+    // loadingScreen = new BrowserWindow({
+    //   // width: 150,
+    //   // height: 150,
+    //   frame: false,
+    //   transparent: false,
+    //   alwaysOnTop: true,
+    //   webPreferences: {
+    //     nodeIntegration: true,
+    //   },
+    //   backgroundColor: '#2e2c29',
+    // });
+    //
+    // loadingScreen.loadFile(path.join(__dirname, 'loading.html'));
+    // loadingScreen.center();
+    // console.log('Loading screen created');
 
     mainWindow = new BrowserWindow({
-      width: 1024,
-      height: 768,
+      width: Math.min(1280, width * 0.8),
+      height: Math.min(800, height * 0.8),
+      minWidth: 430,
+      minHeight: 600,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, 'preload.js'),
       },
+      backgroundColor: nativeTheme.shouldUseDarkColors ? '#1a1a1a' : '#ffffff',
+      show: true,
+      frame: false,
+      titleBarStyle: 'hidden',
+      icon: path.join(__dirname, 'app-icon.png'),
     });
 
-    // Load the Next.js app
+    mainWindow.removeMenu();
+    mainWindow.setTitle('Your Professional App Name');
+
+    console.log('Attempting to load main window URL...');
     await mainWindow.loadURL(`http://localhost:${port}`);
+    console.log('Main window URL loaded successfully');
 
-    // Create system tray
+    mainWindow.once('ready-to-show', () => {
+      console.log('Main window ready to show');
+      // if (loadingScreen) {
+      //   loadingScreen.close();
+      // }
+      mainWindow.show();
+      mainWindow.focus();
+    });
+
     createTray();
-
-    // Check for updates
     autoUpdater.checkForUpdatesAndNotify();
 
-    mainWindow.on('closed', function () {
-      mainWindow = null;
+    // Handle window state
+    let isQuitting = false;
+    mainWindow.on('close', (event) => {
+      if (!isQuitting) {
+        event.preventDefault();
+        mainWindow.hide();
+      }
     });
+
+    app.on('before-quit', () => {
+      isQuitting = true;
+    });
+
+    // Adjust window behavior
+    mainWindow.on('maximize', () => {
+      mainWindow.webContents.send('window-maximized');
+    });
+
+    mainWindow.on('unmaximize', () => {
+      mainWindow.webContents.send('window-unmaximized');
+    });
+
+    // Handle external links
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+      shell.openExternal(url);
+      return { action: 'deny' };
+    });
+
   } catch (err) {
-    console.error('Failed to start server', err);
+    console.error('Error in createWindow:', err);
     app.quit();
   }
 }
@@ -44,27 +106,45 @@ function createTray() {
   tray = new Tray(path.join(__dirname, 'tray-icon.png'));
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show App', click: () => mainWindow.show() },
-    { label: 'Quit', click: () => app.quit() }
+    { type: 'separator' },
+    { label: 'Quit', click: () => app.quit() },
   ]);
-  tray.setToolTip('Your App Name');
+  tray.setToolTip('Your Professional App Name');
   tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+  });
 }
 
-app.on('ready', createWindow);
+app.whenReady().then(() => {
+  console.log('App is ready, creating window...');
+  createWindow().catch((err) => {
+    console.error('Failed to create window:', err);
+    app.quit();
+  });
 
-app.on('window-all-closed', function () {
+  app.on('activate', function() {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', function() {
   if (process.platform !== 'darwin') app.quit();
 });
 
-app.on('activate', function () {
-  if (mainWindow === null) createWindow();
+// IPC handlers for window controls
+ipcMain.on('minimize-window', () => mainWindow.minimize());
+ipcMain.on('maximize-window', () => {
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
+  }
 });
+ipcMain.on('close-window', () => mainWindow.close());
 
-ipcMain.on('app-event', (event, arg) => {
-  console.log('Received event from renderer:', arg);
-  // Handle various events here
-});
-
+// Auto-updater events
 autoUpdater.on('update-available', () => {
   mainWindow.webContents.send('update_available');
 });
