@@ -30,8 +30,16 @@ export function AppBeam() {
 
   // state
   const [showDebug, setShowDebug] = React.useState(false);
-  const conversation = React.useRef<DConversation>(initTestConversation());
-  const beamStoreApi = React.useRef(initTestBeamStore(conversation.current.messages)).current;
+
+  const [conversation, setConversation] = React.useState<DConversation>(() => initTestConversation());
+  const [beamStoreApi] = React.useState(() => createBeamVanillaStore());
+
+
+  // reinit the beam store if the conversation changes
+  React.useEffect(() => {
+    initTestBeamStore(conversation.messages, beamStoreApi);
+  }, [beamStoreApi, conversation]);
+
 
   // external state
   const isMobile = useIsMobile();
@@ -44,7 +52,7 @@ export function AppBeam() {
 
 
   const handleClose = React.useCallback(() => {
-    beamStoreApi.getState().terminate();
+    beamStoreApi.getState().terminateKeepingSettings();
   }, [beamStoreApi]);
 
 
@@ -56,10 +64,7 @@ export function AppBeam() {
     </Button>
 
     {/* 'open' */}
-    <Button size='sm' variant='plain' color='neutral' onClick={() => {
-      conversation.current = initTestConversation();
-      initTestBeamStore(conversation.current.messages, beamStoreApi);
-    }}>
+    <Button size='sm' variant='plain' color='neutral' onClick={() => setConversation(initTestConversation())}>
       .open
     </Button>
 
@@ -67,7 +72,7 @@ export function AppBeam() {
     <Button size='sm' variant='plain' color='neutral' onClick={handleClose}>
       .close
     </Button>
-  </>, [beamStoreApi, handleClose, showDebug]), null, 'AppBeam');
+  </>, [handleClose, showDebug]), null, 'AppBeam');
 
 
   return (

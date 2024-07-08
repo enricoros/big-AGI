@@ -2,13 +2,14 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorMistral } from './mistral.vendor';
@@ -31,7 +32,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorMistral, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
   return <>
 
@@ -39,7 +40,7 @@ export function MistralSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='mistral-key' label='Mistral Key'
       rightLabel={<>{needsUserKey
         ? !mistralKey && <Link level='body-sm' href={MISTRAL_REG_LINK} target='_blank'>request Key</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={mistralKey} onChange={value => updateSetup({ oaiKey: value })}
       required={needsUserKey} isError={showKeyError}

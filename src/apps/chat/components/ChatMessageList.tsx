@@ -9,7 +9,7 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -136,6 +136,10 @@ export function ChatMessageList(props: {
     }), false);
   }, [conversationId, editMessage]);
 
+  const handleReplyTo = React.useCallback((_messageId: string, text: string) => {
+    props.conversationHandler?.getOverlayStore().getState().setReplyToText(text);
+  }, [props.conversationHandler]);
+
   const handleTextDiagram = React.useCallback(async (messageId: string, text: string) => {
     conversationId && onTextDiagram({ conversationId: conversationId, messageId, text });
   }, [conversationId, onTextDiagram]);
@@ -182,9 +186,9 @@ export function ChatMessageList(props: {
     setSelectedMessages(new Set());
   };
 
-  useGlobalShortcut(props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
+  useGlobalShortcuts([[props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
     props.setIsMessageSelectionMode(false);
-  });
+  }]]);
 
 
   // text-diff functionality: only diff the last message and when it's complete (not typing), and they're similar in size
@@ -225,12 +229,15 @@ export function ChatMessageList(props: {
 
   return (
     <List sx={{
-      p: 0, ...(props.sx || {}),
-      // this makes sure that the the window is scrolled to the bottom (column-reverse)
-      display: 'flex',
-      flexDirection: 'column',
+      p: 0,
+      ...(props.sx || {}),
+
       // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
       // marginBottom: '-1px',
+
+      // layout
+      display: 'flex',
+      flexDirection: 'column',
     }}>
 
       {optionalTranslationWarning}
@@ -276,9 +283,10 @@ export function ChatMessageList(props: {
               onMessageEdit={handleMessageEdit}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
+              // onReplyTo={handleReplyTo}
               onTextDiagram={handleTextDiagram}
-              onTextImagine={handleTextImagine}
-              onTextSpeak={handleTextSpeak}
+              onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
+              onTextSpeak={isSpeakable ? handleTextSpeak : undefined}
             />
 
           );

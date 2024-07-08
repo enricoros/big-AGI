@@ -12,6 +12,7 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
+import GrainIcon from '@mui/icons-material/Grain';
 import ImageIcon from '@mui/icons-material/Image';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import IosShareIcon from '@mui/icons-material/IosShare';
@@ -161,6 +162,13 @@ export const navItems: {
       type: 'app',
       route: '/personas',
       hideBar: true,
+    },
+    {
+      name: 'Tokenize',
+      icon: GrainIcon,
+      type: 'app',
+      route: '/tokens',
+      hideDrawer: true,
     },
     {
       name: 'Beam',

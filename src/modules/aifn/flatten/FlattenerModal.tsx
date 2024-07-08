@@ -117,7 +117,7 @@ export function FlattenerModal(props: {
     await startStreaming(llm.id, [
       { role: 'system', content: flattenProfile.systemPrompt },
       { role: 'user', content: encodeConversationAsUserMessage(flattenProfile.userPrompt, messages) },
-    ]);
+    ], 'ai-flattener', messages[0].id);
 
   }, [llm, props.conversationId, startStreaming]);
 

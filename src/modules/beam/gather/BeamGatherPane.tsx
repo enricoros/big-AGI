@@ -6,15 +6,14 @@ import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 
-import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
-import { BeamGatherDropdown } from './BeamGatherPaneDropdown';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
+import { useModuleBeamStore } from '../store-module-beam';
 
 
 const gatherPaneClasses = {
@@ -59,7 +58,7 @@ export function BeamGatherPane(props: {
   beamStore: BeamStoreApi,
   canGather: boolean,
   isMobile: boolean,
-  onAddFusion: () => void,
+  // onAddFusion: () => void,
   raysReady: number,
 }) {
 
@@ -67,7 +66,7 @@ export function BeamGatherPane(props: {
   // external state
   // const { setStickToBottom } = useScrollToBottom();
   const {
-    currentFactoryId, currentGatherLlmId, isGatheringAny,
+    currentFactoryId, currentGatherLlmId, isGatheringAny, hasFusions,
     setCurrentFactoryId, setCurrentGatherLlmId,
   } = useBeamStore(props.beamStore, useShallow(state => ({
     // state
@@ -75,13 +74,15 @@ export function BeamGatherPane(props: {
     currentFactoryId: state.currentFactoryId,
     currentGatherLlmId: state.currentGatherLlmId,
     isGatheringAny: state.isGatheringAny,
+    hasFusions: state.fusions.length > 0,
 
     // actions
     setCurrentFactoryId: state.setCurrentFactoryId,
     setCurrentGatherLlmId: state.setCurrentGatherLlmId,
   })));
-  const [_, gatherLlmComponent, gatherLlmIcon] = useLLMSelect(
-    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true,
+  const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
+  const [_, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(
+    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true, !props.canGather && !gatherAutoStartAfterScatter,
   );
 
   // derived state
@@ -96,7 +97,7 @@ export function BeamGatherPane(props: {
   }, [currentFactoryId, setCurrentFactoryId]);
 
 
-  const MainLlmIcon = gatherLlmIcon || (isGatheringAny ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
+  const MainLlmIcon = /*gatherLlmIcon ||*/ (isGatheringAny ? AutoAwesomeIcon : AutoAwesomeOutlinedIcon);
 
   return (
     <Box
@@ -105,21 +106,20 @@ export function BeamGatherPane(props: {
     >
 
       {/* Title */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 184 }}>
-        <div>
-          <Typography
-            level='h4' component='h2'
-            endDecorator={<BeamGatherDropdown />}
-            // sx={{ my: 0.25 }}
-          >
-            <MainLlmIcon sx={{ fontSize: '1rem', animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />&nbsp;Merge
-          </Typography>
-          <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
-            {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
-            {props.canGather ? `Combine the ${props.raysReady} replies` : 'Two replies or more'}
-          </Typography>
-        </div>
-        <ScrollToBottomButton inline />
+      <Box>
+        <Typography
+          level='h4' component='h3'
+          // endDecorator={<ScrollToBottomButton inline />}
+          // sx={{ my: 0.25 }}
+          sx={(props.canGather || hasFusions || isGatheringAny) ? undefined : { color: 'primary.solidDisabledColor', ['& > svg']: { color: 'primary.solidDisabledColor' } }}
+        >
+          <MainLlmIcon sx={{ fontSize: '1rem', mr: 0.625, animation: isGatheringAny ? `${animationColorBeamGather} 2s linear infinite` : undefined }} />
+          Merge
+        </Typography>
+        <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
+          {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
+          {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ ''}
+        </Typography>
       </Box>
 
       {/* Method */}
@@ -128,6 +128,7 @@ export function BeamGatherPane(props: {
         <ButtonGroup
           variant='outlined'
           size='md'
+          disabled={!props.canGather}
           // sx={{ boxShadow: isNoFactorySelected ? 'xs' : undefined }}
         >
           {FUSION_FACTORIES.map(factory => {

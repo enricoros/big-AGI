@@ -11,6 +11,7 @@ import { GATHER_PLACEHOLDER } from '../beam.config';
 import { RootStoreSlice } from '../store-beam-vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
+import { updateBeamLastConfig } from '../store-module-beam';
 
 
 /// Gather Store > BFusion ///
@@ -103,6 +104,7 @@ interface GatherStateSlice {
 
   // derived state (just acts as a cache to avoid re-calculating)
   isGatheringAny: boolean;
+  // fusionsReady: number;
 
 }
 
@@ -117,6 +119,7 @@ export const reInitGatherStateSlice = (prevFusions: BFusion[], gatherLlmId: DLLM
     fusions: [],
 
     isGatheringAny: false,
+    // fusionsReady: 0,
   };
 };
 
@@ -144,15 +147,19 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
   ...reInitGatherStateSlice([], null),
 
 
-  setCurrentFactoryId: (factoryId: FFactoryId | null) =>
+  setCurrentFactoryId: (factoryId: FFactoryId | null) => {
     _set({
       currentFactoryId: factoryId,
-    }),
+    });
+    updateBeamLastConfig({ gatherFactoryId: factoryId });
+  },
 
-  setCurrentGatherLlmId: (llmId: DLLMId | null) =>
+  setCurrentGatherLlmId: (llmId: DLLMId | null) => {
     _set({
       currentGatherLlmId: llmId,
-    }),
+    });
+    updateBeamLastConfig({ gatherLlmId: llmId });
+  },
 
 
   _fusionUpdate: (fusionId: BFusionId, update: FusionUpdateOrFn) => {
@@ -165,10 +172,12 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
 
     // 'or' the status of all fusions
     const isGatheringAny = newFusions.some(fusionIsFusing);
+    // const fusionsReady = newFusions.filter(fusionIsUsableOutput).length;
 
     _set({
       fusions: newFusions,
       isGatheringAny,
+      // fusionsReady,
     });
   },
 

@@ -4,7 +4,7 @@ import Router from 'next/router';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip } from '@mui/joy';
 import MenuIcon from '@mui/icons-material/Menu';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
@@ -93,10 +93,10 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
         <Dropdown key='n-app-overflow'>
           <Tooltip disableInteractive enterDelay={600} title='More Apps'>
             <MenuButton slots={{ root: DesktopNavIcon }} slotProps={{ root: { className: navItemClasses.typeApp } }}>
-              <MoreHorizRoundedIcon />
+              <MoreHorizIcon />
             </MenuButton>
           </Tooltip>
-          <Menu variant='solid' invertedColors placement='right-start'>
+          <Menu variant='solid' invertedColors placement='right-start' sx={{ minWidth: 160 }}>
             {overflowApps.map((app, appIdx) =>
               <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
                 <ListItemDecorator sx={{ ml: 1 }}>

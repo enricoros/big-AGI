@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert, Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
@@ -10,7 +11,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorTogetherAI } from './togetherai.vendor';
@@ -39,7 +40,7 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorTogetherAI, access, !sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
 
 
   return <>
@@ -48,7 +49,7 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='togetherai-key' label='Together AI Key'
       rightLabel={<>{needsUserKey
         ? !togetherKey && <Link level='body-sm' href={TOGETHERAI_REG_LINK} target='_blank'>request Key</Link>
-        : '✔️ already set in server'}
+        : <AlreadySet />}
       </>}
       value={togetherKey} onChange={value => updateSetup({ togetherKey: value })}
       required={needsUserKey} isError={showKeyError}

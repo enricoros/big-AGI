@@ -1,21 +1,40 @@
 // NOTE: this is a separate file to help with bundle tracing, as it's included by the ProviderBootstrapLogic (i.e. by All pages)
 
-// update this variable every time you want to broadcast a new version to clients
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
 import { useAppStateStore } from '~/common/state/store-appstate';
 
 
-export const incrementalNewsVersion: number = 15;
+// update this variable every time you want to broadcast a new version to clients
+export const incrementalNewsVersion: number = 16.1; // not notifying for 16.3
+
+
+interface NewsState {
+  lastSeenNewsVersion: number;
+}
+
+export const useAppNewsStateStore = create<NewsState>()(
+  persist(
+    (set) => ({
+      lastSeenNewsVersion: 0,
+    }),
+    {
+      name: 'app-news',
+    },
+  ),
+);
 
 
 export function shallRedirectToNews() {
-  const { usageCount, lastSeenNewsVersion } = useAppStateStore.getState();
+  const { lastSeenNewsVersion } = useAppNewsStateStore.getState();
+  const { usageCount } = useAppStateStore.getState();
   const isNewsOutdated = (lastSeenNewsVersion || 0) < incrementalNewsVersion;
   return isNewsOutdated && usageCount > 2;
 }
 
 export function markNewsAsSeen() {
-  const { setLastSeenNewsVersion } = useAppStateStore.getState();
-  setLastSeenNewsVersion(incrementalNewsVersion);
+  useAppNewsStateStore.setState({ lastSeenNewsVersion: incrementalNewsVersion });
 }
 
 

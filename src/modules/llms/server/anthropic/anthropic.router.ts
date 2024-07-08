@@ -8,7 +8,7 @@ import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsListModelsOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
 
 import { AnthropicWireMessagesRequest, anthropicWireMessagesRequestSchema, AnthropicWireMessagesResponse, anthropicWireMessagesResponseSchema } from './anthropic.wiretypes';
 import { hardcodedAnthropicModels } from './anthropic.models';
@@ -83,6 +83,17 @@ export function anthropicMessagesPayloadOrThrow(model: OpenAIModelSchema, histor
       const anthropicRole = historyItem.role === 'assistant' ? 'assistant' : 'user';
 
       if (index === 0 || anthropicRole !== lastMessage?.role) {
+
+        // Hack/Hotfix: if the first role is 'assistant', then prepend a user message otherwise the API call will break;
+        //              but what should we really do here?
+        if (index === 0 && anthropicRole === 'assistant') {
+          if (systemPrompt) {
+            // This stinks, as it will duplicate the system prompt; it's the best we can do for now for a better UX
+            acc.push({ role: 'user', content: [{ type: 'text', text: systemPrompt }] });
+          } else
+            throw new Error('The first message in the chat history must be a user message and not an assistant message.');
+        }
+
         // Add a new message object if the role is different from the previous message
         acc.push({
           role: anthropicRole,
@@ -147,7 +158,11 @@ const listModelsInputSchema = z.object({
 
 const chatGenerateInputSchema = z.object({
   access: anthropicAccessSchema,
-  model: openAIModelSchema, history: openAIHistorySchema,
+  model: openAIModelSchema,
+  history: openAIHistorySchema,
+  // functions: openAIFunctionsSchema.optional(),
+  // forceFunctionName: z.string().optional(),
+  context: llmsGenerateContextSchema.optional(),
 });
 
 

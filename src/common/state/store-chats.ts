@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DLLMId, getChatLLMId } from '~/modules/llms/store-llms';
 
-import { IDB_MIGRATION_INITIAL, idbStateStorage } from '../util/idbUtils';
+import { idbStateStorage } from '../util/idbUtils';
 import { countModelTokens } from '../util/token-counter';
 import { defaultSystemPurposeId, SystemPurposeId } from '../../data';
 
@@ -65,7 +65,8 @@ export interface DMessage {
   purposeId?: SystemPurposeId;      // only assistant/system
   originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
-  userFlags?: DMessageUserFlag[];       // user-set per-message flags
+  metadata?: DMessageMetadata;      // metadata, mainly at creation and for UI
+  userFlags?: DMessageUserFlag[];   // (UI) user-set per-message flags
 
   tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 
@@ -75,6 +76,10 @@ export interface DMessage {
 
 export type DMessageUserFlag =
   | 'starred'; // user starred this
+
+export interface DMessageMetadata {
+  inReplyToText?: string;           // text this was in reply to
+}
 
 export function createDMessage(role: DMessage['role'], text: string): DMessage {
   return {
@@ -130,6 +135,7 @@ export interface ChatActions {
   appendMessage: (conversationId: string, message: DMessage) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   editMessage: (conversationId: string, messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), touchUpdated: boolean) => void;
+  updateMetadata: (conversationId: string, messageId: string, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) => void;
   setAutoTitle: (conversationId: string, autoTitle: string) => void;
   setUserTitle: (conversationId: string, userTitle: string) => void;
@@ -345,9 +351,30 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           return {
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
-            ...(touchUpdated && { updated: Date.now() }),
+            updated: touchUpdated ? Date.now() : conversation.updated,
           };
         }),
+
+      updateMetadata: (conversationId: string, messageId: string, metadataDelta: Partial<DMessageMetadata>, touchUpdated: boolean = true) => {
+        _get()._editConversation(conversationId, conversation => {
+          const messages = conversation.messages.map(message =>
+            message.id !== messageId ? message
+              : {
+                ...message,
+                metadata: {
+                  ...message.metadata,
+                  ...metadataDelta,
+                },
+                updated: touchUpdated ? Date.now() : message.updated,
+              },
+          );
+
+          return {
+            messages,
+            updated: touchUpdated ? Date.now() : conversation.updated,
+          };
+        });
+      },
 
       setSystemPurposeId: (conversationId: string, systemPurposeId: SystemPurposeId) =>
         _get()._editConversation(conversationId,
@@ -380,10 +407,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       storage: createJSONStorage(() => idbStateStorage),
 
       // Migrations
-      migrate: (persistedState: unknown, fromVersion: number): ConversationsStore => {
-        // -1 -> 3: migration loading from localStorage to IndexedDB
-        if (fromVersion === IDB_MIGRATION_INITIAL)
-          return _migrateLocalStorageData() as any;
+      migrate: (persistedState: unknown, _fromVersion: number): ConversationsStore => {
 
         // other: just proceed
         return persistedState as any;
@@ -438,32 +462,6 @@ function getNextBranchTitle(currentTitle: string): string {
     return `(1) ${currentTitle}`;
 }
 
-/**
- * Returns the chats stored in the localStorage, and rename the key for
- * backup/data loss prevention purposes
- */
-function _migrateLocalStorageData(): ChatState | {} {
-  const key = 'app-chats';
-  const value = localStorage.getItem(key);
-  if (!value) return {};
-  try {
-    // parse the localStorage state
-    const localStorageState = JSON.parse(value)?.state;
-
-    // backup and delete the localStorage key
-    const backupKey = `${key}-v2`;
-    localStorage.setItem(backupKey, value);
-    localStorage.removeItem(key);
-
-    // match the state from localstorage
-    return {
-      conversations: localStorageState?.conversations ?? [],
-    };
-  } catch (error) {
-    console.error('LocalStorage migration error', error);
-    return {};
-  }
-}
 
 /**
  * Convenience function to count the tokens in a DMessage object

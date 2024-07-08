@@ -2,15 +2,17 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, IconButton, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, IconButton, Sheet, styled, Tooltip, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import SchemaIcon from '@mui/icons-material/Schema';
 import ShapeLineOutlinedIcon from '@mui/icons-material/ShapeLineOutlined';
+import WrapTextIcon from '@mui/icons-material/WrapText';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { CodeBlock } from '../blocks';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
@@ -19,10 +21,12 @@ import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
 import { heuristicIsHtml, IFrameComponent } from '../RenderHtml';
 import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
 
+
 export function getPlantUmlServerUrl(): string {
   // set at nextjs build time
   return process.env.NEXT_PUBLIC_PLANTUML_SERVER_URL || 'https://www.plantuml.com/plantuml/svg/';
 }
+
 
 async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
   // Get the PlantUML server from inline env var
@@ -64,13 +68,19 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
 }
 
 
+export const OverlayButton = styled(IconButton)(({ theme, variant }) => ({
+  backgroundColor: variant === 'outlined' ? theme.palette.background.surface : undefined,
+  '--Icon-fontSize': theme.fontSize.lg,
+})) as typeof IconButton;
+
+
 export const overlayButtonsSx: SxProps = {
   position: 'absolute', top: 0, right: 0, zIndex: 2, /* top of message and its chips */
   display: 'flex', flexDirection: 'row', gap: 1,
   opacity: 0, transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
   // buttongroup: background
   '& > div > button': {
-    backgroundColor: 'background.surface',
+    // backgroundColor: 'background.surface',
     // backdropFilter: 'blur(12px)',
   },
 };
@@ -98,6 +108,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
+  const [softWrap, setSoftWrap] = useUIPreferencesStore(state => [state.renderCodeSoftWrap, state.setRenderCodeSoftWrap]);
 
   // derived props
   const {
@@ -163,19 +174,25 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}`}
         sx={{
-          whiteSpace: 'pre', // was 'break-spaces' before we implemented per-block scrolling
+          whiteSpace: softWrap ? 'break-spaces' : 'pre', // was 'break-spaces' before we implemented per-block scrolling
           mx: 0, p: 1.5, // this block gets a thicker border
-          display: 'block',
+          display: 'flex',
+          flexDirection: 'column',
+          // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
           overflowX: 'auto',
           minWidth: 160,
           '&:hover > .overlay-buttons': { opacity: 1 },
           ...(props.sx || {}),
+          // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
+          '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? {
+            backgroundColor: 'neutral.300',
+          } : {},
         }}>
 
         {/* Markdown Title (File/Type) */}
         {blockTitle != inferredCodeLanguage && (blockTitle.includes('.') || blockTitle.includes('://')) && (
-          <Sheet sx={{ boxShadow: 'sm', borderRadius: 'sm', mb: 1 }}>
-            <Typography level='title-sm' sx={{ px: 1, py: 0.5 }}>
+          <Sheet sx={{ backgroundColor: 'background.surface', boxShadow: 'xs', borderRadius: 'xs', m: -0.5, mb: 1.5 }}>
+            <Typography level='body-sm' sx={{ px: 1, py: 0.5, color: 'text.primary' }}>
               {blockTitle}
               {/*{inferredCodeLanguage}*/}
             </Typography>
@@ -198,59 +215,78 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
                    }}
                    sx={{
                      ...(renderSVG ? { lineHeight: 0 } : {}),
-                     ...(renderPlantUML ? { textAlign: 'center' } : {}),
+                     ...(renderPlantUML ? { textAlign: 'center', mx: 'auto' } : {}),
                    }}
             />}
 
         {/* Buttons */}
         <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, p: 0.5 }}>
+          {/* Show HTML */}
           {isHTML && (
             <Tooltip title={optimizeLightweight ? null : renderHTML ? 'Hide' : 'Show Web Page'}>
-              <IconButton variant={renderHTML ? 'solid' : 'soft'} color='danger' onClick={() => setShowHTML(!showHTML)}>
-                <HtmlIcon />
-              </IconButton>
+              <OverlayButton variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+                <HtmlIcon sx={{ fontSize: 'xl2' }} />
+              </OverlayButton>
             </Tooltip>
           )}
-          {isMermaid && (
-            <Tooltip title={optimizeLightweight ? null : renderMermaid ? 'Show Code' : 'Render Mermaid'}>
-              <IconButton variant={renderMermaid ? 'solid' : 'soft'} onClick={() => setShowMermaid(!showMermaid)}>
-                <SchemaIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {isPlantUML && (
-            <Tooltip title={optimizeLightweight ? null : renderPlantUML ? 'Show Code' : 'Render PlantUML'}>
-              <IconButton variant={renderPlantUML ? 'solid' : 'soft'} onClick={() => setShowPlantUML(!showPlantUML)}>
-                <SchemaIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+
+          {/* Show SVG */}
           {isSVG && (
             <Tooltip title={optimizeLightweight ? null : renderSVG ? 'Show Code' : 'Render SVG'}>
-              <IconButton variant={renderSVG ? 'solid' : 'soft'} onClick={() => setShowSVG(!showSVG)}>
+              <OverlayButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
                 <ShapeLineOutlinedIcon />
-              </IconButton>
+              </OverlayButton>
             </Tooltip>
           )}
-          {((isMermaid && showMermaid) || (isPlantUML && showPlantUML && !plantUmlError) || (isSVG && showSVG && canScaleSVG)) && (
-            <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
-              <IconButton variant={fitScreen ? 'solid' : 'soft'} onClick={() => setFitScreen(on => !on)}>
-                <FitScreenIcon />
-              </IconButton>
-            </Tooltip>
+
+          {/* Show Diagrams */}
+          {(isMermaid || isPlantUML) && (
+            <ButtonGroup aria-label='Diagram'>
+              {/* Toggle rendering */}
+              <Tooltip title={optimizeLightweight ? null : (renderMermaid || renderPlantUML) ? 'Show Code' : 'Render Mermaid'}>
+                <OverlayButton variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'} onClick={() => {
+                  if (isMermaid) setShowMermaid(on => !on);
+                  if (isPlantUML) setShowPlantUML(on => !on);
+                }}>
+                  <SchemaIcon />
+                </OverlayButton>
+              </Tooltip>
+
+              {/* Fit-To-Screen */}
+              {((isMermaid && showMermaid) || (isPlantUML && showPlantUML && !plantUmlError) || (isSVG && showSVG && canScaleSVG)) && (
+                <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
+                  <OverlayButton variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
+                    <FitScreenIcon />
+                  </OverlayButton>
+                </Tooltip>
+              )}
+            </ButtonGroup>
           )}
+
+          {/* New Code Window Buttons */}
           {(canJSFiddle || canCodePen || canStackBlitz) && (
-            <ButtonGroup aria-label='Open code in external editors' sx={{ cornerRadius: 'md' }}>
+            <ButtonGroup aria-label='Open code in external editors'>
               {canJSFiddle && <ButtonJsFiddle code={blockCode} language={inferredCodeLanguage!} />}
               {canCodePen && <ButtonCodePen code={blockCode} language={inferredCodeLanguage!} />}
               {canStackBlitz && <ButtonStackBlitz code={blockCode} title={blockTitle} language={inferredCodeLanguage!} />}
             </ButtonGroup>
           )}
+
+          {/* Soft Wrap toggle */}
+          {(!renderHTML && !renderMermaid && !renderPlantUML && !renderSVG) && (
+            <Tooltip title='Toggle Soft Wrap'>
+              <OverlayButton variant={softWrap ? 'solid' : 'outlined'} onClick={() => setSoftWrap(!softWrap)}>
+                <WrapTextIcon />
+              </OverlayButton>
+            </Tooltip>
+          )}
+
+          {/* Copy */}
           {props.noCopyButton !== true && (
             <Tooltip title={optimizeLightweight ? null : 'Copy Code'}>
-              <IconButton variant='soft' onClick={handleCopyToClipboard}>
+              <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
                 <ContentCopyIcon />
-              </IconButton>
+              </OverlayButton>
             </Tooltip>
           )}
         </Box>

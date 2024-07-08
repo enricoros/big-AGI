@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, ButtonGroup, CircularProgress, Divider, FormControl, FormLabel, Grid, IconButton, Input } from '@mui/joy';
 import AccountTreeTwoToneIcon from '@mui/icons-material/AccountTreeTwoTone';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -13,6 +14,7 @@ import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
+import { adjustContentScaling } from '~/common/app.theme';
 import { createDMessage, useChatStore } from '~/common/state/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
@@ -20,6 +22,10 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
+
+
+// configuration
+const DIAGRAM_ACTOR_PREFIX = 'diagram';
 
 
 // Used by the callers to setup the diagam session
@@ -37,7 +43,10 @@ function hotFixDiagramCode(llmCode: string): string {
     llmCode = '```\n' + llmCode + '\n```';
   // fix generation mistakes
   return llmCode
-    .replaceAll('@endmindmap\n@enduml', '@endmindmap')
+    .replaceAll('@startumd', '@startuml') // haiku
+    .replaceAll('@endutml', '@enduml') // haiku
+    .replaceAll('@endmindmap\n@enduml', '@endmindmap') // gpt-3.5
+    .replaceAll('@endmindmap\n@end', '@endmindmap') // gpt-3.5
     .replaceAll('```\n```', '```');
 }
 
@@ -47,8 +56,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // state
   const [showOptions, setShowOptions] = React.useState(true);
   const [diagramCode, setDiagramCode] = React.useState<string | null>(null);
-  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('auto', diagramTypes, 'Visualize');
-  const [diagramLanguage, languageComponent] = useFormRadio<DiagramLanguage>('plantuml', diagramLanguages, 'Style');
+  const [diagramType, diagramComponent] = useFormRadio<DiagramType>('mind', diagramTypes, 'Diagram');
+  const [diagramLanguage, languageComponent, setDiagramLanguage] = useFormRadio<DiagramLanguage>('mermaid', diagramLanguages, 'Syntax');
   const [customInstruction, setCustomInstruction] = React.useState<string>('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
@@ -56,10 +65,11 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // external state
   const isMobile = useIsMobile();
   const contentScaling = useUIPreferencesStore(state => state.contentScaling);
-  const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator');
+  const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
 
   // derived state
-  const { conversationId, text: subject } = props.config;
+  const { conversationId, messageId, text: subject } = props.config;
+  const diagramLlmId = diagramLlm?.id;
 
 
   /**
@@ -88,7 +98,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
 
     try {
-      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, null, null, stepAbortController.signal,
+      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, 'ai-diagram', messageId, null, null, stepAbortController.signal,
         ({ textSoFar }) => textSoFar && setDiagramCode(diagramCode = textSoFar),
       );
     } catch (error: any) {
@@ -99,7 +109,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, conversationId, diagramLanguage, diagramLlm, diagramType, subject, customInstruction]);
+  }, [abortController, conversationId, customInstruction, diagramLanguage, diagramLlm, diagramType, messageId, subject]);
 
 
   // [Effect] Auto-abort on unmount
@@ -113,95 +123,146 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   }, [abortController]);
 
 
-  const handleInsertAndClose = () => {
+  // custom instruction
+
+  const handleCustomInstructionKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void handleGenerateNew();
+    }
+  }, [handleGenerateNew]);
+
+  const handleCustomInstructionChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomInstruction(event.target.value);
+  }, []);
+
+
+  // done
+
+  const handleAppendMessageAndClose = React.useCallback(() => {
     if (!diagramCode)
       return setErrorMessage('Nothing to add to the conversation.');
 
     const diagramMessage = createDMessage('assistant', diagramCode);
     // diagramMessage.purposeId = conversation.systemPurposeId;
-    diagramMessage.originLLM = 'diagram';
+    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '');
 
     useChatStore.getState().appendMessage(conversationId, diagramMessage);
     props.onClose();
-  };
+  }, [conversationId, diagramCode, diagramLlmId, props]);
 
 
-  return <GoodModal
-    title='Generate Diagram' noTitleBar
-    open onClose={props.onClose}
-    sx={{ maxWidth: { xs: '100vw', md: '95vw' } }}
-    startButton={
-      <Button variant='soft' color='success' disabled={!diagramCode || !!abortController} endDecorator={<TelegramIcon />} onClick={handleInsertAndClose}>
-        Add To Chat
-      </Button>
-    }
-  >
+  // [effect] Auto-switch language to match diagram type
+  React.useEffect(() => {
+    setDiagramLanguage(diagramType === 'mind' ? 'mermaid' : 'plantuml');
+  }, [diagramType, setDiagramLanguage]);
 
-    {showOptions && (
-      <Grid container spacing={2}>
-        <Grid xs={12} md={6}>
-          {diagramComponent}
-        </Grid>
-        {languageComponent && (
+
+  return (
+    <GoodModal
+      titleStartDecorator={<AutoFixHighIcon sx={{ fontSize: 'md', mr: 1 }} />}
+      title={<>
+        Auto-Diagram
+        <IconButton
+          aria-label={showOptions ? 'Hide Options' : 'Show Options'}
+          size='sm'
+          onClick={() => setShowOptions(options => !options)}
+          sx={{ ml: 1, my: -0.5 }}
+        >
+          {showOptions ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+        </IconButton>
+      </>}
+      hideBottomClose
+      open onClose={props.onClose}
+      sx={{ maxWidth: { xs: '100vw', md: '95vw', lg: '88vw' } }}
+    >
+
+      {showOptions && (
+        <Grid container spacing={2}>
           <Grid xs={12} md={6}>
-            {languageComponent}
+            {diagramComponent}
           </Grid>
-        )}
-        <Grid xs={12} xl={6}>
-          {llmComponent}
+          {languageComponent && (
+            <Grid xs={12} md={6}>
+              {languageComponent}
+            </Grid>
+          )}
+          <Grid xs={12} md={6}>
+            {llmComponent}
+          </Grid>
+          <Grid xs={12} md={6}>
+            <FormControl>
+              <FormLabel>Customize</FormLabel>
+              <Input
+                title='Custom Instruction'
+                placeholder='e.g. visualize as state'
+                value={customInstruction}
+                onKeyDown={handleCustomInstructionKeyDown}
+                onChange={handleCustomInstructionChange}
+                endDecorator={(abortController && customInstruction) ? <CircularProgress size='sm' /> : undefined}
+              />
+            </FormControl>
+          </Grid>
         </Grid>
-        <Grid xs={12} md={6}>
-          <FormControl>
-            <FormLabel>Custom Instruction</FormLabel>
-            <Input title='Custom Instruction' placeholder='e.g. visualize as state' value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)} />
-          </FormControl>
-        </Grid>
-      </Grid>
-    )}
+      )}
 
-    <ButtonGroup color='primary' sx={{ flexGrow: 1 }}>
-      <Button
-        fullWidth
-        variant={abortController ? 'soft' : 'solid'} color='primary'
-        disabled={!diagramLlm}
-        onClick={abortController ? () => abortController.abort() : handleGenerateNew}
-        endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayIcon /> : <AccountTreeTwoToneIcon />}
-        sx={{ minWidth: 200 }}
-      >
-        {abortController ? 'Stop' : diagramCode ? 'Regenerate' : 'Generate'}
-      </Button>
-      <IconButton onClick={() => setShowOptions(options => !options)}>
-        {showOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-      </IconButton>
-    </ButtonGroup>
+      {errorMessage && <InlineError error={errorMessage} />}
 
-    {errorMessage && <InlineError error={errorMessage} />}
+      {!showOptions && !!abortController && <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress size='lg' />
+      </Box>}
 
-    {!showOptions && !!abortController && <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-      <CircularProgress size='lg' />
-    </Box>}
+      {!!diagramCode && (!abortController || showOptions) && (
+        <Box sx={{
+          backgroundColor: 'background.level2',
+          marginX: 'calc(-1 * var(--Card-padding))',
+          minHeight: 96,
+          p: { xs: 1, md: 2 },
+          overflow: 'hidden',
+        }}>
+          <BlocksRenderer
+            text={diagramCode}
+            fromRole='assistant'
+            fitScreen={isMobile}
+            contentScaling={adjustContentScaling(contentScaling, -1)}
+            renderTextAsMarkdown={false}
+            specialDiagramMode
+            // onMessageEdit={(text) => setMessage({ ...message, text })}
+          />
+        </Box>
+      )}
 
-    {!!diagramCode && (!abortController || showOptions) && (
-      <Box sx={{
-        backgroundColor: 'background.level2',
-        marginX: 'calc(-1 * var(--Card-padding))',
-        minHeight: 96,
-        p: { xs: 1, md: 2 },
-        overflow: 'hidden',
-      }}>
-        <BlocksRenderer
-          text={diagramCode}
-          fromRole='assistant'
-          fitScreen={isMobile}
-          contentScaling={contentScaling}
-          renderTextAsMarkdown={false}
-          specialDiagramMode
-          // onMessageEdit={(text) => setMessage({ ...message, text })}
-        />
+      {!diagramCode && <Divider />}
+
+      {/* End */}
+      <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+
+        {/* Add Message to Chat (once complete) */}
+        <Button variant='soft' color='success' disabled={!diagramCode || !!abortController} endDecorator={<TelegramIcon />} onClick={handleAppendMessageAndClose}>
+          Add To Chat
+        </Button>
+
+        {/* Button Group to toggle controls visibility - NOT enabled at the moment */}
+        <ButtonGroup variant='solid' color='primary' sx={{ ml: 'auto' }}>
+          {/*<IconButton*/}
+          {/*  aria-label={showOptions ? 'Hide Options' : 'Show Options'}*/}
+          {/*  onClick={() => setShowOptions(options => !options)}*/}
+          {/*>*/}
+          {/*  {showOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}*/}
+          {/*</IconButton>*/}
+          <Button
+            variant={abortController ? 'soft' : 'solid'} color='primary'
+            disabled={!diagramLlm}
+            onClick={abortController ? () => abortController.abort() : handleGenerateNew}
+            endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayIcon /> : <AccountTreeTwoToneIcon />}
+            sx={{ minWidth: isMobile ? 160 : 220 }}
+          >
+            {abortController ? 'Stop' : diagramCode ? 'Regenerate' : 'Generate'}
+          </Button>
+        </ButtonGroup>
+
       </Box>
-    )}
 
-    {!diagramCode && <Divider />}
-
-  </GoodModal>;
+    </GoodModal>
+  );
 }

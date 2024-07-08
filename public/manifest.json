@@ -11,7 +11,7 @@
     "utilities"
   ],
   "display": "standalone",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "icons": [
     {
@@ -51,5 +51,12 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "shortcuts": [
+    {
+      "name": "Call",
+      "url": "/call",
+      "description": "Call a Persona"
+    }
+  ]
 }

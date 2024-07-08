@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Button, Typography } from '@mui/joy';
 
+import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -9,7 +10,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { getCallbackUrl } from '~/common/app.routes';
 
 import { DModelSourceId } from '../../store-llms';
-import { useLlmUpdateModels } from '../useLlmUpdateModels';
+import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
@@ -30,7 +31,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(ModelVendorOpenRouter, access, !sourceHasLLMs && shallFetchSucceed, source, true);
+    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source, true);
 
 
   const handleOpenRouterLogin = () => {
@@ -56,7 +57,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
       autoCompleteId='openrouter-key' label='OpenRouter API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <Link level='body-sm' href='https://openrouter.ai/keys' target='_blank'>your keys</Link>
-        : '✔️ already set in server'
+        : <AlreadySet />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://openrouter.ai/activity' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
