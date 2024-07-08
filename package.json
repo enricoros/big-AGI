@@ -4,6 +4,7 @@
   "private": true,
   "author": "Enrico Ros <enrico.ros@gmail.com>",
   "repository": "https://github.com/enricoros/big-agi",
+  "main": "src/electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -82,6 +83,8 @@
     "@types/react-katex": "^3.0.4",
     "@types/react-timeago": "^4.1.7",
     "@types/turndown": "^5.0.4",
+    "electron": "^31.1.0",
+    "electron-builder": "^24.13.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.4",
     "prettier": "^3.3.2",

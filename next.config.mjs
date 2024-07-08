@@ -13,7 +13,7 @@ let nextConfig = {
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
   ...buildType && {
     output: buildType,
-    distDir: 'dist',
+    // distDir: 'dist',
 
     // disable image optimization for exports
     images: { unoptimized: true },
