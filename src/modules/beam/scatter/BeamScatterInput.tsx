@@ -91,7 +91,6 @@ export function BeamScatterInput(props: {
         message={lastHistoryMessage}
         fitScreen={props.isMobile}
         isMobile={props.isMobile}
-        showAvatar={true}
         adjustContentScaling={-1}
         topDecorator={userMessageDecorator}
         onMessageFragmentReplace={props.onMessageFragmentReplace}

@@ -144,7 +144,7 @@ export function Fusion(props: {
             <ChatMessageMemo
               message={fusion.outputDMessage}
               fitScreen={true}
-              showAvatar={false}
+              hideAvatar
               showUnsafeHtml={true}
               adjustContentScaling={-1}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}

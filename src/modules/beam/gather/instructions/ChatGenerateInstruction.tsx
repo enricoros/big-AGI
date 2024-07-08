@@ -81,7 +81,7 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
           <ChatMessage
             message={inputs.intermediateDMessage}
             fitScreen={true}
-            showAvatar={false}
+            hideAvatar
             adjustContentScaling={-1}
             sx={!getBeamCardScrolling() ? beamCardMessageSx : beamCardMessageScrollingSx}
           />,
