@@ -32,6 +32,8 @@ async function createWindow() {
     // loadingScreen.center();
     // console.log('Loading screen created');
 
+    console.log('Preload script path:', path.join(__dirname, 'preload.js'));
+
     mainWindow = new BrowserWindow({
       width: Math.min(1280, width * 0.8),
       height: Math.min(800, height * 0.8),
@@ -41,12 +43,22 @@ async function createWindow() {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, 'preload.js'),
+        sandbox: false,
+        devTools: false,
       },
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#1a1a1a' : '#ffffff',
       show: true,
       frame: false,
       titleBarStyle: 'hidden',
-      icon: path.join(__dirname, 'app-icon.png'),
+      icon: path.join(__dirname, 'tray-icon.png'),
+      // New "insane" features:
+      // transparent: true, // Enable window transparency
+      vibrancy: 'under-window', // Add vibrancy effect (macOS only)
+      visualEffectState: 'active', // Keep vibrancy active even when not focused (macOS only)
+      roundedCorners: true, // Enable rounded corners (macOS only)
+      // thickFrame: false, // Use a thinner frame on Windows
+      autoHideMenuBar: true, // Auto-hide the menu bar, press Alt to show it
+      scrollBounce: true, // Enable bounce effect when scrolling (macOS only)
     });
 
     mainWindow.removeMenu();
@@ -89,6 +101,17 @@ async function createWindow() {
     mainWindow.on('unmaximize', () => {
       mainWindow.webContents.send('window-unmaximized');
     });
+
+
+    // Warn if preloads fail
+    mainWindow.webContents.on('preload-error', (event, preloadPath, error) => {
+      console.error('Preload error:', preloadPath, error);
+    });
+
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+      console.error('Failed to load:', errorCode, errorDescription);
+    });
+
 
     // Handle external links
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -143,6 +166,7 @@ ipcMain.on('maximize-window', () => {
   }
 });
 ipcMain.on('close-window', () => mainWindow.close());
+
 
 // Auto-updater events
 autoUpdater.on('update-available', () => {
