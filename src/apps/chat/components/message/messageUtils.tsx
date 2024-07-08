@@ -35,13 +35,20 @@ export const messageAsideColumnSx: SxProps = {
   alignItems: 'center',
 };
 
+export const messageZenAsideColumnSx: SxProps = {
+  ...messageAsideColumnSx,
+  minWidth: undefined,
+  maxWidth: undefined,
+  mx: -1,
+};
+
 export const avatarIconSx = {
   width: 36,
   height: 36,
 } as const;
 
 
-export function makeMessageAvatar(
+export function makeMessageAvatarIcon(
   messageAvatarUrl: string | null,
   messageRole: DMessageRole | string,
   messageOriginLLM: string | undefined,

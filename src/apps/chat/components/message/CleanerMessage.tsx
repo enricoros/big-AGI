@@ -8,7 +8,7 @@ import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.
 
 import { TokenBadgeMemo } from '../composer/TokenBadge';
 import { isErrorChatMessage } from './explainServiceErrors';
-import { makeMessageAvatar, messageBackground } from './messageUtils';
+import { makeMessageAvatarIcon, messageBackground } from './messageUtils';
 
 
 /**
@@ -62,8 +62,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
 
   const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
 
-  const avatarEl: React.JSX.Element | null = React.useMemo(() =>
-      makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete),
+  const avatarIconEl: React.JSX.Element | null = React.useMemo(() =>
+      makeMessageAvatarIcon(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete),
     [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole],
   );
 
@@ -86,7 +86,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
       </Box>}
 
       <Box sx={{ display: { xs: 'none', sm: 'flex' }, minWidth: { xs: 40, sm: 48 }, justifyContent: 'center' }}>
-        {avatarEl}
+        {avatarIconEl}
       </Box>
 
       <Typography level='body-sm' sx={{ minWidth: 64 }}>

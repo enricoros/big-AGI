@@ -207,7 +207,7 @@ export function BeamRay(props: {
             <ChatMessageMemo
               message={ray.message}
               fitScreen={true}
-              showAvatar={false}
+              hideAvatar
               showUnsafeHtml={true}
               adjustContentScaling={-1}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}

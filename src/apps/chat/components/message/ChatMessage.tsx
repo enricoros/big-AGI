@@ -38,7 +38,7 @@ import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentFragments } from './fragments-attachment-doc/DocumentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
-import { avatarIconSx, makeMessageAvatar, messageAsideColumnSx, messageBackground } from './messageUtils';
+import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
 
@@ -71,7 +71,7 @@ export function ChatMessage(props: {
   isBottom?: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
-  showAvatar?: boolean, // auto if undefined
+  hideAvatar?: boolean,
   showBlocksDate?: boolean,
   showUnsafeHtml?: boolean,
   adjustContentScaling?: number,
@@ -102,8 +102,8 @@ export function ChatMessage(props: {
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
 
   // external state
-  const { showAvatar, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
-    showAvatar: props.showAvatar !== undefined ? props.showAvatar : state.zenMode !== 'cleaner',
+  const { isZenMode, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
+    isZenMode: state.zenMode === 'cleaner',
     contentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
     doubleClickToEdit: state.doubleClickToEdit,
     renderMarkdown: state.renderMarkdown,
@@ -417,9 +417,10 @@ export function ChatMessage(props: {
   const backgroundColor = messageBackground(messageRole, wasEdited, false /*isAssistantError && !errorMessage*/);
 
   // avatar
-  const avatarEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatar ? makeMessageAvatar(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
-    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatar],
+  const showAvatarIcon = !props.hideAvatar && !isZenMode;
+  const avatarIconEl: React.JSX.Element | null = React.useMemo(
+    () => showAvatarIcon ? makeMessageAvatarIcon(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
+    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon],
   );
 
 
@@ -486,8 +487,8 @@ export function ChatMessage(props: {
         )}
 
         {/* [aside B] Avatar (Persona) */}
-        {showAvatar && !isEditingText && (
-          <Box sx={messageAsideColumnSx}>
+        {!props.hideAvatar && !isEditingText && (
+          <Box sx={isZenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
 
             {/* Persona Avatar or Menu Button */}
             <Box
@@ -500,17 +501,22 @@ export function ChatMessage(props: {
               onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
               sx={{ display: 'flex' }}
             >
-              {(isHovering || opsMenuAnchor) ? (
-                <IconButton variant={opsMenuAnchor ? 'solid' : 'soft'} color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'} sx={avatarIconSx}>
+              {!isHovering && !opsMenuAnchor && !isZenMode ? (
+                avatarIconEl
+              ) : (
+                <IconButton
+                  size='sm'
+                  variant={opsMenuAnchor ? 'solid' : isZenMode ? 'plain' : 'soft'}
+                  color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'}
+                  sx={avatarIconSx}
+                >
                   <MoreVertIcon />
                 </IconButton>
-              ) : (
-                avatarEl
               )}
             </Box>
 
             {/* Assistant (llm/function) name */}
-            {fromAssistant && (
+            {fromAssistant && !isZenMode && (
               <Tooltip arrow title={messagePendingIncomplete ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
                 <Typography level='body-xs' sx={{
                   overflowWrap: 'anywhere',
