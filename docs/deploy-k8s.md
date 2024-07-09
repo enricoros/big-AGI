@@ -79,4 +79,7 @@ To update big-AGI to the latest version:
 
 This will trigger a rolling update of the deployment with the latest image.
 
+**Note**: If you're deploying big-AGI behind a reverse proxy, you may need to configure
+your proxy to support streaming. See our [Reverse Proxy Deployment Guide](deploy-reverse-proxy.md) for more information.
+
 Note: For production use, consider setting up an Ingress Controller or Load Balancer instead of using port-forward.

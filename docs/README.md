@@ -46,6 +46,7 @@ Step-by-step deployment and system configuration instructions.
   - **[Source code alterations guide](customizations.md)**: source code primer and alterations guidelines
   - **[Basic Authentication](deploy-authentication.md)**: Optional, adds a username and password wall
   - **[Database Setup](deploy-database.md)**: Optional, enables "Chat Link Sharing"
+  - **[Reverse Proxy](deploy-reverse-proxy.md)**: Optional, enables custom domain and SSL
   - **[Environment Variables](environment-variables.md)**: 📌 Pre-configures models and services
 
 ## Support and Community
