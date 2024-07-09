@@ -7,10 +7,11 @@ import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
 
+import { AnthropicWireMessageCreate, anthropicWireMessageCreateSchema, AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from '~/modules/aix/server/dispatch/anthropic/anthropic.wiretypes';
+
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
 
-import { AnthropicWireMessageCreate, anthropicWireMessageCreateSchema, AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from '~/modules/llms/server/anthropic/anthropic.wiretypes';
 import { hardcodedAnthropicModels } from './anthropic.models';
 
 

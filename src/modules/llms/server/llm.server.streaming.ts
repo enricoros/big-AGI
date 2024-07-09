@@ -6,7 +6,7 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetch
 
 
 // Anthropic server imports
-import { AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from './anthropic/anthropic.wiretypes';
+import { AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from '../../aix/server/dispatch/anthropic/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
 
 // Gemini server imports
