@@ -765,7 +765,7 @@ export function ChatMessage(props: {
                 ? <>Restart <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
                   ? <>Retry <span style={{ opacity: 0.5 }}>from here</span></>
-                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + R' /></Box>}
+                  : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Retry<KeyStroke combo='Ctrl + Shift + G' /></Box>}
             </MenuItem>
           )}
           {!!props.onMessageBeam && (
