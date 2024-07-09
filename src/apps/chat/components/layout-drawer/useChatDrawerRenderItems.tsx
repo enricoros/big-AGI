@@ -4,7 +4,7 @@ import { useStoreWithEqualityFn } from 'zustand/traditional';
 import type { DFolder } from '~/common/state/store-folders';
 import { DMessage, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { isContentOrAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';
@@ -93,6 +93,7 @@ export function useChatDrawerRenderItems(
   allFolders: DFolder[],
   filterHasStars: boolean,
   filterHasImageAssets: boolean,
+  filterHasDocFragments: boolean,
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
@@ -112,6 +113,10 @@ export function useChatDrawerRenderItems(
       // filter 2: preparation: lowercase the query
       const { isSearching, lcTextQuery } = isDrawerSearching(filterByQuery);
 
+      function messageHasDocAttachmentFragments(message: DMessage): boolean {
+        return message.fragments.some(fragment => isAttachmentFragment(fragment) && isDocPart(fragment.part));
+      }
+
       function messageHasImageFragments(message: DMessage): boolean {
         return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) /*&& fragment.part.dataRef.reftype === 'dblob'*/);
       }
@@ -120,6 +125,7 @@ export function useChatDrawerRenderItems(
       const chatNavItems = selectedConversations
         .filter(_c => !filterHasStars || _c.messages.some(m => messageHasUserFlag(m, 'starred')))
         .filter(_c => !filterHasImageAssets || _c.messages.some(messageHasImageFragments))
+        .filter(_c => !filterHasDocFragments || _c.messages.some(messageHasDocAttachmentFragments))
         .map((_c): ChatNavigationItemData => {
           // rich properties
           const title = conversationTitle(_c);
@@ -139,6 +145,7 @@ export function useChatDrawerRenderItems(
           const allFlags = new Set<DMessageUserFlag>();
           _c.messages.forEach(_m => _m.userFlags?.forEach(flag => allFlags.add(flag)));
           const userFlagsSummary = !allFlags.size ? undefined : Array.from(allFlags).map(messageUserFlagToEmoji).join('');
+          const containsDocAttachments = filterHasDocFragments || _c.messages.some(messageHasDocAttachmentFragments);
           const containsImageAssets = filterHasImageAssets || _c.messages.some(messageHasImageFragments);
 
           // create the ChatNavigationData
@@ -151,6 +158,7 @@ export function useChatDrawerRenderItems(
             title,
             userSymbol: _c.userSymbol || undefined,
             userFlagsSummary,
+            containsDocAttachments,
             containsImageAssets,
             folder: !allFolders.length
               ? undefined                             // don't show folder select if folders are disabled
@@ -245,11 +253,12 @@ export function useChatDrawerRenderItems(
       if (!renderNavItems.length)
         renderNavItems.push({
           type: 'nav-item-info-message',
-          message: (filterHasStars && filterHasImageAssets) ? 'No starred results with images'
-            : filterHasImageAssets ? 'No image results'
-              : filterHasStars ? 'No starred results'
-                : isSearching ? 'No results found'
-                  : 'No conversations in folder',
+          message: (filterHasStars && (filterHasImageAssets || filterHasDocFragments)) ? 'No starred results with attachments'
+            : filterHasDocFragments ? 'No attachment results'
+              : filterHasImageAssets ? 'No image results'
+                : filterHasStars ? 'No starred results'
+                  : isSearching ? 'No results found'
+                    : 'No conversations in folder',
         });
 
       // other derived state

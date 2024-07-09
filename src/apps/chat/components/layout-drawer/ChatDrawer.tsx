@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -83,14 +84,15 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const {
-    filterHasStars, toggleFilterHasStars,
+    filterHasDocFragments, toggleFilterHasDocFragments,
     filterHasImageAssets, toggleFilterHasImageAssets,
+    filterHasStars, toggleFilterHasStars,
     showPersonaIcons, toggleShowPersonaIcons,
     showRelativeSize, toggleShowRelativeSize,
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, navGrouping, searchSorting, showRelativeSize,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, filterHasDocFragments, navGrouping, searchSorting, showRelativeSize,
   );
   const { contentScaling, showSymbols } = useUIPreferencesStore(useShallow(state => ({
     contentScaling: state.contentScaling,
@@ -189,6 +191,10 @@ function ChatDrawer(props: {
             <ListItemDecorator>{filterHasImageAssets && <CheckRoundedIcon />}</ListItemDecorator>
             Has Images <FormatPaintOutlinedIcon />
           </MenuItem>
+          <MenuItem onClick={toggleFilterHasDocFragments}>
+            <ListItemDecorator>{filterHasDocFragments && <CheckRoundedIcon />}</ListItemDecorator>
+            Has Attachments <AttachFileRoundedIcon />
+          </MenuItem>
 
           <ListDivider />
           <ListItem>
@@ -221,8 +227,8 @@ function ChatDrawer(props: {
       )}
     </Dropdown>
   ), [
-    filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, showPersonaIcons, showRelativeSize,
-    toggleFilterHasImageAssets, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize,
+    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, showPersonaIcons, showRelativeSize,
+    toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize,
   ]);
 
 
