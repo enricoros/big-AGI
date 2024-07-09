@@ -99,6 +99,8 @@ or follow the steps below for a quick start.
    ```
    Access your big-AGI instance at `http://localhost:3000`.
 
+If you deploy big-AGI behind a reverse proxy, you may want to check out the [Reverse Proxy Configuration Guide](deploy-reverse-proxy.md).
+
 ### Kubernetes Deployment
 
 Deploy big-AGI on a Kubernetes cluster for enhanced scalability and management. Follow these steps for a Kubernetes deployment:
