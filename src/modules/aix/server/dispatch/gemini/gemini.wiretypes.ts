@@ -92,7 +92,6 @@ export const geminiModelsListOutputSchema = z.object({
 ]);*/
 
 const geminiContentPartSchema = z.union([
-
   // TextPart
   z.object({
     text: z.string(),
