@@ -32,7 +32,7 @@ const anthropicWire_ToolResultBlock_Schema = z.object({
   tool_use_id: z.string(),
   // NOTE: could be a string too, but we force it to be an array for a better implementation
   content: z.array(z.union([anthropicWire_TextBlock_Schema, anthropicWire_ImageBlock_Schema])).optional(),
-  is_error: z.boolean().optional(),
+  is_error: z.boolean().optional(), // default: false
 });
 
 
@@ -52,8 +52,14 @@ const anthropicWire_HistoryMessageUL_Schema = z.object({
 
 const anthropicWire_ToolUL_Schema = z.object({
   name: z.string(),
-  // Description of what this tool does.
+
+  /**
+   * Description of what this tool does. Tool descriptions should be as detailed as possible.
+   * The more information that the model has about what the tool is and how to use it, the better it will perform.
+   * @see aixFunctionCallSchema
+   */
   description: z.string().optional(),
+
   /**
    * [JSON schema](https://json-schema.org/) for this tool's input.
    *
@@ -62,6 +68,7 @@ const anthropicWire_ToolUL_Schema = z.object({
   input_schema: z.object({
     type: z.literal('object'),
     properties: z.record(z.unknown()).optional(),
+    required: z.array(z.string()).optional(),
   }).and(z.record(z.unknown())),
 });
 
