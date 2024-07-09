@@ -12,7 +12,7 @@ import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModels
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
-import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelSchema, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
+import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelEnum, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from './gemini.wiretypes';
 import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from '~/modules/llms/server/gemini/gemini.models';
 
 
@@ -110,7 +110,7 @@ async function geminiPOST<TOut extends object, TPostBody extends object>(access:
 export const geminiAccessSchema = z.object({
   dialect: z.enum(['gemini']),
   geminiKey: z.string(),
-  minSafetyLevel: geminiBlockSafetyLevelSchema,
+  minSafetyLevel: geminiBlockSafetyLevelEnum,
 });
 export type GeminiAccessSchema = z.infer<typeof geminiAccessSchema>;
 
