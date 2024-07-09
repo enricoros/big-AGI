@@ -61,6 +61,7 @@ Test your application thoroughly using local development (refer to README.md for
 
 - [deploy-cloudflare.md](deploy-cloudflare.md): for Cloudflare Workers deployment
 - [deploy-docker.md](deploy-docker.md): for Docker deployment instructions and examples
+- [deploy-k8s.md](deploy-k8s.md): for Kubernetes deployment instructions and examples
 
 ## Debugging
 
