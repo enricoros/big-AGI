@@ -46,22 +46,68 @@ export const geminiModelsListOutputSchema = z.object({
 
 // Request
 
+// The IANA standard MIME type of the source data. Examples: - image/png - image/jpeg
+// For a complete list of supported types, see Supported file formats:
+// https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=node#supported_file_formats
+/*const geminiBlobMimeTypeSchema = z.enum([
+  // Image formats
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+  // Audio formats
+  'audio/wav',
+  'audio/mp3',
+  'audio/aiff',
+  'audio/aac',
+  'audio/ogg',
+  'audio/flac',
+  // Video formats
+  'video/mp4',
+  'video/mpeg',
+  'video/mov',
+  'video/avi',
+  'video/x-flv',
+  'video/mpg',
+  'video/webm',
+  'video/wmv',
+  'video/3gpp',
+  // Plain text formats
+  'text/plain',
+  'text/html',
+  'text/css',
+  'text/javascript',
+  'application/x-javascript',
+  'text/x-typescript',
+  'application/x-typescript',
+  'text/csv',
+  'text/markdown',
+  'text/x-python',
+  'application/x-python-code',
+  'application/json',
+  'text/xml',
+  'application/rtf',
+  'text/rtf',
+]);*/
+
 const geminiContentPartSchema = z.union([
 
   // TextPart
   z.object({
-    text: z.string().optional(),
+    text: z.string(),
   }),
 
-  // InlineDataPart
+  // InlineDataPart (for raw media bytes)
   z.object({
     inlineData: z.object({
-      mimeType: z.string(),
+      // see geminiBlobMimeTypeSchema
+      mimeType: z.string(), // The IANA standard MIME type of the source data.
       data: z.string(), // base64-encoded string
     }),
   }),
 
-  // A predicted FunctionCall returned from the model
+  // FunctionCall (predicted by the model)
   z.object({
     functionCall: z.object({
       name: z.string(),
@@ -69,21 +115,37 @@ const geminiContentPartSchema = z.union([
     }),
   }),
 
-  // The result output of a FunctionCall
+  // FunctionResponse (result of a FunctionCall)
   z.object({
     functionResponse: z.object({
       name: z.string(),
-      response: z.record(z.any()), // JSON object format
+      response: z.record(z.any()), // Optional. JSON object format
+    }),
+  }),
+
+  // FileData (URI based data)
+  z.object({
+    fileData: z.object({
+      mimeType: z.string().optional(), // Optional. The IANA standard MIME type of the source data.
+      fileUri: z.string(),
     }),
   }),
 ]);
 
 const geminiToolSchema = z.object({
+  codeExecution: z.object({}).optional(),
   functionDeclarations: z.array(z.object({
     name: z.string(),
     description: z.string(),
     parameters: z.record(z.any()).optional(), // Schema object format
   })).optional(),
+});
+
+const geminiToolConfigSchema = z.object({
+  functionCallingConfig: z.object({
+    mode: z.enum(['MODE_UNSPECIFIED', 'AUTO', 'ANY', 'NONE']).optional(),
+    allowedFunctionNames: z.array(z.string()).optional(),
+  }).optional(),
 });
 
 const geminiHarmCategorySchema = z.enum([
@@ -131,12 +193,20 @@ const geminiContentSchema = z.object({
   parts: z.array(geminiContentPartSchema),
 });
 
+const geminiSystemContentSchema = z.object({
+  parts: z.array(z.object({
+    text: z.string(),
+  })),
+});
+
 export type GeminiContentSchema = z.infer<typeof geminiContentSchema>;
 
 export const geminiGenerateContentRequest = z.object({
   contents: z.array(geminiContentSchema),
   tools: z.array(geminiToolSchema).optional(),
+  toolConfig: geminiToolConfigSchema.optional(),
   safetySettings: z.array(geminiSafetySettingSchema).optional(),
+  systemInstruction: geminiSystemContentSchema.optional(), // Note: should be 'contents' object, but since it's text-only, we cast it down with a custom definition
   generationConfig: geminiGenerationConfigSchema.optional(),
 });
 

@@ -59,6 +59,7 @@ export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, histo
     const { role: msgRole, content: msgContent } = _historyElement;
 
     // System message - we treat it as per the example in https://ai.google.dev/tutorials/ai-studio_quickstart#chat_example
+    // TODO: sypport the system instruction
     if (msgRole === 'system') {
       contents.push({ role: 'user', parts: [{ text: msgContent }] });
       contents.push({ role: 'model', parts: [{ text: 'Ok' }] });
