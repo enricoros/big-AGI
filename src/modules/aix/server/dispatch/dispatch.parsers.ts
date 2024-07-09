@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { safeErrorString } from '~/server/wire';
 
 import type { OpenAIWire } from '~/modules/llms/server/openai/openai.wiretypes';
-import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from '~/modules/llms/server/gemini/gemini.wiretypes';
 import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema, AnthropicWireMessageResponse } from '~/modules/llms/server/anthropic/anthropic.wiretypes';
 import { wireOllamaChunkedOutputSchema } from '~/modules/llms/server/ollama/ollama.wiretypes';
+
+import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from './gemini/gemini.wiretypes';
 
 
 // configuration

@@ -11,7 +11,7 @@ import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow
 
 // Gemini server imports
 import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } from './gemini/gemini.router';
-import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
+import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from '../../aix/server/dispatch/gemini/gemini.wiretypes';
 
 // Ollama server imports
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
