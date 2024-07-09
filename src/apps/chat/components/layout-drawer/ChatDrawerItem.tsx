@@ -57,6 +57,7 @@ export interface ChatNavigationItemData {
   title: string;
   userSymbol: string | undefined;
   userFlagsSummary: string | undefined;
+  containsDocAttachments: boolean;
   containsImageAssets: boolean;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;

@@ -29,11 +29,14 @@ interface AppChatStore {
 
   // chat UI
 
-  filterHasStars: boolean;
-  setFilterHasStars: (filterHasStars: boolean) => void;
+  filterHasDocFragments: boolean;
+  setFilterHasDocFragments: (filterHasDocFragments: boolean) => void;
 
   filterHasImageAssets: boolean;
   setFilterHasImageAssets: (filterHasImageAssets: boolean) => void;
+
+  filterHasStars: boolean;
+  setFilterHasStars: (filterHasStars: boolean) => void;
 
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
@@ -71,11 +74,14 @@ const useAppChatStore = create<AppChatStore>()(persist(
     autoTitleChat: true,
     setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
 
-    filterHasStars: false,
-    setFilterHasStars: (filterHasStars: boolean) => _set({ filterHasStars }),
+    filterHasDocFragments: false,
+    setFilterHasDocFragments: (filterHasDocFragments: boolean) => _set({ filterHasDocFragments }),
 
     filterHasImageAssets: false,
     setFilterHasImageAssets: (filterHasImageAssets: boolean) => _set({ filterHasImageAssets }),
+
+    filterHasStars: false,
+    setFilterHasStars: (filterHasStars: boolean) => _set({ filterHasStars }),
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
@@ -145,15 +151,17 @@ export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] 
 
 export const useChatDrawerFilters = () => {
   const values = useAppChatStore(useShallow(state => ({
-    filterHasStars: state.filterHasStars,
+    filterHasDocFragments: state.filterHasDocFragments,
     filterHasImageAssets: state.filterHasImageAssets,
+    filterHasStars: state.filterHasStars,
     showPersonaIcons: state.showPersonaIcons,
     showRelativeSize: state.showRelativeSize,
   })));
   return {
     ...values,
-    toggleFilterHasStars: () => useAppChatStore.getState().setFilterHasStars(!values.filterHasStars),
+    toggleFilterHasDocFragments: () => useAppChatStore.getState().setFilterHasDocFragments(!values.filterHasDocFragments),
     toggleFilterHasImageAssets: () => useAppChatStore.getState().setFilterHasImageAssets(!values.filterHasImageAssets),
+    toggleFilterHasStars: () => useAppChatStore.getState().setFilterHasStars(!values.filterHasStars),
     toggleShowPersonaIcons: () => useAppChatStore.getState().setShowPersonaIcons(!values.showPersonaIcons),
     toggleShowRelativeSize: () => useAppChatStore.getState().setShowRelativeSize(!values.showRelativeSize),
   };
