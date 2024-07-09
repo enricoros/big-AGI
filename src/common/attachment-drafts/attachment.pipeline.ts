@@ -88,6 +88,16 @@ const IMAGE_MIMETYPES: string[] = [
   'image/gif',
 ];
 
+// mimetypes to treat as PDFs
+const PDF_MIMETYPES: string[] = [
+  'application/pdf', 'application/x-pdf', 'application/acrobat',
+];
+
+// mimetypes to treat as images
+const DOCX_MIMETYPES: string[] = [
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
 
 /**
  * Creates a new AttachmentDraft object.
@@ -258,9 +268,14 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       break;
 
     // PDF
-    case ['application/pdf', 'application/x-pdf', 'application/acrobat'].includes(input.mimeType):
+    case PDF_MIMETYPES.includes(input.mimeType):
       converters.push({ id: 'pdf-text', name: 'PDF To Text (OCR)' });
       converters.push({ id: 'pdf-images', name: 'PDF To Images' });
+      break;
+
+    // DOCX
+    case DOCX_MIMETYPES.includes(input.mimeType):
+      converters.push({ id: 'docx-to-html', name: 'DOCX to HTML' });
       break;
 
     // EGO
@@ -527,6 +542,22 @@ export async function attachmentPerformConversion(
         }
       } catch (error) {
         console.error('Error converting PDF to images:', error);
+      }
+      break;
+
+
+    // docx to markdown
+    case 'docx-to-html':
+      if (!(input.data instanceof ArrayBuffer)) {
+        console.log('Expected ArrayBuffer for DOCX converter, got:', typeof input.data);
+        break;
+      }
+      try {
+        const { convertDocxToHTML } = await import('./file-converters/DocxToMarkdown');
+        const { html } = await convertDocxToHTML(input.data);
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', createDMessageDataInlineText(html, 'text/html'), refString, docMeta));
+      } catch (error) {
+        console.error('Error in DOCX to Markdown conversion:', error);
       }
       break;
 

@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
@@ -73,13 +74,14 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'text': TextFieldsIcon,
   'rich-text': CodeIcon,
   'rich-text-table': PivotTableChartIcon,
-  'pdf-text': PictureAsPdfIcon,
-  'pdf-images': PermMediaOutlinedIcon,
   'image-original': ImageOutlinedIcon,
   'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
   'image-resized-low': PhotoSizeSelectSmallOutlinedIcon,
   'image-to-default': ImageOutlinedIcon,
   'image-ocr': AbcIcon,
+  'pdf-text': PictureAsPdfIcon,
+  'pdf-images': PermMediaOutlinedIcon,
+  'docx-to-html': DescriptionOutlinedIcon,
   'ego-fragments-inlined': TelegramIcon,
   'unhandled': TextureIcon,
 };
