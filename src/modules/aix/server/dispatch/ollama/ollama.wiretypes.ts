@@ -44,7 +44,7 @@ const wireOllamaChatCompletionInputSchema = z.object({
   // required
   model: z.string(),
   messages: z.array(z.object({
-    role: z.enum(['assistant', 'system', 'user']),
+    role: z.enum(['system', 'user', 'assistant']),
     content: z.string(),
     images: z.array(z.string()).optional(), // base64 encoded images
   })),

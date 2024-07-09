@@ -14,7 +14,7 @@ import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } fr
 import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from '../../aix/server/dispatch/gemini/gemini.wiretypes';
 
 // Ollama server imports
-import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
+import { wireOllamaChunkedOutputSchema } from '../../aix/server/dispatch/ollama/ollama.wiretypes';
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
 
 // OpenAI server imports
