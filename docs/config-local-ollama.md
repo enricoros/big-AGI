@@ -81,7 +81,8 @@ Then, edit the nginx configuration file `/etc/nginx/sites-enabled/default` and a
         proxy_buffering off;
         proxy_cache off;
         
-        # Longer timeouts
+        # Longer timeouts (1hr)
+        keepalive_timeout 3600;
         proxy_read_timeout 3600;
         proxy_connect_timeout 3600;
         proxy_send_timeout 3600;
