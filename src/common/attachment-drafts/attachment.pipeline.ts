@@ -19,8 +19,19 @@ const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
 
 
-// extensions to treat as plain text
-const PLAIN_TEXT_EXTENSIONS: string[] = ['.ts', '.tsx'];
+// input mimetypes missing
+const RESOLVE_MISSING_FILE_MIMETYPE_MAP: Record<string, string> = {
+  // JavaScript files (official)
+  'js': 'text/javascript',
+  // Python files
+  'py': 'text/x-python',
+  // TypeScript files (recommended is application/typescript, but we standardize to text/x-typescript instead as per Gemini's standard)
+  'ts': 'text/x-typescript',
+  'tsx': 'text/x-typescript',
+  // JSON files
+  'json': 'application/json',
+  'csv': 'text/csv',
+};
 
 // mimetypes to treat as plain text
 const PLAIN_TEXT_MIMETYPES: string[] = [
@@ -152,15 +163,22 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       edit({ label: source.refPath, ref: source.refPath });
 
       // fix missing/wrong mimetypes
+      const fileExtension = source.refPath.split('.').pop()?.toLowerCase() || undefined;
       let mimeType = source.fileWithHandle.type;
       if (!mimeType) {
         // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
-        console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.refPath);
-        mimeType = 'text/plain';
-      } else {
-        // possibly fix wrongly assigned mimetypes (from the extension alone)
-        if (!mimeType.startsWith('text/') && PLAIN_TEXT_EXTENSIONS.some(ext => source.refPath.endsWith(ext)))
+        if (fileExtension)
+          mimeType = RESOLVE_MISSING_FILE_MIMETYPE_MAP[fileExtension] ?? undefined;
+        // unknown extension or missing extension and mime: falling back to text/plain
+        if (!mimeType) {
+          console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.refPath);
           mimeType = 'text/plain';
+        }
+      } else {
+        // we can possibly fix wrongly assigned transfer mimetypes here
+        // fix the mimetype for TypeScript files (from some old video streaming format on windows...)
+        if ((fileExtension === 'ts' || fileExtension === 'tsx') && !mimeType.startsWith('text/'))
+          mimeType = 'text/x-typescript';
       }
 
       // UX: just a hint of a loading state
