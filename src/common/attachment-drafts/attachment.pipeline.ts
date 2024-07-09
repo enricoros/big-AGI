@@ -270,8 +270,10 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       converters.push({ id: 'text', name: 'Text' });
 
       // p3: Html
-      if (textOriginHtml)
+      if (textOriginHtml) {
         converters.push({ id: 'rich-text', name: 'HTML' });
+        converters.push({ id: 'rich-text-cleaner', name: 'Cleaner HTML' });
+      }
       break;
 
     // Images (Known/Unknown)
@@ -448,6 +450,19 @@ export async function attachmentPerformConversion(
       //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
       const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
       newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', richTextData, refString, docMeta));
+      break;
+
+    // html cleaned
+    case 'rich-text-cleaner':
+      const cleanerHtml = (input.altData || '')
+        // remove class and style attributes
+        .replace(/<[^>]+>/g, (tag) =>
+          tag.replace(/ class="[^"]*"/g, '').replace(/ style="[^"]*"/g, ''),
+        )
+        // remove svg elements
+        .replace(/<svg[^>]*>.*?<\/svg>/g, '');
+      const cleanedHtmlData = createDMessageDataInlineText(cleanerHtml, 'text/html');
+      newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', cleanedHtmlData, refString, docMeta));
       break;
 
     // html to markdown table

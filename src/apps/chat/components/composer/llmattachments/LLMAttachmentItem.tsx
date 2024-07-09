@@ -73,6 +73,7 @@ const InputErrorIndicator = () =>
 const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.ComponentType<any> } = {
   'text': TextFieldsIcon,
   'rich-text': CodeIcon,
+  'rich-text-cleaner': CodeIcon,
   'rich-text-table': PivotTableChartIcon,
   'image-original': ImageOutlinedIcon,
   'image-resized-high': PhotoSizeSelectLargeOutlinedIcon,
@@ -101,6 +102,8 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
   if (converter && attachmentDraft.label === 'Rich Text') {
     if (converter.id === 'rich-text-table')
       return 'Rich Table';
+    if (converter.id === 'rich-text-cleaner')
+      return 'Cleaner HTML';
     if (converter.id === 'rich-text')
       return 'Rich HTML';
   }

@@ -94,7 +94,7 @@ export type AttachmentDraftConverter = {
 }
 
 export type AttachmentDraftConverterType =
-  | 'text' | 'rich-text' | 'rich-text-table'
+  | 'text' | 'rich-text' | 'rich-text-cleaner' | 'rich-text-table'
   | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-default'
   | 'pdf-text' | 'pdf-images'
   | 'docx-to-html'
