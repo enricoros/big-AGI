@@ -272,7 +272,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       // p3: Html
       if (textOriginHtml) {
         converters.push({ id: 'rich-text', name: 'HTML' });
-        converters.push({ id: 'rich-text-cleaner', name: 'Cleaner HTML' });
+        converters.push({ id: 'rich-text-cleaner', name: 'Clean HTML' });
       }
       break;
 
