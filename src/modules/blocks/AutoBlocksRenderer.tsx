@@ -281,9 +281,9 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
       })}
 
       {(isTextCollapsed || forceUserExpanded) && (
-        <Box sx={{ textAlign: 'right' }}>
+        <Box sx={{ textAlign: 'right', mt: 1 }}>
           <Button
-            variant={props.specialCodePlain ? 'plain' : 'soft'}
+            variant='soft'
             color={props.specialCodePlain ? 'neutral' : undefined}
             size='sm'
             onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
