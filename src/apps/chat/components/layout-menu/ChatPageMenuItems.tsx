@@ -143,7 +143,7 @@ export function ChatPageMenuItems(props: {
       <ListItemDecorator><ClearIcon /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         Reset Chat
-        {!props.disableItems && <KeyStroke combo='Ctrl + Alt + X' />}
+        {!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}
       </Box>
     </MenuItem>
 
