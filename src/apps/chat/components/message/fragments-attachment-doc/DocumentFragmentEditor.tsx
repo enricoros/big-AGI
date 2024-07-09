@@ -111,7 +111,7 @@ export function DocumentFragmentEditor(props: {
         <Typography level='title-sm'>
           <Tooltip disableInteractive title={part.ref === part.meta?.srcFileName ? undefined : part.ref} placement='top-start'>
             <div>
-              {part.meta?.srcFileName || part.ref}aaa
+              {part.meta?.srcFileName || part.ref}
             </div>
           </Tooltip>
         </Typography>
@@ -121,6 +121,7 @@ export function DocumentFragmentEditor(props: {
         </Typography>
       </Box>
       {/*</Sheet>*/}
+
 
       {isEditing ? (
         // Document Editor
@@ -152,16 +153,16 @@ export function DocumentFragmentEditor(props: {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {isDeleteArmed ? (
-            <Button variant='solid' color='neutral' size='sm' onClick={handleToggleDeleteArmed} startDecorator={<CloseRoundedIcon />}>
+            <Button variant='soft' color='neutral' size='sm' onClick={handleToggleDeleteArmed} startDecorator={<CloseRoundedIcon />}>
               Cancel
             </Button>
           ) : (
-            <Button variant='plain' color='neutral' size='sm' onClick={handleToggleDeleteArmed} startDecorator={<DeleteOutlineIcon />}>
+            <Button variant='soft' color='neutral' size='sm' onClick={handleToggleDeleteArmed} startDecorator={<DeleteOutlineIcon />}>
               Delete
             </Button>
           )}
           {isDeleteArmed && (
-            <Button variant='plain' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
+            <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
               Delete
             </Button>
           )}
@@ -169,16 +170,16 @@ export function DocumentFragmentEditor(props: {
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
           {isEditing ? (
-            <Button variant='plain' color='neutral' size='sm' onClick={handleToggleEdit} startDecorator={<CloseRoundedIcon />}>
+            <Button variant='soft' color='neutral' size='sm' onClick={handleToggleEdit} startDecorator={<CloseRoundedIcon />}>
               Cancel
             </Button>
           ) : (
-            <Button variant='plain' color='neutral' size='sm' onClick={handleToggleEdit} startDecorator={<EditRoundedIcon />}>
+            <Button variant='soft' color='neutral' size='sm' onClick={handleToggleEdit} startDecorator={<EditRoundedIcon />}>
               Edit
             </Button>
           )}
           {isEditing && (
-            <Button variant='plain' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
+            <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={{ minWidth: 100 }}>
               Save
             </Button>
           )}
