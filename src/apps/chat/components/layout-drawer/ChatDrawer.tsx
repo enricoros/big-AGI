@@ -84,6 +84,7 @@ function ChatDrawer(props: {
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const {
+    clearFilters,
     filterHasDocFragments, toggleFilterHasDocFragments,
     filterHasImageAssets, toggleFilterHasImageAssets,
     filterHasStars, toggleFilterHasStars,
@@ -342,15 +343,23 @@ function ChatDrawer(props: {
               {item.title}
             </Typography>
           ) : item.type === 'nav-item-info-message' ? (
-            <Typography key={'nav-info-' + idx} level='body-xs' sx={{ textAlign: 'center', color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
-              {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
-              {item.message}
-              {filterHasStars && <>
-                <Button variant='soft' size='sm' onClick={toggleFilterHasStars} sx={{ display: 'block', mt: 2, mx: 'auto' }}>
-                  remove filters
-                </Button>
-              </>}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, ml: 2 }}>
+              <Typography
+                key={'nav-info-' + idx}
+                level='body-xs'
+                sx={{ color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}
+              >
+                {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
+                {item.message}
+              </Typography>
+              {(filterHasStars || filterHasImageAssets || filterHasDocFragments) && (
+                <Tooltip title='Clear Filters'>
+                  <IconButton size='sm' color='primary' onClick={clearFilters}>
+                    <ClearIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
           ) : null,
         )}
       </Box>

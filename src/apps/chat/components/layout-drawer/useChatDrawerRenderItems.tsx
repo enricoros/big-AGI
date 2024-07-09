@@ -249,17 +249,26 @@ export function useChatDrawerRenderItems(
         ]);
       }
 
-      // [empty message] if there are no items
-      if (!renderNavItems.length)
+      // [zero state] searching & filtering
+      if (!renderNavItems.length) {
         renderNavItems.push({
           type: 'nav-item-info-message',
-          message: (filterHasStars && (filterHasImageAssets || filterHasDocFragments)) ? 'No starred results with attachments'
+          message: (filterHasStars && (filterHasImageAssets || filterHasDocFragments)) ? 'No results'
             : filterHasDocFragments ? 'No attachment results'
               : filterHasImageAssets ? 'No image results'
                 : filterHasStars ? 'No starred results'
-                  : isSearching ? 'No results found'
+                  : isSearching ? 'Text not found'
                     : 'No conversations in folder',
         });
+      } else {
+        // filtering reminder (will be rendered with a clear button too)
+        if (filterHasStars || filterHasImageAssets || filterHasDocFragments) {
+          renderNavItems.unshift({
+            type: 'nav-item-info-message',
+            message: `Filtering by ${filterHasStars ? 'stars' : ''}${filterHasStars && filterHasImageAssets ? ', ' : ''}${filterHasImageAssets ? 'images' : ''}${(filterHasStars || filterHasImageAssets) && filterHasDocFragments ? ', ' : ''}${filterHasDocFragments ? 'attachments' : ''}`,
+          });
+        }
+      }
 
       // other derived state
       const filteredChatIDs = chatNavItems.map(_c => _c.conversationId);

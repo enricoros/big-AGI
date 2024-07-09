@@ -29,6 +29,8 @@ interface AppChatStore {
 
   // chat UI
 
+  clearFilters: () => void;
+
   filterHasDocFragments: boolean;
   setFilterHasDocFragments: (filterHasDocFragments: boolean) => void;
 
@@ -73,6 +75,8 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoTitleChat: true,
     setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
+
+    clearFilters: () => _set({ filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
 
     filterHasDocFragments: false,
     setFilterHasDocFragments: (filterHasDocFragments: boolean) => _set({ filterHasDocFragments }),
@@ -157,13 +161,15 @@ export const useChatDrawerFilters = () => {
     showPersonaIcons: state.showPersonaIcons,
     showRelativeSize: state.showRelativeSize,
   })));
+  const chatStoreState = useAppChatStore.getState();
   return {
     ...values,
-    toggleFilterHasDocFragments: () => useAppChatStore.getState().setFilterHasDocFragments(!values.filterHasDocFragments),
-    toggleFilterHasImageAssets: () => useAppChatStore.getState().setFilterHasImageAssets(!values.filterHasImageAssets),
-    toggleFilterHasStars: () => useAppChatStore.getState().setFilterHasStars(!values.filterHasStars),
-    toggleShowPersonaIcons: () => useAppChatStore.getState().setShowPersonaIcons(!values.showPersonaIcons),
-    toggleShowRelativeSize: () => useAppChatStore.getState().setShowRelativeSize(!values.showRelativeSize),
+    clearFilters: chatStoreState.clearFilters,
+    toggleFilterHasDocFragments: () => chatStoreState.setFilterHasDocFragments(!values.filterHasDocFragments),
+    toggleFilterHasImageAssets: () => chatStoreState.setFilterHasImageAssets(!values.filterHasImageAssets),
+    toggleFilterHasStars: () => chatStoreState.setFilterHasStars(!values.filterHasStars),
+    toggleShowPersonaIcons: () => chatStoreState.setShowPersonaIcons(!values.showPersonaIcons),
+    toggleShowRelativeSize: () => chatStoreState.setShowRelativeSize(!values.showRelativeSize),
   };
 };
 
