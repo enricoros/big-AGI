@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button } from '@mui/joy';
+import { Box, Button, Tooltip, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -87,7 +87,7 @@ export function DocumentFragmentEditor(props: {
 
   return (
     <Box sx={{
-      backgroundColor: 'background.level2',
+      backgroundColor: 'background.level1',
       border: '1px solid',
       borderColor: 'neutral.outlinedBorder',
       borderRadius: 'sm',
@@ -95,6 +95,32 @@ export function DocumentFragmentEditor(props: {
       p: 1,
       mt: 0.5,
     }}>
+
+      {/* Ref of the file */}
+      {/*<Sheet variant='plain' sx={{ borderRadius: 'sm', mb: 1 }}>*/}
+      <Box sx={{
+        // backgroundColor: 'background.popup',
+        // borderRadius: 'sm',
+        p: 0.5,
+        mb: 1,
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: 1,
+      }}>
+        <Typography level='title-sm'>
+          <Tooltip disableInteractive title={part.ref === part.meta?.srcFileName ? undefined : part.ref} placement='top-start'>
+            <div>
+              {part.meta?.srcFileName || part.ref}aaa
+            </div>
+          </Tooltip>
+        </Typography>
+        <Typography level='body-sm'>
+          {part.type}{part.data.mimeType && part.data.mimeType !== part.type ? ` · ${part.data.mimeType}` : ''}
+          {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType })}*/}
+        </Typography>
+      </Box>
+      {/*</Sheet>*/}
 
       {isEditing ? (
         // Document Editor
@@ -110,7 +136,9 @@ export function DocumentFragmentEditor(props: {
       ) : (
         // Document viewer, including collapse/expand
         <AutoBlocksRenderer
-          text={marshallWrapText(part.data.text, /*fragment.title ||*/ part.meta?.srcFileName || part.ref, 'markdown-code')}
+          // text={marshallWrapText(part.data.text, /*fragment.title ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType }), 'markdown-code')}
+          text={marshallWrapText(part.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
+          // text={part.data.text}
           // text={selectedFragment.part.text}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}
