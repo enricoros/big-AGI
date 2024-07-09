@@ -10,6 +10,8 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
+import type { OpenaiWire_ChatCompletionRequest } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
+
 import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
@@ -283,7 +285,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
-      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire.ChatCompletion.Response, OpenAIWire.ChatCompletion.Request>(
+      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire.ChatCompletion.Response, OpenaiWire_ChatCompletionRequest>(
         access, model.id, completionsBody, '/v1/chat/completions',
       );
 
@@ -627,7 +629,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 }
 
 
-export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIFunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire.ChatCompletion.Request {
+export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIFunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenaiWire_ChatCompletionRequest {
 
   // Hotfixes to comply with API restrictions
   const hotfixAlternateUARoles = dialect === 'perplexity';

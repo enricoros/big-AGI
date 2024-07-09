@@ -131,7 +131,7 @@ const openaiWire_ToolChoice_Schema = z.union([
 
 /// API: Content Generation - Request
 
-export type OpenaiWire_Message = z.infer<typeof openaiWire_Message_Schema>;
+export type OpenaiWire_ChatCompletionRequest = z.infer<typeof openaiWire_chatCompletionRequest_Schema>;
 export const openaiWire_chatCompletionRequest_Schema = z.object({
   // basic input
   model: z.string(),
@@ -203,6 +203,18 @@ const openaiWire_Usage_Schema = z.object({
   total_tokens: z.number(),
 });
 
+
+const openaiWire_UndocumentedError_Schema = z.object({
+  // (undocumented) first experienced on 2023-06-19 on streaming APIs
+  message: z.string().optional(),
+  type: z.string().optional(),
+  param: z.string().nullable().optional(),
+  code: z.string().nullable().optional(),
+});
+
+const openaiWire_UndocumentedWarning_Schema = z.string();
+
+
 const openaiWire_ChatCompletionChoice_Schema = z.object({
   index: z.number(),
 
@@ -252,7 +264,7 @@ const openaiWire_ChatCompletionChunkChoice_Schema = z.object({
 
 export type OpenaiWire_ChatCompletionChunkResponse = z.infer<typeof openaiWire_ChatCompletionChunkResponse_Schema>;
 export const openaiWire_ChatCompletionChunkResponse_Schema = z.object({
-  object: z.literal('chat.completion.chunk'),
+  object: z.enum(['chat.completion.chunk', '' /* [Azure] bad response */]),
   id: z.string(),
 
   /**
@@ -267,4 +279,8 @@ export const openaiWire_ChatCompletionChunkResponse_Schema = z.object({
   created: z.number(), // The Unix timestamp (in seconds) of when the chat completion was created.
   system_fingerprint: z.string().optional(), // The backend configuration that the model runs with.
   // service_tier: z.unknown().optional(),
+
+  // undocumented streaming messages
+  error: openaiWire_UndocumentedError_Schema.optional(),
+  warning: openaiWire_UndocumentedWarning_Schema.optional(),
 });
