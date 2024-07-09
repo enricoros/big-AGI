@@ -6,8 +6,8 @@ import { apiStream } from '~/common/util/trpc.client';
 
 import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 
-import type { AixAccess, AixHistory, AixModel, AixStreamGenerateContext } from '../shared/aix.shared.types';
-import type { AixToolPolicy, AixTools } from '../shared/aix.shared.tools';
+import type { AixAccess, AixHistory, AixModel, AixStreamGenerateContext } from '../server/intake/aix.intake.types';
+import type { AixToolPolicy, AixTools } from '../server/intake/aix.tool.types';
 
 
 export type StreamingClientUpdate = Partial<{
