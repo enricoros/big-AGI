@@ -506,7 +506,7 @@ export function ChatMessage(props: {
               ) : (
                 <IconButton
                   size='sm'
-                  variant={opsMenuAnchor ? 'solid' : isZenMode ? 'plain' : 'soft'}
+                  variant={opsMenuAnchor ? 'solid' : (isZenMode && fromAssistant) ? 'plain' : 'soft'}
                   color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'}
                   sx={avatarIconSx}
                 >
