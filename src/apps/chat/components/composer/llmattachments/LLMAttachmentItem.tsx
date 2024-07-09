@@ -103,7 +103,7 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
     if (converter.id === 'rich-text-table')
       return 'Rich Table';
     if (converter.id === 'rich-text-cleaner')
-      return 'Cleaner HTML';
+      return 'Clean HTML';
     if (converter.id === 'rich-text')
       return 'Rich HTML';
   }
