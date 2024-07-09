@@ -10,7 +10,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
@@ -38,7 +38,7 @@ export function DocumentFragmentEditor(props: {
   const fragmentCaption = fragment.caption;
   const part = fragment.part;
 
-  if (part.pt !== 'doc')
+  if (!isDocPart(part))
     throw new Error('Unexpected part type: ' + part.pt);
 
   // delete
@@ -66,7 +66,7 @@ export function DocumentFragmentEditor(props: {
       return;
 
     // only edit DOCs
-    if (fragment.part.pt !== 'doc') {
+    if (!isDocPart(fragment.part)) {
       console.warn('handleEditApply: unexpected part type:', fragment.part.pt);
       return;
     }

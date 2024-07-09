@@ -2,7 +2,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
-import { DMessageAttachmentFragment, DMessageFragment, isContentFragment, isContentOrAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 
 
@@ -35,7 +35,7 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
     return 0;
 
   // attachment fragments
-  if (fragment.ft === 'attachment') {
+  if (isAttachmentFragment(fragment)) {
     const aPart = fragment.part;
     switch (aPart.pt) {
       case 'doc':
@@ -87,7 +87,7 @@ export function marshallWrapDocFragments(initialText: string | null, fragments: 
   let inlinedText = initialText || '';
   for (const fragment of fragments) {
     // warn on non-text fragments, which are not handled - it's an API error to call this function to non-text-part fragments
-    if (fragment.part.pt !== 'doc') {
+    if (!isDocPart(fragment.part)) {
       console.warn('marshallWrapTextFragments: unhandled part type:', fragment.part.pt);
       continue;
     }

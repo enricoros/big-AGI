@@ -12,7 +12,7 @@ import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
-import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment } from './chat.fragments';
+import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment } from './chat.fragments';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -398,7 +398,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
                 fragment.fId = agiId('chat-dfragment');
               }
               // fixup, for attachments without date, use the message date
-              if (fragment.ft === 'attachment' && !fragment.created) {
+              if (isAttachmentFragment(fragment) && !fragment.created) {
                 fragment.created = message.updated || message.created;
               }
             }

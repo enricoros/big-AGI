@@ -130,12 +130,16 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
-export function isTextPart(part: DMessageContentFragment['part']) {
-  return part.pt === 'text';
+export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
+  return part.pt === 'doc';
 }
 
 export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'image_ref';
+}
+
+export function isTextPart(part: DMessageContentFragment['part']) {
+  return part.pt === 'text';
 }
 
 
