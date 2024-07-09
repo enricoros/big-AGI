@@ -134,7 +134,7 @@ export const aixRouter = createTRPCRouter({
           try {
             const parsedEvents = dispatchParser(demuxedEvent.data, demuxedEvent.name);
             for (const upe of parsedEvents) {
-              console.log('parsedUpstream:', upe);
+              console.log('parsed dispatch:', upe);
               // TODO: massively rework this into a good protocol
               if (upe.op === 'parser-close') {
                 yield* intakeHandler.yieldTermination('parser-done');
@@ -164,9 +164,9 @@ export const aixRouter = createTRPCRouter({
 
       } while (!intakeHandler.intakeTerminated);
 
-      // End reached, with or without issues or downstream connectivity terminations
-      // NOTE: we already send the termination (good exit) or issue (bad exit) on all code paths,
-      //       or the downstream has already closed to socket on us
+      // We already send the termination event (good exit) or issue (bad exit) on all code
+      // paths to the intake, or the intake has already closed the socket on us.
+      // So there's nothing to do here.
       // yield* intakeHandler.yieldEnd();
 
     }),
