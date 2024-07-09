@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-big-agi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: big-agi
+  name: deployment-big-agi
+  namespace: ns-big-agi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: big-agi
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: big-agi
+    spec:
+      containers:
+        - image: ghcr.io/enricoros/big-agi:latest
+          name: big-agi
+          ports:
+            - containerPort: 3000
+          args:
+            - next
+            - start
+            - -p
+            - "3000"
+          envFrom:
+            - secretRef:
+                name: env
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: big-agi
+  name: svc-big-agi
+  namespace: ns-big-agi
+spec:
+  ports:
+    - name: "http"
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: big-agi
