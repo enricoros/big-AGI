@@ -10,7 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
 
-import { DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -162,7 +162,7 @@ export function LLMAttachmentMenu(props: {
                         </Link>
                       </Typography>
                     );
-                  } else if (part.pt === 'doc') {
+                  } else if (isDocPart(part)) {
                     return (
                       <Typography key={index} level='body-sm'>
                         🡒 text: {part.data.text.length.toLocaleString()} bytes

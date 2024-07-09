@@ -10,7 +10,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 
-import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 
@@ -51,7 +51,7 @@ export function DocumentFragmentButton(props: {
   const { fragment, isSelected, toggleSelected } = props;
 
   // only operate on doc fragments
-  if (fragment.part.pt !== 'doc')
+  if (!isDocPart(fragment.part))
     throw new Error('Unexpected part type: ' + fragment.part.pt);
 
   // handlers
