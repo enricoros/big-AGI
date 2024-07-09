@@ -5,7 +5,7 @@ import { createParser as createEventsourceParser } from 'eventsource-parser';
  *  - 'sse' is the default format, and is used by all vendors except Ollama
  *  - 'json-nl' is used by Ollama
  */
-type UpstreamDemuxFormat = 'sse' | 'json-nl';
+type DispatchDemuxFormat = 'sse' | 'json-nl';
 
 export type DemuxedEvent = {
   type: 'event' | 'reconnect-interval';
@@ -13,15 +13,13 @@ export type DemuxedEvent = {
   data: string;
 };
 
-type UpstreamDemuxFunction = (chunk: string) => DemuxedEvent[];
-
-type UpstreamDemuxer = {
-  demux: UpstreamDemuxFunction;
+type DispatchDemuxer = {
+  demux: (chunk: string) => DemuxedEvent[];
   remaining: () => string;
 };
 
 
-export function createUpstreamDemuxer(format: UpstreamDemuxFormat) {
+export function createDispatchDemuxer(format: DispatchDemuxFormat) {
   switch (format) {
     case 'sse':
       return _createEventSourceDemuxer();
@@ -35,9 +33,9 @@ export function createUpstreamDemuxer(format: UpstreamDemuxFormat) {
  * Creates a parser for an EventSource stream (e.g. OpenAI's format).
  * Uses the renowned `eventsource-parser` library.
  *
- * Note that we only use the 'feed' function and not 'reset', as we create a new parser per-upstream.
+ * Note that we only use the 'feed' function and not 'reset', as we recreate the object per-call.
  */
-function _createEventSourceDemuxer(): UpstreamDemuxer {
+function _createEventSourceDemuxer(): DispatchDemuxer {
   let buffer: DemuxedEvent[] = [];
   const parser = createEventsourceParser((event) => {
     switch (event.type) {
@@ -65,7 +63,7 @@ function _createEventSourceDemuxer(): UpstreamDemuxer {
  * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
  * Ollama is the only vendor that uses this format.
  */
-function _createJsonNlDemuxer(): UpstreamDemuxer {
+function _createJsonNlDemuxer(): DispatchDemuxer {
   let buffer = '';
 
   return {

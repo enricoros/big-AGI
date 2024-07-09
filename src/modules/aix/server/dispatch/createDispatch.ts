@@ -5,14 +5,14 @@ import { geminiModelsStreamGenerateContentPath } from '~/modules/llms/server/gem
 import { openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/server/openai/openai.router';
 
 import type { AixAccess, AixHistory, AixModel } from '../intake/aix.intake.types';
-import { createUpstreamDemuxer } from './dispatch.demuxers';
-import { createUpstreamParserAnthropicMessages, createUpstreamParserGemini, createUpstreamParserOllama, createUpstreamParserOpenAI, UpstreamParser } from './dispatch.parsers';
+import { createDispatchDemuxer } from './dispatch.demuxers';
+import { createDispatchParserAnthropicMessages, createDispatchParserGemini, createDispatchParserOllama, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
 
 
 export function createDispatch(access: AixAccess, model: AixModel, history: AixHistory): {
   request: { url: string, headers: HeadersInit, body: object },
-  demuxer: ReturnType<typeof createUpstreamDemuxer>;
-  parser: UpstreamParser;
+  demuxer: ReturnType<typeof createDispatchDemuxer>;
+  parser: DispatchParser;
 } {
   switch (access.dialect) {
     case 'anthropic':
@@ -21,8 +21,8 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
           ...anthropicAccess(access, '/v1/messages'),
           body: anthropicMessagesPayloadOrThrow(model, history, true),
         },
-        demuxer: createUpstreamDemuxer('sse'),
-        parser: createUpstreamParserAnthropicMessages(),
+        demuxer: createDispatchDemuxer('sse'),
+        parser: createDispatchParserAnthropicMessages(),
       };
 
     case 'gemini':
@@ -31,8 +31,8 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
           ...geminiAccess(access, model.id, geminiModelsStreamGenerateContentPath),
           body: geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1),
         },
-        demuxer: createUpstreamDemuxer('sse'),
-        parser: createUpstreamParserGemini(model.id.replace('models/', '')),
+        demuxer: createDispatchDemuxer('sse'),
+        parser: createDispatchParserGemini(model.id.replace('models/', '')),
       };
 
     case 'ollama':
@@ -41,8 +41,8 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
           ...ollamaAccess(access, OLLAMA_PATH_CHAT),
           body: ollamaChatCompletionPayload(model, history, access.ollamaJson, true),
         },
-        demuxer: createUpstreamDemuxer('json-nl'),
-        parser: createUpstreamParserOllama(),
+        demuxer: createDispatchDemuxer('json-nl'),
+        parser: createDispatchParserOllama(),
       };
 
     case 'azure':
@@ -61,8 +61,8 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           body: openAIChatCompletionPayload(access.dialect, model, history, null, null, 1, true),
         },
-        demuxer: createUpstreamDemuxer('sse'),
-        parser: createUpstreamParserOpenAI(),
+        demuxer: createDispatchDemuxer('sse'),
+        parser: createDispatchParserOpenAI(),
       };
   }
 }

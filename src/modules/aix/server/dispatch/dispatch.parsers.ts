@@ -15,7 +15,7 @@ const ISSUE_SYMBOL_RECITATION = '🦜';
 const TEXT_SYMBOL_MAX_TOKENS = '🧱';
 
 
-type UpstreamParsedEvent = {
+type DispatchParsedEvent = {
   op: 'text',
   text: string;
 } | {
@@ -36,19 +36,19 @@ type UpstreamParsedEvent = {
   };
 };
 
-export type UpstreamParser = (eventData: string, eventName?: string) => Generator<UpstreamParsedEvent>;
+export type DispatchParser = (eventData: string, eventName?: string) => Generator<DispatchParsedEvent>;
 
 
 /// Stream Parsers
 
-export function createUpstreamParserAnthropicMessages(): UpstreamParser {
+export function createDispatchParserAnthropicMessages(): DispatchParser {
   let responseMessage: AnthropicWireMessageResponse;
   let hasErrored = false;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
   //       to the client. It is however building in parallel the responseMessage object, which is not
   //       yet used, but contains token counts, for instance.
-  return function* (eventData: string, eventName?: string): Generator<UpstreamParsedEvent> {
+  return function* (eventData: string, eventName?: string): Generator<DispatchParsedEvent> {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -157,11 +157,11 @@ function explainGeminiSafetyIssues(safetyRatings?: GeminiSafetyRatings): string 
     .join(', ');
 }
 
-export function createUpstreamParserGemini(modelName: string): UpstreamParser {
+export function createDispatchParserGemini(modelName: string): DispatchParser {
   let hasBegun = false;
 
-  // this can throw, it's catched upstream
-  return function* (eventData): Generator<UpstreamParsedEvent> {
+  // this can throw, it's caught by the caller
+  return function* (eventData): Generator<DispatchParsedEvent> {
 
     // parse the JSON chunk
     const wireGenerationChunk = JSON.parse(eventData);
@@ -226,10 +226,10 @@ export function createUpstreamParserGemini(modelName: string): UpstreamParser {
 }
 
 
-export function createUpstreamParserOllama(): UpstreamParser {
+export function createDispatchParserOllama(): DispatchParser {
   let hasBegun = false;
 
-  return function* (eventData: string): Generator<UpstreamParsedEvent> {
+  return function* (eventData: string): Generator<DispatchParsedEvent> {
 
     // parse the JSON chunk
     let wireJsonChunk: any;
@@ -273,12 +273,12 @@ export function createUpstreamParserOllama(): UpstreamParser {
 }
 
 
-export function createUpstreamParserOpenAI(): UpstreamParser {
+export function createDispatchParserOpenAI(): DispatchParser {
   let hasBegun = false;
   let hasWarned = false;
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
-  return function* (eventData: string): Generator<UpstreamParsedEvent> {
+  return function* (eventData: string): Generator<DispatchParsedEvent> {
 
     // Throws on malformed event data
     const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(eventData);
@@ -298,7 +298,7 @@ export function createUpstreamParserOpenAI(): UpstreamParser {
     // [OpenAI] if there's a warning, log it once
     if (json.warning && !hasWarned) {
       hasWarned = true;
-      console.log('/api/llms/stream: OpenAI upstream warning:', json.warning);
+      console.log('/api/llms/stream: OpenAI dispatch warning:', json.warning);
     }
 
     // expect: 1 completion

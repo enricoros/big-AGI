@@ -10,7 +10,7 @@ type IntakeEventProtoObject =
 
 
 /**
- * Handles the downstream of the AIX server.
+ * Handles the downstream of the AIX router.
  */
 export class IntakeHandler {
   private dispatchReceivedEvents: number = 0;
