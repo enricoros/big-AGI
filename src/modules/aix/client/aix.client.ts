@@ -79,7 +79,7 @@ function aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: str
   };
 }
 
-function aixStreamGenerateContext(contextName: VChatStreamContextName, contextRef: VChatContextRef): AixStreamGenerateContext {
+function aixStreamGenerateContext(contextName: AixStreamGenerateContext['name'], contextRef: AixStreamGenerateContext['ref']): AixStreamGenerateContext {
   return {
     method: 'chat-stream',
     name: contextName,

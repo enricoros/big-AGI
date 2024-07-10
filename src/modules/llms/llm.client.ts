@@ -2,9 +2,10 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
+import type { OpenaiWire_FunctionDefinition } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
+
 import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
 import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
-import type { OpenAIWire } from './server/openai/openai.wiretypes';
 import { DLLM, DLLMId, DModelSource, DModelSourceId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, useModelsStore } from './store-llms';
 import { FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
@@ -20,7 +21,7 @@ export interface VChatMessageIn {
   //name?: string; // when role: 'function'
 }
 
-export type VChatFunctionIn = OpenAIWire.ChatCompletion.RequestFunctionDef;
+export type VChatFunctionIn = OpenaiWire_FunctionDefinition;
 
 export type VChatStreamContextName = StreamingContextNameSchema;
 export type VChatGenerateContextName = GenerateContextNameSchema;

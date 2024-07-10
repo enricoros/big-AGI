@@ -98,11 +98,14 @@ const openaiWire_Message_Schema = z.discriminatedUnion('role', [
 
 /// Tool definitions - Input
 
-const openaiWire_FunctionDefinition_Schema = z.object({
+export type OpenaiWire_FunctionDefinition = z.infer<typeof openaiWire_FunctionDefinition_Schema>;
+export const openaiWire_FunctionDefinition_Schema = z.object({
   /**
    * The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
    */
-  name: z.string(),
+  name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/, {
+    message: 'Tool name must be 1-64 characters long and contain only letters, numbers, underscores, and hyphens',
+  }),
   /**
    * A description of what the function does, used by the model to choose when and how to call the function.
    */
@@ -111,7 +114,18 @@ const openaiWire_FunctionDefinition_Schema = z.object({
    * The parameters the functions accepts, described as a JSON Schema object.
    * Omitting parameters defines a function with an empty parameter list.
    */
-  parameters: z.record(z.unknown()).optional(),
+  parameters: z.object({
+    type: z.literal('object'),
+    // Note: This is a more specialized definition than the OpenAI doc (which leaves it a bit open).
+    //       The generic one is commented below.
+    properties: z.record(z.object({
+      type: z.enum(['string', 'number', 'integer', 'boolean']),
+      description: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+    })),
+    // properties: z.record(z.unknown()).optional(),
+    required: z.array(z.string()).optional(),
+  }).optional(),
 });
 
 const openaiWire_ToolDefinition_Schema = z.discriminatedUnion('type', [
