@@ -5,7 +5,6 @@ import { fileOpen, FileWithHandle } from 'browser-fs-access';
 import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -72,34 +71,10 @@ import { ReplyToBubble } from '../message/ReplyToBubble';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
+import { useDragDrop } from './useComposerDragDrop';
 
 
-const zIndexComposerOverlayDrop = 20;
 const zIndexComposerOverlayMic = 10;
-
-const dropperContainerSx: SxProps = {
-  position: 'relative', /* for Drop overlay */
-} as const;
-
-const dropperCardSx: SxProps = {
-  display: 'none',
-  position: 'absolute',
-  inset: 0,
-  pointerEvents: 'none',
-  zIndex: zIndexComposerOverlayDrop,
-} as const;
-
-const dropppedCardDraggingSx: SxProps = {
-  ...dropperCardSx,
-  pointerEvents: undefined,
-  border: '1px dashed',
-  borderRadius: 'sm',
-  boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-success-softColor)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 2,
-} as const;
 
 
 /**
@@ -123,7 +98,6 @@ export function Composer(props: {
   const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
-  const [isDragging, setIsDragging] = React.useState(false);
   const {
     chatExecuteMode,
     chatExecuteModeSendColor, chatExecuteModeSendLabel,
@@ -176,6 +150,9 @@ export function Composer(props: {
 
   // attachments derived state
   const llmAttachmentDrafts = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
+
+  // drag/drop
+  const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer, alert);
 
 
   // derived state
@@ -501,50 +478,7 @@ export function Composer(props: {
   }, [attachmentsTakeFragmentsByType, setComposeText]);
 
 
-  // Drag & Drop
-
-  const eatDragEvent = React.useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
-
-  const handleTextareaDragEnter = React.useCallback((event: React.DragEvent) => {
-    const isFromSelf = event.dataTransfer.types.includes('x-app/agi');
-    if (!isFromSelf) {
-      eatDragEvent(event);
-      setIsDragging(true);
-    }
-  }, [eatDragEvent]);
-
-  const handleTextareaDragStart = React.useCallback((event: React.DragEvent) => {
-    event.dataTransfer.setData('x-app/agi', 'do-not-intercept');
-  }, []);
-
-  const handleOverlayDragLeave = React.useCallback((event: React.DragEvent) => {
-    eatDragEvent(event);
-    setIsDragging(false);
-  }, [eatDragEvent]);
-
-  const handleOverlayDragOver = React.useCallback((event: React.DragEvent) => {
-    eatDragEvent(event);
-    // this makes sure we don't "transfer" (or move) the item, but we tell the sender we'll copy it
-    event.dataTransfer.dropEffect = 'copy';
-  }, [eatDragEvent]);
-
-  const handleOverlayDrop = React.useCallback(async (event: React.DragEvent) => {
-    eatDragEvent(event);
-    setIsDragging(false);
-
-    // VSCode: detect failure of dropping from VSCode, details below:
-    //         https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572
-    const { dataTransfer } = event;
-    if (dataTransfer.types.includes('codeeditors'))
-      return setComposeText(test => test + 'Dragging files from VSCode is not supported! Fixme: anyone?');
-
-    // textarea drop
-    attachAppendDataTransfer(dataTransfer, 'drop', true);
-  }, [attachAppendDataTransfer, eatDragEvent, setComposeText]);
-
+  // ...
 
   const isText = chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1';
   const isTextBeam = chatExecuteMode === 'beam-content';
@@ -590,10 +524,10 @@ export function Composer(props: {
     <Box aria-label='User Message' component='section' sx={props.sx}>
       <Grid
         container
-        onDragEnter={handleTextareaDragEnter}
-        onDragStart={handleTextareaDragStart}
+        onDragEnter={handleDragEnter}
+        onDragStart={handleDragStart}
         spacing={{ xs: 1, md: 2 }}
-        sx={dropperContainerSx}
+        sx={dragContainerSx}
       >
 
         {/* [Mobile: top, Desktop: left] */}
@@ -885,24 +819,8 @@ export function Composer(props: {
           </Box>
         </Grid>
 
-
         {/* overlay: Drag & Drop*/}
-        {!isMobile && (
-          <Card
-            color={isDragging ? 'success' : undefined}
-            variant={isDragging ? 'soft' : undefined}
-            invertedColors={isDragging}
-            onDragLeave={handleOverlayDragLeave}
-            onDragOver={handleOverlayDragOver}
-            onDrop={handleOverlayDrop}
-            sx={isDragging ? dropppedCardDraggingSx : dropperCardSx}
-          >
-            {isDragging && <AttachFileIcon sx={{ width: 36, height: 36, pointerEvents: 'none' }} />}
-            {isDragging && <Typography level='title-sm' sx={{ pointerEvents: 'none' }}>
-              I will hold on to this for you.
-            </Typography>}
-          </Card>
-        )}
+        {dragDropComponent}
 
       </Grid>
 
