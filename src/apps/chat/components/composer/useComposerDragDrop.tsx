@@ -36,7 +36,6 @@ const draggingCardSx: SxProps = {
 export function useDragDrop(
   disabled: boolean,
   onDataTransfer: (dataTransfer: DataTransfer, type: 'paste' | 'drop', isDropOnTextarea: boolean) => void,
-  onMessage: (text: string) => void,
 ) {
 
   // state
@@ -94,21 +93,20 @@ export function useDragDrop(
       }
       const fileNames = filePaths.map(path => path.split('\\').pop() || path.split('/').pop() || 'unknown file');
 
-      const message = [
+      // just show an old school alert message (save callbacks)
+      return alert([
         `Dropped ${fileNames.length} file${fileNames.length > 1 ? 's' : ''} from VSCode:`,
         ...fileNames.map((name, index) => `${index + 1}. ${name}`),
         '',
         'VSCode does not drag-and-drop to browsers. https://github.com/microsoft/vscode/issues/98629#issuecomment-634475572.',
         '',
         'Upload 📎, paste 📋, or drag from a folder 📁.',
-      ].join('\n');
-
-      return onMessage(message);
+      ].join('\n'));
     }
 
     // textarea drop
     onDataTransfer(dataTransfer, 'drop', true);
-  }, [eatDragEvent, onDataTransfer, onMessage]);
+  }, [eatDragEvent, onDataTransfer]);
 
 
   const dropComponent = React.useMemo(() => {
