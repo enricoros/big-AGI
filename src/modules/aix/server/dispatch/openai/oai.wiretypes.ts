@@ -163,7 +163,8 @@ export const openaiWire_chatCompletionRequest_Schema = z.object({
   max_tokens: z.number().optional(),
   temperature: z.number().min(0).max(2).optional(),
 
-  // other model configuration
+  // API configuration
+  n: z.number().int().positive().optional(), // defaulting 'n' to 1, as the derived-ecosystem does not support it
   stream: z.boolean().optional(), // If set, partial message deltas will be sent, with the stream terminated by a `data: [DONE]` message.
   stream_options: z.object({
     include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
@@ -199,7 +200,6 @@ export const openaiWire_chatCompletionRequest_Schema = z.object({
   // top_p: z.number().min(0).max(1).optional(),
 
   // (disabled) advanced API configuration
-  // n: z.number().int().positive().optional(), // defaulting 'n' to 1, as the derived-ecosystem does not support it
   // service_tier: z.unknown().optional(),
 
 });
