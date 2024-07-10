@@ -74,22 +74,31 @@ import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 
 
-const zIndexComposerOverlayDrop = 10;
-const zIndexComposerOverlayMic = 20;
+const zIndexComposerOverlayDrop = 20;
+const zIndexComposerOverlayMic = 10;
+
+const dropperContainerSx: SxProps = {
+  position: 'relative', /* for Drop overlay */
+} as const;
 
 const dropperCardSx: SxProps = {
   display: 'none',
-  position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-  alignItems: 'center', justifyContent: 'center', gap: 2,
-  border: '2px dashed',
-  borderRadius: 'xs',
-  boxShadow: 'none',
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
   zIndex: zIndexComposerOverlayDrop,
 } as const;
 
 const dropppedCardDraggingSx: SxProps = {
   ...dropperCardSx,
+  pointerEvents: undefined,
+  border: '1px dashed',
+  borderRadius: 'sm',
+  boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-success-softColor)',
   display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 2,
 } as const;
 
 
@@ -494,32 +503,32 @@ export function Composer(props: {
 
   // Drag & Drop
 
-  const eatDragEvent = React.useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const eatDragEvent = React.useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
   }, []);
 
-  const handleTextareaDragEnter = React.useCallback((e: React.DragEvent) => {
-    const isFromSelf = e.dataTransfer.types.includes('x-app/agi');
+  const handleTextareaDragEnter = React.useCallback((event: React.DragEvent) => {
+    const isFromSelf = event.dataTransfer.types.includes('x-app/agi');
     if (!isFromSelf) {
-      eatDragEvent(e);
+      eatDragEvent(event);
       setIsDragging(true);
     }
   }, [eatDragEvent]);
 
-  const handleTextareaDragStart = React.useCallback((e: React.DragEvent) => {
-    e.dataTransfer.setData('x-app/agi', 'do-not-intercept');
+  const handleTextareaDragStart = React.useCallback((event: React.DragEvent) => {
+    event.dataTransfer.setData('x-app/agi', 'do-not-intercept');
   }, []);
 
-  const handleOverlayDragLeave = React.useCallback((e: React.DragEvent) => {
-    eatDragEvent(e);
+  const handleOverlayDragLeave = React.useCallback((event: React.DragEvent) => {
+    eatDragEvent(event);
     setIsDragging(false);
   }, [eatDragEvent]);
 
-  const handleOverlayDragOver = React.useCallback((e: React.DragEvent) => {
-    eatDragEvent(e);
+  const handleOverlayDragOver = React.useCallback((event: React.DragEvent) => {
+    eatDragEvent(event);
     // this makes sure we don't "transfer" (or move) the item, but we tell the sender we'll copy it
-    e.dataTransfer.dropEffect = 'copy';
+    event.dataTransfer.dropEffect = 'copy';
   }, [eatDragEvent]);
 
   const handleOverlayDrop = React.useCallback(async (event: React.DragEvent) => {
@@ -579,7 +588,13 @@ export function Composer(props: {
 
   return (
     <Box aria-label='User Message' component='section' sx={props.sx}>
-      <Grid container spacing={{ xs: 1, md: 2 }}>
+      <Grid
+        container
+        onDragEnter={handleTextareaDragEnter}
+        onDragStart={handleTextareaDragStart}
+        spacing={{ xs: 1, md: 2 }}
+        sx={dropperContainerSx}
+      >
 
         {/* [Mobile: top, Desktop: left] */}
         <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
@@ -655,8 +670,8 @@ export function Composer(props: {
             minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
           }}>
 
-            {/* Text Edit + Mic buttons + MicOverlay & DragOverlay */}
-            <Box sx={{ position: 'relative' /* for overlays */ }}>
+            {/* Text Edit + Mic buttons + MicOverlay */}
+            <Box sx={{ position: 'relative' /* for Mic overlay */ }}>
 
               {/* Edit box with inner Token Progress bar */}
               <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */ }}>
@@ -670,8 +685,6 @@ export function Composer(props: {
                   placeholder={textPlaceholder}
                   value={composeText}
                   onChange={handleTextareaTextChange}
-                  onDragEnter={handleTextareaDragEnter}
-                  onDragStart={handleTextareaDragStart}
                   onKeyDown={handleTextareaKeyDown}
                   onPasteCapture={handleAttachCtrlV}
                   // onFocusCapture={handleFocusModeOn}
@@ -753,22 +766,6 @@ export function Composer(props: {
                     {speechInterimResult.transcript}{' '}
                     <span className={speechInterimResult.interimTranscript !== 'Listening...' ? 'interim' : undefined}>{speechInterimResult.interimTranscript}</span>
                   </Typography>
-                </Card>
-              )}
-
-              {/* overlay: Drag & Drop*/}
-              {!isMobile && (
-                <Card
-                  color={isDragging ? 'success' : undefined} variant={isDragging ? 'soft' : undefined} invertedColors={isDragging}
-                  sx={isDragging ? dropppedCardDraggingSx : dropperCardSx}
-                  onDragLeave={handleOverlayDragLeave}
-                  onDragOver={handleOverlayDragOver}
-                  onDrop={handleOverlayDrop}
-                >
-                  {isDragging && <AttachFileIcon sx={{ width: 40, height: 40, pointerEvents: 'none' }} />}
-                  {isDragging && <Typography level='title-sm' sx={{ pointerEvents: 'none' }}>
-                    I will hold on to this for you
-                  </Typography>}
                 </Card>
               )}
 
@@ -887,6 +884,25 @@ export function Composer(props: {
 
           </Box>
         </Grid>
+
+
+        {/* overlay: Drag & Drop*/}
+        {!isMobile && (
+          <Card
+            color={isDragging ? 'success' : undefined}
+            variant={isDragging ? 'soft' : undefined}
+            invertedColors={isDragging}
+            onDragLeave={handleOverlayDragLeave}
+            onDragOver={handleOverlayDragOver}
+            onDrop={handleOverlayDrop}
+            sx={isDragging ? dropppedCardDraggingSx : dropperCardSx}
+          >
+            {isDragging && <AttachFileIcon sx={{ width: 36, height: 36, pointerEvents: 'none' }} />}
+            {isDragging && <Typography level='title-sm' sx={{ pointerEvents: 'none' }}>
+              I will hold on to this for you.
+            </Typography>}
+          </Card>
+        )}
 
       </Grid>
 
