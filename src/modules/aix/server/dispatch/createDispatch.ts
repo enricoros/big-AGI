@@ -1,26 +1,78 @@
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaChatCompletionPayload } from '~/modules/llms/server/ollama/ollama.router';
 import { anthropicAccess, anthropicMessagesPayloadOrThrow } from '~/modules/llms/server/anthropic/anthropic.router';
 import { geminiAccess, geminiGenerateContentTextPayload } from '~/modules/llms/server/gemini/gemini.router';
-import { openAIAccess, openAIChatCompletionPayload } from '~/modules/llms/server/openai/openai.router';
+import { openAIAccess, openAIChatCompletionPayload, OpenAIHistorySchema } from '~/modules/llms/server/openai/openai.router';
 
-import type { AixAccess, AixHistory, AixModel } from '../intake/aix.intake.types';
+import type { IntakeAccess, IntakeChatGenerateRequest, IntakeModel } from '../intake/schemas.intake.api';
 
 import { createDispatchDemuxer } from './dispatch.demuxers';
 import { createDispatchParserAnthropicMessages, createDispatchParserGemini, createDispatchParserOllama, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
 import { geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
 
 
-export function createDispatch(access: AixAccess, model: AixModel, history: AixHistory): {
+export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGenerate: IntakeChatGenerateRequest): {
   request: { url: string, headers: HeadersInit, body: object },
   demuxer: ReturnType<typeof createDispatchDemuxer>;
   parser: DispatchParser;
 } {
+
+  // temporarily re-cast back to history
+
+  const _hist: OpenAIHistorySchema = [];
+  chatGenerate.systemMessage?.parts.forEach(systemPart => {
+    _hist.push({ role: 'system', content: systemPart.text });
+  });
+  chatGenerate.chat.forEach(({ role, parts }) => {
+    switch (role) {
+
+      case 'user':
+        parts.forEach(userPart => {
+          switch (userPart.pt) {
+            case 'text':
+              _hist.push({ role: 'user', content: userPart.text });
+              break;
+            case 'inline_image':
+              throw new Error('Inline images are not supported');
+            case 'doc':
+              _hist.push({ role: 'user', content: userPart.data.text });
+              break;
+            case 'meta_reply_to':
+              throw new Error('Meta reply to is not supported');
+          }
+        });
+        break;
+
+      case 'model':
+        parts.forEach(modelPart => {
+          switch (modelPart.pt) {
+            case 'text':
+              _hist.push({ role: 'assistant', content: modelPart.text });
+              break;
+            case 'tool_call':
+              throw new Error('Tool calls are not supported');
+          }
+        });
+        break;
+
+      case 'tool':
+        parts.forEach(toolPart => {
+          switch (toolPart.pt) {
+            case 'tool_response':
+              throw new Error('Tool responses are not supported');
+          }
+        });
+        break;
+    }
+  });
+  console.log('converted chatGenerate to history', _hist.length, '<- items');
+
+
   switch (access.dialect) {
     case 'anthropic':
       return {
         request: {
           ...anthropicAccess(access, '/v1/messages'),
-          body: anthropicMessagesPayloadOrThrow(model, history, true),
+          body: anthropicMessagesPayloadOrThrow(model, _hist, true),
         },
         demuxer: createDispatchDemuxer('sse'),
         parser: createDispatchParserAnthropicMessages(),
@@ -30,7 +82,7 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
       return {
         request: {
           ...geminiAccess(access, model.id, geminiModelsStreamGenerateContentPath),
-          body: geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1),
+          body: geminiGenerateContentTextPayload(model, _hist, access.minSafetyLevel, 1),
         },
         demuxer: createDispatchDemuxer('sse'),
         parser: createDispatchParserGemini(model.id.replace('models/', '')),
@@ -40,7 +92,7 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
       return {
         request: {
           ...ollamaAccess(access, OLLAMA_PATH_CHAT),
-          body: ollamaChatCompletionPayload(model, history, access.ollamaJson, true),
+          body: ollamaChatCompletionPayload(model, _hist, access.ollamaJson, true),
         },
         demuxer: createDispatchDemuxer('json-nl'),
         parser: createDispatchParserOllama(),
@@ -60,7 +112,7 @@ export function createDispatch(access: AixAccess, model: AixModel, history: AixH
       return {
         request: {
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
-          body: openAIChatCompletionPayload(access.dialect, model, history, null, null, 1, true),
+          body: openAIChatCompletionPayload(access.dialect, model, _hist, null, null, 1, true),
         },
         demuxer: createDispatchDemuxer('sse'),
         parser: createDispatchParserOpenAI(),

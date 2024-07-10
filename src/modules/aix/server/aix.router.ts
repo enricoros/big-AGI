@@ -5,8 +5,8 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { IntakeHandler } from './intake/IntakeHandler';
-import { aixAccessSchema, aixChatContentGenerateSchema, aixModelSchema, aixStreamingContextSchema } from './intake/schemas.aix.api';
 import { createDispatch } from './dispatch/createDispatch';
+import { intakeAccessSchema, intakeChatGenerateRequestSchema, intakeContextChatStreamSchema, intakeModelSchema } from './intake/schemas.intake.api';
 
 
 export const aixRouter = createTRPCRouter({
@@ -17,10 +17,10 @@ export const aixRouter = createTRPCRouter({
    */
   chatGenerateContentStream: publicProcedure
     .input(z.object({
-      access: aixAccessSchema,
-      model: aixModelSchema,
-      chatGenerate: aixChatContentGenerateSchema,
-      context: aixStreamingContextSchema,
+      access: intakeAccessSchema,
+      model: intakeModelSchema,
+      chatGenerate: intakeChatGenerateRequestSchema,
+      context: intakeContextChatStreamSchema,
     }))
     .mutation(async function* ({ input, ctx }) {
 
@@ -31,7 +31,7 @@ export const aixRouter = createTRPCRouter({
       const accessDialect = access.dialect;
       const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
 
-      // Intake handler
+      // Intake handlers
       const intakeHandler = new IntakeHandler(prettyDialect);
       yield* intakeHandler.yieldStart();
 
@@ -39,7 +39,7 @@ export const aixRouter = createTRPCRouter({
       // Prepare the dispatch
       let dispatch: ReturnType<typeof createDispatch>;
       try {
-        dispatch = createDispatch(access, model, history);
+        dispatch = createDispatch(access, model, chatGenerate);
       } catch (error: any) {
         yield* intakeHandler.yieldError('dispatch-prepare', `**[Service Creation Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
         return; // exit
@@ -168,5 +168,3 @@ export const aixRouter = createTRPCRouter({
     }),
 
 });
-
-
