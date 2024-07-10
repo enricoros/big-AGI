@@ -218,7 +218,7 @@ const openaiWire_Usage_Schema = z.object({
   prompt_tokens: z.number(),
   completion_tokens: z.number(),
   total_tokens: z.number(),
-});
+}).nullable();
 
 
 const openaiWire_UndocumentedError_Schema = z.object({

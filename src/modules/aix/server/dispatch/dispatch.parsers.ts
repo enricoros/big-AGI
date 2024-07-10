@@ -301,28 +301,33 @@ export function createDispatchParserOpenAI(): DispatchParser {
       console.log('/api/llms/stream: OpenAI dispatch warning:', json.warning);
     }
 
-    // expect: 1 completion
+    // -> Stats
+    if (json.usage && json.usage.completion_tokens)
+      yield { op: 'set', value: { stats: { chatInTokens: json.usage.prompt_tokens || -1, chatOutTokens: json.usage.completion_tokens } } };
+
+    // expect: 1 completion, or stop
     if (json.choices.length !== 1) {
+
+      // Usage objects will likely have an empty completion
+      if (json.usage)
+        return;
+
       // [Azure] we seem to get 'prompt_annotations' or 'prompt_filter_results' objects - which we will ignore to suppress the error
       if (json.id === '' && json.object === '' && json.model === '')
         return;
-      throw new Error(`Expected 1 completion, got ${json.choices.length}`);
+
+      throw new Error(`expected 1 completion, got ${json.choices.length}`);
     }
 
-    // expect: index=0
+    // expect: index=0 (n: 1)
     const index = json.choices[0].index;
     if (index !== 0)
-      throw new Error(`Expected completion index 0, got ${index}`);
+      throw new Error(`expected completion index 0, got ${index}`);
 
     // -> Text
     const text = json.choices[0].delta?.content /*|| json.choices[0]?.text*/ || '';
     if (text?.length)
       yield { op: 'text', text };
-
-
-    // -> Stats?
-    if (json.usage && json.usage.completion_tokens)
-      yield { op: 'set', value: { stats: { chatInTokens: json.usage.prompt_tokens || -1, chatOutTokens: json.usage.completion_tokens } } };
 
     // Note: not needed anymore - Workaround for implementations that don't send the [DONE] event
     // use the finish_reason to close the parser
