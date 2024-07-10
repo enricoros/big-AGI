@@ -8,41 +8,9 @@ export const geminiModelsGenerateContentPath = '/v1beta/{model=models/*}:generat
 export const geminiModelsStreamGenerateContentPath = '/v1beta/{model=models/*}:streamGenerateContent?alt=sse';
 
 
-// models.list = /v1beta/models
-
-const geminiModelSchema = z.object({
-  name: z.string(),
-  version: z.string(),
-  displayName: z.string(),
-  description: z.string(),
-  inputTokenLimit: z.number().int().min(1),
-  outputTokenLimit: z.number().int().min(1),
-  supportedGenerationMethods: z.array(z.enum([
-    'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
-    'countMessageTokens',
-    'countTextTokens',
-    'countTokens',
-    'createTunedModel',
-    'createTunedTextModel',
-    'embedContent',
-    'embedText',
-    'generateAnswer',
-    'generateContent',
-    'generateMessage',
-    'generateText',
-  ])),
-  temperature: z.number().optional(),
-  topP: z.number().optional(),
-  topK: z.number().optional(),
-});
-export type GeminiModelSchema = z.infer<typeof geminiModelSchema>;
-
-export const geminiModelsListOutputSchema = z.object({
-  models: z.array(geminiModelSchema),
-});
-
-
+//
 // /v1/{model=models/*}:generateContent, /v1beta/{model=models/*}:streamGenerateContent
+//
 
 // Request
 
@@ -207,7 +175,8 @@ const geminiSystemContentSchema = z.object({
 
 export type GeminiContentSchema = z.infer<typeof geminiContentSchema>;
 
-export const geminiGenerateContentRequest = z.object({
+export type GeminiGenerateContentRequest = z.infer<typeof geminiGenerateContentRequestSchema>;
+const geminiGenerateContentRequestSchema = z.object({
   contents: z.array(geminiContentSchema),
   tools: z.array(geminiToolSchema).optional(),
   toolConfig: geminiToolConfigSchema.optional(),
@@ -215,8 +184,6 @@ export const geminiGenerateContentRequest = z.object({
   systemInstruction: geminiSystemContentSchema.optional(), // Note: should be 'contents' object, but since it's text-only, we cast it down with a custom definition
   generationConfig: geminiGenerationConfigSchema.optional(),
 });
-
-export type GeminiGenerateContentRequest = z.infer<typeof geminiGenerateContentRequest>;
 
 
 // Response
@@ -250,7 +217,6 @@ const geminiBlockReasonEnum = z.enum([
   'OTHER',
 ]);
 
-
 export type GeminiSafetyRatings = z.infer<typeof geminiSafetyRatingsSchema>;
 const geminiSafetyRatingsSchema = z.array(z.object({
   'category': geminiHarmCategoryEnum,
@@ -271,7 +237,6 @@ const geminiSafetyRatingsSchema = z.array(z.object({
   }),
   content: geminiContentSchema,
 });*/
-
 
 const geminiPromptFeedbackSchema = z.object({
   blockReason: geminiBlockReasonEnum.optional(),
@@ -304,4 +269,40 @@ export const geminiGeneratedContentResponseSchema = z.object({
   })),
   promptFeedback: geminiPromptFeedbackSchema.optional(), // only sent in the 1st chunk of a streaming response
   usageMetadata: geminiUsageMetadataSchema.optional(), // only use (sent?) at the end
+});
+
+
+//
+// models.list = /v1beta/models
+//
+
+export type GeminiModelSchema = z.infer<typeof geminiModelSchema>;
+const geminiModelSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  inputTokenLimit: z.number().int().min(1),
+  outputTokenLimit: z.number().int().min(1),
+  supportedGenerationMethods: z.array(z.enum([
+    'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
+    'countMessageTokens',
+    'countTextTokens',
+    'countTokens',
+    'createTunedModel',
+    'createTunedTextModel',
+    'embedContent',
+    'embedText',
+    'generateAnswer',
+    'generateContent',
+    'generateMessage',
+    'generateText',
+  ])),
+  temperature: z.number().optional(),
+  topP: z.number().optional(),
+  topK: z.number().optional(),
+});
+
+export const geminiModelsListOutputSchema = z.object({
+  models: z.array(geminiModelSchema),
 });
