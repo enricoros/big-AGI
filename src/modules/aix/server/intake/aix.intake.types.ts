@@ -21,14 +21,15 @@ export const aixAccessSchema = z.discriminatedUnion(
 );
 
 
-// AIX Context Schema //
+// AIX Model Schema //
 
-export type AixStreamGenerateContext = z.infer<typeof aixStreamingContextSchema>;
+export type AixModel = z.infer<typeof aixModelSchema>;
 
-export const aixStreamingContextSchema = z.object({
-  method: z.literal('chat-stream'),
-  name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
-  ref: z.string(),
+// FIXME: have a more flexible schema
+export const aixModelSchema = z.object({
+  id: z.string(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().min(1).max(1000000).optional(),
 });
 
 
@@ -42,13 +43,13 @@ export const aixHistorySchema = z.array(z.object({
 }));
 
 
-// AIX Model Schema //
+// AIX Context Schema //
 
-export type AixModel = z.infer<typeof aixModelSchema>;
+export type AixStreamGenerateContext = z.infer<typeof aixStreamingContextSchema>;
 
-// FIXME: have a more flexible schema
-export const aixModelSchema = z.object({
-  id: z.string(),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).max(1000000).optional(),
+export const aixStreamingContextSchema = z.object({
+  method: z.literal('chat-stream'),
+  name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
+  ref: z.string(),
 });
+
