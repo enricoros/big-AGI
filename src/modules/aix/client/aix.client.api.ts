@@ -10,13 +10,15 @@ import type { DMessageDocPart, DMessageTextPart, DMessageToolCallPart, DMessageT
 //
 // Chat/Other -- (this schema) --> Client -- (intake request) --> Server -- (dispatch request) --> AI Service
 //
+// ** MUST Keep the __intake__ schemas in sync **
+//
 
 
 // Chat Content Generation - Request Schema
 
-export interface ContentGenerationRequest {
+export interface AixChatContentGenerateRequest {
   systemMessage?: AixSystemMessage;
-  inputSequence: AixChatMessage[];
+  chat: AixChatMessage[];
   tools?: AixToolDefinition[];
   toolPolicy?: AixToolPolicy;
 }
@@ -58,7 +60,7 @@ interface AixChatMessageTool {
 }
 
 interface AixInlineImagePart {
-  pt: 'inlineImage';
+  pt: 'inline_image';
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp'; // supported by all
   // | 'image/gif' // Anthropic/OpenAI only
   // | 'image/heic' | 'image/heif' // Gemini only
@@ -72,7 +74,7 @@ interface AixInlineImagePart {
 // }
 
 interface AixMetaReplyToPart {
-  pt: 'metaReplyTo';
+  pt: 'meta_reply_to';
   replyTo: string;
 }
 
@@ -93,12 +95,12 @@ export type AixToolPolicy =
 
 // AIX Tools > Function Call
 
-type AixToolFunctionCallDefinition = {
+interface AixToolFunctionCallDefinition {
   type: 'function_call';
   function: AixFunctionCall;
-};
+}
 
-type AixFunctionCall = {
+interface AixFunctionCall {
   /**
    * The name of the function to call. Up to 64 characters long, and can only contain letters, numbers, underscores, and hyphens.
    */
@@ -112,19 +114,19 @@ type AixFunctionCall = {
    * (OpenAI,Google: parameters, Anthropic: input_schema)
    */
   input_schema?: AixFunctionCallInputSchema;
-};
+}
 
-type AixFunctionCallInputSchema = {
+interface AixFunctionCallInputSchema {
   type: 'object';
   properties: Record<string, OpenAPISchemaObject>;
   required?: string[];
-};
+}
 
 /**
  * The TypeScript definition of an "OpenAPI 3.0.3" "Schema Object".
  * This is a subset of the OpenAPI Schema Object, focused on function calling use cases.
  */
-type OpenAPISchemaObject = {
+interface OpenAPISchemaObject {
   type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
   description?: string;
   nullable?: boolean;
@@ -133,18 +135,18 @@ type OpenAPISchemaObject = {
   properties?: Record<string, OpenAPISchemaObject>;
   required?: string[];
   items?: OpenAPISchemaObject;
-};
+}
 
 
 // AIX Tools > Gemini Code Interpreter
 
-type AixToolGeminiCodeInterpreter = {
+interface AixToolGeminiCodeInterpreter {
   type: 'gemini_code_interpreter';
-};
+}
 
 // AIX Tools > Preprocessor
 
-type AixToolPreprocessor = {
+interface AixToolPreprocessor {
   type: 'preprocessor';
   pname: 'anthropic_artifacts';
-};
+}
