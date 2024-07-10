@@ -123,7 +123,7 @@ export const anthropicWireMessageCreateSchema = z.object({
   ]).optional(),
 
   /**
-   *
+   * (optional) Tools that the model can use to generate the response.
    */
   tools: z.array(anthropicWire_ToolUL_Schema).optional(),
 

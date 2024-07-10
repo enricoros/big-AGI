@@ -176,8 +176,15 @@ const geminiSafetySettingSchema = z.object({
   threshold: geminiBlockSafetyLevelEnum,
 });
 
+const geminiResponseMimeTypeEnum = z.enum([
+  'text/plain',
+  'application/json',
+]);
+
 const geminiGenerationConfigSchema = z.object({
   stopSequences: z.array(z.string()).optional(),
+  responseMimeType: geminiResponseMimeTypeEnum.optional(), // defaults to 'text/plain'
+  responseSchema: z.record(z.any()).optional(), // This is a simplified representation of the Schema object
   candidateCount: z.number().int().optional(),
   maxOutputTokens: z.number().int().optional(),
   temperature: z.number().optional(),
