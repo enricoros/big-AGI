@@ -16,7 +16,7 @@ import type { DMessageDocPart, DMessageTextPart, DMessageToolCallPart, DMessageT
 
 export interface ContentGenerationRequest {
   systemMessage?: AixSystemMessage;
-  inputSequence: AixInputMessage[];
+  inputSequence: AixChatMessage[];
   tools?: AixToolDefinition[];
   toolPolicy?: AixToolPolicy;
 }
@@ -30,29 +30,34 @@ export interface ContentGenerationRequest {
 
 // System Message Schema
 
-export type AixSystemMessage = {
+interface AixSystemMessage {
   parts: DMessageTextPart[];
 }
 
 
 // Input Message Schema
 
-export type AixInputMessage = {
+export type AixChatMessage =
+  | AixChatMessageUser
+  | AixChatMessageModel
+  | AixChatMessageTool;
+
+interface AixChatMessageUser {
   role: 'user',
-  parts: _InputUserParts[];
-} | {
-  role: 'model',
-  parts: _InputModelParts[];
-} | {
-  role: 'tool',
-  parts: _InputToolResponseParts[];
+  parts: (DMessageTextPart | AixInlineImagePart | DMessageDocPart | AixMetaReplyToPart)[];
 }
 
-type _InputUserParts = DMessageTextPart | InlineImagePart | DMessageDocPart | MetaReplyToPart;
-type _InputModelParts = DMessageTextPart | DMessageToolCallPart;
-type _InputToolResponseParts = DMessageToolResponsePart;
+interface AixChatMessageModel {
+  role: 'model',
+  parts: (DMessageTextPart | DMessageToolCallPart)[];
+}
 
-type InlineImagePart = {
+interface AixChatMessageTool {
+  role: 'tool',
+  parts: DMessageToolResponsePart[];
+}
+
+interface AixInlineImagePart {
   pt: 'inlineImage';
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp'; // supported by all
   // | 'image/gif' // Anthropic/OpenAI only
@@ -60,13 +65,13 @@ type InlineImagePart = {
   base64: string;
 }
 
-// type InlineAudioPart = {
+// interface AixInlineAudioPart {
 //   pt: 'inlineAudio';
 //   mimeType: 'audio/wav' | 'audio/mp3' | 'audio/aiff' | 'audio/aac' | 'audio/ogg' | 'audio/flac'; // Gemini only
 //   base64: string;
 // }
 
-type MetaReplyToPart = {
+interface AixMetaReplyToPart {
   pt: 'metaReplyTo';
   replyTo: string;
 }
