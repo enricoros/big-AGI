@@ -57,7 +57,7 @@ async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: DBlobDBC
 //   return await getDBAssetsByType<DBlobImageAsset>(DBlobAssetType.IMAGE);
 // }
 
-async function getImageAsset(id: DBlobAssetId) {
+export async function getImageAsset(id: DBlobAssetId) {
   return await getDBAsset<DBlobImageAsset>(id);
 }
 

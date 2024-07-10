@@ -4,10 +4,9 @@ import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry
 
 import { apiStream } from '~/common/util/trpc.client';
 
-import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
+import type { IntakeAccess, IntakeContextChatStream, IntakeModel } from '../server/intake/schemas.intake.api';
 
-import type { AixAccess, AixHistory, AixModel, AixStreamGenerateContext } from '../server/intake/aix.intake.types';
-import type { AixToolPolicy, AixTools } from '../server/intake/aix.tool.types';
+import type { AixChatContentGenerateRequest } from './aix.client.api';
 
 
 export type StreamingClientUpdate = Partial<{
@@ -19,11 +18,9 @@ export type StreamingClientUpdate = Partial<{
 
 export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
   llmId: DLLMId,
-  history: VChatMessageIn[],
-  contextName: VChatStreamContextName,
-  contextRef: VChatContextRef,
-  functions: VChatFunctionIn[] | null,
-  forceFunctionName: string | null,
+  chatGenerate: AixChatContentGenerateRequest,
+  intakeContextName: IntakeContextChatStream['name'],
+  intakeContextRef: string,
   abortSignal: AbortSignal,
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
 ): Promise<void> {
@@ -32,11 +29,12 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
   const { llm, vendor } = findVendorForLlmOrThrow<TSourceSetup, TAccess>(llmId);
 
   // FIXME: relax the forced cast
-  const llmOptions = llm.options;
+  // const llmOptions = llm.options;
+  const intakeModel = intakeModelFromLLMOptions(llm.options, llmId);
 
   // get the access
   const partialSourceSetup = llm._source.setup;
-  const access = vendor.getTransportAccess(partialSourceSetup); // as ChatStreamInputSchema['access'];
+  const intakeAccess = vendor.getTransportAccess(partialSourceSetup);
 
   // get any vendor-specific rate limit delay
   const delay = vendor.getRateLimitDelay?.(llm, partialSourceSetup) ?? 0;
@@ -44,29 +42,24 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
     await new Promise(resolve => setTimeout(resolve, delay));
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
-  // if (access.dialect === 'openai' && access.moderationCheck) {
-  //   const moderationUpdate = await _openAIModerationCheck(access, messages.at(-1) ?? null);
+  // if (intakeAccess.dialect === 'openai' && intakeAccess.moderationCheck) {
+  //   const moderationUpdate = await _openAIModerationCheck(intakeAccess, messages.at(-1) ?? null);
   //   if (moderationUpdate)
   //     return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
   // }
 
 
   // execute via the vendor
-  return await aixStreamGenerateUnified(
-    access,
-    aixModelFromLLMOptions(llm.options, llmId),
-    history,
-    undefined,
-    undefined,
-    aixStreamGenerateContext(contextName, contextRef),
-    abortSignal,
-    onUpdate,
-  );
-  // return await vendor.streamingChatGenerateOrThrow(access, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
+  // return await vendor.streamingChatGenerateOrThrow(intakeAccess, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
+  const intakeContext = intakeContextChatStream(intakeContextName, intakeContextRef);
+  return await _aixStreamGenerateUnified(intakeAccess, intakeModel, chatGenerate, intakeContext, abortSignal, onUpdate);
 }
 
+function intakeContextChatStream(name: IntakeContextChatStream['name'], ref: string): IntakeContextChatStream {
+  return { method: 'chat-stream', name, ref };
+}
 
-function aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: string): AixModel {
+function intakeModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: string): IntakeModel {
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = llmOptions || {};
   if (!llmRef || llmTemperature === undefined)
@@ -76,14 +69,6 @@ function aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: str
     id: llmRef,
     temperature: llmTemperature,
     ...(llmResponseTokens ? { maxTokens: llmResponseTokens } : {}),
-  };
-}
-
-function aixStreamGenerateContext(contextName: AixStreamGenerateContext['name'], contextRef: AixStreamGenerateContext['ref']): AixStreamGenerateContext {
-  return {
-    method: 'chat-stream',
-    name: contextName,
-    ref: contextRef,
   };
 }
 
@@ -97,27 +82,21 @@ function aixStreamGenerateContext(contextName: AixStreamGenerateContext['name'],
  *
  * NOTE: onUpdate is callback when a piece of a message (text, model name, typing..) is received
  */
-export async function aixStreamGenerateUnified<TSourceSetup = unknown>(
+async function _aixStreamGenerateUnified(
   // input
-  access: AixAccess,
-  model: AixModel,
-  history: AixHistory,
-  tools: AixTools | undefined,
-  toolPolicy: AixToolPolicy | undefined,
-  context: AixStreamGenerateContext,
+  access: IntakeAccess,
+  model: IntakeModel,
+  chatGenerate: AixChatContentGenerateRequest,
+  context: IntakeContextChatStream,
   // others
   abortSignal: AbortSignal,
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
 ): Promise<void> {
 
-  const x = await apiStream.aix.chatGenerateContentStream.mutate({
-    access,
-    model,
-    history,
-    tools,
-    toolPolicy,
-    context,
-  }, { signal: abortSignal });
+  const x = await apiStream.aix.chatGenerateContentStream.mutate(
+    { access, model, chatGenerate, context },
+    { signal: abortSignal },
+  );
 
   let incrementalText = '';
 
@@ -150,5 +129,4 @@ export async function aixStreamGenerateUnified<TSourceSetup = unknown>(
   console.log('HERE', abortSignal.aborted ? 'client-initiated ABORTED' : '');
 
   onUpdate({ typing: false }, true);
-
 }

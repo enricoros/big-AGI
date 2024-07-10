@@ -1,18 +1,96 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
-import type { VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
+
+import { AixChatContentGenerateRequest, AixChatMessage, AixChatMessageModel, AixChatMessageUser } from '~/modules/aix/client/aix.client.api';
+import type { IntakeContextChatStream } from '~/modules/aix/server/intake/schemas.intake.api';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
-import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DMessage, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { DMessage, messageFragmentsReplaceLastContentText } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
-import { isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
+import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
+
+
+async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Promise<AixChatContentGenerateRequest> {
+  // reduce history
+  return history.reduce((acc, m, index) => {
+
+    // extract system
+    if (index === 0 && m.role === 'system') {
+      // create parts if not exist
+      if (!acc.systemMessage) {
+        acc.systemMessage = {
+          parts: [],
+        };
+      }
+      for (const systemFragment of m.fragments) {
+        if (isContentFragment(systemFragment) && isTextPart(systemFragment.part)) {
+          acc.systemMessage.parts.push(systemFragment.part);
+        } else {
+          console.warn('historyToChatGenerateRequest: unexpected system fragment', systemFragment);
+        }
+      }
+      return acc;
+    }
+
+    // map the other parts
+    let aixChatMessage: AixChatMessage | undefined = undefined;
+    if (m.role === 'assistant') {
+      aixChatMessage = m.fragments.reduce((mMsg, srcFragment) => {
+        if (!isContentOrAttachmentFragment(srcFragment))
+          return mMsg;
+        switch (srcFragment.part.pt) {
+          case 'text':
+          case 'tool_call':
+            mMsg.parts.push(srcFragment.part);
+            break;
+          default:
+            console.warn('historyToChatGenerateRequest: unexpected model fragment part type', srcFragment.part);
+            break;
+        }
+        return mMsg;
+      }, { role: 'model', parts: [] } as AixChatMessageModel);
+    } else if (m.role === 'user') {
+      aixChatMessage = m.fragments.reduce((mMsg, srcFragment) => {
+        if (!isContentOrAttachmentFragment(srcFragment))
+          return mMsg;
+        switch (srcFragment.part.pt) {
+          case 'text':
+            mMsg.parts.push(srcFragment.part);
+            break;
+          case 'image_ref':
+            console.log('DEV: historyToChatGenerateRequest: image_ref', srcFragment.part);
+            // const imageDataRef = srcFragment.part.dataRef;
+            // if (imageDataRef.reftype === 'dblob' && imageDataRef.dblobAssetId) {
+            //   const imageAsset = await getImageAsset(imageDataRef.dblobAssetId);
+            // }
+            //
+            //
+            //
+            // mMsg.parts.push({ pt: 'inline_image',mimeType });
+            break;
+          case 'doc':
+            mMsg.parts.push(srcFragment.part);
+            break;
+          default:
+            console.warn('historyToChatGenerateRequest: unexpected user fragment part type', srcFragment.part);
+        }
+        return mMsg;
+      }, { role: 'user', parts: [] } as AixChatMessageUser);
+    } else {
+      console.warn('historyToChatGenerateRequest: unexpected message role', m.role);
+    }
+    if (aixChatMessage)
+      acc.chat.push(aixChatMessage);
+    return acc;
+  }, { chat: [] } as AixChatContentGenerateRequest);
+}
 
 
 /**
@@ -45,17 +123,12 @@ export async function runPersonaOnConversationHead(
   const abortController = new AbortController();
   cHandler.setAbortController(abortController);
 
+
   // stream the assistant's messages directly to the state store
-  let instructions: VChatMessageIn[];
-  try {
-    instructions = history.map((m): VChatMessageIn => ({ role: m.role, content: messageSingleTextOrThrow(m) /* BIG FIXME */ }));
-  } catch (error) {
-    console.error('runAssistantUpdatingState: error:', error, history);
-    throw error;
-  }
+  const aixChatContentGenerateRequest = await historyToChatGenerateRequest(history);
   const messageStatus = await llmGenerateContentStream(
     assistantLlmId,
-    instructions,
+    aixChatContentGenerateRequest,
     'conversation',
     conversationId,
     parallelViewCount,
@@ -103,9 +176,9 @@ type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIn
 
 export async function llmGenerateContentStream(
   llmId: DLLMId,
-  messagesHistory: VChatMessageIn[],
-  contextName: VChatStreamContextName,
-  contextRef: VChatContextRef,
+  chatGenerate: AixChatContentGenerateRequest,
+  intakeContextName: IntakeContextChatStream['name'],
+  intakeContextRef: string,
   parallelViewCount: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   abortSignal: AbortSignal,
   onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
@@ -122,7 +195,7 @@ export async function llmGenerateContentStream(
 
   try {
 
-    await aixStreamingChatGenerate(llmId, messagesHistory, contextName, contextRef, null, null, abortSignal,
+    await aixStreamingChatGenerate(llmId, chatGenerate, intakeContextName, intakeContextRef, abortSignal,
       (update: StreamingClientUpdate, done: boolean) => {
 
         // grow the incremental message
