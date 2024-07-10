@@ -18,8 +18,8 @@ import { wireOllamaChunkedOutputSchema } from '../../aix/server/dispatch/ollama/
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
 
 // OpenAI server imports
-import type { OpenAIWire } from './openai/openai.wiretypes';
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
+import { openaiWire_ChatCompletionChunkResponse_Schema } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
 
 
 import { llmsStreamingContextSchema } from './llm.server.types';
@@ -455,7 +455,7 @@ function createStreamParserOpenAI(): AIStreamParser {
 
   return (data: string) => {
 
-    const json: OpenAIWire.ChatCompletion.ResponseStreamingChunk = JSON.parse(data);
+    const json = openaiWire_ChatCompletionChunkResponse_Schema.parse(JSON.parse(data));
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error)
