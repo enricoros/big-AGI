@@ -645,11 +645,11 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
   const chatCompletionRequest: OpenaiWire_ChatCompletionRequest = {
     model: model.id,
     messages: history,
-    stream: stream,
-    stream_options: {
-      include_usage: true,
-    },
   };
+  if (stream) {
+    chatCompletionRequest.stream = true;
+    chatCompletionRequest.stream_options = { include_usage: true };
+  }
   if (model.temperature !== undefined)
     chatCompletionRequest.temperature = model.temperature;
   if (model.maxTokens)
@@ -665,8 +665,8 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
       function: { name: forceFunctionName },
     };
   if (n > 1) {
+    chatCompletionRequest.n = n;
     throw new Error('OpenAI-derived API do not support n > 1 for chat completions, so we will not do it either');
-    // chatCompletionRequest.n = n;
   }
   return chatCompletionRequest;
 }
