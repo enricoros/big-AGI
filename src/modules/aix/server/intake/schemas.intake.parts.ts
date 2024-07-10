@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 
 // Export types
-// export type AixSystemMessage = z.infer<typeof aixSystemMessageSchema>;
-// export type AixChatMessage = z.infer<typeof aixChatMessageSchema>;
+export type IntakeSystemMessage = z.infer<typeof intakeSystemMessageSchema>;
+export type IntakeChatMessage = z.infer<typeof intakeChatMessageSchema>;
 
 
 // Parts: mirror the Typescript definitions from the frontend-side
@@ -51,13 +51,13 @@ const dMessageToolResponsePartSchema = z.object({
 });
 
 
-const aixInlineImagePartSchema = z.object({
+const intakeInlineImagePartSchema = z.object({
   pt: z.literal('inline_image'),
   mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
   base64: z.string(),
 });
 
-const aixMetaReplyToPartSchema = z.object({
+const intakeMetaReplyToPartSchema = z.object({
   pt: z.literal('meta_reply_to'),
   replyTo: z.string(),
 });
@@ -65,17 +65,17 @@ const aixMetaReplyToPartSchema = z.object({
 
 // Messagges
 
-export const aixSystemMessageSchema = z.object({
+export const intakeSystemMessageSchema = z.object({
   parts: z.array(dMessageTextPartSchema),
 });
 
-export const aixChatMessageSchema = z.discriminatedUnion('role', [
+export const intakeChatMessageSchema = z.discriminatedUnion('role', [
 
   // User
   z.object({
     role: z.literal('user'),
     parts: z.array(z.discriminatedUnion('pt', [
-      dMessageTextPartSchema, aixInlineImagePartSchema, dMessageDocPartSchema, aixMetaReplyToPartSchema,
+      dMessageTextPartSchema, intakeInlineImagePartSchema, dMessageDocPartSchema, intakeMetaReplyToPartSchema,
     ])),
   }),
 

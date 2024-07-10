@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 
 // Export types
-// export type AixTools = z.infer<typeof aixToolsSchema>;
-// export type AixToolPolicy = z.infer<typeof aixToolsPolicySchema>;
+export type IntakeToolDefinition = z.infer<typeof intakeToolDefinitionSchema>;
+export type IntakeToolsPolicy = z.infer<typeof intakeToolsPolicySchema>;
 
 
-// AIX Tools - Function Call //
+// Tools > Function Call
 
 /**
  * The zod definition of an "OpenAPI 3.0.3" "Schema Object".
@@ -53,13 +53,13 @@ const openAPISchemaObjectSchema = z.object({
 });
 
 // an object-only subset of the above, which is the JSON object owner of the parameters
-const aixFunctionCallInputSchemaSchema = z.object({
+const intakeFunctionCallInputSchemaSchema = z.object({
   type: z.literal('object'),
   properties: z.record(openAPISchemaObjectSchema),
   required: z.array(z.string()).optional(),
 });
 
-const aixFunctionCallSchema = z.object({
+const intakeFunctionCallSchema = z.object({
   /**
    * The name of the function to call. Up to 64 characters long, and can only contain letters, numbers, underscores, and hyphens.
    */
@@ -76,24 +76,24 @@ const aixFunctionCallSchema = z.object({
    *  A JSON Schema object defining the expected parameters for the function call.
    *  (OpenAI,Google: parameters, Anthropic: input_schema)
    */
-  input_schema: aixFunctionCallInputSchemaSchema.optional(),
+  input_schema: intakeFunctionCallInputSchemaSchema.optional(),
 });
 
-const aixToolFunctionCallSchema = z.object({
+const intakeToolFunctionCallDefinitionSchema = z.object({
   type: z.literal('function_call'),
-  function: aixFunctionCallSchema,
+  function: intakeFunctionCallSchema,
   // domain: z.enum(['server', 'client']).optional(),
 });
 
 
-// AIX Tools - Gemini Code Interpreter //
+// Tools - Gemini Code Interpreter
 
-const aixToolGeminiCodeInterpreterSchema = z.object({
+const intakeToolGeminiCodeInterpreterSchema = z.object({
   type: z.literal('gemini_code_interpreter'),
 });
 
 
-// AIX Tools - Preprocessor //
+// Tools - Preprocessor
 
 /**
  * We only have 1 preprocessor so far, which is the Anthropic Artifacts processor.
@@ -103,13 +103,13 @@ const aixToolGeminiCodeInterpreterSchema = z.object({
  *
  * In the future we can have multiple preprocessors, such as data retrieval and generation (rag), etc.
  */
-const aixToolPreprocessorSchema = z.object({
+const intakeToolPreprocessorSchema = z.object({
   type: z.literal('preprocessor'),
   pname: z.literal('anthropic_artifacts'),
 });
 
 
-// AIX Tools Schema //
+// Tools Schema
 
 /**
  * Describe 'Tools' available to the model.
@@ -136,11 +136,11 @@ const aixToolPreprocessorSchema = z.object({
  *  { type: 'preprocessor', pname: 'anthropic_artifacts' },
  * ]
  */
-export const aixToolsSchema = z.array(z.discriminatedUnion('type', [
-  aixToolFunctionCallSchema,
-  aixToolGeminiCodeInterpreterSchema,
-  aixToolPreprocessorSchema,
-]));
+export const intakeToolDefinitionSchema = z.discriminatedUnion('type', [
+  intakeToolFunctionCallDefinitionSchema,
+  intakeToolGeminiCodeInterpreterSchema,
+  intakeToolPreprocessorSchema,
+]);
 
 /**
  * Policy for tools that the model can use:
@@ -149,7 +149,7 @@ export const aixToolsSchema = z.array(z.discriminatedUnion('type', [
  * - function: must use a specific Function Tool
  * - none: same as not giving the model any tool
  */
-export const aixToolsPolicySchema = z.discriminatedUnion('type', [
+export const intakeToolsPolicySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('any') /*, parallel: z.boolean()*/ }),
   z.object({ type: z.literal('auto') }),
   z.object({ type: z.literal('function'), function: z.object({ name: z.string() }) }),
