@@ -6,7 +6,6 @@ import type { DLLMId } from '../store-llms';
 import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '../llm.client';
 
 import type { OpenAIAccessSchema } from '../server/openai/openai.router';
-import type { OpenAIWire } from '../server/openai/openai.wiretypes';
 
 
 export type StreamingClientUpdate = Partial<{
@@ -149,7 +148,7 @@ async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: V
     return null;
 
   try {
-    const moderationResult: OpenAIWire.Moderation.Response = await apiAsync.llmOpenAI.moderation.mutate({
+    const moderationResult = await apiAsync.llmOpenAI.moderation.mutate({
       access, text: lastMessage.content,
     });
     const issues = moderationResult.results.reduce((acc, result) => {

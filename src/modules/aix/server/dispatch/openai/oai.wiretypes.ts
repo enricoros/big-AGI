@@ -7,6 +7,9 @@ import { z } from 'zod';
 // - 2024-07-09: ignoring the advanced model configuration
 //
 
+//
+// Chat > Create chat completion
+//
 
 /// Content parts - Input
 
@@ -262,7 +265,6 @@ const openaiWire_ChatCompletionChunkChoice_Schema = z.object({
   // logprobs: ... // Log probability information for the choice.
 });
 
-export type OpenaiWire_ChatCompletionChunkResponse = z.infer<typeof openaiWire_ChatCompletionChunkResponse_Schema>;
 export const openaiWire_ChatCompletionChunkResponse_Schema = z.object({
   object: z.enum(['chat.completion.chunk', '' /* [Azure] bad response */]),
   id: z.string(),
@@ -283,4 +285,115 @@ export const openaiWire_ChatCompletionChunkResponse_Schema = z.object({
   // undocumented streaming messages
   error: openaiWire_UndocumentedError_Schema.optional(),
   warning: openaiWire_UndocumentedWarning_Schema.optional(),
+});
+
+
+//
+// Images > Create Image
+// https://platform.openai.com/docs/api-reference/images/create
+//
+
+export type OpenaiWire_CreateImageRequest = z.infer<typeof openaiWire_CreateImageRequest_Schema>;
+const openaiWire_CreateImageRequest_Schema = z.object({
+  // The maximum length is 1000 characters for dall-e-2 and 4000 characters for dall-e-3
+  prompt: z.string().max(4000),
+
+  // The model to use for image generation
+  model: z.enum(['dall-e-2', 'dall-e-3']).optional().default('dall-e-2'),
+
+  // The number of images to generate. Must be between 1 and 10. For dall-e-3, only n=1 is supported.
+  n: z.number().min(1).max(10).nullable().optional(),
+
+  // 'hd' creates images with finer details and greater consistency across the image. This param is only supported for dall-e-3
+  quality: z.enum(['standard', 'hd']).optional(),
+
+  // The format in which the generated images are returned
+  response_format: z.enum(['url', 'b64_json']).optional(), //.default('url'),
+
+  // 'dall-e-2': must be one of 256x256, 512x512, or 1024x1024
+  // 'dall-e-3': must be one of 1024x1024, 1792x1024, or 1024x1792
+  size: z.enum(['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792']).optional().default('1024x1024'),
+
+  // only used by 'dall-e-3': 'vivid' (hyper-real and dramatic images) or 'natural'
+  style: z.enum(['vivid', 'natural']).optional().default('vivid'),
+
+  // A unique identifier representing your end-user
+  user: z.string().optional(),
+});
+
+
+export type OpenaiWire_CreateImageResponse = z.infer<typeof openaiWire_CreateImageResponse_Schema>;
+export const openaiWire_CreateImageResponse_Schema = z.object({
+  created: z.number(),
+  data: z.array(z.object({
+    url: z.string().url().optional(),
+    b64_json: z.string().optional(),
+    revised_prompt: z.string().optional(),
+  })),
+});
+
+
+//
+// Models > List Models
+//
+
+// Model object schema
+export type OpenaiWire_Model = z.infer<typeof openaiWire_Model_Schema>;
+const openaiWire_Model_Schema = z.object({
+  id: z.string(),
+  object: z.literal('model'),
+  created: z.number().optional(),
+  // [dialect:OpenAI] 'openai' | 'openai-dev' | 'openai-internal' | 'system'
+  // [dialect:Oobabooga] 'user'
+  owned_by: z.string().optional(),
+
+  // **Extensions**
+  // [Openrouter] non-standard - commented because dynamically added by the Openrouter vendor code
+  // context_length: z.number().optional(),
+});
+
+// List models response schema
+export type OpenaiWire_ModelList = z.infer<typeof openaiWire_ModelList_Schema>;
+const openaiWire_ModelList_Schema = z.object({
+  object: z.literal('list'),
+  data: z.array(openaiWire_Model_Schema),
+});
+
+
+//
+// Moderations > Create Moderation
+//
+
+export const openaiWire_ModerationCategory_Schema = z.enum([
+  'sexual',
+  'hate',
+  'harassment',
+  'self-harm',
+  'sexual/minors',
+  'hate/threatening',
+  'violence/graphic',
+  'self-harm/intent',
+  'self-harm/instructions',
+  'harassment/threatening',
+  'violence',
+]);
+
+export type OpenaiWire_ModerationRequest = z.infer<typeof openaiWire_ModerationRequest_Schema>;
+const openaiWire_ModerationRequest_Schema = z.object({
+  // input: z.union([z.string(), z.array(z.string())]),
+  input: z.string(),
+  model: z.enum(['text-moderation-stable', 'text-moderation-latest']).optional(),
+});
+
+const openaiWire_ModerationResult_Schema = z.object({
+  flagged: z.boolean(),
+  categories: z.record(openaiWire_ModerationCategory_Schema, z.boolean()),
+  category_scores: z.record(openaiWire_ModerationCategory_Schema, z.number()),
+});
+
+export type OpenaiWire_ModerationResponse = z.infer<typeof openaiWire_ModerationResponse_Schema>;
+const openaiWire_ModerationResponse_Schema = z.object({
+  id: z.string(),
+  model: z.string(),
+  results: z.array(openaiWire_ModerationResult_Schema),
 });

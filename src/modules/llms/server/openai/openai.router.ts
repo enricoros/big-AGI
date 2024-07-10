@@ -10,9 +10,9 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import type { OpenaiWire_ChatCompletionRequest } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
+import { OpenaiWire_ChatCompletionRequest, OpenaiWire_CreateImageRequest, OpenaiWire_CreateImageResponse, openaiWire_CreateImageResponse_Schema, OpenaiWire_ModelList, OpenaiWire_ModerationRequest, OpenaiWire_ModerationResponse } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
 
-import { OpenAIWire, WireOpenAICreateImageOutput, wireOpenAICreateImageOutputSchema, WireOpenAICreateImageRequest } from './openai.wiretypes';
+import type { OpenAIWire } from './openai.wiretypes';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
@@ -155,13 +155,13 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
-      const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire.Models.Response>(access, '/v1/models');
+      const openAIWireModelsResponse = await openaiGETOrThrow<OpenaiWire_ModelList>(access, '/v1/models');
 
       // [Together] missing the .data property
       if (access.dialect === 'togetherai')
         return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
 
-      let openAIModels: OpenAIWire.Models.ModelDescription[] = openAIWireModelsResponse.data || [];
+      let openAIModels = openAIWireModelsResponse.data || [];
 
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
       const preCount = openAIModels.length;
@@ -321,7 +321,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
 
       // images/generations request body
-      const requestBody: WireOpenAICreateImageRequest = {
+      const requestBody: OpenaiWire_CreateImageRequest = {
         prompt: config.prompt,
         model: config.model,
         n: config.count,
@@ -337,7 +337,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         delete requestBody.response_format;
 
       // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
-      const wireOpenAICreateImageOutput = await openaiPOSTOrThrow<WireOpenAICreateImageOutput, WireOpenAICreateImageRequest>(
+      const wireOpenAICreateImageOutput = await openaiPOSTOrThrow<OpenaiWire_CreateImageResponse, OpenaiWire_CreateImageRequest>(
         access, null, requestBody, '/v1/images/generations',
       );
 
@@ -350,7 +350,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { count: _count, responseFormat: _responseFormat, prompt: origPrompt, ...parameters } = config;
 
       // expect a single image and as URL
-      const generatedImages = wireOpenAICreateImageOutputSchema.parse(wireOpenAICreateImageOutput).data;
+      const generatedImages = openaiWire_CreateImageResponse_Schema.parse(wireOpenAICreateImageOutput).data;
       return generatedImages.map((image): T2iCreateImageOutput => {
         if (!('b64_json' in image))
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
@@ -371,10 +371,10 @@ export const llmOpenAIRouter = createTRPCRouter({
   /* [OpenAI] check for content policy violations */
   moderation: publicProcedure
     .input(moderationInputSchema)
-    .mutation(async ({ input: { access, text } }): Promise<OpenAIWire.Moderation.Response> => {
+    .mutation(async ({ input: { access, text } }): Promise<OpenaiWire_ModerationResponse> => {
       try {
 
-        return await openaiPOSTOrThrow<OpenAIWire.Moderation.Response, OpenAIWire.Moderation.Request>(access, null, {
+        return await openaiPOSTOrThrow<OpenaiWire_ModerationResponse, OpenaiWire_ModerationRequest>(access, null, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');

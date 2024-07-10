@@ -1,7 +1,8 @@
+import type { OpenaiWire_Model } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
+
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
-import type { OpenAIWire } from './openai.wiretypes';
 import { wireGroqModelsListOutputSchema } from './groq.wiretypes';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
 import { wireOpenrouterModelsListOutputSchema } from './openrouter.wiretypes';
@@ -306,11 +307,11 @@ const openAIModelsDenyList: string[] = [
   'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-0301', 'gpt-3.5-turbo-16k',
 ];
 
-export function openAIModelFilter(model: OpenAIWire.Models.ModelDescription) {
+export function openAIModelFilter(model: OpenaiWire_Model) {
   return !openAIModelsDenyList.some(deny => model.id.includes(deny));
 }
 
-export function openAIModelToModelDescription(modelId: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
+export function openAIModelToModelDescription(modelId: string, modelCreated: number | undefined, modelUpdated?: number): ModelDescriptionSchema {
   return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated);
 }
 
@@ -663,7 +664,7 @@ const _knownOobaboogaNonChatModels: string[] = [
   /* 'gpt-3.5-turbo' // used to be here, but now it's the way to select the activly loaded ooababooga model */
 ];
 
-export function oobaboogaModelToModelDescription(modelId: string, created: number): ModelDescriptionSchema {
+export function oobaboogaModelToModelDescription(modelId: string, created: number | undefined): ModelDescriptionSchema {
   let label = modelId.replaceAll(/[_-]/g, ' ').split(' ').map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
   if (label.endsWith('.bin'))
     label = label.slice(0, -4);
