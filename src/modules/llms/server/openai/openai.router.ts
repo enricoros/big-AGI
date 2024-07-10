@@ -10,7 +10,7 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenaiWire_ChatCompletionRequest, OpenaiWire_CreateImageRequest, OpenaiWire_CreateImageResponse, openaiWire_CreateImageResponse_Schema, OpenaiWire_ModelList, OpenaiWire_ModerationRequest, OpenaiWire_ModerationResponse } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
+import { OpenaiWire_ChatCompletionRequest, OpenaiWire_CreateImageRequest, OpenaiWire_CreateImageResponse, openaiWire_CreateImageResponse_Schema, OpenaiWire_FunctionDefinition, openaiWire_FunctionDefinition_Schema, OpenaiWire_ModelList, OpenaiWire_ModerationRequest, OpenaiWire_ModerationResponse } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
 
 import type { OpenAIWire } from './openai.wiretypes';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
@@ -50,25 +50,6 @@ export const openAIHistorySchema = z.array(z.object({
 }));
 export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
 
-export const openAIFunctionsSchema = z.array(z.object({
-  name: z.string()
-    .regex(/^[a-zA-Z0-9_-]{1,64}$/, {
-      // constraint gotten from Anthropic: https://docs.anthropic.com/en/docs/build-with-claude/tool-use
-      message: 'Tool name must be 1-64 characters long and contain only letters, numbers, underscores, and hyphens',
-    }),
-  description: z.string().optional(),
-  parameters: z.object({
-    type: z.literal('object'),
-    properties: z.record(z.object({
-      type: z.enum(['string', 'number', 'integer', 'boolean']),
-      description: z.string().optional(),
-      enum: z.array(z.string()).optional(),
-    })),
-    required: z.array(z.string()).optional(),
-  }).optional(),
-}));
-export type OpenAIFunctionsSchema = z.infer<typeof openAIFunctionsSchema>;
-
 
 // Router Input Schemas
 
@@ -80,7 +61,7 @@ const chatGenerateWithFunctionsInputSchema = z.object({
   access: openAIAccessSchema,
   model: openAIModelSchema,
   history: openAIHistorySchema,
-  functions: openAIFunctionsSchema.optional(),
+  functions: z.array(openaiWire_FunctionDefinition_Schema).optional(),
   forceFunctionName: z.string().optional(),
   context: llmsGenerateContextSchema.optional(),
 });
@@ -629,7 +610,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 }
 
 
-export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIFunctionsSchema | null, forceFunctionName: string | null, n: number, stream: boolean): OpenaiWire_ChatCompletionRequest {
+export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenaiWire_FunctionDefinition[] | null, forceFunctionName: string | null, n: number, stream: boolean): OpenaiWire_ChatCompletionRequest {
 
   // Hotfixes to comply with API restrictions
   const hotfixAlternateUARoles = dialect === 'perplexity';
