@@ -15,11 +15,15 @@ import { isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
+import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 
+// FIXME: complete and optimize. This translates our 'message at rest' data structure into the Aix Request structure
+// for chat generate
 async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Promise<AixChatContentGenerateRequest> {
   // reduce history
-  return history.reduce((acc, m, index) => {
+  return await history.reduce(async (accPromise, m, index) => {
+    const acc = await accPromise;
 
     // extract system
     if (index === 0 && m.role === 'system') {
@@ -57,7 +61,8 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
         return mMsg;
       }, { role: 'model', parts: [] } as AixChatMessageModel);
     } else if (m.role === 'user') {
-      aixChatMessage = m.fragments.reduce((mMsg, srcFragment) => {
+      aixChatMessage = await m.fragments.reduce(async (mMsgPromise, srcFragment) => {
+        const mMsg = await mMsgPromise;
         if (!isContentOrAttachmentFragment(srcFragment))
           return mMsg;
         switch (srcFragment.part.pt) {
@@ -66,14 +71,23 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
             break;
           case 'image_ref':
             console.log('DEV: historyToChatGenerateRequest: image_ref', srcFragment.part);
-            // const imageDataRef = srcFragment.part.dataRef;
-            // if (imageDataRef.reftype === 'dblob' && imageDataRef.dblobAssetId) {
-            //   const imageAsset = await getImageAsset(imageDataRef.dblobAssetId);
-            // }
-            //
-            //
-            //
-            // mMsg.parts.push({ pt: 'inline_image',mimeType });
+            const imageDataRef = srcFragment.part.dataRef;
+            if (imageDataRef.reftype === 'dblob' && imageDataRef.dblobAssetId) {
+              const imageAsset = await getImageAsset(imageDataRef.dblobAssetId);
+              if (imageAsset) {
+                mMsg.parts.push({
+                  pt: 'inline_image',
+                  mimeType: imageDataRef.mimeType || imageAsset.data.mimeType || 'image/png' as any,
+                  base64: imageAsset.data.base64,
+                });
+              } else {
+                console.warn('historyToChatGenerateRequest: image_ref: missing image asset', imageDataRef);
+                throw new Error('Missing image asset');
+              }
+            } else {
+              console.warn('historyToChatGenerateRequest: image_ref: unexpected data ref', imageDataRef);
+              throw new Error('Unexpected data ref');
+            }
             break;
           case 'doc':
             mMsg.parts.push(srcFragment.part);
@@ -82,14 +96,14 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
             console.warn('historyToChatGenerateRequest: unexpected user fragment part type', srcFragment.part);
         }
         return mMsg;
-      }, { role: 'user', parts: [] } as AixChatMessageUser);
+      }, Promise.resolve({ role: 'user', parts: [] } as AixChatMessageUser));
     } else {
       console.warn('historyToChatGenerateRequest: unexpected message role', m.role);
     }
     if (aixChatMessage)
       acc.chat.push(aixChatMessage);
     return acc;
-  }, { chat: [] } as AixChatContentGenerateRequest);
+  }, Promise.resolve({ chat: [] } as AixChatContentGenerateRequest));
 }
 
 

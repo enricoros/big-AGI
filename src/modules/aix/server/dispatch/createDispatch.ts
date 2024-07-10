@@ -1,5 +1,5 @@
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaChatCompletionPayload } from '~/modules/llms/server/ollama/ollama.router';
-import { anthropicAccess, anthropicMessagesPayloadOrThrow } from '~/modules/llms/server/anthropic/anthropic.router';
+import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.router';
 import { geminiAccess, geminiGenerateContentTextPayload } from '~/modules/llms/server/gemini/gemini.router';
 import { openAIAccess, openAIChatCompletionPayload, OpenAIHistorySchema } from '~/modules/llms/server/openai/openai.router';
 
@@ -8,6 +8,7 @@ import type { IntakeAccess, IntakeChatGenerateRequest, IntakeModel } from '../in
 import { createDispatchDemuxer } from './dispatch.demuxers';
 import { createDispatchParserAnthropicMessages, createDispatchParserGemini, createDispatchParserOllama, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
 import { geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
+import { NEWanthropicMessagesPayloadOrThrow } from '~/modules/aix/server/dispatch/anthropic/anthropic.adapter';
 
 
 export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGenerate: IntakeChatGenerateRequest): {
@@ -19,52 +20,54 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
   // temporarily re-cast back to history
 
   const _hist: OpenAIHistorySchema = [];
-  chatGenerate.systemMessage?.parts.forEach(systemPart => {
-    _hist.push({ role: 'system', content: systemPart.text });
-  });
-  chatGenerate.chat.forEach(({ role, parts }) => {
-    switch (role) {
+  if (access.dialect !== 'anthropic') {
+    chatGenerate.systemMessage?.parts.forEach(systemPart => {
+      _hist.push({ role: 'system', content: systemPart.text });
+    });
+    chatGenerate.chat.forEach(({ role, parts }) => {
+      switch (role) {
 
-      case 'user':
-        parts.forEach(userPart => {
-          switch (userPart.pt) {
-            case 'text':
-              _hist.push({ role: 'user', content: userPart.text });
-              break;
-            case 'inline_image':
-              throw new Error('Inline images are not supported');
-            case 'doc':
-              _hist.push({ role: 'user', content: userPart.data.text });
-              break;
-            case 'meta_reply_to':
-              throw new Error('Meta reply to is not supported');
-          }
-        });
-        break;
+        case 'user':
+          parts.forEach(userPart => {
+            switch (userPart.pt) {
+              case 'text':
+                _hist.push({ role: 'user', content: userPart.text });
+                break;
+              case 'inline_image':
+                throw new Error('Inline images are not supported');
+              case 'doc':
+                _hist.push({ role: 'user', content: userPart.data.text });
+                break;
+              case 'meta_reply_to':
+                throw new Error('Meta reply to is not supported');
+            }
+          });
+          break;
 
-      case 'model':
-        parts.forEach(modelPart => {
-          switch (modelPart.pt) {
-            case 'text':
-              _hist.push({ role: 'assistant', content: modelPart.text });
-              break;
-            case 'tool_call':
-              throw new Error('Tool calls are not supported');
-          }
-        });
-        break;
+        case 'model':
+          parts.forEach(modelPart => {
+            switch (modelPart.pt) {
+              case 'text':
+                _hist.push({ role: 'assistant', content: modelPart.text });
+                break;
+              case 'tool_call':
+                throw new Error('Tool calls are not supported');
+            }
+          });
+          break;
 
-      case 'tool':
-        parts.forEach(toolPart => {
-          switch (toolPart.pt) {
-            case 'tool_response':
-              throw new Error('Tool responses are not supported');
-          }
-        });
-        break;
-    }
-  });
-  console.log('converted chatGenerate to history', _hist.length, '<- items');
+        case 'tool':
+          parts.forEach(toolPart => {
+            switch (toolPart.pt) {
+              case 'tool_response':
+                throw new Error('Tool responses are not supported');
+            }
+          });
+          break;
+      }
+    });
+    console.log('converted chatGenerate to history', _hist.length, '<- items');
+  }
 
 
   switch (access.dialect) {
@@ -72,7 +75,7 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
       return {
         request: {
           ...anthropicAccess(access, '/v1/messages'),
-          body: anthropicMessagesPayloadOrThrow(model, _hist, true),
+          body: NEWanthropicMessagesPayloadOrThrow(model, chatGenerate, true),
         },
         demuxer: createDispatchDemuxer('sse'),
         parser: createDispatchParserAnthropicMessages(),
