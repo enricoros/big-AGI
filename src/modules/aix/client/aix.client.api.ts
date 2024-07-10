@@ -44,12 +44,12 @@ export type AixChatMessage =
   | AixChatMessageModel
   | AixChatMessageTool;
 
-interface AixChatMessageUser {
+export interface AixChatMessageUser {
   role: 'user',
   parts: (DMessageTextPart | AixInlineImagePart | DMessageDocPart | AixMetaReplyToPart)[];
 }
 
-interface AixChatMessageModel {
+export interface AixChatMessageModel {
   role: 'model',
   parts: (DMessageTextPart | DMessageToolCallPart)[];
 }
