@@ -152,7 +152,7 @@ export function Composer(props: {
   const llmAttachmentDrafts = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
 
   // drag/drop
-  const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer, alert);
+  const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer);
 
 
   // derived state
