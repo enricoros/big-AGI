@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 
+// Export types
+// export type AixTools = z.infer<typeof aixToolsSchema>;
+// export type AixToolPolicy = z.infer<typeof aixToolsPolicySchema>;
+
+
 // AIX Tools - Function Call //
 
 /**
@@ -137,8 +142,6 @@ export const aixToolsSchema = z.array(z.discriminatedUnion('type', [
   aixToolPreprocessorSchema,
 ]));
 
-export type AixTools = z.infer<typeof aixToolsSchema>;
-
 /**
  * Policy for tools that the model can use:
  * - any: must use one tool at least
@@ -152,5 +155,3 @@ export const aixToolsPolicySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('function'), function: z.object({ name: z.string() }) }),
   z.object({ type: z.literal('none') }),
 ]);
-
-export type AixToolPolicy = z.infer<typeof aixToolsPolicySchema>;

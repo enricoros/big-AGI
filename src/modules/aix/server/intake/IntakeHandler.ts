@@ -1,9 +1,10 @@
-import type { DemuxedEvent } from '../dispatch/dispatch.demuxers';
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
+import type { DemuxedEvent } from '../dispatch/dispatch.demuxers';
 
-type IntakeProtoObject = IntakeControlProtoObject | IntakeEventProtoObject;
-type IntakeControlProtoObject = { type: 'start' | 'done' };
+
+// type IntakeProtoObject = IntakeControlProtoObject | IntakeEventProtoObject;
+// type IntakeControlProtoObject = { type: 'start' | 'done' };
 type IntakeEventProtoObject =
   | { t: string }
   | { set: { model?: string } }

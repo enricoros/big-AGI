@@ -5,8 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { IntakeHandler } from './intake/IntakeHandler';
-import { aixAccessSchema, aixHistorySchema, aixModelSchema, aixStreamingContextSchema } from './intake/aix.intake.types';
-import { aixToolsPolicySchema, aixToolsSchema } from './intake/aix.tool.types';
+import { aixAccessSchema, aixChatContentGenerateSchema, aixModelSchema, aixStreamingContextSchema } from './intake/schemas.aix.api';
 import { createDispatch } from './dispatch/createDispatch';
 
 
@@ -20,18 +19,15 @@ export const aixRouter = createTRPCRouter({
     .input(z.object({
       access: aixAccessSchema,
       model: aixModelSchema,
-      history: aixHistorySchema,
-      tools: aixToolsSchema.optional(),
-      toolPolicy: aixToolsPolicySchema.optional(),
+      chatGenerate: aixChatContentGenerateSchema,
       context: aixStreamingContextSchema,
-      // stream? -> discriminated via the rpc function name
     }))
     .mutation(async function* ({ input, ctx }) {
 
 
       // Intake derived state
       const intakeAbortSignal = ctx.reqSignal;
-      const { access, model, history } = input;
+      const { access, model, chatGenerate } = input;
       const accessDialect = access.dialect;
       const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
 
