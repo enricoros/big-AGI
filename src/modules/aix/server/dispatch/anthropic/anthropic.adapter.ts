@@ -35,12 +35,13 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
 
 function _intakeToAnthropicMessages(ism: IntakeChatGenerateRequest['systemMessage'], icms: IntakeChatGenerateRequest['chat'], conversionWarnings: string[]) {
 
+  // fixes we apply
+  const hotFixImagePartsFirst = true;
+
   // Convert the system message
   let systemMessage: AnthropicWire_MessageCreate['system'] = ism?.parts.length
     ? ism.parts.map((part) => anthropicWire_TextBlock(part.text))
     : undefined;
-
-  // systemMessage = undefined;
 
   // Transform the chat messages into Anthropic's format
   const chatMessages: AnthropicWire_MessageCreate['messages'] = icms.reduce((acc, im) => {
@@ -63,17 +64,20 @@ function _intakeToAnthropicMessages(ism: IntakeChatGenerateRequest['systemMessag
     }
 
     switch (im.role) {
+
       case 'user':
         // Claude works best when images come before text.
         // - https://docs.anthropic.com/en/docs/build-with-claude/vision
 
         // move 'inline_image' parts to the front
         const upfrontImageParts = [...im.parts];
-        upfrontImageParts.sort((a, b) => {
-          if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
-          if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
-          return 0;
-        });
+        if (hotFixImagePartsFirst) {
+          upfrontImageParts.sort((a, b) => {
+            if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
+            if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
+            return 0;
+          });
+        }
 
         for (const userPart of upfrontImageParts) {
           switch (userPart.pt) {
