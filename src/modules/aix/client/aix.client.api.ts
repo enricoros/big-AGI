@@ -1,5 +1,8 @@
 import type { DMessageDocPart, DMessageTextPart, DMessageToolCallPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
+import type { IntakeInlineImagePart as AixInlineImagePart, IntakeMetaReplyToPart as AixMetaReplyToPart } from '~/modules/aix/server/intake/schemas.intake.parts';
+
+export type { AixInlineImagePart, AixMetaReplyToPart };
 
 // Implementation note: we reuse the 'Parts' from the chat module, and slightly extend/modify it.
 // However we may switch to the 'Fragments' concept if we need to uplevel.
@@ -51,7 +54,7 @@ export interface AixChatMessageUser {
 
 export interface AixChatMessageModel {
   role: 'model',
-  parts: (DMessageTextPart | DMessageToolCallPart)[];
+  parts: (DMessageTextPart | AixInlineImagePart | DMessageToolCallPart)[];
 }
 
 interface AixChatMessageTool {
@@ -59,23 +62,12 @@ interface AixChatMessageTool {
   parts: DMessageToolResponsePart[];
 }
 
-interface AixInlineImagePart {
-  pt: 'inline_image';
-  mimeType: 'image/jpeg' | 'image/png' | 'image/webp'; // supported by all
-  // | 'image/gif' // Anthropic/OpenAI only
-  // | 'image/heic' | 'image/heif' // Gemini only
-  base64: string;
+export function createAixInlineImagePart(base64: string, mimeType: string): AixInlineImagePart {
+  return { pt: 'inline_image', mimeType: (mimeType || 'image/png') as AixInlineImagePart['mimeType'], base64 };
 }
 
-// interface AixInlineAudioPart {
-//   pt: 'inlineAudio';
-//   mimeType: 'audio/wav' | 'audio/mp3' | 'audio/aiff' | 'audio/aac' | 'audio/ogg' | 'audio/flac'; // Gemini only
-//   base64: string;
-// }
-
-interface AixMetaReplyToPart {
-  pt: 'meta_reply_to';
-  replyTo: string;
+export function createAixMetaReplyToPart(replyTo: string): AixMetaReplyToPart {
+  return { pt: 'meta_reply_to', replyTo };
 }
 
 
@@ -89,7 +81,7 @@ export type AixToolDefinition =
 export type AixToolPolicy =
   | { type: 'any' }
   | { type: 'auto' }
-  | { type: 'function'; function: { name: string } }
+  | { type: 'function_call'; function_call: { name: string } }
   | { type: 'none' };
 
 
@@ -97,7 +89,7 @@ export type AixToolPolicy =
 
 interface AixToolFunctionCallDefinition {
   type: 'function_call';
-  function: AixFunctionCall;
+  function_call: AixFunctionCall;
 }
 
 interface AixFunctionCall {

@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 
 // Export types
+export type IntakeInlineImagePart = z.infer<typeof intakeInlineImagePartSchema>;
+export type IntakeMetaReplyToPart = z.infer<typeof intakeMetaReplyToPartSchema>;
 export type IntakeSystemMessage = z.infer<typeof intakeSystemMessageSchema>;
 export type IntakeChatMessage = z.infer<typeof intakeChatMessageSchema>;
 
@@ -40,22 +42,38 @@ const dMessageDocPartSchema = z.object({
 
 const dMessageToolCallPartSchema = z.object({
   pt: z.literal('tool_call'),
-  function: z.string(),
-  args: z.record(z.any()),
+  id: z.string(),
+  name: z.string(),
+  args: z.record(z.any()).optional(),
 });
 
 const dMessageToolResponsePartSchema = z.object({
   pt: z.literal('tool_response'),
-  function: z.string(),
-  response: z.record(z.any()),
+  id: z.string(),
+  name: z.string(),
+  response: z.string().optional(),
+  isError: z.boolean().optional(),
 });
 
 
 const intakeInlineImagePartSchema = z.object({
   pt: z.literal('inline_image'),
+  /**
+   * The MIME type of the image.
+   * Only using the types supported by all, while the following are supported only by a subset:
+   * - image/gif: Anthropic, OpenAI
+   * - image/heic, image/heif: Gemini
+   */
   mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
   base64: z.string(),
 });
+
+/* Gemini-only
+const intakeInlineAudioPartSchema = z.object({
+  pt: z.literal('inline_audio'),
+  mimeType: z.enum(['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac']),
+  base64: z.string(),
+});*/
 
 const intakeMetaReplyToPartSchema = z.object({
   pt: z.literal('meta_reply_to'),
@@ -83,7 +101,7 @@ export const intakeChatMessageSchema = z.discriminatedUnion('role', [
   z.object({
     role: z.literal('model'),
     parts: z.array(z.discriminatedUnion('pt', [
-      dMessageTextPartSchema, dMessageToolCallPartSchema,
+      dMessageTextPartSchema, intakeInlineImagePartSchema, dMessageToolCallPartSchema,
     ])),
   }),
 

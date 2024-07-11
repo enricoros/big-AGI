@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { safeErrorString } from '~/server/wire';
 
-import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema, AnthropicWireMessageResponse } from './anthropic/anthropic.wiretypes';
+import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from './anthropic/anthropic.wiretypes';
 import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from './gemini/gemini.wiretypes';
 import { openaiWire_ChatCompletionChunkResponse_Schema } from './openai/oai.wiretypes';
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
@@ -42,7 +42,7 @@ export type DispatchParser = (eventData: string, eventName?: string) => Generato
 /// Stream Parsers
 
 export function createDispatchParserAnthropicMessages(): DispatchParser {
-  let responseMessage: AnthropicWireMessageResponse;
+  let responseMessage: AnthropicWire_MessageResponse;
   let hasErrored = false;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text

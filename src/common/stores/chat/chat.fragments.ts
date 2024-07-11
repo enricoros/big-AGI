@@ -75,8 +75,8 @@ export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
 export type DMessageTextPart = { pt: 'text', text: string };
-export type DMessageToolCallPart = { pt: 'tool_call', function: string, args: Record<string, any> };
-export type DMessageToolResponsePart = { pt: 'tool_response', function: string, response: Record<string, any> };
+export type DMessageToolCallPart = { pt: 'tool_call', id: string, name: string, args?: Record<string, any> };
+export type DMessageToolResponsePart = { pt: 'tool_response', id: string, name: string, response?: string, isError?: boolean };
 type _DMessageSentinelPart = { pt: '_pt_sentinel' };
 
 
@@ -218,12 +218,12 @@ function createDMessageTextPart(text: string): DMessageTextPart {
   return { pt: 'text', text };
 }
 
-function createDMessageToolCallPart(functionName: string, args: Record<string, any>): DMessageToolCallPart {
-  return { pt: 'tool_call', function: functionName, args };
+function createDMessageToolCallPart(toolId: string, toolName: string, args?: Record<string, any>): DMessageToolCallPart {
+  return { pt: 'tool_call', id: toolId, name: toolName, args };
 }
 
-function createDMessageToolResponsePart(functionName: string, response: Record<string, any>): DMessageToolResponsePart {
-  return { pt: 'tool_response', function: functionName, response };
+function createDMessageToolResponsePart(toolId: string, toolName: string, response?: string, isError?: boolean): DMessageToolResponsePart {
+  return { pt: 'tool_response', id: toolId, name: toolName, response, isError };
 }
 
 function createDMessageSentinelPart(): _DMessageSentinelPart {
@@ -286,10 +286,10 @@ function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachm
       return createDMessageTextPart(part.text) as TPart;
 
     case 'tool_call':
-      return createDMessageToolCallPart(part.function, _duplicateObjectWarning(part.args, 'tool_call')) as TPart;
+      return createDMessageToolCallPart(part.id, part.name, _duplicateObjectWarning(part.args, 'tool_call')) as TPart;
 
     case 'tool_response':
-      return createDMessageToolResponsePart(part.function, _duplicateObjectWarning(part.response, 'tool_response')) as TPart;
+      return createDMessageToolResponsePart(part.id, part.name, part.response, part.isError) as TPart;
 
     case '_pt_sentinel':
       return createDMessageSentinelPart() as TPart;
@@ -316,7 +316,8 @@ function _duplicateDataReference(ref: DMessageDataRef): DMessageDataRef {
   }
 }
 
-function _duplicateObjectWarning<T extends Record<string, any>>(obj: T, devPlace: string): T {
+function _duplicateObjectWarning<T extends Record<string, any>>(obj: T | undefined, devPlace: string): T | undefined {
   console.warn('[DEV]: implement deep copy for:', devPlace);
+  if (!obj) return obj;
   return { ...obj };
 }

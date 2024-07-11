@@ -1,6 +1,6 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { AixChatContentGenerateRequest, AixChatMessage, AixChatMessageModel, AixChatMessageUser } from '~/modules/aix/client/aix.client.api';
+import { AixChatContentGenerateRequest, AixChatMessage, AixChatMessageModel, AixChatMessageUser, createAixInlineImagePart } from '~/modules/aix/client/aix.client.api';
 import type { IntakeContextChatStream } from '~/modules/aix/server/intake/schemas.intake.api';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
@@ -9,14 +9,34 @@ import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions'
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessage, messageFragmentsReplaceLastContentText } from '~/common/stores/chat/chat.message';
+import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
-import { isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
+
+async function convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart) {
+  console.log('DEV: convertImageRefToInlineImage:', imageRefPart);
+
+  // validate
+  const { dataRef } = imageRefPart;
+  if (dataRef.reftype !== 'dblob' || !('dblobAssetId' in dataRef)) {
+    console.warn('convertImageRefToInlineImage: unexpected data ref', dataRef);
+    throw new Error('Unexpected data ref');
+  }
+
+  // get image asset
+  const imageAsset = await getImageAsset(dataRef.dblobAssetId);
+  if (!imageAsset) {
+    console.warn('convertImageRefToInlineImage: missing image asset', dataRef);
+    throw new Error('Missing image asset');
+  }
+
+  return createAixInlineImagePart(imageAsset.data.base64, dataRef.mimeType || imageAsset.data.mimeType);
+}
 
 // FIXME: complete and optimize. This translates our 'message at rest' data structure into the Aix Request structure
 // for chat generate
@@ -46,7 +66,9 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
     // map the other parts
     let aixChatMessage: AixChatMessage | undefined = undefined;
     if (m.role === 'assistant') {
-      aixChatMessage = m.fragments.reduce((mMsg, srcFragment) => {
+
+      aixChatMessage = await m.fragments.reduce(async (mMsgPromise, srcFragment) => {
+        const mMsg = await mMsgPromise;
         if (!isContentOrAttachmentFragment(srcFragment))
           return mMsg;
         switch (srcFragment.part.pt) {
@@ -54,13 +76,19 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
           case 'tool_call':
             mMsg.parts.push(srcFragment.part);
             break;
+          case 'image_ref':
+            const assistantInlineImage = await convertImageRefToInlineImageOrThrow(srcFragment.part);
+            mMsg.parts.push(assistantInlineImage);
+            break;
           default:
-            console.warn('historyToChatGenerateRequest: unexpected model fragment part type', srcFragment.part);
+            console.warn('historyToChatGenerateRequest: unexpected assistant fragment part type', srcFragment.part);
             break;
         }
         return mMsg;
-      }, { role: 'model', parts: [] } as AixChatMessageModel);
+      }, Promise.resolve({ role: 'model', parts: [] } as AixChatMessageModel));
+
     } else if (m.role === 'user') {
+
       aixChatMessage = await m.fragments.reduce(async (mMsgPromise, srcFragment) => {
         const mMsg = await mMsgPromise;
         if (!isContentOrAttachmentFragment(srcFragment))
@@ -70,24 +98,8 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
             mMsg.parts.push(srcFragment.part);
             break;
           case 'image_ref':
-            console.log('DEV: historyToChatGenerateRequest: image_ref', srcFragment.part);
-            const imageDataRef = srcFragment.part.dataRef;
-            if (imageDataRef.reftype === 'dblob' && imageDataRef.dblobAssetId) {
-              const imageAsset = await getImageAsset(imageDataRef.dblobAssetId);
-              if (imageAsset) {
-                mMsg.parts.push({
-                  pt: 'inline_image',
-                  mimeType: imageDataRef.mimeType || imageAsset.data.mimeType || 'image/png' as any,
-                  base64: imageAsset.data.base64,
-                });
-              } else {
-                console.warn('historyToChatGenerateRequest: image_ref: missing image asset', imageDataRef);
-                throw new Error('Missing image asset');
-              }
-            } else {
-              console.warn('historyToChatGenerateRequest: image_ref: unexpected data ref', imageDataRef);
-              throw new Error('Unexpected data ref');
-            }
+            const inlineImage = await convertImageRefToInlineImageOrThrow(srcFragment.part);
+            mMsg.parts.push(inlineImage);
             break;
           case 'doc':
             mMsg.parts.push(srcFragment.part);
@@ -97,7 +109,9 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
         }
         return mMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixChatMessageUser));
+
     } else {
+      // TODO: impement mid-chat system messages
       console.warn('historyToChatGenerateRequest: unexpected message role', m.role);
     }
     if (aixChatMessage)

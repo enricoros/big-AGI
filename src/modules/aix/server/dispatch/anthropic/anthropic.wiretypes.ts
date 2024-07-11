@@ -36,7 +36,24 @@ const anthropicWire_ToolResultBlock_Schema = z.object({
 });
 
 
-// Uplink
+export function anthropicWire_TextBlock(text: string): z.infer<typeof anthropicWire_TextBlock_Schema> {
+  return { type: 'text', text };
+}
+
+export function anthropicWire_ImageBlock(mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', base64: string): z.infer<typeof anthropicWire_ImageBlock_Schema> {
+  return { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+}
+
+export function anthropicWire_ToolUseBlock(id: string, name: string, input: unknown): z.infer<typeof anthropicWire_ToolUseBlock_Schema> {
+  return { type: 'tool_use', id, name, input };
+}
+
+export function anthropicWire_ToolResultBlock(tool_use_id: string, content: z.infer<typeof anthropicWire_ToolResultBlock_Schema>['content'], is_error?: boolean): z.infer<typeof anthropicWire_ToolResultBlock_Schema> {
+  return { type: 'tool_result', tool_use_id, content: content?.length ? content : undefined, is_error };
+}
+
+
+// Request
 
 const anthropicWire_ContentBlockUL_Schema = z.discriminatedUnion('type', [
   anthropicWire_TextBlock_Schema,
@@ -72,9 +89,8 @@ const anthropicWire_ToolUL_Schema = z.object({
   }).and(z.record(z.unknown())),
 });
 
-
-export type AnthropicWireMessageCreate = z.infer<typeof anthropicWireMessageCreateSchema>;
-export const anthropicWireMessageCreateSchema = z.object({
+export type AnthropicWire_MessageCreate = z.infer<typeof anthropicWire_MessageCreate_Schema>;
+export const anthropicWire_MessageCreate_Schema = z.object({
   /**
    * (required) The maximum number of tokens to generate before stopping.
    */
@@ -165,15 +181,15 @@ export const anthropicWireMessageCreateSchema = z.object({
 });
 
 
-/// Downlink
+/// Response
 
 const anthropicWire_ContentBlockDL_Schema = z.discriminatedUnion('type', [
   anthropicWire_TextBlock_Schema,
   anthropicWire_ToolUseBlock_Schema,
 ]);
 
-export type AnthropicWireMessageResponse = z.infer<typeof anthropicWireMessageResponseSchema>;
-export const anthropicWireMessageResponseSchema = z.object({
+export type AnthropicWire_MessageResponse = z.infer<typeof anthropicWire_MessageResponse_Schema>;
+export const anthropicWire_MessageResponse_Schema = z.object({
   // Unique object identifier.
   id: z.string(),
 
@@ -216,7 +232,7 @@ export const anthropicWireMessageResponseSchema = z.object({
 
 export const anthropicWire_MessageStartEvent_Schema = z.object({
   type: z.literal('message_start'),
-  message: anthropicWireMessageResponseSchema,
+  message: anthropicWire_MessageResponse_Schema,
 });
 
 export const anthropicWire_MessageStopEvent_Schema = z.object({

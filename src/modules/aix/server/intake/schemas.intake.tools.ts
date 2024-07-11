@@ -81,7 +81,7 @@ const intakeFunctionCallSchema = z.object({
 
 const intakeToolFunctionCallDefinitionSchema = z.object({
   type: z.literal('function_call'),
-  function: intakeFunctionCallSchema,
+  function_call: intakeFunctionCallSchema,
   // domain: z.enum(['server', 'client']).optional(),
 });
 
@@ -144,14 +144,13 @@ export const intakeToolDefinitionSchema = z.discriminatedUnion('type', [
 
 /**
  * Policy for tools that the model can use:
- * - any: must use one tool at least
  * - auto: can use a tool or not (default, same as not specifying a policy)
- * - function: must use a specific Function Tool
- * - none: same as not giving the model any tool
+ * - any: must use one tool at least
+ * - function_call: must use a specific Function Tool
+ * - none: same as not giving the model any tool [REMOVED - just give no tools]
  */
 export const intakeToolsPolicySchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('any') /*, parallel: z.boolean()*/ }),
   z.object({ type: z.literal('auto') }),
-  z.object({ type: z.literal('function'), function: z.object({ name: z.string() }) }),
-  z.object({ type: z.literal('none') }),
+  z.object({ type: z.literal('any') /*, parallel: z.boolean()*/ }),
+  z.object({ type: z.literal('function_call'), function_call: z.object({ name: z.string() }) }),
 ]);
