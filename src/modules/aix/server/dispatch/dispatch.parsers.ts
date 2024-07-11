@@ -190,7 +190,10 @@ export function createDispatchParserGemini(modelName: string): DispatchParser {
     if (!singleCandidate.content) {
       switch (singleCandidate.finishReason) {
         case 'MAX_TOKENS':
-          yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS} [Interrupted]: MAX_TOKENS` };
+          // NOTE: this will show up in the chat as a message as a brick wall
+          // and without the " [Gemini Issue]: Interrupted.." prefix, as it's written in the history
+          // This can be changed in the future?
+          yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS}` /* Interrupted: MAX_TOKENS reached */ };
           return yield { op: 'parser-close' };
         case 'RECITATION':
           yield { op: 'issue', issue: `Generation stopped due to 'RECITATION'`, symbol: ISSUE_SYMBOL_RECITATION };
