@@ -1,14 +1,41 @@
 import type { IntakeChatGenerateRequest, IntakeModel } from '../../intake/schemas.intake.api';
+import type { IntakeChatMessage } from '../../intake/schemas.intake.parts';
 import type { IntakeToolDefinition, IntakeToolsPolicy } from '../../intake/schemas.intake.tools';
+
 import { anthropicWire_ImageBlock, AnthropicWire_MessageCreate, anthropicWire_MessageCreate_Schema, anthropicWire_TextBlock, anthropicWire_ToolResultBlock, anthropicWire_ToolUseBlock } from './anthropic.wiretypes';
+
+
+// configuration
+const hotFixImagePartsFirst = true;
+const hotFixMapModelImagesToUser = true;
 
 const DEFAULT_MAX_TOKENS = 4096;
 
 
 export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate: IntakeChatGenerateRequest, stream: boolean, conversionWarnings: string[]): AnthropicWire_MessageCreate {
 
+  // Convert the system message
+  const systemMessage: AnthropicWire_MessageCreate['system'] = chatGenerate.systemMessage?.parts.length
+    ? chatGenerate.systemMessage.parts.map((part) => anthropicWire_TextBlock(part.text))
+    : undefined;
+
+  // Transform the chat messages into Anthropic's format
+  const chatMessages: AnthropicWire_MessageCreate['messages'] = [];
+  let currentMessage: AnthropicWire_MessageCreate['messages'][number] | null = null;
+  for (const intakeChatMessage of chatGenerate.chatSequence) {
+    for (const { role, content } of _generateAnthropicMessagesContentBlocks(intakeChatMessage)) {
+      if (!currentMessage || currentMessage.role !== role) {
+        if (currentMessage)
+          chatMessages.push(currentMessage);
+        currentMessage = { role, content: [] };
+      }
+      currentMessage.content.push(content);
+    }
+  }
+  if (currentMessage)
+    chatMessages.push(currentMessage);
+
   // Construct the request payload
-  const { chatMessages, systemMessage } = _intakeToAnthropicMessages(chatGenerate.systemMessage, chatGenerate.chat, conversionWarnings);
   const payload: AnthropicWire_MessageCreate = {
     max_tokens: model.maxTokens ? model.maxTokens : DEFAULT_MAX_TOKENS,
     model: model.id,
@@ -33,123 +60,74 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
 }
 
 
-function _intakeToAnthropicMessages(ism: IntakeChatGenerateRequest['systemMessage'], icms: IntakeChatGenerateRequest['chat'], conversionWarnings: string[]) {
+function* _generateAnthropicMessagesContentBlocks({ parts, role }: IntakeChatMessage): Generator<{
+  role: 'user' | 'assistant',
+  content: AnthropicWire_MessageCreate['messages'][number]['content'][number]
+}> {
+  if (parts.length < 1) return; // skip empty messages
 
-  // fixes we apply
-  const hotFixImagePartsFirst = true;
+  if (hotFixImagePartsFirst) {
+    parts.sort((a, b) => {
+      if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
+      if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
+      return 0;
+    });
+  }
 
-  // Convert the system message
-  let systemMessage: AnthropicWire_MessageCreate['system'] = ism?.parts.length
-    ? ism.parts.map((part) => anthropicWire_TextBlock(part.text))
-    : undefined;
-
-  // Transform the chat messages into Anthropic's format
-  const chatMessages: AnthropicWire_MessageCreate['messages'] = icms.reduce((acc, im) => {
-
-    // skip empty messages
-    if (im.parts.length < 1) return acc;
-
-    const imRole = im.role;
-    const messageRole: AnthropicWire_MessageCreate['messages'][number]['role'] = (im.role === 'user' || im.role === 'tool') ? 'user' : 'assistant';
-    const lastMessage: AnthropicWire_MessageCreate['messages'][number] | undefined = acc[acc.length - 1];
-    const lastMessageRole = lastMessage?.role;
-
-    // If the last message was from the same role, fuse this message with the last one
-    let messageContent: AnthropicWire_MessageCreate['messages'][number]['content'];
-    if (messageRole === lastMessageRole) {
-      messageContent = lastMessage.content;
-    } else {
-      messageContent = [];
-      acc.push({ role: messageRole, content: messageContent });
-    }
-
-    switch (im.role) {
-
+  for (const part of parts) {
+    switch (role) {
       case 'user':
-        // Claude works best when images come before text.
-        // - https://docs.anthropic.com/en/docs/build-with-claude/vision
-
-        // move 'inline_image' parts to the front
-        const upfrontImageParts = [...im.parts];
-        if (hotFixImagePartsFirst) {
-          upfrontImageParts.sort((a, b) => {
-            if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
-            if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
-            return 0;
-          });
-        }
-
-        for (const userPart of upfrontImageParts) {
-          switch (userPart.pt) {
-            case 'text':
-              messageContent.push(anthropicWire_TextBlock(userPart.text));
-              break;
-            case 'inline_image':
-              messageContent.push(anthropicWire_ImageBlock(userPart.mimeType, userPart.base64));
-              break;
-            case 'doc':
-              messageContent.push(anthropicWire_TextBlock(
-                '```' + (userPart.ref || '') + '\n' + userPart.data.text + '\n```\n',
-              ));
-              break;
-            case 'meta_reply_to':
-              messageContent.push(anthropicWire_TextBlock(
-                `<context>The user is referring to: ${userPart.replyTo}</context>`,
-              ));
-              break;
-          }
+        switch (part.pt) {
+          case 'text':
+            yield { role: 'user', content: anthropicWire_TextBlock(part.text) };
+            break;
+          case 'inline_image':
+            yield { role: 'user', content: anthropicWire_ImageBlock(part.mimeType, part.base64) };
+            break;
+          case 'doc':
+            yield { role: 'user', content: anthropicWire_TextBlock('```' + (part.ref || '') + '\n' + part.data.text + '\n```\n') };
+            break;
+          case 'meta_reply_to':
+            yield { role: 'user', content: anthropicWire_TextBlock(`<context>The user is referring to: ${part.replyTo}</context>`) };
+            break;
+          default:
+            throw new Error(`Unsupported part type in User message: ${part.pt}`);
         }
         break;
 
       case 'model':
-        for (const modelPart of im.parts) {
-          switch (modelPart.pt) {
-            case 'text':
-              messageContent.push(anthropicWire_TextBlock(modelPart.text));
-              break;
-            case 'inline_image':
-              const modelGenImageBlock = anthropicWire_ImageBlock(modelPart.mimeType, modelPart.base64);
-              // [Fixup] Anthropic: Bad Request - messages.N.content: all 'assistant' content blocks should be text
-              // TODO....
-              messageContent.push(modelGenImageBlock);
-              break;
-            case 'tool_call':
-              messageContent.push(anthropicWire_ToolUseBlock(
-                modelPart.id,
-                modelPart.name,
-                modelPart.args,
-              ));
-              break;
-          }
+        switch (part.pt) {
+          case 'text':
+            yield { role: 'assistant', content: anthropicWire_TextBlock(part.text) };
+            break;
+          case 'inline_image':
+            // Example of mapping a model-generated image to a user message
+            if (hotFixMapModelImagesToUser) {
+              yield { role: 'user', content: anthropicWire_ImageBlock(part.mimeType, part.base64) };
+            } else
+              throw new Error('Model-generated images are not supported by Anthropic yet');
+            break;
+          case 'tool_call':
+            yield { role: 'assistant', content: anthropicWire_ToolUseBlock(part.id, part.name, part.args) };
+            break;
+          default:
+            throw new Error(`Unsupported part type in Model message: ${part.pt}`);
         }
         break;
 
       case 'tool':
-        for (let toolResponsePart of im.parts) {
-          switch (toolResponsePart.pt) {
-            case 'tool_response':
-              // Notes:
-              // - tool.name is not used (id only)
-              // - content could support arrays of text and images, but we only pass a single string
-              // - content may not even be present for a tool that just executed without output
-              const responseContent = toolResponsePart.response ? [anthropicWire_TextBlock(toolResponsePart.response)] : [];
-              messageContent.push(anthropicWire_ToolResultBlock(
-                toolResponsePart.id,
-                responseContent,
-                toolResponsePart.isError,
-              ));
-              break;
-          }
+        switch (part.pt) {
+          case 'tool_response':
+            const responseContent = part.response ? [anthropicWire_TextBlock(part.response)] : [];
+            yield { role: 'user', content: anthropicWire_ToolResultBlock(part.id, responseContent, part.isError) };
+            break;
+          default:
+            throw new Error(`Unsupported part type in Tool message: ${part.pt}`);
         }
         break;
     }
-
-    return acc;
-  }, [] as AnthropicWire_MessageCreate['messages']);
-
-  return { chatMessages, systemMessage };
+  }
 }
-
 
 function _intakeToAnthropicTools(itds: IntakeToolDefinition[]): NonNullable<AnthropicWire_MessageCreate['tools']> {
   return itds.map(itd => {
