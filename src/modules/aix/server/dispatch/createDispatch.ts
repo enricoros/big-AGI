@@ -25,7 +25,7 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
     chatGenerate.systemMessage?.parts.forEach(systemPart => {
       _hist.push({ role: 'system', content: systemPart.text });
     });
-    chatGenerate.chat.forEach(({ role, parts }) => {
+    chatGenerate.chatSequence.forEach(({ role, parts }) => {
       switch (role) {
 
         case 'user':

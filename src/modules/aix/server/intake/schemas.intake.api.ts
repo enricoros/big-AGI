@@ -42,7 +42,7 @@ export const intakeModelSchema = z.object({
 
 export const intakeChatGenerateRequestSchema = z.object({
   systemMessage: intakeSystemMessageSchema.optional(),
-  chat: z.array(intakeChatMessageSchema),
+  chatSequence: z.array(intakeChatMessageSchema),
   tools: z.array(intakeToolDefinitionSchema).optional(),
   toolsPolicy: intakeToolsPolicySchema.optional(),
 });

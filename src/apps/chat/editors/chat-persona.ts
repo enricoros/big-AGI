@@ -115,9 +115,9 @@ async function historyToChatGenerateRequest(history: Readonly<DMessage[]>): Prom
       console.warn('historyToChatGenerateRequest: unexpected message role', m.role);
     }
     if (aixChatMessage)
-      acc.chat.push(aixChatMessage);
+      acc.chatSequence.push(aixChatMessage);
     return acc;
-  }, Promise.resolve({ chat: [] } as AixChatContentGenerateRequest));
+  }, Promise.resolve({ chatSequence: [] } as AixChatContentGenerateRequest));
 }
 
 

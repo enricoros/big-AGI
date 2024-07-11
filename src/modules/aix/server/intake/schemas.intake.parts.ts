@@ -4,8 +4,8 @@ import { z } from 'zod';
 // Export types
 export type IntakeInlineImagePart = z.infer<typeof intakeInlineImagePartSchema>;
 export type IntakeMetaReplyToPart = z.infer<typeof intakeMetaReplyToPartSchema>;
-export type IntakeSystemMessage = z.infer<typeof intakeSystemMessageSchema>;
 export type IntakeChatMessage = z.infer<typeof intakeChatMessageSchema>;
+export type IntakeSystemMessage = z.infer<typeof intakeSystemMessageSchema>;
 
 
 // Parts: mirror the Typescript definitions from the frontend-side
