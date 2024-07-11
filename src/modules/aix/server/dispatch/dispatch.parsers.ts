@@ -32,6 +32,8 @@ type DispatchParsedEvent = {
       chatInTokens?: number; // -1: unknown
       chatOutTokens: number;
       chatOutRate?: number;
+      timeInner?: number;
+      timeOuter?: number;
     }
   };
 };
@@ -136,6 +138,7 @@ export function createDispatchParserAnthropicMessages(): DispatchParser {
                   chatInTokens: chatInTokens !== null ? chatInTokens : -1,
                   chatOutTokens: usage.output_tokens,
                   chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+                  timeInner: elapsedTimeSeconds,
                 },
               },
             };
