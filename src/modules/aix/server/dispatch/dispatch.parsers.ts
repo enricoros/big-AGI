@@ -82,19 +82,20 @@ export function createDispatchParserAnthropicMessage(): DispatchParser {
       case 'content_block_start':
         if (responseMessage) {
           const { index, content_block } = anthropicWire_ContentBlockStartEvent_Schema.parse(JSON.parse(eventData));
-          if (responseMessage.content[index] === undefined)
-            responseMessage.content[index] = content_block;
+          if (responseMessage.content[index] !== undefined)
+            throw new Error(`Unexpected content block start location (${index})`);
+          responseMessage.content[index] = content_block;
 
-          switch (responseMessage.content[index].type) {
+          switch (content_block.type) {
             case 'text':
-              yield { op: 'text', text: responseMessage.content[index].text };
+              yield { op: 'text', text: content_block.text };
               break;
             case 'tool_use':
-              yield { op: 'text', text: `TODO: [Tool Use] ${responseMessage.content[index].name} ${responseMessage.content[index].input}` };
+              yield { op: 'text', text: `TODO: [Tool Use] ${content_block.id} ${content_block.name} ${content_block.input}` };
               break;
           }
         } else
-          throw new Error('Unexpected content block start');
+          throw new Error('Unexpected content_block_start');
         break;
 
       // M3+. Append delta text to the current message content
@@ -104,14 +105,26 @@ export function createDispatchParserAnthropicMessage(): DispatchParser {
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block delta location (${index})`);
 
-          // text delta
-          if (delta.type === 'text_delta' && responseMessage.content[index].type === 'text') {
-            responseMessage.content[index].text += delta.text;
-            yield { op: 'text', text: delta.text };
-          } else
-            throw new Error(`Unexpected content block delta ${delta.type} for content block ${responseMessage.content[index].type}`);
+          switch (delta.type) {
+            case 'text_delta':
+              if (responseMessage.content[index].type === 'text') {
+                responseMessage.content[index].text += delta.text;
+                yield { op: 'text', text: delta.text };
+              }
+              break;
+
+            case 'input_json_delta':
+              if (responseMessage.content[index].type === 'tool_use') {
+                responseMessage.content[index].input += delta.partial_json;
+                yield { op: 'text', text: `[${delta.partial_json}]` };
+              }
+              break;
+
+            default:
+              throw new Error(`Unexpected content block delta type: ${(delta as any).type}`);
+          }
         } else
-          throw new Error('Unexpected content block delta');
+          throw new Error('Unexpected content_block_delta');
         break;
 
       // Finalize content block if needed.
@@ -119,9 +132,11 @@ export function createDispatchParserAnthropicMessage(): DispatchParser {
         if (responseMessage) {
           const { index } = anthropicWire_ContentBlockStopEvent_Schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] === undefined)
-            throw new Error(`Unexpected content block end location (${index})`);
+            throw new Error(`Unexpected content block stop location (${index})`);
+
+          // Signal that the tool is ready? (if it is...)
         } else
-          throw new Error('Unexpected content block stop');
+          throw new Error('Unexpected content_block_stop');
         break;
 
       // Optionally handle top-level message changes. Example: updating stop_reason
@@ -144,7 +159,7 @@ export function createDispatchParserAnthropicMessage(): DispatchParser {
             };
           }
         } else
-          throw new Error('Unexpected message delta');
+          throw new Error('Unexpected message_delta');
         break;
 
       // We can now close the message
