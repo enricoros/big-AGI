@@ -7,8 +7,8 @@ import type { IntakeAccess, IntakeChatGenerateRequest, IntakeModel } from '../in
 
 import { intakeToAnthropicMessageCreate } from './anthropic/anthropic.adapters';
 
-import { createDispatchDemuxer } from './dispatch.demuxers';
-import { createDispatchParserAnthropicMessages, createDispatchParserGemini, createDispatchParserOllama, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
+import { createDispatchDemuxer, nullDispatchDemuxer } from './dispatch.demuxers';
+import { createDispatchParserAnthropicMessage, createDispatchParserAnthropicNS, createDispatchParserGemini, createDispatchParserOllama, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
 import { geminiModelsGenerateContentPath, geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
 
 
@@ -71,16 +71,15 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
   }
 
 
-  const conversionWarnings: string[] = [];
   switch (access.dialect) {
     case 'anthropic':
       return {
         request: {
           ...anthropicAccess(access, '/v1/messages'),
-          body: intakeToAnthropicMessageCreate(model, chatGenerate, streaming, conversionWarnings),
+          body: intakeToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
-        demuxer: createDispatchDemuxer('sse'),
-        parser: createDispatchParserAnthropicMessages(),
+        demuxer: streaming ? createDispatchDemuxer('sse') : nullDispatchDemuxer,
+        parser: streaming ? createDispatchParserAnthropicMessage() : createDispatchParserAnthropicNS(),
       };
 
     case 'gemini':
@@ -89,7 +88,7 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
           ...geminiAccess(access, model.id, streaming ? geminiModelsStreamGenerateContentPath : geminiModelsGenerateContentPath),
           body: geminiGenerateContentTextPayload(model, _hist, access.minSafetyLevel, 1),
         },
-        demuxer: createDispatchDemuxer('sse'),
+        demuxer: streaming ? createDispatchDemuxer('sse') : nullDispatchDemuxer,
         parser: createDispatchParserGemini(model.id.replace('models/', '')),
       };
 
@@ -99,7 +98,7 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
           ...ollamaAccess(access, OLLAMA_PATH_CHAT),
           body: ollamaChatCompletionPayload(model, _hist, access.ollamaJson, streaming),
         },
-        demuxer: createDispatchDemuxer('json-nl'),
+        demuxer: streaming ? createDispatchDemuxer('json-nl') : nullDispatchDemuxer,
         parser: createDispatchParserOllama(),
       };
 
@@ -119,7 +118,7 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           body: openAIChatCompletionPayload(access.dialect, model, _hist, null, null, 1, streaming),
         },
-        demuxer: createDispatchDemuxer('sse'),
+        demuxer: streaming ? createDispatchDemuxer('sse') : nullDispatchDemuxer,
         parser: createDispatchParserOpenAI(),
       };
   }

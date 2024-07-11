@@ -12,7 +12,7 @@ const hotFixMapModelImagesToUser = true;
 const DEFAULT_MAX_TOKENS = 4096;
 
 
-export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate: IntakeChatGenerateRequest, stream: boolean, conversionWarnings: string[]): AnthropicWire_MessageCreate {
+export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate: IntakeChatGenerateRequest, streaming: boolean): AnthropicWire_MessageCreate {
 
   // Convert the system message
   const systemMessage: AnthropicWire_MessageCreate['system'] = chatGenerate.systemMessage?.parts.length
@@ -45,7 +45,7 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
     tool_choice: chatGenerate.toolsPolicy && _intakeToAnthropicToolChoice(chatGenerate.toolsPolicy),
     // metadata: { user_id: ... }
     // stop_sequences: undefined,
-    stream: stream,
+    stream: streaming,
     temperature: model.temperature !== undefined ? model.temperature : undefined,
     // top_k: undefined,
     // top_p: undefined,

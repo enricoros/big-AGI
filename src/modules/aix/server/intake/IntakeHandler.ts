@@ -1,6 +1,7 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
 import type { DemuxedEvent } from '../dispatch/dispatch.demuxers';
+import type { DispatchMessageAction } from '../dispatch/dispatch.parsers';
 
 
 // type IntakeProtoObject = IntakeControlProtoObject | IntakeEventProtoObject;
@@ -41,6 +42,32 @@ export class IntakeHandler {
 
   * yieldOp(op: IntakeEventProtoObject) {
     yield op;
+  }
+
+  * yieldDmaOps(parsedEvents: Generator<DispatchMessageAction>, prettyDialect: string) {
+    for (const dma of parsedEvents) {
+      // console.log('parsed dispatch:', dma);
+      // TODO: massively rework this into a good protocol
+      if (dma.op === 'parser-close') {
+        yield* this.yieldTermination('parser-done');
+        break;
+      } else if (dma.op === 'text') {
+        yield* this.yieldOp({
+          t: dma.text,
+        });
+      } else if (dma.op === 'issue') {
+        yield* this.yieldOp({
+          t: ` ${dma.symbol} **[${prettyDialect} Issue]:** ${dma.issue}`,
+        });
+      } else if (dma.op === 'set') {
+        yield* this.yieldOp({
+          set: dma.value,
+        });
+      } else {
+        // shall never reach this
+        console.error('Unexpected stream event:', dma);
+      }
+    }
   }
 
   * yieldError(errorId: 'dispatch-prepare' | 'dispatch-fetch' | 'dispatch-read' | 'dispatch-parse', errorText: string, forceConsoleMessage?: boolean) {
