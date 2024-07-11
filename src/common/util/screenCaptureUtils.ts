@@ -33,7 +33,7 @@ export async function takeScreenCapture(): Promise<File | null> {
   await metadataLoaded;
 
   // short timeout to ensure the video frame is ready
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   // capture a frame (or throw)
   try {
