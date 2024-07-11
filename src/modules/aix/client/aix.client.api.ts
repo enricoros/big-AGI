@@ -21,7 +21,7 @@ export type { AixInlineImagePart, AixMetaReplyToPart };
 
 export interface AixChatContentGenerateRequest {
   systemMessage?: AixSystemMessage;
-  chat: AixChatMessage[];
+  chatSequence: AixChatMessage[];
   tools?: AixToolDefinition[];
   toolPolicy?: AixToolPolicy;
 }
