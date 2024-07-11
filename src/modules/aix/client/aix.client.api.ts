@@ -1,6 +1,6 @@
 import type { DMessageDocPart, DMessageTextPart, DMessageToolCallPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
-import type { IntakeInlineImagePart as AixInlineImagePart, IntakeMetaReplyToPart as AixMetaReplyToPart } from '~/modules/aix/server/intake/schemas.intake.parts';
+import type { IntakeInlineImagePart as AixInlineImagePart, IntakeMetaReplyToPart as AixMetaReplyToPart } from '../server/intake/schemas.intake.parts';
 
 export type { AixInlineImagePart, AixMetaReplyToPart };
 
@@ -15,7 +15,6 @@ export type { AixInlineImagePart, AixMetaReplyToPart };
 //
 // ** MUST Keep the __intake__ schemas in sync **
 //
-
 
 // Chat Content Generation - Request Schema
 
