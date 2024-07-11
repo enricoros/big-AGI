@@ -15,21 +15,20 @@ export const aixRouter = createTRPCRouter({
    * Chat content generation, streaming, multipart.
    * Architecture: Client <-- (intake) --> Server <-- (dispatch) --> AI Service
    */
-  chatGenerateContentStream: publicProcedure
+  chatGenerateContent: publicProcedure
     .input(z.object({
       access: intakeAccessSchema,
       model: intakeModelSchema,
       chatGenerate: intakeChatGenerateRequestSchema,
       context: intakeContextChatStreamSchema,
+      streaming: z.boolean(),
     }))
     .mutation(async function* ({ input, ctx }) {
 
-      // Using the variable to keep the implementation generic
-      const streaming = true;
 
       // Intake derived state
       const intakeAbortSignal = ctx.reqSignal;
-      const { access, model, chatGenerate } = input;
+      const { access, model, chatGenerate, streaming } = input;
       const accessDialect = access.dialect;
       const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
 
@@ -43,7 +42,7 @@ export const aixRouter = createTRPCRouter({
       try {
         dispatch = createDispatch(access, model, chatGenerate, streaming);
       } catch (error: any) {
-        yield* intakeHandler.yieldError('dispatch-prepare', `**[Service Creation Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
+        yield* intakeHandler.yieldError('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
         return; // exit
       }
 
@@ -73,11 +72,22 @@ export const aixRouter = createTRPCRouter({
       }
 
 
-      // Stream the response to the client
+      // [ALPHA] [NON-STREAMING] Read the full response and send operations down the intake
+      if (!streaming) {
+        try {
+          const dispatchBody = await dispatchResponse.text();
+          const messageAction = dispatch.parser(dispatchBody);
+          yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
+        } catch (error: any) {
+          yield* intakeHandler.yieldError('dispatch-read', `**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service reading error'}`);
+        }
+        return; // exit
+      }
+
+
+      // STREAM the response to the client
       const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
       const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> “ ” (U+FFFD) */ });
-      const dispatchDemuxer = dispatch.demuxer.demux;
-      const dispatchParser = dispatch.parser;
 
       // Data pump: AI Service -- (dispatch) --> Server -- (intake) --> Client
       do {
@@ -109,51 +119,29 @@ export const aixRouter = createTRPCRouter({
 
 
         // Demux the chunk into 0 or more events
-        for (const demuxedEvent of dispatchDemuxer(dispatchChunk)) {
-          intakeHandler.onReceivedDispatchEvent(demuxedEvent);
+        for (const demuxedItem of dispatch.demuxer.demux(dispatchChunk)) {
+          intakeHandler.onReceivedDispatchEvent(demuxedItem);
 
           // ignore events post termination
           if (intakeHandler.intakeTerminated) {
-            // warning on, because this is pretty important
-            console.warn('/api/llms/stream: Received event after termination:', demuxedEvent);
+            // warning on, because this is important and a sign of a bug
+            console.warn('/api/llms/stream: Received event after termination:', demuxedItem);
             break; // inner for {}
           }
 
           // ignore superfluos stream events
-          if (demuxedEvent.type !== 'event')
+          if (demuxedItem.type !== 'event')
             continue; // inner for {}
 
-          // [OpenAI] Special: event stream termination, close our transformed stream
-          if (demuxedEvent.data === '[DONE]') {
+          // [OpenAI] Special: stream termination marker
+          if (demuxedItem.data === '[DONE]') {
             yield* intakeHandler.yieldTermination('event-done');
             break; // inner for {}, then outer do
           }
 
           try {
-            const parsedEvents = dispatchParser(demuxedEvent.data, demuxedEvent.name);
-            for (const upe of parsedEvents) {
-              console.log('parsed dispatch:', upe);
-              // TODO: massively rework this into a good protocol
-              if (upe.op === 'parser-close') {
-                yield* intakeHandler.yieldTermination('parser-done');
-                break;
-              } else if (upe.op === 'text') {
-                yield* intakeHandler.yieldOp({
-                  t: upe.text,
-                });
-              } else if (upe.op === 'issue') {
-                yield* intakeHandler.yieldOp({
-                  t: ` ${upe.symbol} **[${prettyDialect} Issue]:** ${upe.issue}`,
-                });
-              } else if (upe.op === 'set') {
-                yield* intakeHandler.yieldOp({
-                  set: upe.value,
-                });
-              } else {
-                // shall never reach this
-                console.error('Unexpected stream event:', upe);
-              }
-            }
+            const messageAction = dispatch.parser(demuxedItem.data, demuxedItem.name);
+            yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
           } catch (error: any) {
             yield* intakeHandler.yieldError('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}. Please open a support ticket.`);
             break; // inner for {}, then outer do

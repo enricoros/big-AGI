@@ -28,6 +28,14 @@ export function createDispatchDemuxer(format: DispatchDemuxFormat) {
   }
 }
 
+export const nullDispatchDemuxer: DispatchDemuxer = {
+  demux: () => {
+    console.warn('Null demuxer called - shall not happen, as it is only created in non-streaming');
+    return [];
+  },
+  remaining: () => '',
+};
+
 
 /**
  * Creates a parser for an EventSource stream (e.g. OpenAI's format).

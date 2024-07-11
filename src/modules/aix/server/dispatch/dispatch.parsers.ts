@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { safeErrorString } from '~/server/wire';
 
-import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from './anthropic/anthropic.wiretypes';
+import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from './anthropic/anthropic.wiretypes';
 import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from './gemini/gemini.wiretypes';
 import { openaiWire_ChatCompletionChunkResponse_Schema } from './openai/oai.wiretypes';
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
@@ -15,7 +15,7 @@ const ISSUE_SYMBOL_RECITATION = '🦜';
 const TEXT_SYMBOL_MAX_TOKENS = '🧱';
 
 
-type DispatchParsedEvent = {
+export type DispatchMessageAction = {
   op: 'text',
   text: string;
 } | {
@@ -38,12 +38,12 @@ type DispatchParsedEvent = {
   };
 };
 
-export type DispatchParser = (eventData: string, eventName?: string) => Generator<DispatchParsedEvent>;
+export type DispatchParser = (eventData: string, eventName?: string) => Generator<DispatchMessageAction>;
 
 
 /// Stream Parsers
 
-export function createDispatchParserAnthropicMessages(): DispatchParser {
+export function createDispatchParserAnthropicMessage(): DispatchParser {
   let responseMessage: AnthropicWire_MessageResponse;
   let hasErrored = false;
   let messageStartTime: number | undefined = undefined;
@@ -52,7 +52,7 @@ export function createDispatchParserAnthropicMessages(): DispatchParser {
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
   //       to the client. It is however building in parallel the responseMessage object, which is not
   //       yet used, but contains token counts, for instance.
-  return function* (eventData: string, eventName?: string): Generator<DispatchParsedEvent> {
+  return function* (eventData: string, eventName?: string): Generator<DispatchMessageAction> {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -167,6 +167,59 @@ export function createDispatchParserAnthropicMessages(): DispatchParser {
 }
 
 
+export function createDispatchParserAnthropicNS(): DispatchParser {
+  let messageStartTime: number = Date.now();
+
+  return function* (fullData: string): Generator<DispatchMessageAction> {
+
+    // parse with validation (e.g. type: 'message' && role: 'assistant')
+    const {
+      model,
+      content,
+      stop_reason,
+      usage,
+    } = anthropicWire_MessageResponse_Schema.parse(JSON.parse(fullData));
+
+    // -> Model
+    if (model)
+      yield { op: 'set', value: { model } };
+
+    // -> Content Blocks
+    for (let i = 0; i < content.length; i++) {
+      const contentBlock = content[i];
+      const isLastBlock = i === content.length - 1;
+      switch (contentBlock.type) {
+        case 'text':
+          const hitMaxTokens = (isLastBlock && stop_reason === 'max_tokens') ? ` ${TEXT_SYMBOL_MAX_TOKENS}` : '';
+          yield { op: 'text', text: contentBlock.text + hitMaxTokens };
+          break;
+        case 'tool_use':
+          yield { op: 'text', text: `TODO: [Tool Use] ${contentBlock.id} ${contentBlock.name} ${JSON.stringify(contentBlock.input)}` };
+          break;
+        default:
+          throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
+      }
+    }
+
+    // -> Stats
+    if (usage) {
+      const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
+      const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+      yield {
+        op: 'set', value: {
+          stats: {
+            chatInTokens: usage.input_tokens,
+            chatOutTokens: usage.output_tokens,
+            chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+            timeInner: elapsedTimeSeconds,
+          },
+        },
+      };
+    }
+  };
+}
+
+
 function explainGeminiSafetyIssues(safetyRatings?: GeminiSafetyRatings): string {
   if (!safetyRatings || !safetyRatings.length)
     return 'no safety ratings provided';
@@ -182,7 +235,7 @@ export function createDispatchParserGemini(modelName: string): DispatchParser {
   let hasBegun = false;
 
   // this can throw, it's caught by the caller
-  return function* (eventData): Generator<DispatchParsedEvent> {
+  return function* (eventData): Generator<DispatchMessageAction> {
 
     // parse the JSON chunk
     const wireGenerationChunk = JSON.parse(eventData);
@@ -253,7 +306,7 @@ export function createDispatchParserGemini(modelName: string): DispatchParser {
 export function createDispatchParserOllama(): DispatchParser {
   let hasBegun = false;
 
-  return function* (eventData: string): Generator<DispatchParsedEvent> {
+  return function* (eventData: string): Generator<DispatchMessageAction> {
 
     // parse the JSON chunk
     let wireJsonChunk: any;
@@ -302,7 +355,7 @@ export function createDispatchParserOpenAI(): DispatchParser {
   let hasWarned = false;
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
-  return function* (eventData: string): Generator<DispatchParsedEvent> {
+  return function* (eventData: string): Generator<DispatchMessageAction> {
 
     // Throws on malformed event data
     const json = openaiWire_ChatCompletionChunkResponse_Schema.parse(JSON.parse(eventData));

@@ -93,17 +93,17 @@ async function _aixStreamGenerateUnified(
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
 ): Promise<void> {
 
-  const x = await apiStream.aix.chatGenerateContentStream.mutate(
-    { access, model, chatGenerate, context },
+  const operation = await apiStream.aix.chatGenerateContent.mutate(
+    { access, model, chatGenerate, context, streaming: true },
     { signal: abortSignal },
   );
 
   let incrementalText = '';
 
   try {
-    for await (const update of x) {
-      console.log('cs update:', update);
-
+    for await (const update of operation) {
+      // console.log('cs update:', update);
+      // TODO: improve this recombination protocol...
       if ('t' in update) {
         incrementalText += update.t;
         onUpdate({ textSoFar: incrementalText, typing: true }, false);

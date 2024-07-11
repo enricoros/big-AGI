@@ -54,7 +54,6 @@ const openAPISchemaObjectSchema = z.object({
 
 // an object-only subset of the above, which is the JSON object owner of the parameters
 const intakeFunctionCallInputSchemaSchema = z.object({
-  type: z.literal('object'),
   properties: z.record(openAPISchemaObjectSchema),
   required: z.array(z.string()).optional(),
 });
