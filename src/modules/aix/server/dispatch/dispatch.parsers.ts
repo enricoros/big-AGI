@@ -44,6 +44,8 @@ export type DispatchParser = (eventData: string, eventName?: string) => Generato
 export function createDispatchParserAnthropicMessages(): DispatchParser {
   let responseMessage: AnthropicWire_MessageResponse;
   let hasErrored = false;
+  let messageStartTime: number | undefined = undefined;
+  let chatInTokens: number | undefined = undefined;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
   //       to the client. It is however building in parallel the responseMessage object, which is not
@@ -61,12 +63,17 @@ export function createDispatchParserAnthropicMessages(): DispatchParser {
 
       // M1. Initialize the message content for a new message
       case 'message_start':
+        messageStartTime = Date.now();
         const isFirstMessage = !responseMessage;
         responseMessage = anthropicWire_MessageStartEvent_Schema.parse(JSON.parse(eventData)).message;
 
         // -> Model
         if (isFirstMessage && responseMessage.model)
           yield { op: 'set', value: { model: responseMessage.model } };
+        if (responseMessage.usage) {
+          chatInTokens = responseMessage.usage.input_tokens;
+          yield { op: 'set', value: { stats: { chatInTokens: chatInTokens, chatOutTokens: responseMessage.usage.output_tokens } } };
+        }
         break;
 
       // M2. Initialize content block if needed
@@ -120,8 +127,19 @@ export function createDispatchParserAnthropicMessages(): DispatchParser {
         if (responseMessage) {
           const { delta, usage } = anthropicWire_MessageDeltaEvent_Schema.parse(JSON.parse(eventData));
           Object.assign(responseMessage, delta);
-          if (usage?.output_tokens)
-            yield { op: 'set', value: { stats: { chatOutTokens: usage.output_tokens } } };
+          if (usage?.output_tokens && messageStartTime) {
+            const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
+            const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+            yield {
+              op: 'set', value: {
+                stats: {
+                  chatInTokens: chatInTokens !== null ? chatInTokens : -1,
+                  chatOutTokens: usage.output_tokens,
+                  chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+                },
+              },
+            };
+          }
         } else
           throw new Error('Unexpected message delta');
         break;
