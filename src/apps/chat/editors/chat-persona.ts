@@ -5,6 +5,7 @@ import type { IntakeContextChatStream } from '~/modules/aix/server/intake/schema
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
+import { conversationMessagesToAixGenerateRequest } from '~/modules/aix/client/aix.client.messages.api';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
@@ -15,7 +16,6 @@ import { isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragmen
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
-import { conversationMessagesToAixGenerateRequest } from '~/modules/aix/client/aix.client.messages.api';
 
 
 /**
