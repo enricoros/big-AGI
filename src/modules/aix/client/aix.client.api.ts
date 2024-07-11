@@ -104,13 +104,10 @@ interface AixFunctionCall {
    * A JSON Schema object defining the expected parameters for the function call.
    * (OpenAI,Google: parameters, Anthropic: input_schema)
    */
-  input_schema?: AixFunctionCallInputSchema;
-}
-
-interface AixFunctionCallInputSchema {
-  type: 'object';
-  properties: Record<string, OpenAPISchemaObject>;
-  required?: string[];
+  input_schema?: {
+    properties: Record<string, OpenAPISchemaObject>;
+    required?: string[];
+  };
 }
 
 /**

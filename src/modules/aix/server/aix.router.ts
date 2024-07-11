@@ -22,6 +22,7 @@ export const aixRouter = createTRPCRouter({
       chatGenerate: intakeChatGenerateRequestSchema,
       context: intakeContextChatStreamSchema,
       streaming: z.boolean(),
+      _debugRequestBody: z.boolean().optional(),
     }))
     .mutation(async function* ({ input, ctx }) {
 
@@ -41,6 +42,11 @@ export const aixRouter = createTRPCRouter({
       let dispatch: ReturnType<typeof createDispatch>;
       try {
         dispatch = createDispatch(access, model, chatGenerate, streaming);
+
+        // TEMP for debugging without requiring a full server restart
+        if (input._debugRequestBody)
+          yield { _debugClientPrint: JSON.stringify(dispatch.request.body, null, 2) };
+
       } catch (error: any) {
         yield* intakeHandler.yieldError('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
         return; // exit

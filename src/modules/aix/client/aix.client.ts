@@ -94,7 +94,7 @@ async function _aixStreamGenerateUnified(
 ): Promise<void> {
 
   const operation = await apiStream.aix.chatGenerateContent.mutate(
-    { access, model, chatGenerate, context, streaming: true },
+    { access, model, chatGenerate, context, streaming: true, _debugRequestBody: false },
     { signal: abortSignal },
   );
 
@@ -102,7 +102,6 @@ async function _aixStreamGenerateUnified(
 
   try {
     for await (const update of operation) {
-      // console.log('cs update:', update);
       // TODO: improve this recombination protocol...
       if ('t' in update) {
         incrementalText += update.t;
@@ -115,6 +114,8 @@ async function _aixStreamGenerateUnified(
       } else if ('issueId' in update) {
         incrementalText += update.issueText;
         onUpdate({ textSoFar: incrementalText, typing: true }, false);
+      } else if ('_debugClientPrint' in update) {
+        console.log('_debugClientPrint:', update._debugClientPrint);
       } else
         console.log('update:', update);
     }
