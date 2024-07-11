@@ -110,7 +110,21 @@ const geminiToolSchema = z.object({
 
 const geminiToolConfigSchema = z.object({
   functionCallingConfig: z.object({
-    mode: z.enum(['MODE_UNSPECIFIED', 'AUTO', 'ANY', 'NONE']).optional(),
+    mode: z.enum([
+      /**
+       * (default) The model decides to predict either a function call or a natural language response.
+       */
+      'AUTO',
+      /**
+       * The model is constrained to always predict a function call.
+       * If allowed_function_names is provided, the model picks from the set of allowed functions.
+       */
+      'ANY',
+      /**
+       * The model behavior is the same as if you don't pass any function declarations.
+       */
+      'NONE',
+    ]).optional(),
     allowedFunctionNames: z.array(z.string()).optional(),
   }).optional(),
 });

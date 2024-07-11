@@ -6,7 +6,7 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetch
 
 
 // Anthropic server imports
-import { AnthropicWireMessageResponse, anthropicWireMessageResponseSchema } from '../../aix/server/dispatch/anthropic/anthropic.wiretypes';
+import { AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema } from '../../aix/server/dispatch/anthropic/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
 
 // Gemini server imports
@@ -265,7 +265,7 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
 /// Stream Parsers
 
 function createStreamParserAnthropicMessages(): AIStreamParser {
-  let responseMessage: AnthropicWireMessageResponse | null = null;
+  let responseMessage: AnthropicWire_MessageResponse | null = null;
   let hasErrored = false;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
@@ -287,7 +287,7 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
       case 'message_start':
         const firstMessage = !responseMessage;
         const { message } = JSON.parse(data);
-        responseMessage = anthropicWireMessageResponseSchema.parse(message);
+        responseMessage = anthropicWire_MessageResponse_Schema.parse(message);
         // hack: prepend the model name to the first packet
         if (firstMessage) {
           const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };

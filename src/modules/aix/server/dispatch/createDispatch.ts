@@ -5,10 +5,11 @@ import { openAIAccess, openAIChatCompletionPayload, OpenAIHistorySchema } from '
 
 import type { IntakeAccess, IntakeChatGenerateRequest, IntakeModel } from '../intake/schemas.intake.api';
 
+import { intakeToAnthropicMessageCreate } from './anthropic/anthropic.adapter';
+
 import { createDispatchDemuxer } from './dispatch.demuxers';
 import { createDispatchParserAnthropicMessages, createDispatchParserGemini, createDispatchParserOllama, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
 import { geminiModelsStreamGenerateContentPath } from './gemini/gemini.wiretypes';
-import { NEWanthropicMessagesPayloadOrThrow } from '~/modules/aix/server/dispatch/anthropic/anthropic.adapter';
 
 
 export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGenerate: IntakeChatGenerateRequest): {
@@ -70,12 +71,13 @@ export function createDispatch(access: IntakeAccess, model: IntakeModel, chatGen
   }
 
 
+  const conversionWarnings: string[] = [];
   switch (access.dialect) {
     case 'anthropic':
       return {
         request: {
           ...anthropicAccess(access, '/v1/messages'),
-          body: NEWanthropicMessagesPayloadOrThrow(model, chatGenerate, true),
+          body: intakeToAnthropicMessageCreate(model, chatGenerate, true, conversionWarnings),
         },
         demuxer: createDispatchDemuxer('sse'),
         parser: createDispatchParserAnthropicMessages(),

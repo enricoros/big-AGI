@@ -122,7 +122,7 @@ async function _aixStreamGenerateUnified(
     if (error instanceof Error && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'))) {
       console.log('client-side aborted 111111111111111111111111111222222');
     } else {
-      console.error('Client catch:', (error as any).name, { error });
+      console.error('aix stream gen Client catch:', (error as any).name, { error });
     }
   }
 
