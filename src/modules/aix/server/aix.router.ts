@@ -24,6 +24,8 @@ export const aixRouter = createTRPCRouter({
     }))
     .mutation(async function* ({ input, ctx }) {
 
+      // Using the variable to keep the implementation generic
+      const streaming = true;
 
       // Intake derived state
       const intakeAbortSignal = ctx.reqSignal;
@@ -39,7 +41,7 @@ export const aixRouter = createTRPCRouter({
       // Prepare the dispatch
       let dispatch: ReturnType<typeof createDispatch>;
       try {
-        dispatch = createDispatch(access, model, chatGenerate);
+        dispatch = createDispatch(access, model, chatGenerate, streaming);
       } catch (error: any) {
         yield* intakeHandler.yieldError('dispatch-prepare', `**[Service Creation Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
         return; // exit
