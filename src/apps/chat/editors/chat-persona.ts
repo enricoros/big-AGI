@@ -11,11 +11,15 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessage, messageFragmentsReplaceLastContentText } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
-import { isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
+
+
+export interface PersonaProcessorInterface {
+  handleMessage(accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean): void;
+}
 
 
 /**
@@ -42,7 +46,7 @@ export async function runPersonaOnConversationHead(
   );
 
   // AutoSpeak
-  const autoSpeaker = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;
+  const autoSpeaker: PersonaProcessorInterface | null = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
@@ -67,12 +71,7 @@ export async function runPersonaOnConversationHead(
 
       cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
 
-      if (autoSpeaker && accumulatedMessage.fragments?.length && isContentFragment(accumulatedMessage.fragments[0]) && isTextPart(accumulatedMessage.fragments[0].part)) {
-        if (messageComplete)
-          autoSpeaker.finalizeText(accumulatedMessage.fragments[0].part.text);
-        else
-          autoSpeaker.handleTextSoFar(accumulatedMessage.fragments[0].part.text);
-      }
+      autoSpeaker?.handleMessage(accumulatedMessage, messageComplete);
     },
   );
 
@@ -97,7 +96,7 @@ export async function runPersonaOnConversationHead(
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
-type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
+export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
 
 export async function llmGenerateContentStream(
   llmId: DLLMId,
