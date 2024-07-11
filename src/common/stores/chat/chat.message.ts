@@ -160,8 +160,10 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
             return fragment.part.text;
           case 'error':
             return fragment.part.error;
+          case 'image_ref':
+            return '';
           case 'ph':
-            return 0;
+            return '';
         }
       } else if (isAttachmentFragment(fragment)) {
         switch (fragment.part.pt) {
@@ -171,7 +173,7 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
             return '';
         }
       }
-      console.warn('DEV: messageFragmentsReduceText: unexpected content fragment', fragment);
+      console.warn(`DEV: messageFragmentsReduceText: unexpected '${fragment.ft}' fragment with '${(fragment as any)?.part?.pt}' part`);
       return '';
     })
     .filter(text => !!text)
