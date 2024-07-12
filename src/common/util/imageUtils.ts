@@ -65,7 +65,7 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
 
 export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google' | 'anthropic' | 'thumbnail-128' | 'thumbnail-256';
 
-export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: string = 'image/webp', destQuality: number = 0.90): Promise<{
+export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase64Data: string, resizeMode: LLMImageResizeMode, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
   mimeType: string,
   base64: string,
 } | null> {
