@@ -1,4 +1,4 @@
-import { useBrowseStore } from '~/modules/browse/store-module-browsing';
+import { BrowsePageTransform, useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { apiAsyncNode } from '~/common/util/trpc.client';
 
@@ -11,8 +11,8 @@ const DEBUG_SHOW_SCREENSHOT = false;
 
 export async function callBrowseFetchPage(
   url: string,
-  // transforms?: BrowsePageTransform[],
-  // screenshotOptions?: { width: number, height: number, quality?: number },
+  transforms?: BrowsePageTransform[],
+  screenshotOptions?: { width: number, height: number, quality?: number },
 ) {
 
   // validate url
@@ -33,8 +33,8 @@ export async function callBrowseFetchPage(
     },
     requests: [{
       url,
-      transforms: /*transforms ? transforms :*/ [pageTransform],
-      screenshot: /*screenshotOptions ? screenshotOptions :*/ !DEBUG_SHOW_SCREENSHOT ? undefined : {
+      transforms: transforms ? transforms : [pageTransform],
+      screenshot: screenshotOptions ? screenshotOptions : !DEBUG_SHOW_SCREENSHOT ? undefined : {
         width: 512,
         height: 512,
         // quality: 100,

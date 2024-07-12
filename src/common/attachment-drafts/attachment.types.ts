@@ -38,8 +38,8 @@ export type AttachmentDraftId = string;
 
 export type AttachmentDraftSource = {
   media: 'url';
-  url: string;
-  refUrl: string;
+  url: string; // parsed valid url
+  refUrl: string; // original text (use this as text ref, otherwise use the url)
 } | {
   media: 'file';
   origin: AttachmentDraftSourceOriginFile,
@@ -75,6 +75,13 @@ export type AttachmentDraftInput = {
   dataSize: number; // Size of the original data in bytes
   altMimeType?: string; // Alternative MIME type for the input
   altData?: string; // Alternative data for the input
+  // [media:URL] special for download inputs
+  urlImage?: {
+    webpDataUrl: string;
+    mimeType: string;
+    width: number;
+    height: number;
+  };
   // preview?: AttachmentPreview; // Preview of the input
 };
 
@@ -99,6 +106,7 @@ export type AttachmentDraftConverterType =
   | 'pdf-text' | 'pdf-images'
   | 'docx-to-html'
   | 'ego-fragments-inlined'
+  | 'url-image'
   | 'unhandled';
 
 

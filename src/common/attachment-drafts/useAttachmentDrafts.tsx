@@ -87,7 +87,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     const textPlain = dt.getData('text/plain') || '';
     if (textPlain && enableLoadURLs) {
       const textPlainUrl = asValidURL(textPlain);
-      if (textPlainUrl && textPlainUrl) {
+      if (textPlainUrl && textPlainUrl.trim()) {
         void _createAttachmentDraft({
           media: 'url', url: textPlainUrl, refUrl: textPlain,
         });
