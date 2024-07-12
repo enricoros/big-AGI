@@ -1,5 +1,4 @@
 import { getChatLLMId } from '~/modules/llms/store-llms';
-import { inlineUpdateHistoryForReplyTo } from '~/modules/aifn/replyto/replyTo';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
@@ -35,10 +34,6 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   //       2. all the exit points need to call setMessages
   const _inplaceEditableHistory = [...initialHistory];
   cHandler.inlineUpdatePurposeInHistory(_inplaceEditableHistory, chatLLMId || undefined);
-
-  // FIXME: shouldn't do this for all the code paths. The advantage for having it here (vs Composer output only) is re-executing history
-  // TODO: move this to the server side after transferring metadata?
-  inlineUpdateHistoryForReplyTo(_inplaceEditableHistory);
 
   // Set the history - note that 'history' objects become invalid after this, and you'd have to
   // re-read it from the store, such as with `cHandler.historyView()`

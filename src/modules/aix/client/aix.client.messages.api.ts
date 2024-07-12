@@ -4,7 +4,7 @@ import type { DMessage } from '~/common/stores/chat/chat.message';
 import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
-import { AixChatContentGenerateRequest, AixChatMessage, AixChatMessageModel, AixChatMessageUser, createAixInlineImagePart } from './aix.client.api';
+import { AixChatContentGenerateRequest, AixChatMessageModel, AixChatMessageUser, createAixInlineImagePart, createAixMetaReplyToPart } from './aix.client.api';
 
 
 // TODO: remove console messages to zero, or replace with throws or something
@@ -36,67 +36,104 @@ export async function conversationMessagesToAixGenerateRequest(messageSequence: 
         if (isContentFragment(systemFragment) && isTextPart(systemFragment.part)) {
           acc.systemMessage.parts.push(systemFragment.part);
         } else {
-          console.warn('historyToChatGenerateRequest: unexpected system fragment', systemFragment);
+          console.warn('conversationMessagesToAixGenerateRequest: unexpected system fragment', systemFragment);
         }
       }
       return acc;
     }
 
     // map the other parts
-    let aixChatMessage: AixChatMessage | undefined = undefined;
     if (m.role === 'user') {
 
-      aixChatMessage = await m.fragments.reduce(async (mMsgPromise, srcFragment) => {
-        const mMsg = await mMsgPromise;
-        if (!isContentOrAttachmentFragment(srcFragment))
-          return mMsg;
-        switch (srcFragment.part.pt) {
+      const dMEssageUserFragments = m.fragments;
+      const aixChatMessageUser = await dMEssageUserFragments.reduce(async (mMsgPromise, uFragment) => {
+
+        const uMsg = await mMsgPromise;
+        if (!isContentOrAttachmentFragment(uFragment) || uFragment.part.pt === '_pt_sentinel' || uFragment.part.pt === 'ph')
+          return uMsg;
+
+        switch (uFragment.part.pt) {
           case 'text':
-            mMsg.parts.push(srcFragment.part);
+            uMsg.parts.push(uFragment.part);
             break;
+
           case 'image_ref':
             // note, we don't resize, as the user image is resized following the user's preferences
-            mMsg.parts.push(await _convertImageRefToInlineImageOrThrow(srcFragment.part, false));
+            uMsg.parts.push(await _convertImageRefToInlineImageOrThrow(uFragment.part, false));
             break;
+
           case 'doc':
-            mMsg.parts.push(srcFragment.part);
+            uMsg.parts.push(uFragment.part);
             break;
+
+          // skipped (non-user)
+          case 'error':
+          case 'tool_call':
+          case 'tool_response':
+            break;
+
           default:
-            console.warn('historyToChatGenerateRequest: unexpected user fragment part type', srcFragment.part);
+            console.warn('conversationMessagesToAixGenerateRequest: unexpected User fragment part type', (uFragment.part as any).pt);
         }
-        return mMsg;
+        return uMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixChatMessageUser));
+
+      // handle metadata on user messages
+      if (m.metadata?.inReplyToText)
+        aixChatMessageUser.parts.push(createAixMetaReplyToPart(m.metadata.inReplyToText));
+
+      acc.chatSequence.push(aixChatMessageUser);
 
     } else if (m.role === 'assistant') {
 
-      aixChatMessage = await m.fragments.reduce(async (mMsgPromise, srcFragment) => {
+      const dMessageAssistantFragments = m.fragments;
+      const aixChatMessageModel = await dMessageAssistantFragments.reduce(async (mMsgPromise, aFragment) => {
+
         const mMsg = await mMsgPromise;
-        if (!isContentOrAttachmentFragment(srcFragment))
+        if (!isContentOrAttachmentFragment(aFragment) || aFragment.part.pt === '_pt_sentinel' || aFragment.part.pt === 'ph')
           return mMsg;
-        switch (srcFragment.part.pt) {
+
+        switch (aFragment.part.pt) {
+
+          // intake.message.part = fragment.part
           case 'text':
           case 'tool_call':
-            mMsg.parts.push(srcFragment.part);
+            mMsg.parts.push(aFragment.part);
             break;
+
+          case 'doc':
+            // TODO
+            console.warn('conversationMessagesToAixGenerateRequest: doc part not implemented yet');
+            // mMsg.parts.push(aFragment.part);
+            break;
+
+          case 'error':
+            mMsg.parts.push({ pt: 'text', text: `[ERROR] ${aFragment.part.error}` });
+            break;
+
           case 'image_ref':
             // TODO: rescale shall be dependent on the LLM here - and be careful with the high-res options, as they can
             //  be really space consuming. how to choose between high and low? global option?
             const resizeMode: LLMImageResizeMode = 'openai-low-res';
-            mMsg.parts.push(await _convertImageRefToInlineImageOrThrow(srcFragment.part, resizeMode));
+            mMsg.parts.push(await _convertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
             break;
-          default:
-            console.warn('historyToChatGenerateRequest: unexpected assistant fragment part type', srcFragment.part);
+
+          case 'tool_response':
+            // TODO
+            console.warn('conversationMessagesToAixGenerateRequest: tool_response part not implemented yet');
             break;
+
         }
         return mMsg;
       }, Promise.resolve({ role: 'model', parts: [] } as AixChatMessageModel));
 
+      acc.chatSequence.push(aixChatMessageModel);
+
     } else {
-      // TODO: impement mid-chat system messages
+      // TODO: impement mid-chat system messages?
       console.warn('historyToChatGenerateRequest: unexpected message role', m.role);
     }
-    if (aixChatMessage)
-      acc.chatSequence.push(aixChatMessage);
+
     return acc;
   }, Promise.resolve({ chatSequence: [] } as AixChatContentGenerateRequest));
 }
