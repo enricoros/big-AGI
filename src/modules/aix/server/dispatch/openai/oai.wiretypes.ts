@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { openAPI_SchemaObject_Schema } from '../../intake/schemas.intake.tools';
+
+
 //
 // Implementation notes:
 // - 2024-07-09: skipping Functions as they're deprecated
@@ -119,14 +122,14 @@ export const openaiWire_FunctionDefinition_Schema = z.object({
    */
   parameters: z.object({
     type: z.literal('object'),
-    // Note: This is a more specialized definition than the OpenAI doc (which leaves it a bit open).
-    //       The generic one is commented below.
-    properties: z.record(z.object({
-      type: z.enum(['string', 'number', 'integer', 'boolean']),
-      description: z.string().optional(),
-      enum: z.array(z.string()).optional(),
-    })),
-    // properties: z.record(z.unknown()).optional(),
+    properties: z.record(openAPI_SchemaObject_Schema),
+    // Note: We commented out the code below in favor of the line above, because the OpenAPI 3.0.3 Schema object
+    //       is in the 'Intake' API spec (.properties), and here we just need to pass that object upstream.
+    // properties: z.record(z.object({
+    //   type: z.enum(['string', 'number', 'integer', 'boolean']),
+    //   description: z.string().optional(),
+    //   enum: z.array(z.string()).optional(),
+    // })),
     required: z.array(z.string()).optional(),
   }).optional(),
 });
