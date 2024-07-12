@@ -5,7 +5,7 @@ import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.router';
 import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.router';
 import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
-import { intake_ChatMessage_Schema, intake_SystemMessage_Schema } from './schemas.intake.parts';
+import { intake_ChatMessage_Schema, intake_SystemMessage_Schema } from './schemas.intake.messages';
 import { intake_ToolDefinition_Schema, intake_ToolsPolicy_Schema } from './schemas.intake.tools';
 
 

@@ -23,7 +23,7 @@ const ABERRATION_FIXUP_SQUASH = '\n\n\n---\n\n\n';
 const openAIDialects = z.enum([
   'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
 ]);
-type OpenAIDialects = z.infer<typeof openAIDialects>;
+export type OpenAIDialects = z.infer<typeof openAIDialects>;
 
 export const openAIAccessSchema = z.object({
   dialect: openAIDialects,

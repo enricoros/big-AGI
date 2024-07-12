@@ -1,7 +1,7 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
 
 import type { AixChatContentGenerateRequest } from '~/modules/aix/client/aix.client.api';
-import type { IntakeContextChatStream } from '~/modules/aix/server/intake/schemas.intake.api';
+import type { Intake_ContextChatStream } from '~/modules/aix/server/intake/schemas.intake.api';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
@@ -101,7 +101,7 @@ export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pe
 export async function llmGenerateContentStream(
   llmId: DLLMId,
   chatGenerate: AixChatContentGenerateRequest,
-  intakeContextName: IntakeContextChatStream['name'],
+  intakeContextName: Intake_ContextChatStream['name'],
   intakeContextRef: string,
   parallelViewCount: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   abortSignal: AbortSignal,

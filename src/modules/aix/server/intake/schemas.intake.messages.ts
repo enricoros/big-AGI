@@ -44,7 +44,7 @@ const dMessage_ToolCallPart_Schema = z.object({
   pt: z.literal('tool_call'),
   id: z.string(),
   name: z.string(),
-  args: z.record(z.any()).optional(),
+  args: z.record(z.any()).optional(), // flat key-value pairs object
 });
 
 const dMessage_ToolResponsePart_Schema = z.object({

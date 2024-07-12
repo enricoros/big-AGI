@@ -4,7 +4,7 @@ import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry
 
 import { apiStream } from '~/common/util/trpc.client';
 
-import type { IntakeAccess, IntakeContextChatStream, IntakeModel } from '../server/intake/schemas.intake.api';
+import type { Intake_Access, Intake_ContextChatStream, Intake_Model } from '../server/intake/schemas.intake.api';
 
 import type { AixChatContentGenerateRequest } from './aix.client.api';
 
@@ -19,7 +19,7 @@ export type StreamingClientUpdate = Partial<{
 export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
   llmId: DLLMId,
   chatGenerate: AixChatContentGenerateRequest,
-  intakeContextName: IntakeContextChatStream['name'],
+  intakeContextName: Intake_ContextChatStream['name'],
   intakeContextRef: string,
   abortSignal: AbortSignal,
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
@@ -55,11 +55,11 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
   return await _aixStreamGenerateUnified(intakeAccess, intakeModel, chatGenerate, intakeContext, abortSignal, onUpdate);
 }
 
-function intakeContextChatStream(name: IntakeContextChatStream['name'], ref: string): IntakeContextChatStream {
+function intakeContextChatStream(name: Intake_ContextChatStream['name'], ref: string): Intake_ContextChatStream {
   return { method: 'chat-stream', name, ref };
 }
 
-function intakeModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: string): IntakeModel {
+function intakeModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: string): Intake_Model {
   // model params (llm)
   const { llmRef, llmTemperature, llmResponseTokens } = llmOptions || {};
   if (!llmRef || llmTemperature === undefined)
@@ -84,10 +84,10 @@ function intakeModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: 
  */
 async function _aixStreamGenerateUnified(
   // input
-  access: IntakeAccess,
-  model: IntakeModel,
+  access: Intake_Access,
+  model: Intake_Model,
   chatGenerate: AixChatContentGenerateRequest,
-  context: IntakeContextChatStream,
+  context: Intake_ContextChatStream,
   // others
   abortSignal: AbortSignal,
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
