@@ -434,7 +434,7 @@ function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceU
     // find the LLM from the ID
     try {
       const dllm = findLLMOrThrow(llmId);
-      message.tokenCount = estimateTokensForFragments(message.fragments, dllm, false, debugFrom);
+      message.tokenCount = estimateTokensForFragments(dllm, message.role, message.fragments, false, debugFrom);
     } catch (e) {
       console.error(`updateMessageTokenCount: LLM not found for ID ${llmId}`);
       message.tokenCount = 0;

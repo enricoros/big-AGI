@@ -2,13 +2,14 @@ import type { DLLM } from '~/modules/llms/store-llms';
 
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 
 
-export function estimateTokensForFragments(fragments: DMessageFragment[], llm: DLLM, addTopGlue: boolean, debugFrom: string) {
+export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragments: DMessageFragment[], addTopGlue: boolean, debugFrom: string) {
   return fragments.reduce((acc, fragment) => {
-    let fragmentTokens = _fragmentTokens(fragment, llm, debugFrom);
+    let fragmentTokens = _fragmentTokens(llm, role, fragment, debugFrom);
     if (acc > 0 || addTopGlue)
       fragmentTokens += _glueForFragmentTokens(llm);
     return acc + fragmentTokens;
@@ -29,7 +30,7 @@ function estimateImageTokens(width: number | undefined, height: number | undefin
 
 // Content Parts
 
-function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: string): number {
+function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragment, debugFrom: string): number {
   // non content/attachment fragments are ignored
   if (!isContentOrAttachmentFragment(fragment) || fragment.part.pt === '_pt_sentinel')
     return 0;
@@ -42,7 +43,9 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
         const likelyRendition = marshallWrapText(aPart.data.text, aPart.ref, 'markdown-code');
         return estimateTextTokens(likelyRendition, llm, debugFrom);
       case 'image_ref':
-        return estimateImageTokens(aPart.width, aPart.height, fragment.title, llm);
+        // NOTE: should not happen with attachments, unless someone '/a' a message with an image attached
+        const forcedSize = role === 'assistant' ? 512 : undefined;
+        return estimateImageTokens(forcedSize || aPart.width, forcedSize || aPart.height, fragment.title, llm);
     }
   } else if (isContentFragment(fragment)) {
     const cPart = fragment.part;
@@ -50,7 +53,8 @@ function _fragmentTokens(fragment: DMessageFragment, llm: DLLM, debugFrom: strin
       case 'error':
         return estimateTextTokens(cPart.error, llm, debugFrom);
       case 'image_ref':
-        return estimateImageTokens(cPart.width, cPart.height, debugFrom, llm);
+        const forcedSize = role === 'assistant' ? 512 : undefined;
+        return estimateImageTokens(forcedSize || cPart.width, forcedSize || cPart.height, debugFrom, llm);
       case 'ph':
         return 0;
       case 'text':
