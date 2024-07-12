@@ -9,7 +9,8 @@ import { anthropicWire_ImageBlock, AnthropicWire_MessageCreate, anthropicWire_Me
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
 
-const DEFAULT_MAX_TOKENS = 4096;
+// max from https://docs.anthropic.com/en/docs/about-claude/models
+const ANTHROPIC_FALLBACK_MAX_TOKENS = 4096;
 
 
 export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate: IntakeChatGenerateRequest, streaming: boolean): AnthropicWire_MessageCreate {
@@ -37,7 +38,7 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
 
   // Construct the request payload
   const payload: AnthropicWire_MessageCreate = {
-    max_tokens: model.maxTokens ? model.maxTokens : DEFAULT_MAX_TOKENS,
+    max_tokens: model.maxTokens !== undefined ? model.maxTokens : ANTHROPIC_FALLBACK_MAX_TOKENS,
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
@@ -51,10 +52,10 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
     // top_p: undefined,
   };
 
-  // Validate the payload on the server rathen than upstream, to catch issues early
+  // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = anthropicWire_MessageCreate_Schema.safeParse(payload);
   if (!validated.success)
-    throw new Error(`Invalid message sequence for Anthropic models: ${validated.error.errors?.[0]?.message || validated.error}`);
+    throw new Error(`Invalid message sequence for Anthropic models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}`);
 
   return validated.data;
 }
