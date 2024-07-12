@@ -27,7 +27,7 @@ export async function fetchResponseOrTRPCThrow<TBody extends object | undefined 
 }
 
 
-type RequestConfig<TBody extends object | undefined> = {
+type RequestConfig<TJsonBody extends object | undefined> = {
   url: string;
   headers?: HeadersInit;
   signal?: AbortSignal;
@@ -35,8 +35,8 @@ type RequestConfig<TBody extends object | undefined> = {
   throwWithoutName?: boolean; // when throwing, do not add the module name (the caller will improve the output)
 } & (
   | { method?: 'GET' /* in case of GET, the method is optional, and no body */ }
-  | { method: 'POST'; body: TBody }
-  | { method: 'DELETE'; body: TBody }
+  | { method: 'POST'; body: TJsonBody }
+  | { method: 'DELETE'; body: TJsonBody }
   );
 
 
@@ -45,8 +45,8 @@ type RequestConfig<TBody extends object | undefined> = {
  * - Parses errors on connection, http responses, and parsing
  * - Throws TRPCErrors (as this is used within tRPC procedures)
  */
-async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
-  config: RequestConfig<TBody>,
+async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
+  config: RequestConfig<TJsonBody>,
   responseParser: (response: Response) => Promise<TOut>,
   parserName: 'json' | 'text' | 'response',
 ): Promise<TOut> {
@@ -62,10 +62,12 @@ async function _fetchFromTRPC<TBody extends object | undefined, TOut>(
       console.log('-> upstream CURL:', debugGenerateCurlCommand(method, url, headers, body as any));
 
     // upstream request
-    const request: RequestInit = { method };
-    if (headers !== undefined) request.headers = headers;
-    if (body !== undefined) request.body = JSON.stringify(body);
-    if (signal) request.signal = signal;
+    const request: RequestInit = {
+      method,
+      headers: headers !== undefined ? headers : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: signal !== undefined ? signal : undefined,
+    };
 
     // upstream fetch
     response = await fetch(url, request);
