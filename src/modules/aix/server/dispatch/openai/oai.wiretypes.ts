@@ -230,6 +230,8 @@ const openaiWire_FinishReason_Enum = z.enum([
   'length', // max_tokens exceeded
   'tool_calls', // the model called a tool
   'content_filter', // upstream content filter stopped the generation
+  // Extensions //
+  '', // [LocalAI] bad response from LocalAI which breaks the parser
 ]);
 
 const openaiWire_Usage_Schema = z.object({
