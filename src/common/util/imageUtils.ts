@@ -5,6 +5,25 @@
  * Also see videoUtils.ts for more image-related functions.
  */
 
+import { createBlobURLFromDataURL } from './urlUtils';
+
+
+/**
+ * Opens an image Data URL in a new tab
+ */
+export function showImageDataURLInNewTab(imageDataURL: string) {
+  const blobURL = createBlobURLFromDataURL(imageDataURL);
+  return blobURL ? showBlobURLInNewTab(blobURL) : false;
+}
+
+export function showBlobURLInNewTab(blobURL: string) {
+  if (typeof window !== 'undefined') {
+    window.open(blobURL, '_blank', 'noopener,noreferrer');
+    return true;
+  }
+  return false;
+}
+
 
 /**
  * Asynchronously gets the dimensions of a base64DataURL image.
