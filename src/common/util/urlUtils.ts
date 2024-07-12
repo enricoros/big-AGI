@@ -46,3 +46,35 @@ export function fixupHost(host: string, apiPath: string): string {
     host = host.slice(0, -1);
   return host;
 }
+
+
+/**
+ * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance)
+ */
+export function createBlobURLFromData(base64Data: string, mimeType: string) {
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: mimeType });
+  return URL.createObjectURL(blob);
+}
+
+/**
+ * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance) from a Data URL
+ */
+export function createBlobURLFromDataURL(dataURL: string) {
+  if (!dataURL.startsWith('data:')) {
+    console.error('createBlobURLFromDataURL: Invalid data URL', dataURL);
+    return null;
+  }
+  const mimeType = dataURL.slice(5, dataURL.indexOf(';'));
+  const base64Data = dataURL.slice(dataURL.indexOf(',') + 1);
+  if (!mimeType || !base64Data) {
+    console.error('createBlobURLFromDataURL: Invalid data URL', dataURL);
+    return null;
+  }
+  return createBlobURLFromData(base64Data, mimeType);
+}

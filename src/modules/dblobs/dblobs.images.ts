@@ -1,3 +1,4 @@
+import { createBlobURLFromData } from '~/common/util/urlUtils';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 import { _addDBAsset, gcDBAssetsByScope, getDBAsset } from './dblobs.db';
@@ -63,16 +64,8 @@ export async function getImageAsset(id: DBlobAssetId) {
 
 export async function getImageAssetAsBlobURL(id: DBlobAssetId) {
   const imageAsset = await getImageAsset(id);
-  if (imageAsset) {
-    const byteCharacters = atob(imageAsset.data.base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: imageAsset.data.mimeType });
-    return URL.createObjectURL(blob);
-  }
+  if (imageAsset)
+    return createBlobURLFromData(imageAsset.data.base64, imageAsset.data.mimeType);
   return null;
 }
 

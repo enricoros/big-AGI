@@ -11,6 +11,7 @@ import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
+import { showBlobURLInNewTab } from '~/common/util/imageUtils';
 
 import { RenderImageURL, RenderImageURLVarint } from './RenderImageURL';
 
@@ -19,16 +20,12 @@ import { RenderImageURL, RenderImageURLVarint } from './RenderImageURL';
  * Opens am image data ref in a new tab (fetches and shows it)
  */
 export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
-  let imageUrl: string | null = null;
+  let imageBlobURL: string | null = null;
   if (dataRef.reftype === 'url')
-    imageUrl = dataRef.url;
+    imageBlobURL = dataRef.url;
   else if (dataRef.reftype === 'dblob')
-    imageUrl = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
-  if (imageUrl && typeof window !== 'undefined') {
-    window.open(imageUrl, '_blank', 'noopener,noreferrer');
-    return true;
-  }
-  return false;
+    imageBlobURL = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
+  return imageBlobURL ? showBlobURLInNewTab(imageBlobURL) : false;
 }
 
 
