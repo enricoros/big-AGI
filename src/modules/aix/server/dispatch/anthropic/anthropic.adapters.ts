@@ -147,9 +147,9 @@ function _intakeToAnthropicTools(itds: Intake_ToolDefinition[]): NonNullable<Ant
           },
         };
       case 'gemini_code_interpreter':
-        throw new Error('Gemini code interpreter is not supported by Anthropic');
+        throw new Error('Gemini code interpreter is not supported');
       case 'preprocessor':
-        throw new Error('Preprocessors are not supported by Anthropic yet');
+        throw new Error('Preprocessors are not supported yet');
     }
   });
 }

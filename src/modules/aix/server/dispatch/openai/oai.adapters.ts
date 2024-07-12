@@ -214,9 +214,9 @@ function _intakeToOpenAITools(itds: Intake_ToolDefinition[]): NonNullable<Openai
           },
         };
       case 'gemini_code_interpreter':
-        throw new Error('Gemini code interpreter is not supported by OpenAI');
+        throw new Error('Gemini code interpreter is not supported');
       case 'preprocessor':
-        throw new Error('Preprocessors are not supported by OpenAI yet');
+        throw new Error('Preprocessors are not supported yet');
     }
   });
 }
