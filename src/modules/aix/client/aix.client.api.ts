@@ -1,6 +1,6 @@
 import type { DMessageDocPart, DMessageTextPart, DMessageToolCallPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
-import type { IntakeInlineImagePart as AixInlineImagePart, IntakeMetaReplyToPart as AixMetaReplyToPart } from '../server/intake/schemas.intake.parts';
+import type { Intake_InlineImagePart as AixInlineImagePart, Intake_MetaReplyToPart as AixMetaReplyToPart } from '../server/intake/schemas.intake.messages';
 
 export type { AixInlineImagePart, AixMetaReplyToPart };
 
