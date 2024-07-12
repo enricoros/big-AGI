@@ -5,20 +5,20 @@ import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.router';
 import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.router';
 import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
-import { intakeChatMessageSchema, intakeSystemMessageSchema } from './schemas.intake.parts';
-import { intakeToolDefinitionSchema, intakeToolsPolicySchema } from './schemas.intake.tools';
+import { intake_ChatMessage_Schema, intake_SystemMessage_Schema } from './schemas.intake.parts';
+import { intake_ToolDefinition_Schema, intake_ToolsPolicy_Schema } from './schemas.intake.tools';
 
 
 // Export types
-export type IntakeAccess = z.infer<typeof intakeAccessSchema>;
-export type IntakeModel = z.infer<typeof intakeModelSchema>;
-export type IntakeChatGenerateRequest = z.infer<typeof intakeChatGenerateRequestSchema>;
-export type IntakeContextChatStream = z.infer<typeof intakeContextChatStreamSchema>;
+export type Intake_Access = z.infer<typeof intake_Access_Schema>;
+export type Intake_Model = z.infer<typeof intake_Model_Schema>;
+export type Intake_ChatGenerateRequest = z.infer<typeof intake_ChatGenerateRequest_Schema>;
+export type Intake_ContextChatStream = z.infer<typeof intake_ContextChatStream_Schema>;
 
 
 // Intake Access Schema
 
-export const intakeAccessSchema = z.discriminatedUnion(
+export const intake_Access_Schema = z.discriminatedUnion(
   'dialect',
   [
     anthropicAccessSchema,
@@ -31,7 +31,7 @@ export const intakeAccessSchema = z.discriminatedUnion(
 
 // Intake Model Schema
 
-export const intakeModelSchema = z.object({
+export const intake_Model_Schema = z.object({
   id: z.string(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().min(1).max(1000000).optional(),
@@ -40,17 +40,17 @@ export const intakeModelSchema = z.object({
 
 // Intake Content Generation Schema
 
-export const intakeChatGenerateRequestSchema = z.object({
-  systemMessage: intakeSystemMessageSchema.optional(),
-  chatSequence: z.array(intakeChatMessageSchema),
-  tools: z.array(intakeToolDefinitionSchema).optional(),
-  toolsPolicy: intakeToolsPolicySchema.optional(),
+export const intake_ChatGenerateRequest_Schema = z.object({
+  systemMessage: intake_SystemMessage_Schema.optional(),
+  chatSequence: z.array(intake_ChatMessage_Schema),
+  tools: z.array(intake_ToolDefinition_Schema).optional(),
+  toolsPolicy: intake_ToolsPolicy_Schema.optional(),
 });
 
 
 // Intake Context (Streaming) Schema
 
-export const intakeContextChatStreamSchema = z.object({
+export const intake_ContextChatStream_Schema = z.object({
   method: z.literal('chat-stream'),
   name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
   ref: z.string(),

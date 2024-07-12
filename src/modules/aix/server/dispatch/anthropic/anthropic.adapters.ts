@@ -1,6 +1,6 @@
-import type { IntakeChatGenerateRequest, IntakeModel } from '../../intake/schemas.intake.api';
-import type { IntakeChatMessage } from '../../intake/schemas.intake.parts';
-import type { IntakeToolDefinition, IntakeToolsPolicy } from '../../intake/schemas.intake.tools';
+import type { Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
+import type { Intake_ChatMessage } from '../../intake/schemas.intake.parts';
+import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../intake/schemas.intake.tools';
 
 import { anthropicWire_ImageBlock, AnthropicWire_MessageCreate, anthropicWire_MessageCreate_Schema, anthropicWire_TextBlock, anthropicWire_ToolResultBlock, anthropicWire_ToolUseBlock } from './anthropic.wiretypes';
 
@@ -8,12 +8,10 @@ import { anthropicWire_ImageBlock, AnthropicWire_MessageCreate, anthropicWire_Me
 // configuration
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
-
-// max from https://docs.anthropic.com/en/docs/about-claude/models
-const ANTHROPIC_FALLBACK_MAX_TOKENS = 4096;
+const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropic.com/en/docs/about-claude/models
 
 
-export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate: IntakeChatGenerateRequest, streaming: boolean): AnthropicWire_MessageCreate {
+export function intakeToAnthropicMessageCreate(model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): AnthropicWire_MessageCreate {
 
   // Convert the system message
   const systemMessage: AnthropicWire_MessageCreate['system'] = chatGenerate.systemMessage?.parts.length
@@ -38,7 +36,7 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
 
   // Construct the request payload
   const payload: AnthropicWire_MessageCreate = {
-    max_tokens: model.maxTokens !== undefined ? model.maxTokens : ANTHROPIC_FALLBACK_MAX_TOKENS,
+    max_tokens: model.maxTokens !== undefined ? model.maxTokens : hotFixMissingTokens,
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
@@ -61,7 +59,7 @@ export function intakeToAnthropicMessageCreate(model: IntakeModel, chatGenerate:
 }
 
 
-function* _generateAnthropicMessagesContentBlocks({ parts, role }: IntakeChatMessage): Generator<{
+function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMessage): Generator<{
   role: 'user' | 'assistant',
   content: AnthropicWire_MessageCreate['messages'][number]['content'][number]
 }> {
@@ -130,7 +128,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: IntakeChatMes
   }
 }
 
-function _intakeToAnthropicTools(itds: IntakeToolDefinition[]): NonNullable<AnthropicWire_MessageCreate['tools']> {
+function _intakeToAnthropicTools(itds: Intake_ToolDefinition[]): NonNullable<AnthropicWire_MessageCreate['tools']> {
   return itds.map(itd => {
     switch (itd.type) {
       case 'function_call':
@@ -152,7 +150,7 @@ function _intakeToAnthropicTools(itds: IntakeToolDefinition[]): NonNullable<Anth
   });
 }
 
-function _intakeToAnthropicToolChoice(itp: IntakeToolsPolicy): NonNullable<AnthropicWire_MessageCreate['tool_choice']> {
+function _intakeToAnthropicToolChoice(itp: Intake_ToolsPolicy): NonNullable<AnthropicWire_MessageCreate['tool_choice']> {
   switch (itp.type) {
     case 'auto':
       return { type: 'auto' as const };
