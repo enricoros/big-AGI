@@ -131,7 +131,7 @@ export const aixRouter = createTRPCRouter({
           // ignore events post termination
           if (intakeHandler.intakeTerminated) {
             // warning on, because this is important and a sign of a bug
-            console.warn('/api/llms/stream: Received event after termination:', demuxedItem);
+            console.warn('[chatGenerateContent] Received event after termination:', demuxedItem);
             break; // inner for {}
           }
 
@@ -149,6 +149,7 @@ export const aixRouter = createTRPCRouter({
             const messageAction = dispatch.parser(demuxedItem.data, demuxedItem.name);
             yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
           } catch (error: any) {
+            console.warn('[chatGenerateContent] Error parsing dispatch stream event:', demuxedItem, error);
             yield* intakeHandler.yieldError('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}. Please open a support ticket.`);
             break; // inner for {}, then outer do
           }
