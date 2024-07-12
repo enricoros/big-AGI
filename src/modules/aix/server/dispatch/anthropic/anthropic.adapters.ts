@@ -73,9 +73,9 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
     });
   }
 
-  for (const part of parts) {
-    switch (role) {
-      case 'user':
+  switch (role) {
+    case 'user':
+      for (const part of parts) {
         switch (part.pt) {
           case 'text':
             yield { role: 'user', content: anthropicWire_TextBlock(part.text) };
@@ -90,11 +90,13 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
             yield { role: 'user', content: anthropicWire_TextBlock(`<context>The user is referring to: ${part.replyTo}</context>`) };
             break;
           default:
-            throw new Error(`Unsupported part type in User message: ${part.pt}`);
+            throw new Error(`Unsupported part type in User message: ${(part as any).pt}`);
         }
-        break;
+      }
+      break;
 
-      case 'model':
+    case 'model':
+      for (const part of parts) {
         switch (part.pt) {
           case 'text':
             yield { role: 'assistant', content: anthropicWire_TextBlock(part.text) };
@@ -110,21 +112,23 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
             yield { role: 'assistant', content: anthropicWire_ToolUseBlock(part.id, part.name, part.args) };
             break;
           default:
-            throw new Error(`Unsupported part type in Model message: ${part.pt}`);
+            throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
         }
-        break;
+      }
+      break;
 
-      case 'tool':
+    case 'tool':
+      for (const part of parts) {
         switch (part.pt) {
           case 'tool_response':
             const responseContent = part.response ? [anthropicWire_TextBlock(part.response)] : [];
             yield { role: 'user', content: anthropicWire_ToolResultBlock(part.id, responseContent, part.isError) };
             break;
           default:
-            throw new Error(`Unsupported part type in Tool message: ${part.pt}`);
+            throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
         }
-        break;
-    }
+      }
+      break;
   }
 }
 
