@@ -37,7 +37,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
       llmSupportsAllFragments: !a.outputFragments ? false : a.outputFragments.every(op => supportedTypes.includes(op.part.pt)),
       llmSupportsTextFragments: !a.outputFragments ? false : a.outputFragments.some(op => supportedTextTypes.includes(op.part.pt)),
       llmTokenCountApprox: chatLLM
-        ? estimateTokensForFragments(a.outputFragments, chatLLM, true, 'useLLMAttachmentDrafts')
+        ? estimateTokensForFragments(chatLLM, 'user', a.outputFragments, true, 'useLLMAttachmentDrafts')
         : null,
     }));
 
