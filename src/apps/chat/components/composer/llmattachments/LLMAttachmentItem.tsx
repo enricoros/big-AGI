@@ -84,6 +84,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'pdf-images': PermMediaOutlinedIcon,
   'docx-to-html': DescriptionOutlinedIcon,
   'ego-fragments-inlined': TelegramIcon,
+  'url-image': ImageOutlinedIcon,
   'unhandled': TextureIcon,
 };
 

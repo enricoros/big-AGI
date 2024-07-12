@@ -10,8 +10,9 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
 
-import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
@@ -142,10 +143,19 @@ export function LLMAttachmentMenu(props: {
                 <span style={{ color: 'transparent' }}>🡐</span> {draftInput.altMimeType} · {draftInput.altData?.length.toLocaleString()}
               </Typography>
             )}
+            {!!draftInput?.urlImage && (
+              <Typography level='body-sm'>
+                <span style={{ color: 'transparent' }}>🡐</span> {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.webpDataUrl?.length.toLocaleString()}
+                {' · '}
+                <Link onClick={() => showImageDataURLInNewTab(draftInput?.urlImage?.webpDataUrl || '')}>
+                  open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
+                </Link>
+              </Typography>
+            )}
             {/*<Typography level='body-sm'>*/}
             {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === draft.converterIdx) ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
-            <Box>
+            <Box sx={{ mt: 1 }}>
               {isOutputMissing ? (
                 <Typography level='body-sm'>🡒 ...</Typography>
               ) : (

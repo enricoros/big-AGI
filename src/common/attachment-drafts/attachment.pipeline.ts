@@ -145,12 +145,17 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
     case 'url':
       edit({ label: source.refUrl, ref: source.refUrl });
       try {
-        const page = await callBrowseFetchPage(source.url);
-        const titleObject: Partial<AttachmentDraftInput> | undefined = page.title ? { altMimeType: 'application/vnd.agi.title', altData: page.title } : undefined;
+        const { title, content: { html, markdown, text }, screenshot } = await callBrowseFetchPage(
+          source.url, undefined, { width: 512, height: 512, quality: 98 },
+        );
+        // [special] the page title is in the alt mime
+        const titleObject: Partial<AttachmentDraftInput> | undefined = title ? { altMimeType: 'application/vnd.agi.title', altData: title } : undefined;
+        // [special] attach the screenshot too, if present
+        const screenshotObject: Partial<AttachmentDraftInput> | undefined = screenshot ? { urlImage: screenshot } : undefined;
         edit(
-          page.content.markdown ? { input: { mimeType: 'text/markdown', data: page.content.markdown, dataSize: page.content.markdown.length, ...titleObject } }
-            : page.content.text ? { input: { mimeType: 'text/plain', data: page.content.text, dataSize: page.content.text.length, ...titleObject } }
-              : page.content.html ? { input: { mimeType: 'text/html', data: page.content.html, dataSize: page.content.html.length, ...titleObject } }
+          markdown ? { input: { mimeType: 'text/markdown', data: markdown, dataSize: markdown.length, ...titleObject, ...screenshotObject } }
+            : text ? { input: { mimeType: 'text/plain', data: text, dataSize: text.length, ...titleObject, ...screenshotObject } }
+              : html ? { input: { mimeType: 'text/html', data: html, dataSize: html.length, ...titleObject, ...screenshotObject } }
                 : { inputError: 'No content found at this link' },
         );
       } catch (error: any) {
@@ -309,6 +314,10 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       converters.push({ id: 'text', name: 'As Text' });
       break;
   }
+
+  // URL screenshots, independent of the mime
+  if (input.urlImage)
+    converters.push({ id: 'url-image', name: 'Screenshot', disabled: !input.urlImage.width || !input.urlImage.height });
 
   edit({ converters });
 }
@@ -604,6 +613,27 @@ export async function attachmentPerformConversion(
       title = `Chat Message: ${attachment.label}`;
       for (const contentFragment of input.data) {
         newFragments.push(specialContentPartToDocAttachmentFragment(title, caption, contentFragment.part, refString, docMeta));
+      }
+      break;
+
+    // urlimage
+    case 'url-image':
+      if (!input.urlImage) {
+        console.log('Expected URL image data for url-image, got:', input.urlImage);
+        break;
+      }
+      try {
+        // get the data
+        const { mimeType, webpDataUrl } = input.urlImage;
+        const dataIndex = webpDataUrl.indexOf(',');
+        const base64Data = webpDataUrl.slice(dataIndex + 1);
+        // do not convert, as we're in the optimal webp already
+        // do not resize, as the 512x512 is optimal for most LLM Vendors, an a great tradeoff of quality/size/cost
+        const screenshotImageF = await imageDataToImageAttachmentFragmentViaDBlob(mimeType, base64Data, source, `Screenshot of ${title}`, caption, false, false);
+        if (screenshotImageF)
+          newFragments.push(screenshotImageF);
+      } catch (error) {
+        console.error('Error attaching screenshot URL image:', error);
       }
       break;
 
