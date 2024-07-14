@@ -4,8 +4,8 @@ import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } fr
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import HtmlIcon from '@mui/icons-material/Html';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import LanguageIcon from '@mui/icons-material/Language';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
 import PhotoSizeSelectSmallOutlinedIcon from '@mui/icons-material/PhotoSizeSelectSmallOutlined';
@@ -84,22 +84,26 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PermMediaOutlinedIcon,
   'docx-to-html': DescriptionOutlinedIcon,
-  'url-page-text': LanguageIcon,
-  'url-page-markdown': LanguageIcon,
-  'url-page-html': LanguageIcon,
+  'url-page-text': TextFieldsIcon, // was LanguageIcon
+  'url-page-markdown': CodeIcon, // was LanguageIcon
+  'url-page-html': HtmlIcon, // was LanguageIcon
   'url-page-image': ImageOutlinedIcon,
   'ego-fragments-inlined': TelegramIcon,
   'unhandled': TextureIcon,
 };
 
-function attachmentConverterIcon(attachmentDraft: AttachmentDraft): React.ReactNode {
-  const converter = attachmentDraft.converters.find(c => c.isActive) ?? null;
-  if (converter && converter.id) {
-    const Icon = converterTypeToIconMap[converter.id] ?? null;
-    if (Icon)
-      return <Icon sx={{ width: 24, height: 24 }} />;
-  }
-  return null;
+function attachmentIcon(attachmentDraft: AttachmentDraft): React.ReactNode {
+  const activeConterters = attachmentDraft.converters.filter(c => c.isActive);
+  if (activeConterters.length === 0)
+    return null;
+  // 1+ icons
+  return <Typography sx={{ display: 'flex', gap: 0.5 }}>
+    {/*{activeConterters.some(c => c.id.startsWith('url-page-')) ? <LanguageIcon sx={{ opacity: 0.2, ml: -2.5 }} /> : null}*/}
+    {activeConterters.map(c => {
+      const Icon = converterTypeToIconMap[c.id] ?? null;
+      return Icon ? <Icon key={c.id} sx={{ width: 20, height: 20 }} /> : null;
+    })}
+  </Typography>;
 }
 
 function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
@@ -206,7 +210,7 @@ export function LLMAttachmentItem(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentConverterIcon(draft)}
+                {attachmentIcon(draft)}
                 {isOutputLoading
                   ? <>Converting <CircularProgress color='success' size='sm' /></>
                   : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>

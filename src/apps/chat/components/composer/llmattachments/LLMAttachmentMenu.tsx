@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Checkbox, CircularProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, Checkbox, CircularProgress, LinearProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -151,13 +151,24 @@ export function LLMAttachmentMenu(props: {
       )}
       {/*{!isUnconvertible && <ListDivider sx={{ mb: 0 }} />}*/}
 
-      <MenuItem variant='soft' disabled={!canHaveDetails} onClick={handleToggleShowDetails} sx={{
-        my: 0.75,
-        border: '1px solid',
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderColor: 'divider',
-      }}>
+      {/* Progress indicator (mainly for OCRs of Images, PDFs, and PDF to Images) */}
+      {!!draft.outputsConversionProgress && draft.outputsConversionProgress < 1 && (
+        <LinearProgress determinate value={100 * draft.outputsConversionProgress} sx={{ mx: 1 }} />
+      )}
+
+      <MenuItem
+        variant='soft'
+        color={isOutputMissing ? 'warning' : 'success'}
+        disabled={!canHaveDetails}
+        onClick={handleToggleShowDetails}
+        sx={{
+          my: 0.75,
+          border: '1px solid',
+          borderLeft: 'none',
+          borderRight: 'none',
+          borderColor: 'divider',
+        }}
+      >
         <ListItemDecorator>
           {(showDetails && canHaveDetails) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </ListItemDecorator>
