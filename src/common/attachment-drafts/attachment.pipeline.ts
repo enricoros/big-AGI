@@ -325,7 +325,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
 
   // URL screenshots, independent of the mime
   if (input.urlImage)
-    converters.push({ id: 'url-image', name: 'Page Screenshot', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
+    converters.push({ id: 'url-image', name: 'Add Screenshot', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
 
   edit({ converters });
 }
