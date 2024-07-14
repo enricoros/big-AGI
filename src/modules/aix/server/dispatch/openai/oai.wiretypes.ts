@@ -284,6 +284,34 @@ export const openaiWire_chatCompletionResponse_Schema = z.object({
 
 /// API: Content Generation - Output - Chunks
 
+/* Note: this is like the predicted function call, but with fields optional,
+   as after the first chunk (which carries type and id), the model will just emit
+   some index and function.arguments
+
+   Note2: we found issues with Together, Openrouter, Mistral, and others we don't remember
+   This object's status is really a mess for OpenAI and their downstream 'compatibles'.
+ */
+const openaiWire_ChatCompletionChunkDeltaToolCalls_Schema = z.object({
+  index: z.number() // index is not present in non-streaming calls
+    .optional(), // [Mitral] not present
+
+  type: z.literal('function').optional(), // currently (2024-07-14) only 'function' is supported
+
+  id: z.string().optional(), // id of the tool call
+
+  function: z.object({
+    // [TogetherAI] added .nullable() - exclusive with 'arguments'
+    name: z.string().optional().nullable(),
+    /**
+     * Note that the model does not always generate valid JSON, and may hallucinate parameters
+     * not defined by your function schema.
+     * Validate the arguments in your code before calling your function.
+     * [TogetherAI] added .nullable() - exclusive with 'name'
+     */
+    arguments: z.string().optional().nullable(),
+  }),
+});
+
 const openaiWire_ChatCompletionChunkDelta_Schema = z.object({
   role: z.literal('assistant').optional()
     .nullable(), // [Deepseek] added .nullable()
