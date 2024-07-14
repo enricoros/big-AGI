@@ -413,7 +413,7 @@ export function createDispatchParserOpenAI(): DispatchParser {
 
     // expect: index=0 (n: 1)
     const index = json.choices[0].index;
-    if (index !== 0)
+    if (index !== 0 && index !== undefined /* [OpenRouter->Gemini] */)
       throw new Error(`expected completion index 0, got ${index}`);
 
     // -> Text
