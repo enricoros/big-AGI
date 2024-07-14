@@ -823,7 +823,7 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
 // Perplexity
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
-  // perplexity models
+  // Perplexity models
   {
     id: 'llama-3-sonar-small-32k-chat',
     label: 'Sonar Small Chat',
@@ -853,7 +853,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
   },
 
-  // opensource models
+  // Open-source models
   {
     id: 'llama-3-8b-instruct',
     label: 'Llama 3 8B Instruct',
