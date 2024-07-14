@@ -12,6 +12,7 @@ import { openAPI_SchemaObject_schema } from '../../../intake/schemas.intake.tool
 
 
 export namespace OpenAIWire_ContentParts {
+
   /// Content parts - Input
 
   const TextContentPart_schema = z.object({
@@ -43,7 +44,6 @@ export namespace OpenAIWire_ContentParts {
     return { type: 'image_url', image_url: { url, detail } };
   }
 
-
   /// Content parts - Output
 
   const PredictedFunctionCall_schema = z.object({
@@ -67,6 +67,7 @@ export namespace OpenAIWire_ContentParts {
   export function PredictedFunctionCall(toolCallId: string, functionName: string, functionArgs: string): z.infer<typeof PredictedFunctionCall_schema> {
     return { type: 'function', id: toolCallId, function: { name: functionName, arguments: functionArgs } };
   }
+
 }
 
 export namespace OpenAIWire_Messages {
@@ -112,6 +113,7 @@ export namespace OpenAIWire_Messages {
     AssistantMessage_schema,
     ToolMessage_schema,
   ]);
+
 }
 
 export namespace OpenAIWire_Tools {
@@ -164,7 +166,9 @@ export namespace OpenAIWire_Tools {
       function: z.object({ name: z.string() }),
     }),
   ]);
+
 }
+
 
 //
 // Chat > Create chat completion
@@ -229,7 +233,6 @@ export namespace OpenAIWire_API_Chat_Completions {
 
   });
 
-
   /// Response
 
   const FinishReason_Enum = z.enum([
@@ -280,10 +283,9 @@ export namespace OpenAIWire_API_Chat_Completions {
     // service_tier: z.unknown().optional(),
   });
 
-
   /// Streaming Response
 
-  const UndocumentedError_schema = z.object({
+  const _UndocumentedError_schema = z.object({
     // (undocumented) first experienced on 2023-06-19 on streaming APIs
     message: z.string().optional(),
     type: z.string().optional(),
@@ -291,8 +293,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     code: z.string().nullable().optional(),
   });
 
-  const UndocumentedWarning_schema = z.string();
-
+  const _UndocumentedWarning_schema = z.string();
 
   /* Note: this is like the predicted function call, but with fields optional,
      as after the first chunk (which carries type and id), the model will just emit
@@ -364,11 +365,12 @@ export namespace OpenAIWire_API_Chat_Completions {
     // service_tier: z.unknown().optional(),
 
     // undocumented streaming messages
-    error: UndocumentedError_schema.optional(),
-    warning: UndocumentedWarning_schema.optional(),
+    error: _UndocumentedError_schema.optional(),
+    warning: _UndocumentedWarning_schema.optional(),
   });
 
 }
+
 
 //
 // Images > Create Image
@@ -416,12 +418,12 @@ export namespace OpenAIWire_API_Images_Generations {
 
 }
 
+
 //
 // Models > List Models
 //
 export namespace OpenAIWire_API_Models_List {
 
-  // Model object schema
   export type Model = z.infer<typeof Model_schema>;
   const Model_schema = z.object({
     id: z.string(),
@@ -436,7 +438,6 @@ export namespace OpenAIWire_API_Models_List {
     // context_length: z.number().optional(),
   });
 
-  // List models response schema
   export type Response = z.infer<typeof Response_schema>;
   const Response_schema = z.object({
     object: z.literal('list'),
@@ -445,10 +446,18 @@ export namespace OpenAIWire_API_Models_List {
 
 }
 
+
 //
 // Moderations > Create Moderation
 //
 export namespace OpenAIWire_API_Moderations_Create {
+
+  export type Request = z.infer<typeof Request_schema>;
+  const Request_schema = z.object({
+    // input: z.union([z.string(), z.array(z.string())]),
+    input: z.string(),
+    model: z.enum(['text-moderation-stable', 'text-moderation-latest']).optional(),
+  });
 
   const Category_schema = z.enum([
     'sexual',
@@ -464,13 +473,6 @@ export namespace OpenAIWire_API_Moderations_Create {
     'violence',
   ]);
 
-  export type Request = z.infer<typeof Request_schema>;
-  const Request_schema = z.object({
-    // input: z.union([z.string(), z.array(z.string())]),
-    input: z.string(),
-    model: z.enum(['text-moderation-stable', 'text-moderation-latest']).optional(),
-  });
-
   const Result_schema = z.object({
     flagged: z.boolean(),
     categories: z.record(Category_schema, z.boolean()),
@@ -483,4 +485,5 @@ export namespace OpenAIWire_API_Moderations_Create {
     model: z.string(),
     results: z.array(Result_schema),
   });
+
 }
