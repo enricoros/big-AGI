@@ -7,43 +7,13 @@ import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction
 import { openaiWire_ChatCompletionChunkResponse_Schema } from './openai/oai.wiretypes';
 import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
 
-
-// configuration
-const ISSUE_SYMBOL = '❌';
-const ISSUE_SYMBOL_PROMPT_BLOCKED = '🚫';
-const ISSUE_SYMBOL_RECITATION = '🦜';
-const TEXT_SYMBOL_MAX_TOKENS = '🧱';
-
-
-export type DispatchMessageAction = {
-  op: 'text',
-  text: string;
-} | {
-  op: 'issue';
-  issue: string;
-  symbol: string;
-} | {
-  op: 'parser-close';
-} | {
-  op: 'set';
-  value: {
-    model?: string;
-    stats?: {
-      chatInTokens?: number; // -1: unknown
-      chatOutTokens: number;
-      chatOutRate?: number;
-      timeInner?: number;
-      timeOuter?: number;
-    }
-  };
-};
-
-export type DispatchParser = (eventData: string, eventName?: string) => Generator<DispatchMessageAction>;
+import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './chatGenerate.types';
+import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEXT_SYMBOL_MAX_TOKENS } from './chatGenerate.config';
 
 
 /// Stream Parsers
 
-export function createDispatchParserAnthropicMessage(): DispatchParser {
+export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let responseMessage: AnthropicWire_MessageResponse;
   let hasErrored = false;
   let messageStartTime: number | undefined = undefined;
@@ -52,7 +22,7 @@ export function createDispatchParserAnthropicMessage(): DispatchParser {
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
   //       to the client. It is however building in parallel the responseMessage object, which is not
   //       yet used, but contains token counts, for instance.
-  return function* (eventData: string, eventName?: string): Generator<DispatchMessageAction> {
+  return function* (eventData: string, eventName?: string): Generator<ChatGenerateMessageAction> {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -182,10 +152,10 @@ export function createDispatchParserAnthropicMessage(): DispatchParser {
 }
 
 
-export function createDispatchParserAnthropicNS(): DispatchParser {
+export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   let messageStartTime: number = Date.now();
 
-  return function* (fullData: string): Generator<DispatchMessageAction> {
+  return function* (fullData: string): Generator<ChatGenerateMessageAction> {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
@@ -246,11 +216,11 @@ function explainGeminiSafetyIssues(safetyRatings?: GeminiSafetyRatings): string 
     .join(', ');
 }
 
-export function createDispatchParserGemini(modelName: string): DispatchParser {
+export function createGeminiParser(modelName: string): ChatGenerateParseFunction {
   let hasBegun = false;
 
   // this can throw, it's caught by the caller
-  return function* (eventData): Generator<DispatchMessageAction> {
+  return function* (eventData): Generator<ChatGenerateMessageAction> {
 
     // parse the JSON chunk
     const wireGenerationChunk = JSON.parse(eventData);
@@ -318,10 +288,10 @@ export function createDispatchParserGemini(modelName: string): DispatchParser {
 }
 
 
-export function createDispatchParserOllama(): DispatchParser {
+export function createOllamaParser(): ChatGenerateParseFunction {
   let hasBegun = false;
 
-  return function* (eventData: string): Generator<DispatchMessageAction> {
+  return function* (eventData: string): Generator<ChatGenerateMessageAction> {
 
     // parse the JSON chunk
     let wireJsonChunk: any;
@@ -365,12 +335,12 @@ export function createDispatchParserOllama(): DispatchParser {
 }
 
 
-export function createDispatchParserOpenAI(): DispatchParser {
+export function createOpenAIMessageCreateParser(): ChatGenerateParseFunction {
   let hasBegun = false;
   let hasWarned = false;
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
-  return function* (eventData: string): Generator<DispatchMessageAction> {
+  return function* (eventData: string): Generator<ChatGenerateMessageAction> {
 
     // Throws on malformed event data
     const json = openaiWire_ChatCompletionChunkResponse_Schema.parse(JSON.parse(eventData));

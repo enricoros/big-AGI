@@ -1,7 +1,7 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
-import type { DemuxedEvent } from '../dispatch/chatGenerate/chatGenerate.demuxers';
-import type { DispatchMessageAction } from '../dispatch/chatGenerate/chatGenerate.parsers';
+import type { ChatGenerateMessageAction } from '../dispatch/chatGenerate/chatGenerate.types';
+import type { DemuxedEvent } from '../dispatch/stream.demuxers';
 
 
 // type IntakeProtoObject = IntakeControlProtoObject | IntakeEventProtoObject;
@@ -44,7 +44,7 @@ export class IntakeHandler {
     yield op;
   }
 
-  * yieldDmaOps(parsedEvents: Generator<DispatchMessageAction>, prettyDialect: string) {
+  * yieldDmaOps(parsedEvents: Generator<ChatGenerateMessageAction>, prettyDialect: string) {
     for (const dma of parsedEvents) {
       // console.log('parsed dispatch:', dma);
       // TODO: massively rework this into a good protocol
