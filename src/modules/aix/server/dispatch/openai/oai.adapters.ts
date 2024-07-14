@@ -27,7 +27,26 @@ const hotFixForceImageContentPartDetail: 'auto' | 'low' | 'high' = 'high';
 export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, jsonOutput: boolean, streaming: boolean): OpenaiWire_ChatCompletionRequest {
 
   // Convert the chat messages to the OpenAI 4-Messages format
-  const chatMessages = _intakeToOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence);
+  let chatMessages = _intakeToOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence);
+
+
+  // HotFix: Convert multi-part text messages to single strings for older OpenAI dialects
+  const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
+  if (hotFixSquashMultiPartText) {
+    chatMessages = chatMessages.reduce((acc, message) => {
+      if (message.role === 'user' && Array.isArray(message.content))
+        acc.push({ role: message.role, content: message.content.filter(part => part.type === 'text').map(textPart => textPart.text).join('\n\n\n---\n\n\n') });
+      else
+        acc.push(message);
+      return acc;
+    }, [] as OpenaiWire_ChatCompletionRequest['messages']);
+  }
+
+  // HotFix: Validate function support
+  const hotFixThrowOnFunctionCall = openAIDialect === 'deepseek';
+  if (chatGenerate.tools?.length && hotFixThrowOnFunctionCall)
+    throw new Error('This service does not support function calls');
+
 
   // Construct the request payload
   const payload: OpenaiWire_ChatCompletionRequest = {
@@ -47,6 +66,11 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
     stop: undefined,
     user: undefined,
   };
+
+  // [Azure] remove stream_options (not supported)
+  const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
+  if (hotFixRemoveStreamOptions)
+    delete payload.stream_options;
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = openaiWire_chatCompletionRequest_Schema.safeParse(payload);
