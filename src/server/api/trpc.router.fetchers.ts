@@ -99,12 +99,13 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
   //  - 403 when requesting a localhost URL from a public server, etc..
   if (!response.ok) {
     // try to parse a json or text payload, which frequently contains the error, if present
+    const responseCloneIfJsonFails = response.clone();
     let payload: any | null = await response.json().catch(() => null);
     if (payload === null)
-      payload = await response.text().catch(() => null);
+      payload = await responseCloneIfJsonFails.text().catch(() => null);
 
     // [logging - HTTP error] candidate for the logging system
-    console.error(`[${method}] ${moduleName} error (upstream):`, response.status, response.statusText, payload);
+    console.error(`[${method}] ${moduleName} error (upstream): ${response.status} (${response.statusText}):`, safeErrorString(payload));
 
     // HTTP 400
     throw new TRPCError({
