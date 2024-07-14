@@ -4,7 +4,7 @@ import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/s
 import type { Intake_ChatMessage, Intake_SystemMessage } from '../../../intake/schemas.intake.messages';
 import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
 
-import { OpenAIWire_API, OpenAIWire_ContentParts } from './oai.wiretypes';
+import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts } from './oai.wiretypes';
 
 
 //
@@ -26,7 +26,7 @@ const hotFixForceImageContentPartOpenAIDetail: 'auto' | 'low' | 'high' = 'high';
 const hotFixSquashTextSeparator = '\n\n\n---\n\n\n';
 
 
-type TRequest = OpenAIWire_API.ChatCompletionRequest;
+type TRequest = OpenAIWire_API_Chat_Completions.Request;
 type TRequestMessages = TRequest['messages'];
 
 export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, jsonOutput: boolean, streaming: boolean): TRequest {
@@ -80,7 +80,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
     payload = _fixRemoveStreamOptions(payload);
 
   // Preemptive error detection with server-side payload validation before sending it upstream
-  const validated = OpenAIWire_API.ChatCompletionRequest_schema.safeParse(payload);
+  const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);
   if (!validated.success)
     throw new Error(`Invalid message sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}`);
 
