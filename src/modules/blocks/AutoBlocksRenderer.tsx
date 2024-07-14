@@ -99,7 +99,8 @@ function parseBlocksFromText(text: string, disableParsing: boolean, forceTextDif
     switch (matchType) {
       case 'codeBlock':
         const blockTitle: string = (match[1] || '').trim();
-        const blockCode: string = match[2].trim();
+        // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces, we trim that
+        const blockCode: string = match[2].replace(/\s+$/, '');
         const blockEnd: string = match[3];
         blocks.push({ type: 'codeb', blockTitle, blockCode, complete: blockEnd.startsWith('```') });
         break;
