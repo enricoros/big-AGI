@@ -7,7 +7,7 @@ import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { AnthropicWire_MessageCreate, anthropicWire_MessageCreate_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema } from '~/modules/aix/server/dispatch/anthropic/anthropic.wiretypes';
+import { AnthropicWire_MessageCreate, anthropicWire_MessageCreate_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema } from '~/modules/aix/server/dispatch/chatGenerate/anthropic/anthropic.wiretypes';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';

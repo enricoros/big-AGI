@@ -1,7 +1,7 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
-import type { DemuxedEvent } from '../dispatch/dispatch.demuxers';
-import type { DispatchMessageAction } from '../dispatch/dispatch.parsers';
+import type { DemuxedEvent } from '../dispatch/chatGenerate/chatGenerate.demuxers';
+import type { DispatchMessageAction } from '../dispatch/chatGenerate/chatGenerate.parsers';
 
 
 // type IntakeProtoObject = IntakeControlProtoObject | IntakeEventProtoObject;
