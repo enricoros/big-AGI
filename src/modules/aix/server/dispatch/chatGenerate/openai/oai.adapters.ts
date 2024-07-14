@@ -4,7 +4,8 @@ import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/s
 import type { Intake_ChatMessage, Intake_SystemMessage } from '../../../intake/schemas.intake.messages';
 import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
 
-import { OpenaiWire_ChatCompletionRequest, openaiWire_chatCompletionRequest_Schema, openaiWire_ImageContentPart, openaiWire_PredictedFunctionCall, openaiWire_TextContentPart } from './oai.wiretypes';
+import { OpenAIWire_API, OpenAIWire_ContentParts } from './oai.wiretypes';
+
 
 //
 // OpenAI API - Chat Adapter - Implementation Notes
@@ -25,7 +26,10 @@ const hotFixForceImageContentPartOpenAIDetail: 'auto' | 'low' | 'high' = 'high';
 const hotFixSquashTextSeparator = '\n\n\n---\n\n\n';
 
 
-export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, jsonOutput: boolean, streaming: boolean): OpenaiWire_ChatCompletionRequest {
+type TRequest = OpenAIWire_API.ChatCompletionRequest;
+type TRequestMessages = TRequest['messages'];
+
+export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, jsonOutput: boolean, streaming: boolean): TRequest {
 
   // Dialect incompatibilities -> Hotfixes
   const hotFixAlternateUserAssistantRoles = openAIDialect === 'perplexity';
@@ -54,7 +58,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
 
 
   // Construct the request payload
-  let payload: OpenaiWire_ChatCompletionRequest = {
+  let payload: TRequest = {
     model: model.id,
     messages: chatMessages,
     tools: chatGenerate.tools && _intakeToOpenAITools(chatGenerate.tools),
@@ -76,7 +80,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
     payload = _fixRemoveStreamOptions(payload);
 
   // Preemptive error detection with server-side payload validation before sending it upstream
-  const validated = openaiWire_chatCompletionRequest_Schema.safeParse(payload);
+  const validated = OpenAIWire_API.ChatCompletionRequest_schema.safeParse(payload);
   if (!validated.success)
     throw new Error(`Invalid message sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}`);
 
@@ -86,7 +90,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
   return validated.data;
 }
 
-function _fixAlternateUserAssistantRoles(chatMessages: OpenaiWire_ChatCompletionRequest['messages']): OpenaiWire_ChatCompletionRequest['messages'] {
+function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TRequestMessages {
   return chatMessages.reduce((acc, historyItem) => {
 
     // treat intermediate system messages as user messages
@@ -105,8 +109,8 @@ function _fixAlternateUserAssistantRoles(chatMessages: OpenaiWire_ChatCompletion
           lastItem.content += hotFixSquashTextSeparator + historyItem.content;
         } else if (lastItem.role === 'user') {
           lastItem.content = [
-            ...(Array.isArray(lastItem.content) ? lastItem.content : [openaiWire_TextContentPart(lastItem.content)]),
-            ...(Array.isArray(historyItem.content) ? historyItem.content : historyItem.content ? [openaiWire_TextContentPart(historyItem.content)] : []),
+            ...(Array.isArray(lastItem.content) ? lastItem.content : [OpenAIWire_ContentParts.TextContentPart(lastItem.content)]),
+            ...(Array.isArray(historyItem.content) ? historyItem.content : historyItem.content ? [OpenAIWire_ContentParts.TextContentPart(historyItem.content)] : []),
           ];
         }
         return acc;
@@ -116,19 +120,19 @@ function _fixAlternateUserAssistantRoles(chatMessages: OpenaiWire_ChatCompletion
     // if it's not a case for concatenation, just push the current item to the accumulator
     acc.push(historyItem);
     return acc;
-  }, [] as OpenaiWire_ChatCompletionRequest['messages']);
+  }, [] as TRequestMessages);
 }
 
-function _fixRemoveEmptyMessages(chatMessages: OpenaiWire_ChatCompletionRequest['messages']): OpenaiWire_ChatCompletionRequest['messages'] {
+function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessages {
   return chatMessages.filter(message => message.content !== null && message.content !== '');
 }
 
-function _fixRemoveStreamOptions(payload: OpenaiWire_ChatCompletionRequest): OpenaiWire_ChatCompletionRequest {
+function _fixRemoveStreamOptions(payload: TRequest): TRequest {
   const { stream_options, ...rest } = payload;
   return rest;
 }
 
-function _fixSquashMultiPartText(chatMessages: OpenaiWire_ChatCompletionRequest['messages']): OpenaiWire_ChatCompletionRequest['messages'] {
+function _fixSquashMultiPartText(chatMessages: TRequestMessages): TRequestMessages {
   // Convert multi-part text messages to single strings for older OpenAI dialects
   return chatMessages.reduce((acc, message) => {
     if (message.role === 'user' && Array.isArray(message.content))
@@ -136,7 +140,7 @@ function _fixSquashMultiPartText(chatMessages: OpenaiWire_ChatCompletionRequest[
     else
       acc.push(message);
     return acc;
-  }, [] as OpenaiWire_ChatCompletionRequest['messages']);
+  }, [] as TRequestMessages);
 }
 
 /*function _fixUseDeprecatedFunctionCalls(payload: OpenaiWire_ChatCompletionRequest): OpenaiWire_ChatCompletionRequest {
@@ -155,10 +159,10 @@ function _fixSquashMultiPartText(chatMessages: OpenaiWire_ChatCompletionRequest[
 }*/
 
 
-function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined, chatSequence: Intake_ChatMessage[]): OpenaiWire_ChatCompletionRequest['messages'] {
+function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined, chatSequence: Intake_ChatMessage[]): TRequestMessages {
 
   // Transform the chat messages into OpenAI's format (an array of 'system', 'user', 'assistant', and 'tool' messages)
-  const chatMessages: OpenaiWire_ChatCompletionRequest['messages'] = [];
+  const chatMessages: TRequestMessages = [];
 
   // Convert the system message
   systemMessage?.parts.forEach(({ text }) => {
@@ -186,7 +190,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
                   ? `\`\`\`${part.ref || ''}\n${part.data.text}\n\`\`\`\n`
                   : part.data.text;
 
-              const textContentPart = openaiWire_TextContentPart(textContentString);
+              const textContentPart = OpenAIWire_ContentParts.TextContentPart(textContentString);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -199,7 +203,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
               // create a new OpenAIWire_ImageContentPart
               const { mimeType, base64 } = part;
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
-              const imageContentPart = openaiWire_ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
+              const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -238,7 +242,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
               // create a new OpenAIWire_ImageContentPart of type User
               const { mimeType, base64 } = part;
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
-              const imageContentPart = openaiWire_ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
+              const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -254,7 +258,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
               // - otherwise we'll add an assistant message with null message
 
               // create a new OpenAIWire_ToolCall (specialized to function)
-              const toolCallPart = openaiWire_PredictedFunctionCall(part.id, part.name, JSON.stringify(part.args));
+              const toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, part.name, JSON.stringify(part.args));
 
 
               // Append to existing content[], or new message
@@ -294,7 +298,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
 }
 
 
-function _intakeToOpenAITools(itds: Intake_ToolDefinition[]): NonNullable<OpenaiWire_ChatCompletionRequest['tools']> {
+function _intakeToOpenAITools(itds: Intake_ToolDefinition[]): NonNullable<TRequest['tools']> {
   return itds.map(itd => {
     switch (itd.type) {
       case 'function_call':
@@ -319,7 +323,7 @@ function _intakeToOpenAITools(itds: Intake_ToolDefinition[]): NonNullable<Openai
   });
 }
 
-function _intakeToOpenAIToolChoice(itp: Intake_ToolsPolicy): NonNullable<OpenaiWire_ChatCompletionRequest['tool_choice']> {
+function _intakeToOpenAIToolChoice(itp: Intake_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
   // NOTE: OpenAI has an additional policy 'none', which we don't have as it behaves like passing no tools at all.
   //       Passing no tools is mandated instead of 'none'.
   switch (itp.type) {
