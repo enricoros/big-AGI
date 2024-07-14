@@ -2,7 +2,7 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
-import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
+import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
 import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';

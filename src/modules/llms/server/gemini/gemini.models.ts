@@ -1,4 +1,4 @@
-import type { GeminiModelSchema } from '~/modules/aix/server/dispatch/chatGenerate/gemini/gemini.wiretypes';
+import type { GeminiModelSchema } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import type { ModelDescriptionSchema } from '../llm.server.types';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 

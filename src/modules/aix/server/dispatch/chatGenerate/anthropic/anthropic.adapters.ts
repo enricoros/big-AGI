@@ -2,7 +2,7 @@ import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/s
 import type { Intake_ChatMessage } from '../../../intake/schemas.intake.messages';
 import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
 
-import { anthropicWire_ImageBlock, AnthropicWire_MessageCreate, anthropicWire_MessageCreate_Schema, anthropicWire_TextBlock, anthropicWire_ToolResultBlock, anthropicWire_ToolUseBlock } from './anthropic.wiretypes';
+import { anthropicWire_ImageBlock, AnthropicWire_MessageCreate, anthropicWire_MessageCreate_Schema, anthropicWire_TextBlock, anthropicWire_ToolResultBlock, anthropicWire_ToolUseBlock } from '../../wiretypes/anthropic.wiretypes';
 
 
 // configuration

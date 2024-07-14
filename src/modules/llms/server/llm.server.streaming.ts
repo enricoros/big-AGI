@@ -6,20 +6,20 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetch
 
 
 // Anthropic server imports
-import { AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema } from '~/modules/aix/server/dispatch/chatGenerate/anthropic/anthropic.wiretypes';
+import { AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema } from '~/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
 
 // Gemini server imports
 import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } from './gemini/gemini.router';
-import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from '~/modules/aix/server/dispatch/chatGenerate/gemini/gemini.wiretypes';
+import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 // Ollama server imports
-import { wireOllamaChunkedOutputSchema } from '~/modules/aix/server/dispatch/chatGenerate/ollama/ollama.wiretypes';
+import { wireOllamaChunkedOutputSchema } from '~/modules/aix/server/dispatch/wiretypes/ollama.wiretypes';
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
 
 // OpenAI server imports
 import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
-import { OpenAIWire_API_Chat_Completions } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
+import { OpenAIWire_API_Chat_Completions } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 
 import { llmsStreamingContextSchema } from './llm.server.types';

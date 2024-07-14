@@ -2,13 +2,13 @@ import { z } from 'zod';
 
 import { safeErrorString } from '~/server/wire';
 
-import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from './anthropic/anthropic.wiretypes';
-import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from './gemini/gemini.wiretypes';
-import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
+import { OpenAIWire_API_Chat_Completions } from '../wiretypes/openai.wiretypes';
+import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from '../wiretypes/anthropic.wiretypes';
+import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from '../wiretypes/gemini.wiretypes';
+import { wireOllamaChunkedOutputSchema } from '../wiretypes/ollama.wiretypes';
 
 import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './chatGenerate.types';
 import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEXT_SYMBOL_MAX_TOKENS } from './chatGenerate.config';
-import { OpenAIWire_API_Chat_Completions } from './openai/oai.wiretypes';
 
 
 /// Stream Parsers

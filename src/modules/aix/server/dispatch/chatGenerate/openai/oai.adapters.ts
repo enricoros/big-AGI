@@ -4,7 +4,7 @@ import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/s
 import type { Intake_ChatMessage, Intake_SystemMessage } from '../../../intake/schemas.intake.messages';
 import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
 
-import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts } from './oai.wiretypes';
+import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts } from '../../wiretypes/openai.wiretypes';
 
 
 //
