@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 
 // Export types
-export type Intake_ToolDefinition = z.infer<typeof intake_ToolDefinition_Schema>;
-export type Intake_ToolsPolicy = z.infer<typeof intake_ToolsPolicy_Schema>;
+export type Intake_ToolDefinition = z.infer<typeof intake_ToolDefinition_schema>;
+export type Intake_ToolsPolicy = z.infer<typeof intake_ToolsPolicy_schema>;
 
 
 // Tools > Function Call
@@ -18,7 +18,7 @@ export type Intake_ToolsPolicy = z.infer<typeof intake_ToolsPolicy_Schema>;
  *    of the properties for our function calling use case.
  *
  */
-export const openAPI_SchemaObject_Schema = z.object({
+export const openAPI_SchemaObject_schema = z.object({
   // allowed data types - https://ai.google.dev/api/rest/v1beta/cachedContents#Type
   type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
 
@@ -53,12 +53,12 @@ export const openAPI_SchemaObject_Schema = z.object({
 });
 
 // an object-only subset of the above, which is the JSON object owner of the parameters
-const intake_FunctionCallInputSchema_Schema = z.object({
-  properties: z.record(openAPI_SchemaObject_Schema),
+const intake_FunctionCallInputSchema_schema = z.object({
+  properties: z.record(openAPI_SchemaObject_schema),
   required: z.array(z.string()).optional(),
 });
 
-const intake_FunctionCall_Schema = z.object({
+const intake_FunctionCall_schema = z.object({
   /**
    * The name of the function to call. Up to 64 characters long, and can only contain letters, numbers, underscores, and hyphens.
    */
@@ -75,19 +75,19 @@ const intake_FunctionCall_Schema = z.object({
    *  A JSON Schema object defining the expected parameters for the function call.
    *  (OpenAI,Google: parameters, Anthropic: input_schema)
    */
-  input_schema: intake_FunctionCallInputSchema_Schema.optional(),
+  input_schema: intake_FunctionCallInputSchema_schema.optional(),
 });
 
-const intake_ToolFunctionCallDefinition_Schema = z.object({
+const intake_ToolFunctionCallDefinition_schema = z.object({
   type: z.literal('function_call'),
-  function_call: intake_FunctionCall_Schema,
+  function_call: intake_FunctionCall_schema,
   // domain: z.enum(['server', 'client']).optional(),
 });
 
 
 // Tools - Gemini Code Interpreter
 
-const intake_ToolGeminiCodeInterpreter_Schema = z.object({
+const intake_ToolGeminiCodeInterpreter_schema = z.object({
   type: z.literal('gemini_code_interpreter'),
 });
 
@@ -102,7 +102,7 @@ const intake_ToolGeminiCodeInterpreter_Schema = z.object({
  *
  * In the future we can have multiple preprocessors, such as data retrieval and generation (rag), etc.
  */
-const intake_ToolPreprocessor_Schema = z.object({
+const intake_ToolPreprocessor_schema = z.object({
   type: z.literal('preprocessor'),
   pname: z.literal('anthropic_artifacts'),
 });
@@ -135,10 +135,10 @@ const intake_ToolPreprocessor_Schema = z.object({
  *  { type: 'preprocessor', pname: 'anthropic_artifacts' },
  * ]
  */
-export const intake_ToolDefinition_Schema = z.discriminatedUnion('type', [
-  intake_ToolFunctionCallDefinition_Schema,
-  intake_ToolGeminiCodeInterpreter_Schema,
-  intake_ToolPreprocessor_Schema,
+export const intake_ToolDefinition_schema = z.discriminatedUnion('type', [
+  intake_ToolFunctionCallDefinition_schema,
+  intake_ToolGeminiCodeInterpreter_schema,
+  intake_ToolPreprocessor_schema,
 ]);
 
 /**
@@ -148,7 +148,7 @@ export const intake_ToolDefinition_Schema = z.discriminatedUnion('type', [
  * - function_call: must use a specific Function Tool
  * - none: same as not giving the model any tool [REMOVED - just give no tools]
  */
-export const intake_ToolsPolicy_Schema = z.discriminatedUnion('type', [
+export const intake_ToolsPolicy_schema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('auto') }),
   z.object({ type: z.literal('any') /*, parallel: z.boolean()*/ }),
   z.object({ type: z.literal('function_call'), function_call: z.object({ name: z.string() }) }),

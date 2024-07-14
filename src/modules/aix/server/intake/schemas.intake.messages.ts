@@ -2,26 +2,26 @@ import { z } from 'zod';
 
 
 // Export types
-export type Intake_InlineImagePart = z.infer<typeof intake_InlineImagePart_Schema>;
-export type Intake_MetaReplyToPart = z.infer<typeof intake_MetaReplyToPart_Schema>;
-export type Intake_ChatMessage = z.infer<typeof intake_ChatMessage_Schema>;
-export type Intake_SystemMessage = z.infer<typeof intake_SystemMessage_Schema>;
+export type Intake_InlineImagePart = z.infer<typeof intake_InlineImagePart_schema>;
+export type Intake_MetaReplyToPart = z.infer<typeof intake_MetaReplyToPart_schema>;
+export type Intake_ChatMessage = z.infer<typeof intake_ChatMessage_schema>;
+export type Intake_SystemMessage = z.infer<typeof intake_SystemMessage_schema>;
 
 
 // Parts: mirror the Typescript definitions from the frontend-side
 
-const dMessage_DataInline_Schema = z.object({
+const dMessage_DataInline_schema = z.object({
   idt: z.literal('text'),
   text: z.string(),
   mimeType: z.string().optional(),
 });
 
-const dMessage_TextPart_Schema = z.object({
+const dMessage_TextPart_schema = z.object({
   pt: z.literal('text'),
   text: z.string(),
 });
 
-const dMessage_DocPart_Schema = z.object({
+const dMessage_DocPart_schema = z.object({
   pt: z.literal('doc'),
 
   type: z.enum([
@@ -32,7 +32,7 @@ const dMessage_DocPart_Schema = z.object({
     'text/plain',
   ]),
 
-  data: dMessage_DataInline_Schema,
+  data: dMessage_DataInline_schema,
 
   // id of the document, to be known to the model
   ref: z.string(),
@@ -40,14 +40,14 @@ const dMessage_DocPart_Schema = z.object({
   // meta: ignored...
 });
 
-const dMessage_ToolCallPart_Schema = z.object({
+const dMessage_ToolCallPart_schema = z.object({
   pt: z.literal('tool_call'),
   id: z.string(),
   name: z.string(),
   args: z.record(z.any()).optional(), // flat key-value pairs object
 });
 
-const dMessage_ToolResponsePart_Schema = z.object({
+const dMessage_ToolResponsePart_schema = z.object({
   pt: z.literal('tool_response'),
   id: z.string(),
   name: z.string(),
@@ -56,7 +56,7 @@ const dMessage_ToolResponsePart_Schema = z.object({
 });
 
 
-const intake_InlineImagePart_Schema = z.object({
+const intake_InlineImagePart_schema = z.object({
   pt: z.literal('inline_image'),
   /**
    * The MIME type of the image.
@@ -75,7 +75,7 @@ const intakeInlineAudioPartSchema = z.object({
   base64: z.string(),
 });*/
 
-const intake_MetaReplyToPart_Schema = z.object({
+const intake_MetaReplyToPart_schema = z.object({
   pt: z.literal('meta_reply_to'),
   replyTo: z.string(),
 });
@@ -83,17 +83,17 @@ const intake_MetaReplyToPart_Schema = z.object({
 
 // Messagges
 
-export const intake_SystemMessage_Schema = z.object({
-  parts: z.array(dMessage_TextPart_Schema),
+export const intake_SystemMessage_schema = z.object({
+  parts: z.array(dMessage_TextPart_schema),
 });
 
-export const intake_ChatMessage_Schema = z.discriminatedUnion('role', [
+export const intake_ChatMessage_schema = z.discriminatedUnion('role', [
 
   // User
   z.object({
     role: z.literal('user'),
     parts: z.array(z.discriminatedUnion('pt', [
-      dMessage_TextPart_Schema, intake_InlineImagePart_Schema, dMessage_DocPart_Schema, intake_MetaReplyToPart_Schema,
+      dMessage_TextPart_schema, intake_InlineImagePart_schema, dMessage_DocPart_schema, intake_MetaReplyToPart_schema,
     ])),
   }),
 
@@ -101,14 +101,14 @@ export const intake_ChatMessage_Schema = z.discriminatedUnion('role', [
   z.object({
     role: z.literal('model'),
     parts: z.array(z.discriminatedUnion('pt', [
-      dMessage_TextPart_Schema, intake_InlineImagePart_Schema, dMessage_ToolCallPart_Schema,
+      dMessage_TextPart_schema, intake_InlineImagePart_schema, dMessage_ToolCallPart_schema,
     ])),
   }),
 
   // Tool
   z.object({
     role: z.literal('tool'),
-    parts: z.array(dMessage_ToolResponsePart_Schema),
+    parts: z.array(dMessage_ToolResponsePart_schema),
   }),
 
 ]);
