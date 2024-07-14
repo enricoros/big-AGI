@@ -75,9 +75,13 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     if (!defined?.converters.length)
       return;
 
-    // 3. Select the first (non-disabled) Converter
-    const firstEnabledIndex = defined.converters.findIndex(_c => !_c.disabled);
-    await toggleAttachmentDraftConverterAndConvert(attachmentDraftId, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
+    // 3. Select the already active, or the first (non-disabled) Converter
+    let cIndex = defined.converters.findIndex(_c => _c.isActive);
+    if (cIndex === -1)
+      defined.converters.findIndex(_c => !_c.disabled);
+    if (cIndex === -1)
+      cIndex = 0;
+    await toggleAttachmentDraftConverterAndConvert(attachmentDraftId, cIndex);
   },
 
   removeAllAttachmentDrafts: () =>

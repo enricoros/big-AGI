@@ -1,7 +1,7 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DMessageAttachmentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageAttachmentFragment, DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 
 
@@ -54,11 +54,7 @@ export type AttachmentDraftSource = {
   media: 'ego';
   method: 'ego-fragments';
   label: string;
-  // this is overfit to fragments for now
-  fragments: DMessageContentFragment[];
-  refConversationTitle: string;
-  refConversationId: DConversationId;
-  refMessageId: DMessageId;
+  egoFragmentsInputData: DraftEgoFragmentsInputData;
 };
 
 export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file-open' | 'clipboard-read' | AttachmentDraftSourceOriginDTO;
@@ -68,10 +64,13 @@ export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
 // draft input
 
+export const draftInputMimeEgoFragments = 'application/vnd.agi.ego.fragments';
+export const draftInputMimeWebpage = 'application/vnd.agi.webpage';
+
 export type AttachmentDraftInput = {
-  mimeType: string; // Original MIME type of the file
-  data: string | ArrayBuffer | DMessageContentFragment[]; // The original data of the attachment
-  dataSize: number; // Size of the original data in bytes
+  mimeType: string; // Original MIME type of the file, or application specific type
+  data: string | ArrayBuffer | DraftWebInputData | DraftEgoFragmentsInputData; // The original data of the attachment
+  dataSize?: number; // Size of the original data (for plain/simple 1:1 mime)
   altMimeType?: string; // Alternative MIME type for the input
   altData?: string; // Alternative data for the input
   // [media:URL] special for download inputs
@@ -83,6 +82,20 @@ export type AttachmentDraftInput = {
   };
   // preview?: AttachmentPreview; // Preview of the input
 };
+
+export type DraftWebInputData = {
+  pageText?: string;
+  pageMarkdown?: string;
+  pageCleanedHtml?: string;
+  pageTitle?: string;
+}
+
+export type DraftEgoFragmentsInputData = {
+  fragments: DMessageFragment[];
+  conversationTitle: string;
+  conversationId: DConversationId;
+  messageId: DMessageId;
+}
 
 
 // draft converter
@@ -109,8 +122,8 @@ export type AttachmentDraftConverterType =
   | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-default'
   | 'pdf-text' | 'pdf-images'
   | 'docx-to-html'
+  | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-image'
   | 'ego-fragments-inlined'
-  | 'url-image'
   | 'unhandled';
 
 

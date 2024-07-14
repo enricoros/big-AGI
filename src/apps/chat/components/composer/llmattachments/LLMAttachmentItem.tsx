@@ -5,6 +5,7 @@ import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import LanguageIcon from '@mui/icons-material/Language';
 import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import PhotoSizeSelectLargeOutlinedIcon from '@mui/icons-material/PhotoSizeSelectLargeOutlined';
 import PhotoSizeSelectSmallOutlinedIcon from '@mui/icons-material/PhotoSizeSelectSmallOutlined';
@@ -83,8 +84,11 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PermMediaOutlinedIcon,
   'docx-to-html': DescriptionOutlinedIcon,
+  'url-page-text': LanguageIcon,
+  'url-page-markdown': LanguageIcon,
+  'url-page-html': LanguageIcon,
+  'url-page-image': ImageOutlinedIcon,
   'ego-fragments-inlined': TelegramIcon,
-  'url-image': ImageOutlinedIcon,
   'unhandled': TextureIcon,
 };
 
