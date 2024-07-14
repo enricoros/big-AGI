@@ -2,7 +2,7 @@ import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
-import type { GeminiBlockSafetyLevel } from '~/modules/aix/server/dispatch/chatGenerate/gemini/gemini.wiretypes';
+import type { GeminiBlockSafetyLevel } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import type { IModelVendor } from '../IModelVendor';
 import type { VChatContextRef, VChatGenerateContextName, VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';

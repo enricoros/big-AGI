@@ -12,7 +12,7 @@ import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModels
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
-import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelEnum, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from '~/modules/aix/server/dispatch/chatGenerate/gemini/gemini.wiretypes';
+import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelEnum, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from '~/modules/llms/server/gemini/gemini.models';
 
 

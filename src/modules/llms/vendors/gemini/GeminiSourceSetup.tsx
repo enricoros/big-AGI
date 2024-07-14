@@ -11,7 +11,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import type { DModelSourceId } from '../../store-llms';
-import type { GeminiBlockSafetyLevel } from '~/modules/aix/server/dispatch/chatGenerate/gemini/gemini.wiretypes';
+import type { GeminiBlockSafetyLevel } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
