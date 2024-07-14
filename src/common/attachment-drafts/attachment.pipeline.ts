@@ -123,7 +123,6 @@ export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft
     inputError: null,
     input: undefined,
     converters: [],
-    converterIdx: null,
     outputsConverting: false,
     outputFragments: [],
     // metadata: {},
@@ -266,13 +265,22 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
+      const isFromURL = input.altMimeType === 'application/vnd.agi.title';
 
       // p1: Tables
       if (textOriginHtml && isHtmlTable)
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      converters.push({ id: 'text', name: 'Text' });
+      if (isFromURL) {
+        converters.push({
+          id: 'text', name:
+            input.mimeType === 'text/markdown' ? 'Markdown'
+              : input.mimeType === 'text/html' ? 'Clean HTML'
+                : 'Text',
+        });
+      } else
+        converters.push({ id: 'text', name: 'Text' });
 
       // p3: Html
       if (textOriginHtml) {
@@ -317,7 +325,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
 
   // URL screenshots, independent of the mime
   if (input.urlImage)
-    converters.push({ id: 'url-image', name: 'Screenshot', disabled: !input.urlImage.width || !input.urlImage.height });
+    converters.push({ id: 'url-image', name: 'Page Screenshot', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
 
   edit({ converters });
 }
@@ -328,7 +336,7 @@ function lowCollisionRefString(prefix: string, digits: number): string {
 }
 
 
-function prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterName: string): {
+function prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterNameForTextConversion: string): {
   title: string;
   caption: string;
   refString: string;
@@ -389,7 +397,7 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
     case 'text':
       const textRef = lowCollisionRefString('doc', 6);
       return {
-        title: converterName || 'Text',
+        title: converterNameForTextConversion || 'Text',
         caption: source.method === 'drop' ? 'Dropped' : 'Pasted',
         refString: humanReadableHyphenated(textRef),
       };
@@ -410,236 +418,233 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
  * Converts the input of an AttachmentDraft object based on the selected converter.
  *
  * @param {Readonly<AttachmentDraft>} attachment - The AttachmentDraft object to convert.
- * @param {number | null} converterIdx - The index of the selected converter.
  * @param edit - A function to edit the AttachmentDraft object.
  * @param replaceOutputFragments - A function to replace the output fragments of the AttachmentDraft object.
  */
 export async function attachmentPerformConversion(
   attachment: Readonly<AttachmentDraft>,
-  converterIdx: number | null,
   edit: AttachmentsDraftsStore['_editAttachment'],
   replaceOutputFragments: AttachmentsDraftsStore['_replaceAttachmentOutputFragments'],
 ) {
 
-  // set converter index
-  converterIdx = (converterIdx !== null && converterIdx >= 0 && converterIdx < attachment.converters.length) ? converterIdx : null;
-  edit(attachment.id, {
-    converterIdx: converterIdx,
-  });
-
   // clear outputs
-  replaceOutputFragments(attachment.id, []);
+  // NOTE: disabled, to keep the old conversions while converting to the new - keeps the UI less 'flashing'
+  // replaceOutputFragments(attachment.id, []);
 
   // get converter
   const { input, source } = attachment;
-  const converter = converterIdx !== null ? attachment.converters[converterIdx] : null;
-  if (!converter || !input)
+  if (!input)
     return;
 
   edit(attachment.id, {
     outputsConverting: true,
   });
 
-  // prepare the doc data
-  let { title, caption, refString, docMeta } = prepareDocData(source, input, converter.name);
 
   // apply converter to the input
   const newFragments: DMessageAttachmentFragment[] = [];
-  switch (converter.id) {
+  for (const converter of attachment.converters) {
+    if (!converter.isActive) continue;
 
-    // text as-is
-    case 'text':
-      const textData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-      newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textData, refString, docMeta));
-      break;
+    // prepare the doc data
+    let { title, caption, refString, docMeta } = prepareDocData(source, input, converter.name);
 
-    // html as-is
-    case 'rich-text':
-      // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
-      //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
-      const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
-      newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', richTextData, refString, docMeta));
-      break;
+    switch (converter.id) {
 
-    // html cleaned
-    case 'rich-text-cleaner':
-      const cleanerHtml = (input.altData || '')
-        // remove class and style attributes
-        .replace(/<[^>]+>/g, (tag) =>
-          tag.replace(/ class="[^"]*"/g, '').replace(/ style="[^"]*"/g, ''),
-        )
-        // remove svg elements
-        .replace(/<svg[^>]*>.*?<\/svg>/g, '');
-      const cleanedHtmlData = createDMessageDataInlineText(cleanerHtml, 'text/html');
-      newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', cleanedHtmlData, refString, docMeta));
-      break;
-
-    // html to markdown table
-    case 'rich-text-table':
-      let tableData: DMessageDataInline;
-      try {
-        const mdTable = htmlTableToMarkdown(input.altData!, false);
-        tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
-      } catch (error) {
-        // fallback to text/plain
-        tableData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-      }
-      newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', tableData, refString, docMeta));
-      break;
-
-    // image resized (default mime/quality, openai-high-res)
-    case 'image-resized-high':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
-        return null;
-      }
-      const imageHighF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-high-res');
-      if (imageHighF)
-        newFragments.push(imageHighF);
-      break;
-
-    // image resized (default mime/quality, openai-low-res)
-    case 'image-resized-low':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
-        return null;
-      }
-      const imageLowF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-low-res');
-      if (imageLowF)
-        newFragments.push(imageLowF);
-      break;
-
-    // image as-is
-    case 'image-original':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for image-original, got:', typeof input.data);
-        return null;
-      }
-      const imageOrigF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, false);
-      if (imageOrigF)
-        newFragments.push(imageOrigF);
-      break;
-
-    // image converted (potentially unsupported mime)
-    case 'image-to-default':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for image-to-default, got:', typeof input.data);
-        return null;
-      }
-      const imageCastF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
-      if (imageCastF)
-        newFragments.push(imageCastF);
-      break;
-
-    // image to text
-    case 'image-ocr':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for Image OCR converter, got:', typeof input.data);
+      // text as-is
+      case 'text':
+        const textData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textData, refString, docMeta));
         break;
-      }
-      try {
-        const { recognize } = await import('tesseract.js');
-        const buffer = Buffer.from(input.data);
-        const result = await recognize(buffer, undefined, {
-          errorHandler: e => console.error(e),
-          logger: (message) => {
-            if (message.status === 'recognizing text')
-              console.log('OCR progress:', message.progress);
-          },
-        });
-        const imageText = result.data.text;
-        newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(imageText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'image' }));
-      } catch (error) {
-        console.error(error);
-      }
-      break;
 
-
-    // pdf to text
-    case 'pdf-text':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for PDF text converter, got:', typeof input.data);
+      // html as-is
+      case 'rich-text':
+        // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
+        //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
+        const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', richTextData, refString, docMeta));
         break;
-      }
-      // duplicate the ArrayBuffer to avoid mutation
-      const pdfData = new Uint8Array(input.data.slice(0));
-      const pdfText = await pdfToText(pdfData);
-      newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
-      break;
 
-    // pdf to images
-    case 'pdf-images':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for PDF images converter, got:', typeof input.data);
+      // html cleaned
+      case 'rich-text-cleaner':
+        const cleanerHtml = (input.altData || '')
+          // remove class and style attributes
+          .replace(/<[^>]+>/g, (tag) =>
+            tag.replace(/ class="[^"]*"/g, '').replace(/ style="[^"]*"/g, ''),
+          )
+          // remove svg elements
+          .replace(/<svg[^>]*>.*?<\/svg>/g, '');
+        const cleanedHtmlData = createDMessageDataInlineText(cleanerHtml, 'text/html');
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', cleanedHtmlData, refString, docMeta));
         break;
-      }
-      // duplicate the ArrayBuffer to avoid mutation
-      const pdfData2 = new Uint8Array(input.data.slice(0));
-      try {
-        const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
-        for (const pdfPageImage of imageDataURLs) {
-          const pdfPageImageF = await imageDataToImageAttachmentFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `${title} (pg. ${newFragments.length + 1})`, caption, false, false);
-          if (pdfPageImageF)
-            newFragments.push(pdfPageImageF);
+
+      // html to markdown table
+      case 'rich-text-table':
+        let tableData: DMessageDataInline;
+        try {
+          const mdTable = htmlTableToMarkdown(input.altData!, false);
+          tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
+        } catch (error) {
+          // fallback to text/plain
+          tableData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
         }
-      } catch (error) {
-        console.error('Error converting PDF to images:', error);
-      }
-      break;
-
-
-    // docx to markdown
-    case 'docx-to-html':
-      if (!(input.data instanceof ArrayBuffer)) {
-        console.log('Expected ArrayBuffer for DOCX converter, got:', typeof input.data);
+        newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', tableData, refString, docMeta));
         break;
-      }
-      try {
-        const { convertDocxToHTML } = await import('./file-converters/DocxToMarkdown');
-        const { html } = await convertDocxToHTML(input.data);
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', createDMessageDataInlineText(html, 'text/html'), refString, docMeta));
-      } catch (error) {
-        console.error('Error in DOCX to Markdown conversion:', error);
-      }
-      break;
 
-
-    // self: message
-    case 'ego-fragments-inlined':
-      if (!Array.isArray(input.data)) {
-        console.log('Expected DMessageContentFragment[] for ego-fragments-inlined, got:', typeof input.data);
+      // image resized (default mime/quality, openai-high-res)
+      case 'image-resized-high':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
+          return null;
+        }
+        const imageHighF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-high-res');
+        if (imageHighF)
+          newFragments.push(imageHighF);
         break;
-      }
-      title = `Chat Message: ${attachment.label}`;
-      for (const contentFragment of input.data) {
-        newFragments.push(specialContentPartToDocAttachmentFragment(title, caption, contentFragment.part, refString, docMeta));
-      }
-      break;
 
-    // urlimage
-    case 'url-image':
-      if (!input.urlImage) {
-        console.log('Expected URL image data for url-image, got:', input.urlImage);
+      // image resized (default mime/quality, openai-low-res)
+      case 'image-resized-low':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for image-resized, got:', typeof input.data);
+          return null;
+        }
+        const imageLowF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, 'openai-low-res');
+        if (imageLowF)
+          newFragments.push(imageLowF);
         break;
-      }
-      try {
-        // get the data
-        const { mimeType, webpDataUrl } = input.urlImage;
-        const dataIndex = webpDataUrl.indexOf(',');
-        const base64Data = webpDataUrl.slice(dataIndex + 1);
-        // do not convert, as we're in the optimal webp already
-        // do not resize, as the 512x512 is optimal for most LLM Vendors, an a great tradeoff of quality/size/cost
-        const screenshotImageF = await imageDataToImageAttachmentFragmentViaDBlob(mimeType, base64Data, source, `Screenshot of ${title}`, caption, false, false);
-        if (screenshotImageF)
-          newFragments.push(screenshotImageF);
-      } catch (error) {
-        console.error('Error attaching screenshot URL image:', error);
-      }
-      break;
 
-    case 'unhandled':
-      // force the user to explicitly select 'as text' if they want to proceed
-      break;
+      // image as-is
+      case 'image-original':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for image-original, got:', typeof input.data);
+          return null;
+        }
+        const imageOrigF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, false, false);
+        if (imageOrigF)
+          newFragments.push(imageOrigF);
+        break;
+
+      // image converted (potentially unsupported mime)
+      case 'image-to-default':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for image-to-default, got:', typeof input.data);
+          return null;
+        }
+        const imageCastF = await imageDataToImageAttachmentFragmentViaDBlob(input.mimeType, input.data, source, title, caption, DEFAULT_ADRAFT_IMAGE_MIMETYPE, false);
+        if (imageCastF)
+          newFragments.push(imageCastF);
+        break;
+
+      // image to text
+      case 'image-ocr':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for Image OCR converter, got:', typeof input.data);
+          break;
+        }
+        try {
+          const { recognize } = await import('tesseract.js');
+          const buffer = Buffer.from(input.data);
+          const result = await recognize(buffer, undefined, {
+            errorHandler: e => console.error(e),
+            logger: (message) => {
+              if (message.status === 'recognizing text')
+                console.log('OCR progress:', message.progress);
+            },
+          });
+          const imageText = result.data.text;
+          newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(imageText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'image' }));
+        } catch (error) {
+          console.error(error);
+        }
+        break;
+
+
+      // pdf to text
+      case 'pdf-text':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for PDF text converter, got:', typeof input.data);
+          break;
+        }
+        // duplicate the ArrayBuffer to avoid mutation
+        const pdfData = new Uint8Array(input.data.slice(0));
+        const pdfText = await pdfToText(pdfData);
+        newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
+        break;
+
+      // pdf to images
+      case 'pdf-images':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for PDF images converter, got:', typeof input.data);
+          break;
+        }
+        // duplicate the ArrayBuffer to avoid mutation
+        const pdfData2 = new Uint8Array(input.data.slice(0));
+        try {
+          const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
+          for (const pdfPageImage of imageDataURLs) {
+            const pdfPageImageF = await imageDataToImageAttachmentFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `${title} (pg. ${newFragments.length + 1})`, caption, false, false);
+            if (pdfPageImageF)
+              newFragments.push(pdfPageImageF);
+          }
+        } catch (error) {
+          console.error('Error converting PDF to images:', error);
+        }
+        break;
+
+
+      // docx to markdown
+      case 'docx-to-html':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for DOCX converter, got:', typeof input.data);
+          break;
+        }
+        try {
+          const { convertDocxToHTML } = await import('./file-converters/DocxToMarkdown');
+          const { html } = await convertDocxToHTML(input.data);
+          newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', createDMessageDataInlineText(html, 'text/html'), refString, docMeta));
+        } catch (error) {
+          console.error('Error in DOCX to Markdown conversion:', error);
+        }
+        break;
+
+
+      // self: message
+      case 'ego-fragments-inlined':
+        if (!Array.isArray(input.data)) {
+          console.log('Expected DMessageContentFragment[] for ego-fragments-inlined, got:', typeof input.data);
+          break;
+        }
+        title = `Chat Message: ${attachment.label}`;
+        for (const contentFragment of input.data) {
+          newFragments.push(specialContentPartToDocAttachmentFragment(title, caption, contentFragment.part, refString, docMeta));
+        }
+        break;
+
+      // urlimage
+      case 'url-image':
+        if (!input.urlImage) {
+          console.log('Expected URL image data for url-image, got:', input.urlImage);
+          break;
+        }
+        try {
+          // get the data
+          const { mimeType, webpDataUrl } = input.urlImage;
+          const dataIndex = webpDataUrl.indexOf(',');
+          const base64Data = webpDataUrl.slice(dataIndex + 1);
+          // do not convert, as we're in the optimal webp already
+          // do not resize, as the 512x512 is optimal for most LLM Vendors, an a great tradeoff of quality/size/cost
+          const screenshotImageF = await imageDataToImageAttachmentFragmentViaDBlob(mimeType, base64Data, source, `Screenshot of ${title}`, caption, false, false);
+          if (screenshotImageF)
+            newFragments.push(screenshotImageF);
+        } catch (error) {
+          console.error('Error attaching screenshot URL image:', error);
+        }
+        break;
+
+      case 'unhandled':
+        // force the user to explicitly select 'as text' if they want to proceed
+        break;
+    }
   }
 
   // update
