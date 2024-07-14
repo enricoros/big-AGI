@@ -124,6 +124,7 @@ export function attachmentCreate(source: AttachmentDraftSource): AttachmentDraft
     input: undefined,
     converters: [],
     outputsConverting: false,
+    outputsConversionProgress: null,
     outputFragments: [],
     // metadata: {},
   };
@@ -445,6 +446,7 @@ export async function attachmentPerformConversion(
 
   edit(attachment.id, {
     outputsConverting: true,
+    outputsConversionProgress: null,
   });
 
   // apply converter to the input
@@ -549,13 +551,18 @@ export async function attachmentPerformConversion(
           break;
         }
         try {
+          let lastProgress = -1;
           const { recognize } = await import('tesseract.js');
           const buffer = Buffer.from(input.data);
           const result = await recognize(buffer, undefined, {
             errorHandler: e => console.error(e),
             logger: (message) => {
-              if (message.status === 'recognizing text')
-                console.log('OCR progress:', message.progress);
+              if (message.status === 'recognizing text') {
+                if (message.progress > lastProgress + 0.01) {
+                  lastProgress = message.progress;
+                  edit(attachment.id, { outputsConversionProgress: lastProgress });
+                }
+              }
             },
           });
           const imageText = result.data.text;
@@ -574,7 +581,9 @@ export async function attachmentPerformConversion(
         }
         // duplicate the ArrayBuffer to avoid mutation
         const pdfData = new Uint8Array(input.data.slice(0));
-        const pdfText = await pdfToText(pdfData);
+        const pdfText = await pdfToText(pdfData, (progress: number) => {
+          edit(attachment.id, { outputsConversionProgress: progress });
+        });
         newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
         break;
 
@@ -587,7 +596,9 @@ export async function attachmentPerformConversion(
         // duplicate the ArrayBuffer to avoid mutation
         const pdfData2 = new Uint8Array(input.data.slice(0));
         try {
-          const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE);
+          const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+            edit(attachment.id, { outputsConversionProgress: progress });
+          });
           for (const pdfPageImage of imageDataURLs) {
             const pdfPageImageF = await imageDataToImageAttachmentFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `${title} (pg. ${newFragments.length + 1})`, caption, false, false);
             if (pdfPageImageF)
@@ -699,6 +710,7 @@ export async function attachmentPerformConversion(
   replaceOutputFragments(attachment.id, newFragments);
   edit(attachment.id, {
     outputsConverting: false,
+    outputsConversionProgress: null,
   });
 }
 

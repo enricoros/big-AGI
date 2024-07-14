@@ -21,6 +21,7 @@ export type AttachmentDraft = {
   converters: AttachmentDraftConverter[]; // List of available converters for this attachment
 
   outputsConverting: boolean;
+  outputsConversionProgress: number | null;
   outputFragments: DMessageAttachmentFragment[];
 
   // metadata: {

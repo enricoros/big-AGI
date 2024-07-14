@@ -11,8 +11,9 @@ const SKIP_LOADING_IN_DEV = false;
  * and we don't want to load it unless we need to. [Faster startup time!]
  *
  * @param pdfBuffer The content of a PDF file
+ * @param onProgress A callback function to report the progress of the text extraction
  */
-export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
+export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: number) => void): Promise<string> {
   const { getDocument } = await dynamicImportPdfJs();
   if (!getDocument) {
     console.log('pdfToText: [dev] pdfjs-dist loading skipped');
@@ -20,13 +21,18 @@ export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
   }
   const pdf = await getDocument(pdfBuffer).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages
+  onProgress(0);
 
   for (let i = 1; i <= pdf.numPages; i++) {
+
     const page = await pdf.getPage(i);
+    onProgress(i / pdf.numPages);
+
     const content = await page.getTextContent();
     const strings = content.items
       .filter(isTextItem) // Use the type guard to filter out items with the 'str' property
       .map((item) => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
+    onProgress((i * 3 + 1) / (pdf.numPages * 3));
 
     // textPages.push(strings.join(' ')); // Add the joined strings to the array
     // New way: join the strings to form a page text. treat empty lines as newlines, otherwise join with a space (or not if the line is just 1 space)
@@ -50,7 +56,10 @@ export async function pdfToText(pdfBuffer: ArrayBuffer): Promise<string> {
       // otherwise just concatenate
       return acc + str;
     }, ''));
+    onProgress((i * 3 + 2) / (pdf.numPages * 3));
   }
+
+  onProgress(1);
   return textPages.join('\n\n'); // Join all the page texts at the end
 }
 
@@ -70,8 +79,9 @@ interface PdfPageImage {
  * @param imageMimeType The MIME type of the image to render (default 'image/jpeg')
  * @param imageQuality The quality of the image (default 0.95 for moderate quality)
  * @param scale The scale factor for the image resolution (default 1.5 for moderate quality)
+ * @param onProgress A callback function to report the progress of the image rendering
  */
-export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/): Promise<PdfPageImage[]> {
+export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/, onProgress: (progress: number) => void): Promise<PdfPageImage[]> {
   const { getDocument } = await dynamicImportPdfJs();
   if (!getDocument) {
     console.log('pdfToImageDataURLs: [dev] pdfjs-dist loading skipped');
@@ -81,12 +91,16 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
   const images: PdfPageImage[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
+
     const page = await pdf.getPage(i);
+    onProgress(i / pdf.numPages);
+
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     canvas.height = viewport.height;
     canvas.width = viewport.width;
+    onProgress((i * 3 + 1) / (pdf.numPages * 3));
 
     await page.render({
       canvasContext: context!,
@@ -103,8 +117,10 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
       width: viewport.width,
       height: viewport.height,
     });
+    onProgress((i * 3 + 2) / (pdf.numPages * 3));
   }
 
+  onProgress(1);
   return images;
 }
 
