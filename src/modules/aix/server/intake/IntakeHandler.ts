@@ -72,7 +72,7 @@ export class IntakeHandler {
 
   * yieldError(errorId: 'dispatch-prepare' | 'dispatch-fetch' | 'dispatch-read' | 'dispatch-parse', errorText: string, forceConsoleMessage?: boolean) {
     if (SERVER_DEBUG_WIRE || forceConsoleMessage || true)
-      console.error(`[POST] /api/llms/stream: ${this.prettyDialect}: ${errorId}: ${errorText}`);
+      console.error(`[POST] Aix.${this.prettyDialect} (${errorId}): ${errorText}`);
     yield {
       issueId: errorId,
       issueText: errorText,
