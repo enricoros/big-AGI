@@ -10,7 +10,7 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenaiWire_ChatCompletionRequest, OpenaiWire_ChatCompletionResponse, OpenaiWire_CreateImageRequest, OpenaiWire_CreateImageResponse, openaiWire_CreateImageResponse_Schema, OpenaiWire_FunctionDefinition, openaiWire_FunctionDefinition_Schema, OpenaiWire_ModelList, OpenaiWire_ModerationRequest, OpenaiWire_ModerationResponse } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
+import { OpenAIWire_API, OpenaiWire_CreateImageRequest, OpenaiWire_CreateImageResponse, openaiWire_CreateImageResponse_schema, OpenaiWire_ModelList, OpenaiWire_ModerationRequest, OpenaiWire_ModerationResponse, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
@@ -59,7 +59,7 @@ const chatGenerateWithFunctionsInputSchema = z.object({
   access: openAIAccessSchema,
   model: openAIModelSchema,
   history: openAIHistorySchema,
-  functions: z.array(openaiWire_FunctionDefinition_Schema).optional(),
+  functions: z.array(OpenAIWire_Tools.FunctionDefinition_schema).optional(),
   forceFunctionName: z.string().optional(),
   context: llmsGenerateContextSchema.optional(),
 });
@@ -264,7 +264,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
-      const wireCompletions = await openaiPOSTOrThrow<OpenaiWire_ChatCompletionResponse, OpenaiWire_ChatCompletionRequest>(
+      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire_API.ChatCompletionResponse, OpenAIWire_API.ChatCompletionRequest>(
         access, model.id, completionsBody, '/v1/chat/completions',
       );
 
@@ -329,7 +329,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { count: _count, responseFormat: _responseFormat, prompt: origPrompt, ...parameters } = config;
 
       // expect a single image and as URL
-      const generatedImages = openaiWire_CreateImageResponse_Schema.parse(wireOpenAICreateImageOutput).data;
+      const generatedImages = openaiWire_CreateImageResponse_schema.parse(wireOpenAICreateImageOutput).data;
       return generatedImages.map((image): T2iCreateImageOutput => {
         if (!('b64_json' in image))
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
@@ -608,7 +608,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 }
 
 
-export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenaiWire_FunctionDefinition[] | null, forceFunctionName: string | null, n: number, stream: boolean): OpenaiWire_ChatCompletionRequest {
+export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIWire_Tools.FunctionDefinition[] | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire_API.ChatCompletionRequest {
 
   // Hotfixes to comply with API restrictions
   const hotfixAlternateUARoles = dialect === 'perplexity';
@@ -642,7 +642,7 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
     }, [] as OpenAIHistorySchema);
   }
 
-  const chatCompletionRequest: OpenaiWire_ChatCompletionRequest = {
+  const chatCompletionRequest: OpenAIWire_API.ChatCompletionRequest = {
     model: model.id,
     messages: history,
   };
@@ -681,7 +681,7 @@ async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object>(
   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${access.dialect}` });
 }
 
-function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, message: OpenaiWire_ChatCompletionResponse['choices'][number]['message']) {
+function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, message: OpenAIWire_API.ChatCompletionResponse['choices'][number]['message']) {
   // NOTE: Defensive: we run extensive validation because the API is not well tested and documented at the moment
   if (!isFunctionsCall)
     throw new TRPCError({
@@ -722,7 +722,7 @@ function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, mes
   };
 }
 
-function parseChatGenerateOutput(message: OpenaiWire_ChatCompletionResponse['choices'][number]['message'], finish_reason: OpenaiWire_ChatCompletionResponse['choices'][number]['finish_reason']) {
+function parseChatGenerateOutput(message: OpenAIWire_API.ChatCompletionResponse['choices'][number]['message'], finish_reason: OpenAIWire_API.ChatCompletionResponse['choices'][number]['finish_reason']) {
   // validate the message
   if (message.content === null)
     throw new TRPCError({

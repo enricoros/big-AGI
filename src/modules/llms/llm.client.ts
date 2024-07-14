@@ -2,7 +2,7 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
-import type { OpenaiWire_FunctionDefinition } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
+import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
 
 import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
 import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
@@ -21,7 +21,7 @@ export interface VChatMessageIn {
   //name?: string; // when role: 'function'
 }
 
-export type VChatFunctionIn = OpenaiWire_FunctionDefinition;
+export type VChatFunctionIn = OpenAIWire_Tools.FunctionDefinition;
 
 export type VChatStreamContextName = StreamingContextNameSchema;
 export type VChatGenerateContextName = GenerateContextNameSchema;
