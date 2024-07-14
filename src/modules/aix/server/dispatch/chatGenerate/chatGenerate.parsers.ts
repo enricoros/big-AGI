@@ -8,7 +8,7 @@ import { wireOllamaChunkedOutputSchema } from './ollama/ollama.wiretypes';
 
 import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './chatGenerate.types';
 import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEXT_SYMBOL_MAX_TOKENS } from './chatGenerate.config';
-import { OpenAIWire_API } from './openai/oai.wiretypes';
+import { OpenAIWire_API_Chat_Completions } from './openai/oai.wiretypes';
 
 
 /// Stream Parsers
@@ -343,7 +343,7 @@ export function createOpenAIMessageCreateParser(): ChatGenerateParseFunction {
   return function* (eventData: string): Generator<ChatGenerateMessageAction> {
 
     // Throws on malformed event data
-    const json = OpenAIWire_API.ChatCompletionChunkResponse_schema.parse(JSON.parse(eventData));
+    const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(JSON.parse(eventData));
 
     // -> Model
     if (!hasBegun && json.model) {

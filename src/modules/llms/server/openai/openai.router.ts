@@ -10,7 +10,7 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenAIWire_API, OpenaiWire_CreateImageRequest, OpenaiWire_CreateImageResponse, openaiWire_CreateImageResponse_schema, OpenaiWire_ModelList, OpenaiWire_ModerationRequest, OpenaiWire_ModerationResponse, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
+import { OpenAIWire_API_Chat_Completions, OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
@@ -134,7 +134,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
       // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
-      const openAIWireModelsResponse = await openaiGETOrThrow<OpenaiWire_ModelList>(access, '/v1/models');
+      const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire_API_Models_List.Response>(access, '/v1/models');
 
       // [Together] missing the .data property
       if (access.dialect === 'togetherai')
@@ -264,7 +264,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const isFunctionsCall = !!functions && functions.length > 0;
 
       const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
-      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire_API.ChatCompletionResponse, OpenAIWire_API.ChatCompletionRequest>(
+      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire_API_Chat_Completions.Response, OpenAIWire_API_Chat_Completions.Request>(
         access, model.id, completionsBody, '/v1/chat/completions',
       );
 
@@ -300,7 +300,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
 
       // images/generations request body
-      const requestBody: OpenaiWire_CreateImageRequest = {
+      const requestBody: OpenAIWire_API_Images_Generations.Request = {
         prompt: config.prompt,
         model: config.model,
         n: config.count,
@@ -316,7 +316,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         delete requestBody.response_format;
 
       // create 1 image (dall-e-3 won't support more than 1, so better transfer the burden to the client)
-      const wireOpenAICreateImageOutput = await openaiPOSTOrThrow<OpenaiWire_CreateImageResponse, OpenaiWire_CreateImageRequest>(
+      const wireOpenAICreateImageOutput = await openaiPOSTOrThrow<OpenAIWire_API_Images_Generations.Response, OpenAIWire_API_Images_Generations.Request>(
         access, null, requestBody, '/v1/images/generations',
       );
 
@@ -329,7 +329,7 @@ export const llmOpenAIRouter = createTRPCRouter({
       const { count: _count, responseFormat: _responseFormat, prompt: origPrompt, ...parameters } = config;
 
       // expect a single image and as URL
-      const generatedImages = openaiWire_CreateImageResponse_schema.parse(wireOpenAICreateImageOutput).data;
+      const generatedImages = OpenAIWire_API_Images_Generations.Response_schema.parse(wireOpenAICreateImageOutput).data;
       return generatedImages.map((image): T2iCreateImageOutput => {
         if (!('b64_json' in image))
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[OpenAI Issue] Expected a b64_json, got a url` });
@@ -350,10 +350,10 @@ export const llmOpenAIRouter = createTRPCRouter({
   /* [OpenAI] check for content policy violations */
   moderation: publicProcedure
     .input(moderationInputSchema)
-    .mutation(async ({ input: { access, text } }): Promise<OpenaiWire_ModerationResponse> => {
+    .mutation(async ({ input: { access, text } }): Promise<OpenAIWire_API_Moderations_Create.Response> => {
       try {
 
-        return await openaiPOSTOrThrow<OpenaiWire_ModerationResponse, OpenaiWire_ModerationRequest>(access, null, {
+        return await openaiPOSTOrThrow<OpenAIWire_API_Moderations_Create.Response, OpenAIWire_API_Moderations_Create.Request>(access, null, {
           input: text,
           model: 'text-moderation-latest',
         }, '/v1/moderations');
@@ -608,7 +608,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 }
 
 
-export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIWire_Tools.FunctionDefinition[] | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire_API.ChatCompletionRequest {
+export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIWire_Tools.FunctionDefinition[] | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire_API_Chat_Completions.Request {
 
   // Hotfixes to comply with API restrictions
   const hotfixAlternateUARoles = dialect === 'perplexity';
@@ -642,7 +642,7 @@ export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: Open
     }, [] as OpenAIHistorySchema);
   }
 
-  const chatCompletionRequest: OpenAIWire_API.ChatCompletionRequest = {
+  const chatCompletionRequest: OpenAIWire_API_Chat_Completions.Request = {
     model: model.id,
     messages: history,
   };
@@ -681,7 +681,7 @@ async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object>(
   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${access.dialect}` });
 }
 
-function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, message: OpenAIWire_API.ChatCompletionResponse['choices'][number]['message']) {
+function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, message: OpenAIWire_API_Chat_Completions.Response['choices'][number]['message']) {
   // NOTE: Defensive: we run extensive validation because the API is not well tested and documented at the moment
   if (!isFunctionsCall)
     throw new TRPCError({
@@ -722,7 +722,7 @@ function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, mes
   };
 }
 
-function parseChatGenerateOutput(message: OpenAIWire_API.ChatCompletionResponse['choices'][number]['message'], finish_reason: OpenAIWire_API.ChatCompletionResponse['choices'][number]['finish_reason']) {
+function parseChatGenerateOutput(message: OpenAIWire_API_Chat_Completions.Response['choices'][number]['message'], finish_reason: OpenAIWire_API_Chat_Completions.Response['choices'][number]['finish_reason']) {
   // validate the message
   if (message.content === null)
     throw new TRPCError({

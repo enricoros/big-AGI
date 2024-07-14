@@ -1,4 +1,4 @@
-import type { OpenaiWire_Model } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
+import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 
@@ -307,7 +307,7 @@ const openAIModelsDenyList: string[] = [
   'gpt-3.5-turbo-16k-0613', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-0301', 'gpt-3.5-turbo-16k',
 ];
 
-export function openAIModelFilter(model: OpenaiWire_Model) {
+export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
   return !openAIModelsDenyList.some(deny => model.id.includes(deny));
 }
 
