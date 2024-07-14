@@ -232,6 +232,10 @@ const openaiWire_FinishReason_Enum = z.enum([
   'content_filter', // upstream content filter stopped the generation
   // Extensions //
   '', // [LocalAI] bad response from LocalAI which breaks the parser
+  'stop_sequence', // [OpenRouter->Anthropic] added 'stop_sequence' which is the same as 'stop'
+  'eos', // [OpenRouter->Phind]
+  'COMPLETE', // [OpenRouter->Command-R+]
+  'error', // [OpenRouter] their network error
 ]);
 
 const openaiWire_Usage_Schema = z.object({
