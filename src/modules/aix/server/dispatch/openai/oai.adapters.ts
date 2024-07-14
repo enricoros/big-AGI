@@ -1,4 +1,4 @@
-import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+import { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
 import type { Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
 import type { Intake_ChatMessage, Intake_SystemMessage } from '../../intake/schemas.intake.messages';
@@ -21,31 +21,74 @@ import { OpenaiWire_ChatCompletionRequest, openaiWire_chatCompletionRequest_Sche
 // configuration
 const hotFixOnlySupportN1 = true;
 const hotFixPreferArrayUserContent = true;
-const hotFixForceImageContentPartDetail: 'auto' | 'low' | 'high' = 'high';
+const hotFixForceImageContentPartOpenAIDetail: 'auto' | 'low' | 'high' = 'high';
+const hotFixSquashTextSeparator = '\n\n\n---\n\n\n';
 
 
 export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, jsonOutput: boolean, streaming: boolean): OpenaiWire_ChatCompletionRequest {
 
+  // Hotfixes
+  const hotFixThrowCannotFC = openAIDialect === 'deepseek';
+  const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
+  const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
+  const hotFixAlternateUserAssistantRoles = openAIDialect === 'perplexity';
+  const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
+
+  // Throw if function support is needed but missing
+  if (chatGenerate.tools?.length && hotFixThrowCannotFC)
+    throw new Error('This service does not support function calls');
+
   // Convert the chat messages to the OpenAI 4-Messages format
   let chatMessages = _intakeToOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence);
 
-
-  // HotFix: Convert multi-part text messages to single strings for older OpenAI dialects
-  const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
+  // Convert multi-part text messages to single strings for older OpenAI dialects
   if (hotFixSquashMultiPartText) {
     chatMessages = chatMessages.reduce((acc, message) => {
       if (message.role === 'user' && Array.isArray(message.content))
-        acc.push({ role: message.role, content: message.content.filter(part => part.type === 'text').map(textPart => textPart.text).join('\n\n\n---\n\n\n') });
+        acc.push({ role: message.role, content: message.content.filter(part => part.type === 'text').map(textPart => textPart.text).filter(text => !!text).join(hotFixSquashTextSeparator) });
       else
         acc.push(message);
       return acc;
     }, [] as OpenaiWire_ChatCompletionRequest['messages']);
   }
 
-  // HotFix: Validate function support
-  const hotFixThrowOnFunctionCall = openAIDialect === 'deepseek';
-  if (chatGenerate.tools?.length && hotFixThrowOnFunctionCall)
-    throw new Error('This service does not support function calls');
+  // Remove empty messages
+  if (hotFixRemoveEmptyMessages)
+    chatMessages = chatMessages.filter(message => message.content !== null && message.content !== '');
+
+  // Alternate user/assistant roles
+  if (hotFixAlternateUserAssistantRoles) {
+    chatMessages = chatMessages.reduce((acc, historyItem) => {
+
+      // treat intermediate system messages as user messages
+      if (acc.length > 0 && historyItem.role === 'system') {
+        historyItem = {
+          role: 'user',
+          content: historyItem.content,
+        };
+      }
+
+      // if the current item has the same role as the last item, concatenate their content
+      if (acc.length > 0) {
+        const lastItem = acc[acc.length - 1];
+        if (lastItem.role === historyItem.role) {
+          if (lastItem.role === 'assistant') {
+            lastItem.content += hotFixSquashTextSeparator + historyItem.content;
+          } else if (lastItem.role === 'user') {
+            lastItem.content = [
+              ...(Array.isArray(lastItem.content) ? lastItem.content : [openaiWire_TextContentPart(lastItem.content)]),
+              ...(Array.isArray(historyItem.content) ? historyItem.content : historyItem.content ? [openaiWire_TextContentPart(historyItem.content)] : []),
+            ];
+          }
+          return acc;
+        }
+      }
+
+      // if it's not a case for concatenation, just push the current item to the accumulator
+      acc.push(historyItem);
+      return acc;
+    }, [] as OpenaiWire_ChatCompletionRequest['messages']);
+  }
 
 
   // Construct the request payload
@@ -68,7 +111,6 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
   };
 
   // [Azure] remove stream_options (not supported)
-  const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   if (hotFixRemoveStreamOptions)
     delete payload.stream_options;
 
@@ -125,7 +167,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
               // create a new OpenAIWire_ImageContentPart
               const { mimeType, base64 } = part;
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
-              const imageContentPart = openaiWire_ImageContentPart(base64DataUrl, hotFixForceImageContentPartDetail);
+              const imageContentPart = openaiWire_ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
@@ -164,7 +206,7 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
               // create a new OpenAIWire_ImageContentPart of type User
               const { mimeType, base64 } = part;
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
-              const imageContentPart = { type: 'image_url', image_url: { url: base64DataUrl, detail: hotFixForceImageContentPartDetail } } as const;
+              const imageContentPart = openaiWire_ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
