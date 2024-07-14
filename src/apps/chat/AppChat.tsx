@@ -397,7 +397,7 @@ export function AppChat() {
   const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
     // focused conversation
     ['b', true, true, false, handleMessageBeamLastInFocusedPane],
-    ['g', true, true, false, handleMessageRegenerateLastInFocusedPane],
+    ['z', true, true, false, handleMessageRegenerateLastInFocusedPane],
     ['o', true, false, false, handleFileOpenConversation],
     ['s', true, false, false, () => handleFileSaveConversation(focusedPaneConversationId)],
     ['n', true, true, false, handleConversationNewInFocusedPane],
