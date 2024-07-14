@@ -6,7 +6,7 @@ import { createEmptyReadableStream, debugGenerateCurlCommand, nonTrpcServerFetch
 
 
 // Anthropic server imports
-import { AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema } from '~/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes';
+import { AnthropicWire_API_Message_Create } from '~/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes';
 import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
 
 // Gemini server imports
@@ -14,12 +14,12 @@ import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } fr
 import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 // Ollama server imports
-import { wireOllamaChunkedOutputSchema } from '~/modules/aix/server/dispatch/wiretypes/ollama.wiretypes';
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
+import { wireOllamaChunkedOutputSchema } from '~/modules/aix/server/dispatch/wiretypes/ollama.wiretypes';
 
 // OpenAI server imports
-import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
 import { OpenAIWire_API_Chat_Completions } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
+import { openAIAccess, openAIAccessSchema, openAIChatCompletionPayload, openAIHistorySchema, openAIModelSchema } from './openai/openai.router';
 
 
 import { llmsStreamingContextSchema } from './llm.server.types';
@@ -265,7 +265,7 @@ function createUpstreamTransformer(muxingFormat: MuxingFormat, vendorTextParser:
 /// Stream Parsers
 
 function createStreamParserAnthropicMessages(): AIStreamParser {
-  let responseMessage: AnthropicWire_MessageResponse | null = null;
+  let responseMessage: AnthropicWire_API_Message_Create.Response | null = null;
   let hasErrored = false;
 
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
@@ -287,7 +287,7 @@ function createStreamParserAnthropicMessages(): AIStreamParser {
       case 'message_start':
         const firstMessage = !responseMessage;
         const { message } = JSON.parse(data);
-        responseMessage = anthropicWire_MessageResponse_Schema.parse(message);
+        responseMessage = AnthropicWire_API_Message_Create.Response_schema.parse(message);
         // hack: prepend the model name to the first packet
         if (firstMessage) {
           const firstPacket: ChatStreamingPreambleModelSchema = { model: responseMessage.model };

@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { safeErrorString } from '~/server/wire';
 
+import { AnthropicWire_API_Message_Create } from '../wiretypes/anthropic.wiretypes';
 import { OpenAIWire_API_Chat_Completions } from '../wiretypes/openai.wiretypes';
-import { anthropicWire_ContentBlockDeltaEvent_Schema, anthropicWire_ContentBlockStartEvent_Schema, anthropicWire_ContentBlockStopEvent_Schema, anthropicWire_MessageDeltaEvent_Schema, AnthropicWire_MessageResponse, anthropicWire_MessageResponse_Schema, anthropicWire_MessageStartEvent_Schema, anthropicWire_MessageStopEvent_Schema } from '../wiretypes/anthropic.wiretypes';
 import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from '../wiretypes/gemini.wiretypes';
 import { wireOllamaChunkedOutputSchema } from '../wiretypes/ollama.wiretypes';
 
@@ -14,7 +14,7 @@ import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEX
 /// Stream Parsers
 
 export function createAnthropicMessageParser(): ChatGenerateParseFunction {
-  let responseMessage: AnthropicWire_MessageResponse;
+  let responseMessage: AnthropicWire_API_Message_Create.Response;
   let hasErrored = false;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
@@ -37,7 +37,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_start':
         messageStartTime = Date.now();
         const isFirstMessage = !responseMessage;
-        responseMessage = anthropicWire_MessageStartEvent_Schema.parse(JSON.parse(eventData)).message;
+        responseMessage = AnthropicWire_API_Message_Create.event_MessageStart_schema.parse(JSON.parse(eventData)).message;
 
         // -> Model
         if (isFirstMessage && responseMessage.model)
@@ -51,7 +51,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // M2. Initialize content block if needed
       case 'content_block_start':
         if (responseMessage) {
-          const { index, content_block } = anthropicWire_ContentBlockStartEvent_Schema.parse(JSON.parse(eventData));
+          const { index, content_block } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] !== undefined)
             throw new Error(`Unexpected content block start location (${index})`);
           responseMessage.content[index] = content_block;
@@ -71,7 +71,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // M3+. Append delta text to the current message content
       case 'content_block_delta':
         if (responseMessage) {
-          const { index, delta } = anthropicWire_ContentBlockDeltaEvent_Schema.parse(JSON.parse(eventData));
+          const { index, delta } = AnthropicWire_API_Message_Create.event_ContentBlockDelta_schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block delta location (${index})`);
 
@@ -100,7 +100,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // Finalize content block if needed.
       case 'content_block_stop':
         if (responseMessage) {
-          const { index } = anthropicWire_ContentBlockStopEvent_Schema.parse(JSON.parse(eventData));
+          const { index } = AnthropicWire_API_Message_Create.event_ContentBlockStop_schema.parse(JSON.parse(eventData));
           if (responseMessage.content[index] === undefined)
             throw new Error(`Unexpected content block stop location (${index})`);
 
@@ -112,7 +112,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // Optionally handle top-level message changes. Example: updating stop_reason
       case 'message_delta':
         if (responseMessage) {
-          const { delta, usage } = anthropicWire_MessageDeltaEvent_Schema.parse(JSON.parse(eventData));
+          const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
           Object.assign(responseMessage, delta);
           if (usage?.output_tokens && messageStartTime) {
             const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
@@ -134,7 +134,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
       // We can now close the message
       case 'message_stop':
-        anthropicWire_MessageStopEvent_Schema.parse(JSON.parse(eventData));
+        AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
         return yield { op: 'parser-close' };
 
       // UNDOCUMENTED - Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
@@ -163,7 +163,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       content,
       stop_reason,
       usage,
-    } = anthropicWire_MessageResponse_Schema.parse(JSON.parse(fullData));
+    } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
 
     // -> Model
     if (model)
