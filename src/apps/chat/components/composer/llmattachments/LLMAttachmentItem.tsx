@@ -88,8 +88,8 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'unhandled': TextureIcon,
 };
 
-function attachmentConverterIcon(attachmentDraft: AttachmentDraft) {
-  const converter = attachmentDraft.converterIdx !== null ? attachmentDraft.converters[attachmentDraft.converterIdx] ?? null : null;
+function attachmentConverterIcon(attachmentDraft: AttachmentDraft): React.ReactNode {
+  const converter = attachmentDraft.converters.find(c => c.isActive) ?? null;
   if (converter && converter.id) {
     const Icon = converterTypeToIconMap[converter.id] ?? null;
     if (Icon)
@@ -99,7 +99,7 @@ function attachmentConverterIcon(attachmentDraft: AttachmentDraft) {
 }
 
 function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
-  const converter = attachmentDraft.converterIdx !== null ? attachmentDraft.converters[attachmentDraft.converterIdx] ?? null : null;
+  const converter = attachmentDraft.converters.find(c => c.isActive) ?? null;
   if (converter && attachmentDraft.label === 'Rich Text') {
     if (converter.id === 'rich-text-table')
       return 'Rich Table';

@@ -1,8 +1,10 @@
 import * as React from 'react';
 
-import { Box, CircularProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, Checkbox, CircularProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -20,10 +22,6 @@ import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
 
 
-// enable for debugging
-export const DEBUG_LLMATTACHMENTS = true;
-
-
 export function LLMAttachmentMenu(props: {
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
   llmAttachmentDraft: LLMAttachmentDraft,
@@ -33,6 +31,9 @@ export function LLMAttachmentMenu(props: {
   onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
   onClose: () => void,
 }) {
+
+  // state
+  const [showDetails, setShowDetails] = React.useState(false);
 
   // derived state
 
@@ -49,6 +50,13 @@ export function LLMAttachmentMenu(props: {
   const isOutputMissing = !draft.outputFragments.length;
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
+
+
+  // hooks
+
+  const handleToggleShowDetails = React.useCallback(() => {
+    setShowDetails(on => !on);
+  }, []);
 
 
   // operations
@@ -69,13 +77,14 @@ export function LLMAttachmentMenu(props: {
   }, [draftId, attachmentDraftsStoreApi, onClose]);
 
   const handleSetConverterIdx = React.useCallback(async (converterIdx: number | null) => {
-    return attachmentDraftsStoreApi.getState().setAttachmentDraftConverterIdxAndConvert(draftId, converterIdx);
+    return attachmentDraftsStoreApi.getState().toggleAttachmentDraftConverterAndConvert(draftId, converterIdx);
   }, [draftId, attachmentDraftsStoreApi]);
 
   // const handleSummarizeText = React.useCallback(() => {
   //   onAttachmentDraftSummarizeText(draftId);
   // }, [draftId, onAttachmentDraftSummarizeText]);
 
+  const canHaveDetails = !!draftInput && !isConverting;
 
   return (
     <CloseableMenu
@@ -115,23 +124,32 @@ export function LLMAttachmentMenu(props: {
         <MenuItem
           disabled={c.disabled || isConverting}
           key={'c-' + c.id}
-          onClick={async () => idx !== draft.converterIdx && await handleSetConverterIdx(idx)}
+          onClick={async () => (c.isCheckbox || !c.isActive) && await handleSetConverterIdx(idx)}
         >
           <ListItemDecorator>
-            {(isConverting && idx === draft.converterIdx)
+            {(isConverting && c.isActive)
               ? <CircularProgress size='sm' sx={{ '--CircularProgress-size': '1.25rem' }} />
-              : <Radio checked={idx === draft.converterIdx} disabled={isConverting} />}
+              : !c.isCheckbox
+                ? <Radio checked={c.isActive} disabled={isConverting} />
+                : <Checkbox checked={c.isActive} disabled={isConverting} />
+            }
           </ListItemDecorator>
           {c.unsupported
             ? <Box>Unsupported 🤔 <Typography level='body-xs'>{c.name}</Typography></Box>
             : c.name}
         </MenuItem>,
       )}
-      {!isUnconvertible && <ListDivider />}
+      {!isUnconvertible && <ListDivider sx={{ mb: 0 }} />}
 
-      {DEBUG_LLMATTACHMENTS && !!draftInput && !isConverting && (
-        <ListItem>
-          <ListItemDecorator />
+      <MenuItem variant='soft' disabled={!canHaveDetails} onClick={handleToggleShowDetails}>
+        <ListItemDecorator>
+          {(showDetails && canHaveDetails) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </ListItemDecorator>
+        {!(showDetails && canHaveDetails) ? (
+          <Typography level='body-sm'>
+            Stats For Nerds
+          </Typography>
+        ) : (
           <Box>
             {!!draftInput && (
               <Typography level='body-sm'>
@@ -147,13 +165,17 @@ export function LLMAttachmentMenu(props: {
               <Typography level='body-sm'>
                 <span style={{ color: 'transparent' }}>🡐</span> {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.webpDataUrl?.length.toLocaleString()}
                 {' · '}
-                <Link onClick={() => showImageDataURLInNewTab(draftInput?.urlImage?.webpDataUrl || '')}>
+                <Link onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  showImageDataURLInNewTab(draftInput?.urlImage?.webpDataUrl || '');
+                }}>
                   open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                 </Link>
               </Typography>
             )}
             {/*<Typography level='body-sm'>*/}
-            {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${(idx === draft.converterIdx) ? '*' : ''}`)).join(', ')}*/}
+            {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${converter.isActive ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
             <Box sx={{ mt: 1 }}>
               {isOutputMissing ? (
@@ -164,23 +186,27 @@ export function LLMAttachmentMenu(props: {
                     const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'unknown resolution';
                     const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
                     return (
-                      <Typography key={index} level='body-sm'>
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
                         🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? part.dataRef.bytesSize?.toLocaleString() : '(remote)'}
                         {' · '}
-                        <Link onClick={() => showImageDataRefInNewTab(part.dataRef)}>
+                        <Link onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          void showImageDataRefInNewTab(part.dataRef);
+                        }}>
                           open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                         </Link>
                       </Typography>
                     );
                   } else if (isDocPart(part)) {
                     return (
-                      <Typography key={index} level='body-sm'>
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
                         🡒 text: {part.data.text.length.toLocaleString()} bytes
                       </Typography>
                     );
                   } else {
                     return (
-                      <Typography key={index} level='body-sm'>
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
                         🡒 {(part as DMessageAttachmentFragment['part']).pt}: (other)
                       </Typography>
                     );
@@ -188,15 +214,15 @@ export function LLMAttachmentMenu(props: {
                 })
               )}
               {!!llmTokenCountApprox && (
-                <Typography level='body-sm' sx={{ ml: 1.75 }}>
-                  ~ {llmTokenCountApprox.toLocaleString()} tokens
+                <Typography level='body-sm' sx={{ color: 'text.primary' }}>
+                  <span style={{ color: 'transparent' }}>🡒</span> {llmTokenCountApprox.toLocaleString()} tokens
                 </Typography>
               )}
             </Box>
           </Box>
-        </ListItem>
-      )}
-      {DEBUG_LLMATTACHMENTS && !!draftInput && !isConverting && <ListDivider />}
+        )}
+      </MenuItem>
+      <ListDivider sx={{ mt: 0 }} />
 
       {/* Destructive Operations */}
       {/*<MenuItem onClick={handleCopyToClipboard} disabled={!isOutputTextInlineable}>*/}

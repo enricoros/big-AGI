@@ -19,7 +19,6 @@ export type AttachmentDraft = {
 
   // options to convert the input
   converters: AttachmentDraftConverter[]; // List of available converters for this attachment
-  converterIdx: number | null; // Index of the selected converter
 
   outputsConverting: boolean;
   outputFragments: DMessageAttachmentFragment[];
@@ -93,6 +92,11 @@ export type AttachmentDraftConverter = {
   name: string;
   disabled?: boolean;
   unsupported?: boolean;
+  isCheckbox?: boolean; // renders as checkbox and is not exclusive with the others
+
+  // runtime properties
+  isActive?: boolean; // checked, for both radio (mutually exclusive) and checkbox (additional) converters
+
   // outputType: ComposerOutputPartType; // The type of the output after conversion
   // isAutonomous: boolean; // Whether the conversion does not require user input
   // isAsync: boolean; // Whether the conversion is asynchronous

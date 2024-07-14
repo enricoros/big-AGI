@@ -5,7 +5,7 @@ import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.t
 
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { AttachmentDraft, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
+import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
 import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './attachment.pipeline';
 import { removeAttachmentOwnedDBAsset, transferAttachmentOwnedDBAsset } from './attachment.dblobs';
 
@@ -24,7 +24,7 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
   removeAllAttachmentDrafts: () => void;
   removeAttachmentDraft: (attachmentDraftId: AttachmentDraftId) => void;
   moveAttachmentDraft: (attachmentDraftId: AttachmentDraftId, delta: 1 | -1) => void;
-  setAttachmentDraftConverterIdxAndConvert: (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => Promise<void>;
+  toggleAttachmentDraftConverterAndConvert: (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => Promise<void>;
 
   /**
    * Extracts all fragments from the all drafts and transfers ownership to the caller.
@@ -53,7 +53,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
 
   // actions
   createAttachmentDraft: async (source: AttachmentDraftSource) => {
-    const { _getAttachment, _editAttachment, setAttachmentDraftConverterIdxAndConvert } = _get();
+    const { _getAttachment, _editAttachment, toggleAttachmentDraftConverterAndConvert } = _get();
 
     const _attachmentDraft = attachmentCreate(source);
     _set(store => ({
@@ -72,12 +72,12 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     // 2. Define the I->O Converters
     attachmentDefineConverters(source.media, loaded.input, editFn);
     const defined = _getAttachment(attachmentDraftId);
-    if (!defined?.converters.length || defined.converterIdx !== null)
+    if (!defined?.converters.length)
       return;
 
-    // 3. Select the first Converter
+    // 3. Select the first (non-disabled) Converter
     const firstEnabledIndex = defined.converters.findIndex(_c => !_c.disabled);
-    await setAttachmentDraftConverterIdxAndConvert(attachmentDraftId, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
+    await toggleAttachmentDraftConverterAndConvert(attachmentDraftId, firstEnabledIndex > -1 ? firstEnabledIndex : 0);
   },
 
   removeAllAttachmentDrafts: () =>
@@ -128,13 +128,48 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
       return { attachmentDrafts: attachments };
     }),
 
-  setAttachmentDraftConverterIdxAndConvert: async (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => {
+  toggleAttachmentDraftConverterAndConvert: async (attachmentDraftId: AttachmentDraftId, converterIdx: number | null) => {
     const { _getAttachment, _editAttachment, _replaceAttachmentOutputFragments } = _get();
-    const attachmentDraft = _getAttachment(attachmentDraftId);
-    if (!attachmentDraft || attachmentDraft.converterIdx === converterIdx)
-      return;
 
-    await attachmentPerformConversion(attachmentDraft, converterIdx, _editAttachment, _replaceAttachmentOutputFragments);
+    // null: select none, radio: change the active selection, checkbox: toggle the selection
+    _editAttachment(attachmentDraftId, (draft) => {
+
+      // null: uncheck all converters
+      if (converterIdx === null) {
+        return {
+          converters: draft.converters.map((converter): AttachmentDraftConverter => ({ ...converter, isActive: false })),
+        };
+      }
+
+      // No change if invalid index
+      const targetConverter = draft.converters[converterIdx];
+      if (!targetConverter) return draft;
+
+      // if checkbox: Toggle only the target checkbox
+      if (targetConverter.isCheckbox) {
+        return {
+          converters: draft.converters.map((converter, idx): AttachmentDraftConverter =>
+            idx === converterIdx
+              ? { ...converter, isActive: !converter.isActive }
+              : converter,
+          ),
+        };
+      } else {
+        // For radio buttons: check the target and uncheck all others
+        return {
+          converters: draft.converters.map((converter, idx): AttachmentDraftConverter =>
+            converter.isCheckbox
+              ? converter
+              : { ...converter, isActive: idx === converterIdx },
+          ),
+        };
+      }
+    });
+
+    // Perform the conversion
+    const attachmentDraft = _getAttachment(attachmentDraftId);
+    if (!attachmentDraft) return;
+    await attachmentPerformConversion(attachmentDraft, _editAttachment, _replaceAttachmentOutputFragments);
   },
 
   takeAllFragments: async (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => {
