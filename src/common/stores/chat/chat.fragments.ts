@@ -184,10 +184,10 @@ export function createImageAttachmentFragment(title: string, caption: string, da
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
   if (isTextPart(contentPart))
-    return createDocAttachmentFragment(title, caption, 'text/plain', createDMessageDataInlineText(contentPart.text), ref, docMeta);
+    return createDocAttachmentFragment(title, caption, 'text/plain', createDMessageDataInlineText(contentPart.text, 'text/plain'), ref, docMeta);
   if (isImageRefPart(contentPart))
     return createImageAttachmentFragment(title, caption, _duplicateDataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
-  return createDocAttachmentFragment('Error', 'Content to Attachment', 'text/plain', createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`), ref, docMeta);
+  return createDocAttachmentFragment('Error', 'Content to Attachment', 'text/plain', createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`, 'text/plain'), ref, docMeta);
 }
 
 

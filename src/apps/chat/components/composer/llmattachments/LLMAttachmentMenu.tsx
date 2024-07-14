@@ -14,12 +14,18 @@ import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefD
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
+
+
+// configuration
+const DEFAULT_DETAILS_OPEN = true;
+const SHOW_INLINING_OPERATIONS = false;
 
 
 export function LLMAttachmentMenu(props: {
@@ -33,7 +39,7 @@ export function LLMAttachmentMenu(props: {
 }) {
 
   // state
-  const [showDetails, setShowDetails] = React.useState(false);
+  const [showDetails, setShowDetails] = React.useState(DEFAULT_DETAILS_OPEN);
 
   // derived state
 
@@ -44,7 +50,7 @@ export function LLMAttachmentMenu(props: {
   } = props.llmAttachmentDraft;
 
   const draftId = draft.id;
-  const draftSourceMedia = draft.source.media;
+  const draftSource = draft.source;
   const draftInput = draft.input;
   const isConverting = draft.outputsConverting;
   const isUnconvertible = !draft.converters.length;
@@ -90,6 +96,7 @@ export function LLMAttachmentMenu(props: {
   return (
     <CloseableMenu
       dense placement='top'
+      noTopPadding
       open anchorEl={props.menuAnchor} onClose={props.onClose}
       sx={{ minWidth: 260 }}
     >
@@ -111,14 +118,16 @@ export function LLMAttachmentMenu(props: {
           <KeyboardArrowRightIcon />
         </MenuItem>
       </Box>}
-      {!isUnmoveable && <ListDivider sx={{ mt: 0 }} />}
+      {!isUnmoveable && <ListDivider sx={{ my: 0 }} />}
 
       {/* Render Converters as menu items */}
       {!isUnconvertible && (
-        <ListItem>
-          <Typography level='body-sm'>
-            Attach {draftSourceMedia === 'url' ? 'link' : draftSourceMedia === 'file' ? 'file' : ''} as:
-          </Typography>
+        <ListItem sx={{ fontSize: 'sm', my: 0.75 }}>
+          Attach {draftSource.media === 'url' ? 'web page'
+          : draftSource.media === 'file' ? 'file'
+            : draftSource.media === 'text'
+              ? (draftSource.method === 'drop' ? 'drop' : draftSource.method === 'clipboard-read' ? 'clipboard' : draftSource.method === 'paste' ? 'paste' : '')
+              : ''} as:
         </ListItem>
       )}
       {!isUnconvertible && draft.converters.map((c, idx) =>
@@ -157,10 +166,10 @@ export function LLMAttachmentMenu(props: {
             Details
           </Typography>
         ) : (
-          <Box>
+          <Box sx={{ my: 0.5 }}>
             {!!draftInput && (
               <Typography level='body-sm'>
-                🡐 {draftInput.mimeType} · {draftInput.dataSize.toLocaleString()}
+                🡐 {draftInput.mimeType}{typeof draftInput.dataSize === 'number' ? ` · ${draftInput.dataSize.toLocaleString()} bytes` : ''}
               </Typography>
             )}
             {!!draftInput?.altMimeType && (
@@ -208,7 +217,15 @@ export function LLMAttachmentMenu(props: {
                   } else if (isDocPart(part)) {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
-                        🡒 text: {part.data.text.length.toLocaleString()} bytes
+                        🡒 {part.data.mimeType /* part.type: big-agi type, not source mime */}: {part.data.text.length.toLocaleString()} bytes
+                        {' · '}
+                        <Link onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          copyToClipboard(part.data.text, 'Attachment Text');
+                        }}>
+                          copy <ContentCopyIcon sx={{ mx: 0.5, fontSize: 16 }} />
+                        </Link>
                       </Typography>
                     );
                   } else {
@@ -239,15 +256,21 @@ export function LLMAttachmentMenu(props: {
       {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
       {/*  Shrink*/}
       {/*</MenuItem>*/}
-      <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
-        <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-        Inline text
-      </MenuItem>
-      <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
-        <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-        Copy text
-      </MenuItem>
-      <ListDivider />
+
+      {SHOW_INLINING_OPERATIONS && (
+        <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
+          <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+          Inline text
+        </MenuItem>
+      )}
+      {SHOW_INLINING_OPERATIONS && (
+        <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
+          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+          Copy text
+        </MenuItem>
+      )}
+      {SHOW_INLINING_OPERATIONS && <ListDivider />}
+
       <MenuItem onClick={handleRemove}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
         Remove

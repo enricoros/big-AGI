@@ -5,10 +5,10 @@ import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageDataInline, DMessageDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
+import { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, draftInputMimeEgoFragments, draftInputMimeWebpage, DraftWebInputData } from './attachment.types';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
 
 
@@ -144,19 +144,26 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
     case 'url':
       edit({ label: source.refUrl, ref: source.refUrl });
       try {
+        // fetch the web page
         const { title, content: { html, markdown, text }, screenshot } = await callBrowseFetchPage(
-          source.url, undefined, { width: 512, height: 512, quality: 98 },
+          source.url, ['text', 'markdown', 'html'], { width: 512, height: 512, quality: 98 },
         );
-        // [special] the page title is in the alt mime
-        const titleObject: Partial<AttachmentDraftInput> | undefined = title ? { altMimeType: 'application/vnd.agi.title', altData: title } : undefined;
-        // [special] attach the screenshot too, if present
-        const screenshotObject: Partial<AttachmentDraftInput> | undefined = screenshot ? { urlImage: screenshot } : undefined;
-        edit(
-          markdown ? { input: { mimeType: 'text/markdown', data: markdown, dataSize: markdown.length, ...titleObject, ...screenshotObject } }
-            : text ? { input: { mimeType: 'text/plain', data: text, dataSize: text.length, ...titleObject, ...screenshotObject } }
-              : html ? { input: { mimeType: 'text/html', data: html, dataSize: html.length, ...titleObject, ...screenshotObject } }
-                : { inputError: 'No content found at this link' },
-        );
+        if (html || markdown || text)
+          edit({
+            label: title || source.refUrl,
+            input: {
+              mimeType: draftInputMimeWebpage,
+              data: {
+                pageText: text ?? undefined,
+                pageMarkdown: markdown ?? undefined,
+                pageCleanedHtml: html ?? undefined,
+                pageTitle: title || undefined,
+              },
+              urlImage: screenshot || undefined,
+            },
+          });
+        else
+          edit({ inputError: 'No content found at this link' });
       } catch (error: any) {
         edit({ inputError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
       }
@@ -232,11 +239,10 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
     case 'ego':
       edit({
         label: source.label,
-        ref: `${source.refMessageId} - ${source.refConversationTitle}`,
+        ref: `${source.egoFragmentsInputData.messageId} - ${source.egoFragmentsInputData.conversationTitle}`,
         input: {
-          mimeType: 'application/vnd.agi.ego.fragments',
-          data: source.fragments,
-          dataSize: source.fragments.length,
+          mimeType: draftInputMimeEgoFragments,
+          data: source.egoFragmentsInputData,
         },
       });
       break;
@@ -265,22 +271,13 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
-      const isFromURL = input.altMimeType === 'application/vnd.agi.title';
 
       // p1: Tables
       if (textOriginHtml && isHtmlTable)
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      if (isFromURL) {
-        converters.push({
-          id: 'text', name:
-            input.mimeType === 'text/markdown' ? 'Markdown'
-              : input.mimeType === 'text/html' ? 'Clean HTML'
-                : 'Text',
-        });
-      } else
-        converters.push({ id: 'text', name: 'Text' });
+      converters.push({ id: 'text', name: 'Text' });
 
       // p3: Html
       if (textOriginHtml) {
@@ -311,8 +308,22 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       converters.push({ id: 'docx-to-html', name: 'DOCX to HTML' });
       break;
 
+    // URL: custom converters because of a custom input structure with multiple inputs
+    case input.mimeType === draftInputMimeWebpage:
+      const pageData = input.data as DraftWebInputData;
+      const preferMarkdown = !!pageData.pageMarkdown;
+      if (pageData.pageText)
+        converters.push({ id: 'url-page-text', name: 'Text', isActive: !preferMarkdown });
+      if (pageData.pageMarkdown)
+        converters.push({ id: 'url-page-markdown', name: 'Markdown (suggested)', isActive: preferMarkdown });
+      if (pageData.pageCleanedHtml)
+        converters.push({ id: 'url-page-html', name: 'Clean HTML', isActive: !preferMarkdown && !pageData.pageText });
+      if (input.urlImage)
+        converters.push({ id: 'url-page-image', name: 'Add Screenshot', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
+      break;
+
     // EGO
-    case input.mimeType === 'application/vnd.agi.ego.fragments':
+    case input.mimeType === draftInputMimeEgoFragments:
       converters.push({ id: 'ego-fragments-inlined', name: 'Message' });
       break;
 
@@ -323,10 +334,6 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
       break;
   }
 
-  // URL screenshots, independent of the mime
-  if (input.urlImage)
-    converters.push({ id: 'url-image', name: 'Add Screenshot', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
-
   edit({ converters });
 }
 
@@ -336,7 +343,7 @@ function lowCollisionRefString(prefix: string, digits: number): string {
 }
 
 
-function prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterNameForTextConversion: string): {
+function prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterName: string): {
   title: string;
   caption: string;
   refString: string;
@@ -347,12 +354,12 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
 
     // Downloaded URL as Text, Markdown, or HTML
     case 'url':
-      let pageTitle = input.altMimeType === 'application/vnd.agi.title' ? inputDataToString(input.altData) : '';
+      let pageTitle = input.mimeType === draftInputMimeWebpage ? (input.data as DraftWebInputData)?.pageTitle : undefined;
       if (!pageTitle)
-        pageTitle = `Page from ${source.refUrl}`;
+        pageTitle = `Web page: ${source.refUrl}`;
       return {
         title: pageTitle,
-        caption: inputMime === 'text/markdown' ? 'As Markdown' : inputMime === 'text/html' ? 'As HTML' : 'As Text',
+        caption: converterName,
         refString: humanReadableHyphenated(pageTitle),
       };
 
@@ -397,18 +404,18 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
     case 'text':
       const textRef = lowCollisionRefString('doc', 6);
       return {
-        title: converterNameForTextConversion || 'Text',
+        title: converterName || 'Text',
         caption: source.method === 'drop' ? 'Dropped' : 'Pasted',
         refString: humanReadableHyphenated(textRef),
       };
 
     // The application attaching pieces of itself
     case 'ego':
-      const egoTitle = source.method === 'ego-fragments' ? 'Chat Message' : 'Application';
+      const egoKind = source.method === 'ego-fragments' ? 'Chat Message' : '';
       return {
-        title: egoTitle,
-        caption: 'From Chat: ' + source.refConversationTitle,
-        refString: humanReadableHyphenated(lowCollisionRefString('ego-' + egoTitle, 6)),
+        title: egoKind,
+        caption: 'From Chat: ' + source.egoFragmentsInputData.conversationTitle,
+        refString: humanReadableHyphenated(egoKind),
       };
   }
 }
@@ -439,7 +446,6 @@ export async function attachmentPerformConversion(
   edit(attachment.id, {
     outputsConverting: true,
   });
-
 
   // apply converter to the input
   const newFragments: DMessageAttachmentFragment[] = [];
@@ -490,6 +496,7 @@ export async function attachmentPerformConversion(
         }
         newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', tableData, refString, docMeta));
         break;
+
 
       // image resized (default mime/quality, openai-high-res)
       case 'image-resized-high':
@@ -608,20 +615,38 @@ export async function attachmentPerformConversion(
         break;
 
 
-      // self: message
-      case 'ego-fragments-inlined':
-        if (!Array.isArray(input.data)) {
-          console.log('Expected DMessageContentFragment[] for ego-fragments-inlined, got:', typeof input.data);
+      // url page text
+      case 'url-page-text':
+        if (!input.data || input.mimeType !== draftInputMimeWebpage || !(input.data as DraftWebInputData).pageText) {
+          console.log('Expected WebPageInputData for url-page-text, got:', input.data);
           break;
         }
-        title = `Chat Message: ${attachment.label}`;
-        for (const contentFragment of input.data) {
-          newFragments.push(specialContentPartToDocAttachmentFragment(title, caption, contentFragment.part, refString, docMeta));
-        }
+        const pageTextData = createDMessageDataInlineText((input.data as DraftWebInputData).pageText!, 'text/plain');
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', pageTextData, refString, docMeta));
         break;
 
-      // urlimage
-      case 'url-image':
+      // url page markdown
+      case 'url-page-markdown':
+        if (!input.data || input.mimeType !== draftInputMimeWebpage || !(input.data as DraftWebInputData).pageMarkdown) {
+          console.log('Expected WebPageInputData for url-page-markdown, got:', input.data);
+          break;
+        }
+        const pageMarkdownData = createDMessageDataInlineText((input.data as DraftWebInputData).pageMarkdown!, 'text/markdown');
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/markdown', pageMarkdownData, refString, docMeta));
+        break;
+
+      // url page html
+      case 'url-page-html':
+        if (!input.data || input.mimeType !== draftInputMimeWebpage || !(input.data as DraftWebInputData).pageCleanedHtml) {
+          console.log('Expected WebPageInputData for url-page-html, got:', input.data);
+          break;
+        }
+        const pageHtmlData = createDMessageDataInlineText((input.data as DraftWebInputData).pageCleanedHtml!, 'text/html');
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', pageHtmlData, refString, docMeta));
+        break;
+
+      // url page image
+      case 'url-page-image':
         if (!input.urlImage) {
           console.log('Expected URL image data for url-image, got:', input.urlImage);
           break;
@@ -641,6 +666,29 @@ export async function attachmentPerformConversion(
         }
         break;
 
+
+      // ego: message
+      case 'ego-fragments-inlined':
+        if (!input.data || input.mimeType !== draftInputMimeEgoFragments || !(input.data as DraftEgoFragmentsInputData).fragments?.length) {
+          console.log('Expected non-empty EgoFragmentsInputData for ego-fragments-inlined, got:', input.data);
+          break;
+        }
+        const draftEgoData = input.data as DraftEgoFragmentsInputData;
+        for (const fragment of draftEgoData.fragments) {
+          if (isContentOrAttachmentFragment(fragment)) {
+            if (isDocPart(fragment.part)) {
+              console.log('Skipping doc part in ego-fragments-inlined:', fragment);
+              continue;
+            }
+            const fragmentTitle = `Chat Message: ${attachment.label}`;
+            const fragmentCaption = 'From chat: ' + draftEgoData.conversationTitle;
+            const fragmentRef = humanReadableHyphenated(refString + '-' + draftEgoData.messageId + '-' + fragment.fId);
+            newFragments.push(specialContentPartToDocAttachmentFragment(fragmentTitle, fragmentCaption, fragment.part, fragmentRef, docMeta));
+          }
+        }
+        break;
+
+
       case 'unhandled':
         // force the user to explicitly select 'as text' if they want to proceed
         break;
@@ -655,11 +703,11 @@ export async function attachmentPerformConversion(
 }
 
 
-function inputDataToString(data: string | ArrayBuffer | DMessageContentFragment[] | null | undefined): string {
+function inputDataToString(data: AttachmentDraftInput['data']): string {
   if (typeof data === 'string')
     return data;
   if (data instanceof ArrayBuffer)
-    return new TextDecoder().decode(data);
+    return new TextDecoder('utf-8', { fatal: false }).decode(data);
   console.log('attachment.inputDataToString: expected string or ArrayBuffer, got:', typeof data);
   return '';
 }
