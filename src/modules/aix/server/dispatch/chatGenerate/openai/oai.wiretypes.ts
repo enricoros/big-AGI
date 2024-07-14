@@ -11,19 +11,15 @@ import { openAPI_SchemaObject_schema } from '../../../intake/schemas.intake.tool
 //
 
 
-//
-// Chat > Create chat completion
-//
-
 export namespace OpenAIWire_ContentParts {
   /// Content parts - Input
 
-  export const TextContentPart_schema = z.object({
+  const TextContentPart_schema = z.object({
     type: z.literal('text'),
     text: z.string(),
   });
 
-  export const ImageContentPart_schema = z.object({
+  const ImageContentPart_schema = z.object({
     type: z.literal('image_url'),
     image_url: z.object({
       // Either a URL of the image or the base64 encoded image data.
@@ -50,7 +46,7 @@ export namespace OpenAIWire_ContentParts {
 
   /// Content parts - Output
 
-  export const PredictedFunctionCall_schema = z.object({
+  const PredictedFunctionCall_schema = z.object({
     type: z.literal('function'),
     id: z.string(),
     function: z.object({
@@ -79,13 +75,13 @@ export namespace OpenAIWire_Messages {
 
   // const _optionalParticipantName = z.string().optional();
 
-  export const SystemMessage_schema = z.object({
+  const SystemMessage_schema = z.object({
     role: z.literal('system'),
     content: z.string(),
     // name: _optionalParticipantName,
   });
 
-  export const UserMessage_schema = z.object({
+  const UserMessage_schema = z.object({
     role: z.literal('user'),
     content: z.union([z.string(), z.array(OpenAIWire_ContentParts.ContentPart_schema)]),
     // name: _optionalParticipantName,
@@ -104,7 +100,7 @@ export namespace OpenAIWire_Messages {
     // name: _optionalParticipantName,
   });
 
-  export const ToolMessage_schema = z.object({
+  const ToolMessage_schema = z.object({
     role: z.literal('tool'),
     content: z.string(),
     tool_call_id: z.string(),
@@ -170,6 +166,9 @@ export namespace OpenAIWire_Tools {
   ]);
 }
 
+//
+// Chat > Create chat completion
+//
 export namespace OpenAIWire_API_Chat_Completions {
 
   /// Request
@@ -233,7 +232,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
   /// Response
 
-  export const FinishReason_Enum = z.enum([
+  const FinishReason_Enum = z.enum([
     'stop', // natural completion, or stop sequence hit
     'length', // max_tokens exceeded
     'tool_calls', // the model called a tool
@@ -246,13 +245,13 @@ export namespace OpenAIWire_API_Chat_Completions {
     'error', // [OpenRouter] their network error
   ]);
 
-  export const Usage_schema = z.object({
+  const Usage_schema = z.object({
     prompt_tokens: z.number(),
     completion_tokens: z.number(),
     total_tokens: z.number(),
   }).nullable();
 
-  export const Choice_schema = z.object({
+  const Choice_schema = z.object({
     index: z.number(),
 
     // NOTE: the OpenAI api does not force role: 'assistant', it's only induced
@@ -264,7 +263,7 @@ export namespace OpenAIWire_API_Chat_Completions {
   });
 
   export type Response = z.infer<typeof Response_schema>;
-  export const Response_schema = z.object({
+  const Response_schema = z.object({
     object: z.literal('chat.completion'),
     id: z.string(), // A unique identifier for the chat completion.
 
@@ -284,7 +283,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
   /// Streaming Response
 
-  export const UndocumentedError_schema = z.object({
+  const UndocumentedError_schema = z.object({
     // (undocumented) first experienced on 2023-06-19 on streaming APIs
     message: z.string().optional(),
     type: z.string().optional(),
@@ -292,7 +291,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     code: z.string().nullable().optional(),
   });
 
-  export const UndocumentedWarning_schema = z.string();
+  const UndocumentedWarning_schema = z.string();
 
 
   /* Note: this is like the predicted function call, but with fields optional,
@@ -302,7 +301,7 @@ export namespace OpenAIWire_API_Chat_Completions {
      Note2: we found issues with Together, Openrouter, Mistral, and others we don't remember
      This object's status is really a mess for OpenAI and their downstream 'compatibles'.
    */
-  export const ChunkDeltaToolCalls_schema = z.object({
+  const ChunkDeltaToolCalls_schema = z.object({
     index: z.number() // index is not present in non-streaming calls
       .optional(), // [Mitral] not present
 
@@ -323,14 +322,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     }),
   });
 
-  export const ChunkDelta_schema = z.object({
+  const ChunkDelta_schema = z.object({
     role: z.literal('assistant').optional()
       .nullable(), // [Deepseek] added .nullable()
     content: z.string().nullable().optional(),
     tool_calls: z.array(ChunkDeltaToolCalls_schema).optional(),
   });
 
-  export const ChunkChoice_schema = z.object({
+  const ChunkChoice_schema = z.object({
     index: z.number()
       .optional(), // [OpenRouter] added .optional() which implies index=0 I guess
 
@@ -371,7 +370,6 @@ export namespace OpenAIWire_API_Chat_Completions {
 
 }
 
-
 //
 // Images > Create Image
 // https://platform.openai.com/docs/api-reference/images/create
@@ -379,7 +377,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 export namespace OpenAIWire_API_Images_Generations {
 
   export type Request = z.infer<typeof Request_schema>;
-  export const Request_schema = z.object({
+  const Request_schema = z.object({
     // The maximum length is 1000 characters for dall-e-2 and 4000 characters for dall-e-3
     prompt: z.string().max(4000),
 
@@ -418,7 +416,6 @@ export namespace OpenAIWire_API_Images_Generations {
 
 }
 
-
 //
 // Models > List Models
 //
@@ -426,7 +423,7 @@ export namespace OpenAIWire_API_Models_List {
 
   // Model object schema
   export type Model = z.infer<typeof Model_schema>;
-  export const Model_schema = z.object({
+  const Model_schema = z.object({
     id: z.string(),
     object: z.literal('model'),
     created: z.number().optional(),
@@ -441,20 +438,19 @@ export namespace OpenAIWire_API_Models_List {
 
   // List models response schema
   export type Response = z.infer<typeof Response_schema>;
-  export const Response_schema = z.object({
+  const Response_schema = z.object({
     object: z.literal('list'),
     data: z.array(Model_schema),
   });
 
 }
 
-
 //
 // Moderations > Create Moderation
 //
 export namespace OpenAIWire_API_Moderations_Create {
 
-  export const Category_schema = z.enum([
+  const Category_schema = z.enum([
     'sexual',
     'hate',
     'harassment',
@@ -469,20 +465,20 @@ export namespace OpenAIWire_API_Moderations_Create {
   ]);
 
   export type Request = z.infer<typeof Request_schema>;
-  export const Request_schema = z.object({
+  const Request_schema = z.object({
     // input: z.union([z.string(), z.array(z.string())]),
     input: z.string(),
     model: z.enum(['text-moderation-stable', 'text-moderation-latest']).optional(),
   });
 
-  export const Result_schema = z.object({
+  const Result_schema = z.object({
     flagged: z.boolean(),
     categories: z.record(Category_schema, z.boolean()),
     category_scores: z.record(Category_schema, z.number()),
   });
 
   export type Response = z.infer<typeof Response_schema>;
-  export const Response_schema = z.object({
+  const Response_schema = z.object({
     id: z.string(),
     model: z.string(),
     results: z.array(Result_schema),
