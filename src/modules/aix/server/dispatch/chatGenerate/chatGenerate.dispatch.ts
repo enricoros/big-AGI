@@ -6,14 +6,15 @@ import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '..
 import { intakeToAnthropicMessageCreate } from './anthropic/anthropic.adapters';
 import { intakeToOpenAIMessageCreate } from './openai/oai.adapters';
 
-import { createDispatchDemuxer, nullDispatchDemuxer } from './chatGenerate.demuxers';
-import { createDispatchParserAnthropicMessage, createDispatchParserAnthropicNS, createDispatchParserOpenAI, DispatchParser } from './chatGenerate.parsers';
+import type { ChatGenerateParseFunction } from './chatGenerate.types';
+import type { StreamDemuxerFormat } from '../stream.demuxers';
+import { createAnthropicMessageParser, createAnthropicMessageParserNS, createOpenAIMessageCreateParser } from './chatGenerate.parsers';
 
 
-export function dispatchChatGenerate(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
+export function createChatGenerateDispatch(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
-  demuxer: ReturnType<typeof createDispatchDemuxer>;
-  parser: DispatchParser;
+  demuxerFormat: StreamDemuxerFormat;
+  chatGenerateParse: ChatGenerateParseFunction;
 } {
 
   switch (access.dialect) {
@@ -23,8 +24,8 @@ export function dispatchChatGenerate(access: Intake_Access, model: Intake_Model,
           ...anthropicAccess(access, '/v1/messages'),
           body: intakeToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
-        demuxer: streaming ? createDispatchDemuxer('sse') : nullDispatchDemuxer,
-        parser: streaming ? createDispatchParserAnthropicMessage() : createDispatchParserAnthropicNS(),
+        demuxerFormat: streaming ? 'sse' : null,
+        chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
 
     case 'gemini':
@@ -34,8 +35,8 @@ export function dispatchChatGenerate(access: Intake_Access, model: Intake_Model,
     //     ...geminiAccess(access, model.id, streaming ? geminiModelsStreamGenerateContentPath : geminiModelsGenerateContentPath),
     //     // body: geminiGenerateContentTextPayload(model, _hist, access.minSafetyLevel, 1),
     //   },
-    //   demuxer: streaming ? createDispatchDemuxer('sse') : nullDispatchDemuxer,
-    //   parser: createDispatchParserGemini(model.id.replace('models/', '')),
+    //   demuxerFormat: streaming ? 'sse' : null,
+    //   chatGenerateParse: createDispatchParserGemini(model.id.replace('models/', '')),
     // };
 
     case 'ollama':
@@ -45,8 +46,8 @@ export function dispatchChatGenerate(access: Intake_Access, model: Intake_Model,
     //     ...ollamaAccess(access, OLLAMA_PATH_CHAT),
     //     body: ollamaChatCompletionPayload(model, _hist, access.ollamaJson, streaming),
     //   },
-    //   demuxer: streaming ? createDispatchDemuxer('json-nl') : nullDispatchDemuxer,
-    //   parser: createDispatchParserOllama(),
+    //   demuxerFormat: streaming ? 'json-nl' : null,
+    //   chatGenerateParse: createDispatchParserOllama(),
     // };
 
     case 'azure':
@@ -65,8 +66,8 @@ export function dispatchChatGenerate(access: Intake_Access, model: Intake_Model,
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           body: intakeToOpenAIMessageCreate(access.dialect, model, chatGenerate, false, streaming),
         },
-        demuxer: streaming ? createDispatchDemuxer('sse') : nullDispatchDemuxer,
-        parser: createDispatchParserOpenAI(),
+        demuxerFormat: streaming ? 'sse' : null,
+        chatGenerateParse: createOpenAIMessageCreateParser(),
       };
   }
 }

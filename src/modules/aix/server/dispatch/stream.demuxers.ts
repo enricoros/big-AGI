@@ -1,11 +1,28 @@
 import { createParser as createEventsourceParser } from 'eventsource-parser';
 
 /**
- * Event stream formats
- *  - 'sse' is the default format, and is used by all vendors except Ollama
- *  - 'json-nl' is used by Ollama
+ * The format of the stream: 'sse' or 'json-nl'
+ * - 'sse' is the default format, and is used by all vendors except Ollama
+ * - 'json-nl' is used by Ollama
  */
-type DispatchDemuxFormat = 'sse' | 'json-nl';
+export type StreamDemuxerFormat = 'sse' | 'json-nl' | null;
+
+
+/**
+ * Creates a demuxer for a stream of events.
+ * The demuxer is stateful and accumulates data until a full event is available.
+ */
+export function createStreamDemuxer(format: StreamDemuxerFormat): StreamDemuxer {
+  switch (format) {
+    case 'sse':
+      return _createEventSourceDemuxer();
+    case 'json-nl':
+      return _createJsonNlDemuxer();
+    case null:
+      return _nullStreamDemuxerWarn;
+  }
+}
+
 
 export type DemuxedEvent = {
   type: 'event' | 'reconnect-interval';
@@ -13,27 +30,9 @@ export type DemuxedEvent = {
   data: string;
 };
 
-type DispatchDemuxer = {
+type StreamDemuxer = {
   demux: (chunk: string) => DemuxedEvent[];
   remaining: () => string;
-};
-
-
-export function createDispatchDemuxer(format: DispatchDemuxFormat) {
-  switch (format) {
-    case 'sse':
-      return _createEventSourceDemuxer();
-    case 'json-nl':
-      return _createJsonNlDemuxer();
-  }
-}
-
-export const nullDispatchDemuxer: DispatchDemuxer = {
-  demux: () => {
-    console.warn('Null demuxer called - shall not happen, as it is only created in non-streaming');
-    return [];
-  },
-  remaining: () => '',
 };
 
 
@@ -43,7 +42,7 @@ export const nullDispatchDemuxer: DispatchDemuxer = {
  *
  * Note that we only use the 'feed' function and not 'reset', as we recreate the object per-call.
  */
-function _createEventSourceDemuxer(): DispatchDemuxer {
+function _createEventSourceDemuxer(): StreamDemuxer {
   let buffer: DemuxedEvent[] = [];
   const parser = createEventsourceParser((event) => {
     switch (event.type) {
@@ -71,7 +70,7 @@ function _createEventSourceDemuxer(): DispatchDemuxer {
  * Creates a parser for a 'JSON\n' non-event stream, to be swapped with an EventSource parser.
  * Ollama is the only vendor that uses this format.
  */
-function _createJsonNlDemuxer(): DispatchDemuxer {
+function _createJsonNlDemuxer(): StreamDemuxer {
   let buffer = '';
 
   return {
@@ -91,3 +90,12 @@ function _createJsonNlDemuxer(): DispatchDemuxer {
     remaining: () => buffer,
   };
 }
+
+
+const _nullStreamDemuxerWarn: StreamDemuxer = {
+  demux: () => {
+    console.warn('Null demuxer called - shall not happen, as it is only created in non-streaming');
+    return [];
+  },
+  remaining: () => '',
+};

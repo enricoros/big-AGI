@@ -5,7 +5,8 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { IntakeHandler } from './intake/IntakeHandler';
-import { dispatchChatGenerate } from './dispatch/chatGenerate/dispatchChatGenerate';
+import { createChatGenerateDispatch } from './dispatch/chatGenerate/chatGenerate.dispatch';
+import { createStreamDemuxer } from './dispatch/stream.demuxers';
 import { intake_Access_Schema, intake_ChatGenerateRequest_Schema, intake_ContextChatStream_Schema, intake_Model_Schema } from './intake/schemas.intake.api';
 
 
@@ -39,9 +40,9 @@ export const aixRouter = createTRPCRouter({
 
 
       // Prepare the dispatch
-      let dispatch: ReturnType<typeof dispatchChatGenerate>;
+      let dispatch: ReturnType<typeof createChatGenerateDispatch>;
       try {
-        dispatch = dispatchChatGenerate(access, model, chatGenerate, streaming);
+        dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
 
         // TEMP for debugging without requiring a full server restart
         if (input._debugRequestBody)
@@ -82,7 +83,7 @@ export const aixRouter = createTRPCRouter({
       if (!streaming) {
         try {
           const dispatchBody = await dispatchResponse.text();
-          const messageAction = dispatch.parser(dispatchBody);
+          const messageAction = dispatch.chatGenerateParse(dispatchBody);
           yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
         } catch (error: any) {
           yield* intakeHandler.yieldError('dispatch-read', `**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service reading error'}`);
@@ -94,6 +95,8 @@ export const aixRouter = createTRPCRouter({
       // STREAM the response to the client
       const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
       const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> “ ” (U+FFFD) */ });
+      const dispatchDemuxer = createStreamDemuxer(dispatch.demuxerFormat);
+      const dispatchParser = dispatch.chatGenerateParse;
 
       // Data pump: AI Service -- (dispatch) --> Server -- (intake) --> Client
       do {
@@ -125,7 +128,7 @@ export const aixRouter = createTRPCRouter({
 
 
         // Demux the chunk into 0 or more events
-        for (const demuxedItem of dispatch.demuxer.demux(dispatchChunk)) {
+        for (const demuxedItem of dispatchDemuxer.demux(dispatchChunk)) {
           intakeHandler.onReceivedDispatchEvent(demuxedItem);
 
           // ignore events post termination
@@ -146,7 +149,7 @@ export const aixRouter = createTRPCRouter({
           }
 
           try {
-            const messageAction = dispatch.parser(demuxedItem.data, demuxedItem.name);
+            const messageAction = dispatchParser(demuxedItem.data, demuxedItem.name);
             yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
           } catch (error: any) {
             console.warn('[chatGenerateContent] Error parsing dispatch stream event:', demuxedItem, error);
