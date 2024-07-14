@@ -1,4 +1,4 @@
-import type { OpenaiWire_Model } from '~/modules/aix/server/dispatch/openai/oai.wiretypes';
+import type { OpenaiWire_Model } from '~/modules/aix/server/dispatch/chatGenerate/openai/oai.wiretypes';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 

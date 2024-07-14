@@ -1,8 +1,8 @@
 import { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
-import type { Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
-import type { Intake_ChatMessage, Intake_SystemMessage } from '../../intake/schemas.intake.messages';
-import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../intake/schemas.intake.tools';
+import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/schemas.intake.api';
+import type { Intake_ChatMessage, Intake_SystemMessage } from '../../../intake/schemas.intake.messages';
+import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
 
 import { OpenaiWire_ChatCompletionRequest, openaiWire_chatCompletionRequest_Schema, openaiWire_ImageContentPart, openaiWire_PredictedFunctionCall, openaiWire_TextContentPart } from './oai.wiretypes';
 

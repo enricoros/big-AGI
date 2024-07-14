@@ -1,16 +1,16 @@
 import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
-import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '../intake/schemas.intake.api';
+import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
 
 import { intakeToAnthropicMessageCreate } from './anthropic/anthropic.adapters';
 import { intakeToOpenAIMessageCreate } from './openai/oai.adapters';
 
-import { createDispatchDemuxer, nullDispatchDemuxer } from './dispatch.demuxers';
-import { createDispatchParserAnthropicMessage, createDispatchParserAnthropicNS, createDispatchParserOpenAI, DispatchParser } from './dispatch.parsers';
+import { createDispatchDemuxer, nullDispatchDemuxer } from './chatGenerate.demuxers';
+import { createDispatchParserAnthropicMessage, createDispatchParserAnthropicNS, createDispatchParserOpenAI, DispatchParser } from './chatGenerate.parsers';
 
 
-export function createDispatch(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
+export function dispatchChatGenerate(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
   demuxer: ReturnType<typeof createDispatchDemuxer>;
   parser: DispatchParser;

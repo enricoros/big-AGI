@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { IntakeHandler } from './intake/IntakeHandler';
-import { createDispatch } from './dispatch/createDispatch';
+import { dispatchChatGenerate } from './dispatch/chatGenerate/dispatchChatGenerate';
 import { intake_Access_Schema, intake_ChatGenerateRequest_Schema, intake_ContextChatStream_Schema, intake_Model_Schema } from './intake/schemas.intake.api';
 
 
@@ -39,9 +39,9 @@ export const aixRouter = createTRPCRouter({
 
 
       // Prepare the dispatch
-      let dispatch: ReturnType<typeof createDispatch>;
+      let dispatch: ReturnType<typeof dispatchChatGenerate>;
       try {
-        dispatch = createDispatch(access, model, chatGenerate, streaming);
+        dispatch = dispatchChatGenerate(access, model, chatGenerate, streaming);
 
         // TEMP for debugging without requiring a full server restart
         if (input._debugRequestBody)
