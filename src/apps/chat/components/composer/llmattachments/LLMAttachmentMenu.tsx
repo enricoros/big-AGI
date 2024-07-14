@@ -44,6 +44,7 @@ export function LLMAttachmentMenu(props: {
   } = props.llmAttachmentDraft;
 
   const draftId = draft.id;
+  const draftSourceMedia = draft.source.media;
   const draftInput = draft.input;
   const isConverting = draft.outputsConverting;
   const isUnconvertible = !draft.converters.length;
@@ -116,7 +117,7 @@ export function LLMAttachmentMenu(props: {
       {!isUnconvertible && (
         <ListItem>
           <Typography level='body-sm'>
-            Attach as:
+            Attach {draftSourceMedia === 'url' ? 'link' : draftSourceMedia === 'file' ? 'file' : ''} as:
           </Typography>
         </ListItem>
       )}
@@ -139,15 +140,21 @@ export function LLMAttachmentMenu(props: {
             : c.name}
         </MenuItem>,
       )}
-      {!isUnconvertible && <ListDivider sx={{ mb: 0 }} />}
+      {/*{!isUnconvertible && <ListDivider sx={{ mb: 0 }} />}*/}
 
-      <MenuItem variant='soft' disabled={!canHaveDetails} onClick={handleToggleShowDetails}>
+      <MenuItem variant='soft' disabled={!canHaveDetails} onClick={handleToggleShowDetails} sx={{
+        my: 0.75,
+        border: '1px solid',
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderColor: 'divider',
+      }}>
         <ListItemDecorator>
           {(showDetails && canHaveDetails) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </ListItemDecorator>
         {!(showDetails && canHaveDetails) ? (
-          <Typography level='body-sm'>
-            Stats For Nerds
+          <Typography sx={{ fontSize: 'sm' }}>
+            Details
           </Typography>
         ) : (
           <Box>
@@ -222,7 +229,6 @@ export function LLMAttachmentMenu(props: {
           </Box>
         )}
       </MenuItem>
-      <ListDivider sx={{ mt: 0 }} />
 
       {/* Destructive Operations */}
       {/*<MenuItem onClick={handleCopyToClipboard} disabled={!isOutputTextInlineable}>*/}
