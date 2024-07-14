@@ -7,7 +7,7 @@ import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 import { IntakeHandler } from './intake/IntakeHandler';
 import { createChatGenerateDispatch } from './dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from './dispatch/stream.demuxers';
-import { intake_Access_Schema, intake_ChatGenerateRequest_Schema, intake_ContextChatStream_Schema, intake_Model_Schema } from './intake/schemas.intake.api';
+import { intake_Access_schema, intake_ChatGenerateRequest_schema, intake_ContextChatStream_schema, intake_Model_schema } from './intake/schemas.intake.api';
 
 
 export const aixRouter = createTRPCRouter({
@@ -18,10 +18,10 @@ export const aixRouter = createTRPCRouter({
    */
   chatGenerateContent: publicProcedure
     .input(z.object({
-      access: intake_Access_Schema,
-      model: intake_Model_Schema,
-      chatGenerate: intake_ChatGenerateRequest_Schema,
-      context: intake_ContextChatStream_Schema,
+      access: intake_Access_schema,
+      model: intake_Model_schema,
+      chatGenerate: intake_ChatGenerateRequest_schema,
+      context: intake_ContextChatStream_schema,
       streaming: z.boolean(),
       _debugRequestBody: z.boolean().optional(),
     }))
