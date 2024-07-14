@@ -72,7 +72,7 @@ export namespace OpenAIWire_ContentParts {
 
 export namespace OpenAIWire_Messages {
 
-  // Messages - Input
+  /// Messages - Input
 
   // const _optionalParticipantName = z.string().optional();
 
