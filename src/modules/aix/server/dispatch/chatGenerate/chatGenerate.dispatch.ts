@@ -5,8 +5,9 @@ import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
-import { intakeToAnthropicMessageCreate } from './anthropic/anthropic.adapters';
-import { intakeToOpenAIMessageCreate } from './openai/oai.adapters';
+
+import { intakeToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
+import { intakeToOpenAIMessageCreate } from './adapters/openai.chatCompletions';
 
 import type { ChatGenerateParseFunction } from './chatGenerate.types';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
