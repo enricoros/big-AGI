@@ -15,7 +15,7 @@ export function intakeToGeminiGenerateContent(model: Intake_Model, chatGenerate:
 
   // System Instructions
   const systemInstruction: TRequest['systemInstruction'] = chatGenerate.systemMessage?.parts.length
-    ? { parts: chatGenerate.systemMessage.parts.map(part => GeminiWire_ContentParts.TextContentPart(part.text)) }
+    ? { parts: chatGenerate.systemMessage.parts.map(part => GeminiWire_ContentParts.TextPart(part.text)) }
     : undefined;
 
   // Chat Messages
@@ -67,7 +67,7 @@ function _intakeToGeminiContents(chatSequence: Intake_ChatMessage[]): GeminiWire
       switch (part.pt) {
 
         case 'text':
-          parts.push(GeminiWire_ContentParts.TextContentPart(part.text));
+          parts.push(GeminiWire_ContentParts.TextPart(part.text));
           break;
 
         case 'inline_image':
@@ -168,9 +168,9 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
 // Approximate conversions - alternative approaches should be tried until we find the best one
 
 function _toApproximateGeminiDocPart(intakeDocPart: Intake_DocPart): GeminiWire_ContentParts.ContentPart {
-  return GeminiWire_ContentParts.TextContentPart(`\`\`\`${intakeDocPart.ref || ''}\n${intakeDocPart.data.text}\n\`\`\`\n`);
+  return GeminiWire_ContentParts.TextPart(`\`\`\`${intakeDocPart.ref || ''}\n${intakeDocPart.data.text}\n\`\`\`\n`);
 }
 
 function _toApproximateGeminiReplyTo(replyTo: string): GeminiWire_ContentParts.ContentPart {
-  return GeminiWire_ContentParts.TextContentPart(`<context>The user is referring to this in particular: ${replyTo}</context>`);
+  return GeminiWire_ContentParts.TextPart(`<context>The user is referring to this in particular: ${replyTo}</context>`);
 }

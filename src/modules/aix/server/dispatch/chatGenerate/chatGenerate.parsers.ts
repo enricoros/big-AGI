@@ -289,17 +289,22 @@ export function createGeminiGenerateContentParser(modelId: string): ChatGenerate
     for (const mPart of candidate0.content.parts) {
       switch (true) {
 
-        // -> Text
+        // <- TextPart
         case 'text' in mPart:
           yield { op: 'text', text: mPart.text || '' };
           break;
 
-        // -> ExecutableCode
+        // <- FunctionCallPart
+        case 'functionCall' in mPart:
+          yield { op: 'text', text: `TODO: [Function Call] ${mPart.functionCall.name} ${JSON.stringify(mPart.functionCall.args)}` };
+          break;
+
+        // <- ExecutableCodePart
         case 'executableCode' in mPart:
           yield { op: 'text', text: `TODO: [Executable Code] ${mPart.executableCode}` };
           break;
 
-        // -> CodeExecutionResult
+        // <- CodeExecutionResultPart
         case 'codeExecutionResult' in mPart:
           yield { op: 'text', text: `TODO: [Code Execution Result] ${mPart.codeExecutionResult}` };
           break;
