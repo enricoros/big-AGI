@@ -10,8 +10,8 @@ import { AnthropicWire_API_Message_Create } from '~/modules/aix/server/dispatch/
 import { anthropicAccess, anthropicAccessSchema, anthropicMessagesPayloadOrThrow } from './anthropic/anthropic.router';
 
 // Gemini server imports
+import { GeminiWire_API_Generate_Content } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiAccess, geminiAccessSchema, geminiGenerateContentTextPayload } from './gemini/gemini.router';
-import { geminiGeneratedContentResponseSchema, geminiModelsStreamGenerateContentPath } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 // Ollama server imports
 import { OLLAMA_PATH_CHAT, ollamaAccess, ollamaAccessSchema, ollamaChatCompletionPayload } from './ollama/ollama.router';
@@ -366,9 +366,9 @@ function createStreamParserGemini(modelName: string): AIStreamParser {
 
     // parse the JSON chunk
     const wireGenerationChunk = JSON.parse(data);
-    let generationChunk: ReturnType<typeof geminiGeneratedContentResponseSchema.parse>;
+    let generationChunk: GeminiWire_API_Generate_Content.Response;
     try {
-      generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
+      generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(wireGenerationChunk);
     } catch (error: any) {
       // log the malformed data to the console, and rethrow to transmit as 'error'
       console.log(`/api/llms/stream: Gemini parsing issue: ${error?.message || error}`, wireGenerationChunk);
@@ -511,7 +511,7 @@ function _prepareRequestData({ access, model, history, context: _context }: Chat
 
     case 'gemini':
       return {
-        ...geminiAccess(access, model.id, geminiModelsStreamGenerateContentPath),
+        ...geminiAccess(access, model.id, GeminiWire_API_Generate_Content.streamingPostPath),
         body: geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1),
         vendorMuxingFormat: 'sse',
         vendorStreamParser: createStreamParserGemini(model.id.replace('models/', '')),

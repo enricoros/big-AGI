@@ -12,7 +12,7 @@ import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModels
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
-import { GeminiBlockSafetyLevel, geminiBlockSafetyLevelEnum, GeminiContentSchema, GeminiGenerateContentRequest, geminiGeneratedContentResponseSchema, geminiModelsGenerateContentPath, geminiModelsListOutputSchema, geminiModelsListPath } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+import { GeminiWire_API_Generate_Content, GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from '~/modules/llms/server/gemini/gemini.models';
 
 
@@ -44,16 +44,18 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
   };
 }
 
+type TRequest = GeminiWire_API_Generate_Content.Request;
+
 /**
  * We specially encode the history to match the Gemini API requirements.
  * Gemini does not want 2 consecutive messages from the same role, so we alternate.
  *  - System messages = [User, Model'Ok']
  *  - User and Assistant messages are coalesced into a single message (e.g. [User, User, Assistant, Assistant, User] -> [User[2], Assistant[2], User[1]])
  */
-export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, safety: GeminiBlockSafetyLevel, n: number): GeminiGenerateContentRequest => {
+export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, safety: GeminiWire_Safety.HarmBlockThreshold, n: number): TRequest => {
 
   // convert the history to a Gemini format
-  const contents: GeminiContentSchema[] = [];
+  const contents: TRequest['contents'] = [];
   for (const _historyElement of history) {
 
     const { role: msgRole, content: msgContent } = _historyElement;
@@ -67,7 +69,7 @@ export const geminiGenerateContentTextPayload = (model: OpenAIModelSchema, histo
     }
 
     // User or Assistant message
-    const nextRole: GeminiContentSchema['role'] = msgRole === 'assistant' ? 'model' : 'user';
+    const nextRole: TRequest['contents'][number]['role'] = msgRole === 'assistant' ? 'model' : 'user';
     if (contents.length && contents[contents.length - 1].role === nextRole) {
       // coalesce with the previous message
       contents[contents.length - 1].parts.push({ text: msgContent });
@@ -110,7 +112,7 @@ async function geminiPOST<TOut extends object, TPostBody extends object>(access:
 export const geminiAccessSchema = z.object({
   dialect: z.enum(['gemini']),
   geminiKey: z.string(),
-  minSafetyLevel: geminiBlockSafetyLevelEnum,
+  minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold_enum,
 });
 export type GeminiAccessSchema = z.infer<typeof geminiAccessSchema>;
 
@@ -142,8 +144,8 @@ export const llmGeminiRouter = createTRPCRouter({
     .query(async ({ input }) => {
 
       // get the models
-      const wireModels = await geminiGET(input.access, null, geminiModelsListPath);
-      const detailedModels = geminiModelsListOutputSchema.parse(wireModels).models;
+      const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath);
+      const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
 
       // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,
       //       as the List API already all the info on all the models
@@ -167,9 +169,9 @@ export const llmGeminiRouter = createTRPCRouter({
     .mutation(async ({ input: { access, history, model } }) => {
 
       // generate the content
-      const wireGeneration = await geminiPOST(access, model.id, geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1), geminiModelsGenerateContentPath);
-      const generation = geminiGeneratedContentResponseSchema.parse(wireGeneration);
-
+      const wireGeneration = await geminiPOST(access, model.id, geminiGenerateContentTextPayload(model, history, access.minSafetyLevel, 1), GeminiWire_API_Generate_Content.postPath);
+      const generation = GeminiWire_API_Generate_Content.Response_schema.parse(wireGeneration);
+      0;
       // only use the first result (and there should be only one)
       const singleCandidate = generation.candidates?.[0] ?? null;
       if (!singleCandidate || !singleCandidate.content?.parts.length)

@@ -1,4 +1,4 @@
-import type { GeminiModelSchema } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import type { ModelDescriptionSchema } from '../llm.server.types';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 
@@ -8,11 +8,11 @@ const DEV_DEBUG_GEMINI_MODELS = false;
 
 
 // supported interfaces
-const geminiChatInterfaces: GeminiModelSchema['supportedGenerationMethods'] = ['generateContent'];
+const geminiChatInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = ['generateContent'];
 
 // unsupported interfaces
 const filterUnallowedNames = ['Legacy'];
-const filterUnallowedInterfaces: GeminiModelSchema['supportedGenerationMethods'] = ['generateAnswer', 'embedContent', 'embedText'];
+const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = ['generateAnswer', 'embedContent', 'embedText'];
 
 
 /* Manual models details
@@ -163,7 +163,7 @@ const _knownGeminiModels: ({
 ];
 
 
-export function geminiFilterModels(geminiModel: GeminiModelSchema): boolean {
+export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model): boolean {
   const isAllowed = !filterUnallowedNames.some(name => geminiModel.displayName.includes(name));
   const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
   return isAllowed && isSupported;
@@ -176,7 +176,7 @@ export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
   return b.label.localeCompare(a.label);
 }
 
-export function geminiModelToModelDescription(geminiModel: GeminiModelSchema): ModelDescriptionSchema {
+export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models_List.Model): ModelDescriptionSchema {
   const { description, displayName, name: modelId, supportedGenerationMethods } = geminiModel;
 
   if (DEV_DEBUG_GEMINI_MODELS)
