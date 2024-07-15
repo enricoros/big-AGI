@@ -75,9 +75,7 @@ class MediaSessionManager {
     (Object.keys(this.handlers) as MediaSessionAction[]).forEach(action => {
       const handlers = this.handlers[action];
       if (handlers.size > 0) {
-        console.log('set handler for ', action);
         navigator.mediaSession.setActionHandler(action, () => {
-          console.log('HANDLED!');
           handlers.forEach(handler => handler());
         });
       } else {
@@ -88,7 +86,12 @@ class MediaSessionManager {
 
 }
 
-
+// noinspection JSUnusedGlobalSymbols
+/**
+ * Note: this does not seem to be working as of now.
+ * The reason is possibly related to us not having an <audio> element in the DOM.
+ * @param handlers an object containing zero or more handlers for diverse media session actions
+ */
 export function useMediaSessionCallbacks(handlers: MediaSessionCallbacks) {
 
   const stableHandlers = useStableObject(handlers);

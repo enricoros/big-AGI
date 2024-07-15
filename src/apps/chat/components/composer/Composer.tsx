@@ -72,7 +72,6 @@ import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 import { useDragDrop } from './useComposerDragDrop';
-import { useMediaSessionCallbacks } from '~/common/util/useMediaSessionCallbacks';
 
 
 const zIndexComposerOverlayMic = 10;
@@ -407,7 +406,7 @@ export function Composer(props: {
     useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
 
   useGlobalShortcuts([['m', true, false, false, toggleRecording]]);
-  useMediaSessionCallbacks({ play: toggleRecording, pause: toggleRecording });
+  // useMediaSessionCallbacks({ play: toggleRecording, pause: toggleRecording });
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !isSpeechError;
