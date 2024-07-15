@@ -67,7 +67,8 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
 
-      contentScaling: 'md',
+      // 2024-07-14: 'sm' is the new default, down from 'md'
+      contentScaling: 'sm',
       setContentScaling: (contentScaling: ContentScaling) => set({ contentScaling: contentScaling }),
       increaseContentScaling: () => set((state) => state.contentScaling === 'md' ? state : { contentScaling: state.contentScaling === 'xs' ? 'sm' : 'md' }),
       decreaseContentScaling: () => set((state) => state.contentScaling === 'xs' ? state : { contentScaling: state.contentScaling === 'md' ? 'sm' : 'xs' }),
@@ -115,13 +116,20 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       /* versioning:
        * 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
+       * 2: deault 'contentScaling' to 'sm'
        */
-      version: 1,
+      version: 2,
 
       migrate: (state: any, fromVersion: number): UIPreferencesStore => {
-        // 0 -> 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
-        if (state && fromVersion === 0)
+
+        // 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
+        if (state && fromVersion < 1)
           state.enterIsNewline = state['enterToSend'] === false;
+
+        // 2: deault 'contentScaling' to 'sm'
+        if (state && fromVersion < 2)
+          state.contentScaling = 'sm';
+
         return state;
       },
     },
