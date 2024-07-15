@@ -7,6 +7,7 @@ import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '..
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
 import { intakeToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
+import { intakeToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { intakeToOpenAIMessageCreate } from './adapters/openai.chatCompletions';
 
 import type { ChatGenerateParseFunction } from './chatGenerate.types';
@@ -35,7 +36,7 @@ export function createChatGenerateDispatch(access: Intake_Access, model: Intake_
       return {
         request: {
           ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath),
-          body: {}, //intakeToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
+          body: intakeToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
         chatGenerateParse: createGeminiGenerateContentParser(model.id),

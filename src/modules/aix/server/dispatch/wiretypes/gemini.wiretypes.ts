@@ -64,7 +64,7 @@ export namespace GeminiWire_ContentParts {
   const FunctionCallPart_schema = z.object({
     functionCall: z.object({
       name: z.string(),
-      args: z.record(z.any()), // JSON object format
+      args: z.record(z.any()).optional(), // JSON object format
     }),
   });
 
@@ -82,6 +82,7 @@ export namespace GeminiWire_ContentParts {
     }),
   });*/
 
+  export type ContentPart = z.infer<typeof ContentPart_schema>;
   export const ContentPart_schema = z.union([
     TextContentPart_schema,
     InlineDataPart_schema,
@@ -97,10 +98,28 @@ export namespace GeminiWire_ContentParts {
     return { inlineData: { mimeType, data } };
   }
 
+  export function FunctionCallPart(name: string, args?: Record<string, any>): z.infer<typeof FunctionCallPart_schema> {
+    return { functionCall: { name, args } };
+  }
+
+  export function FunctionResponsePart(name: string, response: Record<string, any>): z.infer<typeof FunctionResponsePart_schema> {
+    return { functionResponse: { name, response } };
+  }
+
 }
 
 export namespace GeminiWire_Messages {
 
+  /// System Instruction
+
+  export const SystemInstruction_schema = z.object({
+    // Note: should be 'contents' object, but since it's text-only, we cast it down with a custom definition
+    parts: z.array(GeminiWire_ContentParts.TextContentPart_schema),
+  });
+
+  // Contents
+
+  export type Content = z.infer<typeof Content_schema>;
   export const Content_schema = z.object({
     // Must be either 'user' or 'model'. Optional but must be set if there are multiple "Content" objects in the parent array.
     role: z.enum(['user', 'model']).optional(),
@@ -115,25 +134,7 @@ export namespace GeminiWire_Messages {
   export const ModelContent_schema = Content_schema.extend({
     role: z.literal('model'),
   });
-  //
-  // export const SystemMessage_schema = z.object({
-  //   parts: z.array(z.object({
-  //     text: z.string(),
-  //   })),
-  // });
 
-  export const SystemInstruction_schema = z.object({
-    // Note: should be 'contents' object, but since it's text-only, we cast it down with a custom definition
-    parts: z.array(GeminiWire_ContentParts.TextContentPart_schema),
-  });
-
-
-  //
-  // export const Message_schema = z.union([
-  //   UserMessage_schema,
-  //   ModelMessage_schema,
-  //   SystemMessage_schema,
-  // ]);
 }
 
 export namespace GeminiWire_Tools {
@@ -163,9 +164,20 @@ export namespace GeminiWire_Tools {
   export const ToolConfig_schema = z.object({
     functionCallingConfig: z.object({
       mode: z.enum([
-        'AUTO', // (default) The model decides to predict either a function call or a natural language response.
-        'ANY', // The model is constrained to always predict a function call. If allowed_function_names is provided, the model picks from the set of allowed functions.
-        'NONE', // The model behavior is the same as if you don't pass any function declarations.
+        /**
+         * (default) The model decides to predict either a function call or a natural language response.
+         */
+        'AUTO',
+        /**
+         * The model is constrained to always predict a function call.
+         * If allowed_function_names is provided, the model picks from the set of allowed functions.
+         * Also used to force a specific function by setting allowed_function_names to a single function name.
+         */
+        'ANY',
+        /**
+         * The model behavior is the same as if you don't pass any function declarations.
+         */
+        'NONE',
       ]).optional(),
       allowedFunctionNames: z.array(z.string()).optional(),
     }).optional(),
@@ -278,7 +290,7 @@ export namespace GeminiWire_API_Generate_Content {
     safetySettings: z.array(GeminiWire_Safety.SafetySetting_schema).optional(),
     systemInstruction: GeminiWire_Messages.SystemInstruction_schema.optional(),
     generationConfig: GenerationConfig_schema.optional(),
-    cachedContent: z.string().optional(),
+    // cachedContent: z.string().optional(),
   });
 
   // Response

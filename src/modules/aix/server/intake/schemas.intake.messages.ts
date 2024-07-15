@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 
 // Export types
+export type Intake_DocPart = z.infer<typeof dMessage_DocPart_schema>;
 export type Intake_InlineImagePart = z.infer<typeof intake_InlineImagePart_schema>;
 export type Intake_MetaReplyToPart = z.infer<typeof intake_MetaReplyToPart_schema>;
 export type Intake_ChatMessage = z.infer<typeof intake_ChatMessage_schema>;
