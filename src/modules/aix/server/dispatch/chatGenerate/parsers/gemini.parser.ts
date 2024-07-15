@@ -10,21 +10,14 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
   // this can throw, it's caught by the caller
   return function* (eventData): Generator<ChatGenerateMessageAction> {
 
+    // Throws on malformed event data
+    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+
     // -> Model
     if (!hasBegun) {
       hasBegun = true;
       yield { op: 'set', value: { model: modelName } };
     }
-
-    // Throws on malformed event data
-    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
-
-    // remove wireGenerationChunk.candidates[number].safetyRatings
-    (generationChunk as GeminiWire_API_Generate_Content.Response).candidates?.forEach(candidate => {
-      delete candidate.safetyRatings;
-      // delete candidate.citationMetadata;
-    });
-    console.log('\n' + JSON.stringify(generationChunk.candidates, null, 2));
 
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
@@ -65,10 +58,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
       }
     }
 
-    // expect a single part
-    if (candidate0.content.parts?.length !== 1)
-      throw new Error(`expected 1 content part, got ${candidate0.content.parts?.length}`);
-
+    // usually a single part, but in some instances there could be more than one (e.g. two FunctionCallParts)
     for (const mPart of candidate0.content.parts) {
       switch (true) {
 

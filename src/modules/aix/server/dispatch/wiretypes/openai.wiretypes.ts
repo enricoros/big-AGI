@@ -186,7 +186,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // tool definitions and calling policy
     tools: z.array(OpenAIWire_Tools.ToolDefinition_schema).optional(),
     tool_choice: OpenAIWire_Tools.ToolChoice_schema.optional(),
-    parallel_tool_calls: z.boolean().optional(),
+    parallel_tool_calls: z.boolean().optional(), // defaults to true
 
     // common model configuration
     max_tokens: z.number().optional(),
@@ -240,12 +240,14 @@ export namespace OpenAIWire_API_Chat_Completions {
     'length', // max_tokens exceeded
     'tool_calls', // the model called a tool
     'content_filter', // upstream content filter stopped the generation
+
     // Extensions //
     '', // [LocalAI] bad response from LocalAI which breaks the parser
-    'stop_sequence', // [OpenRouter->Anthropic] added 'stop_sequence' which is the same as 'stop'
-    'eos', // [OpenRouter->Phind]
     'COMPLETE', // [OpenRouter->Command-R+]
+    'end_turn', // [OpenRouter->Anthropic]
+    'eos', // [OpenRouter->Phind]
     'error', // [OpenRouter] their network error
+    'stop_sequence', // [OpenRouter->Anthropic] added 'stop_sequence' which is the same as 'stop'
   ]);
 
   const Usage_schema = z.object({
@@ -304,14 +306,18 @@ export namespace OpenAIWire_API_Chat_Completions {
    */
   const ChunkDeltaToolCalls_schema = z.object({
     index: z.number() // index is not present in non-streaming calls
-      .optional(), // [Mitral] not present
+      .optional(), // [Mistral] not present
 
     type: z.literal('function').optional(), // currently (2024-07-14) only 'function' is supported
 
-    id: z.string().optional(), // id of the tool call
+    id: z.string().optional(), // id of the tool call - set likely only in the first chunk
 
     function: z.object({
-      // [TogetherAI] added .nullable() - exclusive with 'arguments'
+      /**
+       * Empirical observations:
+       * - the name field seems to be set, in full, in the first call
+       * - [TogetherAI] added .nullable() - exclusive with 'arguments'
+       */
       name: z.string().optional().nullable(),
       /**
        * Note that the model does not always generate valid JSON, and may hallucinate parameters
