@@ -1,10 +1,8 @@
-import { z } from 'zod';
-
 import { safeErrorString } from '~/server/wire';
 
 import { AnthropicWire_API_Message_Create } from '../wiretypes/anthropic.wiretypes';
+import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../wiretypes/gemini.wiretypes';
 import { OpenAIWire_API_Chat_Completions } from '../wiretypes/openai.wiretypes';
-import { geminiGeneratedContentResponseSchema, geminiHarmProbabilitySortFunction, GeminiSafetyRatings } from '../wiretypes/gemini.wiretypes';
 import { wireOllamaChunkedOutputSchema } from '../wiretypes/ollama.wiretypes';
 
 import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './chatGenerate.types';
@@ -205,7 +203,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 }
 
 
-function explainGeminiSafetyIssues(safetyRatings?: GeminiSafetyRatings): string {
+// Utility function for sorting harm probabilities
+export function geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
+  const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
+  return order.indexOf(a.probability) - order.indexOf(b.probability);
+}
+
+function explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRating[]): string {
   if (!safetyRatings || !safetyRatings.length)
     return 'no safety ratings provided';
   safetyRatings = (safetyRatings || []).sort(geminiHarmProbabilitySortFunction);
@@ -216,7 +220,8 @@ function explainGeminiSafetyIssues(safetyRatings?: GeminiSafetyRatings): string 
     .join(', ');
 }
 
-export function createGeminiParser(modelName: string): ChatGenerateParseFunction {
+export function createGeminiGenerateContentParser(modelId: string): ChatGenerateParseFunction {
+  const modelName = modelId.replace('models/', '');
   let hasBegun = false;
 
   // this can throw, it's caught by the caller
@@ -224,9 +229,9 @@ export function createGeminiParser(modelName: string): ChatGenerateParseFunction
 
     // parse the JSON chunk
     const wireGenerationChunk = JSON.parse(eventData);
-    let generationChunk: z.infer<typeof geminiGeneratedContentResponseSchema>;
+    let generationChunk: GeminiWire_API_Generate_Content.Response;
     try {
-      generationChunk = geminiGeneratedContentResponseSchema.parse(wireGenerationChunk);
+      generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(wireGenerationChunk);
     } catch (error: any) {
       // log the malformed data to the console, and rethrow to transmit as 'error'
       console.log(`/api/llms/stream: Gemini parsing issue: ${error?.message || error}`, wireGenerationChunk);
@@ -255,6 +260,7 @@ export function createGeminiParser(modelName: string): ChatGenerateParseFunction
           yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS}` /* Interrupted: MAX_TOKENS reached */ };
           return yield { op: 'parser-close' };
         case 'RECITATION':
+          console.log(singleCandidate.citationMetadata);
           yield { op: 'issue', issue: `Generation stopped due to 'RECITATION'`, symbol: ISSUE_SYMBOL_RECITATION };
           return yield { op: 'parser-close' };
         case 'SAFETY':
@@ -270,7 +276,7 @@ export function createGeminiParser(modelName: string): ChatGenerateParseFunction
       throw new Error(`expected 1 text part, got ${singleCandidate.content.parts?.length}`);
 
     // -> Model
-    if (!hasBegun && modelName) {
+    if (!hasBegun && modelId) {
       hasBegun = true;
       yield { op: 'set', value: { model: modelName } };
     }
