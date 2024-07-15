@@ -10,8 +10,9 @@ by release.
 - milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
-### What's New in 1.16.1...1.16.3 · Jun 20, 2024 (patch releases)
+### What's New in 1.16.1...1.16.4 · Jul 15, 2024 (patch releases)
 
+- 1.16.4: 8192 tokens support for Claude 3.5 Sonnet
 - 1.16.3: Anthropic Claude 3.5 Sonnet model support
 - 1.16.2: Improve web downloads, as text, markdwon, or HTML
 - 1.16.2: Proper support for Gemini models
