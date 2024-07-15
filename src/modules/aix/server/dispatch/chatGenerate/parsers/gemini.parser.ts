@@ -1,27 +1,9 @@
-// chatGenerate/parsers/gemini.parser.ts
-
+import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from '../chatGenerate.types';
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
-import { ChatGenerateMessageAction } from '../chatGenerate.types';
 import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEXT_SYMBOL_MAX_TOKENS } from '../chatGenerate.config';
 
-// Utility function for sorting harm probabilities
-export function geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
-  const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
-  return order.indexOf(b.probability) - order.indexOf(a.probability);
-}
 
-function explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRating[]): string {
-  if (!safetyRatings || !safetyRatings.length)
-    return 'no safety ratings provided';
-  safetyRatings = (safetyRatings || []).sort(geminiHarmProbabilitySortFunction);
-  // only for non-neglegible probabilities
-  return safetyRatings
-    .filter(rating => rating.probability !== 'NEGLIGIBLE')
-    .map(rating => `${rating.category/*.replace('HARM_CATEGORY_', '')*/} (${rating.probability?.toLowerCase()})`)
-    .join(', ');
-}
-
-export function createGeminiGenerateContentParser(modelId: string): (eventData: string) => Generator<ChatGenerateMessageAction> {
+export function createGeminiGenerateContentResponseParser(modelId: string): ChatGenerateParseFunction {
   const modelName = modelId.replace('models/', '');
   let hasBegun = false;
 
@@ -47,7 +29,7 @@ export function createGeminiGenerateContentParser(modelId: string): (eventData: 
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      yield { op: 'issue', issue: `Input not allowed: ${blockReason}: ${explainGeminiSafetyIssues(safetyRatings)}`, symbol: ISSUE_SYMBOL_PROMPT_BLOCKED };
+      yield { op: 'issue', issue: `Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, symbol: ISSUE_SYMBOL_PROMPT_BLOCKED };
       return yield { op: 'parser-close' };
     }
 
@@ -63,6 +45,9 @@ export function createGeminiGenerateContentParser(modelId: string): (eventData: 
       switch (candidate0.finishReason) {
 
         case 'MAX_TOKENS':
+          // NOTE: this will show up in the chat as a message as a brick wall
+          // and without the " [Gemini Issue]: Interrupted.." prefix, as it's written in the history
+          // This can be changed in the future?
           yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS}` /* Interrupted: MAX_TOKENS reached */ };
           return yield { op: 'parser-close' };
 
@@ -71,7 +56,7 @@ export function createGeminiGenerateContentParser(modelId: string): (eventData: 
           return yield { op: 'parser-close' };
 
         case 'SAFETY':
-          yield { op: 'issue', issue: `Generation stopped due to SAFETY: ${explainGeminiSafetyIssues(candidate0.safetyRatings)}`, symbol: ISSUE_SYMBOL };
+          yield { op: 'issue', issue: `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, symbol: ISSUE_SYMBOL };
           return yield { op: 'parser-close' };
 
         default:
@@ -126,4 +111,21 @@ export function createGeminiGenerateContentParser(modelId: string): (eventData: 
     // }
 
   };
+}
+
+
+function _explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRating[]): string {
+  if (!safetyRatings || !safetyRatings.length)
+    return 'no safety ratings provided';
+  safetyRatings = (safetyRatings || []).sort(_geminiHarmProbabilitySortFunction);
+  // only for non-neglegible probabilities
+  return safetyRatings
+    .filter(rating => rating.probability !== 'NEGLIGIBLE')
+    .map(rating => `${rating.category/*.replace('HARM_CATEGORY_', '')*/} (${rating.probability?.toLowerCase()})`)
+    .join(', ');
+}
+
+function _geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
+  const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
+  return order.indexOf(b.probability) - order.indexOf(a.probability);
 }
