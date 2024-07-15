@@ -10,9 +10,12 @@ import { intakeToAnthropicMessageCreate } from './adapters/anthropic.messageCrea
 import { intakeToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { intakeToOpenAIMessageCreate } from './adapters/openai.chatCompletions';
 
+import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
+import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
+import { createOpenAIMessageCreateParser } from './parsers/openai.parser';
+
 import type { ChatGenerateParseFunction } from './chatGenerate.types';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
-import { createAnthropicMessageParser, createAnthropicMessageParserNS, createGeminiGenerateContentParser, createOpenAIMessageCreateParser } from './chatGenerate.parsers';
 
 
 export function createChatGenerateDispatch(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
@@ -39,7 +42,7 @@ export function createChatGenerateDispatch(access: Intake_Access, model: Intake_
           body: intakeToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
-        chatGenerateParse: createGeminiGenerateContentParser(model.id),
+        chatGenerateParse: createGeminiGenerateContentResponseParser(model.id),
       };
 
     case 'ollama':
