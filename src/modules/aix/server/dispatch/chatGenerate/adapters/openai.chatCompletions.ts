@@ -36,7 +36,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
   const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
-  const hotFixThrowCannotFC = openAIDialect === 'deepseek';
+  const hotFixThrowCannotFC = openAIDialect === 'deepseek' || openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
 
 
   // Throw if function support is needed but missing
@@ -128,7 +128,7 @@ function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessag
 }
 
 function _fixRemoveStreamOptions(payload: TRequest): TRequest {
-  const { stream_options, ...rest } = payload;
+  const { stream_options, parallel_tool_calls, ...rest } = payload;
   return rest;
 }
 
