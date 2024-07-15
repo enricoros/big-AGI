@@ -74,7 +74,8 @@ export const aixRouter = createTRPCRouter({
         const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
         const extraDevMessage = process.env.NODE_ENV === 'development' ? `\n[DEV_URL: ${dispatch.request.url}]` : '';
 
-        yield* intakeHandler.yieldError('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, true);
+        const showOnConsoleForNonCustomServers = access.dialect !== 'openai' || !access.oaiHost;
+        yield* intakeHandler.yieldError('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
         return; // exit
       }
 
@@ -152,8 +153,8 @@ export const aixRouter = createTRPCRouter({
             const messageAction = dispatchParser(demuxedItem.data, demuxedItem.name);
             yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
           } catch (error: any) {
-            console.warn('[chatGenerateContent] Error parsing dispatch stream event:', demuxedItem, error);
-            yield* intakeHandler.yieldError('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}. Please open a support ticket.`);
+            // Handle parsing issue (likely a schema break); print it to the console as well
+            yield* intakeHandler.yieldError('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, true);
             break; // inner for {}, then outer do
           }
         }
