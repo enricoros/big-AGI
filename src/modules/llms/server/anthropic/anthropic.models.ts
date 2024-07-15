@@ -27,7 +27,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     created: roundTime('2024-06-20 06:00'),
     description: 'The most intelligent Claude model',
     contextWindow: 200000, // Characters
-    maxCompletionTokens: 4096,
+    maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     pricing: { chatIn: 3, chatOut: 15 },

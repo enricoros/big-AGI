@@ -17,7 +17,9 @@ import { hardcodedAnthropicModels } from './anthropic.models';
 // Default hosts
 const DEFAULT_API_VERSION_HEADERS = {
   'anthropic-version': '2023-06-01',
-  'anthropic-beta': 'messages-2023-12-15',
+  // Former Betas:
+  // - messages-2023-12-15: to use the Messages API
+  'anthropic-beta': 'max-tokens-3-5-sonnet-2024-07-15',
 };
 const DEFAULT_MAX_TOKENS = 2048;
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
