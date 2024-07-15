@@ -1,14 +1,16 @@
 import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.router';
+import { geminiAccess } from '~/modules/llms/server/gemini/gemini.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
 import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
 
+import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 import { intakeToAnthropicMessageCreate } from './anthropic/anthropic.adapters';
 import { intakeToOpenAIMessageCreate } from './openai/oai.adapters';
 
 import type { ChatGenerateParseFunction } from './chatGenerate.types';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
-import { createAnthropicMessageParser, createAnthropicMessageParserNS, createOpenAIMessageCreateParser } from './chatGenerate.parsers';
+import { createAnthropicMessageParser, createAnthropicMessageParserNS, createGeminiGenerateContentParser, createOpenAIMessageCreateParser } from './chatGenerate.parsers';
 
 
 export function createChatGenerateDispatch(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
@@ -29,15 +31,14 @@ export function createChatGenerateDispatch(access: Intake_Access, model: Intake_
       };
 
     case 'gemini':
-      throw new Error('Gemini is not supported in this context');
-    // return {
-    //   request: {
-    //     ...geminiAccess(access, model.id, streaming ? geminiModelsStreamGenerateContentPath : geminiModelsGenerateContentPath),
-    //     // body: geminiGenerateContentTextPayload(model, _hist, access.minSafetyLevel, 1),
-    //   },
-    //   demuxerFormat: streaming ? 'sse' : null,
-    //   chatGenerateParse: createDispatchParserGemini(model.id.replace('models/', '')),
-    // };
+      return {
+        request: {
+          ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath),
+          body: {}, //intakeToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
+        },
+        demuxerFormat: streaming ? 'sse' : null,
+        chatGenerateParse: createGeminiGenerateContentParser(model.id),
+      };
 
     case 'ollama':
       throw new Error('Ollama is not supported in this context');
