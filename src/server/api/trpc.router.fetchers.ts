@@ -59,7 +59,7 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
   try {
 
     if (SERVER_DEBUG_WIRE)
-      console.log('-> upstream CURL:', debugGenerateCurlCommand(method, url, headers, body as any));
+      console.log('-> fetch:', debugGenerateCurlCommand(method, url, headers, body as any));
 
     // upstream request
     const request: RequestInit = {
