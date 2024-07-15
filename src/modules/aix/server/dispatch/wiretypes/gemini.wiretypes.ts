@@ -50,7 +50,7 @@ export namespace GeminiWire_ContentParts {
 
   /// Content parts - Input
 
-  export const TextContentPart_schema = z.object({
+  export const TextPart_schema = z.object({
     text: z.string(),
   });
 
@@ -61,7 +61,7 @@ export namespace GeminiWire_ContentParts {
     }),
   });
 
-  const FunctionCallPart_schema = z.object({
+  export const FunctionCallPart_schema = z.object({
     functionCall: z.object({
       name: z.string(),
       args: z.record(z.any()).optional(), // JSON object format
@@ -98,9 +98,12 @@ export namespace GeminiWire_ContentParts {
     }),
   });
 
+
+  /// Content Parts - Unions
+
   export type ContentPart = z.infer<typeof ContentPart_schema>;
   export const ContentPart_schema = z.union([
-    TextContentPart_schema,
+    TextPart_schema,
     InlineDataPart_schema,
     FunctionCallPart_schema,
     FunctionResponsePart_schema,
@@ -109,7 +112,10 @@ export namespace GeminiWire_ContentParts {
     unstable_CodeExecutionResultPart_schema, // NEW, undocumented
   ]);
 
-  export function TextContentPart(text: string): z.infer<typeof TextContentPart_schema> {
+
+  /// Content Parts - Factories
+
+  export function TextPart(text: string): z.infer<typeof TextPart_schema> {
     return { text };
   }
 
@@ -133,7 +139,7 @@ export namespace GeminiWire_Messages {
 
   export const SystemInstruction_schema = z.object({
     // Note: should be 'contents' object, but since it's text-only, we cast it down with a custom definition
-    parts: z.array(GeminiWire_ContentParts.TextContentPart_schema),
+    parts: z.array(GeminiWire_ContentParts.TextPart_schema),
   });
 
   // Contents
@@ -150,7 +156,8 @@ export namespace GeminiWire_Messages {
     role: z.literal('model'),
     // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
     parts: z.array(z.union([
-      GeminiWire_ContentParts.TextContentPart_schema,
+      GeminiWire_ContentParts.TextPart_schema,
+      GeminiWire_ContentParts.FunctionCallPart_schema,
       GeminiWire_ContentParts.unstable_ExecutableCodePart_schema,
       GeminiWire_ContentParts.unstable_CodeExecutionResultPart_schema,
     ])),
