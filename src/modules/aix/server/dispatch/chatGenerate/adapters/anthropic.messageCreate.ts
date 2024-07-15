@@ -88,7 +88,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
             yield { role: 'user', content: AnthropicWire_Blocks.TextBlock('```' + (part.ref || '') + '\n' + part.data.text + '\n```\n') };
             break;
           case 'meta_reply_to':
-            yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(`<context>The user is referring to: ${part.replyTo}</context>`) };
+            yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(`<context>The user is referring to this in particular: ${part.replyTo}</context>`) };
             break;
           default:
             throw new Error(`Unsupported part type in User message: ${(part as any).pt}`);
