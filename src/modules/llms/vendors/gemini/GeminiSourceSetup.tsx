@@ -11,7 +11,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import type { DModelSourceId } from '../../store-llms';
-import type { GeminiBlockSafetyLevel } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
@@ -20,7 +20,7 @@ import { ModelVendorGemini } from './gemini.vendor';
 
 const GEMINI_API_KEY_LINK = 'https://makersuite.google.com/app/apikey';
 
-const SAFETY_OPTIONS: { value: GeminiBlockSafetyLevel, label: string }[] = [
+const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: string }[] = [
   { value: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED', label: 'Default' },
   { value: 'BLOCK_LOW_AND_ABOVE', label: 'Low and above' },
   { value: 'BLOCK_MEDIUM_AND_ABOVE', label: 'Medium and above' },

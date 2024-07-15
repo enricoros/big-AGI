@@ -105,6 +105,10 @@ export namespace AnthropicWire_Tools {
 
 }
 
+
+//
+// Messages > Create
+//
 export namespace AnthropicWire_API_Message_Create {
 
   /// Request
