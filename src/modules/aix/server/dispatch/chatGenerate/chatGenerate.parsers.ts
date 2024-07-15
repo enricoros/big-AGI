@@ -227,16 +227,21 @@ export function createGeminiGenerateContentParser(modelId: string): ChatGenerate
   // this can throw, it's caught by the caller
   return function* (eventData): Generator<ChatGenerateMessageAction> {
 
-    // parse the JSON chunk
-    const wireGenerationChunk = JSON.parse(eventData);
-    let generationChunk: GeminiWire_API_Generate_Content.Response;
-    try {
-      generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(wireGenerationChunk);
-    } catch (error: any) {
-      // log the malformed data to the console, and rethrow to transmit as 'error'
-      console.log(`/api/llms/stream: Gemini parsing issue: ${error?.message || error}`, wireGenerationChunk);
-      throw error;
+    // -> Model
+    if (!hasBegun) {
+      hasBegun = true;
+      yield { op: 'set', value: { model: modelName } };
     }
+
+    // Throws on malformed event data
+    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+
+    // remove wireGenerationChunk.candidates[number].safetyRatings
+    (generationChunk as GeminiWire_API_Generate_Content.Response).candidates?.forEach(candidate => {
+      delete candidate.safetyRatings;
+      // delete candidate.citationMetadata;
+    });
+    console.log('\n' + JSON.stringify(generationChunk.candidates, null, 2));
 
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
@@ -246,50 +251,77 @@ export function createGeminiGenerateContentParser(modelId: string): ChatGenerate
     }
 
     // expect: single completion
-    const singleCandidate = generationChunk.candidates?.[0] ?? null;
-    if (!singleCandidate)
+    if (generationChunk.candidates?.length !== 1)
       throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
+    const candidate0 = generationChunk.candidates[0];
+    if (candidate0.index !== 0)
+      throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
-    // no contents: could be an expected or unexpected condition
-    if (!singleCandidate.content) {
-      switch (singleCandidate.finishReason) {
+    // handle missing content
+    if (!candidate0.content) {
+      switch (candidate0.finishReason) {
+
         case 'MAX_TOKENS':
           // NOTE: this will show up in the chat as a message as a brick wall
           // and without the " [Gemini Issue]: Interrupted.." prefix, as it's written in the history
           // This can be changed in the future?
           yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS}` /* Interrupted: MAX_TOKENS reached */ };
           return yield { op: 'parser-close' };
+
         case 'RECITATION':
-          console.log(singleCandidate.citationMetadata);
           yield { op: 'issue', issue: `Generation stopped due to RECITATION`, symbol: ISSUE_SYMBOL_RECITATION };
           return yield { op: 'parser-close' };
+
         case 'SAFETY':
-          yield { op: 'issue', issue: `Generation stopped due to SAFETY: ${explainGeminiSafetyIssues(singleCandidate.safetyRatings)}`, symbol: ISSUE_SYMBOL };
+          yield { op: 'issue', issue: `Generation stopped due to SAFETY: ${explainGeminiSafetyIssues(candidate0.safetyRatings)}`, symbol: ISSUE_SYMBOL };
           return yield { op: 'parser-close' };
+
         default:
-          throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
+          throw new Error(`server response missing content (finishReason: ${candidate0?.finishReason})`);
+
       }
     }
 
-    // expect: single part
-    if (singleCandidate.content.parts?.length !== 1 || !('text' in singleCandidate.content.parts[0]))
-      throw new Error(`expected 1 text part, got ${singleCandidate.content.parts?.length}`);
+    // expect a single part
+    if (candidate0.content.parts?.length !== 1)
+      throw new Error(`expected 1 content part, got ${candidate0.content.parts?.length}`);
 
-    // -> Model
-    if (!hasBegun && modelId) {
-      hasBegun = true;
-      yield { op: 'set', value: { model: modelName } };
+    for (const mPart of candidate0.content.parts) {
+      switch (true) {
+
+        // -> Text
+        case 'text' in mPart:
+          yield { op: 'text', text: mPart.text || '' };
+          break;
+
+        // -> ExecutableCode
+        case 'executableCode' in mPart:
+          yield { op: 'text', text: `TODO: [Executable Code] ${mPart.executableCode}` };
+          break;
+
+        // -> CodeExecutionResult
+        case 'codeExecutionResult' in mPart:
+          yield { op: 'text', text: `TODO: [Code Execution Result] ${mPart.codeExecutionResult}` };
+          break;
+
+        default:
+          throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
+      }
     }
-
-    // -> Text
-    let text = singleCandidate.content.parts[0].text || '';
-    yield { op: 'text', text };
 
     // -> Stats
-    if (generationChunk.usageMetadata) {
-      // TODO: we should only return this on the last packet, once we have the full stats
-      // yield { op: 'set', value: { stats: { chatInTokens: generationChunk.usageMetadata.promptTokenCount ?? -1, chatOutTokens: generationChunk.usageMetadata.candidatesTokenCount ?? -1 } } };
-    }
+    // if (generationChunk.usageMetadata) {
+    //   // TODO: we should only return this on the last packet, once we have the full stats
+    //   yield {
+    //     op: 'set', value: {
+    //       stats: {
+    //         chatInTokens: generationChunk.usageMetadata.promptTokenCount ?? -1,
+    //         chatOutTokens: generationChunk.usageMetadata.candidatesTokenCount ?? -1,
+    //       },
+    //     },
+    //   };
+    // }
+
   };
 }
 

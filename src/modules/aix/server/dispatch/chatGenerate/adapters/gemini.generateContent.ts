@@ -125,6 +125,7 @@ function _intakeToGeminiTools(itds: Intake_ToolDefinition[]): NonNullable<TReque
         break;
 
       case 'gemini_code_interpreter':
+        // throw if code execution is present more than once
         if (tools.some(tool => tool.codeExecution))
           throw new Error('Gemini code interpreter already defined');
         tools.push({ codeExecution: {} });

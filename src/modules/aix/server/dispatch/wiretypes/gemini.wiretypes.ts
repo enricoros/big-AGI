@@ -75,12 +75,28 @@ export namespace GeminiWire_ContentParts {
     }),
   });
 
-  /*const FileDataPart_schema = z.object({
+  const FileDataPart_schema = z.object({
     fileData: z.object({
       mimeType: z.union([z.string(), ianaStandardMimeType_schema]).optional(),
       uri: z.string(),
     }),
-  });*/
+  });
+
+  // Undocumented as of 2024-07-15
+  export const unstable_ExecutableCodePart_schema = z.object({
+    executableCode: z.object({
+      language: z.enum(['PYTHON']), // Add other languages if needed
+      code: z.string(),
+    }),
+  });
+
+  // Undocumented as of 2024-07-15
+  export const unstable_CodeExecutionResultPart_schema = z.object({
+    codeExecutionResult: z.object({
+      outcome: z.enum(['OUTCOME_OK', 'OUTCOME_ERROR']),
+      output: z.string().optional(),
+    }),
+  });
 
   export type ContentPart = z.infer<typeof ContentPart_schema>;
   export const ContentPart_schema = z.union([
@@ -88,6 +104,9 @@ export namespace GeminiWire_ContentParts {
     InlineDataPart_schema,
     FunctionCallPart_schema,
     FunctionResponsePart_schema,
+    FileDataPart_schema,
+    unstable_ExecutableCodePart_schema,
+    unstable_CodeExecutionResultPart_schema, // NEW, undocumented
   ]);
 
   export function TextContentPart(text: string): z.infer<typeof TextContentPart_schema> {
@@ -127,13 +146,19 @@ export namespace GeminiWire_Messages {
     parts: z.array(GeminiWire_ContentParts.ContentPart_schema),
   });
 
+  export const ModelContent_schema = Content_schema.extend({
+    role: z.literal('model'),
+    // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
+    parts: z.array(z.union([
+      GeminiWire_ContentParts.TextContentPart_schema,
+      GeminiWire_ContentParts.unstable_ExecutableCodePart_schema,
+      GeminiWire_ContentParts.unstable_CodeExecutionResultPart_schema,
+    ])),
+  });
+
   // export const UserMessage_schema = Content_schema.extend({
   //   role: z.literal('user'),
   // });
-  //
-  export const ModelContent_schema = Content_schema.extend({
-    role: z.literal('model'),
-  });
 
 }
 
