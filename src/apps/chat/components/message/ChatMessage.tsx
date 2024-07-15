@@ -7,9 +7,9 @@ import { Box, Button, ButtonGroup, CircularProgress, IconButton, ListDivider, Li
 import { ClickAwayListener, Popper } from '@mui/base';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import ClearIcon from '@mui/icons-material/Clear';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
@@ -706,7 +706,7 @@ export function ChatMessage(props: {
           )}
           {!!props.onMessageDelete && (
             <MenuItem onClick={handleOpsDelete} disabled={false /*fromSystem*/}>
-              <ListItemDecorator><ClearIcon /></ListItemDecorator>
+              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
               Delete
               <span style={{ opacity: 0.5 }}>message</span>
             </MenuItem>
