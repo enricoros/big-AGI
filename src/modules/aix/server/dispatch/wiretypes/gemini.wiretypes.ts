@@ -306,35 +306,60 @@ export namespace GeminiWire_API_Generate_Content {
 
   const CitationMetadata_schema = z.object({
     citationSources: z.array(z.object({
-      startIndex: z.number().optional(),
-      endIndex: z.number().optional(),
-      uri: z.string().optional(),
-      license: z.string().optional(),
+      startIndex: z.number().optional(),  // Start of segment of the response that is attributed to this source.
+      endIndex: z.number().optional(),    // End of the attributed segment, exclusive.
+      uri: z.string().optional(),         // URI that is attributed as a source for a portion of the text.
+      license: z.string().optional(),     // License for the GitHub project that is attributed as a source for segment.
     })),
   });
 
   const Candidate_schema = z.object({
     index: z.number(),
-    content: GeminiWire_Messages.ModelContent_schema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
+    /**
+     * This seems to be equal to 'STOP' on all streaming chunks.
+     */
     finishReason: FinishReason_enum.optional(),
-    safetyRatings: z.array(GeminiWire_Safety.SafetyRating_schema).optional(), // undefined when finishReason is 'RECITATION'
-    citationMetadata: CitationMetadata_schema.optional(), // NOTE: may be defined on 'RECITATION'
+    content: GeminiWire_Messages.ModelContent_schema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
+    /**
+     * List of ratings for the safety of a response candidate.
+     * At most one rating per category.
+     *
+     * Empirical observations:
+     * - Not present on the first packet? Second and after?
+     * - Not present when finishReason is 'RECITATION'
+     * - Usually defined for 4 categories: SEXUALLY_EXPLICIT, HATE_SPEECH, HARASSMENT, DANGEROUS_CONTENT
+     */
+    safetyRatings: z.array(GeminiWire_Safety.SafetyRating_schema).optional(),
+    /**
+     * A citation to a source for a portion of a specific response.
+     * This field may be populated with recitation information for any text included in the content.
+     * These are passages that are "recited" from copyrighted material in the foundational LLM's training data.
+     *
+     * Empirical observations:
+     * - 2024-07-15: Unreliable: some of the sources seem to be hallucinated
+     * - 2024-07-15: Not present when finishReason is 'RECITATION'; maybe the packet before it?
+     */
+    citationMetadata: CitationMetadata_schema.optional(),
     tokenCount: z.number().optional(),
     // groundingAttributions: z.array(...).optional(), // This field is populated for GenerateAnswer calls.
   });
 
   const UsageMetadata_schema = z.object({
     promptTokenCount: z.number(),
-    cachedContentTokenCount: z.number().optional(),
     candidatesTokenCount: z.number(),
     totalTokenCount: z.number(),
+    // cachedContentTokenCount: z.number().optional(), // Not supported for now, hence disabled
   });
 
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
     candidates: z.array(Candidate_schema),
-    promptFeedback: GeminiWire_Safety.PromptFeedback_schema.optional(), // sent when starting
-    usageMetadata: UsageMetadata_schema.optional(), // sent when done
+    promptFeedback: GeminiWire_Safety.PromptFeedback_schema.optional(), // rarely sent (only on violations?)
+    /**
+     * Metadata on the generation requests' token usage.
+     * Note: seems to be present on all packets now, so we're commending the .optional()
+     */
+    usageMetadata: UsageMetadata_schema, // .optional()
   });
 
 }

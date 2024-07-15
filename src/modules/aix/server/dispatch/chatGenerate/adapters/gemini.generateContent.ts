@@ -9,8 +9,6 @@ import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Me
 const hotFixImagePartsFirst = true;
 
 
-type TRequest = GeminiWire_API_Generate_Content.Request;
-
 export function intakeToGeminiGenerateContent(model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
   // Note: the streaming setting is ignored as it only belongs in the path
@@ -49,6 +47,8 @@ export function intakeToGeminiGenerateContent(model: Intake_Model, chatGenerate:
 
   return validated.data;
 }
+
+type TRequest = GeminiWire_API_Generate_Content.Request;
 
 
 function _intakeToGeminiContents(chatSequence: Intake_ChatMessage[]): GeminiWire_Messages.Content[] {
@@ -116,7 +116,10 @@ function _intakeToGeminiTools(itds: Intake_ToolDefinition[]): NonNullable<TReque
           functionDeclarations: [{
             name,
             description,
-            parameters: input_schema,
+            parameters: {
+              type: 'object',
+              ...input_schema,
+            },
           }],
         });
         break;
