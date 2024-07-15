@@ -206,7 +206,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 // Utility function for sorting harm probabilities
 export function geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
   const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
-  return order.indexOf(a.probability) - order.indexOf(b.probability);
+  return order.indexOf(b.probability) - order.indexOf(a.probability);
 }
 
 function explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRating[]): string {
@@ -261,10 +261,10 @@ export function createGeminiGenerateContentParser(modelId: string): ChatGenerate
           return yield { op: 'parser-close' };
         case 'RECITATION':
           console.log(singleCandidate.citationMetadata);
-          yield { op: 'issue', issue: `Generation stopped due to 'RECITATION'`, symbol: ISSUE_SYMBOL_RECITATION };
+          yield { op: 'issue', issue: `Generation stopped due to RECITATION`, symbol: ISSUE_SYMBOL_RECITATION };
           return yield { op: 'parser-close' };
         case 'SAFETY':
-          yield { op: 'issue', issue: `Interrupted due to 'SAFETY' filtering: ${explainGeminiSafetyIssues(singleCandidate.safetyRatings)}`, symbol: ISSUE_SYMBOL };
+          yield { op: 'issue', issue: `Generation stopped due to SAFETY: ${explainGeminiSafetyIssues(singleCandidate.safetyRatings)}`, symbol: ISSUE_SYMBOL };
           return yield { op: 'parser-close' };
         default:
           throw new Error(`server response missing content (finishReason: ${singleCandidate?.finishReason})`);
