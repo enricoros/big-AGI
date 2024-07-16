@@ -5,7 +5,7 @@ import { Box, Container, Typography } from '@mui/joy';
 
 export function AppSmallContainer({ title, description, children }: {
   title: string;
-  description: string;
+  description: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (

@@ -164,7 +164,7 @@ export const navItems: {
       hideBar: true,
     },
     {
-      name: 'Compare',
+      name: 'Compare Text',
       barTitle: 'Comparison',
       icon: DifferenceOutlinedIcon,
       type: 'app',
@@ -172,7 +172,7 @@ export const navItems: {
       hideDrawer: true,
     },
     {
-      name: 'Tokenize',
+      name: 'Tokenize Text',
       barTitle: 'Tokenization',
       icon: GrainIcon,
       type: 'app',
