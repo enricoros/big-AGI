@@ -80,7 +80,7 @@ export function DocumentFragmentButton(props: {
       backgroundColor: 'background.surface',
     },
 
-    // from LLMAttachmentItem
+    // from LLMAttachmentButton
     display: 'flex', flexDirection: 'row',
   }), [isSelected, props.contentScaling]);
 

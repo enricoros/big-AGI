@@ -250,7 +250,7 @@ export function LLMAttachmentMenu(props: {
               )}
               {!!llmTokenCountApprox && (
                 <Typography level='body-sm' sx={{ color: 'text.primary' }}>
-                  <span style={{ color: 'transparent' }}>🡒</span> {llmTokenCountApprox.toLocaleString()} tokens
+                  <span style={{ marginLeft: 2 }}>=</span> {llmTokenCountApprox.toLocaleString()} tokens
                 </Typography>
               )}
             </Box>

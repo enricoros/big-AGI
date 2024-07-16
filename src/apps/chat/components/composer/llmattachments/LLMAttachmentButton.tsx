@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Tooltip, Typography } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -15,6 +15,8 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+
+import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
@@ -96,8 +98,43 @@ function attachmentIcon(attachmentDraft: AttachmentDraft): React.ReactNode {
   const activeConterters = attachmentDraft.converters.filter(c => c.isActive);
   if (activeConterters.length === 0)
     return null;
+
+  // find an icon for the first active converter
+  // Note: commented on 2024-07-16 because not tested enough
+  // const imageDataRefs = attachmentDraft.outputFragments.map(f => {
+  //   if (!isImageRefPart(f.part))
+  //     return null;
+  //   const dataRef = f.part.dataRef;
+  //   if (!dataRef || dataRef.reftype !== 'dblob')
+  //     return null;
+  //   return dataRef;
+  // }).filter(Boolean);
+
   // 1+ icons
-  return <Typography sx={{ display: 'flex', gap: 0.5 }}>
+  return <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+
+    {/* If we have a Web preview, show it first */}
+    {/*!imageDataRefs.length &&*/ !!attachmentDraft.input?.urlImage?.webpDataUrl && (
+      <Tooltip title={<>This was the page.<br />You can also Add the Screenshot as attachment</>}>
+        <RenderImageURL
+          imageURL={attachmentDraft.input.urlImage.webpDataUrl}
+          variant='attachment-button'
+          scaledImageSx={{ width: 28, height: 28 }}
+        />
+      </Tooltip>
+    )}
+
+    {/* If an output fragment contains a base64 image, show that as an icon too */}
+    {/*{imageDataRefs.map((dataRef, i) => dataRef && (*/}
+    {/*  <RenderImageRefDBlob*/}
+    {/*    key={i}*/}
+    {/*    dataRefDBlobAssetId={dataRef.dblobAssetId}*/}
+    {/*    dataRefMimeType={dataRef.mimeType}*/}
+    {/*    variant='attachment-button'*/}
+    {/*    scaledImageSx={{ width: 28, height: 28 }}*/}
+    {/*  />*/}
+    {/*))}*/}
+
     {/*{activeConterters.some(c => c.id.startsWith('url-page-')) ? <LanguageIcon sx={{ opacity: 0.2, ml: -2.5 }} /> : null}*/}
     {activeConterters.map(c => {
       const Icon = converterTypeToIconMap[c.id] ?? null;
@@ -120,7 +157,7 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
 }
 
 
-export function LLMAttachmentItem(props: {
+export function LLMAttachmentButton(props: {
   llmAttachment: LLMAttachmentDraft,
   menuShown: boolean,
   onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
