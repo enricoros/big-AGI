@@ -1,18 +1,21 @@
 import * as React from 'react';
+import type { FileWithHandle } from 'browser-fs-access';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Card, Divider, IconButton, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Card, Divider, FormControl, IconButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import { RenderTextDiff, useSanityTextDiffs } from '~/modules/blocks/textdiff/RenderTextDiff';
 
+import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
+import { countWords } from '~/common/util/textUtils';
 import { themeScalingMap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { AppSmallContainer } from '../AppSmallContainer';
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
-import { countWords } from '~/common/util/textUtils';
 
 
 export function AppDiff() {
@@ -65,39 +68,47 @@ export function AppDiff() {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
+        {/* Grid with the 2 input boxes */}
         <Box sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1fr auto 1fr' },
           gap: 2,
           alignItems: 'center',
+          justifyContent: 'center',
         }}>
 
-          <Textarea
-            variant='outlined'
-            color={text1 ? undefined : 'warning'}
-            minRows={5}
-            maxRows={isMobile ? 8 : 10}
-            placeholder='Paste or type your original text here...'
-            autoFocus
-            value={text1}
-            onChange={(e) => setText1(e.target.value)}
-            endDecorator={
-              <Box sx={{
-                backgroundColor: 'background.surface', px: 0.5, py: 0.25, borderRadius: 'xs',
-                width: '100%', lineHeight: 'lg', fontSize: 'xs',
-                display: 'flex', flexFlow: 'row wrap', gap: 1, justifyContent: 'space-between',
-              }}>
-                {!w1 ? <div>No words</div> : <div>Word count: <b>{w1}</b></div>}
-                {!c1 ? <div>No characters</div> : <div>Character Count: <b>{c1}</b></div>}
-              </Box>
-            }
-            sx={{
-              transition: 'transform 0.2s ease-in-out',
-              transform: isSwapping ? 'scale(0.97) translateX(5%)' : 'scale(1)',
-              '&:focus-within': { backgroundColor: 'background.popup' },
-              ...scaledTypographySx,
-            }}
-          />
+          <FormControl sx={{ alignSelf: 'flex-start' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
+              <FormLabelStart title='Original' />
+              <ButtonAttachFilesMemo noToolTip onAttachFiles={(files: FileWithHandle[]) => files[0]?.text().then((text) => setText1(text))} />
+            </Box>
+            <Textarea
+              variant='outlined'
+              color={text1 ? undefined : 'warning'}
+              minRows={5}
+              maxRows={isMobile ? 8 : 10}
+              placeholder='Paste or type your original text here...'
+              autoFocus
+              value={text1}
+              onChange={(e) => setText1(e.target.value)}
+              endDecorator={
+                <Box sx={{
+                  backgroundColor: 'background.surface', px: 0.5, py: 0.25, borderRadius: 'xs',
+                  width: '100%', lineHeight: 'lg', fontSize: 'xs',
+                  display: 'flex', flexFlow: 'row wrap', gap: 1, justifyContent: 'space-between',
+                }}>
+                  {!w1 ? <div>No words</div> : <div>Word count: <b>{w1}</b></div>}
+                  {!c1 ? <div>No characters</div> : <div>Character Count: <b>{c1}</b></div>}
+                </Box>
+              }
+              sx={{
+                transition: 'transform 0.2s ease-in-out',
+                transform: isSwapping ? 'scale(0.97) translateX(5%)' : 'scale(1)',
+                '&:focus-within': { backgroundColor: 'background.popup' },
+                ...scaledTypographySx,
+              }}
+            />
+          </FormControl>
 
           <Tooltip title='Swap texts' disableInteractive>
             <IconButton
@@ -113,31 +124,37 @@ export function AppDiff() {
             </IconButton>
           </Tooltip>
 
-          <Textarea
-            variant='outlined'
-            color={text2 ? undefined : 'warning'}
-            minRows={5}
-            maxRows={isMobile ? 8 : 10}
-            placeholder='Paste or type your modified text here...'
-            value={text2}
-            onChange={(e) => setText2(e.target.value)}
-            endDecorator={
-              <Box sx={{
-                backgroundColor: 'background.surface', px: 0.5, py: 0.25, borderRadius: 'xs',
-                width: '100%', lineHeight: 'lg', fontSize: 'xs',
-                display: 'flex', flexFlow: 'row wrap', gap: 1, justifyContent: 'space-between',
-              }}>
-                {!w2 ? <div>No words</div> : <div>Word count: <b>{w2}</b></div>}
-                {!c2 ? <div>No characters</div> : <div>Character Count: <b>{c2}</b></div>}
-              </Box>
-            }
-            sx={{
-              transition: 'transform 0.2s ease-in-out',
-              transform: isSwapping ? 'scale(0.97) translateX(-5%)' : 'scale(1)',
-              '&:focus-within': { backgroundColor: 'background.popup' },
-              ...scaledTypographySx,
-            }}
-          />
+          <FormControl sx={{ alignSelf: 'flex-start' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
+              <FormLabelStart title='Modified' />
+              <ButtonAttachFilesMemo noToolTip onAttachFiles={(files: FileWithHandle[]) => files[0]?.text().then((text) => setText2(text))} />
+            </Box>
+            <Textarea
+              variant='outlined'
+              color={text2 ? undefined : 'warning'}
+              minRows={5}
+              maxRows={isMobile ? 8 : 10}
+              placeholder='Paste or type your modified text here...'
+              value={text2}
+              onChange={(e) => setText2(e.target.value)}
+              endDecorator={
+                <Box sx={{
+                  backgroundColor: 'background.surface', px: 0.5, py: 0.25, borderRadius: 'xs',
+                  width: '100%', lineHeight: 'lg', fontSize: 'xs',
+                  display: 'flex', flexFlow: 'row wrap', gap: 1, justifyContent: 'space-between',
+                }}>
+                  {!w2 ? <div>No words</div> : <div>Word count: <b>{w2}</b></div>}
+                  {!c2 ? <div>No characters</div> : <div>Character Count: <b>{c2}</b></div>}
+                </Box>
+              }
+              sx={{
+                transition: 'transform 0.2s ease-in-out',
+                transform: isSwapping ? 'scale(0.97) translateX(-5%)' : 'scale(1)',
+                '&:focus-within': { backgroundColor: 'background.popup' },
+                ...scaledTypographySx,
+              }}
+            />
+          </FormControl>
 
         </Box>
 

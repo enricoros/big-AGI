@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { fileOpen, FileWithHandle } from 'browser-fs-access';
+import type { FileWithHandle } from 'browser-fs-access';
 
 import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Tooltip, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
@@ -21,6 +21,7 @@ import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vend
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
+import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -59,7 +60,6 @@ import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode
 
 import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
-import { ButtonAttachFileMemo } from './buttons/ButtonAttachFile';
 import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
@@ -447,15 +447,9 @@ export function Composer(props: {
     void attachAppendFile('screencapture', file);
   }, [attachAppendFile]);
 
-  const handleAttachFilePicker = React.useCallback(async () => {
-    try {
-      const selectedFiles: FileWithHandle[] = await fileOpen({ multiple: true });
-      selectedFiles.forEach(file =>
-        void attachAppendFile('file-open', file),
-      );
-    } catch (error) {
-      // ignore...
-    }
+  const handleAttachFiles = React.useCallback(async (files: FileWithHandle[]) => {
+    for (let file of files)
+      await attachAppendFile('file-open', file).catch(console.error);
   }, [attachAppendFile]);
 
   useGlobalShortcuts([[supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems]]);
@@ -554,7 +548,7 @@ export function Composer(props: {
 
                     {/* Responsive Open Files button */}
                     <MenuItem>
-                      <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
+                      <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
                     </MenuItem>
 
                     {/* Responsive Paste button */}
@@ -580,7 +574,7 @@ export function Composer(props: {
               {/*</FormHelperText>*/}
 
               {/* Responsive Open Files button */}
-              <ButtonAttachFileMemo onAttachFilePicker={handleAttachFilePicker} />
+              <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
 
               {/* Responsive Paste button */}
               {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
