@@ -78,9 +78,13 @@ export async function aixChatGenerateRequestFromDMessages(messageSequence: Reado
         return uMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixMessages_UserMessage));
 
-      // handle metadata on user messages
-      if (m.metadata?.inReplyToText)
-        aixChatMessageUser.parts.push(_clientCreateAixMetaReplyToPart(m.metadata.inReplyToText));
+      // handle reply-to metadata, adding a part right after the user text (or at the beginning)
+      if (m.metadata?.inReplyToText) {
+        // find the index of the tast text part
+        const lastTextPartIndex = aixChatMessageUser.parts.findLastIndex(p => p.pt === 'text');
+        // insert the meta part after the last text part (and before the first attachment)
+        aixChatMessageUser.parts.splice(lastTextPartIndex + 1, 0, _clientCreateAixMetaReplyToPart(m.metadata.inReplyToText));
+      }
 
       acc.chatSequence.push(aixChatMessageUser);
 
