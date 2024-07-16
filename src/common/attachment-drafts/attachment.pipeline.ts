@@ -319,8 +319,11 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
         converters.push({ id: 'url-page-markdown', name: 'Markdown (suggested)', isActive: preferMarkdown });
       if (pageData.pageCleanedHtml)
         converters.push({ id: 'url-page-html', name: 'Clean HTML', isActive: !preferMarkdown && !pageData.pageText });
-      if (input.urlImage)
+      if (input.urlImage) {
+        if (converters.length)
+          converters.push({ id: 'url-page-null', name: 'Do not attach' });
         converters.push({ id: 'url-page-image', name: 'Add Screenshot', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
+      }
       break;
 
     // EGO
@@ -654,6 +657,11 @@ export async function attachmentPerformConversion(
         }
         const pageHtmlData = createDMessageDataInlineText((input.data as DraftWebInputData).pageCleanedHtml!, 'text/html');
         newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', pageHtmlData, refString, docMeta));
+        break;
+
+      // url page null
+      case 'url-page-null':
+        // user chose to not attach any version of the page
         break;
 
       // url page image

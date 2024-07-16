@@ -73,7 +73,7 @@ const InputErrorIndicator = () =>
   <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
 
 
-const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.ComponentType<any> } = {
+const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.ComponentType<any> | null } = {
   'text': TextFieldsIcon,
   'rich-text': CodeIcon,
   'rich-text-cleaner': CodeIcon,
@@ -89,6 +89,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'url-page-text': TextFieldsIcon, // was LanguageIcon
   'url-page-markdown': CodeIcon, // was LanguageIcon
   'url-page-html': HtmlIcon, // was LanguageIcon
+  'url-page-null': TextureIcon,
   'url-page-image': ImageOutlinedIcon,
   'ego-fragments-inlined': TelegramIcon,
   'unhandled': TextureIcon,

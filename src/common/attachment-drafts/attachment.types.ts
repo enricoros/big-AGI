@@ -123,7 +123,7 @@ export type AttachmentDraftConverterType =
   | 'image-original' | 'image-resized-high' | 'image-resized-low' | 'image-ocr' | 'image-to-default'
   | 'pdf-text' | 'pdf-images'
   | 'docx-to-html'
-  | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-image'
+  | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-null' | 'url-page-image'
   | 'ego-fragments-inlined'
   | 'unhandled';
 
