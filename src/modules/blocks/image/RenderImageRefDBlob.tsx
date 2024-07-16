@@ -38,7 +38,7 @@ export function RenderImageRefDBlob(props: {
   imageHeight?: number,
   // others
   variant: RenderImageURLVarint,
-  onOpenInNewTab: () => void
+  onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
   scaledImageSx?: SxProps,
@@ -77,7 +77,7 @@ export function RenderImageRefDBlob(props: {
     }
 
     // [attachment card] only return the data
-    if (props.variant === 'attachment-card') {
+    if (props.variant === 'attachment-card' || props.variant === 'attachment-button') {
       return {
         dataUrlMemo: `data:${imageItem.data.mimeType};base64,${imageItem.data.base64}`,
       };
