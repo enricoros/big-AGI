@@ -96,10 +96,15 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
               <MoreHorizIcon />
             </MenuButton>
           </Tooltip>
-          <Menu variant='solid' invertedColors placement='right-start' sx={{ minWidth: 160 }}>
+          <Menu
+            variant='outlined'
+            placement='right-start'
+            popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [0, -2] } }] }}
+            sx={{ minWidth: 220 }}
+          >
             {overflowApps.map((app, appIdx) =>
-              <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)} sx={{ minHeight: '2.5rem' }}>
-                <ListItemDecorator sx={{ ml: 1 }}>
+              <MenuItem key={'nav-app-extra-' + appIdx} onClick={() => Router.push(app.landingRoute || app.route)}>
+                <ListItemDecorator>
                   <app.icon />
                 </ListItemDecorator>
                 {app.name + (app.isDev ? ' [DEV]' : '')}
