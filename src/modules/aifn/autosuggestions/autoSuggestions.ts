@@ -3,7 +3,7 @@ import { DLLMId, findLLMOrThrow, LLM_IF_OAI_Fn, useModelsStore } from '~/modules
 
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { createErrorContentFragment, createPlaceholderContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -207,7 +207,7 @@ export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId:
   if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the diagram
-    const placeholderFragment = createPlaceholderContentFragment('Auto-Diagram ...');
+    const placeholderFragment = createPlaceholderMetaFragment('Auto-Diagram ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     // instructions: 3 or 4 messages
@@ -255,7 +255,7 @@ export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId:
   if (suggestHTMLUI && !['<html', '<HTML', '<Html'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the UI
-    const placeholderFragment = createPlaceholderContentFragment('Auto-UI ...');
+    const placeholderFragment = createPlaceholderMetaFragment('Auto-UI ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     const instructions: VChatMessageIn[] = [

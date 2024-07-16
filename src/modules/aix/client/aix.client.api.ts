@@ -1,4 +1,4 @@
-import type { DMessageDocPart, DMessageTextPart, DMessageToolCallPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageDocPart, DMessageTextPart, DMessageToolInvocationPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
 import type { Intake_InlineImagePart as AixInlineImagePart, Intake_MetaReplyToPart as AixMetaReplyToPart } from '../server/intake/schemas.intake.messages';
 
@@ -53,7 +53,7 @@ export interface AixChatMessageUser {
 
 export interface AixChatMessageModel {
   role: 'model',
-  parts: (DMessageTextPart | AixInlineImagePart | DMessageToolCallPart)[];
+  parts: (DMessageTextPart | AixInlineImagePart | DMessageToolInvocationPart)[];
 }
 
 interface AixChatMessageTool {

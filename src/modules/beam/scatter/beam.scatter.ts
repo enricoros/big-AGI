@@ -7,7 +7,7 @@ import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
-import { createPlaceholderContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { RootStoreSlice } from '../store-beam-vanilla';
@@ -88,7 +88,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const newMessage: DMessage = {
     ...ray.message,
-    fragments: [createPlaceholderContentFragment(SCATTER_PLACEHOLDER)],
+    fragments: [createPlaceholderMetaFragment(SCATTER_PLACEHOLDER)],
     pendingIncomplete: true,
     created: Date.now(),
     updated: null,
