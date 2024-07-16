@@ -154,9 +154,9 @@ export const RenderImageURL = (props: {
         sx={{
           // style
           mx: isOnButton ? undefined : 1.5,  // 1.5 like the other 'Render*' components
-          minWidth: isOnButton ? 28 : 256,
-          minHeight: isOnButton ? 28 : 128,
-          boxShadow: isCard ? undefined : isOnButton ? '0 2px 4px 0 rgba(0, 0, 0, 0.4)' : 'md',
+          minWidth: isOnButton ? 20 : 256,
+          minHeight: isOnButton ? 20 : 128,
+          boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'md',
 
           // enable anchoring
           position: 'relative',
