@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { openAPI_SchemaObject_schema } from '../../intake/schemas.intake.tools';
-
 
 //
 // Implementation notes:
@@ -60,13 +58,13 @@ export namespace OpenAIWire_ContentParts {
     }),
   });
 
-  export const ToolCall_schema = z.discriminatedUnion('type', [
-    PredictedFunctionCall_schema,
-  ]);
-
   export function PredictedFunctionCall(toolCallId: string, functionName: string, functionArgs: string): z.infer<typeof PredictedFunctionCall_schema> {
     return { type: 'function', id: toolCallId, function: { name: functionName, arguments: functionArgs } };
   }
+
+  export const ToolCall_schema = z.discriminatedUnion('type', [
+    PredictedFunctionCall_schema,
+  ]);
 
 }
 
@@ -107,6 +105,10 @@ export namespace OpenAIWire_Messages {
     tool_call_id: z.string(),
   });
 
+  export function ToolMessage(toolCallId: string, content: string): z.infer<typeof ToolMessage_schema> {
+    return { role: 'tool', content, tool_call_id: toolCallId };
+  }
+
   export const Message_schema = z.discriminatedUnion('role', [
     SystemMessage_schema,
     UserMessage_schema,
@@ -138,16 +140,12 @@ export namespace OpenAIWire_Tools {
      */
     parameters: z.object({
       type: z.literal('object'),
-      properties: z.record(openAPI_SchemaObject_schema),
-      // Note: We commented out the code below in favor of the line above, because the OpenAPI 3.0.3 Schema object
-      //       is in the 'Intake' API spec (.properties), and here we just need to pass that object upstream.
-      // properties: z.record(z.object({
-      //   type: z.enum(['string', 'number', 'integer', 'boolean']),
-      //   description: z.string().optional(),
-      //   enum: z.array(z.string()).optional(),
-      // })),
+      /**
+       * For stricter validation, use the OpenAPI_Schema.Object_schema
+       */
+      properties: z.record(z.any()).optional(),
       required: z.array(z.string()).optional(),
-    }).optional(),
+    }),
   });
 
   export const ToolDefinition_schema = z.discriminatedUnion('type', [

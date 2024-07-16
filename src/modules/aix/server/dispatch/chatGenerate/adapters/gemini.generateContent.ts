@@ -1,7 +1,4 @@
-import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/schemas.intake.api';
-import type { Intake_ChatMessage, Intake_DocPart } from '../../../intake/schemas.intake.messages';
-import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
-
+import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
 
@@ -9,7 +6,7 @@ import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Me
 const hotFixImagePartsFirst = true;
 
 
-export function intakeToGeminiGenerateContent(model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
+export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
   // Note: the streaming setting is ignored as it only belongs in the path
 
@@ -19,13 +16,13 @@ export function intakeToGeminiGenerateContent(model: Intake_Model, chatGenerate:
     : undefined;
 
   // Chat Messages
-  const contents: TRequest['contents'] = _intakeToGeminiContents(chatGenerate.chatSequence);
+  const contents: TRequest['contents'] = _toGeminiContents(chatGenerate.chatSequence);
 
   // Construct the request payload
   const payload: TRequest = {
     contents,
-    tools: chatGenerate.tools && _intakeToGeminiTools(chatGenerate.tools),
-    toolConfig: chatGenerate.toolsPolicy && _intakeToGeminiToolConfig(chatGenerate.toolsPolicy),
+    tools: chatGenerate.tools && _toGeminiTools(chatGenerate.tools),
+    toolConfig: chatGenerate.toolsPolicy && _toGeminiToolConfig(chatGenerate.toolsPolicy),
     safetySettings: _toGeminiSafetySettings(geminiSafetyThreshold),
     systemInstruction,
     generationConfig: {
@@ -51,7 +48,7 @@ export function intakeToGeminiGenerateContent(model: Intake_Model, chatGenerate:
 type TRequest = GeminiWire_API_Generate_Content.Request;
 
 
-function _intakeToGeminiContents(chatSequence: Intake_ChatMessage[]): GeminiWire_Messages.Content[] {
+function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_Messages.Content[] {
   return chatSequence.map(message => {
     const parts: GeminiWire_ContentParts.ContentPart[] = [];
 
@@ -83,12 +80,33 @@ function _intakeToGeminiContents(chatSequence: Intake_ChatMessage[]): GeminiWire
           break;
 
         case 'tool_call':
-          parts.push(GeminiWire_ContentParts.FunctionCallPart(part.name, part.args));
+          switch (part.call.type) {
+            case 'function_call':
+              parts.push(GeminiWire_ContentParts.FunctionCallPart(part.call.name, part.call.args ?? undefined));
+              break;
+            case 'code_execution':
+              if (part.call.language?.toLowerCase() !== 'python')
+                console.warn('Gemini only supports Python code execution, but got:', part.call.language);
+              parts.push(GeminiWire_ContentParts.ExecutableCodePart('PYTHON', part.call.code));
+              break;
+            default:
+              throw new Error(`Unsupported tool call type in message: ${(part as any).call.type}`);
+          }
           break;
 
         case 'tool_response':
-          parts.push(GeminiWire_ContentParts.FunctionResponsePart(part.name, { response: part.response, isError: part.isError }));
-          throw new Error('Tool responses are not supported yet - Gemini Expects Objects, but we have a string...');
+          const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
+          switch (part.response.type) {
+            case 'function_call':
+              parts.push(GeminiWire_ContentParts.FunctionResponsePart(part.response._name || part.id, toolErrorPrefix + part.response.result));
+              break;
+            case 'code_execution':
+              parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_ERROR', toolErrorPrefix + part.response.result));
+              break;
+            default:
+              throw new Error(`Unsupported part type in message: ${(part as any).pt}`);
+          }
+          break;
 
         default:
           throw new Error(`Unsupported part type in message: ${(part as any).pt}`);
@@ -102,7 +120,7 @@ function _intakeToGeminiContents(chatSequence: Intake_ChatMessage[]): GeminiWire
   });
 }
 
-function _intakeToGeminiTools(itds: Intake_ToolDefinition[]): NonNullable<TRequest['tools']> {
+function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['tools']> {
   const tools: TRequest['tools'] = [];
 
   itds.forEach(itd => {
@@ -116,30 +134,29 @@ function _intakeToGeminiTools(itds: Intake_ToolDefinition[]): NonNullable<TReque
           functionDeclarations: [{
             name,
             description,
-            parameters: {
-              type: 'object',
-              ...input_schema,
-            },
+            parameters: { type: 'object', ...input_schema },
           }],
         });
         break;
 
-      case 'gemini_code_interpreter':
+      case 'code_execution':
+        if (itd.variant !== 'gemini_auto_inline')
+          throw new Error('Gemini only supports inline code execution');
+
         // throw if code execution is present more than once
         if (tools.some(tool => tool.codeExecution))
           throw new Error('Gemini code interpreter already defined');
+
         tools.push({ codeExecution: {} });
         break;
 
-      case 'preprocessor':
-        throw new Error('Preprocessors are not supported yet');
     }
   });
 
   return tools;
 }
 
-function _intakeToGeminiToolConfig(itp: Intake_ToolsPolicy): NonNullable<TRequest['toolConfig']> {
+function _toGeminiToolConfig(itp: AixTools_ToolsPolicy): NonNullable<TRequest['toolConfig']> {
   switch (itp.type) {
     case 'auto':
       return { functionCallingConfig: { mode: 'AUTO' } };
@@ -167,8 +184,8 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
 
 // Approximate conversions - alternative approaches should be tried until we find the best one
 
-function _toApproximateGeminiDocPart(intakeDocPart: Intake_DocPart): GeminiWire_ContentParts.ContentPart {
-  return GeminiWire_ContentParts.TextPart(`\`\`\`${intakeDocPart.ref || ''}\n${intakeDocPart.data.text}\n\`\`\`\n`);
+function _toApproximateGeminiDocPart(aixPartsDocPart: AixParts_DocPart): GeminiWire_ContentParts.ContentPart {
+  return GeminiWire_ContentParts.TextPart(`\`\`\`${aixPartsDocPart.ref || ''}\n${aixPartsDocPart.data.text}\n\`\`\`\n`);
 }
 
 function _toApproximateGeminiReplyTo(replyTo: string): GeminiWire_ContentParts.ContentPart {

@@ -1,10 +1,7 @@
-import { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
+import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
-import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/schemas.intake.api';
-import type { Intake_ChatMessage, Intake_SystemMessage } from '../../../intake/schemas.intake.messages';
-import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
-
-import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts } from '../../wiretypes/openai.wiretypes';
+import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../aix.wiretypes';
+import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
 
 //
@@ -29,7 +26,7 @@ const hotFixSquashTextSeparator = '\n\n\n---\n\n\n';
 type TRequest = OpenAIWire_API_Chat_Completions.Request;
 type TRequestMessages = TRequest['messages'];
 
-export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, jsonOutput: boolean, streaming: boolean): TRequest {
+export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
 
   // Dialect incompatibilities -> Hotfixes
   const hotFixAlternateUserAssistantRoles = openAIDialect === 'perplexity';
@@ -44,7 +41,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
     throw new Error('This service does not support function calls');
 
   // Convert the chat messages to the OpenAI 4-Messages format
-  let chatMessages = _intakeToOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence);
+  let chatMessages = _toOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence);
 
   // Apply hotfixes
   if (hotFixSquashMultiPartText)
@@ -61,8 +58,8 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
   let payload: TRequest = {
     model: model.id,
     messages: chatMessages,
-    tools: chatGenerate.tools && _intakeToOpenAITools(chatGenerate.tools),
-    tool_choice: chatGenerate.toolsPolicy && _intakeToOpenAIToolChoice(chatGenerate.toolsPolicy),
+    tools: chatGenerate.tools && _toOpenAITools(chatGenerate.tools),
+    tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(chatGenerate.toolsPolicy),
     parallel_tool_calls: undefined,
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
     temperature: model.temperature !== undefined ? model.temperature : undefined,
@@ -89,6 +86,7 @@ export function intakeToOpenAIMessageCreate(openAIDialect: OpenAIDialects, model
 
   return validated.data;
 }
+
 
 function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TRequestMessages {
   return chatMessages.reduce((acc, historyItem) => {
@@ -159,7 +157,7 @@ function _fixSquashMultiPartText(chatMessages: TRequestMessages): TRequestMessag
 }*/
 
 
-function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined, chatSequence: Intake_ChatMessage[]): TRequestMessages {
+function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined, chatSequence: AixMessages_ChatMessage[]): TRequestMessages {
 
   // Transform the chat messages into OpenAI's format (an array of 'system', 'user', 'assistant', and 'tool' messages)
   const chatMessages: TRequestMessages = [];
@@ -258,8 +256,17 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
               // - otherwise we'll add an assistant message with null message
 
               // create a new OpenAIWire_ToolCall (specialized to function)
-              const toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, part.name, JSON.stringify(part.args));
-
+              let toolCallPart;
+              switch (part.call.type) {
+                case 'function_call':
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, part.call.name, part.call.args || '');
+                  break;
+                case 'code_execution':
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, 'execute_code' /* suboptimal */, part.call.code || '');
+                  break;
+                default:
+                  throw new Error(`Unsupported tool call type in Model message: ${(part as any).pt}`);
+              }
 
               // Append to existing content[], or new message
               if (currentMessage?.role === 'assistant') {
@@ -283,7 +290,11 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
           switch (part.pt) {
 
             case 'tool_response':
-              chatMessages.push({ role: 'tool', tool_call_id: part.id, content: part.isError ? '[ERROR]' + (part.response || '') : (part.response || '') });
+              const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
+              if (part.response.type === 'function_call' || part.response.type === 'code_execution')
+                chatMessages.push(OpenAIWire_Messages.ToolMessage(part.id, toolErrorPrefix + part.response.result));
+              else
+                throw new Error(`Unsupported tool response type in Tool message: ${(part as any).pt}`);
               break;
 
             default:
@@ -297,10 +308,10 @@ function _intakeToOpenAIMessages(systemMessage: Intake_SystemMessage | undefined
   return chatMessages;
 }
 
-
-function _intakeToOpenAITools(itds: Intake_ToolDefinition[]): NonNullable<TRequest['tools']> {
+function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['tools']> {
   return itds.map(itd => {
     switch (itd.type) {
+
       case 'function_call':
         const { name, description, input_schema } = itd.function_call;
         return {
@@ -315,15 +326,15 @@ function _intakeToOpenAITools(itds: Intake_ToolDefinition[]): NonNullable<TReque
             },
           },
         };
-      case 'gemini_code_interpreter':
+
+      case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
-      case 'preprocessor':
-        throw new Error('Preprocessors are not supported yet');
+
     }
   });
 }
 
-function _intakeToOpenAIToolChoice(itp: Intake_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
+function _toOpenAIToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
   // NOTE: OpenAI has an additional policy 'none', which we don't have as it behaves like passing no tools at all.
   //       Passing no tools is mandated instead of 'none'.
   switch (itp.type) {

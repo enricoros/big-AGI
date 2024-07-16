@@ -64,14 +64,18 @@ export namespace GeminiWire_ContentParts {
   export const FunctionCallPart_schema = z.object({
     functionCall: z.object({
       name: z.string(),
-      args: z.record(z.any()).optional(), // JSON object format
+      // NOTE: replacing with a single string for now, leaving serialization to the caller eventually
+      args: z.string().optional(),
+      // args: z.record(z.any()).optional(), // JSON object format
     }),
   });
 
   const FunctionResponsePart_schema = z.object({
     functionResponse: z.object({
       name: z.string(),
-      response: z.record(z.any()), // Optional. JSON object format
+      // NOTE: replacing with a single string for now, leaving serialization to the caller eventually
+      response: z.string().optional(),
+      // response: z.record(z.any()), // Optional. JSON object format
     }),
   });
 
@@ -123,12 +127,20 @@ export namespace GeminiWire_ContentParts {
     return { inlineData: { mimeType, data } };
   }
 
-  export function FunctionCallPart(name: string, args?: Record<string, any>): z.infer<typeof FunctionCallPart_schema> {
+  export function FunctionCallPart(name: string, args?: string): z.infer<typeof FunctionCallPart_schema> {
     return { functionCall: { name, args } };
   }
 
-  export function FunctionResponsePart(name: string, response: Record<string, any>): z.infer<typeof FunctionResponsePart_schema> {
+  export function FunctionResponsePart(name: string, response?: string): z.infer<typeof FunctionResponsePart_schema> {
     return { functionResponse: { name, response } };
+  }
+
+  export function ExecutableCodePart(language: 'PYTHON', code: string): z.infer<typeof unstable_ExecutableCodePart_schema> {
+    return { executableCode: { language, code } };
+  }
+
+  export function CodeExecutionResultPart(outcome: 'OUTCOME_OK' | 'OUTCOME_ERROR', output?: string): z.infer<typeof unstable_CodeExecutionResultPart_schema> {
+    return { codeExecutionResult: { outcome, output } };
   }
 
 }
@@ -185,7 +197,14 @@ export namespace GeminiWire_Tools {
      *  https://ai.google.dev/api/rest/v1beta/cachedContents#schema
      *  Here we relax the check.
      */
-    parameters: z.record(z.any()).optional(),
+    parameters: z.object({
+      type: z.literal('object'),
+      /**
+       * For stricter validation, use the OpenAPI_Schema.Object_schema
+       */
+      properties: z.record(z.any()).optional(),
+      required: z.array(z.string()).optional(),
+    }),
   });
 
   export const Tool_schema = z.object({

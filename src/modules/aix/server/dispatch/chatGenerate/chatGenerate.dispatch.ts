@@ -2,13 +2,13 @@ import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.route
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
-import type { Intake_Access, Intake_ChatGenerateRequest, Intake_Model } from '../../intake/schemas.intake.api';
+import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '../../aix.wiretypes';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
-import { intakeToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
-import { intakeToGeminiGenerateContent } from './adapters/gemini.generateContent';
-import { intakeToOpenAIMessageCreate } from './adapters/openai.chatCompletions';
+import { aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
+import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
+import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
@@ -18,7 +18,7 @@ import type { ChatGenerateParseFunction } from './chatGenerate.types';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
 
 
-export function createChatGenerateDispatch(access: Intake_Access, model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): {
+export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
   demuxerFormat: StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
@@ -29,7 +29,7 @@ export function createChatGenerateDispatch(access: Intake_Access, model: Intake_
       return {
         request: {
           ...anthropicAccess(access, '/v1/messages'),
-          body: intakeToAnthropicMessageCreate(model, chatGenerate, streaming),
+          body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
@@ -39,7 +39,7 @@ export function createChatGenerateDispatch(access: Intake_Access, model: Intake_
       return {
         request: {
           ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath),
-          body: intakeToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
+          body: aixToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
         chatGenerateParse: createGeminiGenerateContentResponseParser(model.id),
@@ -70,7 +70,7 @@ export function createChatGenerateDispatch(access: Intake_Access, model: Intake_
       return {
         request: {
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
-          body: intakeToOpenAIMessageCreate(access.dialect, model, chatGenerate, false, streaming),
+          body: aixToOpenAIChatCompletions(access.dialect, model, chatGenerate, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
         chatGenerateParse: createOpenAIMessageCreateParser(),

@@ -4,10 +4,10 @@ import { createEmptyReadableStream, safeErrorString, serverCapitalizeFirstLetter
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
+import { AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
 import { IntakeHandler } from './intake/IntakeHandler';
 import { createChatGenerateDispatch } from './dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from './dispatch/stream.demuxers';
-import { intake_Access_schema, intake_ChatGenerateRequest_schema, intake_ContextChatStream_schema, intake_Model_schema } from './intake/schemas.intake.api';
 
 
 export const aixRouter = createTRPCRouter({
@@ -18,10 +18,10 @@ export const aixRouter = createTRPCRouter({
    */
   chatGenerateContent: publicProcedure
     .input(z.object({
-      access: intake_Access_schema,
-      model: intake_Model_schema,
-      chatGenerate: intake_ChatGenerateRequest_schema,
-      context: intake_ContextChatStream_schema,
+      access: AixWire_API.Access_schema,
+      model: AixWire_API.Model_schema,
+      chatGenerate: AixWire_API_ChatGenerate.Request_schema,
+      context: AixWire_API.Context_schema,
       streaming: z.boolean(),
       _debugRequestBody: z.boolean().optional(),
     }))

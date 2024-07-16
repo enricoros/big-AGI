@@ -4,8 +4,8 @@ import type { DMessage } from '~/common/stores/chat/chat.message';
 import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
-import { AixChatContentGenerateRequest, AixChatMessageModel, AixChatMessageUser, createAixInlineImagePart, createAixMetaReplyToPart } from './aix.client.api';
-
+// NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
+import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaReplyToPart } from '../server/aix.wiretypes';
 
 // TODO: remove console messages to zero, or replace with throws or something
 
@@ -19,7 +19,7 @@ export const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 // AIX <> Chat Messages API helpers
 //
 
-export async function conversationMessagesToAixGenerateRequest(messageSequence: Readonly<DMessage[]>): Promise<AixChatContentGenerateRequest> {
+export async function aixChatGenerateRequestFromDMessages(messageSequence: Readonly<DMessage[]>): Promise<AixAPIChatGenerate_Request> {
   // reduce history
   return await messageSequence.reduce(async (accPromise, m, index) => {
     const acc = await accPromise;
@@ -76,11 +76,11 @@ export async function conversationMessagesToAixGenerateRequest(messageSequence: 
             console.warn('conversationMessagesToAixGenerateRequest: unexpected User fragment part type', (uFragment.part as any).pt);
         }
         return uMsg;
-      }, Promise.resolve({ role: 'user', parts: [] } as AixChatMessageUser));
+      }, Promise.resolve({ role: 'user', parts: [] } as AixMessages_UserMessage));
 
       // handle metadata on user messages
       if (m.metadata?.inReplyToText)
-        aixChatMessageUser.parts.push(createAixMetaReplyToPart(m.metadata.inReplyToText));
+        aixChatMessageUser.parts.push(_clientCreateAixMetaReplyToPart(m.metadata.inReplyToText));
 
       acc.chatSequence.push(aixChatMessageUser);
 
@@ -95,9 +95,10 @@ export async function conversationMessagesToAixGenerateRequest(messageSequence: 
 
         switch (aFragment.part.pt) {
 
-          // intake.message.part = fragment.part
           case 'text':
           case 'tool_call':
+            // Key place where the Aix Zod inferred types are compared to the Typescript defined DMessagePart* types
+            // - in case of error, check that the types in `chat.fragments.ts` and `aix.wiretypes.ts` are in sync
             mMsg.parts.push(aFragment.part);
             break;
 
@@ -125,7 +126,7 @@ export async function conversationMessagesToAixGenerateRequest(messageSequence: 
 
         }
         return mMsg;
-      }, Promise.resolve({ role: 'model', parts: [] } as AixChatMessageModel));
+      }, Promise.resolve({ role: 'model', parts: [] } as AixMessages_ModelMessage));
 
       acc.chatSequence.push(aixChatMessageModel);
 
@@ -135,10 +136,13 @@ export async function conversationMessagesToAixGenerateRequest(messageSequence: 
     }
 
     return acc;
-  }, Promise.resolve({ chatSequence: [] } as AixChatContentGenerateRequest));
+  }, Promise.resolve({ chatSequence: [] } as AixAPIChatGenerate_Request));
 }
 
-async function _convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false) {
+
+/// Parts that differ from DMessage*Part to AIX
+
+async function _convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
 
   // validate
   const { dataRef } = imageRefPart;
@@ -164,5 +168,13 @@ async function _convertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageR
     }
   }
 
-  return createAixInlineImagePart(base64Data, mimeType || dataRef.mimeType);
+  return _clientCreateAixInlineImagePart(base64Data, mimeType || dataRef.mimeType);
+}
+
+function _clientCreateAixInlineImagePart(base64: string, mimeType: string): AixParts_InlineImagePart {
+  return { pt: 'inline_image', mimeType: (mimeType || 'image/png') as AixParts_InlineImagePart['mimeType'], base64 };
+}
+
+function _clientCreateAixMetaReplyToPart(replyTo: string): AixParts_MetaReplyToPart {
+  return { pt: 'meta_reply_to', replyTo };
 }

@@ -76,7 +76,7 @@ export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMes
 export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 export type DMessageTextPart = { pt: 'text', text: string };
-export type DMessageToolInvocationPart = { pt: 'tool_call', id: string, call: DMessageToolInvocationFunctionCall | DMessageToolInvocationCodeExecution }; // Note that the definition of tools is in AIX.Intake
+export type DMessageToolInvocationPart = { pt: 'tool_call', id: string, call: DMessageToolInvocationFunctionCall | DMessageToolInvocationCodeExecution };
 export type DMessageToolResponsePart = { pt: 'tool_response', id: string, response: DMessageToolResponseFunctionCall | DMessageToolResponseCodeExecution, error?: boolean | string, _environment?: DMessageToolEnvironment };
 export type DMetaPlaceholderPart = { pt: 'ph', pText: string };
 type _DMetaSentinelPart = { pt: '_pt_sentinel' };
@@ -114,7 +114,8 @@ type DMessageToolInvocationFunctionCall = {
 type DMessageToolInvocationCodeExecution = {
   type: 'code_execution';
   variant?: 'gemini_auto_inline';
-  arguments: { code: string; language?: string; };
+  language?: string;
+  code: string;
 };
 
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
@@ -250,7 +251,7 @@ function createDMessageFunctionCallInvocationPart(id: string, name: string, args
 }
 
 function createDMessageCodeExecutionInvocationPart(id: string, code: string, language?: string, variant?: 'gemini_auto_inline'): DMessageToolInvocationPart {
-  return { pt: 'tool_call', id, call: { type: 'code_execution', variant, arguments: { code, language } } };
+  return { pt: 'tool_call', id, call: { type: 'code_execution', variant, language, code } };
 }
 
 function createDMessageFunctionCallResponsePart(id: string, result: string, _name?: string, error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageToolResponsePart {
@@ -329,7 +330,7 @@ function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachm
       if (call.type === 'function_call')
         return createDMessageFunctionCallInvocationPart(part.id, call.name, call.args, call._description, call._args_schema ? { ...call._args_schema } : undefined) as TPart;
       else
-        return createDMessageCodeExecutionInvocationPart(part.id, call.arguments.code, call.arguments.language, call.variant) as TPart;
+        return createDMessageCodeExecutionInvocationPart(part.id, call.code, call.language, call.variant) as TPart;
 
     case 'tool_response':
       const response = part.response;
