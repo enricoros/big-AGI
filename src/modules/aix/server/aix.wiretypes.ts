@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.router';
+import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.router';
+import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.router';
+import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
+
+
 //
 // Design notes:
 // - [Client -> AIX API calls] This encodes the structure sent to the AIX server API calls
@@ -26,7 +32,7 @@ export namespace OpenAPI_Schema {
    * 2. this is actually a subset of the OpenAPI Schema Object, as we only need a subset
    *    of the properties for our function calling use case.
    */
-  export const Object = z.object({
+  export const Object_schema = z.object({
     // allowed data types - https://ai.google.dev/api/rest/v1beta/cachedContents#Type
     type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
 
@@ -61,7 +67,6 @@ export namespace OpenAPI_Schema {
   });
 
 }
-
 
 export namespace AixWire_Parts {
 
@@ -247,7 +252,7 @@ export namespace AixWire_Tools {
      *  (OpenAI, Google: parameters, Anthropic: input_schema)
      */
     input_schema: z.object({
-      properties: z.record(OpenAPI_Schema.Object),
+      properties: z.record(OpenAPI_Schema.Object_schema),
       required: z.array(z.string()).optional(),
     }).optional(),
   });
@@ -315,6 +320,27 @@ export namespace AixWire_Tools {
 
 }
 
+export namespace AixWire_API {
+
+  /// Access
+
+  export const Access_schema = z.discriminatedUnion('dialect', [
+    anthropicAccessSchema,
+    geminiAccessSchema,
+    ollamaAccessSchema,
+    openAIAccessSchema,
+  ]);
+
+  /// Model
+
+  export const Model_schema = z.object({
+    id: z.string(),
+    temperature: z.number().min(0).max(2).optional(),
+    maxTokens: z.number().min(1).max(1000000).optional(),
+  });
+
+}
+
 export namespace AixWire_API_ChatGenerate {
 
   /// Request
@@ -331,7 +357,6 @@ export namespace AixWire_API_ChatGenerate {
     name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
     ref: z.string(),
   });
-
 
   /// Response - Events Stream
 
