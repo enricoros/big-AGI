@@ -34,7 +34,8 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // styling
   backgroundColor: 'transparent',
   borderRight: '1px solid',
-  borderRightColor: theme.palette.divider,
+  // the border right color is from: theme.palette.divider, which is this /0.2 (light) and /0.16 (dark)
+  borderRightColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
   // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
   // contain: 'strict',
