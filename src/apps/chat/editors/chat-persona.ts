@@ -1,11 +1,10 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import type { AixChatContentGenerateRequest } from '~/modules/aix/client/aix.client.api';
-import type { Intake_ContextChatStream } from '~/modules/aix/server/intake/schemas.intake.api';
+import type { AixAPI_ContextChatStream, AixAPIChatGenerate_Request } from '~/modules/aix/server/aix.wiretypes';
+import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
-import { conversationMessagesToAixGenerateRequest } from '~/modules/aix/client/aix.client.messages.api';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
@@ -54,7 +53,7 @@ export async function runPersonaOnConversationHead(
 
 
   // stream the assistant's messages directly to the state store
-  const aixChatContentGenerateRequest = await conversationMessagesToAixGenerateRequest(history);
+  const aixChatContentGenerateRequest = await aixChatGenerateRequestFromDMessages(history);
   const messageStatus = await llmGenerateContentStream(
     assistantLlmId,
     aixChatContentGenerateRequest,
@@ -100,9 +99,9 @@ export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pe
 
 export async function llmGenerateContentStream(
   llmId: DLLMId,
-  chatGenerate: AixChatContentGenerateRequest,
-  intakeContextName: Intake_ContextChatStream['name'],
-  intakeContextRef: string,
+  aixChatGenerate: AixAPIChatGenerate_Request,
+  aixContextName: AixAPI_ContextChatStream['name'],
+  aixContextRef: AixAPI_ContextChatStream['ref'],
   parallelViewCount: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   abortSignal: AbortSignal,
   onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
@@ -119,7 +118,7 @@ export async function llmGenerateContentStream(
 
   try {
 
-    await aixStreamingChatGenerate(llmId, chatGenerate, intakeContextName, intakeContextRef, abortSignal,
+    await aixStreamingChatGenerate(llmId, aixChatGenerate, aixContextName, aixContextRef, abortSignal,
       (update: StreamingClientUpdate, done: boolean) => {
 
         // grow the incremental message

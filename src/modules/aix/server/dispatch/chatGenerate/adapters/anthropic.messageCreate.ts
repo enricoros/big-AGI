@@ -1,7 +1,5 @@
-import type { Intake_ChatGenerateRequest, Intake_Model } from '../../../intake/schemas.intake.api';
-import type { Intake_ChatMessage } from '../../../intake/schemas.intake.messages';
-import type { Intake_ToolDefinition, Intake_ToolsPolicy } from '../../../intake/schemas.intake.tools';
-import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '~/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes';
+import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../aix.wiretypes';
+import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
 
 // configuration
@@ -12,7 +10,7 @@ const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropi
 
 type TRequest = AnthropicWire_API_Message_Create.Request;
 
-export function intakeToAnthropicMessageCreate(model: Intake_Model, chatGenerate: Intake_ChatGenerateRequest, streaming: boolean): TRequest {
+export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
 
   // Convert the system message
   const systemMessage: TRequest['system'] = chatGenerate.systemMessage?.parts.length
@@ -22,8 +20,8 @@ export function intakeToAnthropicMessageCreate(model: Intake_Model, chatGenerate
   // Transform the chat messages into Anthropic's format
   const chatMessages: TRequest['messages'] = [];
   let currentMessage: TRequest['messages'][number] | null = null;
-  for (const intakeChatMessage of chatGenerate.chatSequence) {
-    for (const { role, content } of _generateAnthropicMessagesContentBlocks(intakeChatMessage)) {
+  for (const aixMessage of chatGenerate.chatSequence) {
+    for (const { role, content } of _generateAnthropicMessagesContentBlocks(aixMessage)) {
       if (!currentMessage || currentMessage.role !== role) {
         if (currentMessage)
           chatMessages.push(currentMessage);
@@ -41,8 +39,8 @@ export function intakeToAnthropicMessageCreate(model: Intake_Model, chatGenerate
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
-    tools: chatGenerate.tools && _intakeToAnthropicTools(chatGenerate.tools),
-    tool_choice: chatGenerate.toolsPolicy && _intakeToAnthropicToolChoice(chatGenerate.toolsPolicy),
+    tools: chatGenerate.tools && _toAnthropicTools(chatGenerate.tools),
+    tool_choice: chatGenerate.toolsPolicy && _toAnthropicToolChoice(chatGenerate.toolsPolicy),
     // metadata: { user_id: ... }
     // stop_sequences: undefined,
     stream: streaming,
@@ -60,7 +58,7 @@ export function intakeToAnthropicMessageCreate(model: Intake_Model, chatGenerate
 }
 
 
-function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMessage): Generator<{
+function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_ChatMessage): Generator<{
   role: 'user' | 'assistant',
   content: TRequest['messages'][number]['content'][number]
 }> {
@@ -75,21 +73,27 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
   }
 
   switch (role) {
+
     case 'user':
       for (const part of parts) {
         switch (part.pt) {
+
           case 'text':
             yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(part.text) };
             break;
+
           case 'inline_image':
             yield { role: 'user', content: AnthropicWire_Blocks.ImageBlock(part.mimeType, part.base64) };
             break;
+
           case 'doc':
             yield { role: 'user', content: AnthropicWire_Blocks.TextBlock('```' + (part.ref || '') + '\n' + part.data.text + '\n```\n') };
             break;
+
           case 'meta_reply_to':
             yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(`<context>The user is referring to this in particular: ${part.replyTo}</context>`) };
             break;
+
           default:
             throw new Error(`Unsupported part type in User message: ${(part as any).pt}`);
         }
@@ -99,9 +103,11 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
     case 'model':
       for (const part of parts) {
         switch (part.pt) {
+
           case 'text':
             yield { role: 'assistant', content: AnthropicWire_Blocks.TextBlock(part.text) };
             break;
+
           case 'inline_image':
             // Example of mapping a model-generated image to a user message
             if (hotFixMapModelImagesToUser) {
@@ -109,9 +115,22 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
             } else
               throw new Error('Model-generated images are not supported by Anthropic yet');
             break;
+
           case 'tool_call':
-            yield { role: 'assistant', content: AnthropicWire_Blocks.ToolUseBlock(part.id, part.name, part.args) };
+            let toolUseBlock;
+            switch (part.call.type) {
+              case 'function_call':
+                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, part.call.name, part.call.args);
+                break;
+              case 'code_execution':
+                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, part.call.code);
+                break;
+              default:
+                throw new Error(`Unsupported tool call type in Model message: ${(part.call as any).type}`);
+            }
+            yield { role: 'assistant', content: toolUseBlock };
             break;
+
           default:
             throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
         }
@@ -121,10 +140,23 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
     case 'tool':
       for (const part of parts) {
         switch (part.pt) {
+
           case 'tool_response':
-            const responseContent = part.response ? [AnthropicWire_Blocks.TextBlock(part.response)] : [];
-            yield { role: 'user', content: AnthropicWire_Blocks.ToolResultBlock(part.id, responseContent, part.isError) };
+            const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
+            switch (part.response.type) {
+              case 'function_call':
+                const fcTextParts = [AnthropicWire_Blocks.TextBlock(toolErrorPrefix + part.response.result)];
+                yield { role: 'user', content: AnthropicWire_Blocks.ToolResultBlock(part.id, fcTextParts, part.error ? true : undefined) };
+                break;
+              case 'code_execution':
+                const ceTextParts = [AnthropicWire_Blocks.TextBlock(toolErrorPrefix + part.response.result)];
+                yield { role: 'user', content: AnthropicWire_Blocks.ToolResultBlock(part.id, ceTextParts, part.error ? true : undefined) };
+                break;
+              default:
+                throw new Error(`Unsupported tool response type in Tool message: ${(part as any).pt}`);
+            }
             break;
+
           default:
             throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
         }
@@ -133,9 +165,10 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: Intake_ChatMe
   }
 }
 
-function _intakeToAnthropicTools(itds: Intake_ToolDefinition[]): NonNullable<TRequest['tools']> {
+function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['tools']> {
   return itds.map(itd => {
     switch (itd.type) {
+
       case 'function_call':
         const { name, description, input_schema } = itd.function_call;
         return {
@@ -147,15 +180,15 @@ function _intakeToAnthropicTools(itds: Intake_ToolDefinition[]): NonNullable<TRe
             required: input_schema?.required,
           },
         };
-      case 'gemini_code_interpreter':
+
+      case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
-      case 'preprocessor':
-        throw new Error('Preprocessors are not supported yet');
+
     }
   });
 }
 
-function _intakeToAnthropicToolChoice(itp: Intake_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
+function _toAnthropicToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
   switch (itp.type) {
     case 'auto':
       return { type: 'auto' as const };

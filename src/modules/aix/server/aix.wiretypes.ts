@@ -14,11 +14,22 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
 
 // Export types
-// export type IntakeWire_DocPart = z.infer<typeof IntakeWire_Parts.DocPart_schema>;
-// export type IntakeWire_InlineImagePart = z.infer<typeof IntakeWire_Parts.InlineImagePart_schema>;
-// export type IntakeWire_MetaReplyToPart = z.infer<typeof IntakeWire_Parts.MetaReplyToPart_schema>;
-// export type IntakeWire_ChatMessage = z.infer<typeof IntakeWire_Messages.ChatMessage_schema>;
-// export type IntakeWire_SystemMessage = z.infer<typeof IntakeWire_Messages.SystemMessage_schema>;
+export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
+export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
+export type AixParts_MetaReplyToPart = z.infer<typeof AixWire_Parts.MetaReplyToPart_schema>;
+
+export type AixMessages_SystemMessage = z.infer<typeof AixWire_Messages.SystemMessage_schema>;
+export type AixMessages_UserMessage = z.infer<typeof AixWire_Messages.UserMessage_schema>;
+export type AixMessages_ModelMessage = z.infer<typeof AixWire_Messages.ModelMessage_schema>;
+export type AixMessages_ChatMessage = z.infer<typeof AixWire_Messages.ChatMessage_schema>;
+
+export type AixTools_ToolDefinition = z.infer<typeof AixWire_Tools.Tool_schema>;
+export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tools.ToolsPolicy_schema>;
+
+export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
+export type AixAPI_ContextChatStream = z.infer<typeof AixWire_API.ContextChatStream_schema>;
+export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
+export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatGenerate.Request_schema>;
 
 
 export namespace OpenAPI_Schema {
@@ -137,10 +148,8 @@ export namespace AixWire_Parts {
   const _CodeExecutionInvocation_schema = z.object({
     type: z.literal('code_execution'),
     variant: z.literal('gemini_auto_inline').optional(),
-    arguments: z.object({
-      code: z.string(),
-      language: z.string().optional(),
-    }),
+    language: z.string().optional(),
+    code: z.string(),
   });
 
   export const ToolInvocationPart_schema = z.object({
@@ -157,7 +166,7 @@ export namespace AixWire_Parts {
   const _FunctionCallResponse_schema = z.object({
     type: z.literal('function_call'),
     result: z.string(),
-    // _name: z.string().optional(),
+    _name: z.string().optional(),
   });
 
   const _CodeExecutionResponse_schema = z.object({
@@ -196,7 +205,7 @@ export namespace AixWire_Messages {
 
   /// Chat Message
 
-  const _UserMessage_schema = z.object({
+  export const UserMessage_schema = z.object({
     role: z.literal('user'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
@@ -206,7 +215,7 @@ export namespace AixWire_Messages {
     ])),
   });
 
-  const _ModelMessage_schema = z.object({
+  export const ModelMessage_schema = z.object({
     role: z.literal('model'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
@@ -215,7 +224,7 @@ export namespace AixWire_Messages {
     ])),
   });
 
-  const _ToolMessage_schema = z.object({
+  export const ToolMessage_schema = z.object({
     role: z.literal('tool'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.ToolResponsePart_schema,
@@ -223,9 +232,9 @@ export namespace AixWire_Messages {
   });
 
   export const ChatMessage_schema = z.discriminatedUnion('role', [
-    _UserMessage_schema,
-    _ModelMessage_schema,
-    _ToolMessage_schema,
+    UserMessage_schema,
+    ModelMessage_schema,
+    ToolMessage_schema,
   ]);
 
 }
@@ -339,6 +348,18 @@ export namespace AixWire_API {
     maxTokens: z.number().min(1).max(1000000).optional(),
   });
 
+  /// Context
+
+  export const ContextChatStream_schema = z.object({
+    method: z.literal('chat-stream'),
+    name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
+    ref: z.string(),
+  });
+
+  export const Context_schema = z.discriminatedUnion('method', [
+    ContextChatStream_schema,
+  ]);
+
 }
 
 export namespace AixWire_API_ChatGenerate {
@@ -350,12 +371,6 @@ export namespace AixWire_API_ChatGenerate {
     chatSequence: z.array(AixWire_Messages.ChatMessage_schema),
     tools: z.array(AixWire_Tools.Tool_schema).optional(),
     toolsPolicy: AixWire_Tools.ToolsPolicy_schema.optional(),
-  });
-
-  export const Context_ChatStream_schema = z.object({
-    method: z.literal('chat-stream'),
-    name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
-    ref: z.string(),
   });
 
   /// Response - Events Stream
@@ -375,3 +390,4 @@ export namespace AixWire_API_ChatGenerate {
   // });
 
 }
+
