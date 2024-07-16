@@ -2,6 +2,13 @@ export function capitalizeFirstLetter(string: string) {
   return string?.length ? (string.charAt(0).toUpperCase() + string.slice(1)) : string;
 }
 
+
+export function countWords(text: string) {
+  const trimmedText = text.trim();
+  if (!trimmedText) return 0;
+  return trimmedText.split(/\s+/).length;
+}
+
 /**
  * Convert a string (e.g., a web URL or file name) to a human-readable hyphenated format.
  * This function:
