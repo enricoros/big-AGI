@@ -73,7 +73,7 @@ export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | nul
 }
 
 
-export type RenderImageURLVarint = 'content-part' | 'attachment-card';
+export type RenderImageURLVarint = 'content-part' | 'attachment-card' | 'attachment-button';
 
 export const RenderImageURL = (props: {
   imageURL: string | null,              // remote URL, or data URL
@@ -140,6 +140,7 @@ export const RenderImageURL = (props: {
 
   // derived state
   const isCard = props.variant === 'attachment-card';
+  const isOnButton = props.variant === 'attachment-button';
   const isTempDalleUrl = props.imageURL?.startsWith('https://oaidalle') || false;
 
 
@@ -152,10 +153,10 @@ export const RenderImageURL = (props: {
         className={props.className}
         sx={{
           // style
-          mx: 1.5,  // 1.5 like the other 'Render*' components
-          minWidth: 256,
-          minHeight: 128,
-          boxShadow: isCard ? undefined : 'md',
+          mx: isOnButton ? undefined : 1.5,  // 1.5 like the other 'Render*' components
+          minWidth: isOnButton ? 28 : 256,
+          minHeight: isOnButton ? 28 : 128,
+          boxShadow: isCard ? undefined : isOnButton ? '0 2px 4px 0 rgba(0, 0, 0, 0.4)' : 'md',
 
           // enable anchoring
           position: 'relative',
