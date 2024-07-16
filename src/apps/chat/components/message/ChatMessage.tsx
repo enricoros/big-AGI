@@ -551,6 +551,15 @@ export function ChatMessage(props: {
             </Typography>
           )}
 
+          {/* Reply-To Bubble */}
+          {!!messageMetadata?.inReplyToText && (
+            <ReplyToBubble
+              inlineUserMessage
+              replyToText={messageMetadata.inReplyToText}
+              className='reply-to-bubble'
+            />
+          )}
+
           {/* Image Attachment Fragments (just for a prettier display on top of the message) */}
           {imageAttachments.length >= 1 && !isEditingText && (
             <ImageAttachmentFragments
@@ -604,15 +613,6 @@ export function ChatMessage(props: {
               renderTextAsMarkdown={renderMarkdown}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}
-            />
-          )}
-
-          {/* Reply-To Bubble */}
-          {!!messageMetadata?.inReplyToText && (
-            <ReplyToBubble
-              inlineUserMessage
-              replyToText={messageMetadata.inReplyToText}
-              className='reply-to-bubble'
             />
           )}
 
