@@ -1,5 +1,5 @@
 import { agiUuid } from '~/common/util/idUtils';
-import { createPlaceholderContentFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // Message
@@ -61,7 +61,7 @@ export function createDMessageTextContent(role: DMessageRole, text: string): DMe
 }
 
 export function createDMessagePlaceholderIncomplete(role: DMessageRole, placeholderText: string): DMessage {
-  const placeholderFragment = createPlaceholderContentFragment(placeholderText);
+  const placeholderFragment = createPlaceholderMetaFragment(placeholderText);
   const message = createDMessageFromFragments(role, [placeholderFragment]);
   message.pendingIncomplete = true;
   return message;

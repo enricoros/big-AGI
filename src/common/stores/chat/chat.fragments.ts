@@ -27,26 +27,26 @@ export type DMessageContentFragment = {
   ft: 'content';
   fId: DMessageFragmentId;
   part:
-    | DMessageErrorPart         // red message, e.g. non-content application issues
-    | DMessageImageRefPart      // large image
-    | DMessagePlaceholderPart   // (non submitted) placeholder to be replaced by another part
-    | DMessageTextPart          // plain text or mixed content -> BlockRenderer
-    | DMessageToolCallPart      // shown to dev only, singature of the llm function call
-    | DMessageToolResponsePart  // shown to dev only, response of the llm
-    | _DMessageSentinelPart;
+    | DMessageErrorPart           // red message, e.g. non-content application issues
+    | DMessageImageRefPart        // large image
+    | DMessageTextPart            // plain text or mixed content -> BlockRenderer
+    | DMessageToolInvocationPart  // shown to dev only, singature of the llm function call
+    | DMessageToolResponsePart    // shown to dev only, response of the llm
+    | DMetaPlaceholderPart        // (non submitted) placeholder to be replaced by another part
+    | _DMetaSentinelPart;
 };
 
 // displayed at the bottom of the message, zero or more
 export type DMessageAttachmentFragment = {
   ft: 'attachment';
   fId: DMessageFragmentId;
-  title: string;                // label of the attachment (filename, named id, content overview, title..)
-  caption: string;              // additional information, such as provenance, content preview, etc.
+  title: string;                  // label of the attachment (filename, named id, content overview, title..)
+  caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
   part:
-    | DMessageDocPart
-    | DMessageImageRefPart
-    | _DMessageSentinelPart;
+    | DMessageDocPart             // document attachment
+    | DMessageImageRefPart        // image attachment
+    | _DMetaSentinelPart;
 };
 
 // force the typesystem to work, bark, and detect/reveal corner cases
@@ -65,7 +65,9 @@ type _DMessageSentinelFragment = {
 
 
 //
-// Message Parts
+// Message Parts - STABLE
+// - Data at rest: these are used in the DMessage objects
+// - DO NOT CHANGE: think twice and extend carefully
 //
 // Small and efficient (larger objects need to only be referred to)
 //
@@ -73,11 +75,11 @@ type _DMessageSentinelFragment = {
 export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta };
 export type DMessageErrorPart = { pt: 'error', error: string };
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
-export type DMessagePlaceholderPart = { pt: 'ph', pText: string };
 export type DMessageTextPart = { pt: 'text', text: string };
-export type DMessageToolCallPart = { pt: 'tool_call', id: string, name: string, args?: Record<string, any> };
-export type DMessageToolResponsePart = { pt: 'tool_response', id: string, name: string, response?: string, isError?: boolean };
-type _DMessageSentinelPart = { pt: '_pt_sentinel' };
+export type DMessageToolInvocationPart = { pt: 'tool_call', id: string, call: DMessageToolInvocationFunctionCall | DMessageToolInvocationCodeExecution }; // Note that the definition of tools is in AIX.Intake
+export type DMessageToolResponsePart = { pt: 'tool_response', id: string, response: DMessageToolResponseFunctionCall | DMessageToolResponseCodeExecution, error?: boolean | string, _environment?: DMessageToolEnvironment };
+export type DMetaPlaceholderPart = { pt: 'ph', pText: string };
+type _DMetaSentinelPart = { pt: '_pt_sentinel' };
 
 
 type DMessageDocMimeType =
@@ -99,6 +101,35 @@ type DMessageDocMeta = {
   srcFileSize?: number;
   srcOcrFrom?: 'image' | 'pdf';
 }
+
+
+type DMessageToolInvocationFunctionCall = {
+  type: 'function_call'
+  name: string;             // Name of the function as passed from the definition
+  args: string | null;      // JSON-encoded, if null there are no args
+  _description?: string;    // Description from the definition
+  _args_schema?: object;    // JSON Schema { type: 'object', properties: { ... } } from the definition
+};
+
+type DMessageToolInvocationCodeExecution = {
+  type: 'code_execution';
+  variant?: 'gemini_auto_inline';
+  arguments: { code: string; language?: string; };
+};
+
+type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
+
+type DMessageToolResponseFunctionCall = {
+  type: 'function_call';
+  result: string;           // The output
+  _name?: string;           // Name of the function that produced the result
+};
+
+type DMessageToolResponseCodeExecution = {
+  type: 'code_execution';
+  result: string;           // The output
+  _variant?: 'gemini_auto_inline';
+};
 
 
 //
@@ -157,8 +188,8 @@ export function createImageContentFragment(dataRef: DMessageDataRef, altText?: s
   return _createContentFragment(createDMessageImageRefPart(dataRef, altText, width, height));
 }
 
-export function createPlaceholderContentFragment(placeholderText: string): DMessageContentFragment {
-  return _createContentFragment(createDMessagePlaceholderPart(placeholderText));
+export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
+  return _createContentFragment(createDMetaPlaceholderPart(placeholderText));
 }
 
 export function createTextContentFragment(text: string): DMessageContentFragment {
@@ -210,23 +241,31 @@ function createDMessageImageRefPart(dataRef: DMessageDataRef, altText?: string, 
   return { pt: 'image_ref', dataRef, altText, width, height };
 }
 
-function createDMessagePlaceholderPart(placeholderText: string): DMessagePlaceholderPart {
-  return { pt: 'ph', pText: placeholderText };
-}
-
 function createDMessageTextPart(text: string): DMessageTextPart {
   return { pt: 'text', text };
 }
 
-function createDMessageToolCallPart(toolId: string, toolName: string, args?: Record<string, any>): DMessageToolCallPart {
-  return { pt: 'tool_call', id: toolId, name: toolName, args };
+function createDMessageFunctionCallInvocationPart(id: string, name: string, args: string | null, _description?: string, _args_schema?: object): DMessageToolInvocationPart {
+  return { pt: 'tool_call', id, call: { type: 'function_call', name, args, _description, _args_schema } };
 }
 
-function createDMessageToolResponsePart(toolId: string, toolName: string, response?: string, isError?: boolean): DMessageToolResponsePart {
-  return { pt: 'tool_response', id: toolId, name: toolName, response, isError };
+function createDMessageCodeExecutionInvocationPart(id: string, code: string, language?: string, variant?: 'gemini_auto_inline'): DMessageToolInvocationPart {
+  return { pt: 'tool_call', id, call: { type: 'code_execution', variant, arguments: { code, language } } };
 }
 
-function createDMessageSentinelPart(): _DMessageSentinelPart {
+function createDMessageFunctionCallResponsePart(id: string, result: string, _name?: string, error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageToolResponsePart {
+  return { pt: 'tool_response', id, response: { type: 'function_call', result, _name }, error, _environment };
+}
+
+function createDMessageCodeExecutionResponsePart(id: string, result: string, _variant?: 'gemini_auto_inline', error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageToolResponsePart {
+  return { pt: 'tool_response', id, response: { type: 'code_execution', result, _variant }, error, _environment };
+}
+
+function createDMetaPlaceholderPart(placeholderText: string): DMetaPlaceholderPart {
+  return { pt: 'ph', pText: placeholderText };
+}
+
+function createDMetaSentinelPart(): _DMetaSentinelPart {
   return { pt: '_pt_sentinel' };
 }
 
@@ -280,19 +319,27 @@ function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachm
       return createDMessageImageRefPart(_duplicateDataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
 
     case 'ph':
-      return createDMessagePlaceholderPart(part.pText) as TPart;
+      return createDMetaPlaceholderPart(part.pText) as TPart;
 
     case 'text':
       return createDMessageTextPart(part.text) as TPart;
 
     case 'tool_call':
-      return createDMessageToolCallPart(part.id, part.name, _duplicateObjectWarning(part.args, 'tool_call')) as TPart;
+      const call = part.call;
+      if (call.type === 'function_call')
+        return createDMessageFunctionCallInvocationPart(part.id, call.name, call.args, call._description, call._args_schema ? { ...call._args_schema } : undefined) as TPart;
+      else
+        return createDMessageCodeExecutionInvocationPart(part.id, call.arguments.code, call.arguments.language, call.variant) as TPart;
 
     case 'tool_response':
-      return createDMessageToolResponsePart(part.id, part.name, part.response, part.isError) as TPart;
+      const response = part.response;
+      if (response.type === 'function_call')
+        return createDMessageFunctionCallResponsePart(part.id, response.result, response._name, part.error, part._environment) as TPart;
+      else
+        return createDMessageCodeExecutionResponsePart(part.id, response.result, response._variant, part.error, part._environment) as TPart;
 
     case '_pt_sentinel':
-      return createDMessageSentinelPart() as TPart;
+      return createDMetaSentinelPart() as TPart;
   }
 }
 
