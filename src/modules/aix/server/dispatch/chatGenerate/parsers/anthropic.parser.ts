@@ -1,6 +1,6 @@
 import { safeErrorString } from '~/server/wire';
 
-import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from '../chatGenerate.types';
+import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './parsers.types';
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
 import { ISSUE_SYMBOL, TEXT_SYMBOL_MAX_TOKENS } from '../chatGenerate.config';
 

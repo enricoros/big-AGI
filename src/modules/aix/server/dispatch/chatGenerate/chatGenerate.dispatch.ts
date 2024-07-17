@@ -14,7 +14,7 @@ import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIMessageCreateParser } from './parsers/openai.parser';
 
-import type { ChatGenerateParseFunction } from './chatGenerate.types';
+import type { ChatGenerateParseFunction } from './parsers/parsers.types';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
 
 

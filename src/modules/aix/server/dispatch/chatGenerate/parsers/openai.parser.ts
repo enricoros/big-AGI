@@ -1,6 +1,6 @@
 import { safeErrorString } from '~/server/wire';
 
-import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from '../chatGenerate.types';
+import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './parsers.types';
 import { ISSUE_SYMBOL } from '../chatGenerate.config';
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 
