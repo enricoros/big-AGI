@@ -85,7 +85,7 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
       {!!props.shortcut.ctrl && <ShortcutKey>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
       {!!props.shortcut.shift && <ShortcutKey>{_platformAwareModifier('Shift')}</ShortcutKey>}
       {/*{!!props.shortcut.altForNonMac && <ShortcutKey>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <ShortcutKey>{props.shortcut.key.toUpperCase()}</ShortcutKey>
+      <ShortcutKey>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key.toUpperCase()}</ShortcutKey>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
     </ShortcutContainer>
   );
@@ -100,9 +100,19 @@ export function StatusBar() {
 
   // external state
   const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
-  const shortcuts = useGlobalShortcutsStore(useShallow(state =>
-    !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description),
-  ));
+  const shortcuts = useGlobalShortcutsStore(useShallow(state => {
+    const visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+    visibleShortcuts.sort((a, b) => {
+      // if they don't have a 'shift', they are sorted first
+      if (a.shift !== b.shift)
+        return a.shift ? 1 : -1;
+      // (Hack) If the description is 'Beam', it goes last
+      if (a.description === 'Beam')
+        return 1;
+      return a.key.localeCompare(b.key);
+    });
+    return visibleShortcuts;
+  }));
 
   // handlers
   const handleHideShortcuts = React.useCallback(() => {

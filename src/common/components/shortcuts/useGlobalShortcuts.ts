@@ -12,7 +12,7 @@ export const ShortcutKey = {
 };
 
 export interface ShortcutObject {
-  key: string | 'disabled';
+  key: string;
   ctrl?: boolean;
   shift?: boolean;
   // altForNonMac?: boolean;
