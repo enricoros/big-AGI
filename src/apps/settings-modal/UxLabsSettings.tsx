@@ -5,6 +5,7 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
+import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TitleIcon from '@mui/icons-material/Title';
 
@@ -30,6 +31,7 @@ export function UxLabsSettings() {
     labsChatBarAlt, setLabsChatBarAlt,
     labsHighPerformance, setLabsHighPerformance,
     labsShowCost, setLabsShowCost,
+    labsShowShortcutBar, setLabsShowShortcutBar,
     labsDevMode, setLabsDevMode,
   } = useUXLabsStore();
 
@@ -60,6 +62,11 @@ export function UxLabsSettings() {
     <FormSwitchControl
       title={<><LocalAtmOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Cost of messages</>} description={labsShowCost ? 'Show when available' : 'Disabled'}
       checked={labsShowCost} onChange={setLabsShowCost}
+    />
+
+    <FormSwitchControl
+      title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Show Shortcuts</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
+      checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
     />
 
     {isDevModeLocalhost && (

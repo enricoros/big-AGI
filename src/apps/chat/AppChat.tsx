@@ -41,6 +41,7 @@ import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/layout-menu/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
+import { StatusBar } from './components/StatusBar';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -395,8 +396,8 @@ export function AppChat() {
 
   useGlobalShortcuts('AppChat', React.useMemo(() => [
     // focused conversation
-    { key: 'b', ctrl: true, shift: true, action: handleMessageBeamLastInFocusedPane },
-    { key: 'z', ctrl: true, shift: true, action: handleMessageRegenerateLastInFocusedPane },
+    { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
+    { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam' },
     { key: 'o', ctrl: true, action: handleFileOpenConversation },
     { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
     { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
@@ -571,6 +572,8 @@ export function AppChat() {
       })}
 
     </PanelGroup>
+
+    {!isMobile && !beamOpenStoreInFocusedPane && <StatusBar />}
 
     <Composer
       isMobile={isMobile}

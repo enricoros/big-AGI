@@ -1,5 +1,3 @@
-import { isMacUser } from '~/common/util/pwaUtils';
-
 import { useGlobalShortcutsStore } from './store-global-shortcuts';
 
 
@@ -32,8 +30,8 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
 
     // Check modifier keys
     if ((shortcut.ctrl !== undefined && shortcut.ctrl !== event.ctrlKey) ||
-      (shortcut.shift !== undefined && shortcut.shift !== event.shiftKey) ||
-      (!isMacUser && shortcut.altForNonMac !== undefined && shortcut.altForNonMac !== event.altKey))
+      (shortcut.shift !== undefined && shortcut.shift !== event.shiftKey) /*||
+      (!isMacUser && shortcut.altForNonMac !== undefined && shortcut.altForNonMac !== event.altKey)*/)
       continue;
 
     // Execute the action (and prevent the default browser action)
