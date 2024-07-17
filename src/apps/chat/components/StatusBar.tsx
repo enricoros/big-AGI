@@ -26,6 +26,17 @@ const hideButtonSx: SxProps = {
   mr: -0.5,
 };
 
+// const animateAppear = keyframes`
+//     from {
+//         opacity: 0;
+//         transform: translateY(10px);
+//     }
+//     to {
+//         opacity: 1;
+//         transform: translateY(0);
+//     }
+// `;
+
 const StatusBarContainer = styled(Box)({
   borderTop: '1px solid',
   borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
@@ -38,6 +49,11 @@ const StatusBarContainer = styled(Box)({
   flexFlow: 'row nowrap',
   columnGap: '1.5rem', // space between shortcuts
   lineHeight: '1em',
+  // animation: `${animateAppear} 0.3s ease-out`,
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: 'var(--joy-palette-background-level1)',
+  },
 });
 
 const ShortcutContainer = styled(Box)({
@@ -46,6 +62,10 @@ const ShortcutContainer = styled(Box)({
   whiteSpace: 'nowrap',
   gap: '2px', // space between modifiers
   marginBlock: '0.25rem',
+  // transition: 'transform 0.2s ease',
+  // '&:hover': {
+  //   transform: 'scale(1.05)',
+  // },
 });
 
 const ShortcutKey = styled(Box)({
@@ -61,7 +81,8 @@ const ShortcutKey = styled(Box)({
   // minWidth: '1rem',
   paddingBlock: '1px',
   paddingInline: '4px',
-  pointerEvents: 'none',
+  // pointerEvents: 'none',
+  cursor: 'pointer',
 });
 
 
@@ -80,12 +101,18 @@ function _platformAwareModifier(symbol: 'Ctrl' | 'Alt' | 'Shift') {
 }
 
 function ShortcutItem(props: { shortcut: ShortcutObject }) {
+
+  const handleClicked = React.useCallback(() => {
+    if (props.shortcut.action !== '_specialPrintShortcuts')
+      props.shortcut.action();
+  }, [props.shortcut]);
+
   return (
     <ShortcutContainer sx={props.shortcut.disabled ? { opacity: 0.5 } : undefined}>
-      {!!props.shortcut.ctrl && <ShortcutKey>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
-      {!!props.shortcut.shift && <ShortcutKey>{_platformAwareModifier('Shift')}</ShortcutKey>}
-      {/*{!!props.shortcut.altForNonMac && <ShortcutKey>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <ShortcutKey>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key.toUpperCase()}</ShortcutKey>
+      {!!props.shortcut.ctrl && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
+      {!!props.shortcut.shift && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Shift')}</ShortcutKey>}
+      {/*{!!props.shortcut.altForNonMac && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
+      <ShortcutKey onClick={handleClicked}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key.toUpperCase()}</ShortcutKey>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
     </ShortcutContainer>
   );
