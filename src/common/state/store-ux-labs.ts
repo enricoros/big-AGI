@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { isDevModeLocalhost } from '~/common/util/pwaUtils';
+
 
 // UX Labs Experiments
 
@@ -24,6 +26,11 @@ interface UXLabsStore {
   labsShowCost: boolean;
   setLabsShowCost: (labsShowCost: boolean) => void;
 
+  // [DEV MODE] only shown on localhost
+
+  labsDevMode: boolean;
+  setLabsDevMode: (labsDevMode: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -45,6 +52,11 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsShowCost: true, // release 1.16.0 with this enabled by default
       setLabsShowCost: (labsShowCost: boolean) => set({ labsShowCost }),
 
+      // [DEV MODE] - maybe move them from here
+
+      labsDevMode: false,
+      setLabsDevMode: (labsDevMode: boolean) => set({ labsDevMode }),
+
     }),
     {
       name: 'app-ux-labs',
@@ -58,10 +70,19 @@ export const useUXLabsStore = create<UXLabsStore>()(
           return { ...state, labsAttachScreenCapture: true };
         return state;
       },
+
     },
   ),
 );
 
 export function getUXLabsHighPerformance() {
   return useUXLabsStore.getState().labsHighPerformance;
+}
+
+export function useLabsDevMode() {
+  return useUXLabsStore((state) => state.labsDevMode) && isDevModeLocalhost;
+}
+
+export function getLabsDevMode() {
+  return useUXLabsStore.getState().labsDevMode && isDevModeLocalhost;
 }

@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tooltip } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import CompressIcon from '@mui/icons-material/Compress';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import HorizontalSplitOutlinedIcon from '@mui/icons-material/HorizontalSplitOutlined';
@@ -14,7 +15,10 @@ import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { GoodModal } from '~/common/components/GoodModal';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { devMode_AixLastDispatchRequestBody } from '~/modules/aix/client/aix.client'; // [DEV MODE]
+import { useLabsDevMode } from '~/common/state/store-ux-labs';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
@@ -38,6 +42,7 @@ export function ChatPageMenuItems(props: {
   const { closePageMenu } = useOptimaDrawers();
   const { canAddPane, isMultiPane, duplicateFocusedPane, removeOtherPanes } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
+  const labsDevMode = useLabsDevMode();
 
 
   const handleIncreaseMultiPane = React.useCallback((event?: React.MouseEvent) => {
@@ -87,16 +92,35 @@ export function ChatPageMenuItems(props: {
   const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
 
 
+  // [DEV MODE]
+
+  const [devModeDialog, setDevModeDialog] = React.useState<React.ReactNode | null>(null);
+
+  const handleAixShowLastRequest = React.useCallback(() => {
+    setDevModeDialog((
+      <GoodModal
+        open
+        onClose={() => setDevModeDialog(null)}
+        title='Aix: Last Dispach Request Body'
+        sx={{ width: '80vw', height: '80vh' }}
+      >
+        <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
+          {devMode_AixLastDispatchRequestBody || 'Contents will be shown after the next request.'}
+        </Typography>
+      </GoodModal>
+    ));
+  }, []);
+
+
   return <>
 
-    {/* System Message(s) */}
     <MenuItem onClick={handleToggleSystemMessages}>
       <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
       System messages
       <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
     </MenuItem>
 
-    {/* Un /Split */}
+    {/* Pane management: Un/Split */}
     <MenuItem onClick={handleToggleMultiPane}>
       <ListItemDecorator>{props.isMobile
         ? (isMultiPane ? <HorizontalSplitIcon /> : <HorizontalSplitOutlinedIcon />)
@@ -137,6 +161,15 @@ export function ChatPageMenuItems(props: {
       Compress ...
     </MenuItem>
 
+    {labsDevMode && <ListDivider />}
+
+    {labsDevMode && (
+      <MenuItem disabled={props.disableItems} onClick={handleAixShowLastRequest}>
+        <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
+        AIX: Show Last Request...
+      </MenuItem>
+    )}
+
     <ListDivider />
 
     <MenuItem disabled={props.disableItems} onClick={handleConversationClear}>
@@ -146,6 +179,9 @@ export function ChatPageMenuItems(props: {
         {!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}
       </Box>
     </MenuItem>
+
+    {/* [DEV MODE] Show any dialog, if present */}
+    {devModeDialog}
 
   </>;
 }
