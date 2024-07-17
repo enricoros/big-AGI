@@ -10,7 +10,7 @@ import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
+import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationBackgroundBeamGather, animationColorBeamScatterINV, animationEnterBelow } from '~/common/util/animUtils';
 
 
@@ -59,7 +59,9 @@ export function ChatBarAltBeam(props: {
 
 
   // intercept esc this beam is focused
-  useGlobalShortcuts([[ShortcutKeyName.Esc, false, false, false, handleCloseBeam]]);
+  useGlobalShortcuts('ChatBarAltBeam', React.useMemo(() => [
+    { key: ShortcutKey.Esc, action: handleCloseBeam },
+  ], [handleCloseBeam]));
 
 
   return (

@@ -19,7 +19,6 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -29,9 +28,9 @@ import { createDMessageFromFragments, createDMessageTextContent, DMessageMetadat
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
+import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useRouterQuery } from '~/common/app.routes';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
@@ -394,23 +393,20 @@ export function AppChat() {
     openLlmOptions(chatLLMId);
   }, [openLlmOptions]);
 
-  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
+  useGlobalShortcuts('AppChat', React.useMemo(() => [
     // focused conversation
-    ['b', true, true, false, handleMessageBeamLastInFocusedPane],
-    ['z', true, true, false, handleMessageRegenerateLastInFocusedPane],
-    ['o', true, false, false, handleFileOpenConversation],
-    ['s', true, false, false, () => handleFileSaveConversation(focusedPaneConversationId)],
-    ['n', true, true, false, handleConversationNewInFocusedPane],
-    ['x', true, true, false, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId))],
-    ['d', true, true, false, () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false)],
-    ['[', true, false, false, () => handleNavigateHistoryInFocusedPane('back')],
-    [']', true, false, false, () => handleNavigateHistoryInFocusedPane('forward')],
-    // global
-    ['o', true, true, false, handleOpenChatLlmOptions],
-    ['+', true, true, false, useUIPreferencesStore.getState().increaseContentScaling],
-    ['-', true, true, false, useUIPreferencesStore.getState().decreaseContentScaling],
-  ], [focusedPaneConversationId, handleConversationClear, handleConversationNewInFocusedPane, handleFileOpenConversation, handleFileSaveConversation, handleDeleteConversations, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]);
-  useGlobalShortcuts(shortcuts);
+    { key: 'b', ctrl: true, shift: true, action: handleMessageBeamLastInFocusedPane },
+    { key: 'z', ctrl: true, shift: true, action: handleMessageRegenerateLastInFocusedPane },
+    { key: 'o', ctrl: true, action: handleFileOpenConversation },
+    { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
+    { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
+    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId)) },
+    { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
+    { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
+    { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
+    // focused conversation llm
+    { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
+  ], [focusedPaneConversationId, handleConversationClear, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   // Pluggable Optima components

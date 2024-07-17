@@ -12,10 +12,10 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
-import { GlobalShortcutDefinition, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
+import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { animationTextShadowLimey } from '~/common/util/animUtils';
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { animationTextShadowLimey } from '~/common/util/animUtils';
 
 
 // configuration
@@ -159,11 +159,10 @@ export function ExplainerCarousel(props: {
   }, [props.explainerId]);
 
 
-  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
-    [ShortcutKeyName.Left, false, false, false, handlePrevPage],
-    [ShortcutKeyName.Right, false, false, false, handleNextPage],
-  ], [handleNextPage, handlePrevPage]);
-  useGlobalShortcuts(shortcuts);
+  useGlobalShortcuts('ExplainerCarousel', React.useMemo(() => [
+    { key: ShortcutKey.Left, action: handlePrevPage },
+    { key: ShortcutKey.Right, action: handleNextPage },
+  ], [handleNextPage, handlePrevPage]));
 
 
   // [effect] restart from 0 if steps change

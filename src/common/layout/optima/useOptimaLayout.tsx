@@ -2,8 +2,9 @@ import * as React from 'react';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { isMacUser } from '~/common/util/pwaUtils';
+import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 const DEBUG_OPTIMA_LAYOUT_PLUGGING = false;
@@ -115,12 +116,17 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
 
 
   // global shortcuts for Optima
-  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
-    [isMacUser ? '/' : '?', true, true, false, actions.openShortcuts],
-    [',', true, false, false, actions.openPreferencesTab],
-    ['m', true, true, false, actions.openModelsSetup],
-  ], [actions]);
-  useGlobalShortcuts(shortcuts);
+  useGlobalShortcuts('App', React.useMemo(() => [
+    { key: 's', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
+    { key: isMacUser ? '/' : '?', ctrl: true, shift: true, action: actions.openShortcuts },
+    // Preferences
+    { key: ',', ctrl: true, action: actions.openPreferencesTab },
+    // Models
+    { key: 'm', ctrl: true, shift: true, action: actions.openModelsSetup },
+    // Font Scale
+    { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
+    { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
+  ], [actions]));
 
 
   return (

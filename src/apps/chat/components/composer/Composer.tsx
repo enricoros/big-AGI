@@ -26,7 +26,6 @@ import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -43,6 +42,7 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
+import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -407,11 +407,12 @@ export function Composer(props: {
 
   const { recognitionState, toggleRecognition } = useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
 
-  const composerShortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
-    ['m', true, false, false, () => toggleRecognition(true)],
-  ], [toggleRecognition]);
-  useGlobalShortcuts(composerShortcuts);
-  // useMediaSessionCallbacks({ play: toggleRecording, pause: toggleRecording });
+  // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
+
+  useGlobalShortcuts('Composer', React.useMemo(() => [
+    { key: 'm', ctrl: true, action: () => toggleRecognition(true) },
+    { key: supportsClipboardRead ? 'v' : 'disabled', ctrl: true, shift: true, action: attachAppendClipboardItems },
+  ], [attachAppendClipboardItems, toggleRecognition]));
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !recognitionState.errorMessage;
@@ -456,8 +457,6 @@ export function Composer(props: {
     for (let file of files)
       await attachAppendFile('file-open', file).catch(console.error);
   }, [attachAppendFile]);
-
-  useGlobalShortcuts([[supportsClipboardRead ? 'v' : false, true, true, false, attachAppendClipboardItems]]);
 
 
   // Attachments Down
