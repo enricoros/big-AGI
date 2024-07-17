@@ -6,27 +6,13 @@ import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
 import { useUIPreferencesStore } from '../state/store-ui';
 
 
-type DoneReason =
-  undefined               // upon start: not done yet
-  | 'manual'              // user clicked the stop button
-  | 'continuous-deadline' // we hit our `softStopTimeout` while listening continuously
-  | 'api-unknown-timeout' // a timeout has occurred
-  | 'api-error'           // underlying .onerror
-  | 'api-no-speech'       // underlying .onerror, user did not speak
-  | 'react-unmount';      // the component is unmounting - the App shall never see this (set on unmount and not transmitted)
-
-export interface SpeechResult {
-  transcript: string;         // the portion of the transcript that is finalized (or all the transcript if done)
-  interimTranscript: string;  // for the continuous (interim) listening, this is the current transcript
-  done: boolean;              // true if the recognition is done - no more updates after this
-  doneReason: DoneReason;     // the reason why the recognition is done
-}
+/// Capability interface
 
 let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
 
 export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRecognition => {
   if (!cachedCapability) {
-    const isApiAvailable = !!getSpeechRecognition();
+    const isApiAvailable = !!_getSpeechRecognition();
     const isDeviceNotSupported = false;
     cachedCapability = {
       mayWork: isApiAvailable && !isDeviceNotSupported,
@@ -39,32 +25,69 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
 };
 
 
+/// Hook
+
+type SpeechResultCallback = (result: SpeechResult) => void;
+
+export interface SpeechResult {
+  transcript: string;         // the portion of the transcript that is finalized (or all the transcript if done)
+  interimTranscript: string;  // for the continuous (interim) listening, this is the current transcript
+  done: boolean;              // true if the recognition is done - no more updates after this
+  doneReason: DoneReason;     // the reason why the recognition is done
+  flagSendOnDone?: boolean;   // user flags set on 'startRecognition' - passive
+}
+
+type DoneReason =
+  | undefined             // upon start: not done yet
+  | 'manual'              // user clicked the stop button
+  | 'continuous-deadline' // we hit our `softStopTimeout` while listening continuously
+  | 'api-unknown-timeout' // a timeout has occurred
+  | 'api-error'           // underlying .onerror
+  | 'api-no-speech'       // underlying .onerror, user did not speak
+  | 'react-unmount';      // the component is unmounting - the App shall never see this (set on unmount and not transmitted)
+
+
+function _chunkExpressionReplaceEN(fullText: string) {
+  return fullText
+    .replaceAll(/\.?\scomma\.?/gi, ',')
+    .replaceAll(/\.?\speriod\.?/gi, '.')
+    .replaceAll(/\.?\squestion mark\.?/gi, '?')
+    .replaceAll(/\.?\sexclamation mark\.?/gi, '!');
+}
+
+
 /**
  * We use a hook to default to 'false/null' and dynamically create the engine and update the UI.
  * @param onResultCallback - the callback to invoke when a result is received
  * @param softStopTimeout - FOR INTERIM LISTENING, on desktop: delay since the last word before sending the final result
  */
-export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) => void, softStopTimeout: number) => {
+export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, softStopTimeout: number) => {
 
   // external state (will update this function when changed)
   const preferredLanguage = useUIPreferencesStore(state => state.preferredLanguage);
 
-  // enablers
-  const onResultCallbackRef = React.useRef(onResultCallback);
+  // state (re-renders)
+  const [isAvailable, setIsAvailable] = React.useState<boolean>(false);
+  const [isActive, setIsActive] = React.useState<boolean>(false);
+  const [hasAudio, setHasAudio] = React.useState<boolean>(false);
+  const [hasSpeech, setHasSpeech] = React.useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  // Values that won't trigger re-renders
+  const apiControlProxyRef = React.useRef<{
+    updateLanguage: (lang: string) => void;
+    startApi: () => void;
+    stopApi: (reason: DoneReason, flagSendOnDone?: boolean) => void;
+  } | null>(null);
+  const withinBeginEndRef = React.useRef<boolean>(false);
+  // const recordingDonePromiseResolveRef = React.useRef<((value: SpeechResult | PromiseLike<SpeechResult>) => void) | null>(null);
+
+  // Params: use refs to store the latest values
+  const onResultCallbackRef = React.useRef<SpeechResultCallback>(onResultCallback);
   const softStopTimeoutRef = React.useRef<number>(softStopTimeout);
-  const speechControlsRef = React.useRef<SpeechRecoControls | null>(null);
   const preferredLanguageRef = React.useRef<string>(preferredLanguage);
 
-  // session
-  const refStarted = React.useRef<boolean>(false);
-  const [isSpeechEnabled, setIsSpeechEnabled] = React.useState<boolean>(false);
-  const [isRecording, setIsRecording] = React.useState<boolean>(false);
-  const [isRecordingAudio, setIsRecordingAudio] = React.useState<boolean>(false);
-  const [isRecordingSpeech, setIsRecordingSpeech] = React.useState<boolean>(false);
-  const [isSpeechError, setIsSpeechError] = React.useState<boolean>(false);
-
-
-  // Sync refs with external state (callback, soft timeout, language)
+  // Params: update refs when params change
   React.useEffect(() => {
     // update callback
     onResultCallbackRef.current = onResultCallback;
@@ -75,48 +98,57 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
     // update language on the running instance (requires an instance method invocation)
     if (preferredLanguageRef.current !== preferredLanguage) {
       preferredLanguageRef.current = preferredLanguage;
-      if (speechControlsRef.current)
-        speechControlsRef.current.setLang(preferredLanguage);
+      if (apiControlProxyRef.current)
+        apiControlProxyRef.current.updateLanguage(preferredLanguage);
     }
   }, [onResultCallback, softStopTimeout, preferredLanguage]);
 
 
-  // create the Recognition engine
+  // At mount (no dependencies): create the engine
   React.useEffect(() => {
     if (!isBrowser) return;
 
-    // do not re-initialize, just update the language (if we're here there's a high chance the language has changed)
-    if (speechControlsRef.current) {
-      console.warn('useSpeechRecognition: [dev-warn]: Speech recognition is already initialized.');
+    // prevent multiple instances
+    if (apiControlProxyRef.current) {
+      console.warn('Speech recognition engine is already initialized.');
       return;
     }
 
-    // skip speech recognition on iPhones and Safari browsers - because of sub-par quality
+    // check if the device is supported
     if (browserSpeechRecognitionCapability().isDeviceNotSupported) {
-      console.log('Speech recognition is disabled on this device.');
+      setErrorMessage('Speech recognition is not supported on this device.');
       return;
     }
 
-    const webSpeechAPI = getSpeechRecognition();
-    if (!webSpeechAPI)
+    // check if the API is available
+    const webSpeechAPI = _getSpeechRecognition();
+    if (!webSpeechAPI) {
+      setErrorMessage('Speech recognition API is not available in this browser.');
       return;
+    }
+    setErrorMessage(null);
 
 
     // create the SpeechRecognition instance
-    const instance = new webSpeechAPI();
-    instance.lang = preferredLanguageRef.current;
-    instance.interimResults = isChromeDesktop && softStopTimeoutRef.current > 0;
-    instance.maxAlternatives = 1;
-    instance.continuous = true;
+    const _api = new webSpeechAPI();
 
-    // result within closure
+    // configure the instance
+    _api.lang = preferredLanguageRef.current;
+    _api.interimResults = isChromeDesktop && softStopTimeoutRef.current > 0;
+    _api.maxAlternatives = 1;
+    _api.continuous = true;
+
+
+    // closure: results
     const speechResult: SpeechResult = {
       transcript: '',
       interimTranscript: '',
       done: false,
       doneReason: undefined,
+      flagSendOnDone: undefined,
     };
 
+    // closure: inactivity timeout management
     let inactivityTimeoutId: any | null = null;
 
     const clearInactivityTimeout = () => {
@@ -131,53 +163,57 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
       inactivityTimeoutId = setTimeout(() => {
         inactivityTimeoutId = null;
         speechResult.doneReason = doneReason;
-        instance.stop();
+        _api.stop();
       }, timeoutMs);
     };
 
 
-    instance.onaudiostart = () => setIsRecordingAudio(true);
+    _api.onaudiostart = () => setHasAudio(true);
+    _api.onaudioend = () => setHasAudio(false);
 
-    instance.onaudioend = () => setIsRecordingAudio(false);
+    _api.onspeechstart = () => setHasSpeech(true);
+    _api.onspeechend = () => setHasSpeech(false);
 
-    instance.onspeechstart = () => setIsRecordingSpeech(true);
+    _api.onstart = () => {
+      withinBeginEndRef.current = true; // instant
+      setIsActive(true); // delayed
 
-    instance.onspeechend = () => setIsRecordingSpeech(false);
-
-    instance.onstart = () => {
-      refStarted.current = true;
-      setIsRecording(true);
       speechResult.transcript = '';
       speechResult.interimTranscript = 'Listening...';
       speechResult.done = false;
       speechResult.doneReason = undefined;
       onResultCallbackRef.current(speechResult);
+
       // let the system handle the first stop (as long as possible)
       // if (instance.interimResults)
       //   reloadInactivityTimeout(2 * softStopTimeoutRef.current);
     };
-
-    instance.onend = () => {
-      refStarted.current = false;
-      setIsRecording(false);
+    _api.onend = () => {
       clearInactivityTimeout();
+
+      withinBeginEndRef.current = false; // instant
+      setIsActive(false); // delayed
+
       speechResult.interimTranscript = '';
       speechResult.done = true;
       speechResult.doneReason = speechResult.doneReason ?? 'api-unknown-timeout';
       onResultCallbackRef.current(speechResult);
+
+      // Resolve the promise when recording ends
+      // recordingDonePromiseResolveRef.current?.(speechResult);
+      // recordingDonePromiseResolveRef.current = null;
     };
 
-    instance.onerror = event => {
+    _api.onerror = event => {
       if (event.error === 'no-speech') {
         speechResult.doneReason = 'api-no-speech';
       } else {
-        console.error('Error occurred during speech recognition:', event.error);
-        setIsSpeechError(true);
         speechResult.doneReason = 'api-error';
+        setErrorMessage('Error occurred during speech recognition.');
+        console.error('Error occurred during speech recognition:', event.error);
       }
     };
-
-    instance.onresult = (event: ISpeechRecognitionEvent) => {
+    _api.onresult = (event: ISpeechRecognitionEvent) => {
       if (!event?.results?.length) return;
 
       // coalesce all the final pieces into a cohesive string
@@ -188,13 +224,6 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
         if (!chunk)
           continue;
 
-        // [EN] spoken punctuation marks -> actual characters
-        chunk = chunk
-          .replaceAll(' comma', ',')
-          .replaceAll(' exclamation mark', '!')
-          .replaceAll(' period', '.')
-          .replaceAll(' question mark', '?');
-
         // capitalize
         if (chunk.length >= 2 && (result.isFinal || !speechResult.interimTranscript))
           chunk = chunk.charAt(0).toUpperCase() + chunk.slice(1);
@@ -204,114 +233,119 @@ export const useSpeechRecognition = (onResultCallback: (result: SpeechResult) =>
           chunk += '.';
 
         if (result.isFinal)
-          speechResult.transcript += chunk + ' ';
+          speechResult.transcript = _chunkExpressionReplaceEN(speechResult.transcript + chunk + ' ');
         else
-          speechResult.interimTranscript += chunk + ' ';
+          speechResult.interimTranscript = _chunkExpressionReplaceEN(speechResult.interimTranscript + chunk + ' ');
       }
-
-      // update the UI
       onResultCallbackRef.current(speechResult);
 
-      // auto-stop
-      if (instance.interimResults)
+      // move the timeout deadline, if in continuous (manually stopped) mode
+      if (_api.interimResults)
         reloadInactivityTimeout(softStopTimeoutRef.current, 'continuous-deadline');
     };
 
 
     // store the control interface
-    speechControlsRef.current = {
-      setLang: (lang: string) => instance.lang = lang,
-      start: () => instance.start(),
-      stop: (reason: DoneReason) => {
-        speechResult.doneReason = reason;
-        instance.stop();
+    apiControlProxyRef.current = {
+      updateLanguage: (lang: string) => _api.lang = lang,
+      startApi: () => {
+        speechResult.flagSendOnDone = undefined;
+        _api.start();
       },
-      unmount: () => {
-        // Clear any inactivity timeout to prevent it from running after unmount
-        clearInactivityTimeout();
-
-        // Explicitly remove event listeners
-        instance.onaudiostart = undefined;
-        instance.onaudioend = undefined;
-        instance.onspeechstart = undefined;
-        instance.onspeechend = undefined;
-        instance.onstart = undefined;
-        instance.onend = undefined;
-        instance.onerror = undefined;
-        instance.onresult = undefined;
-
-        // Stop the recognition if it's running
-        if (refStarted.current) {
-          speechResult.doneReason = 'react-unmount';
-          instance.stop();
-          refStarted.current = false;
-        }
+      stopApi: (reason: DoneReason, flagSendOnDone?: boolean) => {
+        speechResult.doneReason = reason;
+        speechResult.flagSendOnDone = flagSendOnDone;
+        _api.stop();
       },
     };
 
-    refStarted.current = false;
-    setIsSpeechEnabled(true);
+    withinBeginEndRef.current = false;
+    setIsAvailable(true);
 
     // Cleanup function to play well when the component unmounts
     return () => {
-      if (speechControlsRef.current) {
-        speechControlsRef.current.unmount();
-        speechControlsRef.current = null;
+      setIsAvailable(false);
+
+      // Clear any inactivity timeout to prevent it from running after unmount
+      clearInactivityTimeout();
+
+      // Explicitly remove event listeners
+      _api.onaudiostart = undefined;
+      _api.onaudioend = undefined;
+      _api.onspeechstart = undefined;
+      _api.onspeechend = undefined;
+      _api.onstart = undefined;
+      _api.onend = undefined;
+      _api.onerror = undefined;
+      _api.onresult = undefined;
+
+      // Stop the recognition if it's running
+      if (withinBeginEndRef.current) {
+        withinBeginEndRef.current = false;
+        speechResult.doneReason = 'react-unmount';
+        _api.stop();
       }
-      setIsSpeechEnabled(false);
+
+      // Clear the control interface (used at the onset of the hook to detect double invocation)
+      apiControlProxyRef.current = null;
     };
   }, []);
 
 
   // ACTIONS: start/stop recording
 
-  const startRecording = React.useCallback(() => {
-    if (!speechControlsRef.current)
-      return console.error('startRecording: Speech recognition is not supported or not initialized.');
-    if (refStarted.current)
-      return console.error('startRecording: Start recording called while already recording.');
+  const startRecognition = React.useCallback(() => {
+    if (!apiControlProxyRef.current)
+      return console.error('startRecognition: Speech recognition is not supported or not initialized.');
+    if (withinBeginEndRef.current)
+      return console.error('startRecognition: Start recording called while already recording.');
 
-    setIsSpeechError(false);
     try {
-      speechControlsRef.current.start();
+      setErrorMessage(null);
+      apiControlProxyRef.current.startApi();
     } catch (error: any) {
-      setIsSpeechError(true);
+      setErrorMessage('Issue starting the speech recognition.');
       console.log('Speech recognition error - clicking too quickly?', error?.message);
     }
   }, []);
 
-  const stopRecording = React.useCallback(() => {
-    if (!speechControlsRef.current)
+  const stopRecognition = React.useCallback((flagSendOnDone?: boolean) => {
+    if (!apiControlProxyRef.current)
       return console.error('stopRecording: Speech recognition is not supported or not initialized.');
-    if (!refStarted.current)
+    if (!withinBeginEndRef.current)
       return console.error('stopRecording: Stop recording called while not recording.');
 
-    speechControlsRef.current.stop('manual');
+    apiControlProxyRef.current.stopApi('manual', flagSendOnDone);
   }, []);
 
-  const toggleRecording = React.useCallback(() => {
-    if (refStarted.current || isSpeechError) {
-      stopRecording();
-      setIsSpeechError(false);
-    } else
-      startRecording();
-  }, [isSpeechError, startRecording, stopRecording]);
+  const isError = !!errorMessage;
+  const toggleRecognition = React.useCallback((flagSendOnDone?: boolean) => {
+    if (withinBeginEndRef.current || isError) {
+      stopRecognition(flagSendOnDone);
+      setErrorMessage(null);
+    } else {
+      startRecognition();
+    }
+    // recordingDonePromiseResolveRef.current = resolve;
+  }, [isError, startRecognition, stopRecognition]);
 
 
   return {
-    isRecording,
-    isRecordingAudio,
-    isRecordingSpeech,
-    isSpeechEnabled,
-    isSpeechError,
-    startRecording,
-    stopRecording,
-    toggleRecording,
+    recognitionState: {
+      isAvailable,
+      isActive,
+      hasAudio,
+      hasSpeech,
+      errorMessage,
+    },
+    startRecognition,
+    stopRecognition,
+    toggleRecognition,
   };
 };
 
 
-function getSpeechRecognition(): ISpeechRecognition | null {
+function _getSpeechRecognition(): ISpeechRecognition | null {
   if (isBrowser) {
     // noinspection JSUnresolvedReference
     return (
@@ -323,6 +357,9 @@ function getSpeechRecognition(): ISpeechRecognition | null {
   }
   return null;
 }
+
+
+/// Polyfill interfaces for the SpeechRecognition API
 
 interface ISpeechRecognition extends EventTarget {
   new(): ISpeechRecognition;
@@ -352,11 +389,4 @@ interface ISpeechRecognition extends EventTarget {
 interface ISpeechRecognitionEvent extends Event {
   // readonly resultIndex: number;
   readonly results: SpeechRecognitionResult[];
-}
-
-interface SpeechRecoControls {
-  setLang: (lang: string) => void;
-  start: () => void;
-  stop: (reason: DoneReason) => void;
-  unmount: () => void;
 }

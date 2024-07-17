@@ -19,6 +19,7 @@ import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.cli
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
+import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
@@ -125,7 +126,7 @@ export function Telephone(props: {
         setCallMessages(messages => [...messages, createDMessageTextContent('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
-  const { isSpeechEnabled, isRecording, isRecordingAudio, isRecordingSpeech, startRecording, stopRecording, toggleRecording } = useSpeechRecognition(onSpeechResultCallback, 1000);
+  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition(onSpeechResultCallback, 1000);
 
   // derived state
   const isRinging = stage === 'ring';
@@ -145,10 +146,18 @@ export function Telephone(props: {
   AudioPlayer.usePlayUrl(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
 
 
+  /// Shortcuts
+
+  const globalShortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
+    ['m', true, false, false, toggleRecognition],
+  ], [toggleRecognition]);
+  useGlobalShortcuts(globalShortcuts);
+
+
   /// CONNECTED
 
   const handleCallStop = () => {
-    stopRecording();
+    stopRecognition();
     setStage('ended');
   };
 
@@ -261,7 +270,7 @@ export function Telephone(props: {
   }, [isConnected, callMessages, chatLLMId, personaVoiceId, personaSystemMessage, reMessages]);
 
   // [E] Message interrupter
-  const abortTrigger = isConnected && isRecordingSpeech;
+  const abortTrigger = isConnected && recognitionState.hasSpeech;
   React.useEffect(() => {
     if (abortTrigger && responseAbortController.current) {
       responseAbortController.current.abort();
@@ -272,16 +281,16 @@ export function Telephone(props: {
 
 
   // [E] continuous speech recognition (reload)
-  const shouldStartRecording = isConnected && !pushToTalk && speechInterim === null && !isRecordingAudio;
+  const shouldStartRecording = isConnected && !pushToTalk && speechInterim === null && !recognitionState.hasAudio;
   React.useEffect(() => {
     if (shouldStartRecording)
-      startRecording();
-  }, [shouldStartRecording, startRecording]);
+      startRecognition();
+  }, [shouldStartRecording, startRecognition]);
 
 
   // more derived state
   const personaName = persona?.title ?? 'Unknown';
-  const isMicEnabled = isSpeechEnabled;
+  const isMicEnabled = recognitionState.isAvailable;
   const isTTSEnabled = true;
   const isEnabled = isMicEnabled && isTTSEnabled;
 
@@ -368,10 +377,10 @@ export function Telephone(props: {
             )}
 
             {/* Listening... */}
-            {isRecording && (
+            {recognitionState.isActive && (
               <CallMessage
                 text={<>{speechInterim?.transcript.trim() || null}{speechInterim?.interimTranscript.trim() ? <i> {speechInterim.interimTranscript}</i> : null}</>}
-                variant={(isRecordingSpeech || !!speechInterim?.transcript) ? 'soft' : 'outlined'}
+                variant={(recognitionState.hasSpeech || !!speechInterim?.transcript) ? 'soft' : 'outlined'}
                 color='primary'
                 role='user'
               />
@@ -397,11 +406,11 @@ export function Telephone(props: {
       {isConnected && <CallButton Icon={CallEndIcon} text='Hang up' color='danger' variant='soft' onClick={handleCallStop} />}
       {isConnected && (pushToTalk ? (
           <CallButton
-            Icon={MicIcon} onClick={toggleRecording}
-            text={isRecordingSpeech ? 'Listening...' : isRecording ? 'Listening' : 'Push To Talk'}
-            variant={isRecordingSpeech ? 'solid' : isRecording ? 'soft' : 'outlined'}
+            Icon={MicIcon} onClick={toggleRecognition}
+            text={recognitionState.hasSpeech ? 'Listening...' : recognitionState.isActive ? 'Listening' : 'Push To Talk'}
+            variant={recognitionState.hasSpeech ? 'solid' : recognitionState.isActive ? 'soft' : 'outlined'}
             color='primary'
-            sx={!isRecording ? { backgroundColor: 'background.surface' } : undefined}
+            sx={!recognitionState.isActive ? { backgroundColor: 'background.surface' } : undefined}
           />
         ) : null
         // <CallButton disabled={true} Icon={MicOffIcon} onClick={() => setMicMuted(muted => !muted)}
@@ -417,9 +426,9 @@ export function Telephone(props: {
 
     {/* DEBUG state */}
     {avatarClickCount > 10 && (avatarClickCount % 2 === 0) && (
-      <Card variant='outlined' sx={{ maxHeight: '25dvh', overflow: 'auto', whiteSpace: 'pre', py: 0, width: '100%' }}>
-        Special commands: Stop, Retry, Try Again, Restart, Goodbye.
-        {JSON.stringify({ isSpeechEnabled, isRecordingAudio, speechInterim }, null, 2)}
+      <Card variant='outlined' sx={{ maxHeight: '25dvh', fontSize: 'sm', overflow: 'auto', whiteSpace: 'pre', py: 0, width: '100%' }}>
+        Special commands: Stop, Retry, Try Again, Restart, Goodbye.<br />
+        {JSON.stringify({ ...recognitionState, speechInterim }, null, 2)}
       </Card>
     )}
 
