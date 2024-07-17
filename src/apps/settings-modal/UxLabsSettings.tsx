@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -10,6 +11,7 @@ import TitleIcon from '@mui/icons-material/Title';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
+import { isDevModeLocalhost } from '~/common/util/pwaUtils';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -28,6 +30,7 @@ export function UxLabsSettings() {
     labsChatBarAlt, setLabsChatBarAlt,
     labsHighPerformance, setLabsHighPerformance,
     labsShowCost, setLabsShowCost,
+    labsDevMode, setLabsDevMode,
   } = useUXLabsStore();
 
   return <>
@@ -58,6 +61,13 @@ export function UxLabsSettings() {
       title={<><LocalAtmOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Cost of messages</>} description={labsShowCost ? 'Show when available' : 'Disabled'}
       checked={labsShowCost} onChange={setLabsShowCost}
     />
+
+    {isDevModeLocalhost && (
+      <FormSwitchControl
+        title={<><EngineeringIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />[DEV Mode]</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
+        checked={labsDevMode} onChange={setLabsDevMode}
+      />
+    )}
 
     {/*
       Other Graduated (removed or backlog):

@@ -2,6 +2,7 @@ import { Brand } from '../app.config';
 
 // assume these won't change during the application lifetime
 export const isBrowser = typeof window !== 'undefined';
+export const isDevModeLocalhost = clientHostName().includes('localhost:300');
 
 // this sort of detection is brittle, but we use it for very optional features
 const safeUA = isBrowser ? window.navigator?.userAgent || '' : '';

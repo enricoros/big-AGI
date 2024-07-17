@@ -3,6 +3,7 @@ import type { DLLMId } from '~/modules/llms/store-llms';
 import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry';
 
 import { apiStream } from '~/common/util/trpc.client';
+import { getLabsDevMode } from '~/common/state/store-ux-labs';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '~/modules/aix/server/aix.wiretypes';
@@ -68,6 +69,9 @@ function _aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: st
 }
 
 
+export let devMode_AixLastDispatchRequestBody: string | null = null;
+
+
 /**
  * Client side chat generation, with streaming. This decodes the (text) streaming response from
  * our server streaming endpoint (plain text, not EventSource), and signals updates via a callback.
@@ -89,7 +93,7 @@ async function _aixChatGenerateContent(
 ): Promise<void> {
 
   const operation = await apiStream.aix.chatGenerateContent.mutate(
-    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming: true, _debugRequestBody: false },
+    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming: true, _debugRequestBody: getLabsDevMode() },
     { signal: abortSignal },
   );
 
@@ -111,6 +115,7 @@ async function _aixChatGenerateContent(
         onUpdate({ textSoFar: incrementalText, typing: true }, false);
       } else if ('_debugClientPrint' in update) {
         console.log('_debugClientPrint:', update._debugClientPrint);
+        devMode_AixLastDispatchRequestBody = update._debugClientPrint;
       } else
         console.log('update:', update);
     }
