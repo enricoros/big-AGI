@@ -158,22 +158,22 @@ export namespace AudioGenerator {
 
   // Basic Sounds
 
-  export function basicSound(options: SoundOptions = {}): void {
-    const ctx = singleContext();
-    if (!ctx) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-
-    o.type = 'sine';
-    o.frequency.setValueAtTime(440, ctx.currentTime);
-
-    g.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-
-    o.connect(g).connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + 0.5);
-  }
+  // export function basicSound(options: SoundOptions = {}): void {
+  //   const ctx = singleContext();
+  //   if (!ctx) return;
+  //   const o = ctx.createOscillator();
+  //   const g = ctx.createGain();
+  //
+  //   o.type = 'sine';
+  //   o.frequency.setValueAtTime(440, ctx.currentTime);
+  //
+  //   g.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime);
+  //   g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+  //
+  //   o.connect(g).connect(ctx.destination);
+  //   o.start();
+  //   o.stop(ctx.currentTime + 0.5);
+  // }
 
   export function basicRandomSound(options: SoundOptions = {}): void {
     const ctx = singleContext();
@@ -321,6 +321,33 @@ export namespace AudioGenerator {
     noise.connect(filter).connect(g).connect(ctx.destination);
     noise.start();
     noise.stop(ctx.currentTime + 4);
+  }
+
+
+  // Big-AGI Sounds
+
+  export function chatAutoSend(options: SoundOptions = {}) {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = 'sine';
+    o.frequency.setValueAtTime(440, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.4);
+
+    // o.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
+    // o.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.5);
+    // o.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 1.0);
+
+    g.gain.setValueAtTime(options.volume || 0.3, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+    o.connect(g).connect(agMasterGain);
+    // applyRoomAcoustics(ctx, o.connect(g), options.roomSize || 'small');
+
+    o.start();
+    o.stop(ctx.currentTime + 0.4);
   }
 
 }

@@ -20,6 +20,7 @@ import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
+import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
@@ -386,11 +387,13 @@ export function Composer(props: {
     nextText = nextText ? nextText + ' ' + transcript : transcript;
 
     // auto-send (mic continuation mode) if requested
-    const autoSend = micContinuation && nextText.length >= 1 && !noConversation; //&& assistantAbortible;
+    const autoSend = (result.flagSendOnDone || micContinuation) && nextText.length >= 1 && !noConversation; //&& assistantAbortible;
     const notUserStop = result.doneReason !== 'manual';
     if (autoSend) {
-      if (notUserStop)
-        void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3');
+      // if (notUserStop) {
+      void AudioGenerator.chatAutoSend();
+      // void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3');
+      // }
       void handleSendAction(chatExecuteMode, nextText); // fire/forget
     } else {
       if (!micContinuation && notUserStop)
