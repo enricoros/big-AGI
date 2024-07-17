@@ -410,9 +410,9 @@ export function Composer(props: {
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
   useGlobalShortcuts('Composer', React.useMemo(() => [
-    ...(browserSpeechRecognitionCapability().mayWork ? [{ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Microphone' }] : []),
-    { key: supportsClipboardRead ? 'v' : 'disabled', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' },
-  ], [attachAppendClipboardItems, toggleRecognition]));
+    ...(browserSpeechRecognitionCapability().mayWork ? [{ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: recognitionState.isActive ? 'Microphone · Stop & Send' : 'Microphone' }] : []),
+    ...(supportsClipboardRead ? [{ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' }] : []),
+  ], [attachAppendClipboardItems, recognitionState.isActive, toggleRecognition]));
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !recognitionState.errorMessage;

@@ -60,7 +60,7 @@ export function ChatBarAltBeam(props: {
 
   // intercept esc this beam is focused
   useGlobalShortcuts('ChatBarAltBeam', React.useMemo(() => [
-    { key: ShortcutKey.Esc, action: handleCloseBeam, description: 'Close' },
+    { key: ShortcutKey.Esc, action: handleCloseBeam },
   ], [handleCloseBeam]));
 
 
