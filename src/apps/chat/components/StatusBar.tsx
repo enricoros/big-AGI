@@ -1,0 +1,150 @@
+import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
+
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, IconButton, styled, Typography } from '@mui/joy';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+
+// import { isMacUser } from '~/common/util/pwaUtils';
+import type { ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
+
+
+const hideButtonTooltip = (
+  <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
+    Hide Shortcuts<br />
+    Enable again in Settings &gt; Labs
+  </Box>
+);
+
+const hideButtonSx: SxProps = {
+  '--IconButton-size': '28px',
+  '--Icon-fontSize': '16px',
+  '--Icon-color': 'var(--joy-palette-text-tertiary)',
+  mr: -0.5,
+};
+
+const StatusBarContainer = styled(Box)({
+  borderTop: '1px solid',
+  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+  // borderTopColor: 'var(--joy-palette-divider)',
+  backgroundColor: 'var(--joy-palette-background-surface)',
+  // paddingBlock: '0.25rem',
+  paddingInline: '0.5rem',
+  // layout
+  display: 'flex',
+  flexFlow: 'row nowrap',
+  columnGap: '1.5rem', // space between shortcuts
+  lineHeight: '1em',
+});
+
+const ShortcutContainer = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  whiteSpace: 'nowrap',
+  gap: '2px', // space between modifiers
+  marginBlock: '0.25rem',
+});
+
+const ShortcutKey = styled(Box)({
+  fontSize: 'var(--joy-fontSize-xs)',
+  fontWeight: 'var(--joy-fontWeight-md)',
+  border: '1px solid',
+  borderColor: 'var(--joy-palette-neutral-outlinedBorder)',
+  borderRadius: 'var(--joy-radius-xs)',
+  // backgroundColor: 'var(--joy-palette-neutral-outlinedBorder)',
+  backgroundColor: 'var(--joy-palette-background-popup)',
+  // boxShadow: 'inset 2px 0px 4px -2px var(--joy-palette-background-backdrop)',
+  boxShadow: 'var(--joy-shadow-xs)',
+  // minWidth: '1rem',
+  paddingBlock: '1px',
+  paddingInline: '4px',
+  pointerEvents: 'none',
+});
+
+
+// Display mac-style shortcuts on windows as well
+const displayMacModifiers = true;
+
+function _platformAwareModifier(symbol: 'Ctrl' | 'Alt' | 'Shift') {
+  switch (symbol) {
+    case 'Ctrl':
+      return displayMacModifiers ? '⌃' : 'Ctrl';
+    case 'Shift':
+      return displayMacModifiers ? '⇧' : '⇧';
+    case 'Alt':
+      return displayMacModifiers ? '⌥' /* Option */ : 'Alt';
+  }
+}
+
+function ShortcutItem(props: { shortcut: ShortcutObject }) {
+  return (
+    <ShortcutContainer sx={props.shortcut.disabled ? { opacity: 0.5 } : undefined}>
+      {!!props.shortcut.ctrl && <ShortcutKey>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
+      {!!props.shortcut.shift && <ShortcutKey>{_platformAwareModifier('Shift')}</ShortcutKey>}
+      {/*{!!props.shortcut.altForNonMac && <ShortcutKey>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
+      <ShortcutKey>{props.shortcut.key.toUpperCase()}</ShortcutKey>
+      &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
+    </ShortcutContainer>
+  );
+}
+
+
+export function StatusBar() {
+
+  // state (modifiers pressed/not)
+  // const [ctrlPressed, setCtrlPressed] = React.useState(false);
+  // const [shiftPressed, setShiftPressed] = React.useState(false);
+
+  // external state
+  const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
+  const shortcuts = useGlobalShortcutsStore(useShallow(state =>
+    !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description),
+  ));
+
+  // handlers
+  const handleHideShortcuts = React.useCallback(() => {
+    useUXLabsStore.getState().setLabsShowShortcutBar(false);
+  }, []);
+
+  // React to modifiers
+  // React.useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.key === 'Control') setCtrlPressed(true);
+  //     if (e.key === 'Shift') setShiftPressed(true);
+  //   };
+  //   const handleKeyUp = (e: KeyboardEvent) => {
+  //     if (e.key === 'Control') setCtrlPressed(false);
+  //     if (e.key === 'Shift') setShiftPressed(false);
+  //   };
+  //   window.addEventListener('keydown', handleKeyDown);
+  //   window.addEventListener('keyup', handleKeyUp);
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //     window.removeEventListener('keyup', handleKeyUp);
+  //   };
+  // }, []);
+
+  if (!labsShowShortcutBar)
+    return null;
+
+  return (
+    <StatusBarContainer aria-label='Status bar'>
+
+      {/* Close Button */}
+      <GoodTooltip usePlain arrow placement='top' title={hideButtonTooltip}>
+        <IconButton size='sm' sx={hideButtonSx} onClick={handleHideShortcuts}>
+          <CloseRoundedIcon />
+        </IconButton>
+      </GoodTooltip>
+
+      {/* Show all shortcuts */}
+      {shortcuts.map((shortcut, idx) => (
+        <ShortcutItem key={shortcut.key + idx} shortcut={shortcut} />
+      ))}
+
+    </StatusBarContainer>
+  );
+}

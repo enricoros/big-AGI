@@ -196,7 +196,7 @@ export function ChatMessageList(props: {
   const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
 
   useGlobalShortcuts('ChatMessageList', React.useMemo(() => !isMessageSelectionMode ? [] : [
-    { key: ShortcutKey.Esc, action: () => setIsMessageSelectionMode(false) },
+    { key: ShortcutKey.Esc, action: () => setIsMessageSelectionMode(false), description: 'Close' },
   ], [isMessageSelectionMode, setIsMessageSelectionMode]));
 
 

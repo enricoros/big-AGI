@@ -26,6 +26,9 @@ interface UXLabsStore {
   labsShowCost: boolean;
   setLabsShowCost: (labsShowCost: boolean) => void;
 
+  labsShowShortcutBar: boolean;
+  setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => void;
+
   // [DEV MODE] only shown on localhost
 
   labsDevMode: boolean;
@@ -51,6 +54,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsShowCost: true, // release 1.16.0 with this enabled by default
       setLabsShowCost: (labsShowCost: boolean) => set({ labsShowCost }),
+
+      labsShowShortcutBar: true,
+      setLabsShowShortcutBar: (labsShowShortcutBar: boolean) => set({ labsShowShortcutBar }),
 
       // [DEV MODE] - maybe move them from here
 

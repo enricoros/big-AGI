@@ -27,8 +27,8 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
+import { browserSpeechRecognitionCapability, SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
@@ -410,8 +410,8 @@ export function Composer(props: {
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
   useGlobalShortcuts('Composer', React.useMemo(() => [
-    { key: 'm', ctrl: true, action: () => toggleRecognition(true) },
-    { key: supportsClipboardRead ? 'v' : 'disabled', ctrl: true, shift: true, action: attachAppendClipboardItems },
+    ...(browserSpeechRecognitionCapability().mayWork ? [{ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Microphone' }] : []),
+    { key: supportsClipboardRead ? 'v' : 'disabled', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' },
   ], [attachAppendClipboardItems, toggleRecognition]));
 
   const micIsRunning = !!speechInterimResult;

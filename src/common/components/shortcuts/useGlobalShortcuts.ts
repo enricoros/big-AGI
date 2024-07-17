@@ -12,12 +12,13 @@ export const ShortcutKey = {
 };
 
 export interface ShortcutObject {
-  key: string;
+  key: string | 'disabled';
   ctrl?: boolean;
   shift?: boolean;
-  altForNonMac?: boolean;
-  description?: string;
+  // altForNonMac?: boolean;
+  disabled?: boolean;
   action: (() => void) | '_specialPrintShortcuts';
+  description?: string;
 }
 
 
