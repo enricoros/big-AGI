@@ -1,6 +1,6 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 
-import type { ChatGenerateMessageAction } from '../dispatch/chatGenerate/chatGenerate.types';
+import type { ChatGenerateMessageAction } from '../dispatch/chatGenerate/parsers/parsers.types';
 import type { DemuxedEvent } from '../dispatch/stream.demuxers';
 
 

@@ -1,4 +1,4 @@
-import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from '../chatGenerate.types';
+import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './parsers.types';
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEXT_SYMBOL_MAX_TOKENS } from '../chatGenerate.config';
 
