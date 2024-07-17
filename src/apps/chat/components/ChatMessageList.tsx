@@ -11,7 +11,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
+import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { createDMessageTextContent, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
@@ -192,9 +192,12 @@ export function ChatMessageList(props: {
     setSelectedMessages(new Set());
   }, [props.conversationHandler, selectedMessages]);
 
-  useGlobalShortcuts([[props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
-    props.setIsMessageSelectionMode(false);
-  }]]);
+
+  const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
+
+  useGlobalShortcuts('ChatMessageList', React.useMemo(() => !isMessageSelectionMode ? [] : [
+    { key: ShortcutKey.Esc, action: () => setIsMessageSelectionMode(false) },
+  ], [isMessageSelectionMode, setIsMessageSelectionMode]));
 
 
   // text-diff functionality: only diff the last complete message, and they're similar in size

@@ -19,13 +19,13 @@ import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.cli
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { Link } from '~/common/components/Link';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import type { AppCallIntent } from './AppCall';
@@ -148,11 +148,9 @@ export function Telephone(props: {
 
   /// Shortcuts
 
-  const globalShortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
-    ['m', true, false, false, toggleRecognition],
-  ], [toggleRecognition]);
-  useGlobalShortcuts(globalShortcuts);
-
+  useGlobalShortcuts('Telephone', React.useMemo(() => [
+    { key: 'm', ctrl: true, action: toggleRecognition },
+  ], [toggleRecognition]));
 
   /// CONNECTED
 

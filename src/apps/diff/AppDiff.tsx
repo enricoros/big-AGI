@@ -9,7 +9,6 @@ import { RenderTextDiff, useSanityTextDiffs } from '~/modules/blocks/textdiff/Re
 
 import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { countWords } from '~/common/util/textUtils';
 import { themeScalingMap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -47,12 +46,6 @@ export function AppDiff() {
     lineHeight: themeScalingMap[contentScaling]?.blockLineHeight ?? 1.75,
   }), [contentScaling]);
 
-  // this is a repetition.. shall move this to a shared root component
-  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
-    ['+', true, true, false, useUIPreferencesStore.getState().increaseContentScaling],
-    ['-', true, true, false, useUIPreferencesStore.getState().decreaseContentScaling],
-  ], []);
-  useGlobalShortcuts(shortcuts);
 
   const c1 = text1?.length || 0;
   const c2 = text2?.length || 0;
