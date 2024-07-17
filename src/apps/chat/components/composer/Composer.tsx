@@ -25,6 +25,7 @@ import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -41,7 +42,6 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
-import { useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -402,22 +402,24 @@ export function Composer(props: {
     }
   }, [chatExecuteMode, composeText, composerTextAreaRef, handleSendAction, micContinuation, noConversation, setComposeText]);
 
-  const { isSpeechEnabled, isSpeechError, isRecordingAudio, isRecordingSpeech, toggleRecording } =
-    useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
+  const { recognitionState, toggleRecognition } = useSpeechRecognition(onSpeechResultCallback, chatMicTimeoutMs || 2000);
 
-  useGlobalShortcuts([['m', true, false, false, toggleRecording]]);
+  const composerShortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
+    ['m', true, false, false, () => toggleRecognition(true)],
+  ], [toggleRecognition]);
+  useGlobalShortcuts(composerShortcuts);
   // useMediaSessionCallbacks({ play: toggleRecording, pause: toggleRecording });
 
   const micIsRunning = !!speechInterimResult;
-  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !isSpeechError;
-  const micColor: ColorPaletteProp = isSpeechError ? 'danger' : isRecordingSpeech ? 'primary' : isRecordingAudio ? 'primary' : 'neutral';
-  const micVariant: VariantProp = isRecordingSpeech ? 'solid' : isRecordingAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
+  const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !recognitionState.errorMessage;
+  const micColor: ColorPaletteProp = recognitionState.errorMessage ? 'danger' : recognitionState.isActive ? 'primary' : recognitionState.hasAudio ? 'primary' : 'neutral';
+  const micVariant: VariantProp = recognitionState.hasSpeech ? 'solid' : recognitionState.hasAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
 
   const handleToggleMic = React.useCallback(() => {
     if (micIsRunning && micContinuation)
       setMicContinuation(false);
-    toggleRecording();
-  }, [micContinuation, micIsRunning, toggleRecording]);
+    toggleRecognition();
+  }, [micContinuation, micIsRunning, toggleRecognition]);
 
   const handleToggleMicContinuation = React.useCallback(() => {
     setMicContinuation(continued => !continued);
@@ -426,8 +428,8 @@ export function Composer(props: {
   React.useEffect(() => {
     // autostart the microphone if the assistant stopped typing
     if (micContinuationTrigger)
-      toggleRecording();
-  }, [toggleRecording, micContinuationTrigger]);
+      toggleRecognition();
+  }, [toggleRecognition, micContinuationTrigger]);
 
 
   // Attachment Up
@@ -532,7 +534,7 @@ export function Composer(props: {
             <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
 
               {/* [mobile] Mic button */}
-              {isSpeechEnabled && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
+              {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
               {/* [mobile] [+] button */}
               {showLLMAttachments && (
@@ -622,7 +624,7 @@ export function Composer(props: {
                     textarea: {
                       enterKeyHint: enterIsNewline ? 'enter' : 'send',
                       sx: {
-                        ...(isSpeechEnabled && { pr: { md: 5 } }),
+                        ...(recognitionState.isAvailable && { pr: { md: 5 } }),
                         // mb: 0.5, // no need; the outer container already has enough p (for TokenProgressbar)
                       },
                       ref: composerTextAreaRef,
@@ -645,7 +647,7 @@ export function Composer(props: {
               </Box>
 
               {/* Mic & Mic Continuation Buttons */}
-              {isSpeechEnabled && (
+              {recognitionState.isAvailable && (
                 <Box sx={{
                   position: 'absolute', top: 0, right: 0,
                   zIndex: zIndexComposerOverlayMic + 1,
@@ -653,7 +655,7 @@ export function Composer(props: {
                   mr: isDesktop ? 1 : 0.25,
                   display: 'flex', flexDirection: 'column', gap: isDesktop ? 1 : 0.25,
                 }}>
-                  {isDesktop && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} noBackground={!isRecordingSpeech} />}
+                  {isDesktop && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} noBackground={!recognitionState.isActive} />}
 
                   {micIsRunning && (
                     <ButtonMicContinuationMemo
