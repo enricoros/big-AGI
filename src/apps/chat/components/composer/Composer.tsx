@@ -79,6 +79,11 @@ import { useDragDrop } from './useComposerDragDrop';
 const zIndexComposerOverlayMic = 10;
 
 
+const paddingBoxSx: SxProps = {
+  p: { xs: 1, md: 2 },
+};
+
+
 /**
  * A React component for composing messages, with attachments and different modes.
  */
@@ -524,7 +529,7 @@ export function Composer(props: {
     // basically a position:relative to enable the inner drop area
     ...dragContainerSx,
     // This used to be in the outer box, but we put it here instead
-    p: { xs: 1, md: 2 },
+    // p: { xs: 1, md: 2 },
   }), [dragContainerSx]);
 
   return (
@@ -532,307 +537,312 @@ export function Composer(props: {
 
       {!isMobile && labsShowShortcutBar && <StatusBar />}
 
-      <Grid
-        container
-        onDragEnter={handleDragEnter}
-        onDragStart={handleDragStart}
-        spacing={{ xs: 1, md: 2 }}
-        sx={stableGridSx}
-      >
+      {/* This container is here just to let the potential statusbar fill the whole space, so we moved the padding here and not in the parent */}
+      <Box sx={paddingBoxSx}>
 
-        {/* [Mobile: top, Desktop: left] */}
-        <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
+        <Grid
+          container
+          onDragEnter={handleDragEnter}
+          onDragStart={handleDragStart}
+          spacing={{ xs: 1, md: 2 }}
+          sx={stableGridSx}
+        >
 
-          {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
-          {isMobile && (
-            <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
+          {/* [Mobile: top, Desktop: left] */}
+          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
 
-              {/* [mobile] Mic button */}
-              {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
+            {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
+            {isMobile && (
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
 
-              {/* [mobile] [+] button */}
-              {showLLMAttachments && (
-                <Dropdown>
-                  <MenuButton slots={{ root: IconButton }}>
-                    <AddCircleOutlineIcon />
-                  </MenuButton>
-                  <Menu>
-                    {/* Responsive Camera OCR button */}
-                    <MenuItem>
-                      <ButtonAttachCameraMemo onOpenCamera={openCamera} />
-                    </MenuItem>
+                {/* [mobile] Mic button */}
+                {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
-                    {/* Responsive Open Files button */}
-                    <MenuItem>
-                      <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
-                    </MenuItem>
+                {/* [mobile] [+] button */}
+                {showLLMAttachments && (
+                  <Dropdown>
+                    <MenuButton slots={{ root: IconButton }}>
+                      <AddCircleOutlineIcon />
+                    </MenuButton>
+                    <Menu>
+                      {/* Responsive Camera OCR button */}
+                      <MenuItem>
+                        <ButtonAttachCameraMemo onOpenCamera={openCamera} />
+                      </MenuItem>
 
-                    {/* Responsive Paste button */}
-                    {supportsClipboardRead && <MenuItem>
-                      <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
-                    </MenuItem>}
-                  </Menu>
-                </Dropdown>
-              )}
+                      {/* Responsive Open Files button */}
+                      <MenuItem>
+                        <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
+                      </MenuItem>
 
-              {/* [Mobile] MultiChat button */}
-              {props.isMulticast !== null && <ButtonMultiChatMemo isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
-
-            </Box>
-          )}
-
-          {/* [Desktop, Col1] Insert Multi-modal content buttons */}
-          {isDesktop && showLLMAttachments && (
-            <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
-
-              {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
-              {/*  Attach*/}
-              {/*</FormHelperText>*/}
-
-              {/* Responsive Open Files button */}
-              <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
-
-              {/* Responsive Paste button */}
-              {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
-
-              {/* Responsive Screen Capture button */}
-              {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}
-
-              {/* Responsive Camera OCR button */}
-              {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
-
-            </Box>)}
-
-
-          {/* Top: Textarea & Mic & Overlays, Bottom, Attachment Drafts */}
-          <Box sx={{
-            flexGrow: 1,
-            // layout
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-            minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
-          }}>
-
-            {/* Text Edit + Mic buttons + MicOverlay */}
-            <Box sx={{ position: 'relative' /* for Mic overlay */ }}>
-
-              {/* Edit box with inner Token Progress bar */}
-              <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */ }}>
-
-                <Textarea
-                  variant='outlined'
-                  color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
-                  autoFocus
-                  minRows={isMobile ? 4 : showChatReplyTo ? 4 : 5}
-                  maxRows={isMobile ? 8 : 10}
-                  placeholder={textPlaceholder}
-                  value={composeText}
-                  onChange={handleTextareaTextChange}
-                  onKeyDown={handleTextareaKeyDown}
-                  onPasteCapture={handleAttachCtrlV}
-                  // onFocusCapture={handleFocusModeOn}
-                  // onBlurCapture={handleFocusModeOff}
-                  endDecorator={showChatReplyTo && <ReplyToBubble replyToText={replyToGenerateText} onClear={handleReplyToClear} className='reply-to-bubble' />}
-                  slotProps={{
-                    textarea: {
-                      enterKeyHint: enterIsNewline ? 'enter' : 'send',
-                      sx: {
-                        ...(recognitionState.isAvailable && { pr: { md: 5 } }),
-                        // mb: 0.5, // no need; the outer container already has enough p (for TokenProgressbar)
-                      },
-                      ref: composerTextAreaRef,
-                    },
-                  }}
-                  sx={{
-                    backgroundColor: 'background.level1',
-                    '&:focus-within': { backgroundColor: 'background.popup', '.reply-to-bubble': { backgroundColor: 'background.popup' } },
-                    lineHeight: lineHeightTextareaMd,
-                  }} />
-
-                {!showChatReplyTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
-                  <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} />
+                      {/* Responsive Paste button */}
+                      {supportsClipboardRead && <MenuItem>
+                        <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
+                      </MenuItem>}
+                    </Menu>
+                  </Dropdown>
                 )}
 
-                {!showChatReplyTo && tokenLimit > 0 && (
-                  <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                {/* [Mobile] MultiChat button */}
+                {props.isMulticast !== null && <ButtonMultiChatMemo isMobile multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
+
+              </Box>
+            )}
+
+            {/* [Desktop, Col1] Insert Multi-modal content buttons */}
+            {isDesktop && showLLMAttachments && (
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
+
+                {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
+                {/*  Attach*/}
+                {/*</FormHelperText>*/}
+
+                {/* Responsive Open Files button */}
+                <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
+
+                {/* Responsive Paste button */}
+                {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
+
+                {/* Responsive Screen Capture button */}
+                {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}
+
+                {/* Responsive Camera OCR button */}
+                {labsCameraDesktop && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
+
+              </Box>)}
+
+
+            {/* Top: Textarea & Mic & Overlays, Bottom, Attachment Drafts */}
+            <Box sx={{
+              flexGrow: 1,
+              // layout
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
+            }}>
+
+              {/* Text Edit + Mic buttons + MicOverlay */}
+              <Box sx={{ position: 'relative' /* for Mic overlay */ }}>
+
+                {/* Edit box with inner Token Progress bar */}
+                <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */ }}>
+
+                  <Textarea
+                    variant='outlined'
+                    color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
+                    autoFocus
+                    minRows={isMobile ? 4 : showChatReplyTo ? 4 : 5}
+                    maxRows={isMobile ? 8 : 10}
+                    placeholder={textPlaceholder}
+                    value={composeText}
+                    onChange={handleTextareaTextChange}
+                    onKeyDown={handleTextareaKeyDown}
+                    onPasteCapture={handleAttachCtrlV}
+                    // onFocusCapture={handleFocusModeOn}
+                    // onBlurCapture={handleFocusModeOff}
+                    endDecorator={showChatReplyTo && <ReplyToBubble replyToText={replyToGenerateText} onClear={handleReplyToClear} className='reply-to-bubble' />}
+                    slotProps={{
+                      textarea: {
+                        enterKeyHint: enterIsNewline ? 'enter' : 'send',
+                        sx: {
+                          ...(recognitionState.isAvailable && { pr: { md: 5 } }),
+                          // mb: 0.5, // no need; the outer container already has enough p (for TokenProgressbar)
+                        },
+                        ref: composerTextAreaRef,
+                      },
+                    }}
+                    sx={{
+                      backgroundColor: 'background.level1',
+                      '&:focus-within': { backgroundColor: 'background.popup', '.reply-to-bubble': { backgroundColor: 'background.popup' } },
+                      lineHeight: lineHeightTextareaMd,
+                    }} />
+
+                  {!showChatReplyTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
+                    <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} />
+                  )}
+
+                  {!showChatReplyTo && tokenLimit > 0 && (
+                    <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                  )}
+
+                </Box>
+
+                {/* Mic & Mic Continuation Buttons */}
+                {recognitionState.isAvailable && (
+                  <Box sx={{
+                    position: 'absolute', top: 0, right: 0,
+                    zIndex: zIndexComposerOverlayMic + 1,
+                    mt: isDesktop ? 1 : 0.25,
+                    mr: isDesktop ? 1 : 0.25,
+                    display: 'flex', flexDirection: 'column', gap: isDesktop ? 1 : 0.25,
+                  }}>
+                    {isDesktop && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} noBackground={!recognitionState.isActive} />}
+
+                    {micIsRunning && (
+                      <ButtonMicContinuationMemo
+                        variant={micContinuation ? 'solid' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
+                        onClick={handleToggleMicContinuation}
+                      />
+                    )}
+                  </Box>
+                )}
+
+                {/* overlay: Mic */}
+                {micIsRunning && (
+                  <Card
+                    color='primary' variant='soft'
+                    sx={{
+                      position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+                      // alignItems: 'center', justifyContent: 'center',
+                      border: '1px solid',
+                      borderColor: 'primary.solidBg',
+                      borderRadius: 'sm',
+                      zIndex: zIndexComposerOverlayMic,
+                      pl: 1.5,
+                      pr: { xs: 1.5, md: 5 },
+                      py: 0.625,
+                      overflow: 'auto',
+                    }}>
+                    <Typography sx={{
+                      color: 'primary.softColor',
+                      lineHeight: lineHeightTextareaMd,
+                      '& .interim': {
+                        textDecoration: 'underline',
+                        textDecorationThickness: '0.25em',
+                        textDecorationColor: 'rgba(var(--joy-palette-primary-mainChannel) / 0.1)',
+                        textDecorationSkipInk: 'none',
+                        textUnderlineOffset: '0.25em',
+                      },
+                    }}>
+                      {speechInterimResult.transcript}{' '}
+                      <span className={speechInterimResult.interimTranscript !== 'Listening...' ? 'interim' : undefined}>{speechInterimResult.interimTranscript}</span>
+                    </Typography>
+                  </Card>
                 )}
 
               </Box>
 
-              {/* Mic & Mic Continuation Buttons */}
-              {recognitionState.isAvailable && (
-                <Box sx={{
-                  position: 'absolute', top: 0, right: 0,
-                  zIndex: zIndexComposerOverlayMic + 1,
-                  mt: isDesktop ? 1 : 0.25,
-                  mr: isDesktop ? 1 : 0.25,
-                  display: 'flex', flexDirection: 'column', gap: isDesktop ? 1 : 0.25,
-                }}>
-                  {isDesktop && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} noBackground={!recognitionState.isActive} />}
-
-                  {micIsRunning && (
-                    <ButtonMicContinuationMemo
-                      variant={micContinuation ? 'solid' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
-                      onClick={handleToggleMicContinuation}
-                    />
-                  )}
-                </Box>
-              )}
-
-              {/* overlay: Mic */}
-              {micIsRunning && (
-                <Card
-                  color='primary' variant='soft'
-                  sx={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
-                    // alignItems: 'center', justifyContent: 'center',
-                    border: '1px solid',
-                    borderColor: 'primary.solidBg',
-                    borderRadius: 'sm',
-                    zIndex: zIndexComposerOverlayMic,
-                    pl: 1.5,
-                    pr: { xs: 1.5, md: 5 },
-                    py: 0.625,
-                    overflow: 'auto',
-                  }}>
-                  <Typography sx={{
-                    color: 'primary.softColor',
-                    lineHeight: lineHeightTextareaMd,
-                    '& .interim': {
-                      textDecoration: 'underline',
-                      textDecorationThickness: '0.25em',
-                      textDecorationColor: 'rgba(var(--joy-palette-primary-mainChannel) / 0.1)',
-                      textDecorationSkipInk: 'none',
-                      textUnderlineOffset: '0.25em',
-                    },
-                  }}>
-                    {speechInterimResult.transcript}{' '}
-                    <span className={speechInterimResult.interimTranscript !== 'Listening...' ? 'interim' : undefined}>{speechInterimResult.interimTranscript}</span>
-                  </Typography>
-                </Card>
-              )}
-
-            </Box>
-
-            {/* Render any Attachments & menu items */}
-            {!!conversationOverlayStore && showLLMAttachments && (
-              <LLMAttachmentsList
-                attachmentDraftsStoreApi={conversationOverlayStore}
-                llmAttachmentDrafts={llmAttachmentDrafts}
-                onAttachmentDraftsAction={handleAttachmentDraftsAction}
-              />
-            )}
-
-          </Box>
-
-        </Box></Grid>
-
-
-        {/* [Mobile: bottom, Desktop: right] */}
-        <Grid xs={12} md={3}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' } as const}>
-
-            {/* [mobile] This row is here only for the [mobile] bottom-start corner item */}
-            {/* [desktop] This column arrangement will have the [desktop] beam button right under call */}
-            <Box sx={isMobile ? { display: 'flex' } : { display: 'grid', gap: 1 }}>
-
-              {/* [mobile] bottom-corner secondary button */}
-              {isMobile && (showChatExtras
-                  ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
-                  : isDraw
-                    ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
-                    : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
-              )}
-
-              {/* Responsive Send/Stop buttons */}
-              <ButtonGroup
-                variant={sendButtonVariant}
-                color={sendButtonColor}
-                sx={{
-                  flexGrow: 1,
-                  backgroundColor: (isMobile && sendButtonVariant === 'outlined') ? 'background.popup' : undefined,
-                  boxShadow: (isMobile && sendButtonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${sendButtonColor}-mainChannel) / 20%)`,
-                }}
-              >
-                {!assistantAbortible ? (
-                  <Button
-                    key='composer-act'
-                    fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
-                    onClick={handleSendClicked}
-                    endDecorator={sendButtonIcon}
-                    sx={{ '--Button-gap': '1rem' }}
-                  >
-                    {micContinuation && 'Voice '}{sendButtonLabel}
-                  </Button>
-                ) : (
-                  <Button
-                    key='composer-stop'
-                    fullWidth variant='soft' disabled={noConversation}
-                    onClick={handleStopClicked}
-                    endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
-                    sx={{ animation: `${animationEnterBelow} 0.1s ease-out` }}
-                  >
-                    Stop
-                  </Button>
-                )}
-
-                {/* [Beam] Open Beam */}
-                {/*{isText && <Tooltip title='Open Beam'>*/}
-                {/*  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleSendTextBeamClicked}>*/}
-                {/*    <ChatBeamIcon />*/}
-                {/*  </IconButton>*/}
-                {/*</Tooltip>}*/}
-
-                {/* [Draw] Imagine */}
-                {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
-                  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>
-                    <AutoAwesomeIcon />
-                  </IconButton>
-                </Tooltip>}
-
-                {/* Mode expander */}
-                <IconButton
-                  variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
-                  disabled={noConversation || noLLM || chatExecuteMenuShown}
-                  onClick={showChatExecuteMenu}
-                >
-                  <ExpandLessIcon />
-                </IconButton>
-              </ButtonGroup>
-
-              {/* [desktop] secondary-top buttons */}
-              {isDesktop && showChatExtras && !assistantAbortible && (
-                <ButtonBeamMemo
-                  disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
-                  hasContent={!!composeText}
-                  onClick={handleSendTextBeamClicked}
+              {/* Render any Attachments & menu items */}
+              {!!conversationOverlayStore && showLLMAttachments && (
+                <LLMAttachmentsList
+                  attachmentDraftsStoreApi={conversationOverlayStore}
+                  llmAttachmentDrafts={llmAttachmentDrafts}
+                  onAttachmentDraftsAction={handleAttachmentDraftsAction}
                 />
               )}
 
             </Box>
 
-            {/* [desktop] Multicast switch (under the Chat button) */}
-            {isDesktop && props.isMulticast !== null && <ButtonMultiChatMemo multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
+          </Box></Grid>
 
-            {/* [desktop] secondary bottom-buttons (aligned to bottom for now, and mutually exclusive) */}
-            {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
-              {/* [desktop] Call secondary button */}
-              {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM} onClick={handleCallClicked} />}
+          {/* [Mobile: bottom, Desktop: right] */}
+          <Grid xs={12} md={3}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' } as const}>
 
-              {/* [desktop] Draw Options secondary button */}
-              {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
+              {/* [mobile] This row is here only for the [mobile] bottom-start corner item */}
+              {/* [desktop] This column arrangement will have the [desktop] beam button right under call */}
+              <Box sx={isMobile ? { display: 'flex' } : { display: 'grid', gap: 1 }}>
 
-            </Box>}
+                {/* [mobile] bottom-corner secondary button */}
+                {isMobile && (showChatExtras
+                    ? <ButtonCallMemo isMobile disabled={noConversation || noLLM} onClick={handleCallClicked} />
+                    : isDraw
+                      ? <ButtonOptionsDraw isMobile onClick={handleDrawOptionsClicked} sx={{ mr: { xs: 1, md: 2 } }} />
+                      : <IconButton disabled sx={{ mr: { xs: 1, md: 2 } }} />
+                )}
 
-          </Box>
+                {/* Responsive Send/Stop buttons */}
+                <ButtonGroup
+                  variant={sendButtonVariant}
+                  color={sendButtonColor}
+                  sx={{
+                    flexGrow: 1,
+                    backgroundColor: (isMobile && sendButtonVariant === 'outlined') ? 'background.popup' : undefined,
+                    boxShadow: (isMobile && sendButtonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${sendButtonColor}-mainChannel) / 20%)`,
+                  }}
+                >
+                  {!assistantAbortible ? (
+                    <Button
+                      key='composer-act'
+                      fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
+                      onClick={handleSendClicked}
+                      endDecorator={sendButtonIcon}
+                      sx={{ '--Button-gap': '1rem' }}
+                    >
+                      {micContinuation && 'Voice '}{sendButtonLabel}
+                    </Button>
+                  ) : (
+                    <Button
+                      key='composer-stop'
+                      fullWidth variant='soft' disabled={noConversation}
+                      onClick={handleStopClicked}
+                      endDecorator={<StopOutlinedIcon sx={{ fontSize: 18 }} />}
+                      sx={{ animation: `${animationEnterBelow} 0.1s ease-out` }}
+                    >
+                      Stop
+                    </Button>
+                  )}
+
+                  {/* [Beam] Open Beam */}
+                  {/*{isText && <Tooltip title='Open Beam'>*/}
+                  {/*  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleSendTextBeamClicked}>*/}
+                  {/*    <ChatBeamIcon />*/}
+                  {/*  </IconButton>*/}
+                  {/*</Tooltip>}*/}
+
+                  {/* [Draw] Imagine */}
+                  {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
+                    <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>
+                      <AutoAwesomeIcon />
+                    </IconButton>
+                  </Tooltip>}
+
+                  {/* Mode expander */}
+                  <IconButton
+                    variant={assistantAbortible ? 'soft' : isDraw ? undefined : undefined}
+                    disabled={noConversation || noLLM || chatExecuteMenuShown}
+                    onClick={showChatExecuteMenu}
+                  >
+                    <ExpandLessIcon />
+                  </IconButton>
+                </ButtonGroup>
+
+                {/* [desktop] secondary-top buttons */}
+                {isDesktop && showChatExtras && !assistantAbortible && (
+                  <ButtonBeamMemo
+                    disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
+                    hasContent={!!composeText}
+                    onClick={handleSendTextBeamClicked}
+                  />
+                )}
+
+              </Box>
+
+              {/* [desktop] Multicast switch (under the Chat button) */}
+              {isDesktop && props.isMulticast !== null && <ButtonMultiChatMemo multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
+
+              {/* [desktop] secondary bottom-buttons (aligned to bottom for now, and mutually exclusive) */}
+              {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
+
+                {/* [desktop] Call secondary button */}
+                {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM} onClick={handleCallClicked} />}
+
+                {/* [desktop] Draw Options secondary button */}
+                {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
+
+              </Box>}
+
+            </Box>
+          </Grid>
+
+          {/* overlay: Drag & Drop*/}
+          {dragDropComponent}
+
         </Grid>
 
-        {/* overlay: Drag & Drop*/}
-        {dragDropComponent}
-
-      </Grid>
+      </Box> {/* Padding container of the whole composer */}
 
       {/* Execution Mode Menu */}
       {chatExecuteMenuComponent}

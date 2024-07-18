@@ -64,10 +64,10 @@ export function UxLabsSettings() {
       checked={labsShowCost} onChange={setLabsShowCost}
     />
 
-    <FormSwitchControl
+    {!isMobile && <FormSwitchControl
       title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Show Shortcuts</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
       checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
-    />
+    />}
 
     {isDevModeLocalhost && (
       <FormSwitchControl
