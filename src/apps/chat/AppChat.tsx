@@ -65,8 +65,6 @@ const composerOpenSx: SxProps = {
   borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   // hack: eats the bottom of the last message (as it has a 1px divider)
   mt: '-1px',
-  // the padding inside the composer used to be set here, not it's on the grid therein
-  // p: { xs: 1, md: 2 },
 };
 
 const composerClosedSx: SxProps = {
