@@ -38,9 +38,9 @@ const hideButtonSx: SxProps = {
 // `;
 
 const StatusBarContainer = styled(Box)({
-  borderTop: '1px solid',
-  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  // borderTopColor: 'var(--joy-palette-divider)',
+  borderBottom: '1px solid',
+  borderBottomColor: 'var(--joy-palette-divider)',
+  // borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
   backgroundColor: 'var(--joy-palette-background-surface)',
   // paddingBlock: '0.25rem',
   paddingInline: '0.5rem',

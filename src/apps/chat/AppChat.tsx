@@ -41,7 +41,6 @@ import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatPageMenuItems } from './components/layout-menu/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
-import { StatusBar } from './components/StatusBar';
 import { usePanesManager } from './components/panes/usePanesManager';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -63,8 +62,11 @@ const composerOpenSx: SxProps = {
   zIndex: 21, // just to allocate a surface, and potentially have a shadow
   backgroundColor: themeBgAppChatComposer,
   borderTop: `1px solid`,
-  borderTopColor: 'divider',
-  p: { xs: 1, md: 2 },
+  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+  // hack: eats the bottom of the last message (as it has a 1px divider)
+  mt: '-1px',
+  // the padding inside the composer used to be set here, not it's on the grid therein
+  // p: { xs: 1, md: 2 },
 };
 
 const composerClosedSx: SxProps = {
@@ -572,8 +574,6 @@ export function AppChat() {
       })}
 
     </PanelGroup>
-
-    {!isMobile && !beamOpenStoreInFocusedPane && <StatusBar />}
 
     <Composer
       isMobile={isMobile}
