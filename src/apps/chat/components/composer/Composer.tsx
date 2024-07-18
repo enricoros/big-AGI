@@ -69,6 +69,7 @@ import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ReplyToBubble } from '../message/ReplyToBubble';
+import { StatusBar } from '../StatusBar';
 import { TokenBadgeMemo } from './TokenBadge';
 import { TokenProgressbarMemo } from './TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
@@ -107,10 +108,11 @@ export function Composer(props: {
 
   // external state
   const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
-  const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost } = useUXLabsStore(useShallow(state => ({
+  const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
     labsShowCost: state.labsShowCost,
+    labsShowShortcutBar: state.labsShowShortcutBar,
   })));
   const timeToShowTips = useAppStateStore(state => state.usageCount > 2);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
@@ -518,14 +520,24 @@ export function Composer(props: {
       textPlaceholder += platformAwareKeystrokes('\n\n💡 Tip: Ctrl + Enter to beam');
   }
 
+  const stableGridSx: SxProps = React.useMemo(() => ({
+    // basically a position:relative to enable the inner drop area
+    ...dragContainerSx,
+    // This used to be in the outer box, but we put it here instead
+    p: { xs: 1, md: 2 },
+  }), [dragContainerSx]);
+
   return (
     <Box aria-label='User Message' component='section' sx={props.sx}>
+
+      {!isMobile && labsShowShortcutBar && <StatusBar />}
+
       <Grid
         container
         onDragEnter={handleDragEnter}
         onDragStart={handleDragStart}
         spacing={{ xs: 1, md: 2 }}
-        sx={dragContainerSx}
+        sx={stableGridSx}
       >
 
         {/* [Mobile: top, Desktop: left] */}
