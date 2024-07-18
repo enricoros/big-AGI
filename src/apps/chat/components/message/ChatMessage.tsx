@@ -280,6 +280,7 @@ export function ChatMessage(props: {
   const wasEdited = !!messageUpdated;
 
   const textSel = selText ? selText : messageText;
+  // WARNING: if you get an issue here, you're downgrading from the new Big-AGI 2 data format to 1.x.
   const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
   const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
   const couldImagine = textSel.length >= 3 && !isSpecialT2I;
