@@ -61,7 +61,7 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.16.4',
+    versionCode: '1.16.5',
     versionName: 'Crystal Clear',
     versionDate: new Date('2024-06-07T05:00:00Z'),
     // versionDate: new Date('2024-05-13T19:00:00Z'),
@@ -81,6 +81,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.2: Proper <B>Gemini</B> support, <B>HTML/Markdown</B> downloads, and latest <B>Mistral</B></> },
       { text: <>1.16.3: Support for <B href='https://www.anthropic.com/news/claude-3-5-sonnet'>Claude 3.5 Sonnet</B> (refresh your <B>Anthropic</B> models)</> },
       { text: <>1.16.4: <B>8192 tokens</B> support for Claude 3.5 Sonnet</> },
+      { text: <>1.16.5: OpenAI <B>GPT-4o Mini</B> support</> },
     ],
   },
   {
