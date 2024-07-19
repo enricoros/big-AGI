@@ -18,13 +18,13 @@ export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
 export type AixParts_MetaReplyToPart = z.infer<typeof AixWire_Parts.MetaReplyToPart_schema>;
 
-export type AixMessages_SystemMessage = z.infer<typeof AixWire_Messages.SystemMessage_schema>;
-export type AixMessages_UserMessage = z.infer<typeof AixWire_Messages.UserMessage_schema>;
-export type AixMessages_ModelMessage = z.infer<typeof AixWire_Messages.ModelMessage_schema>;
-export type AixMessages_ChatMessage = z.infer<typeof AixWire_Messages.ChatMessage_schema>;
+export type AixMessages_SystemMessage = z.infer<typeof AixWire_Content.SystemInstruction_schema>;
+export type AixMessages_UserMessage = z.infer<typeof AixWire_Content.UserMessage_schema>;
+export type AixMessages_ModelMessage = z.infer<typeof AixWire_Content.ModelMessage_schema>;
+export type AixMessages_ChatMessage = z.infer<typeof AixWire_Content.ChatMessage_schema>;
 
-export type AixTools_ToolDefinition = z.infer<typeof AixWire_Tools.Tool_schema>;
-export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tools.ToolsPolicy_schema>;
+export type AixTools_ToolDefinition = z.infer<typeof AixWire_Tooling.Tool_schema>;
+export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_schema>;
 
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
 export type AixAPI_ContextChatStream = z.infer<typeof AixWire_API.ContextChatStream_schema>;
@@ -81,7 +81,7 @@ export namespace OpenAPI_Schema {
 
 export namespace AixWire_Parts {
 
-  // Content Parts
+  // User Input Parts
 
   export const TextPart_schema = z.object({
     pt: z.literal('text'),
@@ -199,11 +199,11 @@ export namespace AixWire_Parts {
 
 }
 
-export namespace AixWire_Messages {
+export namespace AixWire_Content {
 
   /// System Message
 
-  export const SystemMessage_schema = z.object({
+  export const SystemInstruction_schema = z.object({
     parts: z.array(AixWire_Parts.TextPart_schema),
   });
 
@@ -243,7 +243,7 @@ export namespace AixWire_Messages {
 
 }
 
-export namespace AixWire_Tools {
+export namespace AixWire_Tooling {
 
   /// Function Call Tool
 
@@ -371,10 +371,10 @@ export namespace AixWire_API_ChatGenerate {
   /// Request
 
   export const Request_schema = z.object({
-    systemMessage: AixWire_Messages.SystemMessage_schema.optional(),
-    chatSequence: z.array(AixWire_Messages.ChatMessage_schema),
-    tools: z.array(AixWire_Tools.Tool_schema).optional(),
-    toolsPolicy: AixWire_Tools.ToolsPolicy_schema.optional(),
+    systemMessage: AixWire_Content.SystemInstruction_schema.optional(),
+    chatSequence: z.array(AixWire_Content.ChatMessage_schema),
+    tools: z.array(AixWire_Tooling.Tool_schema).optional(),
+    toolsPolicy: AixWire_Tooling.ToolsPolicy_schema.optional(),
   });
 
   /// Response - Events Stream
