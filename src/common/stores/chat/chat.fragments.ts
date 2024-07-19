@@ -3,85 +3,80 @@ import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 import { agiId } from '~/common/util/idUtils';
 
 
-//
-// Message Fragments - forward compatible
-//
-// The Message Fragment is the smallest unit of a message, and can be of different types.
-// A Fragment decorates a 'Part' with a type discriminator end extra information (like a title).
-//
-// Notes:
-// - fId: Fragment ID (8 bytes), unique within the container only
-//
+/// Fragments - forward compatible ///
 
-export type DMessageFragmentId = string; // not unique, 8 bytes
+// The Message Fragment is the smallest unit of a message, and can be of different types that wrap
+// a 'Part' with a type discriminator and extra information (like a title). Notes:
+// - fId: Fragment ID (8 bytes), unique within the container only
+
+/*export type DSystemInstructionFragment = DMessageBaseFragment<'system',
+  | DMessageTextPart
+> & {
+  // UI attributes for a great system message, e.g. has it been edited, etc.
+  editable?: boolean;
+  deletable?: boolean;
+  modified?: boolean;
+};*/
 
 export type DMessageFragment =
   | DMessageContentFragment
   | DMessageAttachmentFragment
   // | DMessageBeamFragment
-  | _DMessageSentinelFragment;
+  | _DMessageSentinelFragment
+  ;
 
+// Content: real signal, needs to be sent to the llm
+export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
+  | DMessageTextPart              // plain text or mixed content -> BlockRenderer
+  | DMessageImageRefPart          // large image
+  | DMessageToolInvocationPart    // shown to dev only, singature of the llm function call
+  | DMessageToolResponsePart      // shown to dev only, response of the llm
+  | DMessageErrorPart             // red message, e.g. non-content application issues
+  | DMetaPlaceholderPart          // (non submitted) placeholder to be replaced by another part
+  | _DMetaSentinelPart
+>;
 
-// expected a list of one or more per message, of similar or different types
-export type DMessageContentFragment = {
-  ft: 'content';
-  fId: DMessageFragmentId;
-  part:
-    | DMessageErrorPart           // red message, e.g. non-content application issues
-    | DMessageImageRefPart        // large image
-    | DMessageTextPart            // plain text or mixed content -> BlockRenderer
-    | DMessageToolInvocationPart  // shown to dev only, singature of the llm function call
-    | DMessageToolResponsePart    // shown to dev only, response of the llm
-    | DMetaPlaceholderPart        // (non submitted) placeholder to be replaced by another part
-    | _DMetaSentinelPart;
-};
-
-// displayed at the bottom of the message, zero or more
-export type DMessageAttachmentFragment = {
-  ft: 'attachment';
-  fId: DMessageFragmentId;
+// Attachments: labeled docs or images, output of Composer > Attachments
+export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
+  | DMessageDocPart               // document Attachment
+  | DMessageImageRefPart          // image Attachment
+  | _DMetaSentinelPart
+> & {
   title: string;                  // label of the attachment (filename, named id, content overview, title..)
   caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
-  part:
-    | DMessageDocPart             // document attachment
-    | DMessageImageRefPart        // image attachment
-    | _DMetaSentinelPart;
 };
-
-// force the typesystem to work, bark, and detect/reveal corner cases
-type _DMessageSentinelFragment = {
-  ft: '_ft_sentinel';
-  fId: DMessageFragmentId;
-}
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
 // could not be the data store itself, but only used for save/reload
-// export type DMessageBeamFragment = {
+// export type DMessageBeamFragment = DMessageBaseFragment<'beam'> & {
 //   ft: 'beam',
 //   fId: DMessageFragmentId;
 //   beam: { rays: any[], merges: any[], ... };
 // }
 
+// Sentinel: force the typesystem to work, bark, and detect/reveal corner cases - unused aside from revealing fragment type issues
+type _DMessageSentinelFragment = { ft: '_ft_sentinel', fId: DMessageFragmentId };
 
-//
-// Message Parts - STABLE
+export type DMessageFragmentId = string; // not unique, 8 bytes
+type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
+  ft: TFragment;
+  fId: DMessageFragmentId;
+  part: TPart;
+}
+
+
+/// Parts - STABLE ///
+
 // - Data at rest: these are used in the DMessage objects
-// - DO NOT CHANGE: think twice and extend carefully
-//
+// - DO NOT CHANGE - think twice (data at rest)
 // Small and efficient (larger objects need to only be referred to)
-//
+
+export type DMessageTextPart = { pt: 'text', text: string };
+
+export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 
 export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta };
-export type DMessageErrorPart = { pt: 'error', error: string };
-export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
-export type DMessageTextPart = { pt: 'text', text: string };
-export type DMessageToolInvocationPart = { pt: 'tool_call', id: string, call: DMessageToolInvocationFunctionCall | DMessageToolInvocationCodeExecution };
-export type DMessageToolResponsePart = { pt: 'tool_response', id: string, response: DMessageToolResponseFunctionCall | DMessageToolResponseCodeExecution, error?: boolean | string, _environment?: DMessageToolEnvironment };
-export type DMetaPlaceholderPart = { pt: 'ph', pText: string };
-type _DMetaSentinelPart = { pt: '_pt_sentinel' };
-
-
 type DMessageDocMimeType =
   | 'application/vnd.agi.ego'         // for attaching messages
   // | 'application/vnd.agi.code'        // Blocks > RenderCode
@@ -94,7 +89,6 @@ type DMessageDocMimeType =
   | 'text/markdown'                   // can be rendered as markdown (note that text/plain can also)
   | 'text/plain'                      // e.g. clipboard paste
   ;
-
 type DMessageDocMeta = {
   codeLanguage?: string;
   srcFileName?: string;
@@ -102,7 +96,7 @@ type DMessageDocMeta = {
   srcOcrFrom?: 'image' | 'pdf';
 }
 
-
+export type DMessageToolInvocationPart = { pt: 'tool_call', id: string, call: DMessageToolInvocationFunctionCall | DMessageToolInvocationCodeExecution };
 type DMessageToolInvocationFunctionCall = {
   type: 'function_call'
   name: string;             // Name of the function as passed from the definition
@@ -110,7 +104,6 @@ type DMessageToolInvocationFunctionCall = {
   _description?: string;    // Description from the definition
   _args_schema?: object;    // JSON Schema { type: 'object', properties: { ... } } from the definition
 };
-
 type DMessageToolInvocationCodeExecution = {
   type: 'code_execution';
   variant?: 'gemini_auto_inline';
@@ -118,23 +111,28 @@ type DMessageToolInvocationCodeExecution = {
   code: string;
 };
 
-type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
-
+export type DMessageToolResponsePart = { pt: 'tool_response', id: string, response: DMessageToolResponseFunctionCall | DMessageToolResponseCodeExecution, error?: boolean | string, _environment?: DMessageToolEnvironment };
 type DMessageToolResponseFunctionCall = {
   type: 'function_call';
   result: string;           // The output
   _name?: string;           // Name of the function that produced the result
 };
-
 type DMessageToolResponseCodeExecution = {
   type: 'code_execution';
   result: string;           // The output
   _variant?: 'gemini_auto_inline';
 };
+type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
+
+export type DMessageErrorPart = { pt: 'error', error: string };
+
+export type DMetaPlaceholderPart = { pt: 'ph', pText: string };
+
+type _DMetaSentinelPart = { pt: '_pt_sentinel' };
 
 
 //
-// Message Data Reference
+// Message Data - DO NOT CHANGE - think twice (data at rest)
 //
 // We use a Ref and the DBlob framework to store media locally, or remote URLs
 //
