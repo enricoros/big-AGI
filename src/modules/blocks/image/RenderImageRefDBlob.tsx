@@ -137,7 +137,7 @@ export function RenderImageRefDBlob(props: {
       onOpenInNewTab={props.onOpenInNewTab}
       onImageDelete={props.onDeleteFragment}
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
-      className={isRegenerating ? 'agi-border-4' : undefined}
+      className={isRegenerating ? 'agi-border-4' /* CSS Effect while regenerating */ : undefined}
       scaledImageSx={props.scaledImageSx}
       variant={props.variant}
     />
