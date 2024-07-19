@@ -88,6 +88,7 @@ export namespace AixWire_Parts {
     text: z.string(),
   });
 
+  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than bein referred to
   export const InlineImagePart_schema = z.object({
     pt: z.literal('inline_image'),
     /**
