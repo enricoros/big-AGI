@@ -51,33 +51,79 @@ This architecture offers several advantages:
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Server
+    participant AIX Client
+    participant AIX Server
+    participant ParticleEmitter
     participant AI Provider
-    Client ->> Server: Send messages (including DMessage*Part as AixWire_Parts)
-    Server ->> Server: Process and prepare request
-    Server ->> AI Provider: Send AI-provider specific request
-    alt Streaming AI Provider
-        loop For each data chunk
-            AI Provider ->> Server: Stream AI-provider specific response chunk
-            Server ->> Server: AI Response Parser processes chunk
-            Server ->> Server: UnifiedStateMachine updates
-            Server ->> Server: Generate RecombinationFragments
-            Server ->> Client: Stream AixWire_RecombinationFragments
-            Client ->> Client: FragmentRecombiner processes fragments
-            alt Content Fragment
-                Client ->> Client: Update UI with DMessageContentFragments
-            else Metadata Fragment
-                Client ->> Client: Update application state
+    AIX Client ->> AIX Client: Initialize PartReassembler
+    AIX Client ->> AIX Client: Convert DMessage*Part to AixWire_Parts
+    AIX Client ->> AIX Server: Send messages (arrays of AixWire_Parts)
+    AIX Server ->> AIX Server: Prepare Dispatch (Upstream request, demux, parsing)
+
+    alt Dispatch Preparation Error
+        AIX Server ->> AIX Client: Send `dispatch-prepare` error message
+    else Dispatch Fetch
+        AIX Server ->> AI Provider: Send AI-provider specific stream/non-stream request
+        AIX Server ->> AIX Client: Send 'start' control message
+
+        alt Streaming AI Provider
+            loop Until stream end or error
+                AI Provider ->> AIX Server: Stream response chunk
+                AIX Server ->> AIX Server: Demux chunk into DispatchEvents
+                loop For each AI-provider specific DispatchEvent
+                    AIX Server ->> AIX Server: Parse DispatchEvent
+                    AIX Server ->> ParticleEmitter: Call particle emission function
+                    ParticleEmitter ->> ParticleEmitter: Generate and potentially throttle AixWire_PartParticles
+                    ParticleEmitter -->> AIX Server: Yield AixWire_PartParticle
+                end
+                AIX Server ->> AIX Client: Send accumulated AixWire_PartParticles
+            end
+            AIX Server ->> ParticleEmitter: Request any remaining particles
+            ParticleEmitter -->> AIX Server: Yield any final AixWire_PartParticles
+            AIX Server ->> AIX Client: Send final AixWire_PartParticles (if any)
+        else Non-Streaming AI Provider
+            AI Provider ->> AIX Server: Send AI-provider specific complete response
+            alt AI-provider specific full-response parser
+                AIX Server ->> AIX Server: Parse full response
+                AIX Server ->> ParticleEmitter: Call particle emission function
+                ParticleEmitter ->> ParticleEmitter: Generate AixWire_PartParticle
+                ParticleEmitter -->> AIX Server: Yield ALL AixWire_PartParticle
+            end
+            AIX Server ->> AIX Client: Send all AixWire_PartParticles
+        end
+        AIX Server ->> AIX Client: Send 'done' control message
+        loop For each received batch of particles
+            AIX Client ->> AIX Client: PartReassembler processes particles into DMessage*Part
+            alt DMessageTextPart
+                AIX Client ->> AIX Client: Update UI with text content
+            else DMessageImageRefPart
+                AIX Client ->> AIX Client: Load and display image
+            else DMessageToolInvocationPart
+                AIX Client ->> AIX Client: Process tool invocation (dev only)
+            else DMessageToolResponsePart
+                AIX Client ->> AIX Client: Process tool response (dev only)
+            else DMessageErrorPart
+                AIX Client ->> AIX Client: Display error message
+            else DMessageDocPart
+                AIX Client ->> AIX Client: Process and display document
+            else DMetaPlaceholderPart
+                AIX Client ->> AIX Client: Handle placeholder (non-submitted)
             end
         end
-    else Non-Streaming AI Provider
-        AI Provider ->> Server: Send complete response
-        Server ->> Server: Process complete response
-        Server ->> Client: Send RecombinationFragments (possibly in batches)
+        AIX Client ->> AIX Client: Finalize data update
     end
-    Server ->> Client: Send completion signal
-    Client ->> Client: Finalize data update
+
+    alt Error Handling
+        AIX Server ->> AIX Client: Send 'error' specific control messages
+    end
+
+    note over AIX Server, AI Provider: Server-side Timeout/Retry mechanism
+    loop Retry on timeout (server-side)
+        AIX Server ->> AI Provider: Retry request
+    end
+
+    note over AIX Client: Client-side Timeout mechanism
+    AIX Client ->> AIX Client: Timeout if no response received within set time
 ```
 
 ## Structure (This was the initial - being replaced part by part right now - will come back to this later to update)
