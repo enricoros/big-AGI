@@ -4,6 +4,7 @@ import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { SxProps } from '@mui/joy/styles/types';
 
 
 export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, tokenPriceIn?: number, tokenPriceOut?: number): {
@@ -56,10 +57,11 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
           `    Max output cost: ${('$' + costOutMax!.toFixed(4)).padStart(8)}\n`;
 
         if (costMin) message += '\n' +
-          `    > Min turn cost: ${formatTokenCost(costMin).padStart(8)}`;
+          ` > Min message cost: <span class="highlight-cost yellow">${formatTokenCost(costMin).padStart(8)}</span>`;
         costMax = (costMin && costOutMax) ? costMin + costOutMax : undefined;
         if (costMax) message += '\n' +
-          `    < Max turn cost: ${formatTokenCost(costMax).padStart(8)}`;
+          ` < Max message cost: <span>${formatTokenCost(costMax).padStart(8)}</span>\n` +
+          '   (depends on assistant response)';
       }
     }
   }
@@ -88,10 +90,34 @@ function _alignRight(value: number, columnSize: number = 8) {
 
 export function formatTokenCost(cost: number) {
   return cost < 1
-    ? (cost * 100).toFixed(cost < 0.010 ? 2 : 1) + ' ¢'
+    ? (cost * 100).toFixed(cost < 0.010 ? 2 : 2) + ' ¢'
     : '$ ' + cost.toFixed(2);
 }
 
+const tooltipMessageSx: SxProps = {
+  p: 2,
+  whiteSpace: 'pre',
+  '& .highlight-cost': {
+    position: 'relative',
+    color: 'black',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: '-2px',
+      right: '-2px',
+      top: '0.1em',
+      bottom: '-0.1em',
+      transform: 'skew(-5deg) rotate(-1deg)',
+      zIndex: -1,
+    },
+    '&.yellow::before': {
+      background: 'linear-gradient(104deg, rgba(255,255,132,0) 0.9%, rgba(255,255,132,1) 2.4%, rgba(255,252,132,1) 50%, rgba(255,255,132,1) 97.6%, rgba(255,255,132,0) 99.1%)',
+    },
+    '&.orange::before': {
+      background: 'linear-gradient(104deg, rgba(255,204,132,0) 0.9%, rgba(255,204,132,1) 2.4%, rgba(255,187,132,1) 50%, rgba(255,204,132,1) 97.6%, rgba(255,204,132,0) 99.1%)',
+    },
+  },
+};
 
 export function TokenTooltip(props: { message: string | null, color: ColorPaletteProp, placement?: 'top' | 'top-end', children: React.ReactElement }) {
 
@@ -105,7 +131,9 @@ export function TokenTooltip(props: { message: string | null, color: ColorPalett
       placement={props.placement}
       variant={props.color !== 'primary' ? 'solid' : 'soft'}
       color={props.color}
-      title={props.message ? <Box sx={{ p: 2, whiteSpace: 'pre' }}>{props.message}</Box> : null}
+      title={!props.message ? null :
+        <Box dangerouslySetInnerHTML={{ __html: props.message }} sx={tooltipMessageSx} />
+      }
       sx={{
         fontFamily: 'code',
         fontSize: fontSize,
