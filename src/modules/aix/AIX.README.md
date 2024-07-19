@@ -22,7 +22,68 @@ AIX provides a unified interface to incorporate various AI functionalities into 
 - React components for rapid integration
 - Supports simple tasks to complex, interactive AI workflows
 
-## Structure
+## 2. System Architecture
+
+The subsystem comprises three main components, each playing a crucial role in the data flow:
+
+1. **Client (Next.js Frontend)**
+
+- Initiates requests
+- Renders AI-generated content in real-time
+- Reconstructs streamed data
+
+2. **Server (Next.js Backend)**
+
+- Acts as an intermediary
+- Forwards requests to AI providers
+- Streams responses back to the client
+- Handles data transformation and security
+
+3. **Upstream AI Providers**
+
+- Generate AI content based on requests
+
+This architecture offers several advantages:
+
+- Enhanced security by keeping sensitive information server-side
+- A unified client-facing API, abstracting provider differences
+- Efficient data transformation and streaming capabilities
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant AI Provider
+    Client ->> Server: Send messages (including DMessage*Part as AixWire_Parts)
+    Server ->> Server: Process and prepare request
+    Server ->> AI Provider: Send AI-provider specific request
+    alt Streaming AI Provider
+        loop For each data chunk
+            AI Provider ->> Server: Stream AI-provider specific response chunk
+            Server ->> Server: AI Response Parser processes chunk
+            Server ->> Server: UnifiedStateMachine updates
+            Server ->> Server: Generate RecombinationFragments
+            Server ->> Client: Stream AixWire_RecombinationFragments
+            Client ->> Client: FragmentRecombiner processes fragments
+            alt Content Fragment
+                Client ->> Client: Update UI with DMessageContentFragments
+            else Metadata Fragment
+                Client ->> Client: Update application state
+            end
+        end
+    else Non-Streaming AI Provider
+        AI Provider ->> Server: Send complete response
+        Server ->> Server: Process complete response
+        Server ->> Client: Send RecombinationFragments (possibly in batches)
+    end
+    Server ->> Client: Send completion signal
+    Client ->> Client: Finalize data update
+```
+
+## Structure (This was the initial - being replaced part by part right now - will come back to this later to update)
+
+--- below the line ---
+
 Here's the file structure we'll use:
 
 1. `types.ts`: Basic types used across the API
@@ -73,10 +134,12 @@ export interface PersonaState {
 
 2. `blocks.ts`
 
+The code implements these as **AixWire_Parts**
+
 ```typescript
 export type InputBlock = InputContentBlock | InputMetaBlock;
 
-export type InputContentBlock = 
+export type InputContentBlock =
   | TextInputBlock
   | ImageInputBlock
   | ToolOutputBlock
@@ -129,7 +192,7 @@ export interface ControlMetaBlock {
 
 export type OutputBlock = OutputContentBlock | OutputMetaBlock;
 
-export type OutputContentBlock = 
+export type OutputContentBlock =
   | TextOutputBlock
   | ImageOutputBlock
   | ToolCallOutputBlock
