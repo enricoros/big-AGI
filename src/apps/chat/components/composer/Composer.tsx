@@ -70,8 +70,8 @@ import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ReplyToBubble } from '../message/ReplyToBubble';
 import { StatusBar } from '../StatusBar';
-import { TokenBadgeMemo } from './TokenBadge';
-import { TokenProgressbarMemo } from './TokenProgressbar';
+import { TokenBadgeMemo } from './tokens/TokenBadge';
+import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerStartupText } from './store-composer';
 import { useDragDrop } from './useComposerDragDrop';
 

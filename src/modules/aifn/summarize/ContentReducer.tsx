@@ -5,7 +5,7 @@ import { Alert, Box, Button, CircularProgress, Divider, FormControl, Option, Sel
 
 import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 
-import { TokenBadgeMemo } from '../../../apps/chat/components/composer/TokenBadge';
+import { TokenBadgeMemo } from '../../../apps/chat/components/composer/tokens/TokenBadge';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
