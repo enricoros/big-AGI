@@ -82,7 +82,7 @@ export function DocumentFragmentEditor(props: {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, fragment, fragmentId, handleFragmentDelete, onFragmentReplace]);
+  }, [editedText, fragment.caption, fragment.part, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
 
 
   return (
