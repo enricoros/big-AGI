@@ -458,6 +458,7 @@ export function ChatMessage(props: {
 
         ...props.sx,
       }}
+      // className={messagePendingIncomplete ? 'agi-border-4' /* CSS Effect while in progress */ : undefined}
     >
 
       {/* (Optional) underlayed top decorator */}
