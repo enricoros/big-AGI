@@ -84,7 +84,7 @@ export function DocumentFragmentButton(props: {
     display: 'flex', flexDirection: 'row',
   }), [isSelected, props.contentScaling]);
 
-  const buttonText = ellipsizeMiddle(fragment.title || 'Text', 28 /* totally arbitrary length */);
+  const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
   const Icon = iconForFragment(fragment);
 

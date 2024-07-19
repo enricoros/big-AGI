@@ -34,7 +34,7 @@ export function DocumentFragmentEditor(props: {
   const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
 
   const fragmentId = fragment.fId;
-  const fragmentTitle = fragment.title;
+  const fragmentTitle = (isDocPart(fragment.part) ? fragment.part.l1Title : '') || fragment.title;
   const fragmentCaption = fragment.caption;
   const part = fragment.part;
 
@@ -73,7 +73,7 @@ export function DocumentFragmentEditor(props: {
 
     if (editedText.length > 0) {
       const newData = createDMessageDataInlineText(editedText, fragment.part.data.mimeType);
-      const newAttachment = createDocAttachmentFragment(fragment.title, fragment.caption, fragment.part.type, newData, fragment.part.ref, fragment.part.meta);
+      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragment.part.type, newData, fragment.part.ref, fragment.part.meta);
       // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
       newAttachment.fId = fragmentId;
       onFragmentReplace(fragmentId, newAttachment);
@@ -111,7 +111,7 @@ export function DocumentFragmentEditor(props: {
         <Typography level='title-sm'>
           <Tooltip disableInteractive title={part.ref === part.meta?.srcFileName ? undefined : part.ref} placement='top-start'>
             <div>
-              {part.meta?.srcFileName || part.ref}
+              {part.meta?.srcFileName || part.l1Title || part.ref}
             </div>
           </Tooltip>
         </Typography>
@@ -137,7 +137,7 @@ export function DocumentFragmentEditor(props: {
       ) : (
         // Document viewer, including collapse/expand
         <AutoBlocksRenderer
-          // text={marshallWrapText(part.data.text, /*fragment.title ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType }), 'markdown-code')}
+          // text={marshallWrapText(part.data.text, /*fragmentTitle ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType }), 'markdown-code')}
           text={marshallWrapText(part.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
           // text={part.data.text}
           // text={selectedFragment.part.text}
