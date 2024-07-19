@@ -76,7 +76,7 @@ export type DMessageTextPart = { pt: 'text', text: string };
 
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 
-export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta };
+export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1_title: string, meta?: DMessageDocMeta };
 type DMessageDocMimeType =
   | 'application/vnd.agi.ego'         // for attaching messages
   // | 'application/vnd.agi.code'        // Blocks > RenderCode
@@ -204,8 +204,8 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
   return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part };
 }
 
-export function createDocAttachmentFragment(title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, createDMessageDocPart(type, data, ref, meta));
+export function createDocAttachmentFragment(l1_title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta): DMessageAttachmentFragment {
+  return _createAttachmentFragment(l1_title, caption, createDMessageDocPart(type, data, ref, l1_title, meta));
 }
 
 export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
@@ -228,8 +228,8 @@ function _createSentinelFragment(): _DMessageSentinelFragment {
 
 /// Helpers - Parts Creation
 
-function createDMessageDocPart(type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta): DMessageDocPart {
-  return { pt: 'doc', type, data, ref, meta };
+function createDMessageDocPart(type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1_title: string, meta?: DMessageDocMeta): DMessageDocPart {
+  return { pt: 'doc', type, data, ref, l1_title, meta };
 }
 
 function createDMessageErrorPart(error: string): DMessageErrorPart {
@@ -309,7 +309,7 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
 function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
     case 'doc':
-      return createDMessageDocPart(part.type, _duplicateInlineData(part.data), part.ref, part.meta) as TPart;
+      return createDMessageDocPart(part.type, _duplicateInlineData(part.data), part.ref, part.l1_title, part.meta ? { ...part.meta } : undefined) as TPart;
 
     case 'error':
       return createDMessageErrorPart(part.error) as TPart;
