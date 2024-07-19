@@ -25,6 +25,9 @@ export const messageAsideColumnSx: SxProps = {
   position: 'sticky',
   top: 0,
 
+  // style
+  // filter: 'url(#agi-holographic)',
+
   // flexBasis: 0, // this won't let the item grow
   minWidth: { xs: 50, md: 64 },
   maxWidth: 80,

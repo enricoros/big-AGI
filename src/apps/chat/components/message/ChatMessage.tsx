@@ -433,6 +433,7 @@ export function ChatMessage(props: {
         backgroundColor: backgroundColor,
         px: { xs: 1, md: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2 },
         py: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2,
+        // filter: 'url(#agi-futuristic-glow)',
 
         // style: omit border if set externally
         ...(!('borderBottom' in (props.sx || {})) && {
