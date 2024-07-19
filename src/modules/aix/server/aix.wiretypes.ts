@@ -125,6 +125,9 @@ export namespace AixWire_Parts {
     // identifier of the document, to be known to the model, as unique as possible, for the purpose of versioning
     ref: z.string(),
 
+    // optional title of the document
+    l1Title: z.string().optional(),
+
     // inlined for now as it's only used here; in the TypeScript definition this is DMessageDataInline
     data: z.object({
       idt: z.literal('text'),
