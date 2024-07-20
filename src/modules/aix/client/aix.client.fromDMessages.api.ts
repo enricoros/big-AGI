@@ -5,7 +5,7 @@ import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment,
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaReplyToPart } from '../server/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaReplyToPart } from '../server/api/aix.wiretypes';
 
 // TODO: remove console messages to zero, or replace with throws or something
 

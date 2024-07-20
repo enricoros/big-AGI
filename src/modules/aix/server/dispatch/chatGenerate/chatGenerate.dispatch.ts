@@ -2,7 +2,7 @@ import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.route
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
-import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '../../aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
