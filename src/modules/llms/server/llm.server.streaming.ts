@@ -531,7 +531,6 @@ function _prepareRequestData({ access, model, history, context: _context }: Chat
     case 'lmstudio':
     case 'localai':
     case 'mistral':
-    case 'oobabooga':
     case 'openai':
     case 'openrouter':
     case 'perplexity':

@@ -22,7 +22,6 @@ Detailed guides to configure your big-AGI interface and models.
   - **[LocalAI](config-local-localai.md)**
   - **[LM Studio](config-local-lmstudio.md)**
   - **[Ollama](config-local-ollama.md)**
-  - **[Oobabooga](config-local-oobabooga.md)**
 
 
 - **Advanced Feature Configuration**:

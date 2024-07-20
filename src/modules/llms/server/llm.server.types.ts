@@ -69,7 +69,7 @@ export type StreamingContextNameSchema = z.infer<typeof llmsStreamingContextSche
 
 export const llmsChatGenerateOutputSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
-  content: z.string(),
+  content: z.string().nullable(),
   finish_reason: z.enum(['stop', 'length']).nullable(),
 });
 

@@ -6,7 +6,6 @@ import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorOllama } from './ollama/ollama.vendor';
-import { ModelVendorOoobabooga } from './oobabooga/oobabooga.vendor';
 import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
@@ -25,7 +24,6 @@ export type ModelVendorId =
   | 'localai'
   | 'mistral'
   | 'ollama'
-  | 'oobabooga'
   | 'openai'
   | 'openrouter'
   | 'perplexity'
@@ -42,7 +40,6 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,
   ollama: ModelVendorOllama,
-  oobabooga: ModelVendorOoobabooga,
   openai: ModelVendorOpenAI,
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
