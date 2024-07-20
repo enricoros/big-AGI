@@ -58,7 +58,20 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
       }
     }
 
-    // usually a single part, but in some instances there could be more than one (e.g. two FunctionCallParts)
+    // Gemini Messages Architecture
+    //
+    // Will send a single candidate (the API does not support more than 1), which will contain the content parts.
+    // There is just a single Part per Candidate, unless the chunk contains parallel function calls, in which case they're in parts.
+    //
+    // Beginning and End are implicit and follow the natural switching of parts in a progressive order; Gemini may for instance
+    // send incremental text parts, then call functions, then send more text parts, which we'll translate to multi parts.
+    //
+    // Parts assumptions:
+    // - 'text' parts are incremental, and meant to be concatenated
+    // - 'functionCall' are whole
+    // - 'executableCode' are whole
+    // - 'codeExecutionResult' are whole
+    //
     for (const mPart of candidate0.content.parts) {
       switch (true) {
 
