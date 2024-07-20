@@ -65,6 +65,7 @@ sequenceDiagram
     else Dispatch Fetch
         AIX Server ->> AI Provider: Send AI-provider specific stream/non-stream request
         AIX Server ->> AIX Client: Send 'start' control message
+        AIX Server ->> ParticleEmitter: Initialize particle emission
 
         alt Streaming AI Provider
             loop Until stream end or error
