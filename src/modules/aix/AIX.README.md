@@ -1,53 +1,51 @@
 # AIX
 
-AIX is a client-side API for integrating advanced AI capabilities into web applications.
+AIX is a client/server library for integrating advanced AI capabilities into web applications.
 
 ## Overview
 
-AIX provides a unified interface to incorporate various AI functionalities into web apps, abstracting the complexities of underlying AI services.
+AIX provides real-time, type-safe communication between a Typescript application and AI providers.
+
+Built in tRPC, it manages the lifecycle of AI-generated content from request to rendering, supporting both streaming and non-streaming AI providers.
 
 ## Features
 
 - Content Generation
-- Information Extraction
-- Image Manipulation
-- Multi-Modal Reasoning
-- Adaptive AI Personas
-- Complex AI Workflows
-
-## Benefits
-
-- Single API for multiple AI services
-- Full TypeScript support
-- React components for rapid integration
-- Supports simple tasks to complex, interactive AI workflows
+  - Multi-Modal streaming/non-streaming
+  - Throttled batching and error handling
+  - Server-side timeout/retry
+- (future) Information Extraction, Image Manipulation
+- (future) Complex AI Workflows
 
 ## 2. System Architecture
 
 The subsystem comprises three main components, each playing a crucial role in the data flow:
 
-1. **Client (Next.js Frontend)**
+1. **Client (e.g. Next.js Frontend)**
 
 - Initiates requests
 - Renders AI-generated content in real-time
 - Reconstructs streamed data
 
-2. **Server (Next.js Backend)**
+2. **Server (e.g. Next.js Backend)**
 
-- Acts as an intermediary
-- Forwards requests to AI providers
+- Acts as an intermediary between client and AI providers
+- Handles request preparation, dispatching, and response processing
 - Streams responses back to the client
-- Handles data transformation and security
 
 3. **Upstream AI Providers**
 
 - Generate AI content based on requests
 
-This architecture offers several advantages:
+### ChatGenerate workflow:
 
-- Enhanced security by keeping sensitive information server-side
-- A unified client-facing API, abstracting provider differences
-- Efficient data transformation and streaming capabilities
+1. Request Initialization: AIX Client prepares and sends AixWire_Parts to AIX Server
+2. Dispatch Preparation: AIX Server prepares for upstream communication
+3. AI Provider Interaction: AIX Server communicates with AI Provider (streaming or non-streaming)
+4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_PartParticles to AIX Client in batches
+5. Client-side Processing: PartReassembler processes particles into AixWire_Parts
+6. Completion: AIX Server sends 'done' control message, AIX Client finalizes data update
+7. Error Handling: AIX Server sends specific error messages when necessary
 
 ```mermaid
 sequenceDiagram
@@ -126,6 +124,30 @@ sequenceDiagram
     note over AIX Client: Client-side Timeout mechanism
     AIX Client ->> AIX Client: Timeout if no response received within set time
 ```
+
+## 3. Files and Folders
+
+AIX is organized into the following files and folders:
+
+1. Client-Side (`/client/`):
+
+- `aix.client.ts`: Main client-side entry point for AIX operations.
+- `aix.client.fromDMessages.api.ts`: Handles conversion of chat messages to AIX-compatible format (AixWire_Content, AixWire_Parts, etc.)
+
+2. Server-Side (`/server`):
+
+- API (`/server/api`):
+  - `aix.router.ts`: Defines the TRPC router for AIX operations.
+  - `aix.wiretypes.ts`: Contains Zod schemas for types incoming from the client (AixWire_Content schema, etc.)
+  - `IntakeHandler.ts`: Manages the downstream communication from AIX router, streaming data and control objects to the client.
+
+- Dispatch (`/server/dispatch`):
+  - Chat Generation (`/server/dispatch/chatGenerate`):
+    - Adapters to create API requests for different AI providers (Anthropic, Gemini, OpenAI).
+    - Parsers for parsing streaming/non-streaming responses for different AI providers (same 3).
+    - `chatGenerate.dispatch.ts`: Creates a pipeline to execute Chat Generation to a specific provider.
+  - AI provider Wire Types (`/server/dispatch/wiretypes`):
+    - Type definitions for different AI providers (Anthropic, Gemini, OpenAI).
 
 ## Structure (This was the initial - being replaced part by part right now - will come back to this later to update)
 
