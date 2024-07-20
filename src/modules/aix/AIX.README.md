@@ -17,6 +17,25 @@ Built in tRPC, it manages the lifecycle of AI-generated content from request to 
 - (future) Information Extraction, Image Manipulation
 - (future) Complex AI Workflows
 
+## AIX Providers support
+
+| Service    | Chat       | Function Calling | Multi-Modal Input | Streaming | Idiosyncratic | 
+|------------|------------|------------------|-------------------|-----------|---------------|
+| Anthropic  | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  |               |
+| Azure      | ✅          | ✅                |                   | Yes       |               |
+| Deepseek   | ✅          | ❌ (rejected)     |                   | Yes       |               |
+| Gemini     | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  | Code ex.: ✅   |
+| Groq       | ✅          | ✅                |                   | Yes       |               |
+| LM Studio  | ✅          | ❌ (not working)  |                   | Yes       |               |
+| Local AI   | ✅          | ✅                |                   | Yes       |               |
+| Mistral    | ✅          | ✅                |                   | Yes       |               |
+| Ollama     | ❌ (broken) | ?                |                   | Yes       |               |
+| Oobabooga  | ✅          | ?                |                   | Yes       |               |  
+| OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | Yes       |               |
+| OpenRouter | ✅          | ❌ (inconsistent) |                   | Yes       |               |
+| Perplexity | ✅          | ❌ (rejected)     |                   | Yes       |               |
+| TogetherAI | ✅          | ✅                |                   | Yes       |               |
+
 ## 2. System Architecture
 
 The subsystem comprises three main components, each playing a crucial role in the data flow:
