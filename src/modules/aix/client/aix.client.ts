@@ -5,8 +5,10 @@ import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry
 import { apiStream } from '~/common/util/trpc.client';
 import { getLabsDevMode } from '~/common/state/store-ux-labs';
 
+import type { DMessageDocPart, DMessageErrorPart, DMessageTextPart, DMessageToolInvocationPart, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
+
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
 
 export type StreamingClientUpdate = Partial<{
