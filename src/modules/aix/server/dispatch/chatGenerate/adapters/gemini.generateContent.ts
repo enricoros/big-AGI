@@ -82,7 +82,22 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
         case 'tool_call':
           switch (part.call.type) {
             case 'function_call':
-              parts.push(GeminiWire_ContentParts.FunctionCallPart(part.call.name, part.call.args ?? undefined));
+              let functionCallArgs: Record<string, any> | undefined;
+              if (part.call.args) {
+                // TODO: migrate to JSON | objects across all providers
+                // noinspection SuspiciousTypeOfGuard - reason: above
+                if (typeof part.call.args === 'string') {
+                  try {
+                    functionCallArgs = JSON.parse(part.call.args);
+                  } catch (e) {
+                    console.warn('Gemini: failed to parse (string -> JSON) function call arguments', e);
+                    functionCallArgs = { output: part.call.args };
+                  }
+                } else {
+                  functionCallArgs = part.call.args;
+                }
+              }
+              parts.push(GeminiWire_ContentParts.FunctionCallPart(part.call.name, functionCallArgs));
               break;
             case 'code_execution':
               if (part.call.language?.toLowerCase() !== 'python')
@@ -98,10 +113,25 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
           switch (part.response.type) {
             case 'function_call':
-              parts.push(GeminiWire_ContentParts.FunctionResponsePart(part.response._name || part.id, toolErrorPrefix + part.response.result));
+              let functionResponseResponse: Record<string, any> | undefined;
+              if (part.response.result) {
+                // TODO: migrate function call results to JSON | objects across all providers
+                // noinspection SuspiciousTypeOfGuard
+                if (typeof part.response.result === 'string') {
+                  try {
+                    functionResponseResponse = JSON.parse(part.response.result);
+                  } catch (e) {
+                    console.warn('Gemini: failed to parse (string -> JSON) function response result', e);
+                    functionResponseResponse = { output: toolErrorPrefix + part.response.result };
+                  }
+                } else {
+                  functionResponseResponse = part.response.result;
+                }
+              }
+              parts.push(GeminiWire_ContentParts.FunctionResponsePart(part.response._name || part.id, functionResponseResponse));
               break;
             case 'code_execution':
-              parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_ERROR', toolErrorPrefix + part.response.result));
+              parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));
               break;
             default:
               throw new Error(`Unsupported part type in message: ${(part as any).pt}`);
