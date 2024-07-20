@@ -12,10 +12,13 @@ import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
-import { createOpenAIMessageCreateParser } from './parsers/openai.parser';
+import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 
-import type { ChatGenerateParseFunction } from './parsers/parsers.types';
+import type { PartTransmitter } from '../../api/PartTransmitter';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
+
+
+export type ChatGenerateParseFunction = (partTransmitter: PartTransmitter, eventData: string, eventName?: string) => void;
 
 
 export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {
@@ -73,7 +76,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           body: aixToOpenAIChatCompletions(access.dialect, model, chatGenerate, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
-        chatGenerateParse: createOpenAIMessageCreateParser(),
+        chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
   }
 }

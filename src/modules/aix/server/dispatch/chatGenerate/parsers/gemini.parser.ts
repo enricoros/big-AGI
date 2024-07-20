@@ -1,6 +1,7 @@
-import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './parsers.types';
+import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
+
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
-import { ISSUE_SYMBOL, ISSUE_SYMBOL_PROMPT_BLOCKED, ISSUE_SYMBOL_RECITATION, TEXT_SYMBOL_MAX_TOKENS } from '../chatGenerate.config';
 
 
 export function createGeminiGenerateContentResponseParser(modelId: string): ChatGenerateParseFunction {
@@ -8,22 +9,21 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
   let hasBegun = false;
 
   // this can throw, it's caught by the caller
-  return function* (eventData): Generator<ChatGenerateMessageAction> {
-
-    // Throws on malformed event data
-    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+  return function(pt: PartTransmitter, eventData: string): void {
 
     // -> Model
     if (!hasBegun) {
       hasBegun = true;
-      yield { op: 'set', value: { model: modelName } };
+      pt.setModelName(modelName);
     }
+
+    // Throws on malformed event data
+    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
 
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      yield { op: 'issue', issue: `Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, symbol: ISSUE_SYMBOL_PROMPT_BLOCKED };
-      return yield { op: 'parser-close' };
+      return pt.terminatingDialectIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
     }
 
     // expect: single completion
@@ -41,16 +41,14 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
           // NOTE: this will show up in the chat as a message as a brick wall
           // and without the " [Gemini Issue]: Interrupted.." prefix, as it's written in the history
           // This can be changed in the future?
-          yield { op: 'text', text: ` ${TEXT_SYMBOL_MAX_TOKENS}` /* Interrupted: MAX_TOKENS reached */ };
-          return yield { op: 'parser-close' };
+          pt.appendText(` ${IssueSymbols.GenMaxTokens}` /* Interrupted: MAX_TOKENS reached */);
+          return pt.terminateParser('dialect-issue');
 
         case 'RECITATION':
-          yield { op: 'issue', issue: `Generation stopped due to RECITATION`, symbol: ISSUE_SYMBOL_RECITATION };
-          return yield { op: 'parser-close' };
+          return pt.terminatingDialectIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
 
         case 'SAFETY':
-          yield { op: 'issue', issue: `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, symbol: ISSUE_SYMBOL };
-          return yield { op: 'parser-close' };
+          return pt.terminatingDialectIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`);
 
         default:
           throw new Error(`server response missing content (finishReason: ${candidate0?.finishReason})`);
@@ -77,22 +75,36 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
 
         // <- TextPart
         case 'text' in mPart:
-          yield { op: 'text', text: mPart.text || '' };
+          pt.appendText(mPart.text || '');
           break;
 
         // <- FunctionCallPart
         case 'functionCall' in mPart:
-          yield { op: 'text', text: `TODO: [Function Call] ${mPart.functionCall.name} ${JSON.stringify(mPart.functionCall.args)}` };
+          pt.startFunctionToolCall(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args);
+          pt.endPart();
           break;
 
         // <- ExecutableCodePart
         case 'executableCode' in mPart:
-          yield { op: 'text', text: `TODO: [Executable Code] ${mPart.executableCode}` };
+          pt.addCodeExecutionToolCall(null, mPart.executableCode.language, mPart.executableCode.code);
           break;
 
         // <- CodeExecutionResultPart
         case 'codeExecutionResult' in mPart:
-          yield { op: 'text', text: `TODO: [Code Execution Result] ${mPart.codeExecutionResult}` };
+          switch (mPart.codeExecutionResult.outcome) {
+            case 'OUTCOME_OK':
+              pt.addCodeExecutionResponse(null, mPart.codeExecutionResult.output || '', undefined);
+              break;
+            case 'OUTCOME_FAILED':
+              pt.addCodeExecutionResponse(null, '', mPart.codeExecutionResult.output || '');
+              break;
+            case 'OUTCOME_DEADLINE_EXCEEDED':
+              const deadlineError = 'Code execution deadline exceeded' + (mPart.codeExecutionResult.output ? `: ${mPart.codeExecutionResult.output}` : '');
+              pt.addCodeExecutionResponse(null, '', deadlineError);
+              break;
+            default:
+              throw new Error(`unexpected code execution outcome: ${mPart.codeExecutionResult.outcome}`);
+          }
           break;
 
         default:
@@ -101,17 +113,8 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
     }
 
     // -> Stats
-    // if (generationChunk.usageMetadata) {
-    //   // TODO: we should only return this on the last packet, once we have the full stats
-    //   yield {
-    //     op: 'set', value: {
-    //       stats: {
-    //         chatInTokens: generationChunk.usageMetadata.promptTokenCount ?? -1,
-    //         chatOutTokens: generationChunk.usageMetadata.candidatesTokenCount ?? -1,
-    //       },
-    //     },
-    //   };
-    // }
+    if (generationChunk.usageMetadata)
+      pt.setCounters({ chatIn: generationChunk.usageMetadata.promptTokenCount, chatOut: generationChunk.usageMetadata.candidatesTokenCount });
 
   };
 }
