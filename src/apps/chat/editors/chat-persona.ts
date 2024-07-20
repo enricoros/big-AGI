@@ -1,6 +1,6 @@
 import type { DLLMId } from '~/modules/llms/store-llms';
 
-import type { AixAPI_ContextChatStream, AixAPIChatGenerate_Request } from '~/modules/aix/server/aix.wiretypes';
+import type { AixAPI_ContextChatStream, AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';

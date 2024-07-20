@@ -1,6 +1,6 @@
 import { createTRPCRouter } from './trpc.server';
 
-import { aixRouter } from '~/modules/aix/server/aix.router';
+import { aixRouter } from '~/modules/aix/server/api/aix.router';
 import { backendRouter } from '~/modules/backend/backend.router';
 import { elevenlabsRouter } from '~/modules/elevenlabs/elevenlabs.router';
 import { googleSearchRouter } from '~/modules/google/search.router';

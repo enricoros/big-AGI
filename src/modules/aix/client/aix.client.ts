@@ -6,7 +6,7 @@ import { apiStream } from '~/common/util/trpc.client';
 import { getLabsDevMode } from '~/common/state/store-ux-labs';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '~/modules/aix/server/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 
 
 export type StreamingClientUpdate = Partial<{
@@ -72,6 +72,14 @@ function _aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: st
 export let devMode_AixLastDispatchRequestBody: string | null = null;
 
 
+export type DMessageAixIntakeRecombinedPart =
+  | DMessageTextPart
+  | DMessageDocPart
+  | DMessageToolInvocationPart
+  | DMessageToolResponsePart // [Gemini] code execution is a code response, which may come down the pipe
+  | DMessageErrorPart;
+
+
 /**
  * Client side chat generation, with streaming. This decodes the (text) streaming response from
  * our server streaming endpoint (plain text, not EventSource), and signals updates via a callback.
@@ -91,6 +99,33 @@ async function _aixChatGenerateContent(
   abortSignal: AbortSignal,
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
 ): Promise<void> {
+
+
+  aixChatGenerate.tools = [{
+    type: 'function_call',
+    function_call: {
+      name: 'get_capybara_info_given_name_and_color_very_long',
+      description: 'Get the info about capybaras. Call one each per name.',
+      input_schema: {
+        properties: {
+          'name': {
+            type: 'string',
+            description: 'The name of the capybara',
+            enum: ['enrico', 'coolio'],
+          },
+          'color': {
+            type: 'string',
+            description: 'The color of the capybara. Mandatory!!',
+          },
+        },
+        required: ['name'],
+      },
+    },
+  }];
+  // chatGenerate.tools = [{
+  //   type: 'gemini_code_interpreter'
+  // }];
+
 
   const operation = await apiStream.aix.chatGenerateContent.mutate(
     { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming: true, _debugRequestBody: getLabsDevMode() },

@@ -5,9 +5,9 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
-import { IntakeHandler } from './intake/IntakeHandler';
-import { createChatGenerateDispatch } from './dispatch/chatGenerate/chatGenerate.dispatch';
-import { createStreamDemuxer } from './dispatch/stream.demuxers';
+import { IntakeHandler } from './IntakeHandler';
+import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
+import { createStreamDemuxer } from '../dispatch/stream.demuxers';
 
 
 export const aixRouter = createTRPCRouter({
