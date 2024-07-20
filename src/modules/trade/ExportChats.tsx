@@ -145,7 +145,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handleDownloadAllConversationsJSON}
             >
-              Download All · JSON
+              Backup All · JSON
             </Button>
 
           </Box>
