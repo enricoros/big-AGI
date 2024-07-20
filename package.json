@@ -18,10 +18,10 @@
     "schema": "src/server/prisma/schema.prisma"
   },
   "dependencies": {
-    "@emotion/cache": "^11.11.0",
-    "@emotion/react": "^11.11.4",
+    "@emotion/cache": "^11.13.0",
+    "@emotion/react": "^11.13.0",
     "@emotion/server": "^11.11.0",
-    "@emotion/styled": "^11.11.5",
+    "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^5.16.4",
     "@mui/joy": "^5.0.0-beta.48",
     "@mui/material": "^5.16.4",
@@ -30,7 +30,7 @@
     "@prisma/client": "^5.17.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.10.1",
-    "@tanstack/react-query": "^5.51.9",
+    "@tanstack/react-query": "^5.51.11",
     "@trpc/client": "11.0.0-rc.466",
     "@trpc/next": "11.0.0-rc.466",
     "@trpc/react-query": "11.0.0-rc.466",
