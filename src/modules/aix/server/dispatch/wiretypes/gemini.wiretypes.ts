@@ -138,7 +138,7 @@ export namespace GeminiWire_ContentParts {
   });
 
 
-  /// Content Parts (union of) - request.contents
+  /// Content Parts (union of) - (input) request.contents[number].parts
 
   export type ContentPart = z.infer<typeof ContentPart_schema>;
   export const ContentPart_schema = z.union([
@@ -147,6 +147,16 @@ export namespace GeminiWire_ContentParts {
     FunctionCallPart_schema,
     FunctionResponsePart_schema,
     FileDataPart_schema,
+    ExecutableCodePart_schema,
+    CodeExecutionResultPart_schema,
+  ]);
+
+
+  /// Content Parts (union of) - (model output) response.candidates[number].content.parts
+
+  export const ModelContentPart_schema = z.union([
+    TextPart_schema,
+    FunctionCallPart_schema,
     ExecutableCodePart_schema,
     CodeExecutionResultPart_schema,
   ]);
@@ -204,12 +214,7 @@ export namespace GeminiWire_Messages {
   export const ModelContent_schema = Content_schema.extend({
     role: z.literal('model'),
     // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
-    parts: z.array(z.union([
-      GeminiWire_ContentParts.TextPart_schema,
-      GeminiWire_ContentParts.FunctionCallPart_schema,
-      GeminiWire_ContentParts.ExecutableCodePart_schema,
-      GeminiWire_ContentParts.CodeExecutionResultPart_schema,
-    ])),
+    parts: z.array(GeminiWire_ContentParts.ModelContentPart_schema),
   });
 
   // export const UserMessage_schema = Content_schema.extend({
@@ -455,7 +460,7 @@ export namespace GeminiWire_API_Generate_Content {
     /**
      * Token count for this candidate.
      * Empirical observations:
-     * - not present, probably replaced by the ^usageMetadata field
+     * - NOTE: not present(!), probably replaced by the ^usageMetadata field
      */
     tokenCount: z.number().optional(),
     // groundingAttributions: z.array(...).optional(), // This field is populated for GenerateAnswer calls.
