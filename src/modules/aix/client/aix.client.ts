@@ -103,30 +103,37 @@ async function _aixChatGenerateContent(
 ): Promise<void> {
 
 
-  aixChatGenerate.tools = [{
-    type: 'function_call',
-    function_call: {
-      name: 'get_capybara_info_given_name_and_color_very_long',
-      description: 'Get the info about capybaras. Call one each per name.',
-      input_schema: {
-        properties: {
-          'name': {
-            type: 'string',
-            description: 'The name of the capybara',
-            enum: ['enrico', 'coolio'],
+  aixChatGenerate.tools = [
+    {
+      type: 'function_call',
+      function_call: {
+        name: 'get_capybara_info_given_name_and_color_very_long',
+        description: 'Get the info about capybaras. Call one each per name.',
+        input_schema: {
+          properties: {
+            'name': {
+              type: 'string',
+              description: 'The name of the capybara',
+              enum: ['enrico', 'coolio'],
+            },
+            'color': {
+              type: 'string',
+              description: 'The color of the capybara. Mandatory!!',
+            },
+            // 'story': {
+            //   type: 'string',
+            //   description: 'A fantastic story about the capybara. Please 10 characters maximum.',
+            // },
           },
-          'color': {
-            type: 'string',
-            description: 'The color of the capybara. Mandatory!!',
-          },
+          required: ['name'],
         },
-        required: ['name'],
       },
     },
-  }];
-  // chatGenerate.tools = [{
-  //   type: 'gemini_code_interpreter'
-  // }];
+    // {
+    //   type: 'code_execution',
+    //   variant: 'gemini_auto_inline',
+    // },
+  ];
 
 
   const operation = await apiStream.aix.chatGenerateContent.mutate(
@@ -143,10 +150,10 @@ async function _aixChatGenerateContent(
         incrementalText += update.t;
         onUpdate({ textSoFar: incrementalText, typing: true }, false);
       } else if ('set' in update) {
-        if (update.set.model)
-          onUpdate({ originLLM: update.set.model }, false);
-        else
-          console.log('set:', update.set);
+        // if (update.set.model)
+        //   onUpdate({ originLLM: update.set.model }, false);
+        // else
+        console.log('set:', update.set);
       } else if ('issueId' in update) {
         incrementalText += update.issueText;
         onUpdate({ textSoFar: incrementalText, typing: true }, false);

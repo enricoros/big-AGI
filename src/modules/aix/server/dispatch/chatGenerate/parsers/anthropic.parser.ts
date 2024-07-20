@@ -1,8 +1,9 @@
 import { safeErrorString } from '~/server/wire';
 
-import type { ChatGenerateMessageAction, ChatGenerateParseFunction } from './parsers.types';
+import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
+
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
-import { ISSUE_SYMBOL, TEXT_SYMBOL_MAX_TOKENS } from '../chatGenerate.config';
 
 
 export function createAnthropicMessageParser(): ChatGenerateParseFunction {
@@ -14,7 +15,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   // Note: at this stage, the parser only returns the text content as text, which is streamed as text
   //       to the client. It is however building in parallel the responseMessage object, which is not
   //       yet used, but contains token counts, for instance.
-  return function* (eventData: string, eventName?: string): Generator<ChatGenerateMessageAction> {
+  return function(pt: PartTransmitter, eventData: string, eventName?: string): void {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -29,14 +30,22 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_start':
         messageStartTime = Date.now();
         const isFirstMessage = !responseMessage;
+
+        // state validation
         responseMessage = AnthropicWire_API_Message_Create.event_MessageStart_schema.parse(JSON.parse(eventData)).message;
+        if (responseMessage.content.length)
+          throw new Error('Unexpected content blocks at message start');
+        if (responseMessage.role !== 'assistant')
+          throw new Error(`Unexpected role at message start: ${responseMessage.role}`);
+        if (!responseMessage.model)
+          throw new Error('Model name missing at message start');
 
         // -> Model
-        if (isFirstMessage && responseMessage.model)
-          yield { op: 'set', value: { model: responseMessage.model } };
+        if (isFirstMessage)
+          pt.setModelName(responseMessage.model);
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
-          yield { op: 'set', value: { stats: { chatInTokens: chatInTokens, chatOutTokens: responseMessage.usage.output_tokens } } };
+          pt.setCounters({ chatIn: chatInTokens, chatOut: responseMessage.usage.output_tokens });
         }
         break;
 
@@ -50,10 +59,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
           switch (content_block.type) {
             case 'text':
-              yield { op: 'text', text: content_block.text };
+              pt.appendText(content_block.text);
               break;
             case 'tool_use':
-              yield { op: 'text', text: `TODO: [Tool Use] ${content_block.id} ${content_block.name} ${content_block.input}` };
+              pt.startFunctionToolCall(content_block.id, content_block.name, 'incr_str', (content_block.input as string) || '');
               break;
           }
         } else
@@ -71,15 +80,17 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             case 'text_delta':
               if (responseMessage.content[index].type === 'text') {
                 responseMessage.content[index].text += delta.text;
-                yield { op: 'text', text: delta.text };
-              }
+                pt.appendText(delta.text);
+              } else
+                throw new Error('Unexpected text delta');
               break;
 
             case 'input_json_delta':
               if (responseMessage.content[index].type === 'tool_use') {
                 responseMessage.content[index].input += delta.partial_json;
-                yield { op: 'text', text: `[${delta.partial_json}]` };
-              }
+                pt.appendFunctionToolCallArgsIStr(responseMessage.content[index].id, delta.partial_json);
+              } else
+                throw new Error('Unexpected input_json_delta');
               break;
 
             default:
@@ -97,6 +108,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             throw new Error(`Unexpected content block stop location (${index})`);
 
           // Signal that the tool is ready? (if it is...)
+          pt.endPart();
         } else
           throw new Error('Unexpected content_block_stop');
         break;
@@ -105,20 +117,32 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_delta':
         if (responseMessage) {
           const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
+
           Object.assign(responseMessage, delta);
+
+          // Unused for now
+          // if (delta.stop_reason) {
+          //   switch (delta.stop_reason) {
+          //     case 'end_turn':
+          //       break;
+          //     case 'max_tokens':
+          //       break;
+          //     case 'stop_sequence':
+          //       break;
+          //     case'tool_use':
+          //       break;
+          //   }
+          // }
+
           if (usage?.output_tokens && messageStartTime) {
             const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
             const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-            yield {
-              op: 'set', value: {
-                stats: {
-                  chatInTokens: chatInTokens !== null ? chatInTokens : -1,
-                  chatOutTokens: usage.output_tokens,
-                  chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-                  timeInner: elapsedTimeSeconds,
-                },
-              },
-            };
+            pt.setCounters({
+              chatIn: chatInTokens !== undefined ? chatInTokens : -1,
+              chatOut: usage.output_tokens,
+              chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+              chatTimeInner: elapsedTimeSeconds,
+            });
           }
         } else
           throw new Error('Unexpected message_delta');
@@ -127,15 +151,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
-        return yield { op: 'parser-close' };
+        return pt.terminateParser('message-stop');
 
       // UNDOCUMENTED - Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
       case 'error':
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        yield { op: 'issue', issue: errorText || 'unknown server issue.', symbol: ISSUE_SYMBOL };
-        return yield { op: 'parser-close' };
+        return pt.terminatingDialectIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
 
       default:
         throw new Error(`Unexpected event name: ${eventName}`);
@@ -147,7 +170,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   let messageStartTime: number = Date.now();
 
-  return function* (fullData: string): Generator<ChatGenerateMessageAction> {
+  return function(pt: PartTransmitter, fullData: string): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
@@ -159,7 +182,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
     // -> Model
     if (model)
-      yield { op: 'set', value: { model } };
+      pt.setModelName(model);
 
     // -> Content Blocks
     for (let i = 0; i < content.length; i++) {
@@ -167,11 +190,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const isLastBlock = i === content.length - 1;
       switch (contentBlock.type) {
         case 'text':
-          const hitMaxTokens = (isLastBlock && stop_reason === 'max_tokens') ? ` ${TEXT_SYMBOL_MAX_TOKENS}` : '';
-          yield { op: 'text', text: contentBlock.text + hitMaxTokens };
+          const hitMaxTokens = (isLastBlock && stop_reason === 'max_tokens') ? ` ${IssueSymbols.GenMaxTokens}` : '';
+          pt.appendText(contentBlock.text + hitMaxTokens);
           break;
         case 'tool_use':
-          yield { op: 'text', text: `TODO: [Tool Use] ${contentBlock.id} ${contentBlock.name} ${JSON.stringify(contentBlock.input)}` };
+          // NOTE: this gets parsed as an object, not string deltas of a json!
+          pt.startFunctionToolCall(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || '');
+          pt.endPart();
           break;
         default:
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
@@ -182,16 +207,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     if (usage) {
       const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
       const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-      yield {
-        op: 'set', value: {
-          stats: {
-            chatInTokens: usage.input_tokens,
-            chatOutTokens: usage.output_tokens,
-            chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-            timeInner: elapsedTimeSeconds,
-          },
-        },
-      };
+      pt.setCounters({
+        chatIn: usage.input_tokens,
+        chatOut: usage.output_tokens,
+        chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+        chatTimeInner: elapsedTimeSeconds,
+      });
     }
   };
 }

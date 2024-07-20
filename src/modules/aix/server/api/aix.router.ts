@@ -6,6 +6,7 @@ import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
 import { IntakeHandler } from './IntakeHandler';
+import { PartTransmitter } from './PartTransmitter';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
 
@@ -38,6 +39,9 @@ export const aixRouter = createTRPCRouter({
       const intakeHandler = new IntakeHandler(prettyDialect);
       yield* intakeHandler.yieldStart();
 
+      // TEMP
+      const partTransmitter = new PartTransmitter(prettyDialect);
+      // TODO partTransmitter.setThrottle(...)
 
       // Prepare the dispatch
       let dispatch: ReturnType<typeof createChatGenerateDispatch>;
@@ -82,12 +86,19 @@ export const aixRouter = createTRPCRouter({
 
       // [ALPHA] [NON-STREAMING] Read the full response and send operations down the intake
       if (!streaming) {
+        let dispatchBody: string;
         try {
-          const dispatchBody = await dispatchResponse.text();
-          const messageAction = dispatch.chatGenerateParse(dispatchBody);
-          yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
+          dispatchBody = await dispatchResponse.text();
+          intakeHandler.onReceivedWireMessage(dispatchBody);
         } catch (error: any) {
-          yield* intakeHandler.yieldError('dispatch-read', `**[Service Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service reading error'}`);
+          yield* intakeHandler.yieldError('dispatch-read', `**[Reading Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`);
+          return; // exit
+        }
+        try {
+          dispatch.chatGenerateParse(partTransmitter, dispatchBody);
+          // TODO * intakeHandler.yieldDmaOps(messageAction, prettyDialect);
+        } catch (error: any) {
+          yield* intakeHandler.yieldError('dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket.`, true);
         }
         return; // exit
       }
@@ -130,7 +141,7 @@ export const aixRouter = createTRPCRouter({
 
         // Demux the chunk into 0 or more events
         for (const demuxedItem of dispatchDemuxer.demux(dispatchChunk)) {
-          intakeHandler.onReceivedDispatchEvent(demuxedItem);
+          intakeHandler.onReceivedWireMessage(demuxedItem);
 
           // ignore events post termination
           if (intakeHandler.intakeTerminated) {
@@ -150,8 +161,8 @@ export const aixRouter = createTRPCRouter({
           }
 
           try {
-            const messageAction = dispatchParser(demuxedItem.data, demuxedItem.name);
-            yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
+            dispatchParser(partTransmitter, demuxedItem.data, demuxedItem.name);
+            // TODO yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
           } catch (error: any) {
             // Handle parsing issue (likely a schema break); print it to the console as well
             yield* intakeHandler.yieldError('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, true);
