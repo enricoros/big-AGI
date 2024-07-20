@@ -6,15 +6,37 @@ import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
 
 
+/**
+ * Anthropic Streaming Completions - Messages Architecture
+ *
+ * Anthropic uses a events-based, chunk-based streaming protocol for its chat completions:
+ * 1. 'message_start': Initializes a new message with metadata (id, model, usage) and empty content.
+ * 2. 'content_block_start': Begins a new content block (text or tool_use).
+ * 3. 'content_block_delta': Streams incremental updates to the current content block.
+ * 4. 'content_block_stop': Signals the end of the current content block.
+ * 5. 'message_delta': Provides updates to message-level information (e.g., stop_reason, usage).
+ * 6. 'message_stop': Indicates the end of the entire message.
+ * 7. 'ping': Keepalive event that may occur at any time during the stream.
+ * 8. 'error': Communicates errors (e.g., overloaded_error) during streaming.
+ *
+ * Delta Types:
+ * - 'text_delta': Incremental text updates for text blocks.
+ * - 'input_json_delta': Partial JSON strings for tool_use inputs.
+ *
+ * Assumptions:
+ * - Content blocks are indexed and streamed sequentially, with no gaps, 'index' is 0-based and reliable.
+ * - 'text' parts are incremental and meant to be concatenated via 'text_delta'
+ * - 'tool_use' parts are only function calls, and meant to have arguments as an incremental string via 'input_json_delta'
+ * - There could be multiple messages, but we only handle 1 at this time, with multiple parts.
+ * - Message Deltas will provide a 'stop reason' on the message
+ * - Begin/End are explicit
+ */
 export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let responseMessage: AnthropicWire_API_Message_Create.Response;
   let hasErrored = false;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
 
-  // Note: at this stage, the parser only returns the text content as text, which is streamed as text
-  //       to the client. It is however building in parallel the responseMessage object, which is not
-  //       yet used, but contains token counts, for instance.
   return function(pt: PartTransmitter, eventData: string, eventName?: string): void {
 
     // if we've errored, we should not be receiving more data
@@ -30,9 +52,13 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       case 'message_start':
         messageStartTime = Date.now();
         const isFirstMessage = !responseMessage;
+        if (!isFirstMessage)
+          throw new Error('Unexpected second message - we only support 1 Antrhopic message at a time');
+
+        // Throws on malformed event data, or even role != 'assistant'
+        responseMessage = AnthropicWire_API_Message_Create.event_MessageStart_schema.parse(JSON.parse(eventData)).message;
 
         // state validation
-        responseMessage = AnthropicWire_API_Message_Create.event_MessageStart_schema.parse(JSON.parse(eventData)).message;
         if (responseMessage.content.length)
           throw new Error('Unexpected content blocks at message start');
         if (responseMessage.role !== 'assistant')
@@ -64,6 +90,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             case 'tool_use':
               pt.startFunctionToolCall(content_block.id, content_block.name, 'incr_str', (content_block.input as string) || '');
               break;
+            default:
+              throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
           }
         } else
           throw new Error('Unexpected content_block_start');

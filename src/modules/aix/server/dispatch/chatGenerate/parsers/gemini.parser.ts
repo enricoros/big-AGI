@@ -3,7 +3,23 @@ import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
-
+/**
+ * Gemini Completions -  Messages Architecture
+ *
+ * Will send a single candidate (the API does not support more than 1), which will contain the content parts.
+ * There is just a single Part per Candidate, unless the chunk contains parallel function calls, in which case they're in parts.
+ *
+ * Beginning and End are implicit and follow the natural switching of parts in a progressive order; Gemini may for instance
+ * send incremental text parts, then call functions, then send more text parts, which we'll translate to multi parts.
+ *
+ * Parts assumptions:
+ *  - 'text' parts are incremental, and meant to be concatenated
+ *  - 'functionCall' are whole
+ *  - 'executableCode' are whole
+ *  - 'codeExecutionResult' are whole *
+ *
+ *  Note that non-streaming calls will contain a complete sequence of complete parts.
+ */
 export function createGeminiGenerateContentResponseParser(modelId: string): ChatGenerateParseFunction {
   const modelName = modelId.replace('models/', '');
   let hasBegun = false;
@@ -56,20 +72,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
       }
     }
 
-    // Gemini Messages Architecture
-    //
-    // Will send a single candidate (the API does not support more than 1), which will contain the content parts.
-    // There is just a single Part per Candidate, unless the chunk contains parallel function calls, in which case they're in parts.
-    //
-    // Beginning and End are implicit and follow the natural switching of parts in a progressive order; Gemini may for instance
-    // send incremental text parts, then call functions, then send more text parts, which we'll translate to multi parts.
-    //
-    // Parts assumptions:
-    // - 'text' parts are incremental, and meant to be concatenated
-    // - 'functionCall' are whole
-    // - 'executableCode' are whole
-    // - 'codeExecutionResult' are whole
-    //
+    // see the message architecture
     for (const mPart of candidate0.content.parts) {
       switch (true) {
 

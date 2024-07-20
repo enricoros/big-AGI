@@ -7,8 +7,27 @@ import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 
 
-/// OpenAI streaming ChatCompletions
-
+/**
+ * OpenAI Streaming Completions -  Messages Architecture
+ *
+ * OpenAI uses a chunk-based streaming protocol for its chat completions:
+ * 1. Each chunk contains a 'choices' array, typically with a single item.
+ * 2. The 'delta' field in each choice contains incremental updates to the message.
+ * 3. Text content is streamed as string fragments in delta.content.
+ * 4. Tool calls (function calls) are streamed incrementally in delta.tool_calls.
+ * 5. There may be a final chunk which may contain a 'finish_reason' - but we won't rely on it.
+ *
+ * Assumptions:
+ * - 'text' parts are incremental
+ * - 'functionCall' are streamed incrementally, but follow a scheme.
+ *    1. the firs delta chunk contains the the full ID and name of the function, and likley empty arguments.
+ *    2. Subsequent delta chunks will only contain incremental text for the arguments.
+ * - Begin/End: at any point:
+ *    - it's either streaming Text or Tool Calls on each chunk
+ *    - and there can be multiple chunks for a single completion (e.g. a text chunk and a tool call 1 chunk)
+ *    - the temporal order of the chunks implies the beginning/end of a tool call.
+ * - There's no explicit end in this data protocol, but it's handled in the caller with a sse:[DONE] event.
+ */
 export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunction {
   let hasBegun = false;
   let hasWarned = false;
