@@ -444,7 +444,6 @@ export namespace OpenAIWire_API_Models_List {
     object: z.literal('model'),
     created: z.number().optional(),
     // [dialect:OpenAI] 'openai' | 'openai-dev' | 'openai-internal' | 'system'
-    // [dialect:Oobabooga] 'user'
     owned_by: z.string().optional(),
 
     // **Extensions**

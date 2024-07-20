@@ -11,7 +11,7 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, oobaboogaModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -21,7 +21,7 @@ const ABERRATION_FIXUP_SQUASH = '\n\n\n---\n\n\n';
 
 
 const openAIDialects = z.enum([
-  'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'oobabooga', 'openai', 'openrouter', 'perplexity', 'togetherai',
+  'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'openai', 'openrouter', 'perplexity', 'togetherai',
 ]);
 export type OpenAIDialects = z.infer<typeof openAIDialects>;
 
@@ -180,13 +180,6 @@ export const llmOpenAIRouter = createTRPCRouter({
           models = openAIModels
             .map(mistralModelToModelDescription)
             .sort(mistralModelsSort);
-          break;
-
-        // [Oobabooga]: remove virtual models, hidden by default
-        case 'oobabooga':
-          models = openAIModels
-            .map(model => oobaboogaModelToModelDescription(model.id, model.created))
-            .filter(model => !model.hidden);
           break;
 
         // [OpenAI]: chat-only models, custom sort, manual mapping
@@ -460,7 +453,6 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'lmstudio':
-    case 'oobabooga':
     case 'openai':
       const oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
       const oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
@@ -724,7 +716,7 @@ function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, mes
 
 function parseChatGenerateOutput(message: OpenAIWire_API_Chat_Completions.Response['choices'][number]['message'], finish_reason: OpenAIWire_API_Chat_Completions.Response['choices'][number]['finish_reason']) {
   // validate the message
-  if (message.content === null)
+  if (message.content === undefined)
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
       message: `[OpenAI Issue] Expected a message, got a null message`,

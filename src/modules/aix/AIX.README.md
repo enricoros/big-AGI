@@ -34,12 +34,10 @@ Built in tRPC, it manages the lifecycle of AI-generated content from request to 
 | Perplexity | ✅          | ❌ (rejected)     |                   | Yes + 📦  |               |
 | TogetherAI | ✅          | ✅                |                   | Yes + 📦  |               |
 | Ollama     | ❌ (broken) | ?                |                   |           |               |
-| Oobabooga  | ?          | ?                |                   |           |               |  
 
 Notes:
 
 - Ollama has not been ported to AIX yet due to the custom APIs.
-- Oobabooga is deprecated and will be removed.
 
 ## 2. System Architecture
 
