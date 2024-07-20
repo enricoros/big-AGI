@@ -64,18 +64,27 @@ export namespace GeminiWire_ContentParts {
   export const FunctionCallPart_schema = z.object({
     functionCall: z.object({
       name: z.string(),
-      // NOTE: replacing with a single string for now, leaving serialization to the caller eventually
-      args: z.string().optional(),
-      // args: z.record(z.any()).optional(), // JSON object format
+      /** The function parameters and values in JSON object format. */
+      args: z.record(z.any()).optional(),
     }),
   });
 
+  /**
+   * The result output from a FunctionCall that contains a string representing the FunctionDeclaration.name
+   * and a structured JSON object containing any output from the function is used as context to the model.
+   * This should contain the result of aFunctionCall made based on model prediction.
+   *
+   * NOTE from the online Google docs on 2024-07-20:
+   * - The next conversation turn may contain a [FunctionResponse][content.part.function_response] with
+   *   the [content.role] "function" generation context for the next model turn.
+   *   This is extremely weird, because role should only be 'user' or 'model'. FIXME GOOGLE!
+   */
   const FunctionResponsePart_schema = z.object({
     functionResponse: z.object({
+      /** Corresponds to the related FunctionDeclaration.name */
       name: z.string(),
-      // NOTE: replacing with a single string for now, leaving serialization to the caller eventually
-      response: z.string().optional(),
-      // response: z.record(z.any()), // Optional. JSON object format
+      /** The function response in JSON object format. */
+      response: z.record(z.any()).optional(),
     }),
   });
 
@@ -86,24 +95,50 @@ export namespace GeminiWire_ContentParts {
     }),
   });
 
-  // Undocumented as of 2024-07-15
-  export const unstable_ExecutableCodePart_schema = z.object({
+  export const ExecutableCodePart_schema = z.object({
     executableCode: z.object({
-      language: z.enum(['PYTHON']), // Add other languages if needed
+      language: z.enum([
+        // /**
+        //  * Unspecified language. This value should not be used.
+        //  */
+        // 'LANGUAGE_UNSPECIFIED',
+        /** Python >= 3.10, with numpy and simpy available. */
+        'PYTHON',
+      ]),
+      /** The code to be executed. */
       code: z.string(),
     }),
   });
 
-  // Undocumented as of 2024-07-15
-  export const unstable_CodeExecutionResultPart_schema = z.object({
+  export const CodeExecutionResultPart_schema = z.object({
     codeExecutionResult: z.object({
-      outcome: z.enum(['OUTCOME_OK', 'OUTCOME_ERROR']),
+      outcome: z.enum([
+        // /**
+        //  * Unspecified status. This value should not be used.
+        //  */
+        // 'OUTCOME_UNSPECIFIED',
+        /**
+         * Code execution completed successfully.
+         */
+        'OUTCOME_OK',
+        /**
+         * Code execution finished but with a failure. stderr should contain the reason.
+         */
+        'OUTCOME_FAILED',
+        /**
+         * Code execution ran for too long, and was cancelled. There may or may not be a partial output present.
+         */
+        'OUTCOME_DEADLINE_EXCEEDED',
+      ]),
+      /**
+       * Contains stdout when code execution is successful, stderr or other description otherwise.
+       */
       output: z.string().optional(),
     }),
   });
 
 
-  /// Content Parts - Unions
+  /// Content Parts (union of) - request.contents
 
   export type ContentPart = z.infer<typeof ContentPart_schema>;
   export const ContentPart_schema = z.union([
@@ -112,8 +147,8 @@ export namespace GeminiWire_ContentParts {
     FunctionCallPart_schema,
     FunctionResponsePart_schema,
     FileDataPart_schema,
-    unstable_ExecutableCodePart_schema,
-    unstable_CodeExecutionResultPart_schema, // NEW, undocumented
+    ExecutableCodePart_schema,
+    CodeExecutionResultPart_schema,
   ]);
 
 
@@ -127,19 +162,19 @@ export namespace GeminiWire_ContentParts {
     return { inlineData: { mimeType, data } };
   }
 
-  export function FunctionCallPart(name: string, args?: string): z.infer<typeof FunctionCallPart_schema> {
+  export function FunctionCallPart(name: string, args?: Record<string, any>): z.infer<typeof FunctionCallPart_schema> {
     return { functionCall: { name, args } };
   }
 
-  export function FunctionResponsePart(name: string, response?: string): z.infer<typeof FunctionResponsePart_schema> {
+  export function FunctionResponsePart(name: string, response?: Record<string, any>): z.infer<typeof FunctionResponsePart_schema> {
     return { functionResponse: { name, response } };
   }
 
-  export function ExecutableCodePart(language: 'PYTHON', code: string): z.infer<typeof unstable_ExecutableCodePart_schema> {
+  export function ExecutableCodePart(language: 'PYTHON', code: string): z.infer<typeof ExecutableCodePart_schema> {
     return { executableCode: { language, code } };
   }
 
-  export function CodeExecutionResultPart(outcome: 'OUTCOME_OK' | 'OUTCOME_ERROR', output?: string): z.infer<typeof unstable_CodeExecutionResultPart_schema> {
+  export function CodeExecutionResultPart(outcome: 'OUTCOME_OK' | 'OUTCOME_FAILED' | 'OUTCOME_DEADLINE_EXCEEDED', output?: string): z.infer<typeof CodeExecutionResultPart_schema> {
     return { codeExecutionResult: { outcome, output } };
   }
 
@@ -154,7 +189,7 @@ export namespace GeminiWire_Messages {
     parts: z.array(GeminiWire_ContentParts.TextPart_schema),
   });
 
-  // Contents
+  // Content - request.contents[]
 
   export type Content = z.infer<typeof Content_schema>;
   export const Content_schema = z.object({
@@ -164,14 +199,16 @@ export namespace GeminiWire_Messages {
     parts: z.array(GeminiWire_ContentParts.ContentPart_schema),
   });
 
+  // Model Content - response.candidates[number].content
+
   export const ModelContent_schema = Content_schema.extend({
     role: z.literal('model'),
     // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
     parts: z.array(z.union([
       GeminiWire_ContentParts.TextPart_schema,
       GeminiWire_ContentParts.FunctionCallPart_schema,
-      GeminiWire_ContentParts.unstable_ExecutableCodePart_schema,
-      GeminiWire_ContentParts.unstable_CodeExecutionResultPart_schema,
+      GeminiWire_ContentParts.ExecutableCodePart_schema,
+      GeminiWire_ContentParts.CodeExecutionResultPart_schema,
     ])),
   });
 
@@ -181,12 +218,14 @@ export namespace GeminiWire_Messages {
 
 }
 
-export namespace GeminiWire_Tools {
+export namespace GeminiWire_ToolDeclarations {
 
   /// Tool definitions - Input
 
   const CodeExecution_schema = z.object({
-    // Not documented yet, as of 2024-07-14
+    // This type has no fields.
+    // Tool that executes code generated by the model, and automatically returns the result to the model.
+    // See also ExecutableCode and CodeExecutionResult which are only generated when using this tool.
   });
 
   export const FunctionDeclaration_schema = z.object({
@@ -215,6 +254,10 @@ export namespace GeminiWire_Tools {
   export const ToolConfig_schema = z.object({
     functionCallingConfig: z.object({
       mode: z.enum([
+        // /**
+        //  * Unspecified function calling mode. This value should not be used.
+        //  */
+        // 'MODE_UNSPECIFIED',
         /**
          * (default) The model decides to predict either a function call or a natural language response.
          */
@@ -317,10 +360,17 @@ export namespace GeminiWire_API_Generate_Content {
   ]);
 
   const GenerationConfig_schema = z.object({
+    /**
+     * The set of character sequences (up to 5) that will stop output generation. If specified, the API will stop at the first appearance of a stop sequence.
+     */
     stopSequences: z.array(z.string()).optional(),
 
-    // [JSON mode] use 'application/json', and set the responseSchema
-    responseMimeType: responseMimeType_enum.optional(), // defaults to 'text/plain'
+    /**
+     * [JSON mode] use 'application/json', and set the responseSchema
+     * - 'text/plain' is the default
+     * - 'application/json' JSON response in the candidates
+     */
+    responseMimeType: responseMimeType_enum.optional(),
     responseSchema: z.record(z.any()).optional(), // if set, responseMimeType must be 'application/json'
 
     candidateCount: z.number().int().optional(), // currently can only be set to 1
@@ -336,8 +386,8 @@ export namespace GeminiWire_API_Generate_Content {
     contents: z.array(GeminiWire_Messages.Content_schema),
 
     // all optional
-    tools: z.array(GeminiWire_Tools.Tool_schema).optional(),
-    toolConfig: GeminiWire_Tools.ToolConfig_schema.optional(),
+    tools: z.array(GeminiWire_ToolDeclarations.Tool_schema).optional(),
+    toolConfig: GeminiWire_ToolDeclarations.ToolConfig_schema.optional(),
     safetySettings: z.array(GeminiWire_Safety.SafetySetting_schema).optional(),
     systemInstruction: GeminiWire_Messages.SystemInstruction_schema.optional(),
     generationConfig: GenerationConfig_schema.optional(),
@@ -352,24 +402,35 @@ export namespace GeminiWire_API_Generate_Content {
     'MAX_TOKENS',                 // The maximum number of tokens as specified in the request was reached.
     'SAFETY',                     // The candidate content was flagged for safety reasons. See safetyRatings.
     'RECITATION',                 // The candidate content was flagged for recitation reasons. See citationMetadata.
+    'LANGUAGE',                   // The candidate content was flagged for using an unsupported language.
     'OTHER',                      // Unknown reason
   ]);
 
   const CitationMetadata_schema = z.object({
-    citationSources: z.array(z.object({
-      startIndex: z.number().optional(),  // Start of segment of the response that is attributed to this source.
-      endIndex: z.number().optional(),    // End of the attributed segment, exclusive.
-      uri: z.string().optional(),         // URI that is attributed as a source for a portion of the text.
-      license: z.string().optional(),     // License for the GitHub project that is attributed as a source for segment.
-    })),
+    citationSources: z.array(
+      z.object({
+        startIndex: z.number().optional(),  // Start of segment of the response that is attributed to this source.
+        endIndex: z.number().optional(),    // End of the attributed segment, exclusive.
+        uri: z.string().optional(),         // URI that is attributed as a source for a portion of the text.
+        license: z.string().optional(),     // License for the GitHub project that is attributed as a source for segment.
+      }),
+    ),
   });
 
   const Candidate_schema = z.object({
+    /**
+     * Index of the candidate in the list of candidates.
+     * NOTE: see GenerationConfig_schema.candidateCount, which can only be set to 1, so index is supposed to be 0.
+     */
     index: z.number(),
     /**
      * This seems to be equal to 'STOP' on all streaming chunks.
+     * In theory: if empty, the model has not stopped generating the tokens.
      */
     finishReason: FinishReason_enum.optional(),
+    /**
+     * Generated content returned from the model.
+     */
     content: GeminiWire_Messages.ModelContent_schema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     /**
      * List of ratings for the safety of a response candidate.
@@ -391,6 +452,11 @@ export namespace GeminiWire_API_Generate_Content {
      * - 2024-07-15: Not present when finishReason is 'RECITATION'; maybe the packet before it?
      */
     citationMetadata: CitationMetadata_schema.optional(),
+    /**
+     * Token count for this candidate.
+     * Empirical observations:
+     * - not present, probably replaced by the ^usageMetadata field
+     */
     tokenCount: z.number().optional(),
     // groundingAttributions: z.array(...).optional(), // This field is populated for GenerateAnswer calls.
   });
