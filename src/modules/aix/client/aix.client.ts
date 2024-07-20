@@ -137,7 +137,7 @@ async function _aixChatGenerateContent(
 
 
   const operation = await apiStream.aix.chatGenerateContent.mutate(
-    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming: true, _debugRequestBody: getLabsDevMode() },
+    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming: false, connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined },
     { signal: abortSignal },
   );
 

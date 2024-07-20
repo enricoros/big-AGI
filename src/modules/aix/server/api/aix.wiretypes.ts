@@ -364,6 +364,14 @@ export namespace AixWire_API {
     ContextChatStream_schema,
   ]);
 
+  /// Connection options
+
+  export const ConnectionOptions_schema = z.object({
+    debugDispatchRequestbody: z.boolean().optional(),
+    // retry: z.number().optional(),
+    // retryDelay: z.number().optional(),
+  });
+
 }
 
 export namespace AixWire_API_ChatGenerate {
