@@ -73,7 +73,7 @@ The subsystem comprises three main components, each playing a crucial role in th
 sequenceDiagram
     participant AIX Client
     participant AIX Server
-    participant ParticleEmitter
+    participant PartTransmitter
     participant AI Provider
     AIX Client ->> AIX Client: Initialize PartReassembler
     AIX Client ->> AIX Client: Convert DMessage*Part to AixWire_Parts
@@ -85,7 +85,7 @@ sequenceDiagram
     else Dispatch Fetch
         AIX Server ->> AI Provider: Send AI-provider specific stream/non-stream request
         AIX Server ->> AIX Client: Send 'start' control message
-        AIX Server ->> ParticleEmitter: Initialize particle emission
+        AIX Server ->> PartTransmitter: Initialize part particle serialization
 
         alt Streaming AI Provider
             loop Until stream end or error
@@ -93,22 +93,22 @@ sequenceDiagram
                 AIX Server ->> AIX Server: Demux chunk into DispatchEvents
                 loop For each AI-provider specific DispatchEvent
                     AIX Server ->> AIX Server: Parse DispatchEvent
-                    AIX Server ->> ParticleEmitter: Call particle emission function
-                    ParticleEmitter ->> ParticleEmitter: Generate and potentially throttle AixWire_PartParticles
-                    ParticleEmitter -->> AIX Server: Yield AixWire_PartParticle
+                    AIX Server ->> PartTransmitter: (Parser) Calls serialization functions
+                    PartTransmitter ->> PartTransmitter: Generate and throttle AixWire_PartParticles
+                    PartTransmitter -->> AIX Server: Yield AixWire_PartParticle
                 end
                 AIX Server ->> AIX Client: Send accumulated AixWire_PartParticles
             end
-            AIX Server ->> ParticleEmitter: Request any remaining particles
-            ParticleEmitter -->> AIX Server: Yield any final AixWire_PartParticles
+            AIX Server ->> PartTransmitter: Request any remaining particles
+            PartTransmitter -->> AIX Server: Yield any final AixWire_PartParticles
             AIX Server ->> AIX Client: Send final AixWire_PartParticles (if any)
         else Non-Streaming AI Provider
             AI Provider ->> AIX Server: Send AI-provider specific complete response
             alt AI-provider specific full-response parser
                 AIX Server ->> AIX Server: Parse full response
-                AIX Server ->> ParticleEmitter: Call particle emission function
-                ParticleEmitter ->> ParticleEmitter: Generate AixWire_PartParticle
-                ParticleEmitter -->> AIX Server: Yield ALL AixWire_PartParticle
+                AIX Server ->> PartTransmitter: Call particle serialization functions
+                PartTransmitter ->> PartTransmitter: Generate AixWire_PartParticle
+                PartTransmitter -->> AIX Server: Yield ALL AixWire_PartParticle
             end
             AIX Server ->> AIX Client: Send all AixWire_PartParticles
         end
@@ -162,6 +162,7 @@ AIX is organized into the following files and folders:
   - `aix.router.ts`: Defines the TRPC router for AIX operations.
   - `aix.wiretypes.ts`: Contains Zod schemas for types incoming from the client (AixWire_Content schema, etc.)
   - `IntakeHandler.ts`: Manages the downstream communication from AIX router, streaming data and control objects to the client.
+  - `PartTransmitter.ts`: Used (by the chatGenerate/parsers) to searialize and transmit AixWire_Parts to the client.
 
 - Dispatch (`/server/dispatch`):
   - Chat Generation (`/server/dispatch/chatGenerate`):
