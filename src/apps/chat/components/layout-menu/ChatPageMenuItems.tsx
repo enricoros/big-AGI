@@ -100,9 +100,10 @@ export function ChatPageMenuItems(props: {
     setDevModeDialog((
       <GoodModal
         open
+        dividers
         onClose={() => setDevModeDialog(null)}
         title='Aix: Last Dispach Request Body'
-        sx={{ width: '80vw', height: '80vh' }}
+        sx={{ minWidth: '80vw', maxWidth: undefined }}
       >
         <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
           {devMode_AixLastDispatchRequestBody || 'Contents will be shown after the next request.'}

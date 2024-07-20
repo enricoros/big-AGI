@@ -24,7 +24,7 @@ export const aixRouter = createTRPCRouter({
       chatGenerate: AixWire_API_ChatGenerate.Request_schema,
       context: AixWire_API.Context_schema,
       streaming: z.boolean(),
-      _debugRequestBody: z.boolean().optional(),
+      connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
     .mutation(async function* ({ input, ctx }) {
 
@@ -49,7 +49,7 @@ export const aixRouter = createTRPCRouter({
         dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
 
         // TEMP for debugging without requiring a full server restart
-        if (input._debugRequestBody)
+        if (input.connectionOptions?.debugDispatchRequestbody && process.env.NODE_ENV === 'development')
           yield { _debugClientPrint: JSON.stringify(dispatch.request.body, null, 2) };
 
       } catch (error: any) {
