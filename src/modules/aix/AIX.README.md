@@ -22,19 +22,24 @@ Built in tRPC, it manages the lifecycle of AI-generated content from request to 
 | Service    | Chat       | Function Calling | Multi-Modal Input | Streaming | Idiosyncratic | 
 |------------|------------|------------------|-------------------|-----------|---------------|
 | Anthropic  | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  |               |
-| Azure      | ✅          | ✅                |                   | Yes       |               |
-| Deepseek   | ✅          | ❌ (rejected)     |                   | Yes       |               |
+| Azure      | ✅          | ✅                |                   | Yes + 📦  |               |
+| Deepseek   | ✅          | ❌ (rejected)     |                   | Yes + 📦  |               |
 | Gemini     | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  | Code ex.: ✅   |
-| Groq       | ✅          | ✅                |                   | Yes       |               |
-| LM Studio  | ✅          | ❌ (not working)  |                   | Yes       |               |
-| Local AI   | ✅          | ✅                |                   | Yes       |               |
-| Mistral    | ✅          | ✅                |                   | Yes       |               |
-| Ollama     | ❌ (broken) | ?                |                   | Yes       |               |
-| Oobabooga  | ✅          | ?                |                   | Yes       |               |  
-| OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | Yes       |               |
-| OpenRouter | ✅          | ❌ (inconsistent) |                   | Yes       |               |
-| Perplexity | ✅          | ❌ (rejected)     |                   | Yes       |               |
-| TogetherAI | ✅          | ✅                |                   | Yes       |               |
+| Groq       | ✅          | ✅ + Parallel     |                   | Yes + 📦  |               |
+| LM Studio  | ✅          | ❌ (not working)  |                   | Yes  + 📦 |               |
+| Local AI   | ✅          | ✅                |                   | Yes  + 📦 |               |
+| Mistral    | ✅          | ✅                |                   | Yes  + 📦 |               |
+| OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  |               |
+| OpenRouter | ✅          | ❌ (inconsistent) |                   | Yes + 📦  |               |
+| Perplexity | ✅          | ❌ (rejected)     |                   | Yes + 📦  |               |
+| TogetherAI | ✅          | ✅                |                   | Yes + 📦  |               |
+| Ollama     | ❌ (broken) | ?                |                   |           |               |
+| Oobabooga  | ?          | ?                |                   |           |               |  
+
+Notes:
+
+- Ollama has not been ported to AIX yet due to the custom APIs.
+- Oobabooga is deprecated and will be removed.
 
 ## 2. System Architecture
 
