@@ -1,5 +1,5 @@
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
+import { ChatGenerateTransmitter, IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
@@ -25,7 +25,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
   let hasBegun = false;
 
   // this can throw, it's caught by the caller
-  return function(pt: PartTransmitter, eventData: string): void {
+  return function(pt: ChatGenerateTransmitter, eventData: string): void {
 
     // -> Model
     if (!hasBegun) {
@@ -39,7 +39,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return pt.terminatingDialectIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
+      return pt.endingDialectIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
     }
 
     // expect: single completion
@@ -58,13 +58,13 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
           // and without the " [Gemini Issue]: Interrupted.." prefix, as it's written in the history
           // This can be changed in the future?
           pt.appendText(` ${IssueSymbols.GenMaxTokens}` /* Interrupted: MAX_TOKENS reached */);
-          return pt.terminateParser('dialect-issue');
+          return pt.setEnded('issue-dialect');
 
         case 'RECITATION':
-          return pt.terminatingDialectIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
+          return pt.endingDialectIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
 
         case 'SAFETY':
-          return pt.terminatingDialectIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`);
+          return pt.endingDialectIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`);
 
         default:
           throw new Error(`server response missing content (finishReason: ${candidate0?.finishReason})`);

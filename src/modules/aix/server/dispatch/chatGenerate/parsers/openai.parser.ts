@@ -2,7 +2,7 @@ import { safeErrorString } from '~/server/wire';
 import { serverSideId } from '~/server/api/trpc.nanoid';
 
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
+import { ChatGenerateTransmitter, IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 
@@ -49,7 +49,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     tool_calls: [],
   };
 
-  return function(pt: PartTransmitter, eventData: string) {
+  return function(pt: ChatGenerateTransmitter, eventData: string) {
 
     // Throws on malformed event data
     const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(JSON.parse(eventData));
@@ -62,7 +62,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error) {
-      return pt.terminatingDialectIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic);
+      return pt.endingDialectIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic);
     }
 
     // [OpenAI] if there's a warning, log it once
@@ -166,7 +166,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
 export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction {
 
-  return function(pt: PartTransmitter, eventData: string) {
+  return function(pt: ChatGenerateTransmitter, eventData: string) {
 
     // Throws on malformed event data
     const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(JSON.parse(eventData));
