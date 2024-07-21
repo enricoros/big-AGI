@@ -1,14 +1,18 @@
 import { z } from 'zod';
 
-import { createEmptyReadableStream, safeErrorString, serverCapitalizeFirstLetter } from '~/server/wire';
+import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString, serverCapitalizeFirstLetter } from '~/server/wire';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
-import { IntakeHandler } from './IntakeHandler';
-import { PartTransmitter } from './PartTransmitter';
+import { AixWire_API, AixWire_API_ChatGenerate, AixWire_API_Particles } from './aix.wiretypes';
+import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
+
+
+function* emitDebugRequestBody(s: string) {
+  yield { o: '_debugRequestBody' as const, body: s };
+}
 
 
 export const aixRouter = createTRPCRouter({
@@ -26,40 +30,36 @@ export const aixRouter = createTRPCRouter({
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
-    .mutation(async function* ({ input, ctx }) {
+    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixWire_API_Particles.ChatGenerateOp> {
 
 
       // Intake derived state
       const intakeAbortSignal = ctx.reqSignal;
-      const { access, model, chatGenerate, streaming } = input;
+      const { access, model, chatGenerate, streaming, connectionOptions } = input;
       const accessDialect = access.dialect;
       const prettyDialect = serverCapitalizeFirstLetter(accessDialect);
 
-      // Intake handlers
-      const intakeHandler = new IntakeHandler(prettyDialect);
-      yield* intakeHandler.yieldStart();
 
-      // TEMP
-      const partTransmitter = new PartTransmitter(prettyDialect);
-      // TODO partTransmitter.setThrottle(...)
+      // Intake Transmitters
+      const chatGenerateTx = new ChatGenerateTransmitter(prettyDialect, connectionOptions?.throttlePartTransmitter);
 
-      // Prepare the dispatch
+
+      // Prepare the dispatch requests
       let dispatch: ReturnType<typeof createChatGenerateDispatch>;
       try {
         dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
-
-        // TEMP for debugging without requiring a full server restart
-        if (input.connectionOptions?.debugDispatchRequestbody && process.env.NODE_ENV === 'development')
-          yield { _debugClientPrint: JSON.stringify(dispatch.request.body, null, 2) };
-
       } catch (error: any) {
-        yield* intakeHandler.yieldError('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
+        yield* chatGenerateTx.flushTerminatingRpcIssue('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
         return; // exit
       }
 
       // Connect to the dispatch
       let dispatchResponse: Response;
       try {
+
+        // [DEV] Debugging the request without requiring a server restart
+        if (input.connectionOptions?.debugDispatchRequestbody && process.env.NODE_ENV === 'development')
+          yield* emitDebugRequestBody(JSON.stringify(dispatch.request.body, null, 2));
 
         // Blocking fetch - may timeout, for instance with long Anthriopic requests (>25s on Vercel)
         dispatchResponse = await fetchResponseOrTRPCThrow({
@@ -79,27 +79,31 @@ export const aixRouter = createTRPCRouter({
         const extraDevMessage = process.env.NODE_ENV === 'development' ? `\n[DEV_URL: ${dispatch.request.url}]` : '';
 
         const showOnConsoleForNonCustomServers = access.dialect !== 'openai' || !access.oaiHost;
-        yield* intakeHandler.yieldError('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
+        yield* chatGenerateTx.flushTerminatingRpcIssue('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
         return; // exit
       }
 
 
-      // [ALPHA] [NON-STREAMING] Read the full response and send operations down the intake
+      // [NON-STREAMING] Read the full response and send operations down the intake
+      const serverDebugIncomingPackets = createServerDebugWireEvents();
       if (!streaming) {
-        let dispatchBody: string;
+        let dispatchBody: string | undefined = undefined;
         try {
+          // Read the full response body
           dispatchBody = await dispatchResponse.text();
-          intakeHandler.onReceivedWireMessage(dispatchBody);
+          serverDebugIncomingPackets?.onMessage(dispatchBody);
+
+          // Parse the response in full
+          dispatch.chatGenerateParse(chatGenerateTx, dispatchBody);
+          chatGenerateTx.setEnded('done-dispatch-closed');
+
         } catch (error: any) {
-          yield* intakeHandler.yieldError('dispatch-read', `**[Reading Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`);
-          return; // exit
+          if (dispatchBody === undefined)
+            chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-read', `**[Reading Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
+          else
+            chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket.`, true);
         }
-        try {
-          dispatch.chatGenerateParse(partTransmitter, dispatchBody);
-          // TODO * intakeHandler.yieldDmaOps(messageAction, prettyDialect);
-        } catch (error: any) {
-          yield* intakeHandler.yieldError('dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket.`, true);
-        }
+        yield* chatGenerateTx.flushParticles();
         return; // exit
       }
 
@@ -120,7 +124,7 @@ export const aixRouter = createTRPCRouter({
 
           // Handle normal dispatch stream closure (no more data, AI Service closed the stream)
           if (done) {
-            yield* intakeHandler.yieldTermination('dispatch-close');
+            chatGenerateTx.setEnded('done-dispatch-closed');
             break; // outer do {}
           }
 
@@ -129,23 +133,23 @@ export const aixRouter = createTRPCRouter({
         } catch (error: any) {
           // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
           if (error && error?.name === 'ResponseAborted') {
-            intakeHandler.markTermination();
+            chatGenerateTx.setEnded('done-dispatch-aborted');
             break; // outer do {}
           }
 
           // Handle abnormal stream termination
-          yield* intakeHandler.yieldError('dispatch-read', `**[Streaming Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`);
+          chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-read', `**[Streaming Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`);
           break; // outer do {}
         }
 
 
         // Demux the chunk into 0 or more events
         for (const demuxedItem of dispatchDemuxer.demux(dispatchChunk)) {
-          intakeHandler.onReceivedWireMessage(demuxedItem);
+          serverDebugIncomingPackets?.onMessage(demuxedItem);
 
           // ignore events post termination
-          if (intakeHandler.intakeTerminated) {
-            // warning on, because this is important and a sign of a bug
+          if (chatGenerateTx.isEnded) {
+            // DEV-only message to fix dispatch protocol parsing -- warning on, because this is important and a sign of a bug
             console.warn('[chatGenerateContent] Received event after termination:', demuxedItem);
             break; // inner for {}
           }
@@ -156,26 +160,25 @@ export const aixRouter = createTRPCRouter({
 
           // [OpenAI] Special: stream termination marker
           if (demuxedItem.data === '[DONE]') {
-            yield* intakeHandler.yieldTermination('event-done');
+            chatGenerateTx.setEnded('done-dialect');
             break; // inner for {}, then outer do
           }
 
           try {
-            dispatchParser(partTransmitter, demuxedItem.data, demuxedItem.name);
-            // TODO yield* intakeHandler.yieldDmaOps(messageAction, prettyDialect);
+            dispatchParser(chatGenerateTx, demuxedItem.data, demuxedItem.name);
+            yield* chatGenerateTx.emitParticles();
           } catch (error: any) {
             // Handle parsing issue (likely a schema break); print it to the console as well
-            yield* intakeHandler.yieldError('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, true);
+            chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, true);
             break; // inner for {}, then outer do
           }
         }
 
-      } while (!intakeHandler.intakeTerminated);
+      } while (!chatGenerateTx.isEnded);
 
-      // We already send the termination event (good exit) or issue (bad exit) on all code
-      // paths to the intake, or the intake has already closed the socket on us.
-      // So there's nothing to do here.
-      // yield* intakeHandler.yieldEnd();
+      // Flush everything that's left; if we're here we have encountered a clean end condition,
+      // or an error that has already been queued up for this last flush
+      yield* chatGenerateTx.flushParticles();
 
     }),
 

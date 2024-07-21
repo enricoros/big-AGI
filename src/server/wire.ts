@@ -1,5 +1,5 @@
 /// set this to true to see the tRPC and fetch requests made by the server
-export const SERVER_DEBUG_WIRE = false;
+export const SERVER_DEBUG_WIRE = true; //
 
 
 export class ServerFetchError extends Error {
@@ -98,3 +98,25 @@ export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
     start: (controller) => controller.close(),
   });
 }
+
+
+/**
+ * Small debugging utility to log train of events, used on the server-side
+ * for incoming packets (e.g. SSE).
+ */
+export class ServerDebugWireEvents {
+  private sequenceNumber: number = 0;
+  private lastMs: number | null = null;
+
+  onMessage(message: any) {
+    this.sequenceNumber++;
+    if (SERVER_DEBUG_WIRE) {
+      const nowMs = Date.now();
+      const elapsedMs = this.lastMs ? nowMs - this.lastMs : 0;
+      this.lastMs = nowMs;
+      console.log(`<- SSE (${this.sequenceNumber}, ${elapsedMs} ms):`, message);
+    }
+  }
+}
+
+export const createServerDebugWireEvents = () => SERVER_DEBUG_WIRE ? new ServerDebugWireEvents() : null;

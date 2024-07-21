@@ -14,11 +14,11 @@ import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 
-import type { PartTransmitter } from '../../api/PartTransmitter';
+import type { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
 import type { StreamDemuxerFormat } from '../stream.demuxers';
 
 
-export type ChatGenerateParseFunction = (partTransmitter: PartTransmitter, eventData: string, eventName?: string) => void;
+export type ChatGenerateParseFunction = (partTransmitter: ChatGenerateTransmitter, eventData: string, eventName?: string) => void;
 
 
 export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {

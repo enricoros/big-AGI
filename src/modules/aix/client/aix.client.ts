@@ -146,22 +146,22 @@ async function _aixChatGenerateContent(
   try {
     for await (const update of operation) {
       // TODO: improve this recombination protocol...
-      if ('t' in update) {
-        incrementalText += update.t;
-        onUpdate({ textSoFar: incrementalText, typing: true }, false);
-      } else if ('set' in update) {
-        // if (update.set.model)
-        //   onUpdate({ originLLM: update.set.model }, false);
-        // else
-        console.log('set:', update.set);
-      } else if ('issueId' in update) {
-        incrementalText += update.issueText;
-        onUpdate({ textSoFar: incrementalText, typing: true }, false);
-      } else if ('_debugClientPrint' in update) {
-        console.log('_debugClientPrint:', update._debugClientPrint);
-        devMode_AixLastDispatchRequestBody = update._debugClientPrint;
-      } else
-        console.log('update:', update);
+      // if ('t' in update) {
+      //   incrementalText += update.t;
+      //   onUpdate({ textSoFar: incrementalText, typing: true }, false);
+      // } else if ('set' in update) {
+      //   // if (update.set.model)
+      //   //   onUpdate({ originLLM: update.set.model }, false);
+      //   // else
+      //   console.log('set:', update.set);
+      // } else if ('issueId' in update) {
+      //   incrementalText += update.issueText;
+      //   onUpdate({ textSoFar: incrementalText, typing: true }, false);
+      // } else if ('_debugClientPrint' in update) {
+      //   console.log('_debugClientPrint:', update._debugClientPrint);
+      //   devMode_AixLastDispatchRequestBody = update._debugClientPrint;
+      // } else
+      console.log('update:', update);
     }
   } catch (error) {
     if (error instanceof Error && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'))) {

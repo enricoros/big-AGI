@@ -32,6 +32,8 @@ export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
 export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatGenerate.Request_schema>;
 
 
+/// Input Types to AIX
+
 export namespace OpenAPI_Schema {
 
   /**
@@ -368,6 +370,7 @@ export namespace AixWire_API {
 
   export const ConnectionOptions_schema = z.object({
     debugDispatchRequestbody: z.boolean().optional(),
+    throttlePartTransmitter: z.number().optional(), // in ms
     // retry: z.number().optional(),
     // retryDelay: z.number().optional(),
   });
@@ -403,3 +406,58 @@ export namespace AixWire_API_ChatGenerate {
 
 }
 
+
+///  Output Types from AIX
+
+/**
+ * This is the protocol for both the control objects sent by the tRPC streaming procedures,
+ * and the thePartTransmitter/PartReassembler.
+ */
+export namespace AixWire_API_Particles {
+
+  /** Unified representation for outputs of chatGenerate */
+  export type ChatGenerateOp =
+    | ControlOp
+    | PartOp
+    | { cg: 'issue', issueId: CGIssueId, issueText: string }
+    | { cg: 'end', reason: CGEndReason }
+    | { cg: 'set-model', name: string }
+    | { cg: 'update-counts', counts: Partial<ChatGenerateCounts> };
+
+  /** Control operations for API call streaming */
+  type ControlOp =
+    | { o: '_debugRequestBody', body: string };
+
+  export type CGIssueId =
+    | 'dispatch-prepare' | 'dispatch-fetch' | 'dispatch-read' | 'dispatch-parse' // 4 phases of dispatch
+    | 'dialect-issue';
+
+  export type CGEndReason =
+    | 'issue-rpc'               // ended because of an issue
+    | 'issue-dialect'           // ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
+    | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sensds the 'message_stop' event
+    | 'done-dispatch-closed'    // dispatch connection closed
+    | 'done-dispatch-aborted'   // this shalle never see the light of day, as it was a reaction to the intake being aborted first
+    ;
+  // | 'message-stop' | 'dialect-issue' | 'dispatch-close';
+
+  type PartOp =
+    | { p: 't_', t: string /* incremental text, despite not having the 'i_' prefix for brevity */ }
+    | { p: 'inline-image', mimeType: string, i_b64?: string }
+    | { p: 'ii_', i_b64: string }
+    | { p: 'inline-doc', type: string, ref: string, l1Title: string, i_text?: string }
+    | { p: 'id_', i_text: string }
+    | { p: 'function-call', id: string, name: string, i_args?: string }
+    | { p: 'fc_', i_args: string }
+    | { p: 'code-call', id: string, language: string, code: string }
+    | { p: 'code-response', id: string, output: string, error?: string }
+
+  export type ChatGenerateCounts = {
+    chatIn?: number,
+    chatOut?: number,
+    chatTotal?: number,
+    chatOutRate?: number,
+    chatTimeInner?: number,
+  };
+
+}

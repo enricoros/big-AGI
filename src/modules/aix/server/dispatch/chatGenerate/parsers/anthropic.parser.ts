@@ -1,7 +1,7 @@
 import { safeErrorString } from '~/server/wire';
 
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import { IssueSymbols, PartTransmitter } from '../../../api/PartTransmitter';
+import { ChatGenerateTransmitter, IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
 
@@ -37,7 +37,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
 
-  return function(pt: PartTransmitter, eventData: string, eventName?: string): void {
+  return function(pt: ChatGenerateTransmitter, eventData: string, eventName?: string): void {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -179,14 +179,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
-        return pt.terminateParser('message-stop');
+        return pt.setEnded('done-dialect');
 
       // UNDOCUMENTED - Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
       case 'error':
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        return pt.terminatingDialectIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
+        return pt.endingDialectIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
 
       default:
         throw new Error(`Unexpected event name: ${eventName}`);
@@ -198,7 +198,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   let messageStartTime: number = Date.now();
 
-  return function(pt: PartTransmitter, fullData: string): void {
+  return function(pt: ChatGenerateTransmitter, fullData: string): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
