@@ -14,7 +14,7 @@ import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefD
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
-import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
+import { LiveFileIcon } from '~/common/livefile/LiveFileIcons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
@@ -184,12 +184,6 @@ export function LLMAttachmentMenu(props: {
           </Typography>
         ) : (
           <Box sx={{ my: 0.5 }}>
-            {/* LiveFile notice */}
-            {hasLiveFile && !!draftInput && (
-              <Typography level='body-sm' sx={{ mb: 1 }} startDecorator={<LiveFileIcon sx={{ width: 16, height: 16 }} />}>
-                LiveFile is supported
-              </Typography>
-            )}
 
             {/* <- inputs */}
             {!!draftInput && (
@@ -271,6 +265,14 @@ export function LLMAttachmentMenu(props: {
                 </Typography>
               )}
             </Box>
+
+            {/* LiveFile notice */}
+            {hasLiveFile && !!draftInput && (
+              <Typography level='body-sm' sx={{ mt: 1 }} startDecorator={<LiveFileIcon sx={{ width: 16, height: 16 }} />}>
+                LiveFile is supported
+              </Typography>
+            )}
+
           </Box>
         )}
       </MenuItem>

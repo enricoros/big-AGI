@@ -19,7 +19,8 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
+import { LiveFileIcon } from '~/common/livefile/LiveFileIcons';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 
@@ -139,9 +140,13 @@ function attachmentIcons(attachmentDraft: AttachmentDraft): React.ReactNode {
     {/*))}*/}
 
     {/*{activeConterters.some(c => c.id.startsWith('url-page-')) ? <LanguageIcon sx={{ opacity: 0.2, ml: -2.5 }} /> : null}*/}
-    {activeConterters.map(c => {
-      const Icon = converterTypeToIconMap[c.id] ?? null;
-      return Icon ? <Icon key={c.id} sx={{ width: 20, height: 20 }} /> : null;
+    {activeConterters.map((_converter, idx) => {
+      const Icon = converterTypeToIconMap[_converter.id] ?? null;
+      return !Icon ? null : (
+        <TooltipOutlined key={`${_converter.id}-${idx}`} title={`Attached as ${_converter.name}`} placement='top-start'>
+          <Icon sx={{ width: 20, height: 20 }} />
+        </TooltipOutlined>
+      );
     })}
   </Typography>;
 }
@@ -264,7 +269,11 @@ export function LLMAttachmentButton(props: {
                 {isOutputLoading && <CircularProgress color='success' size='sm' />}
 
                 {/* Live file icon */}
-                {hasLiveFile && <LiveFileIcon />}
+                {hasLiveFile && (
+                  <TooltipOutlined title='LiveFile is supported' placement='top-end'>
+                    <LiveFileIcon />
+                  </TooltipOutlined>
+                )}
               </>}
           </Button>
         )}
