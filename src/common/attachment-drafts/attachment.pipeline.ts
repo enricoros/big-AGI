@@ -194,7 +194,9 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       }
 
       // UX: just a hint of a loading state
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Note: disabled: the read operation will be async anyway, and
+      //       we don't want to delay too long in case of large drops.
+      // await new Promise(resolve => setTimeout(resolve, 50));
 
       try {
         const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
