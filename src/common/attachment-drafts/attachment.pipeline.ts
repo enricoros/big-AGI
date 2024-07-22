@@ -10,7 +10,7 @@ import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAtta
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
 import { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, draftInputMimeEgoFragments, draftInputMimeWebpage, DraftWebInputData } from './attachment.types';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
-import { liveFileAddToAttachmentFragment, liveFileIsSupported } from '../livefile/livefile';
+import { liveFileCreate, liveFileInSource } from '../livefile/liveFile';
 
 
 // configuration
@@ -284,7 +284,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      converters.push({ id: 'text', name: liveFileIsSupported(source) ? 'Text (Live)' : 'Text' });
+      converters.push({ id: 'text', name: liveFileInSource(source) ? 'Text (Live)' : 'Text' });
 
       // p3: Html
       if (textOriginHtml) {
@@ -470,11 +470,13 @@ export async function attachmentPerformConversion(
 
       // text as-is
       case 'text':
-        const textData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-        const textDocAttachmentFragment = createDocAttachmentFragment(title, caption, 'text/plain', textData, refString, docMeta);
+
         // [LiveFile] if we have a handle for this file, transfer it to the Doc Attachment fragment
-        liveFileAddToAttachmentFragment(source, textDocAttachmentFragment);
-        newFragments.push(textDocAttachmentFragment);
+        const liveFile = (liveFileInSource(source) && source.media === 'file' && converter.id === 'text')
+          ? liveFileCreate(source.fileWithHandle) : undefined;
+
+        const textualInlineData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textualInlineData, refString, docMeta, liveFile));
         break;
 
       // html as-is

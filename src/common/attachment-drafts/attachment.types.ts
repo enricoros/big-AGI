@@ -11,7 +11,7 @@ export type AttachmentDraft = {
   readonly id: AttachmentDraftId;
   readonly source: AttachmentDraftSource,
   label: string;
-  ref: string; // will be used in ```ref\n...``` for instance
+  ref: string; // will be used in ```ref\n...``` for instance - TODO: remove?
 
   inputLoading: boolean;
   inputError: string | null;
@@ -44,7 +44,7 @@ export type AttachmentDraftSource = {
   media: 'file';
   origin: AttachmentDraftSourceOriginFile,
   fileWithHandle: FileWithHandle;
-  refPath: string;
+  refPath: string; // original file name, or path/to/file name
 } | {
   media: 'text';
   method: 'clipboard-read' | AttachmentDraftSourceOriginDTO;

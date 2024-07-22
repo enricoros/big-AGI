@@ -14,7 +14,9 @@ import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefD
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -55,6 +57,7 @@ export function LLMAttachmentMenu(props: {
   const isConverting = draft.outputsConverting;
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
+  const hasLiveFile = draft.outputFragments.some(liveFileInAttachmentFragment);
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
 
@@ -102,7 +105,7 @@ export function LLMAttachmentMenu(props: {
     >
 
       {/* Move Arrows */}
-      {!isUnmoveable && <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {!isUnmoveable && <Box sx={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
         <MenuItem
           disabled={props.isPositionFirst}
           onClick={handleMoveUp}
@@ -118,7 +121,10 @@ export function LLMAttachmentMenu(props: {
           <KeyboardArrowRightIcon />
         </MenuItem>
       </Box>}
-      {!isUnmoveable && <ListDivider sx={{ my: 0 }} />}
+
+      {/*{(showDetails && canHaveDetails) && <ListItem variant='soft' sx={{ fontSize: 'sm', borderBottom: '1px solid', borderColor: 'divider' }}>*/}
+      {/*  {draft.ref}*/}
+      {/*</ListItem>}*/}
 
       {/* Render Converters as menu items */}
       {!isUnconvertible && (
@@ -178,6 +184,14 @@ export function LLMAttachmentMenu(props: {
           </Typography>
         ) : (
           <Box sx={{ my: 0.5 }}>
+            {/* LiveFile notice */}
+            {hasLiveFile && !!draftInput && (
+              <Typography level='body-sm' sx={{ mb: 1 }} startDecorator={<LiveFileIcon sx={{ width: 16, height: 16 }} />}>
+                LiveFile is supported
+              </Typography>
+            )}
+
+            {/* <- inputs */}
             {!!draftInput && (
               <Typography level='body-sm'>
                 🡐 {draftInput.mimeType}{typeof draftInput.dataSize === 'number' ? ` · ${draftInput.dataSize.toLocaleString()} bytes` : ''}
@@ -201,9 +215,12 @@ export function LLMAttachmentMenu(props: {
                 </Link>
               </Typography>
             )}
+
             {/*<Typography level='body-sm'>*/}
-            {/*  Converters: {aConverters.map(((converter, idx) => ` ${converter.id}${converter.isActive ? '*' : ''}`)).join(', ')}*/}
+            {/*  Converters: {draft.converters.map(((converter, idx) => ` ${converter.id}${converter.isActive ? '*' : ''}`)).join(', ')}*/}
             {/*</Typography>*/}
+
+            {/* -> Outputs */}
             <Box sx={{ mt: 1 }}>
               {isOutputMissing ? (
                 <Typography level='body-sm'>🡒 ...</Typography>
