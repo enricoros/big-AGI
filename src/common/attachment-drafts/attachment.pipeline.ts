@@ -210,7 +210,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
         });
       } catch (error: any) {
         const errorText = (error?.name === 'AbortError' && source.fileWithHandle.type === '')
-          ? 'unsupported file type or possible folder. For folders and live files support, we recommend using Google Chrome.'
+          ? 'unsupported file type or possible folder. For folders and LiveFile support, we recommend using Google Chrome.'
           : `issue loading file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}`;
         edit({ inputError: errorText });
       }
