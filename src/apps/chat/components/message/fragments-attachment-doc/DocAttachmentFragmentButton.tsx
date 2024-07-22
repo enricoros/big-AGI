@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ColorPaletteProp, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
@@ -13,7 +13,8 @@ import TextureIcon from '@mui/icons-material/Texture';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
-import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
+import { LiveFileIcon } from '~/common/livefile/LiveFileIcons';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 
@@ -124,9 +125,9 @@ export function DocAttachmentFragmentButton(props: {
         {/*</Box>*/}
       </Box>
       {liveFileInAttachmentFragment(fragment) && (
-        <Tooltip color='success' disableInteractive title='Supports LiveFile' placement='top-end' arrow>
+        <TooltipOutlined title='LiveFile is supported' color='success' placement='top-end'>
           <LiveFileIcon color={isSelected ? undefined : 'success'} sx={{ mr: '0.5rem' }} />
-        </Tooltip>
+        </TooltipOutlined>
       )}
     </Button>
   );

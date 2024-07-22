@@ -2,12 +2,13 @@ import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
-import { Alert, Box, Button, CircularProgress, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress, ColorPaletteProp, IconButton } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
-import { LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from '~/common/livefile/LiveFileIcon';
+import { LiveFileChooseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from '~/common/livefile/LiveFileIcons';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { liveFileCreate } from '~/common/livefile/liveFile';
 
 
@@ -155,19 +156,37 @@ export function useLiveFile(
 
 
   const liveFileSyncButton = React.useMemo(() => (
-    <Tooltip disableInteractive enterDelay={600} arrow color={isPreviewMode ? 'primary' : 'success'} placement='top-end' title={!fileSystemFileHandle ? 'Setup LiveFile file association' : <>LiveFile connected.<br />Click to compare with file content.</>}>
+    <TooltipOutlined
+      title={
+        isPreviewMode ? 'Click to update the comparison.'
+          : fileSystemFileHandle ? 'Click compare with the File contents.'
+            : 'Setup LiveFile association.'
+      }
+      color={isPreviewMode ? 'primary' : 'success'}
+      variant={isPreviewMode ? undefined : 'solid'}
+      placement='top-end'
+    >
       <Button
         variant='soft'
         color={isPreviewMode ? 'primary' : 'success'}
         size='sm'
         disabled={isWorking}
         onClick={handleSyncButtonClick}
-        startDecorator={isPreviewMode ? <LiveFileIcon /> : (isWorking ? <CircularProgress sx={{ '--CircularProgress-size': '16px' }} /> : <LiveFileIcon />)}
+        startDecorator={
+          isPreviewMode ? <LiveFileIcon />
+            : (isWorking ? <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />
+              : fileSystemFileHandle ? <LiveFileIcon />
+                : <LiveFileChooseIcon />)
+        }
         aria-label={fileSystemFileHandle ? 'Sync File' : 'Choose File'}
       >
-        {isPreviewMode ? 'Refresh' : (fileSystemFileHandle ? 'Sync File' : 'Choose File')}
+        {
+          isPreviewMode ? 'Refresh'
+            : fileSystemFileHandle ? 'Sync File'
+              : 'Pair File'
+        }
       </Button>
-    </Tooltip>
+    </TooltipOutlined>
   ), [fileSystemFileHandle, handleSyncButtonClick, isPreviewMode, isWorking]);
 
 
@@ -195,7 +214,7 @@ export function useLiveFile(
       >
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
           {isPreviewMode && !!fileSystemFileHandle && (
-            <IconButton size='sm' color={statusColor} onClick={handleSyncButtonClick}>
+            <IconButton size='sm' onClick={handleSyncButtonClick}>
               <LiveFileIcon />
             </IconButton>
           )}
@@ -204,9 +223,10 @@ export function useLiveFile(
 
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+          {/* Load from File */}
           {(diffSummary && (diffSummary.insertions > 0 || diffSummary.deletions > 0)) && (
             <Button
-              variant='plain'
+              variant={isMobile ? 'outlined' : 'plain'}
               color='primary'
               size='sm'
               disabled={isWorking}
@@ -214,12 +234,14 @@ export function useLiveFile(
               startDecorator={<LiveFileReloadIcon />}
               aria-label='Load content from disk'
             >
-              {isMobile ? 'Load File' : 'Load from File'}
+              {isMobile ? 'Update' : 'Load from File'}
             </Button>
           )}
+
+          {/* Save to File */}
           {(diffSummary && (diffSummary.insertions > 0 || diffSummary.deletions > 0)) && (
             <Button
-              variant='plain'
+              variant={isMobile ? 'outlined' : 'plain'}
               color='danger'
               size='sm'
               disabled={isWorking}
@@ -227,14 +249,23 @@ export function useLiveFile(
               startDecorator={<LiveFileSaveIcon />}
               aria-label='Save content to disk'
             >
-              {isMobile ? 'Save File' : 'Save to File'}
+              {isMobile ? 'Save' : 'Save to File'}
             </Button>
           )}
 
+          {/* Reassign File button */}
+          <TooltipOutlined title='Pair a different File.' placement='top-end'>
+            <IconButton size='sm' onClick={associateAndPreviewFile}>
+              <LiveFileChooseIcon />
+            </IconButton>
+          </TooltipOutlined>
+
           {/* Close button */}
-          <IconButton size='sm' color={statusColor} onClick={resetState}>
-            <CloseRoundedIcon />
-          </IconButton>
+          <TooltipOutlined title='Close LiveFile.' placement='top-end'>
+            <IconButton size='sm' onClick={resetState}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </TooltipOutlined>
         </Box>
       </Alert>
     );
