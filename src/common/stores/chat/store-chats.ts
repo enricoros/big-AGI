@@ -386,12 +386,18 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             delete (message as any).sender;
             delete (message as any).typing;
 
-            // replace the Content.Pl[part.pt='ph'] fragments with Error fragments, to show the aborted ops (instead of just empty blocks)
-            message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment =>
-              (isContentFragment(fragment) && fragment.part.pt === 'ph')
+            // fixup .messages[].fragments[]
+            message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment => {
+              // [LiveFile] remove as they don't survive the serialization
+              if (isAttachmentFragment(fragment))
+                delete fragment._liveFile;
+
+              // replace the Content Placeholder fragments [part.pt='ph'] with Error fragments,
+              // to show the aborted ops (instead of just empty blocks)
+              return (isContentFragment(fragment) && fragment.part.pt === 'ph')
                 ? createErrorContentFragment(`${fragment.part.pText} (did not complete)`)
-                : fragment,
-            );
+                : fragment;
+            });
 
             // cleanup within-v4 - TODO: remove at 2.0.0 ?
             for (const fragment of message.fragments) {

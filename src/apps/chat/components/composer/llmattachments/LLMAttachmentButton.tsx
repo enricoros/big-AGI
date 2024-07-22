@@ -264,7 +264,7 @@ export function LLMAttachmentButton(props: {
                 {isOutputLoading && <CircularProgress color='success' size='sm' />}
 
                 {/* Live file icon */}
-                {hasLiveFile && <LiveFileIcon color='primary' sx={{ width: 20, height: 20 }} />}
+                {hasLiveFile && <LiveFileIcon />}
               </>}
           </Button>
         )}
