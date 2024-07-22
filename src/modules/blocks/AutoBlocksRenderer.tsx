@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Typography } from '@mui/joy';
+import { Button, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -254,6 +254,22 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
   }), [props.contentScaling, props.showAsDanger, props.showAsItalic]);
 
 
+  const toggleExpansionButtonSx: SxProps = React.useMemo(() => ({
+    width: '100%',
+    fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    ...(props.specialCodePlain ? {
+      // Style when inside the <DocumentFragmentEditor />
+      backgroundColor: 'background.surface',
+      marginTop: -0.5,
+    } : {
+      // Style when inside <ChatMessage /> in particular for 'user' messages
+      marginTop: 1,
+    }),
+  }), [props.contentScaling, props.specialCodePlain]);
+
+
   return (
     <BlocksContainer
       ref={ref}
@@ -282,17 +298,16 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
       })}
 
       {(isTextCollapsed || forceUserExpanded) && (
-        <Box sx={{ textAlign: 'right', mt: 1 }}>
-          <Button
-            variant='soft'
-            color={props.specialCodePlain ? 'neutral' : undefined}
-            size='sm'
-            onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
-            startDecorator={isTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-          >
-            {isTextCollapsed ? 'Show more' : 'Show less'}
-          </Button>
-        </Box>
+        <Button
+          variant='soft'
+          color={props.specialCodePlain ? 'neutral' : undefined}
+          size='sm'
+          onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
+          startDecorator={isTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+          sx={toggleExpansionButtonSx}
+        >
+          {isTextCollapsed ? 'Show more' : 'Show less'}
+        </Button>
       )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}

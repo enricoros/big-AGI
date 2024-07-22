@@ -6,8 +6,8 @@ import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/st
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
-import { DocumentFragmentButton } from './DocumentFragmentButton';
-import { DocumentFragmentEditor } from './DocumentFragmentEditor';
+import { DocAttachmentFragmentButton } from './DocAttachmentFragmentButton';
+import { DocAttachmentFragmentEditor } from './DocAttachmentFragmentEditor';
 
 
 /**
@@ -15,7 +15,7 @@ import { DocumentFragmentEditor } from './DocumentFragmentEditor';
  * When one is active, there is a content part just right under (with the collapse mechanism in case it's a user role).
  * If one is clicked the content part (use ContentPartText) is displayed.
  */
-export function DocumentFragments(props: {
+export function DocumentAttachmentFragments(props: {
   attachmentFragments: DMessageAttachmentFragment[],
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
@@ -65,7 +65,7 @@ export function DocumentFragments(props: {
         justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
       }}>
         {props.attachmentFragments.map((attachmentFragment) =>
-          <DocumentFragmentButton
+          <DocAttachmentFragmentButton
             key={attachmentFragment.fId}
             fragment={attachmentFragment}
             contentScaling={props.contentScaling}
@@ -77,7 +77,7 @@ export function DocumentFragments(props: {
 
       {/* Document Viewer & Editor */}
       {!!selectedFragment && (
-        <DocumentFragmentEditor
+        <DocAttachmentFragmentEditor
           fragment={selectedFragment}
           messageRole={props.messageRole}
           editedText={editState?.[selectedFragment.fId]}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { FormControl, IconButton, Step, Stepper } from '@mui/joy';
 
@@ -11,7 +11,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 export function SettingContentScaling(props: { noLabel?: boolean }) {
 
   // external state
-  const [contentScaling, setContentScaling] = useUIPreferencesStore(state => [state.contentScaling, state.setContentScaling], shallow);
+  const [contentScaling, setContentScaling] = useUIPreferencesStore(useShallow(state => [state.contentScaling, state.setContentScaling]));
 
   return (
     <FormControl orientation='horizontal' sx={{ justifyContent: props.noLabel ? 'center' : 'space-between' }}>

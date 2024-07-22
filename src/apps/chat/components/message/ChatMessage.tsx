@@ -35,7 +35,7 @@ import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
-import { DocumentFragments } from './fragments-attachment-doc/DocumentFragments';
+import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
 import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
@@ -473,7 +473,7 @@ export function ChatMessage(props: {
       }}>
 
 
-        {/* [aside A] Editing: Apply */}
+        {/* [aside A] Fragments Edit: Apply */}
         {isEditingText && (
           <Box sx={messageAsideColumnSx}>
             {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
@@ -562,7 +562,7 @@ export function ChatMessage(props: {
             />
           )}
 
-          {/* Image Attachment Fragments (just for a prettier display on top of the message) */}
+          {/* Image Attachment Fragments - just for a prettier display on top of the message */}
           {imageAttachments.length >= 1 && !isEditingText && (
             <ImageAttachmentFragments
               imageAttachments={imageAttachments}
@@ -573,7 +573,7 @@ export function ChatMessage(props: {
             />
           )}
 
-          {/* Content Fragments (iterating all to preserve the index) */}
+          {/* Content Fragments */}
           <ContentFragments
             fragments={contentFragments}
 
@@ -598,7 +598,7 @@ export function ChatMessage(props: {
             onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
           />
 
-          {/* If editing and there's no content, have a button to create a new TextContentFragment */}
+          {/* Empty Fragments Edit: if there's no content, have a button to create a new TextContentFragment */}
           {isEditingText && !contentFragments.length && (
             <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{ justifyContent: 'flex-start' }}>
               add text ...
@@ -607,7 +607,7 @@ export function ChatMessage(props: {
 
           {/* Document Fragments */}
           {nonImageAttachments.length >= 1 && !isEditingText && (
-            <DocumentFragments
+            <DocumentAttachmentFragments
               attachmentFragments={nonImageAttachments}
               messageRole={messageRole}
               contentScaling={contentScaling}
@@ -620,7 +620,7 @@ export function ChatMessage(props: {
 
         </Box>
 
-        {/* Editing: Cancel */}
+        {/* Fragments Edit: Cancel */}
         {isEditingText && (
           <Box sx={messageAsideColumnSx}>
             {/*<Typography level='body-xs'>&nbsp;</Typography>*/}

@@ -1,9 +1,10 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button } from '@mui/joy';
+import { Box, Button, ColorPaletteProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -15,6 +16,11 @@ import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/com
 import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
+
+
+// configuration
+export const DocSelColor: ColorPaletteProp = 'primary';
+const DocUnselColor: ColorPaletteProp = 'primary';
 
 
 function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
@@ -42,7 +48,7 @@ function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.Comp
 }
 
 
-export function DocumentFragmentButton(props: {
+export function DocAttachmentFragmentButton(props: {
   fragment: DMessageAttachmentFragment,
   contentScaling: ContentScaling,
   isSelected: boolean,
@@ -76,10 +82,10 @@ export function DocumentFragmentButton(props: {
     borderRadius: 'sm',
     boxShadow: 'xs',
     ...isSelected ? {
-      borderColor: 'neutral.solidBg',
+      borderColor: `${DocSelColor}.solidBg`,
     } : {
-      borderColor: 'primary.outlinedBorder',
-      backgroundColor: 'background.surface',
+      borderColor: `${DocUnselColor}.outlinedBorder`,
+      backgroundColor: 'background.popup',
     },
 
     // from LLMAttachmentButton
@@ -88,13 +94,13 @@ export function DocumentFragmentButton(props: {
 
   const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
-  const Icon = buttonIconForFragment(fragment);
+  const Icon = isSelected ? ExpandLessIcon : buttonIconForFragment(fragment);
 
   return (
     <Button
       size={props.contentScaling === 'md' ? 'md' : 'sm'}
       variant={isSelected ? 'solid' : 'soft'}
-      color={isSelected ? 'neutral' : 'neutral'}
+      color={isSelected ? DocSelColor : DocUnselColor}
       onClick={handleSelectFragment}
       sx={buttonSx}
     >
@@ -103,7 +109,7 @@ export function DocumentFragmentButton(props: {
           height: '100%',
           paddingX: '0.5rem',
           borderRight: '1px solid',
-          borderRightColor: isSelected ? 'neutral.solidBg' : 'primary.outlinedBorder',
+          borderRightColor: isSelected ? `${DocSelColor}.solidBg` : `${DocUnselColor}.outlinedBorder`,
           display: 'flex', alignItems: 'center',
         }}>
           <Icon />
