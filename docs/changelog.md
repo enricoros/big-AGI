@@ -15,7 +15,7 @@ by release.
 - 1.16.5: GPT-4o Mini support
 - 1.16.4: 8192 tokens support for Claude 3.5 Sonnet
 - 1.16.3: Anthropic Claude 3.5 Sonnet model support
-- 1.16.2: Improve web downloads, as text, markdwon, or HTML
+- 1.16.2: Improve web downloads, as text, markdown, or HTML
 - 1.16.2: Proper support for Gemini models
 - 1.16.2: Added the latest Mistral model
 - 1.16.2: Tokenizer support for gpt-4o
