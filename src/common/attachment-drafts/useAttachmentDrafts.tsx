@@ -49,7 +49,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
   /**
    * Append data transfer to the attachments.
    */
-  const attachAppendDataTransfer = React.useCallback((dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): 'as_files' | 'as_url' | 'as_text' | false => {
+  const attachAppendDataTransfer = React.useCallback(async (dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): Promise<'as_files' | 'as_url' | 'as_text' | false> => {
 
     // https://github.com/enricoros/big-AGI/issues/286
     const textHtml = dt.getData('text/html') || '';
@@ -80,6 +80,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
         }
         void attachAppendFile(method, file, overrideNames ? overrideFileNames[i] || undefined : undefined);
       }
+
       return 'as_files';
     }
 
@@ -91,6 +92,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
         void _createAttachmentDraft({
           media: 'url', url: textPlainUrl, refUrl: textPlain,
         });
+
         return 'as_url';
       }
     }
@@ -100,6 +102,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       void _createAttachmentDraft({
         media: 'text', method, textPlain, textHtml,
       });
+
       return 'as_text';
     }
 

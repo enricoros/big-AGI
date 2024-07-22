@@ -445,8 +445,8 @@ export function Composer(props: {
 
   // Attachment Up
 
-  const handleAttachCtrlV = React.useCallback((event: React.ClipboardEvent) => {
-    if (attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
+  const handleAttachCtrlV = React.useCallback(async (event: React.ClipboardEvent) => {
+    if (await attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files')
       event.preventDefault();
   }, [attachAppendDataTransfer]);
 

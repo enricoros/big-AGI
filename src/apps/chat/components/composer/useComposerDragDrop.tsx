@@ -35,7 +35,7 @@ const draggingCardSx: SxProps = {
 
 export function useDragDrop(
   disabled: boolean,
-  onDataTransfer: (dataTransfer: DataTransfer, type: 'paste' | 'drop', isDropOnTextarea: boolean) => void,
+  onDataTransfer: (dataTransfer: DataTransfer, type: 'paste' | 'drop', isDropOnTextarea: boolean) => Promise<any>,
 ) {
 
   // state
@@ -105,7 +105,7 @@ export function useDragDrop(
     }
 
     // textarea drop
-    onDataTransfer(dataTransfer, 'drop', true);
+    void onDataTransfer(dataTransfer, 'drop', true); // fire/forget
   }, [eatDragEvent, onDataTransfer]);
 
 
