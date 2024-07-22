@@ -4,7 +4,7 @@ import type { FileWithHandle } from 'browser-fs-access';
 
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
-import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
+import { extractFilePathsFromCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -58,27 +58,40 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     const heuristicIsPowerPoint = textHtml.includes('xmlns:m="http://schemas.microsoft.com/office/20') && textHtml.includes('<meta name=Generator content="Microsoft PowerPoint');
     const heuristicBypassImage = heuristicIsExcel || heuristicIsPowerPoint;
 
-    if (ATTACHMENTS_DEBUG_INTAKE)
-      console.log('attachAppendDataTransfer', dt.types, dt.items, dt.files, textHtml);
+    if (ATTACHMENTS_DEBUG_INTAKE) {
+      console.log('\nattachAppendDataTransfer', dt.types, `items: ${dt.items.length}, files: ${dt.files.length}, textHtml: ${textHtml}`);
+      for (let i = 0; i < dt.items.length; i++) {
+        const item = dt.items[i];
+        console.log(' - item:', item.kind, item.type, item.getAsFile());
+      }
+    }
 
     // attach File(s)
-    if (dt.files.length >= 1 && !heuristicBypassImage /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */) {
+    const dtFileItems = Array.from(dt.items).filter(item => item.kind === 'file');
+    if (dtFileItems.length >= 1 && !heuristicBypassImage /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */) {
+
       // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
       let overrideFileNames: string[] = [];
       if (dt.types.includes('text/plain')) {
-        const plainText = dt.getData('text/plain');
-        overrideFileNames = extractFilePathsWithCommonRadix(plainText);
+        const possiblePlainTextURIs: string[] = dt.getData('text/plain').split(/[\r\n]+/);
+        overrideFileNames = extractFilePathsFromCommonRadix(possiblePlainTextURIs);
+        if (overrideFileNames.length !== dtFileItems.length)
+          overrideFileNames = [];
+        else if (ATTACHMENTS_DEBUG_INTAKE)
+          console.log(' - renamed to:', overrideFileNames);
       }
-      const overrideNames = overrideFileNames.length === dt.files.length;
 
       // attach as Files (paste and drop keep the original filename)
-      for (let i = 0; i < dt.files.length; i++) {
-        const file = dt.files[i];
+      for (let i = 0; i < dtFileItems.length; i++) {
+        const file = dtFileItems[i].getAsFile();
+        if (!file) continue; // type guard basically
+
         // drag/drop of folders (or .tsx from IntelliJ) will have no type
         if (!file.type) {
           // NOTE: we are fixing it in attachmentLoadInputAsync, but would be better to do it here
         }
-        void attachAppendFile(method, file, overrideNames ? overrideFileNames[i] || undefined : undefined);
+
+        void attachAppendFile(method, file, overrideFileNames[i]);
       }
 
       return 'as_files';
