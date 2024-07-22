@@ -1,7 +1,7 @@
 import MultipleStopIcon from '@mui/icons-material/MultipleStop';
-import SyncIcon from '@mui/icons-material/Sync';
-// import UploadFileIcon from '@mui/icons-material/UploadFile';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 export { MultipleStopIcon as LiveFileIcon };
-export { SyncIcon as LiveFileReloadIcon };
-// export { UploadFileIcon as LiveFileSaveIcon };
+export { UploadFileIcon as LiveFileSaveIcon };
+export { SystemUpdateAltIcon as LiveFileReloadIcon };
