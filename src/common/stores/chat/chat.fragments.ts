@@ -45,9 +45,9 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
   title: string;                  // label of the attachment (filename, named id, content overview, title..)
   caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
-  _liveFile?: {
+  _liveFile?: {                   // [LiveFile] Store the handle to mem, remove when restoring from disk
     lft: 'fs';
-    _fsFileHandle?: FileSystemFileHandle; // [LiveFile] Store the handle to mem/DB - TODO: check if it works across sessions
+    _fsFileHandle?: FileSystemFileHandle; // file handle to read back the raw data in the future (if available)
   }
 };
 

@@ -10,8 +10,8 @@ import type { DMessageId } from '~/common/stores/chat/chat.message';
 export type AttachmentDraft = {
   readonly id: AttachmentDraftId;
   readonly source: AttachmentDraftSource,
-  label: string;
-  ref: string; // will be used in ```ref\n...``` for instance - TODO: remove?
+  label: string;  // what's written in the button, such as a web page `title`
+  ref: string;    // will be used in ```ref\n...``` for instance the web page `url`
 
   inputLoading: boolean;
   inputError: string | null;

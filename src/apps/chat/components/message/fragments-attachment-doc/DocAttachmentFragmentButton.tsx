@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TelegramIcon from '@mui/icons-material/Telegram';
@@ -94,7 +94,7 @@ export function DocAttachmentFragmentButton(props: {
 
   const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
-  const Icon = isSelected ? ExpandLessIcon : buttonIconForFragment(fragment);
+  const Icon = isSelected ? ExpandCircleDownIcon : buttonIconForFragment(fragment);
 
   return (
     <Button

@@ -11,6 +11,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
@@ -74,15 +75,9 @@ export function DocAttachmentFragmentEditor(props: {
     if (editedText === undefined)
       return;
 
-    // only edit DOCs
-    if (!isDocPart(fragment.part)) {
-      console.warn('handleEditApply: unexpected part type:', fragment.part.pt);
-      return;
-    }
-
     if (editedText.length > 0) {
-      const newData = createDMessageDataInlineText(editedText, fragment.part.data.mimeType);
-      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragment.part.type, newData, fragment.part.ref, fragment.part.meta, fragment._liveFile);
+      const newData = createDMessageDataInlineText(editedText, docPart.data.mimeType);
+      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, docPart.type, newData, docPart.ref, docPart.meta, fragment._liveFile);
       // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
       newAttachment.fId = fragmentId;
       onFragmentReplace(fragmentId, newAttachment);
@@ -91,7 +86,7 @@ export function DocAttachmentFragmentEditor(props: {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, fragment._liveFile, fragment.caption, fragment.part, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
+  }, [docPart, editedText, fragment._liveFile, fragment.caption, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
 
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
@@ -110,20 +105,33 @@ export function DocAttachmentFragmentEditor(props: {
   const handleLiveFileReload = React.useCallback(async () => {
     if (!fileSystemFileHandle)
       return;
-console.log('handleLiveFileReload', fileSystemFileHandle);
-    // TODO: ...reload the content of the file from disk and edit the current fragment (replace) - if we are here we don't need confimation
+
+    setIsLiveFileReloadArmed(false);
     setIsLiveFileReloading(true);
+
     try {
-      // ... (rest of the implementation)
 
-      setIsLiveFileReloading(false);
+      // Read the file content
+      const file = await fileSystemFileHandle.getFile();
+      const reloadedText = await file.text();
 
-    } catch (error) {
-      setIsLiveFileReloading(false);
+      // Update the fragment
+      const newData = createDMessageDataInlineText(reloadedText, docPart.data.mimeType);
+      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, docPart.type, newData, docPart.ref, docPart.meta, fragment._liveFile);
+      // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
+      newAttachment.fId = fragmentId;
+      onFragmentReplace(fragmentId, newAttachment);
 
+      // signal the success
+      addSnackbar({ key: 'chat-attachment-doc-reload-ok', message: 'Reloaded from the file system.', type: 'success', overrides: { autoHideDuration: 2000 } });
+
+    } catch (error: any) {
+      addSnackbar({ key: 'chat-attachment-doc-reload-fail', message: `Error reloading the file: ${error?.message || error || 'error unknown.'}`, type: 'issue' });
     }
 
-  }, [fileSystemFileHandle]);
+    setIsLiveFileReloading(false);
+
+  }, [docPart, fileSystemFileHandle, fragment._liveFile, fragment.caption, fragmentId, fragmentTitle, onFragmentReplace]);
 
   const handleToggleLiveFileReloadArmed = React.useCallback((event: React.MouseEvent) => {
     // reset other states when entering LiveFileReload
@@ -195,7 +203,7 @@ console.log('handleLiveFileReload', fileSystemFileHandle);
         {hasLiveFile && (
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button disabled={isEditing || isLiveFileReloading} variant={isLiveFileReloadArmed ? 'soft' : 'outlined'} color={DocSelColor} size='sm' onClick={handleToggleLiveFileReloadArmed} startDecorator={isLiveFileReloadArmed ? <CloseRoundedIcon /> : <LiveFileIcon />}>
-              {isLiveFileReloadArmed ? 'Cancel' : 'Reload File'}
+              {isLiveFileReloadArmed ? 'Cancel' : 'Sync File'}
             </Button>
             {isLiveFileReloadArmed && (
               <Button disabled={isLiveFileReloading} variant='solid' color='success' size='sm' onClick={handleLiveFileReload} startDecorator={<LiveFileIcon />}>
