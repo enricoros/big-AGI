@@ -85,16 +85,17 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
           console.log(' - renamed to:', overrideFileNames);
       }
 
-      for (let i = 0; i < fileOrFSHandlePromises.length; i++) {
-        const fileOrFSHandlePromise = fileOrFSHandlePromises[i];
+      for (let fIdx = 0; fIdx < fileOrFSHandlePromises.length; fIdx++) {
+        const fileOrFSHandlePromise = fileOrFSHandlePromises[fIdx];
 
         // Files: nothing to do - Note: some browsers will interpret directories as files and
         // not provide a handle; if that's the case, we can't do anything, so we still add the file
         if (fileOrFSHandlePromise instanceof File) {
-          if (mightBeDirectory(fileOrFSHandlePromise)) {
-            console.warn('This browser does not support directories:', fileOrFSHandlePromise);
+          const file = fileOrFSHandlePromise;
+          if (mightBeDirectory(file)) {
+            console.warn('This browser does not support directories:', file);
           }
-          await attachAppendFile(method, fileOrFSHandlePromise, overrideFileNames[i]);
+          await attachAppendFile(method, file, overrideFileNames[fIdx]);
           continue;
         }
 
@@ -104,19 +105,15 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
           // attach file with handle
           case 'file':
-            const file = await fileSystemHandle.getFile();
-            (file as FileWithHandle).handle = fileSystemHandle;
-            await attachAppendFile(method, file, overrideFileNames[i]);
+            const fileWithHandle = await fileSystemHandle.getFile() as FileWithHandle;
+            fileWithHandle.handle = fileSystemHandle;
+            await attachAppendFile(method, fileWithHandle, overrideFileNames[fIdx]);
             break;
 
           // attach all files in a directory as files with handles
           case 'directory':
-            const filesWithHandles: FileWithHandle[] = await getAllFilesFromDirectoryRecursively(fileSystemHandle);
-            // print full paths of files
-            if (ATTACHMENTS_DEBUG_INTAKE)
-              console.log(' - directory:', fileSystemHandle.name, filesWithHandles.map(f => f.name));
-            for (const fileWithHandle of filesWithHandles)
-              await attachAppendFile(method, fileWithHandle);
+            for (const { fileWithHandle, relativeName } of await getAllFilesFromDirectoryRecursively(fileSystemHandle))
+              await attachAppendFile(method, fileWithHandle, relativeName);
             break;
 
           default:

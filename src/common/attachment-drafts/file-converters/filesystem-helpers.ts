@@ -50,30 +50,40 @@ export function mightBeDirectory(file: File) {
  * This is as defined in https://fs.spec.whatwg.org/#filesystemdirectoryhandle (File System Standard, Last Updated 28 June 2024).
  */
 interface ExplorableFileSystemDirectoryHandle extends FileSystemDirectoryHandle {
-  values?: () => AsyncIterable<FileSystemHandle>;
+  values?: () => AsyncIterable<FileSystemFileHandle | FileSystemDirectoryHandle | null>;
 }
 
-export async function getAllFilesFromDirectoryRecursively(directoryHandle: FileSystemDirectoryHandle): Promise<FileWithHandle[]> {
-  const files: FileWithHandle[] = [];
+interface FileWithHandleAndPath {
+  fileWithHandle: FileWithHandle;
+  relativeName: string;
+}
 
-  async function traverseDirectory(dirHandle: ExplorableFileSystemDirectoryHandle) {
+export async function getAllFilesFromDirectoryRecursively(directoryHandle: FileSystemDirectoryHandle): Promise<FileWithHandleAndPath[]> {
+  const list: FileWithHandleAndPath[] = [];
+  const separator = '/';
+
+  async function traverseDirectory(dirHandle: ExplorableFileSystemDirectoryHandle, path: string = '') {
     if ('values' in dirHandle && typeof dirHandle.values === 'function') {
       for await (const handle of dirHandle.values()) {
+        if (!handle) continue;
+        const relativePath = path ? `${path}${separator}${handle.name}` : handle.name;
+
         if (handle.kind === 'file') {
-          const fileHandle = handle as FileSystemFileHandle;
-          const file = await fileHandle.getFile();
-          (file as FileWithHandle).handle = fileHandle;
-          files.push(file);
+          const fileWithHandle = await handle.getFile() as FileWithHandle;
+          fileWithHandle.handle = handle;
+          list.push({
+            fileWithHandle: fileWithHandle,
+            relativeName: relativePath,
+          });
         } else if (handle.kind === 'directory') {
-          const subDirHandle = handle as FileSystemDirectoryHandle;
-          await traverseDirectory(subDirHandle);
+          await traverseDirectory(handle, relativePath);
         }
       }
     }
   }
 
   await traverseDirectory(directoryHandle);
-  return files;
+  return list;
 }
 
 
