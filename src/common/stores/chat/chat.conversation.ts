@@ -29,7 +29,7 @@ export interface DConversation {
 
   // Not persisted, used while in-memory, or temporarily by the UI
   // TODO: @deprecated - shouls not be in here - it's actually a per-message/operation thing
-  abortController: AbortController | null;
+  _abortController: AbortController | null;
 
   // future additions:
   // draftUserMessage?: { text: string; attachments: any[] };
@@ -61,7 +61,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
     created: Date.now(),
     updated: Date.now(),
 
-    abortController: null,
+    _abortController: null,
   };
 }
 
@@ -95,7 +95,7 @@ export function duplicateCConversation(conversation: DConversation, lastMessageI
     created: conversation.created,
     updated: Date.now(),
 
-    abortController: null,
+    _abortController: null,
   };
 }
 

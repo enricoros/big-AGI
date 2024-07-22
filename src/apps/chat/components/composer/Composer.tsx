@@ -129,7 +129,7 @@ export function Composer(props: {
   const { assistantAbortible, systemPurposeId, tokenCount: _historyTokenCount, abortConversationTemp } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(_c => _c.id === props.targetConversationId);
     return {
-      assistantAbortible: conversation ? !!conversation.abortController : false,
+      assistantAbortible: conversation ? !!conversation._abortController : false,
       systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
       abortConversationTemp: state.abortConversationTemp,
