@@ -1,23 +1,22 @@
 // Extract file paths and find the common radix
-export const extractFilePathsWithCommonRadix = (droppedText: string): string[] => {
-  const splitDroppedText = droppedText.split(/[\r\n]+/);
+export function extractFilePathsFromCommonRadix(fileURIs: string[]): string[] {
 
-  const filePaths = splitDroppedText
+  const filePaths = fileURIs
     .filter((path) => path.startsWith('file:'))
     .map((path) => path.slice(5));
 
   if (filePaths.length < 2)
     return [];
 
-  const commonRadix = findCommonPrefix(filePaths);
+  const commonRadix = _findCommonPrefix(filePaths);
   if (!commonRadix.endsWith('/'))
     return [];
 
   return filePaths.map((path) => path.slice(commonRadix.length));
-};
+}
 
 // Find the common prefix of an array of strings
-export const findCommonPrefix = (strings: string[]) => {
+function _findCommonPrefix(strings: string[]) {
   if (!strings.length)
     return '';
 
@@ -35,4 +34,4 @@ export const findCommonPrefix = (strings: string[]) => {
   }
 
   return commonPrefix;
-};
+}
