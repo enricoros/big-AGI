@@ -269,7 +269,7 @@ export function useLiveFile(
         </Box>
       </Alert>
     );
-  }, [diffSummary, fileSystemFileHandle, handleLoadFromDisk, handleSaveToDisk, handleSyncButtonClick, isMobile, isPreviewMode, isWorking, resetState, status]);
+  }, [associateAndPreviewFile, diffSummary, fileSystemFileHandle, handleLoadFromDisk, handleSaveToDisk, handleSyncButtonClick, isMobile, isPreviewMode, isWorking, resetState, status]);
 
 
   return {
