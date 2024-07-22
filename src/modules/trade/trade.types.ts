@@ -94,6 +94,6 @@ export function convertDConversation_V3_V4(conversation: (ImportDConversationV3 
     ...rest,
     messages: messages.map(convertDMessageV3_to_V4),
     systemPurposeId: systemPurposeId as any,
-    abortController: null,
+    _abortController: null,
   };
 }

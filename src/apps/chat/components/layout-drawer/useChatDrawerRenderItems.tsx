@@ -167,7 +167,7 @@ export function useChatDrawerRenderItems(
                 : null,
             updatedAt: _c.updated || _c.created || 0,
             messageCount: _c.messages.length,
-            beingGenerated: !!_c.abortController, // FIXME: when the AbortController is moved at the message level, derive the state in the conv
+            beingGenerated: !!_c._abortController, // FIXME: when the AbortController is moved at the message level, derive the state in the conv
             systemPurposeId: _c.systemPurposeId,
             searchFrequency,
           };

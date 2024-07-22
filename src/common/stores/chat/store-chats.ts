@@ -31,7 +31,7 @@ export interface ChatActions {
   deleteConversations: (cIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
-  setAbortController: (cId: DConversationId, abortController: AbortController | null) => void;
+  setAbortController: (cId: DConversationId, _abortController: AbortController | null) => void;
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
   historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
@@ -79,7 +79,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         // if there's a clash, abort the former conversation, and optionally change the ID
         const existing = conversations.find(_c => _c.id === conversation.id);
         if (existing) {
-          existing?.abortController?.abort();
+          existing?._abortController?.abort();
           if (preventClash) {
             conversation.id = agiUuid('chat-dconversation');
             console.warn('Conversation ID clash, changing ID to', conversation.id);
@@ -117,7 +117,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         const cIndex = conversationIds.length > 0 ? conversations.findIndex(_c => _c.id === conversationIds[0]) : -1;
 
         // abort all pending requests
-        conversationIds.forEach(conversationId => conversations.find(_c => _c.id === conversationId)?.abortController?.abort());
+        conversationIds.forEach(conversationId => conversations.find(_c => _c.id === conversationId)?._abortController?.abort());
 
         // remove from the list
         const newConversations = conversations.filter(_c => !conversationIds.includes(_c.id));
@@ -149,24 +149,24 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           ),
         })),
 
-      setAbortController: (conversationId: DConversationId, abortController: AbortController | null) =>
+      setAbortController: (conversationId: DConversationId, _abortController: AbortController | null) =>
         _get()._editConversation(conversationId, () =>
           ({
-            abortController: abortController,
+            _abortController: _abortController,
           })),
 
       abortConversationTemp: (conversationId: DConversationId) =>
         _get()._editConversation(conversationId, conversation => {
-          conversation.abortController?.abort();
+          conversation._abortController?.abort();
           return {
-            abortController: null,
+            _abortController: null,
           };
         }),
 
 
       historyReplace: (conversationId: DConversationId, newMessages: DMessage[]) =>
         _get()._editConversation(conversationId, conversation => {
-          conversation.abortController?.abort();
+          conversation._abortController?.abort();
           return {
             messages: newMessages,
             ...(!!newMessages.length ? {} : {
@@ -174,7 +174,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             }),
             tokenCount: updateMessagesTokenCounts(newMessages, false, 'historyReplace'),
             updated: Date.now(),
-            abortController: null,
+            _abortController: null,
           };
         }),
 
@@ -184,7 +184,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
           if (messageIndex < 0 || messageIndex + 1 + offset >= conversation.messages.length)
             return {};
 
-          conversation.abortController?.abort();
+          conversation._abortController?.abort();
 
           const truncatedMessages = conversation.messages.slice(0, Math.max(0, messageIndex + 1 + offset));
 
@@ -192,7 +192,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             messages: truncatedMessages,
             tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
             updated: Date.now(),
-            abortController: null,
+            _abortController: null,
           };
         }),
 
@@ -362,7 +362,8 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       partialize: (state) => ({
         ...state,
         conversations: state.conversations.map((conversation: DConversation) => {
-          const { abortController, ...rest } = conversation;
+          // remove the converation AbortController (current data structure version)
+          const { _abortController, ...rest } = conversation;
           return rest;
         }),
       }),
@@ -374,8 +375,9 @@ export const useChatStore = create<ConversationsStore>()(devtools(
         // fixup conversations
         for (const conversation of (state.conversations || [])) {
           // re-add transient properties
-          conversation.abortController = null;
-          // fixup messages
+          conversation._abortController = null;
+
+          // fixup .messages[]
           for (const message of conversation.messages) {
             // reset transient properties
             delete message.pendingIncomplete;

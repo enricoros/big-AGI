@@ -122,7 +122,7 @@ export function createDConversationFromJsonV1(part: ExportedChatJsonV1 & { token
     created: part.created || Date.now(),
     updated: part.updated || Date.now(),
     // add these back - these fields are not exported
-    abortController: null,
+    _abortController: null,
   });
 }
 
