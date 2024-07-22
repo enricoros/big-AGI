@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button, CircularProgress, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Sheet, Tooltip, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -10,14 +10,12 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { LiveFileIcon, LiveFileReloadIcon } from '~/common/livefile/LiveFileIcon';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
-import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
 import { DocSelColor } from './DocAttachmentFragmentButton';
+import { useLiveFile } from './useLiveFile';
 
 
 export function DocAttachmentFragmentEditor(props: {
@@ -37,16 +35,44 @@ export function DocAttachmentFragmentEditor(props: {
   const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
 
-  const [isLiveFileArmed, setIsLiveFileArmed] = React.useState(false);
-  const [isLiveFileWorking, setIsLiveFileWorking] = React.useState(false);
-
 
   const fragmentId = fragment.fId;
   const fragmentTitle = (isDocPart(fragment.part) ? fragment.part.l1Title : '') || fragment.title;
-  const docPart = fragment.part;
+  const fragmentDocPart = fragment.part;
 
-  if (!isDocPart(docPart))
-    throw new Error('Unexpected part type: ' + docPart.pt);
+  if (!isDocPart(fragmentDocPart))
+    throw new Error('Unexpected part type: ' + fragmentDocPart.pt);
+
+
+  // hooks
+
+  const replaceFragmentWithTextDoc = React.useCallback((newText: string) => {
+    // create a new Doc Attachment Fragment
+    const newData = createDMessageDataInlineText(newText, fragmentDocPart.data.mimeType);
+    const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.type, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment._liveFile);
+
+    // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
+    newAttachment.fId = fragmentId;
+
+    // replace this fragment with the new one
+    onFragmentReplace(fragmentId, newAttachment);
+  }, [fragment._liveFile, fragment.caption, fragmentDocPart, fragmentId, fragmentTitle, onFragmentReplace]);
+
+  const replaceFragmentLiveFile = React.useCallback((newLiveFile: DMessageAttachmentFragment['_liveFile']) => {
+    const newFragment = { ...fragment, _liveFile: newLiveFile };
+    onFragmentReplace(fragmentId, newFragment);
+  }, [fragment, fragmentId, onFragmentReplace]);
+
+
+  // LiveFile
+
+  const { liveFileSyncButton, liveFileActionBox } = useLiveFile(
+    props.isMobile,
+    fragmentDocPart.data.text,
+    fragment._liveFile,
+    replaceFragmentLiveFile,
+    replaceFragmentWithTextDoc,
+  );
 
 
   // delete
@@ -58,7 +84,7 @@ export function DocAttachmentFragmentEditor(props: {
   const handleToggleDeleteArmed = React.useCallback((event: React.MouseEvent) => {
     // reset other states when entering Delete
     if (!isDeleteArmed) {
-      setIsLiveFileArmed(false);
+      // setIsLiveFileArmed(false);
       // setIsEditing(false);
     }
     if (!isDeleteArmed && event.shiftKey) // immadiately delete:fragment
@@ -76,74 +102,25 @@ export function DocAttachmentFragmentEditor(props: {
       return;
 
     if (editedText.length > 0) {
-      const newData = createDMessageDataInlineText(editedText, docPart.data.mimeType);
-      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, docPart.type, newData, docPart.ref, docPart.meta, fragment._liveFile);
-      // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
-      newAttachment.fId = fragmentId;
-      onFragmentReplace(fragmentId, newAttachment);
+      replaceFragmentWithTextDoc(editedText);
       setIsEditing(false);
+      // if (liveFileLoadPreview)
+      //   setTimeout(() => liveFileLoadPreview(), 200);
     } else {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [docPart, editedText, fragment._liveFile, fragment.caption, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
+  }, [editedText, handleFragmentDelete, replaceFragmentWithTextDoc]);
 
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
     if (!isEditing) {
       setIsDeleteArmed(false);
-      setIsLiveFileArmed(false);
+      // setIsLiveFileArmed(false);
+      // resetLiveFileState();
     }
     setIsEditing(on => !on);
   }, [isEditing]);
-
-
-  // LiveFile
-  const hasLiveFile = liveFileInAttachmentFragment(fragment);
-  const fileSystemFileHandle = fragment._liveFile?._fsFileHandle || undefined;
-
-  const handleLiveFileReload = React.useCallback(async () => {
-    if (!fileSystemFileHandle)
-      return;
-
-    setIsLiveFileArmed(false);
-    setIsLiveFileWorking(true);
-
-    try {
-
-      // Read the file content
-      const file = await fileSystemFileHandle.getFile();
-      const reloadedText = await file.text();
-
-      // Update the fragment
-      const newData = createDMessageDataInlineText(reloadedText, docPart.data.mimeType);
-      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, docPart.type, newData, docPart.ref, docPart.meta, fragment._liveFile);
-      // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
-      newAttachment.fId = fragmentId;
-      onFragmentReplace(fragmentId, newAttachment);
-
-      // signal the success
-      addSnackbar({ key: 'chat-attachment-doc-reload-ok', message: 'Reloaded from the file system.', type: 'success', overrides: { autoHideDuration: 2000 } });
-
-    } catch (error: any) {
-      addSnackbar({ key: 'chat-attachment-doc-reload-fail', message: `Error reloading the file: ${error?.message || error || 'error unknown.'}`, type: 'issue' });
-    }
-
-    setIsLiveFileWorking(false);
-
-  }, [docPart, fileSystemFileHandle, fragment._liveFile, fragment.caption, fragmentId, fragmentTitle, onFragmentReplace]);
-
-  const handleToggleLiveFileReloadArmed = React.useCallback((event: React.MouseEvent) => {
-    // reset other states when entering LiveFileReload
-    if (!isLiveFileArmed) {
-      setIsDeleteArmed(false);
-      // setIsEditing(false);
-    }
-    if (!isLiveFileArmed && event.shiftKey) // immadiately reload:fragment
-      void handleLiveFileReload();
-    else
-      setIsLiveFileArmed(on => !on);
-  }, [handleLiveFileReload, isLiveFileArmed]);
 
 
   return (
@@ -171,12 +148,12 @@ export function DocAttachmentFragmentEditor(props: {
         gap: 1,
       }}>
         <Typography level='title-sm'>
-          <Tooltip disableInteractive title={docPart.ref === docPart.meta?.srcFileName ? undefined : <>Document identifier: {docPart.ref}<br />Render type: {docPart.type}</>} placement='top-start'>
-            <span>{docPart.meta?.srcFileName || docPart.l1Title || docPart.ref}</span>
+          <Tooltip disableInteractive placement='top-start' arrow color='primary' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined : <>Document identifier: {fragmentDocPart.ref}<br />Render type: {fragmentDocPart.type}</>}>
+            <span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>
           </Tooltip>
         </Typography>
         <Typography level='body-xs' sx={{ opacity: 0.5 }}>
-          {docPart.data.mimeType && docPart.data.mimeType !== docPart.type ? docPart.data.mimeType || '' : ''}
+          {fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.type ? fragmentDocPart.data.mimeType || '' : ''}
           {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType })}*/}
         </Typography>
       </Box>
@@ -189,51 +166,43 @@ export function DocAttachmentFragmentEditor(props: {
         borderBottomColor: isEditing ? 'transparent' : 'primary.outlinedBorder',
         p: 1,
         // layout
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        display: 'grid',
         gap: 1,
       })}>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant='outlined' color={DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
-            {isDeleteArmed ? 'Cancel' : 'Delete'}
-          </Button>
-          {isDeleteArmed && (
-            <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
-              Delete
-            </Button>
-          )}
-        </Box>
+        {!isEditing && liveFileActionBox}
 
-        {hasLiveFile && (
+        {/* Buttons Row */}
+        <Box sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          gap: 1,
+        }}>
+
+
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant={isLiveFileArmed ? 'outlined' : 'soft'} color={isLiveFileArmed ? 'primary' : 'success'} size='sm' disabled={isEditing || isLiveFileWorking} onClick={handleToggleLiveFileReloadArmed} startDecorator={isLiveFileArmed ? <CloseRoundedIcon /> : <LiveFileIcon />}>
-              {isLiveFileArmed ? 'Cancel' : 'File Sync'}
+            <Button variant='outlined' color={isDeleteArmed ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
+              {isDeleteArmed ? 'Cancel' : 'Delete'}
             </Button>
-            {isLiveFileArmed && (
-              <Button variant='solid' color='success' size='sm' disabled={isLiveFileWorking} onClick={handleLiveFileReload} startDecorator={<LiveFileReloadIcon />}>
-                Reload
+            {isDeleteArmed && (
+              <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
+                Delete
               </Button>
             )}
-            {/*{isLiveFileArmed && (*/}
-            {/*  <Button variant='soft' color='success' size='sm' disabled={isLiveFileWorking} onClick={handleLiveFileReload} startDecorator={<LiveFileSaveIcon />}>*/}
-            {/*    Save*/}
-            {/*  </Button>*/}
-            {/*)}*/}
-            {isLiveFileWorking && <CircularProgress size='sm' />}
           </Box>
-        )}
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant='outlined' color={DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
-            {isEditing ? 'Cancel' : 'Edit'}
-          </Button>
-          {isEditing && (
-            <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
-              Save
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {!isEditing && liveFileSyncButton}
+            <Button variant='outlined' color={isEditing ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
+              {isEditing ? 'Cancel' : 'Edit'}
             </Button>
-          )}
+            {isEditing && (
+              <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
+                Save
+              </Button>
+            )}
+          </Box>
         </Box>
 
       </Sheet>
@@ -241,7 +210,7 @@ export function DocAttachmentFragmentEditor(props: {
       {isEditing ? (
         // Document Editor
         <ContentPartTextEditor
-          textPartText={docPart.data.text}
+          textPartText={fragmentDocPart.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}
           editedText={props.editedText}
@@ -253,7 +222,7 @@ export function DocAttachmentFragmentEditor(props: {
         // Document viewer, including the collapse/expand state inside
         <AutoBlocksRenderer
           // text={marshallWrapText(part.data.text, /*fragmentTitle ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType }), 'markdown-code')}
-          text={marshallWrapText(docPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
+          text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
           // text={part.data.text}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}

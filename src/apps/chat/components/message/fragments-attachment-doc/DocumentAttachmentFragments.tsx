@@ -41,6 +41,18 @@ export function DocumentAttachmentFragments(props: {
 
   const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, value: string) => setEditState(prevState => ({ ...prevState, [fragmentId]: value })), []);
 
+  const { onFragmentReplace } = props;
+  const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => {
+    // the purpose of this function is to reset the edit state and then call the parent handler
+    setEditState(prevState => {
+      const newState = { ...prevState };
+      delete newState[fragmentId];
+      return newState;
+    });
+    onFragmentReplace(fragmentId, newFragment);
+  }, [onFragmentReplace]);
+
+
   // [effect] clear edits on onmount
   React.useEffect(() => {
     return () => setEditState(null);
@@ -78,6 +90,7 @@ export function DocumentAttachmentFragments(props: {
       {/* Document Viewer & Editor */}
       {!!selectedFragment && (
         <DocAttachmentFragmentEditor
+          key={selectedFragment.fId /* this is here for the useLiveFile hook which otherwise would migrate state across fragments */}
           fragment={selectedFragment}
           messageRole={props.messageRole}
           editedText={editState?.[selectedFragment.fId]}
@@ -86,7 +99,7 @@ export function DocumentAttachmentFragments(props: {
           isMobile={props.isMobile}
           renderTextAsMarkdown={props.renderTextAsMarkdown}
           onFragmentDelete={props.onFragmentDelete}
-          onFragmentReplace={props.onFragmentReplace}
+          onFragmentReplace={handleFragmentReplace}
         />
       )}
 
