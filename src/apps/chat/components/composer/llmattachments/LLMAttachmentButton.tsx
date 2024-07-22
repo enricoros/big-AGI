@@ -19,7 +19,9 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
+import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
@@ -95,7 +97,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'unhandled': TextureIcon,
 };
 
-function attachmentIcon(attachmentDraft: AttachmentDraft): React.ReactNode {
+function attachmentIcons(attachmentDraft: AttachmentDraft): React.ReactNode {
   const activeConterters = attachmentDraft.converters.filter(c => c.isActive);
   if (activeConterters.length === 0)
     return null;
@@ -115,7 +117,7 @@ function attachmentIcon(attachmentDraft: AttachmentDraft): React.ReactNode {
   return <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
     {/* If we have a Web preview, show it first */}
-    {/*!imageDataRefs.length &&*/ !!attachmentDraft.input?.urlImage?.webpDataUrl && (
+    {!!attachmentDraft.input?.urlImage?.webpDataUrl && /*!imageDataRefs.length &&*/ (
       <Tooltip title={<>This was the page.<br />You can also Add the Screenshot as attachment</>}>
         <RenderImageURL
           imageURL={attachmentDraft.input.urlImage.webpDataUrl}
@@ -172,6 +174,7 @@ export function LLMAttachmentButton(props: {
   const isUnconvertible = !draft.converters.length;
   const isOutputLoading = draft.outputsConverting;
   const isOutputMissing = !draft.outputFragments.length;
+  const hasLiveFile = draft.outputFragments.some(liveFileInAttachmentFragment);
 
   const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments);
 
@@ -232,7 +235,8 @@ export function LLMAttachmentButton(props: {
         : (
           <Button
             size='sm'
-            variant={variant} color={color}
+            color={color}
+            variant={variant}
             onClick={handleToggleMenu}
             onContextMenu={handleToggleMenu}
             sx={{
@@ -248,12 +252,19 @@ export function LLMAttachmentButton(props: {
             {isInputError
               ? <InputErrorIndicator />
               : <>
-                {attachmentIcon(draft)}
-                {isOutputLoading
-                  ? <>Converting <CircularProgress color='success' size='sm' /></>
-                  : <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-                    {attachmentLabelText(draft)}
-                  </Typography>}
+                {/* Icons: Web Page Screenshot, Converter[s] */}
+                {attachmentIcons(draft)}
+
+                {/* Label */}
+                <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
+                  {isOutputLoading ? 'Converting... ' : attachmentLabelText(draft)}
+                </Typography>
+
+                {/* Loading icon */}
+                {isOutputLoading && <CircularProgress color='success' size='sm' />}
+
+                {/* Live file icon */}
+                {hasLiveFile && <LiveFileIcon color='primary' sx={{ width: 20, height: 20 }} />}
               </>}
           </Button>
         )}

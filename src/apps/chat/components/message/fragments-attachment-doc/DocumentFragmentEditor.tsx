@@ -73,7 +73,7 @@ export function DocumentFragmentEditor(props: {
 
     if (editedText.length > 0) {
       const newData = createDMessageDataInlineText(editedText, fragment.part.data.mimeType);
-      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragment.part.type, newData, fragment.part.ref, fragment.part.meta);
+      const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragment.part.type, newData, fragment.part.ref, fragment.part.meta, fragment._liveFile);
       // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
       newAttachment.fId = fragmentId;
       onFragmentReplace(fragmentId, newAttachment);
@@ -82,7 +82,7 @@ export function DocumentFragmentEditor(props: {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, fragment.caption, fragment.part, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
+  }, [editedText, fragment._liveFile, fragment.caption, fragment.part, fragmentId, fragmentTitle, handleFragmentDelete, onFragmentReplace]);
 
 
   return (

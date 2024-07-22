@@ -45,7 +45,10 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
   title: string;                  // label of the attachment (filename, named id, content overview, title..)
   caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
-  _fileSystemFileHandle?: FileSystemFileHandle; // [LiveFile] Store the handle to mem/DB - TODO: check if it works across sessions
+  _liveFile?: {
+    lft: 'fs';
+    _fsFileHandle?: FileSystemFileHandle; // [LiveFile] Store the handle to mem/DB - TODO: check if it works across sessions
+  }
 };
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
@@ -201,16 +204,16 @@ export function specialShallowReplaceTextContentFragment(copyFragment: DMessageC
 }
 
 
-function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part']): DMessageAttachmentFragment {
-  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part };
+function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFile: DMessageAttachmentFragment['_liveFile']): DMessageAttachmentFragment {
+  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), _liveFile: liveFile, part };
 }
 
-export function createDocAttachmentFragment(l1Title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta): DMessageAttachmentFragment {
-  return _createAttachmentFragment(l1Title, caption, createDMessageDocPart(type, data, ref, l1Title, meta));
+export function createDocAttachmentFragment(l1Title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFile?: DMessageAttachmentFragment['_liveFile']): DMessageAttachmentFragment {
+  return _createAttachmentFragment(l1Title, caption, createDMessageDocPart(type, data, ref, l1Title, meta), liveFile);
 }
 
 export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, createDMessageImageRefPart(dataRef, imgAltText, width, height));
+  return _createAttachmentFragment(title, caption, createDMessageImageRefPart(dataRef, imgAltText, width, height), undefined);
 }
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
@@ -297,7 +300,9 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
       return _createContentFragment(_duplicatePart(fragment.part));
 
     case 'attachment':
-      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicatePart(fragment.part));
+      // NOTE: check if this is correct - we haven't tested the serialization of FileSystemFileHandle yet
+      const liveFileCopy = fragment._liveFile ? { ...fragment._liveFile } : undefined;
+      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicatePart(fragment.part), liveFileCopy);
 
     case '_ft_sentinel':
       return _createSentinelFragment();

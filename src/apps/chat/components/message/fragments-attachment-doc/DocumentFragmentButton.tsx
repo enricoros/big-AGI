@@ -10,12 +10,14 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 
-import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
+import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
+import { LiveFileIcon } from '~/common/livefile/LiveFileIcon';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 
 
-function iconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
+function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
   switch (part.pt) {
     case 'doc':
       switch (part.type) {
@@ -86,7 +88,7 @@ export function DocumentFragmentButton(props: {
 
   const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
-  const Icon = iconForFragment(fragment);
+  const Icon = buttonIconForFragment(fragment);
 
   return (
     <Button
@@ -115,6 +117,9 @@ export function DocumentFragmentButton(props: {
         {/*  {fragment.caption}*/}
         {/*</Box>*/}
       </Box>
+      {liveFileInAttachmentFragment(fragment) && (
+        <LiveFileIcon sx={{ mr: '0.5rem' }} />
+      )}
     </Button>
   );
 }
