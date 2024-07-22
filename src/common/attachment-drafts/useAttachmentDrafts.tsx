@@ -9,11 +9,11 @@ import { getClipboardItems } from '~/common/util/clipboardUtils';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
+import { getAllFilesFromDirectoryRecursively } from '~/common/livefile/filesystem-helpers';
 import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
-import { extractFilePathsFromCommonRadix, extractFileSystemHandlesOrFiles, getAllFilesFromDirectoryRecursively, mightBeDirectory } from './file-converters/filesystem-helpers';
 
 
 // enable to debug operations
@@ -69,7 +69,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     // get the file items - note: important to not have any async/await or we'll lose the items of the data transfer
     const fileOrFSHandlePromises: (Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null> | File)[] = heuristicBypassImage
       ? [] /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */
-      : extractFileSystemHandlesOrFiles(dt.items);
+      : getDataTransferFilesOrPromises(dt.items);
 
     // attach File(s)
     if (fileOrFSHandlePromises.length) {
@@ -78,7 +78,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       let overrideFileNames: string[] = [];
       if (dt.types.includes('text/plain')) {
         const possiblePlainTextURIs: string[] = dt.getData('text/plain').split(/[\r\n]+/);
-        overrideFileNames = extractFilePathsFromCommonRadix(possiblePlainTextURIs);
+        overrideFileNames = mapFileURIsRemovingCommonRadix(possiblePlainTextURIs);
         if (overrideFileNames.length !== fileOrFSHandlePromises.length)
           overrideFileNames = [];
         else if (ATTACHMENTS_DEBUG_INTAKE)
@@ -92,9 +92,12 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
         // not provide a handle; if that's the case, we can't do anything, so we still add the file
         if (fileOrFSHandlePromise instanceof File) {
           const file = fileOrFSHandlePromise;
-          if (mightBeDirectory(file)) {
+
+          // Directory detection from File objects weak or impossible - e.g. Firefox reports directories with size > 0 on windows (e.g. 4096)
+          if (file.type === '' && file.size === 0) {
             console.warn('This browser does not support directories:', file);
           }
+
           await attachAppendFile(method, file, overrideFileNames[fIdx]);
           continue;
         }
@@ -265,3 +268,85 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     attachmentsTakeFragmentsByType,
   };
 };
+
+
+/**
+ * Extracts file system handles or files from a list of data transfer items.
+ * Note: the main purpose of this function is to get all the files/handles **upfront** in a
+ * datatransfer, as those objects expire with async operations.
+ */
+function getDataTransferFilesOrPromises(items: DataTransferItemList) {
+  const results: (File | Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null>)[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind !== 'file')
+      continue;
+
+    // extract file system handle if available
+    if ('getAsFileSystemHandle' in item && typeof item.getAsFileSystemHandle === 'function') {
+      try {
+        const handle = item.getAsFileSystemHandle();
+        if (handle)
+          results.push(handle);
+        continue;
+      } catch (error) {
+        console.error('Error getting file system handle:', error);
+      }
+    }
+
+    // extract file if no handle available
+    const file = item.getAsFile();
+    if (file)
+      results.push(file);
+  }
+
+  return results;
+}
+
+
+/**
+ * Maps a list of file URIs to relative paths, removing a common prefix.
+ *
+ * Example, takes the following files:
+ * - file:///C:/Users/Me/Documents/MyFile1.txt
+ * - file:///C:/Users/Me/Documents/Test/MyFile2.txt
+ * - file:///C:/Users/Me/Documents/Test/MyFile3.txt
+ * And returns:
+ * - [ MyFile1.txt, Test/MyFile2.txt, Test/MyFile3.txt ]
+ */
+function mapFileURIsRemovingCommonRadix(fileURIs: string[]): string[] {
+
+  const filePaths = fileURIs
+    .filter((path) => path.startsWith('file:'))
+    .map((path) => path.slice(5));
+
+  if (filePaths.length < 2)
+    return [];
+
+  const commonRadix = _findCommonStringsPrefix(filePaths);
+  if (!commonRadix.endsWith('/'))
+    return [];
+
+  return filePaths.map((path) => path.slice(commonRadix.length));
+}
+
+function _findCommonStringsPrefix(strings: string[]) {
+  if (!strings.length)
+    return '';
+
+  const sortedStrings = strings.slice().sort();
+  const firstString = sortedStrings[0];
+  const lastString = sortedStrings[sortedStrings.length - 1];
+
+  let commonPrefix = '';
+  for (let i = 0; i < firstString.length; i++) {
+    if (firstString[i] === lastString[i]) {
+      commonPrefix += firstString[i];
+    } else {
+      break;
+    }
+  }
+
+  return commonPrefix;
+}

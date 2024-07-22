@@ -45,6 +45,7 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
   title: string;                  // label of the attachment (filename, named id, content overview, title..)
   caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
+  _fileSystemFileHandle?: FileSystemFileHandle; // [LiveFile] - live file support, while in-memory
 };
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)

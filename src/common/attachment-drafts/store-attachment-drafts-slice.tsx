@@ -70,7 +70,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
       return;
 
     // 2. Define the I->O Converters
-    attachmentDefineConverters(source.media, loaded.input, editFn);
+    attachmentDefineConverters(source, loaded.input, editFn);
     const defined = _getAttachment(attachmentDraftId);
     if (!defined?.converters.length)
       return;

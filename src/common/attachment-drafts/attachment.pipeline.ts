@@ -10,6 +10,7 @@ import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAtta
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
 import { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, draftInputMimeEgoFragments, draftInputMimeWebpage, DraftWebInputData } from './attachment.types';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
+import { liveFileAddToAttachmentFragment, liveFileIsSupported } from '../livefile/livefile';
 
 
 // configuration
@@ -261,11 +262,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
 /**
  * Defines the possible converters for an AttachmentDraft object based on its input type.
  *
- * @param {AttachmentDraftSource['media']} sourceType - The media type of the attachment source.
+ * @param {Readonly<AttachmentDraftSource>} source - The source of the AttachmentDraft object.
  * @param {Readonly<AttachmentDraftInput>} input - The input of the AttachmentDraft object.
  * @param {(changes: Partial<AttachmentDraft>) => void} edit - A function to edit the AttachmentDraft object.
  */
-export function attachmentDefineConverters(sourceType: AttachmentDraftSource['media'], input: Readonly<AttachmentDraftInput>, edit: (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void) {
+export function attachmentDefineConverters(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, edit: (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void) {
 
   // return all the possible converters for the input
   const converters: AttachmentDraftConverter[] = [];
@@ -275,7 +276,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
     // plain text types
     case PLAIN_TEXT_MIMETYPES.includes(input.mimeType):
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
-      const textOriginHtml = sourceType === 'text' && input.altMimeType === 'text/html' && !!input.altData;
+      const textOriginHtml = source.media === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
 
       // p1: Tables
@@ -283,7 +284,7 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      converters.push({ id: 'text', name: 'Text' });
+      converters.push({ id: 'text', name: liveFileIsSupported(source) ? 'Text (Live)' : 'Text' });
 
       // p3: Html
       if (textOriginHtml) {
@@ -470,7 +471,10 @@ export async function attachmentPerformConversion(
       // text as-is
       case 'text':
         const textData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textData, refString, docMeta));
+        const textDocAttachmentFragment = createDocAttachmentFragment(title, caption, 'text/plain', textData, refString, docMeta);
+        // [LiveFile] if we have a handle for this file, transfer it to the Doc Attachment fragment
+        liveFileAddToAttachmentFragment(source, textDocAttachmentFragment);
+        newFragments.push(textDocAttachmentFragment);
         break;
 
       // html as-is
