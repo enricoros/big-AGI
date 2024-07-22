@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button, CircularProgress, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, Sheet, Tooltip, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -148,49 +148,55 @@ export function DocAttachmentFragmentEditor(props: {
 
   return (
     <Box sx={{
-      backgroundColor: 'background.level1',
+      mt: 0.5,
+      backgroundColor: 'background.surface',
       border: '1px solid',
       borderColor: `${DocSelColor}.outlinedBorder`,
       borderRadius: 'sm',
-      boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
-      p: 1,
-      // layout
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 1,
+      // contain: 'paint',
+      boxShadow: 'sm',
+      // boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
     }}>
 
       {/* Ref of the file */}
-      {/*<Sheet variant='plain' sx={{ borderRadius: 'sm', mb: 1 }}>*/}
       <Box sx={{
-        // backgroundColor: 'background.popup',
-        // borderRadius: 'sm',
-        p: 0.5,
+        borderBottom: '1px solid',
+        borderBottomColor: 'primary.outlinedBorder',
+        // borderBottomColor: 'divider',
+        p: 1,
+        // layout
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         gap: 1,
       }}>
         <Typography level='title-sm'>
-          <Tooltip disableInteractive title={docPart.ref === docPart.meta?.srcFileName ? undefined : docPart.ref} placement='top-start'>
-            <span>
-              {docPart.meta?.srcFileName || docPart.l1Title || docPart.ref}
-            </span>
+          <Tooltip disableInteractive title={docPart.ref === docPart.meta?.srcFileName ? undefined : <>Document identifier: {docPart.ref}<br />Render type: {docPart.type}</>} placement='top-start'>
+            <span>{docPart.meta?.srcFileName || docPart.l1Title || docPart.ref}</span>
           </Tooltip>
         </Typography>
-        <Typography level='body-xs'>
-          {docPart.type}{docPart.data.mimeType && docPart.data.mimeType !== docPart.type ? ` · ${docPart.data.mimeType}` : ''}
+        <Typography level='body-xs' sx={{ opacity: 0.5 }}>
+          {docPart.data.mimeType && docPart.data.mimeType !== docPart.type ? docPart.data.mimeType || '' : ''}
           {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType })}*/}
         </Typography>
       </Box>
-      {/*</Sheet>*/}
 
 
       {/* Button Bar Edit / Delete commands */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 1 }}>
+      <Sheet color='primary' variant='soft' sx={theme => ({
+        backgroundColor: theme.palette.mode === 'light' ? 'primary.50' : 'primary.900',
+        borderBottom: '1px solid',
+        borderBottomColor: isEditing ? 'transparent' : 'primary.outlinedBorder',
+        p: 1,
+        // layout
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: 1,
+      })}>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant={isDeleteArmed ? 'soft' : 'outlined'} color={DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
+          <Button variant='outlined' color={DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
             {isDeleteArmed ? 'Cancel' : 'Delete'}
           </Button>
           {isDeleteArmed && (
@@ -202,31 +208,35 @@ export function DocAttachmentFragmentEditor(props: {
 
         {hasLiveFile && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button disabled={isEditing || isLiveFileWorking} variant={isLiveFileArmed ? 'soft' : 'outlined'} color={DocSelColor} size='sm' onClick={handleToggleLiveFileReloadArmed} startDecorator={isLiveFileArmed ? <CloseRoundedIcon /> : <LiveFileIcon />}>
-              {isLiveFileArmed ? 'Cancel' : 'Sync File'}
+            <Button variant={isLiveFileArmed ? 'outlined' : 'soft'} color={isLiveFileArmed ? 'primary' : 'success'} size='sm' disabled={isEditing || isLiveFileWorking} onClick={handleToggleLiveFileReloadArmed} startDecorator={isLiveFileArmed ? <CloseRoundedIcon /> : <LiveFileIcon />}>
+              {isLiveFileArmed ? 'Cancel' : 'File Sync'}
             </Button>
             {isLiveFileArmed && (
-              <Button disabled={isLiveFileWorking} variant='solid' color='success' size='sm' onClick={handleLiveFileReload} startDecorator={<LiveFileReloadIcon />}>
+              <Button variant='solid' color='success' size='sm' disabled={isLiveFileWorking} onClick={handleLiveFileReload} startDecorator={<LiveFileReloadIcon />}>
                 Reload
               </Button>
             )}
+            {/*{isLiveFileArmed && (*/}
+            {/*  <Button variant='soft' color='success' size='sm' disabled={isLiveFileWorking} onClick={handleLiveFileReload} startDecorator={<LiveFileSaveIcon />}>*/}
+            {/*    Save*/}
+            {/*  </Button>*/}
+            {/*)}*/}
             {isLiveFileWorking && <CircularProgress size='sm' />}
           </Box>
         )}
 
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant={isEditing ? 'soft' : 'outlined'} color={DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />} sx={{ minWidth: 100 }}>
+          <Button variant='outlined' color={DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
             {isEditing ? 'Cancel' : 'Edit'}
           </Button>
           {isEditing && (
-            <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={{ minWidth: 100 }}>
+            <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
               Save
             </Button>
           )}
         </Box>
 
-      </Box>
-
+      </Sheet>
 
       {isEditing ? (
         // Document Editor

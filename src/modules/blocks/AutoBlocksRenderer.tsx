@@ -262,7 +262,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
     ...(props.specialCodePlain ? {
       // Style when inside the <DocumentFragmentEditor />
       backgroundColor: 'background.surface',
-      marginTop: -0.5,
+      // marginTop: -0.5,
     } : {
       // Style when inside <ChatMessage /> in particular for 'user' messages
       marginTop: 1,
@@ -298,16 +298,18 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
       })}
 
       {(isTextCollapsed || forceUserExpanded) && (
-        <Button
-          variant='soft'
-          color={props.specialCodePlain ? 'neutral' : undefined}
-          size='sm'
-          onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
-          startDecorator={isTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-          sx={toggleExpansionButtonSx}
-        >
-          {isTextCollapsed ? 'Show more' : 'Show less'}
-        </Button>
+        <div style={{ lineHeight: 1 /* Absorbs some weird height issue since the parent has an extended line height (lineHeightChatTextMd) */ }}>
+          <Button
+            variant='soft'
+            color={props.specialCodePlain ? 'neutral' : undefined}
+            size='sm'
+            onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
+            startDecorator={isTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            sx={toggleExpansionButtonSx}
+          >
+            {isTextCollapsed ? 'Show more' : 'Show less'}
+          </Button>
+        </div>
       )}
 
       {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}

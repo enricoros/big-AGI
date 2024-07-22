@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ColorPaletteProp } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Tooltip } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
@@ -73,7 +73,7 @@ export function DocAttachmentFragmentButton(props: {
     // height: '100%',
     minHeight: props.contentScaling === 'md' ? 40 : props.contentScaling === 'sm' ? 38 : 36,
     minWidth: '64px',
-    maxWidth: '280px',
+    maxWidth: '340px',
     padding: 0,
 
     // style
@@ -124,7 +124,9 @@ export function DocAttachmentFragmentButton(props: {
         {/*</Box>*/}
       </Box>
       {liveFileInAttachmentFragment(fragment) && (
-        <LiveFileIcon sx={{ mr: '0.5rem' }} />
+        <Tooltip color='success' disableInteractive title='Supports LiveFile' placement='top-end' arrow>
+          <LiveFileIcon color={isSelected ? undefined : 'success'} sx={{ mr: '0.5rem' }} />
+        </Tooltip>
       )}
     </Button>
   );
