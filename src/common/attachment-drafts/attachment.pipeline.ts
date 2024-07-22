@@ -347,12 +347,12 @@ export function attachmentDefineConverters(sourceType: AttachmentDraftSource['me
 }
 
 
-function lowCollisionRefString(prefix: string, digits: number): string {
+function _lowCollisionRefString(prefix: string, digits: number): string {
   return `${prefix} ${agiCustomId(digits)}`;
 }
 
 
-function prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterName: string): {
+function _prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterName: string): {
   title: string;
   caption: string;
   refString: string;
@@ -376,7 +376,7 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
     case 'file':
       const mayBeImage = inputMime.startsWith('image/');
 
-      let fileTitle = lowCollisionRefString(mayBeImage ? 'Image' : 'File', 4);
+      let fileTitle = _lowCollisionRefString(mayBeImage ? 'Image' : 'File', 4);
       let fileCaption = '';
       const fileMeta: DMessageDocPart['meta'] = {
         srcFileName: source.fileWithHandle.name,
@@ -385,21 +385,21 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
 
       switch (source.origin) {
         case 'camera':
-          fileTitle = source.refPath || lowCollisionRefString('Camera Photo', 6);
+          fileTitle = source.refPath || _lowCollisionRefString('Camera Photo', 6);
           break;
         case 'screencapture':
-          fileTitle = source.refPath || lowCollisionRefString('Screen Capture', 6);
+          fileTitle = source.refPath || _lowCollisionRefString('Screen Capture', 6);
           fileCaption = 'Screen Capture';
           break;
         case 'file-open':
-          fileTitle = source.refPath || lowCollisionRefString('Uploaded File', 6);
+          fileTitle = source.refPath || _lowCollisionRefString('Uploaded File', 6);
           break;
         case 'clipboard-read':
         case 'paste':
-          fileTitle = source.refPath || lowCollisionRefString('Pasted File', 6);
+          fileTitle = source.refPath || _lowCollisionRefString('Pasted File', 6);
           break;
         case 'drop':
-          fileTitle = source.refPath || lowCollisionRefString('Dropped File', 6);
+          fileTitle = source.refPath || _lowCollisionRefString('Dropped File', 6);
           break;
       }
       return {
@@ -411,7 +411,7 @@ function prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachmen
 
     // Text from clipboard, drop, or paste
     case 'text':
-      const textRef = lowCollisionRefString('doc', 6);
+      const textRef = _lowCollisionRefString('doc', 6);
       return {
         title: converterName || 'Text',
         caption: source.method === 'drop' ? 'Dropped' : 'Pasted',
@@ -463,7 +463,7 @@ export async function attachmentPerformConversion(
     if (!converter.isActive) continue;
 
     // prepare the doc data
-    let { title, caption, refString, docMeta } = prepareDocData(source, input, converter.name);
+    let { title, caption, refString, docMeta } = _prepareDocData(source, input, converter.name);
 
     switch (converter.id) {
 
