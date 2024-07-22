@@ -4,7 +4,6 @@ import type { FileWithHandle } from 'browser-fs-access';
 
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
-import { extractFilePathsFromCommonRadix } from '~/common/util/dropTextUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -14,6 +13,7 @@ import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
+import { extractFilePathsFromCommonRadix, extractFileSystemHandlesOrFiles, getAllFilesFromDirectoryRecursively, mightBeDirectory } from './file-converters/filesystem-helpers';
 
 
 // enable to debug operations
@@ -66,32 +66,64 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       }
     }
 
+    // get the file items - note: important to not have any async/await or we'll lose the items of the data transfer
+    const fileOrFSHandlePromises: (Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null> | File)[] = heuristicBypassImage
+      ? [] /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */
+      : extractFileSystemHandlesOrFiles(dt.items);
+
     // attach File(s)
-    const dtFileItems = Array.from(dt.items).filter(item => item.kind === 'file');
-    if (dtFileItems.length >= 1 && !heuristicBypassImage /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */) {
+    if (fileOrFSHandlePromises.length) {
 
       // rename files from a common prefix, to better relate them (if the transfer contains a list of paths)
       let overrideFileNames: string[] = [];
       if (dt.types.includes('text/plain')) {
         const possiblePlainTextURIs: string[] = dt.getData('text/plain').split(/[\r\n]+/);
         overrideFileNames = extractFilePathsFromCommonRadix(possiblePlainTextURIs);
-        if (overrideFileNames.length !== dtFileItems.length)
+        if (overrideFileNames.length !== fileOrFSHandlePromises.length)
           overrideFileNames = [];
         else if (ATTACHMENTS_DEBUG_INTAKE)
           console.log(' - renamed to:', overrideFileNames);
       }
 
-      // attach as Files (paste and drop keep the original filename)
-      for (let i = 0; i < dtFileItems.length; i++) {
-        const file = dtFileItems[i].getAsFile();
-        if (!file) continue; // type guard basically
+      for (let i = 0; i < fileOrFSHandlePromises.length; i++) {
+        const fileOrFSHandlePromise = fileOrFSHandlePromises[i];
 
-        // drag/drop of folders (or .tsx from IntelliJ) will have no type
-        if (!file.type) {
-          // NOTE: we are fixing it in attachmentLoadInputAsync, but would be better to do it here
+        // Files: nothing to do - Note: some browsers will interpret directories as files and
+        // not provide a handle; if that's the case, we can't do anything, so we still add the file
+        if (fileOrFSHandlePromise instanceof File) {
+          if (mightBeDirectory(fileOrFSHandlePromise)) {
+            console.warn('This browser does not support directories:', fileOrFSHandlePromise);
+          }
+          await attachAppendFile(method, fileOrFSHandlePromise, overrideFileNames[i]);
+          continue;
         }
 
-        void attachAppendFile(method, file, overrideFileNames[i]);
+        // Resolve the file system handle
+        const fileSystemHandle = await fileOrFSHandlePromise;
+        switch (fileSystemHandle?.kind) {
+
+          // attach file with handle
+          case 'file':
+            const file = await fileSystemHandle.getFile();
+            (file as FileWithHandle).handle = fileSystemHandle;
+            await attachAppendFile(method, file, overrideFileNames[i]);
+            break;
+
+          // attach all files in a directory as files with handles
+          case 'directory':
+            const filesWithHandles: FileWithHandle[] = await getAllFilesFromDirectoryRecursively(fileSystemHandle);
+            // print full paths of files
+            if (ATTACHMENTS_DEBUG_INTAKE)
+              console.log(' - directory:', fileSystemHandle.name, filesWithHandles.map(f => f.name));
+            for (const fileWithHandle of filesWithHandles)
+              await attachAppendFile(method, fileWithHandle);
+            break;
+
+          default:
+            console.warn('Unhandled file system handle kind:', fileSystemHandle);
+            break;
+
+        }
       }
 
       return 'as_files';
