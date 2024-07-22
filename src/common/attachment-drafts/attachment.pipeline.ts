@@ -183,7 +183,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
           mimeType = RESOLVE_MISSING_FILE_MIMETYPE_MAP[fileExtension] ?? undefined;
         // unknown extension or missing extension and mime: falling back to text/plain
         if (!mimeType) {
-          console.warn('Assuming the attachment is text/plain. From:', source.origin, ', name:', source.refPath);
+          console.warn(`Assuming the attachment is text/plain. From: '${source.origin}', name: ${source.refPath}`);
           mimeType = 'text/plain';
         }
       } else {
@@ -208,7 +208,10 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
           },
         });
       } catch (error: any) {
-        edit({ inputError: `Issue loading file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
+        const errorText = (error?.name === 'AbortError' && source.fileWithHandle.type === '')
+          ? 'unsupported file type or possible folder. For folders and live files support, we recommend using Google Chrome.'
+          : `issue loading file: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}`;
+        edit({ inputError: errorText });
       }
       break;
 
