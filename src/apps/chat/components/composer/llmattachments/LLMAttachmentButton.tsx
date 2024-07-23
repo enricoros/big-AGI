@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
