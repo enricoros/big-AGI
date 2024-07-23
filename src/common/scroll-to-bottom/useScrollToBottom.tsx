@@ -18,6 +18,7 @@ export interface ScrollToBottomState {
 export interface ScrollToBottomActions {
   notifyBooting: () => void;
   setStickToBottom: (stick: boolean) => void;
+  skipNextAutoScroll: () => void;
 }
 
 type ScrollToBottomContext = ScrollToBottomState & ScrollToBottomActions;
