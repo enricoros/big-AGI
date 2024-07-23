@@ -383,8 +383,8 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
       let fileTitle = _lowCollisionRefString(mayBeImage ? 'Image' : 'File', 4);
       let fileCaption = '';
       const fileMeta: DMessageDocPart['meta'] = {
-        srcFileName: source.fileWithHandle.name,
-        srcFileSize: input.dataSize,
+        srcFileName: source.fileWithHandle.name || undefined,
+        srcFileSize: source.fileWithHandle.size || input.dataSize,
       };
 
       switch (source.origin) {
