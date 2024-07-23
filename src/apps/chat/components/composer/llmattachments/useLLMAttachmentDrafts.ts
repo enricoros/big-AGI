@@ -24,7 +24,25 @@ export interface LLMAttachmentDraft {
 
 
 export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachmentDrafts {
+
+  /* [Optimization] Use a Ref to store the previous state of llmAttachmentDrafts and chatLLM
+   *
+   * Note that this works on 2 levels:
+   * - 1. avoids recomputation, but more importantly,
+   * - 2. avoids re-rendering by keeping those llmAttachmentDrafts objects stable.
+   *
+   * Important to notice that the attachmentDraft objects[] are stable to start with, so we can
+   * safely use reference equality to check if internal properties (or order) have changed.
+   */
+  const prevStateRef = React.useRef<{
+    chatLLM: DLLM | null;
+    llmAttachmentDrafts: LLMAttachmentDraft[];
+  }>({ llmAttachmentDrafts: [], chatLLM: null });
+
   return React.useMemo(() => {
+
+    // [Optimization]
+    const equalChatLLM = chatLLM === prevStateRef.current.chatLLM;
 
     // LLM-dependent multi-modal enablement
     const supportsImages = !!chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
@@ -32,14 +50,26 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
     const supportedTextTypes: DMessageAttachmentFragment['part']['pt'][] = supportedTypes.filter(pt => pt === 'doc');
 
     // Add LLM-specific properties to each attachment draft
-    const llmAttachmentDrafts = attachmentDrafts.map((a): LLMAttachmentDraft => ({
-      attachmentDraft: a,
-      llmSupportsAllFragments: !a.outputFragments ? false : a.outputFragments.every(op => supportedTypes.includes(op.part.pt)),
-      llmSupportsTextFragments: !a.outputFragments ? false : a.outputFragments.some(op => supportedTextTypes.includes(op.part.pt)),
-      llmTokenCountApprox: chatLLM
-        ? estimateTokensForFragments(chatLLM, 'user', a.outputFragments, true, 'useLLMAttachmentDrafts')
-        : null,
-    }));
+    const llmAttachmentDrafts = attachmentDrafts.map((a, index) => {
+
+      // [Optimization] If not change in LLM and the attachmentDraft is the same object reference, reuse the previous LLMAttachmentDraft
+      let prevDraft: LLMAttachmentDraft | undefined = prevStateRef.current.llmAttachmentDrafts[index];
+      // if not found, search by id
+      if (!prevDraft)
+        prevDraft = prevStateRef.current.llmAttachmentDrafts.find(_pd => _pd.attachmentDraft.id === a.id);
+      if (equalChatLLM && prevDraft && prevDraft.attachmentDraft === a)
+        return prevDraft;
+
+      // Otherwise, create a new LLMAttachmentDraft
+      return {
+        attachmentDraft: a,
+        llmSupportsAllFragments: !a.outputFragments ? false : a.outputFragments.every(op => supportedTypes.includes(op.part.pt)),
+        llmSupportsTextFragments: !a.outputFragments ? false : a.outputFragments.some(op => supportedTextTypes.includes(op.part.pt)),
+        llmTokenCountApprox: chatLLM
+          ? estimateTokensForFragments(chatLLM, 'user', a.outputFragments, true, 'useLLMAttachmentDrafts')
+          : null,
+      };
+    });
 
     // Calculate the overall properties
     const canAttachAllFragments = llmAttachmentDrafts.every(a => a.llmSupportsAllFragments);
@@ -48,11 +78,15 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
       ? llmAttachmentDrafts.reduce((acc, a) => acc + (a.llmTokenCountApprox || 0), 0)
       : null;
 
+    // [Optimization] Update the ref with the new state
+    prevStateRef.current = { llmAttachmentDrafts, chatLLM };
+
     return {
       llmAttachmentDrafts,
       canAttachAllFragments,
       canInlineSomeFragments,
       llmTokenCountApprox,
     };
-  }, [attachmentDrafts, chatLLM]);
+
+  }, [attachmentDrafts, chatLLM]); // Dependencies for the outer useMemo
 }
