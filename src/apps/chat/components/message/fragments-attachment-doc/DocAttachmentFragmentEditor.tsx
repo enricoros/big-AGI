@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button, Sheet, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Sheet, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -11,6 +11,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
@@ -140,23 +141,36 @@ export function DocAttachmentFragmentEditor(props: {
 
       {/* Ref of the file */}
       <Box sx={{
-        borderBottom: '1px solid',
-        borderBottomColor: 'primary.outlinedBorder',
-        // borderBottomColor: 'divider',
-        p: 1,
+        minHeight: '2.25rem',
+        px: 1,
         // layout
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        alignItems: 'center',
         gap: 1,
       }}>
         <Typography level='title-sm'>
-          <Tooltip disableInteractive placement='top-start' arrow color='primary' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined : <>Document identifier: {fragmentDocPart.ref}<br />Render type: {fragmentDocPart.type}</>}>
+          <TooltipOutlined placement='top-start' color='neutral' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined
+            : <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 0.5, '& > :nth-child(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
+              <div>Title</div>
+              <div>{fragmentTitle}</div>
+              <div>Identifier</div>
+              <div>{fragmentDocPart.ref}</div>
+              <div>Render type</div>
+              <div>{fragmentDocPart.type}</div>
+              <div>Text Mime type</div>
+              <div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>
+              <div>Text Buffer Id</div>
+              <div>{fragmentId}</div>
+            </Box>
+          }>
             <span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>
-          </Tooltip>
+          </TooltipOutlined>
         </Typography>
         <Typography level='body-xs' sx={{ opacity: 0.5 }}>
           {fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.type ? fragmentDocPart.data.mimeType || '' : ''}
+          {/*{fragmentId}*/}
           {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType })}*/}
         </Typography>
       </Box>
@@ -167,6 +181,8 @@ export function DocAttachmentFragmentEditor(props: {
         backgroundColor: theme.palette.mode === 'light' ? 'primary.50' : 'primary.900',
         borderBottom: '1px solid',
         borderBottomColor: isEditing ? 'transparent' : 'primary.outlinedBorder',
+        borderTop: '1px solid',
+        borderTopColor: 'primary.outlinedBorder',
         p: 1,
         // layout
         display: 'grid',
