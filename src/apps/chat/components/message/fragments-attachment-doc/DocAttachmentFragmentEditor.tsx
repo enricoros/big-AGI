@@ -13,10 +13,11 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
+import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
+import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
 import { DocSelColor } from './DocAttachmentFragmentButton';
-import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
 
 
 export function DocAttachmentFragmentEditor(props: {
@@ -30,6 +31,9 @@ export function DocAttachmentFragmentEditor(props: {
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
+
+  // external state
+  const { skipNextAutoScroll } = useScrollToBottom();
 
   // derived state
   const { editedText, fragment, onFragmentDelete, onFragmentReplace } = props;
@@ -116,9 +120,10 @@ export function DocAttachmentFragmentEditor(props: {
       setIsDeleteArmed(false);
       // setIsLiveFileArmed(false);
       // resetLiveFileState();
+      skipNextAutoScroll();
     }
     setIsEditing(on => !on);
-  }, [isEditing]);
+  }, [isEditing, skipNextAutoScroll]);
 
 
   return (
