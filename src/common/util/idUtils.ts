@@ -14,6 +14,7 @@ type UidScope =
   | 'chat-pane'
   | 'dblob-asset'
   | 'draw-prompt'
+  | 'livefile-item'
   | 'persona-creator-chain'
   | 'persona-simple'
   | 'processing-queue-task'

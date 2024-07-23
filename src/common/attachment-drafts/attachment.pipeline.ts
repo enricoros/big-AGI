@@ -6,11 +6,11 @@ import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
 import { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, draftInputMimeEgoFragments, draftInputMimeWebpage, DraftWebInputData } from './attachment.types';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
-import { liveFileCreate, liveFileInSource } from '../livefile/liveFile';
 
 
 // configuration
@@ -284,7 +284,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      converters.push({ id: 'text', name: liveFileInSource(source) ? 'Text (Live)' : 'Text' });
+      converters.push({ id: 'text', name: _sourceContainsFileSystemFileHandle(source) ? 'Text (Live)' : 'Text' });
 
       // p3: Html
       if (textOriginHtml) {
@@ -348,10 +348,13 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
 }
 
 
+function _sourceContainsFileSystemFileHandle(source: AttachmentDraftSource): boolean {
+  return source.media === 'file' && !!source.fileWithHandle.handle && typeof source.fileWithHandle.handle.getFile === 'function';
+}
+
 function _lowCollisionRefString(prefix: string, digits: number): string {
   return `${prefix} ${agiCustomId(digits)}`;
 }
-
 
 function _prepareDocData(source: AttachmentDraftSource, input: Readonly<AttachmentDraftInput>, converterName: string): {
   title: string;
@@ -470,13 +473,13 @@ export async function attachmentPerformConversion(
 
       // text as-is
       case 'text':
-
-        // [LiveFile] if we have a handle for this file, transfer it to the Doc Attachment fragment
-        const liveFile = (liveFileInSource(source) && source.media === 'file' && converter.id === 'text')
-          ? liveFileCreate(source.fileWithHandle) : undefined;
+        // [LiveFile] create a LiveFile is we have a file handle, and set it to the attachment
+        const liveFileId = (_sourceContainsFileSystemFileHandle(source) && source.media === 'file' && !!source.fileWithHandle.handle)
+          ? await liveFileCreateOrThrow(source.fileWithHandle.handle).catch(console.error) || undefined
+          : undefined;
 
         const textualInlineData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textualInlineData, refString, docMeta, liveFile));
+        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textualInlineData, refString, docMeta, liveFileId));
         break;
 
       // html as-is

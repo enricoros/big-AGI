@@ -10,12 +10,13 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
 import { DocSelColor } from './DocAttachmentFragmentButton';
-import { useLiveFile } from './useLiveFile';
+import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
 
 
 export function DocAttachmentFragmentEditor(props: {
@@ -46,32 +47,31 @@ export function DocAttachmentFragmentEditor(props: {
 
   // hooks
 
-  const replaceFragmentWithTextDoc = React.useCallback((newText: string) => {
+  const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
     // create a new Doc Attachment Fragment
     const newData = createDMessageDataInlineText(newText, fragmentDocPart.data.mimeType);
-    const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.type, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment._liveFile);
+    const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.type, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment.liveFileId);
 
     // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
     newAttachment.fId = fragmentId;
 
     // replace this fragment with the new one
     onFragmentReplace(fragmentId, newAttachment);
-  }, [fragment._liveFile, fragment.caption, fragmentDocPart, fragmentId, fragmentTitle, onFragmentReplace]);
+  }, [fragment.caption, fragment.liveFileId, fragmentDocPart, fragmentId, fragmentTitle, onFragmentReplace]);
 
-  const replaceFragmentLiveFile = React.useCallback((newLiveFile: DMessageAttachmentFragment['_liveFile']) => {
-    const newFragment = { ...fragment, _liveFile: newLiveFile };
-    onFragmentReplace(fragmentId, newFragment);
+  const handleReplaceFragmentLiveFileId = React.useCallback((liveFileId: LiveFileId) => {
+    onFragmentReplace(fragmentId, { ...fragment, liveFileId: liveFileId });
   }, [fragment, fragmentId, onFragmentReplace]);
 
 
   // LiveFile
 
-  const { liveFileSyncButton, liveFileActionBox } = useLiveFile(
-    props.isMobile,
+  const { liveFileSyncButton, liveFileActionBox } = useLiveFileComparison(
+    fragment.liveFileId ?? null,
+    props.isMobile === true,
     fragmentDocPart.data.text,
-    fragment._liveFile,
-    replaceFragmentLiveFile,
-    replaceFragmentWithTextDoc,
+    handleReplaceDocFragmentText,
+    handleReplaceFragmentLiveFileId,
   );
 
 
@@ -102,15 +102,13 @@ export function DocAttachmentFragmentEditor(props: {
       return;
 
     if (editedText.length > 0) {
-      replaceFragmentWithTextDoc(editedText);
+      handleReplaceDocFragmentText(editedText);
       setIsEditing(false);
-      // if (liveFileLoadPreview)
-      //   setTimeout(() => liveFileLoadPreview(), 200);
     } else {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, handleFragmentDelete, replaceFragmentWithTextDoc]);
+  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText]);
 
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
@@ -192,8 +190,9 @@ export function DocAttachmentFragmentEditor(props: {
             )}
           </Box>
 
+          {!isEditing && liveFileSyncButton}
+
           <Box sx={{ display: 'flex', gap: 1 }}>
-            {!isEditing && liveFileSyncButton}
             <Button variant='outlined' color={isEditing ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
               {isEditing ? 'Cancel' : 'Edit'}
             </Button>

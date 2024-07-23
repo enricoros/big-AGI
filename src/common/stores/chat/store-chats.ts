@@ -10,6 +10,9 @@ import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 import { agiId, agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
+// Creation dependency on the LiveFile store
+import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
+
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
 import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment } from './chat.fragments';
@@ -387,10 +390,13 @@ export const useChatStore = create<ConversationsStore>()(devtools(
             delete (message as any).typing;
 
             // fixup .messages[].fragments[]
+            const validLiveFileIDs = liveFileGetAllValidIDs();
             message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment => {
-              // [LiveFile] remove as they don't survive the serialization
-              if (isAttachmentFragment(fragment))
-                delete fragment._liveFile;
+
+              // [GC][LiveFile] remove LiveFile references to invalid objects
+              if (isAttachmentFragment(fragment) && fragment.liveFileId)
+                if (!validLiveFileIDs.includes(fragment.liveFileId))
+                  delete fragment.liveFileId;
 
               // replace the Content Placeholder fragments [part.pt='ph'] with Error fragments,
               // to show the aborted ops (instead of just empty blocks)
