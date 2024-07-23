@@ -115,17 +115,17 @@ function attachmentIcons(attachmentDraft: AttachmentDraft): React.ReactNode {
   // }).filter(Boolean);
 
   // 1+ icons
-  return <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+  return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
     {/* If we have a Web preview, show it first */}
     {!!attachmentDraft.input?.urlImage?.webpDataUrl && /*!imageDataRefs.length &&*/ (
-      <Tooltip title={<>This was the page.<br />You can also Add the Screenshot as attachment</>}>
-        <RenderImageURL
-          imageURL={attachmentDraft.input.urlImage.webpDataUrl}
-          variant='attachment-button'
-          scaledImageSx={{ width: 28, height: 28 }}
-        />
-      </Tooltip>
+      // <Tooltip title={<>This was the page.<br />You can also Add the Screenshot as attachment</>}>
+      <RenderImageURL
+        imageURL={attachmentDraft.input.urlImage.webpDataUrl}
+        variant='attachment-button'
+        scaledImageSx={{ width: 28, height: 28 }}
+      />
+      // </Tooltip>
     )}
 
     {/* If an output fragment contains a base64 image, show that as an icon too */}
@@ -148,7 +148,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft): React.ReactNode {
         </TooltipOutlined>
       );
     })}
-  </Typography>;
+  </Box>;
 }
 
 function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
