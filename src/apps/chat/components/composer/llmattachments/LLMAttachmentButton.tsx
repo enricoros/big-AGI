@@ -19,10 +19,10 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { LiveFileIcon } from '~/common/livefile/LiveFileIcons';
+import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
-import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
+import { hasAttachmentFragmentLiveFile } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
@@ -181,7 +181,7 @@ function LLMAttachmentButton(props: {
   const isUnconvertible = !draft.converters.length;
   const isOutputLoading = draft.outputsConverting;
   const isOutputMissing = !draft.outputFragments.length;
-  const hasLiveFile = draft.outputFragments.some(liveFileInAttachmentFragment);
+  const hasLiveFiles = draft.outputFragments.some(hasAttachmentFragmentLiveFile);
 
   const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments);
 
@@ -270,8 +270,8 @@ function LLMAttachmentButton(props: {
                 {/* Loading icon */}
                 {isOutputLoading && <CircularProgress color='success' size='sm' />}
 
-                {/* Live file icon */}
-                {hasLiveFile && (
+                {/* LiveFile icon */}
+                {hasLiveFiles && (
                   <TooltipOutlined title='LiveFile is supported' placement='top-end'>
                     <LiveFileIcon />
                   </TooltipOutlined>

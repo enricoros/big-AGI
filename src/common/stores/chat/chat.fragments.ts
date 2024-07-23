@@ -1,5 +1,6 @@
 import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 
+import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { agiId } from '~/common/util/idUtils';
 
 
@@ -45,10 +46,7 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
   title: string;                  // label of the attachment (filename, named id, content overview, title..)
   caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
-  _liveFile?: {                   // [LiveFile] Store the handle to mem, remove when restoring from disk
-    lft: 'fs';
-    _fsFileHandle?: FileSystemFileHandle; // file handle to read back the raw data in the future (if available)
-  }
+  liveFileId?: LiveFileId;        // [LiveFile] Optional. Relate to a LiveFile; if present, it may still be invalid, hence we cleanup on load
 };
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
@@ -176,6 +174,10 @@ export function isTextPart(part: DMessageContentFragment['part']) {
   return part.pt === 'text';
 }
 
+export function hasAttachmentFragmentLiveFile(fragment: DMessageAttachmentFragment): boolean {
+  return !!fragment.liveFileId;
+}
+
 
 /// Helpers - Fragments Creation
 
@@ -204,17 +206,18 @@ export function specialShallowReplaceTextContentFragment(copyFragment: DMessageC
 }
 
 
-function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFile: DMessageAttachmentFragment['_liveFile']): DMessageAttachmentFragment {
-  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), _liveFile: liveFile, part };
+function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFileId: LiveFileId | undefined): DMessageAttachmentFragment {
+  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part, liveFileId };
 }
 
-export function createDocAttachmentFragment(l1Title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFile?: DMessageAttachmentFragment['_liveFile']): DMessageAttachmentFragment {
-  return _createAttachmentFragment(l1Title, caption, createDMessageDocPart(type, data, ref, l1Title, meta), liveFile);
+export function createDocAttachmentFragment(l1Title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
+  return _createAttachmentFragment(l1Title, caption, createDMessageDocPart(type, data, ref, l1Title, meta), liveFileId);
 }
 
 export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
   return _createAttachmentFragment(title, caption, createDMessageImageRefPart(dataRef, imgAltText, width, height), undefined);
 }
+
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
   if (isTextPart(contentPart))
@@ -300,9 +303,7 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
       return _createContentFragment(_duplicatePart(fragment.part));
 
     case 'attachment':
-      // NOTE: check if this is correct - we haven't tested the serialization of FileSystemFileHandle yet
-      const liveFileCopy = fragment._liveFile ? { ...fragment._liveFile } : undefined;
-      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicatePart(fragment.part), liveFileCopy);
+      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicatePart(fragment.part), fragment.liveFileId);
 
     case '_ft_sentinel':
       return _createSentinelFragment();

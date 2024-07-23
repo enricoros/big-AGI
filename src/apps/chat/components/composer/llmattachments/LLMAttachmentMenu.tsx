@@ -13,10 +13,9 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
-import { LiveFileIcon } from '~/common/livefile/LiveFileIcons';
+import { DMessageAttachmentFragment, hasAttachmentFragmentLiveFile, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -57,7 +56,7 @@ export function LLMAttachmentMenu(props: {
   const isConverting = draft.outputsConverting;
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
-  const hasLiveFile = draft.outputFragments.some(liveFileInAttachmentFragment);
+  const hasLiveFiles = draft.outputFragments.some(hasAttachmentFragmentLiveFile);
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
 
@@ -267,7 +266,7 @@ export function LLMAttachmentMenu(props: {
             </Box>
 
             {/* LiveFile notice */}
-            {hasLiveFile && !!draftInput && (
+            {hasLiveFiles && !!draftInput && (
               <Typography level='body-sm' sx={{ mt: 1 }} startDecorator={<LiveFileIcon sx={{ width: 16, height: 16 }} />}>
                 LiveFile is supported
               </Typography>

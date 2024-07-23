@@ -13,10 +13,10 @@ import TextureIcon from '@mui/icons-material/Texture';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
-import { LiveFileIcon } from '~/common/livefile/LiveFileIcons';
+import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
-import { liveFileInAttachmentFragment } from '~/common/livefile/liveFile';
+import { useLiveFileMetadata } from '~/common/livefile/liveFile.hooks';
 
 
 // configuration
@@ -56,8 +56,13 @@ export function DocAttachmentFragmentButton(props: {
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
 }) {
 
+  // external state
+  const liveFileMetadata = useLiveFileMetadata(props.fragment.liveFileId);
+
   // derived state
   const { fragment, isSelected, toggleSelected } = props;
+  const hasLiveFile = !!liveFileMetadata;
+  const isLiveFilePaired = liveFileMetadata ? liveFileMetadata.isPairingValid || false : false;
 
   // only operate on doc fragments
   if (!isDocPart(fragment.part))
@@ -124,9 +129,16 @@ export function DocAttachmentFragmentButton(props: {
         {/*  {fragment.caption}*/}
         {/*</Box>*/}
       </Box>
-      {liveFileInAttachmentFragment(fragment) && (
-        <TooltipOutlined title='LiveFile is supported' color='success' placement='top-end'>
-          <LiveFileIcon color={isSelected ? undefined : 'success'} sx={{ mr: '0.5rem' }} />
+      {hasLiveFile && (
+        <TooltipOutlined
+          title={!isLiveFilePaired ? 'LiveFile needs re-pairing.' : 'LiveFile is supported'}
+          color={!isLiveFilePaired ? 'danger' : 'success'}
+          placement='top-end'
+        >
+          <LiveFileIcon
+            color={!isSelected ? 'success' : undefined}
+            sx={{ mr: '0.5rem', color: (!isLiveFilePaired && !isSelected) ? 'darkred' : undefined }}
+          />
         </TooltipOutlined>
       )}
     </Button>
