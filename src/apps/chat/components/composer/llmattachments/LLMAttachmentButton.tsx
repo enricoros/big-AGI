@@ -165,7 +165,9 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
 }
 
 
-export function LLMAttachmentButton(props: {
+export const LLMAttachmentButtonMemo = React.memo(LLMAttachmentButton);
+
+function LLMAttachmentButton(props: {
   llmAttachment: LLMAttachmentDraft,
   menuShown: boolean,
   onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,

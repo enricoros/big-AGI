@@ -13,7 +13,7 @@ import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.ty
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
 
 import type { LLMAttachmentDrafts } from './useLLMAttachmentDrafts';
-import { LLMAttachmentButton } from './LLMAttachmentButton';
+import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
 import { LLMAttachmentMenu } from './LLMAttachmentMenu';
 
 
@@ -107,7 +107,7 @@ export function LLMAttachmentsList(props: {
       {/* Horizontally scrollable Attachments */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
         {llmAttachmentDrafts.map((llmAttachment) =>
-          <LLMAttachmentButton
+          <LLMAttachmentButtonMemo
             key={llmAttachment.attachmentDraft.id}
             llmAttachment={llmAttachment}
             menuShown={llmAttachment.attachmentDraft.id === itemMenuAttachmentDraftId}
