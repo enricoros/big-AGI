@@ -13,7 +13,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessageAttachmentFragment, hasAttachmentFragmentLiveFile, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
@@ -56,7 +56,7 @@ export function LLMAttachmentMenu(props: {
   const isConverting = draft.outputsConverting;
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
-  const hasLiveFiles = draft.outputFragments.some(hasAttachmentFragmentLiveFile);
+  const hasLiveFiles = draft.outputFragments.some(_f => _f.liveFileId);
 
   const isUnmoveable = props.isPositionFirst && props.isPositionLast;
 

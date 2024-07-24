@@ -22,7 +22,6 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
-import { hasAttachmentFragmentLiveFile } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
@@ -181,7 +180,7 @@ function LLMAttachmentButton(props: {
   const isUnconvertible = !draft.converters.length;
   const isOutputLoading = draft.outputsConverting;
   const isOutputMissing = !draft.outputFragments.length;
-  const hasLiveFiles = draft.outputFragments.some(hasAttachmentFragmentLiveFile);
+  const hasLiveFiles = draft.outputFragments.some(_f => _f.liveFileId);
 
   const showWarning = isUnconvertible || (isOutputMissing || !llmSupportsAllFragments);
 
