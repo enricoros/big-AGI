@@ -174,9 +174,6 @@ export function isTextPart(part: DMessageContentFragment['part']) {
   return part.pt === 'text';
 }
 
-export function hasAttachmentFragmentLiveFile(fragment: DMessageAttachmentFragment): boolean {
-  return !!fragment.liveFileId;
-}
 
 
 /// Helpers - Fragments Creation
