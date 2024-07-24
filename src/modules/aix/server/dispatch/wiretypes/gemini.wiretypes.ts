@@ -468,7 +468,7 @@ export namespace GeminiWire_API_Generate_Content {
 
   const UsageMetadata_schema = z.object({
     promptTokenCount: z.number(),
-    candidatesTokenCount: z.number(),
+    candidatesTokenCount: z.number().optional(), // .optional: in case the first message is 'RECITATION' there could be no output token count
     totalTokenCount: z.number(),
     // cachedContentTokenCount: z.number().optional(), // Not supported for now, hence disabled
   });
