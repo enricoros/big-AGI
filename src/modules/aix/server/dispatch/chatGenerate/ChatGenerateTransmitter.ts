@@ -224,7 +224,7 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
       p: 'code-response',
       id: id ?? serverSideId('aix-tool-response-id'),
       output,
-      error,
+      ...(error ? { error } : {}),
     });
   }
 
