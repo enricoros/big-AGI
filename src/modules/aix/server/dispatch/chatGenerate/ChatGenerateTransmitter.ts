@@ -239,8 +239,15 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
   /** Update the counters, sent twice (after the first call, and then at the end of the transmission) */
   setCounters(counts: AixAPI_Particles.ChatGenerateCounts) {
     if (!this.accCounts)
-      this.accCounts = {};
-    Object.assign(this.accCounts, counts);
+      this.accCounts = {} as AixAPI_Particles.ChatGenerateCounts;
+
+    // similar to Object.assign, but takes care of removing the "undefined" entries
+    for (const key in counts) {
+      const value = (counts as any)[key] as number | undefined;
+      if (value !== undefined)
+        (this.accCounts as any)[key] = value;
+    }
+
     this.freshCounts = true;
   }
 

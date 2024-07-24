@@ -118,7 +118,10 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
 
     // -> Stats
     if (generationChunk.usageMetadata)
-      pt.setCounters({ chatIn: generationChunk.usageMetadata.promptTokenCount, chatOut: generationChunk.usageMetadata.candidatesTokenCount });
+      pt.setCounters({
+        chatIn: generationChunk.usageMetadata.promptTokenCount,
+        chatOut: generationChunk.usageMetadata.candidatesTokenCount,
+      });
 
   };
 }
