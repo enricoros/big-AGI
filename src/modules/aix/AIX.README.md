@@ -6,7 +6,7 @@ AIX is a client/server library for integrating advanced AI capabilities into web
 
 AIX provides real-time, type-safe communication between a Typescript application and AI providers.
 
-Built in tRPC, it manages the lifecycle of AI-generated content from request to rendering, supporting both streaming and non-streaming AI providers.
+Built with tRPC, it manages the lifecycle of AI-generated content from request to rendering, supporting both streaming and non-streaming AI providers.
 
 ## Features
 
@@ -14,8 +14,9 @@ Built in tRPC, it manages the lifecycle of AI-generated content from request to 
   - Multi-Modal streaming/non-streaming
   - Throttled batching and error handling
   - Server-side timeout/retry
-- (future) Information Extraction, Image Manipulation
-- (future) Complex AI Workflows
+- Function Calling and Code Execution
+- Complex AI Workflows (future)
+- Embeddings / Information Retrieval / Image Manipulation (future)
 
 ## AIX Providers support
 
@@ -39,9 +40,9 @@ Notes:
 
 - Ollama has not been ported to AIX yet due to the custom APIs.
 
-## 2. System Architecture
+## 1. System Architecture
 
-The subsystem comprises three main components, each playing a crucial role in the data flow:
+The subsystem comprises three main components:
 
 1. **Client (e.g. Next.js Frontend)**
 
@@ -61,13 +62,40 @@ The subsystem comprises three main components, each playing a crucial role in th
 
 ### ChatGenerate workflow:
 
-1. Request Initialization: AIX Client prepares and sends AixWire_Parts to AIX Server
+1. Request Initialization: AIX Client prepares and sends request (systemInstruction, messages=AixWire_Parts[], etc.) to AIX Server
 2. Dispatch Preparation: AIX Server prepares for upstream communication
 3. AI Provider Interaction: AIX Server communicates with AI Provider (streaming or non-streaming)
-4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_PartParticles to AIX Client in batches
-5. Client-side Processing: PartReassembler processes particles into AixWire_Parts
+4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client
+5. Client-side Processing: Client's PartReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
 6. Completion: AIX Server sends 'done' control message, AIX Client finalizes data update
 7. Error Handling: AIX Server sends specific error messages when necessary
+
+## 2. Files and Folders
+
+AIX is organized into the following files and folders:
+
+1. Client-Side (`/client/`):
+
+- `aix.client.ts`: Main client-side entry point for AIX operations.
+- `aix.client.fromDMessages.api.ts`: Handles conversion of chat messages to AIX-compatible format (AixWire_Content, AixWire_Parts, etc.).
+
+2. Server-Side (`/server/`):
+
+- API (`/server/api/`) - Client to Server communication:
+  - `aix.router.ts`: Defines the tRPC router for AIX operations.
+  - `aix.wiretypes.ts`: Contains Zod schemas for types and calls incoming from the client (AixWire_Parts, AixWire_Content, AixWire_Tooling, AixWire_API, ...), and outgoing (AixWire_Particles)
+
+- Dispatch (`/server/dispatch/`) - Server to AI Provider communication:
+  - `/server/dispatch/chatGenerate/`: Content Generation with chat-style inputs:
+    - `./adapters/`: Adapters for creating API requests for different AI protocols (Anthropic, Gemini, OpenAI).
+    - `./parsers/`: Parsers for parsing streaming/non-streamin responses from different AI protocols (same 3).
+    - `chatGenerate.dispatch.ts`: Creates a pipeline to execute Chat Generation to a specific provider.
+    - `ChatGenerateTransmitter.ts`: Used to serialize and transmit AixWire_Particles to the client.
+  - `/server/dispatch/wiretypes/`: AI provider Wire Types:
+    - Type definitions for different AI providers/protocols (Anthropic, Gemini, OpenAI).
+  - `stream.demuxers.ts`: Handles demuxing of different stream formats.
+
+## 3. Architecture Diagram
 
 ```mermaid
 sequenceDiagram
@@ -146,32 +174,6 @@ sequenceDiagram
     note over AIX Client: Client-side Timeout mechanism
     AIX Client ->> AIX Client: Timeout if no response received within set time
 ```
-
-## 3. Files and Folders
-
-AIX is organized into the following files and folders:
-
-1. Client-Side (`/client/`):
-
-- `aix.client.ts`: Main client-side entry point for AIX operations.
-- `aix.client.fromDMessages.api.ts`: Handles conversion of chat messages to AIX-compatible format (AixWire_Content, AixWire_Parts, etc.)
-
-2. Server-Side (`/server`):
-
-- API (`/server/api`):
-  - `aix.router.ts`: Defines the TRPC router for AIX operations.
-  - `aix.wiretypes.ts`: Contains Zod schemas for types incoming from the client (AixWire_Content schema, etc.)
-  - `IntakeHandler.ts`: Manages the downstream communication from AIX router, streaming data and control objects to the client.
-
-- Dispatch (`/server/dispatch`):
-  - Chat Generation (`/server/dispatch/chatGenerate`):
-    - Adapters to create API requests for different AI providers (Anthropic, Gemini, OpenAI).
-    - Parsers for parsing streaming/non-streaming responses for different AI providers (same 3).
-    - `chatGenerate.dispatch.ts`: Creates a pipeline to execute Chat Generation to a specific provider.
-    - `ChatGenerateTransmitter.ts`: Used (by the chatGenerate/parsers) to serialize and transmit AixWire_Parts to the client.
-  - AI provider Wire Types (`/server/dispatch/wiretypes`):
-    - Type definitions for different AI providers (Anthropic, Gemini, OpenAI).
-  - `stream.demuxers.ts`: Handles demuxing of different stream formats (SSE, JSON-NL).
 
 ## Structure (This was the initial - being replaced part by part right now - will come back to this later to update)
 
