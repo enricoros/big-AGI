@@ -803,7 +803,7 @@ export function ChatMessage(props: {
                 },
               }}
             >
-              {!!props.onReplyTo && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Reply'>
+              {!!props.onReplyTo && <Tooltip disableInteractive arrow placement='top' title={fromAssistant ? 'Reply' : 'Refer To'}>
                 <IconButton color='primary' onClick={handleOpsReplyTo}>
                   <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />
                 </IconButton>
