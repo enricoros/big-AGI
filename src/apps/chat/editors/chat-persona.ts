@@ -7,13 +7,14 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DMessage, messageFragmentsReplaceLastContentText } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
+import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export interface PersonaProcessorInterface {
@@ -121,8 +122,8 @@ export async function llmGenerateContentStream(
     await aixStreamingChatGenerate(llmId, aixChatGenerate, aixContextName, aixContextRef, abortSignal,
       (update: StreamingClientUpdate, done: boolean) => {
 
-        // grow the incremental message
-        if (update.textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, update.textSoFar);
+        // update the incremental message
+        if (update.fragments) incrementalAnswer.fragments = update.fragments;
         if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
         if (update.typing !== undefined)
           incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
@@ -135,14 +136,14 @@ export async function llmGenerateContentStream(
     );
 
   } catch (error: any) {
-    if (error?.name !== 'AbortError') {
+    // if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
-      const errorText = ` [Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}]`;
-      incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, errorText, true);
+      const errorFragment = createErrorContentFragment(`Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}`);
+      incrementalAnswer.fragments.push(errorFragment);
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
-    } else
-      returnStatus.outcome = 'aborted';
+    // } else
+    //   returnStatus.outcome = 'aborted';
   }
 
   // Ensure the last content is flushed out, and mark as complete
