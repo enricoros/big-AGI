@@ -1,7 +1,8 @@
 import { safeErrorString } from '~/server/wire';
 
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import { ChatGenerateTransmitter, IssueSymbols } from '../ChatGenerateTransmitter';
+import type { IPartTransmitter } from '../IPartTransmitter';
+import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
 
@@ -37,7 +38,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
 
-  return function(pt: ChatGenerateTransmitter, eventData: string, eventName?: string): void {
+  return function(pt: IPartTransmitter, eventData: string, eventName?: string): void {
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -136,7 +137,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             throw new Error(`Unexpected content block stop location (${index})`);
 
           // Signal that the tool is ready? (if it is...)
-          pt.endPart();
+          pt.endMessagePart();
         } else
           throw new Error('Unexpected content_block_stop');
         break;
@@ -186,7 +187,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        return pt.endingDialectIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
+        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
 
       default:
         throw new Error(`Unexpected event name: ${eventName}`);
@@ -198,7 +199,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   let messageStartTime: number = Date.now();
 
-  return function(pt: ChatGenerateTransmitter, fullData: string): void {
+  return function(pt: IPartTransmitter, fullData: string): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
@@ -224,7 +225,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
           pt.startFunctionToolCall(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || '');
-          pt.endPart();
+          pt.endMessagePart();
           break;
         default:
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);

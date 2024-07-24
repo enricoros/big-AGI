@@ -162,13 +162,13 @@ AIX is organized into the following files and folders:
   - `aix.router.ts`: Defines the TRPC router for AIX operations.
   - `aix.wiretypes.ts`: Contains Zod schemas for types incoming from the client (AixWire_Content schema, etc.)
   - `IntakeHandler.ts`: Manages the downstream communication from AIX router, streaming data and control objects to the client.
-  - `PartTransmitter.ts`: Used (by the chatGenerate/parsers) to serialize and transmit AixWire_Parts to the client.
 
 - Dispatch (`/server/dispatch`):
   - Chat Generation (`/server/dispatch/chatGenerate`):
     - Adapters to create API requests for different AI providers (Anthropic, Gemini, OpenAI).
     - Parsers for parsing streaming/non-streaming responses for different AI providers (same 3).
     - `chatGenerate.dispatch.ts`: Creates a pipeline to execute Chat Generation to a specific provider.
+    - `ChatGenerateTransmitter.ts`: Used (by the chatGenerate/parsers) to serialize and transmit AixWire_Parts to the client.
   - AI provider Wire Types (`/server/dispatch/wiretypes`):
     - Type definitions for different AI providers (Anthropic, Gemini, OpenAI).
   - `stream.demuxers.ts`: Handles demuxing of different stream formats (SSE, JSON-NL).

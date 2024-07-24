@@ -4,7 +4,7 @@ import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { AixWire_API, AixWire_API_ChatGenerate, AixWire_API_Particles } from './aix.wiretypes';
+import { AixAPI_Particles, AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
@@ -30,7 +30,7 @@ export const aixRouter = createTRPCRouter({
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
-    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixWire_API_Particles.ChatGenerateOp> {
+    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixAPI_Particles.ChatGenerateOp> {
 
 
       // Intake derived state
@@ -49,7 +49,8 @@ export const aixRouter = createTRPCRouter({
       try {
         dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
       } catch (error: any) {
-        yield* chatGenerateTx.flushTerminatingRpcIssue('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`);
+        chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
+        yield* chatGenerateTx.flushParticles();
         return; // exit
       }
 
@@ -79,7 +80,8 @@ export const aixRouter = createTRPCRouter({
         const extraDevMessage = process.env.NODE_ENV === 'development' ? `\n[DEV_URL: ${dispatch.request.url}]` : '';
 
         const showOnConsoleForNonCustomServers = access.dialect !== 'openai' || !access.oaiHost;
-        yield* chatGenerateTx.flushTerminatingRpcIssue('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
+        chatGenerateTx.setRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
+        yield* chatGenerateTx.flushParticles();
         return; // exit
       }
 
@@ -99,9 +101,9 @@ export const aixRouter = createTRPCRouter({
 
         } catch (error: any) {
           if (dispatchBody === undefined)
-            chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-read', `**[Reading Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
+            chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
           else
-            chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket.`, true);
+            chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket.`, true);
         }
         yield* chatGenerateTx.flushParticles();
         return; // exit
@@ -138,7 +140,7 @@ export const aixRouter = createTRPCRouter({
           }
 
           // Handle abnormal stream termination
-          chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-read', `**[Streaming Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`);
+          chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, true);
           break; // outer do {}
         }
 
@@ -170,7 +172,7 @@ export const aixRouter = createTRPCRouter({
               yield* chatGenerateTx.emitParticles();
           } catch (error: any) {
             // Handle parsing issue (likely a schema break); print it to the console as well
-            chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, true);
+            chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, false);
             break; // inner for {}, then outer do
           }
         }

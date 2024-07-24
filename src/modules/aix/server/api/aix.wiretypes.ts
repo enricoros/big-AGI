@@ -413,20 +413,16 @@ export namespace AixWire_API_ChatGenerate {
  * This is the protocol for both the control objects sent by the tRPC streaming procedures,
  * and the thePartTransmitter/PartReassembler.
  */
-export namespace AixWire_API_Particles {
+export namespace AixAPI_Particles {
 
   /** Unified representation for outputs of chatGenerate */
   export type ChatGenerateOp =
-    | ControlOp
-    | PartOp
+    | ParticleOp
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'end', reason: CGEndReason }
     | { cg: 'set-model', name: string }
-    | { cg: 'update-counts', counts: Partial<ChatGenerateCounts> };
-
-  /** Control operations for API call streaming */
-  type ControlOp =
-    | { o: '_debugRequestBody', body: string };
+    | { cg: 'update-counts', counts: Partial<ChatGenerateCounts> }
+    | DebugOp;
 
   export type CGIssueId =
     | 'dispatch-prepare' | 'dispatch-fetch' | 'dispatch-read' | 'dispatch-parse' // 4 phases of dispatch
@@ -439,9 +435,8 @@ export namespace AixWire_API_Particles {
     | 'done-dispatch-closed'    // dispatch connection closed
     | 'done-dispatch-aborted'   // this shalle never see the light of day, as it was a reaction to the intake being aborted first
     ;
-  // | 'message-stop' | 'dialect-issue' | 'dispatch-close';
 
-  type PartOp =
+  export type ParticleOp =
     | { p: 't_', t: string /* incremental text, despite not having the 'i_' prefix for brevity */ }
     | { p: 'inline-image', mimeType: string, i_b64?: string }
     | { p: 'ii_', i_b64: string }
@@ -459,5 +454,9 @@ export namespace AixWire_API_Particles {
     chatOutRate?: number,
     chatTimeInner?: number,
   };
+
+  /** Control operations for API call streaming */
+  type DebugOp =
+    | { o: '_debugRequestBody', body: string };
 
 }
