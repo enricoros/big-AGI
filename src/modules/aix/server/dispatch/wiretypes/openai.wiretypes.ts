@@ -380,9 +380,23 @@ export namespace OpenAIWire_API_Chat_Completions {
       .nullable(), // [Grow, undocumented OpenAI] fingerprint is null on some OpenAI examples too
     // service_tier: z.unknown().optional(),
 
-    // undocumented streaming messages
+    // [OpenAI] undocumented streaming messages
     error: _UndocumentedError_schema.optional(),
     warning: _UndocumentedWarning_schema.optional(),
+
+    // [Groq] undocumented statistics message
+    x_groq: z.object({
+      id: z.string().optional(),
+      usage: z.object({
+        queue_time: z.number().optional(),
+        prompt_tokens: z.number().optional(),
+        prompt_time: z.number().optional(),
+        completion_tokens: z.number().optional(),
+        completion_time: z.number().optional(),
+        total_tokens: z.number().optional(),
+        total_time: z.number().optional(),
+      }).optional(),
+    }).optional(),
   });
 
 }
