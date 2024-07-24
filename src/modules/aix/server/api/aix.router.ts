@@ -166,7 +166,8 @@ export const aixRouter = createTRPCRouter({
 
           try {
             dispatchParser(chatGenerateTx, demuxedItem.data, demuxedItem.name);
-            yield* chatGenerateTx.emitParticles();
+            if (!chatGenerateTx.isEnded)
+              yield* chatGenerateTx.emitParticles();
           } catch (error: any) {
             // Handle parsing issue (likely a schema break); print it to the console as well
             chatGenerateTx.setEndedIssue('issue-rpc', 'dispatch-parse', ` **[Service Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${demuxedItem.data}.\nPlease open a support ticket.`, true);
