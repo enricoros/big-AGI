@@ -53,9 +53,11 @@ export class ChatGenerateTransmitter {
     // These issues are particularly important to debug
     if (SERVER_DEBUG_WIRE || forceConsoleMessage || true)
       console.error(`Aix.${this.prettyDialect} (${issueId}): ${issueText}`);
+
     // queue the issue
     this.endCurrentPart();
     this.operations.push({ cg: 'issue', issueId, issueText });
+
     // set the end
     this.setEnded(endReason);
   }
@@ -80,7 +82,7 @@ export class ChatGenerateTransmitter {
   }
 
   * emitParticles(): Generator<Particles.ChatGenerateOp> {
-    // Counters
+    // Counters: emit at the beginning and the end -- if there's data to transmit
     if (!this.sentCounts && this.freshCounts && this.accCounts) {
       this.sentCounts = true;
       this.freshCounts = false;
@@ -103,10 +105,6 @@ export class ChatGenerateTransmitter {
 
   /// Control plane
 
-
-  /**
-   * Originally: yield { t: ` ${dma.symbol} **[${prettyDialect} Issue]:** ${dma.issue}` }
-   */
   endingDialectIssue(dialectText: string, symbol?: string) {
     this.setEndedIssue('issue-dialect', 'dialect-issue', ` ${symbol} **[${this.prettyDialect} Issue]:** ${dialectText}`);
   }
