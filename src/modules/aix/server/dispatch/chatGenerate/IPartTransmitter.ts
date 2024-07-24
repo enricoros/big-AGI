@@ -1,4 +1,4 @@
-import type { AixAPI_Particles } from '~/modules/aix/server/api/aix.wiretypes';
+import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 
 
 export interface IPartTransmitter {
@@ -6,7 +6,7 @@ export interface IPartTransmitter {
   // Parser-initiated Control //
 
   /** Set the end reason - only use for 'done-dialect' to signal a dialect-close */
-  setEnded(reason: Extract<AixAPI_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>): void;
+  setEnded(reason: Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>): void;
 
   /** End the current part and flush it */
   setDialectTerminatingIssue(dialectText: string, symbol?: string): void;
@@ -45,6 +45,6 @@ export interface IPartTransmitter {
   setModelName(modelName: string): void;
 
   /** Update the counters, sent twice (after the first call, and then at the end of the transmission) */
-  setCounters(counts: AixAPI_Particles.ChatGenerateCounts): void;
+  setCounters(counts: AixWire_Particles.ChatGenerateCounts): void;
 
 }

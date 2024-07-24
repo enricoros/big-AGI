@@ -1,7 +1,7 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 import { serverSideId } from '~/server/api/trpc.nanoid';
 
-import type { AixAPI_Particles } from '../../api/aix.wiretypes';
+import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { IPartTransmitter } from './IPartTransmitter';
 
@@ -32,19 +32,19 @@ export const IssueSymbols = {
 export class ChatGenerateTransmitter implements IPartTransmitter {
 
   // Particle queue
-  private currentParticle: AixAPI_Particles.ParticleOp | null = null;
-  private transmissionQueue: AixAPI_Particles.ChatGenerateOp[] = [];
+  private currentParticle: AixWire_Particles.ParticleOp | null = null;
+  private transmissionQueue: AixWire_Particles.ChatGenerateOp[] = [];
 
   // State machinery
-  private lastFunctionCallParticle: AixAPI_Particles.ParticleOp | null = null;
+  private lastFunctionCallParticle: AixWire_Particles.ParticleOp | null = null;
 
   // Counters
-  private accCounts: AixAPI_Particles.ChatGenerateCounts | undefined = undefined;
+  private accCounts: AixWire_Particles.ChatGenerateCounts | undefined = undefined;
   private sentCounts: boolean = false;
   private freshCounts: boolean = false;
 
   // Termination
-  private terminationReason: AixAPI_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
+  private terminationReason: AixWire_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
 
 
   constructor(private readonly prettyDialect: string, _throttleTimeMs: number | undefined) {
@@ -61,7 +61,7 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
 
   /// aix.router.ts
 
-  * emitParticles(): Generator<AixAPI_Particles.ChatGenerateOp> {
+  * emitParticles(): Generator<AixWire_Particles.ChatGenerateOp> {
     // Counters: emit at the beginning and the end -- if there's data to transmit
     if (!this.sentCounts && this.freshCounts && this.accCounts) {
       this.sentCounts = true;
@@ -88,7 +88,7 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
     }
   }
 
-  * flushParticles(): Generator<AixAPI_Particles.ChatGenerateOp> {
+  * flushParticles(): Generator<AixWire_Particles.ChatGenerateOp> {
     this._queueParticle();
     this.sentCounts = false; // enable sending counters again
     return yield* this.emitParticles();
@@ -98,7 +98,7 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
     return !!this.terminationReason;
   }
 
-  setRpcTerminatingIssue(issueId: AixAPI_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
+  setRpcTerminatingIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
     this._addIssue(issueId, issueText, forceLogWarn);
     this.setEnded('issue-rpc');
   }
@@ -107,7 +107,7 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
   /// IPartTransmitter
 
   /** Set the end reason (NOTE: more comprehensive than just the IPartTransmitter.setEnded['reason'])*/
-  setEnded(reason: AixAPI_Particles.CGEndReason) {
+  setEnded(reason: AixWire_Particles.CGEndReason) {
     if (SERVER_DEBUG_WIRE)
       console.log('|terminate|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
     this.terminationReason = reason;
@@ -128,7 +128,7 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
   }
 
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
-  private _addIssue(issueId: AixAPI_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
+  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
     if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE)
       console.warn(`Aix.${this.prettyDialect} (${issueId}): ${issueText}`);
 
@@ -237,9 +237,9 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
   }
 
   /** Update the counters, sent twice (after the first call, and then at the end of the transmission) */
-  setCounters(counts: AixAPI_Particles.ChatGenerateCounts) {
+  setCounters(counts: AixWire_Particles.ChatGenerateCounts) {
     if (!this.accCounts)
-      this.accCounts = {} as AixAPI_Particles.ChatGenerateCounts;
+      this.accCounts = {};
 
     // similar to Object.assign, but takes care of removing the "undefined" entries
     for (const key in counts) {

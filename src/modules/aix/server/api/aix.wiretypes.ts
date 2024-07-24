@@ -417,7 +417,7 @@ export namespace AixWire_API_ChatGenerate {
  * object rather than setting it as 'undefined' as 'superjson' will mess it up
  * and tRPC decoding will be broken (very important!)
  */
-export namespace AixAPI_Particles {
+export namespace AixWire_Particles {
 
   /** Unified representation for outputs of chatGenerate */
   export type ChatGenerateOp =

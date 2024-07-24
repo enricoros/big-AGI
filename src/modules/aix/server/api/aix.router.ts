@@ -4,7 +4,7 @@ import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { AixAPI_Particles, AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
+import { AixWire_Particles, AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
@@ -30,7 +30,7 @@ export const aixRouter = createTRPCRouter({
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
-    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixAPI_Particles.ChatGenerateOp> {
+    .mutation(async function* ({ input, ctx }): AsyncGenerator<AixWire_Particles.ChatGenerateOp> {
 
 
       // Intake derived state
