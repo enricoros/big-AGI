@@ -175,28 +175,44 @@ export function isTextPart(part: DMessageContentFragment['part']) {
 }
 
 
-
 /// Helpers - Fragments Creation
 
 function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
   return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
 }
 
-export function createErrorContentFragment(error: string): DMessageContentFragment {
-  return _createContentFragment(createDMessageErrorPart(error));
+export function createTextContentFragment(text: string): DMessageContentFragment {
+  return _createContentFragment(createDMessageTextPart(text));
 }
 
 export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
   return _createContentFragment(createDMessageImageRefPart(dataRef, altText, width, height));
 }
 
+export function createToolCallContentFragment(id: string, name: string, args: string | null, _description?: string, _args_schema?: object): DMessageContentFragment {
+  return _createContentFragment(createDMessageFunctionCallInvocationPart(id, name, args, _description, _args_schema));
+}
+
+export function createCodeExecutionContentFragment(id: string, code: string, language?: string, variant?: 'gemini_auto_inline'): DMessageContentFragment {
+  return _createContentFragment(createDMessageCodeExecutionInvocationPart(id, code, language, variant));
+}
+
+export function createFunctionCallResponseContentFragment(id: string, result: string, _name?: string, error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageContentFragment {
+  return _createContentFragment(createDMessageFunctionCallResponsePart(id, result, _name, error, _environment));
+}
+
+export function createCodeExecutionResponseContentFragment(id: string, result: string, _variant?: 'gemini_auto_inline', error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageContentFragment {
+  return _createContentFragment(createDMessageCodeExecutionResponsePart(id, result, _variant, error, _environment));
+}
+
+export function createErrorContentFragment(error: string): DMessageContentFragment {
+  return _createContentFragment(createDMessageErrorPart(error));
+}
+
 export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
   return _createContentFragment(createDMetaPlaceholderPart(placeholderText));
 }
 
-export function createTextContentFragment(text: string): DMessageContentFragment {
-  return _createContentFragment(createDMessageTextPart(text));
-}
 
 export function specialShallowReplaceTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
   return { ...copyFragment, part: createDMessageTextPart(text) };
