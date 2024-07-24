@@ -1,11 +1,10 @@
-import { createCodeExecutionContentFragment, createCodeExecutionResponseContentFragment, createErrorContentFragment, createTextContentFragment, createToolCallContentFragment, DMessageContentFragment, DMessageFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createCodeExecutionContentFragment, createCodeExecutionResponseContentFragment, createErrorContentFragment, createTextContentFragment, createToolCallContentFragment, DMessageContentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
-
 export class PartReassembler {
-  private fragments: DMessageFragment[] = [];
-  private currentTextFragment: DMessageContentFragment | null = null;
+  private fragments: DMessageContentFragment[] = [];
+  private currentTextFragmentIndex: number | null = null;
 
   processParticle(particle: AixWire_Particles.ChatGenerateOp): void {
     if ('p' in particle) {
@@ -42,18 +41,18 @@ export class PartReassembler {
     }
   }
 
-
   private handleTextParticle(particle: Extract<AixWire_Particles.ParticleOp, { p: 't_' }>): void {
-    if (!this.currentTextFragment || !isTextPart(this.currentTextFragment.part)) {
-      this.currentTextFragment = createTextContentFragment(particle.t);
-      console.log('created text', this.currentTextFragment);
-      this.fragments.push(this.currentTextFragment);
+    if (this.currentTextFragmentIndex === null || !isTextPart(this.fragments[this.currentTextFragmentIndex].part)) {
+      const newTextFragment = createTextContentFragment(particle.t);
+      this.fragments.push(newTextFragment);
+      this.currentTextFragmentIndex = this.fragments.length - 1;
     } else {
-      this.currentTextFragment = specialShallowReplaceTextContentFragment(
-        this.currentTextFragment,
-        this.currentTextFragment.part.text + particle.t,
+      const currentFragment = this.fragments[this.currentTextFragmentIndex];
+      const updatedFragment = specialShallowReplaceTextContentFragment(
+        currentFragment,
+        currentFragment.part.text + particle.t,
       );
-      console.log('updated text', this.currentTextFragment);
+      this.fragments[this.currentTextFragmentIndex] = updatedFragment;
     }
   }
 
@@ -64,11 +63,11 @@ export class PartReassembler {
         particle.name,
         particle.i_args || null,
       );
-      console.log('created tool call', fragment);
       this.fragments.push(fragment);
+      this.currentTextFragmentIndex = null;
     } else if (this.fragments.length > 0) {
       const lastFragment = this.fragments[this.fragments.length - 1];
-      if (lastFragment.ft === 'content' && lastFragment.part.pt === 'tool_call' && lastFragment.part.call.type === 'function_call') {
+      if (lastFragment.part.pt === 'tool_call' && lastFragment.part.call.type === 'function_call') {
         const updatedPart = {
           ...lastFragment.part,
           call: {
@@ -77,7 +76,6 @@ export class PartReassembler {
           },
         };
         this.fragments[this.fragments.length - 1] = { ...lastFragment, part: updatedPart };
-        console.log('updated tool call', updatedPart);
       }
     }
   }
@@ -89,6 +87,7 @@ export class PartReassembler {
       particle.language,
     );
     this.fragments.push(fragment);
+    this.currentTextFragmentIndex = null;
   }
 
   private handleCodeResponseParticle(particle: Extract<AixWire_Particles.ParticleOp, { p: 'code-response' }>): void {
@@ -99,25 +98,29 @@ export class PartReassembler {
       particle.error,
     );
     this.fragments.push(fragment);
+    this.currentTextFragmentIndex = null;
   }
 
   private handleIssue(issueText: string): void {
-    if (this.currentTextFragment && isTextPart(this.currentTextFragment.part)) {
-      this.currentTextFragment = specialShallowReplaceTextContentFragment(
-        this.currentTextFragment,
-        this.currentTextFragment.part.text + ` [ISSUE: ${issueText}]`,
+    if (this.currentTextFragmentIndex !== null && isTextPart(this.fragments[this.currentTextFragmentIndex].part)) {
+      const currentFragment = this.fragments[this.currentTextFragmentIndex];
+      const updatedFragment = specialShallowReplaceTextContentFragment(
+        currentFragment,
+        currentFragment.part.text + ` [ISSUE: ${issueText}]`,
       );
+      this.fragments[this.currentTextFragmentIndex] = updatedFragment;
     } else {
       this.fragments.push(createErrorContentFragment(issueText));
+      this.currentTextFragmentIndex = null;
     }
   }
 
-  getReassembledFragments(): DMessageFragment[] {
+  getReassembledFragments(): DMessageContentFragment[] {
     return this.fragments;
   }
 
   reset(): void {
     this.fragments = [];
-    this.currentTextFragment = null;
+    this.currentTextFragmentIndex = null;
   }
 }
