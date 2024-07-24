@@ -52,7 +52,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
   return function(pt: ChatGenerateTransmitter, eventData: string) {
 
     // Throws on malformed event data
-    const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(JSON.parse(eventData));
+    // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
+    const parsedData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
+    const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(parsedData);
 
     // -> Model
     if (!hasBegun && json.model) {
@@ -84,6 +86,16 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
       if (!json.choices.length)
         return;
+    }
+    // [Groq] -> Stats
+    if (json.x_groq?.usage) {
+      const { prompt_tokens, completion_tokens, completion_time, total_time } = json.x_groq.usage;
+      pt.setCounters({
+        chatIn: prompt_tokens,
+        chatOut: completion_tokens,
+        chatOutRate: (completion_tokens && completion_time) ? Math.round((completion_tokens / completion_time) * 100) / 100 : undefined,
+        chatTimeInner: completion_time,
+      });
     }
 
     // expect: 1 completion, or stop
