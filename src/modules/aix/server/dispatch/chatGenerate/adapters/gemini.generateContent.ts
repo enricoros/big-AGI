@@ -4,6 +4,7 @@ import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Me
 
 // configuration
 const hotFixImagePartsFirst = true;
+const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 
 export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
@@ -49,6 +50,12 @@ type TRequest = GeminiWire_API_Generate_Content.Request;
 
 
 function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_Messages.Content[] {
+
+  // Remove messages that are made of empty parts
+  // if (hotFixRemoveEmptyMessages)
+  //   chatSequence = chatSequence.filter(message => message.parts.length > 0);
+
+
   return chatSequence.map(message => {
     const parts: GeminiWire_ContentParts.ContentPart[] = [];
 
@@ -58,6 +65,14 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
         if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
         return 0;
       });
+    }
+
+    /* Semantically we want to preserve an empty assistant response, but Gemini requires
+     * at least one part for a `Content` object, so the empty message becomes a "" instead.
+     * E.g. { role: 'rolename', parts: [{text: ''}] }
+     */
+    if (hotFixReplaceEmptyMessagesWithEmptyTextPart && message.parts.length === 0) {
+      parts.push(GeminiWire_ContentParts.TextPart(''));
     }
 
     for (const part of message.parts) {
