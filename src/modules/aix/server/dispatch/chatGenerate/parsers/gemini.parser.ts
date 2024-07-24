@@ -1,5 +1,6 @@
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import { ChatGenerateTransmitter, IssueSymbols } from '../ChatGenerateTransmitter';
+import type { IPartTransmitter } from '../IPartTransmitter';
+import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
@@ -25,7 +26,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
   let hasBegun = false;
 
   // this can throw, it's caught by the caller
-  return function(pt: ChatGenerateTransmitter, eventData: string): void {
+  return function(pt: IPartTransmitter, eventData: string): void {
 
     // -> Model
     if (!hasBegun) {
@@ -39,7 +40,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return pt.endingDialectIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
+      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
     }
 
     // expect: single completion
@@ -61,10 +62,10 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
           return pt.setEnded('issue-dialect');
 
         case 'RECITATION':
-          return pt.endingDialectIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
+          return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
 
         case 'SAFETY':
-          return pt.endingDialectIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`);
+          return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`);
 
         default:
           throw new Error(`server response missing content (finishReason: ${candidate0?.finishReason})`);
@@ -84,7 +85,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
         // <- FunctionCallPart
         case 'functionCall' in mPart:
           pt.startFunctionToolCall(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args);
-          pt.endPart();
+          pt.endMessagePart();
           break;
 
         // <- ExecutableCodePart
