@@ -152,7 +152,7 @@ export function DocAttachmentFragmentEditor(props: {
       }}>
         <Typography level='title-sm'>
           <TooltipOutlined placement='top-start' color='neutral' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined
-            : <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 0.5, '& > :nth-child(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
+            : <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 0.5, '& > :nth-of-type(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
               <div>Title</div>
               <div>{fragmentTitle}</div>
               <div>Identifier</div>
