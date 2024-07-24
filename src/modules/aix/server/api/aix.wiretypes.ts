@@ -412,6 +412,10 @@ export namespace AixWire_API_ChatGenerate {
 /**
  * This is the protocol for both the control objects sent by the tRPC streaming procedures,
  * and the thePartTransmitter/PartReassembler.
+ *
+ * VITAL: when transmitting anything that's "undefined", leave it out of the
+ * object rather than setting it as 'undefined' as 'superjson' will mess it up
+ * and tRPC decoding will be broken (very important!)
  */
 export namespace AixAPI_Particles {
 
@@ -438,19 +442,19 @@ export namespace AixAPI_Particles {
 
   export type ParticleOp =
     | { p: 't_', t: string /* incremental text, despite not having the 'i_' prefix for brevity */ }
-    | { p: 'inline-image', mimeType: string, i_b64?: string }
+    | { p: 'inline-image', mimeType: string, i_b64?: string /* never undefined */ }
     | { p: 'ii_', i_b64: string }
-    | { p: 'inline-doc', type: string, ref: string, l1Title: string, i_text?: string }
+    | { p: 'inline-doc', type: string, ref: string, l1Title: string, i_text?: string /* never undefined */ }
     | { p: 'id_', i_text: string }
-    | { p: 'function-call', id: string, name: string, i_args?: string }
+    | { p: 'function-call', id: string, name: string, i_args?: string /* never undefined */ }
     | { p: 'fc_', i_args: string }
     | { p: 'code-call', id: string, language: string, code: string }
-    | { p: 'code-response', id: string, output: string, error?: string }
+    | { p: 'code-response', id: string, output: string, error?: string /* never undefined */ }
 
+  // NOTE: see the Vital notice
   export type ChatGenerateCounts = {
     chatIn?: number,
     chatOut?: number,
-    chatTotal?: number,
     chatOutRate?: number,
     chatTimeInner?: number,
   };

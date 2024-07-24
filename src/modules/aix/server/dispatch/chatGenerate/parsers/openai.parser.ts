@@ -82,7 +82,10 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     // -> Stats
     if (json.usage) {
       if (json.usage.completion_tokens !== undefined)
-        pt.setCounters({ chatIn: json.usage.prompt_tokens || -1, chatOut: json.usage.completion_tokens });
+        pt.setCounters({
+          chatIn: json.usage.prompt_tokens || -1,
+          chatOut: json.usage.completion_tokens,
+        });
 
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
       if (!json.choices.length)
@@ -196,7 +199,10 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
     // -> Stats
     if (json.usage)
-      pt.setCounters({ chatIn: json.usage.prompt_tokens, chatOut: json.usage.completion_tokens, chatTotal: json.usage.total_tokens });
+      pt.setCounters({
+        chatIn: json.usage.prompt_tokens,
+        chatOut: json.usage.completion_tokens,
+      });
 
     // Assumption/validate: expect 1 completion, or stop
     if (json.choices.length !== 1)
