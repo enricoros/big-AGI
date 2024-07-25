@@ -72,9 +72,6 @@ function _aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: st
 }
 
 
-export let devMode_AixLastDispatchRequestBody: string | null = null;
-
-
 // export type DMessageAixIntakeRecombinedPart =
 //   | DMessageTextPart
 //   | DMessageDocPart
@@ -156,9 +153,9 @@ async function _aixChatGenerateContent(
   try {
     for await (const update of operation) {
       console.log('update', update);
-      partReassembler.processParticle(update);
+      partReassembler.reassembleParticle(update);
 
-      const fragments = partReassembler.getReassembledFragments();
+      const fragments = partReassembler.reassembedFragments;
       console.log('fragments', fragments);
       onUpdate({ fragments: [...fragments], typing: true }, false);
 
