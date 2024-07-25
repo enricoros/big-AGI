@@ -59,7 +59,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     model: model.id,
     messages: chatMessages,
     tools: chatGenerate.tools && _toOpenAITools(chatGenerate.tools),
-    tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(chatGenerate.toolsPolicy),
+    tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy),
     parallel_tool_calls: undefined,
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
     temperature: model.temperature !== undefined ? model.temperature : undefined,
@@ -335,7 +335,14 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
   });
 }
 
-function _toOpenAIToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
+function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
+  // [Mistral] - supports 'auto', 'none', 'any'
+  if (openAIDialect === 'mistral' && itp.type !== 'auto') {
+    // Note: we tried adding the 'any' model, but don't feel comfortable with altering our good parsers
+    // to allow for Mistral's deviation from the de-facto norm set by the OpenAI protocol.
+    throw new Error('We only support automatic tool selection for Mistral models');
+  }
+
   // NOTE: OpenAI has an additional policy 'none', which we don't have as it behaves like passing no tools at all.
   //       Passing no tools is mandated instead of 'none'.
   switch (itp.type) {

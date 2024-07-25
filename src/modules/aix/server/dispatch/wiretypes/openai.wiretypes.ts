@@ -170,6 +170,9 @@ export namespace OpenAIWire_Tools {
       type: z.literal('function'),
       function: z.object({ name: z.string() }),
     }),
+    // [Mistral] Mistral only, requires an 'any' value
+    // Commented because we'll disable Mistral function calling instead
+    // z.literal('any'),
   ]);
 
 }
