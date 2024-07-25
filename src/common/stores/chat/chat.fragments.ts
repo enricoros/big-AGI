@@ -76,6 +76,8 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
 
 export type DMessageTextPart = { pt: 'text', text: string };
 
+export type DMessageErrorPart = { pt: 'error', error: string };
+
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 
 export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta };
@@ -98,35 +100,40 @@ type DMessageDocMeta = {
   srcOcrFrom?: 'image' | 'pdf';
 }
 
-export type DMessageToolInvocationPart = { pt: 'tool_call', id: string, call: DMessageToolInvocationFunctionCall | DMessageToolInvocationCodeExecution };
-type DMessageToolInvocationFunctionCall = {
-  type: 'function_call'
-  name: string;             // Name of the function as passed from the definition
-  args: string | null;      // JSON-encoded, if null there are no args
-  _description?: string;    // Description from the definition
-  _args_schema?: object;    // JSON Schema { type: 'object', properties: { ... } } from the definition
-};
-type DMessageToolInvocationCodeExecution = {
-  type: 'code_execution';
-  variant?: 'gemini_auto_inline';
-  language?: string;
-  code: string;
+export type DMessageToolInvocationPart = {
+  pt: 'tool_invocation',
+  id: string,
+  invocation: {
+    type: 'function_call'
+    name: string;             // Name of the function as passed from the definition
+    args: string | null;      // JSON-encoded, if null there are no args
+    // temporary, not stored
+    _description?: string;    // Description from the definition
+    _args_schema?: object;    // JSON Schema { type: 'object', properties: { ... } } from the definition
+  } | {
+    type: 'code_execution';
+    language: string;
+    code: string;
+    author: 'gemini_auto_inline';
+  }
 };
 
-export type DMessageToolResponsePart = { pt: 'tool_response', id: string, response: DMessageToolResponseFunctionCall | DMessageToolResponseCodeExecution, error?: boolean | string, _environment?: DMessageToolEnvironment };
-type DMessageToolResponseFunctionCall = {
-  type: 'function_call';
-  result: string;           // The output
-  _name?: string;           // Name of the function that produced the result
-};
-type DMessageToolResponseCodeExecution = {
-  type: 'code_execution';
-  result: string;           // The output
-  _variant?: 'gemini_auto_inline';
+export type DMessageToolResponsePart = {
+  pt: 'tool_response',
+  id: string,
+  error: boolean | string,
+  response: {
+    type: 'function_call';
+    name: string;             // Name of the function that produced the result
+    result: string;           // The output
+  } | {
+    type: 'code_execution';
+    result: string;           // The output
+    executor: 'gemini_auto_inline';
+  },
+  environment: DMessageToolEnvironment,
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
-
-export type DMessageErrorPart = { pt: 'error', error: string };
 
 export type DMetaPlaceholderPart = { pt: 'ph', pText: string };
 
@@ -162,6 +169,7 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
+
 export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'doc';
 }
@@ -175,69 +183,68 @@ export function isTextPart(part: DMessageContentFragment['part']) {
 }
 
 
-/// Helpers - Fragments Creation
+/// Fragments Creation & Duplication
+
+export function createTextContentFragment(text: string): DMessageContentFragment {
+  return _createContentFragment(_create_Text_Part(text));
+}
+
+export function createErrorContentFragment(error: string): DMessageContentFragment {
+  return _createContentFragment(_create_Error_Part(error));
+}
+
+export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
+  return _createContentFragment(_create_ImageRef_Part(dataRef, altText, width, height));
+}
+
+export function create_FunctionCallInvocation_ContentFragment(id: string, functionName: string, args: string | null): DMessageContentFragment {
+  return _createContentFragment(_create_FunctionCallInvocation_Part(id, functionName, args));
+}
+
+export function create_CodeExecutionInvocation_ContentFragment(id: string, language: string, code: string, author: 'gemini_auto_inline'): DMessageContentFragment {
+  return _createContentFragment(_create_CodeExecutionInvocation_Part(id, language, code, author));
+}
+
+export function create_FunctionCallResponse_ContentFragment(id: string, error: boolean | string, name: string, result: string, environment: DMessageToolEnvironment): DMessageContentFragment {
+  return _createContentFragment(_create_FunctionCallResponse_Part(id, error, name, result, environment));
+}
+
+export function create_CodeExecutionResponse_ContentFragment(id: string, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: DMessageToolEnvironment): DMessageContentFragment {
+  return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
+}
+
+export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
+  return _createContentFragment(_create_Placeholder_Part(placeholderText));
+}
+
+export function specialShallowReplaceTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
+  // TODO: remove?
+  return { ...copyFragment, part: _create_Text_Part(text) };
+}
 
 function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
   return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
 }
 
-export function createTextContentFragment(text: string): DMessageContentFragment {
-  return _createContentFragment(createDMessageTextPart(text));
-}
-
-export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
-  return _createContentFragment(createDMessageImageRefPart(dataRef, altText, width, height));
-}
-
-export function createToolCallContentFragment(id: string, name: string, args: string | null, _description?: string, _args_schema?: object): DMessageContentFragment {
-  return _createContentFragment(createDMessageFunctionCallInvocationPart(id, name, args, _description, _args_schema));
-}
-
-export function createCodeExecutionContentFragment(id: string, code: string, language?: string, variant?: 'gemini_auto_inline'): DMessageContentFragment {
-  return _createContentFragment(createDMessageCodeExecutionInvocationPart(id, code, language, variant));
-}
-
-export function createFunctionCallResponseContentFragment(id: string, result: string, _name?: string, error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageContentFragment {
-  return _createContentFragment(createDMessageFunctionCallResponsePart(id, result, _name, error, _environment));
-}
-
-export function createCodeExecutionResponseContentFragment(id: string, result: string, _variant?: 'gemini_auto_inline', error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageContentFragment {
-  return _createContentFragment(createDMessageCodeExecutionResponsePart(id, result, _variant, error, _environment));
-}
-
-export function createErrorContentFragment(error: string): DMessageContentFragment {
-  return _createContentFragment(createDMessageErrorPart(error));
-}
-
-export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
-  return _createContentFragment(createDMetaPlaceholderPart(placeholderText));
-}
-
-
-export function specialShallowReplaceTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
-  return { ...copyFragment, part: createDMessageTextPart(text) };
-}
-
-
-function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFileId: LiveFileId | undefined): DMessageAttachmentFragment {
-  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part, liveFileId };
-}
 
 export function createDocAttachmentFragment(l1Title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
-  return _createAttachmentFragment(l1Title, caption, createDMessageDocPart(type, data, ref, l1Title, meta), liveFileId);
+  return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(type, data, ref, l1Title, meta), liveFileId);
 }
 
 export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, createDMessageImageRefPart(dataRef, imgAltText, width, height), undefined);
+  return _createAttachmentFragment(title, caption, _create_ImageRef_Part(dataRef, imgAltText, width, height), undefined);
 }
-
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
   if (isTextPart(contentPart))
     return createDocAttachmentFragment(title, caption, 'text/plain', createDMessageDataInlineText(contentPart.text, 'text/plain'), ref, docMeta);
   if (isImageRefPart(contentPart))
-    return createImageAttachmentFragment(title, caption, _duplicateDataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
+    return createImageAttachmentFragment(title, caption, _duplicate_DataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
   return createDocAttachmentFragment('Error', 'Content to Attachment', 'text/plain', createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`, 'text/plain'), ref, docMeta);
+}
+
+function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFileId: LiveFileId | undefined): DMessageAttachmentFragment {
+  return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part, liveFileId };
 }
 
 
@@ -246,66 +253,6 @@ function _createSentinelFragment(): _DMessageSentinelFragment {
 }
 
 
-/// Helpers - Parts Creation
-
-function createDMessageDocPart(type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta): DMessageDocPart {
-  return { pt: 'doc', type, data, ref, l1Title, meta };
-}
-
-function createDMessageErrorPart(error: string): DMessageErrorPart {
-  return { pt: 'error', error };
-}
-
-function createDMessageImageRefPart(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
-  return { pt: 'image_ref', dataRef, altText, width, height };
-}
-
-function createDMessageTextPart(text: string): DMessageTextPart {
-  return { pt: 'text', text };
-}
-
-function createDMessageFunctionCallInvocationPart(id: string, name: string, args: string | null, _description?: string, _args_schema?: object): DMessageToolInvocationPart {
-  return { pt: 'tool_call', id, call: { type: 'function_call', name, args, _description, _args_schema } };
-}
-
-function createDMessageCodeExecutionInvocationPart(id: string, code: string, language?: string, variant?: 'gemini_auto_inline'): DMessageToolInvocationPart {
-  return { pt: 'tool_call', id, call: { type: 'code_execution', variant, language, code } };
-}
-
-function createDMessageFunctionCallResponsePart(id: string, result: string, _name?: string, error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageToolResponsePart {
-  return { pt: 'tool_response', id, response: { type: 'function_call', result, _name }, error, _environment };
-}
-
-function createDMessageCodeExecutionResponsePart(id: string, result: string, _variant?: 'gemini_auto_inline', error?: boolean | string, _environment?: DMessageToolEnvironment): DMessageToolResponsePart {
-  return { pt: 'tool_response', id, response: { type: 'code_execution', result, _variant }, error, _environment };
-}
-
-function createDMetaPlaceholderPart(placeholderText: string): DMetaPlaceholderPart {
-  return { pt: 'ph', pText: placeholderText };
-}
-
-function createDMetaSentinelPart(): _DMetaSentinelPart {
-  return { pt: '_pt_sentinel' };
-}
-
-
-/// Helpers - Data Reference Creation
-
-export function createDMessageDataInlineText(text: string, mimeType?: string): DMessageDataInline {
-  return { idt: 'text', text, mimeType };
-}
-
-function createDMessageDataRefUrl(url: string): DMessageDataRef {
-  return { reftype: 'url', url };
-}
-
-export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType: string, bytesSize: number): DMessageDataRef {
-  return { reftype: 'dblob', dblobAssetId: dblobAssetId, mimeType, bytesSize };
-}
-
-
-/// Helpers - Duplication
-
 export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
   return fragments.map(_duplicateFragment);
 }
@@ -313,10 +260,10 @@ export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   switch (fragment.ft) {
     case 'content':
-      return _createContentFragment(_duplicatePart(fragment.part));
+      return _createContentFragment(_duplicate_Part(fragment.part));
 
     case 'attachment':
-      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicatePart(fragment.part), fragment.liveFileId);
+      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicate_Part(fragment.part), fragment.liveFileId);
 
     case '_ft_sentinel':
       return _createSentinelFragment();
@@ -326,43 +273,89 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   }
 }
 
-function _duplicatePart<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
+
+/// Helpers - Parts Creation & Duplication
+
+function _create_Text_Part(text: string): DMessageTextPart {
+  return { pt: 'text', text };
+}
+
+function _create_Error_Part(error: string): DMessageErrorPart {
+  return { pt: 'error', error };
+}
+
+function _create_Doc_Part(type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta): DMessageDocPart {
+  return { pt: 'doc', type, data, ref, l1Title, meta };
+}
+
+function _create_ImageRef_Part(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
+  return { pt: 'image_ref', dataRef, altText, width, height };
+}
+
+function _create_FunctionCallInvocation_Part(id: string, functionName: string, args: string | null): DMessageToolInvocationPart {
+  return { pt: 'tool_invocation', id, invocation: { type: 'function_call', name: functionName, args } };
+}
+
+function _create_CodeExecutionInvocation_Part(id: string, language: string, code: string, author: 'gemini_auto_inline'): DMessageToolInvocationPart {
+  return { pt: 'tool_invocation', id, invocation: { type: 'code_execution', language, code, author } };
+}
+
+function _create_FunctionCallResponse_Part(id: string, error: boolean | string, name: string, result: string, environment: DMessageToolEnvironment): DMessageToolResponsePart {
+  return { pt: 'tool_response', id, error, response: { type: 'function_call', name, result }, environment };
+}
+
+function _create_CodeExecutionResponse_Part(id: string, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: DMessageToolEnvironment): DMessageToolResponsePart {
+  return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
+}
+
+function _create_Placeholder_Part(placeholderText: string): DMetaPlaceholderPart {
+  return { pt: 'ph', pText: placeholderText };
+}
+
+function _create_Sentinel_Part(): _DMetaSentinelPart {
+  return { pt: '_pt_sentinel' };
+}
+
+function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
     case 'doc':
-      return createDMessageDocPart(part.type, _duplicateInlineData(part.data), part.ref, part.l1Title, part.meta ? { ...part.meta } : undefined) as TPart;
+      return _create_Doc_Part(part.type, _duplicate_InlineData(part.data), part.ref, part.l1Title, part.meta ? { ...part.meta } : undefined) as TPart;
 
     case 'error':
-      return createDMessageErrorPart(part.error) as TPart;
+      return _create_Error_Part(part.error) as TPart;
 
     case 'image_ref':
-      return createDMessageImageRefPart(_duplicateDataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
+      return _create_ImageRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
 
     case 'ph':
-      return createDMetaPlaceholderPart(part.pText) as TPart;
+      return _create_Placeholder_Part(part.pText) as TPart;
 
     case 'text':
-      return createDMessageTextPart(part.text) as TPart;
+      return _create_Text_Part(part.text) as TPart;
 
-    case 'tool_call':
-      const call = part.call;
-      if (call.type === 'function_call')
-        return createDMessageFunctionCallInvocationPart(part.id, call.name, call.args, call._description, call._args_schema ? { ...call._args_schema } : undefined) as TPart;
-      else
-        return createDMessageCodeExecutionInvocationPart(part.id, call.code, call.language, call.variant) as TPart;
+    case 'tool_invocation':
+      return part.invocation.type === 'function_call'
+        ? _create_FunctionCallInvocation_Part(part.id, part.invocation.name, part.invocation.args) as TPart
+        : _create_CodeExecutionInvocation_Part(part.id, part.invocation.language, part.invocation.code, part.invocation.author) as TPart;
 
     case 'tool_response':
-      const response = part.response;
-      if (response.type === 'function_call')
-        return createDMessageFunctionCallResponsePart(part.id, response.result, response._name, part.error, part._environment) as TPart;
-      else
-        return createDMessageCodeExecutionResponsePart(part.id, response.result, response._variant, part.error, part._environment) as TPart;
+      return part.response.type === 'function_call'
+        ? _create_FunctionCallResponse_Part(part.id, part.error, part.response.name, part.response.result, part.environment) as TPart
+        : _create_CodeExecutionResponse_Part(part.id, part.error, part.response.result, part.response.executor, part.environment) as TPart;
 
     case '_pt_sentinel':
-      return createDMetaSentinelPart() as TPart;
+      return _create_Sentinel_Part() as TPart;
   }
 }
 
-function _duplicateInlineData(data: DMessageDataInline): DMessageDataInline {
+
+/// Helpers - Data Reference Creation & Duplication
+
+export function createDMessageDataInlineText(text: string, mimeType?: string): DMessageDataInline {
+  return { idt: 'text', text, mimeType };
+}
+
+function _duplicate_InlineData(data: DMessageDataInline): DMessageDataInline {
   switch (data.idt) {
     case 'text':
       return createDMessageDataInlineText(data.text, data.mimeType);
@@ -372,18 +365,27 @@ function _duplicateInlineData(data: DMessageDataInline): DMessageDataInline {
   }
 }
 
-function _duplicateDataReference(ref: DMessageDataRef): DMessageDataRef {
-  switch (ref.reftype) {
-    case 'url':
-      return createDMessageDataRefUrl(ref.url);
+export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType: string, bytesSize: number): DMessageDataRef {
+  return { reftype: 'dblob', dblobAssetId: dblobAssetId, mimeType, bytesSize };
+}
 
+export function createDMessageDataRefUrl(url: string): DMessageDataRef {
+  return { reftype: 'url', url };
+}
+
+function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
+  switch (ref.reftype) {
     case 'dblob':
       return createDMessageDataRefDBlob(ref.dblobAssetId, ref.mimeType, ref.bytesSize);
+
+    case 'url':
+      return createDMessageDataRefUrl(ref.url);
   }
 }
 
-function _duplicateObjectWarning<T extends Record<string, any>>(obj: T | undefined, devPlace: string): T | undefined {
-  console.warn('[DEV]: implement deep copy for:', devPlace);
-  if (!obj) return obj;
-  return { ...obj };
-}
+
+// function _duplicateObjectWarning<T extends Record<string, any>>(obj: T | undefined, devPlace: string): T | undefined {
+//   console.warn('[DEV]: implement deep copy for:', devPlace);
+//   if (!obj) return obj;
+//   return { ...obj };
+// }
