@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
@@ -17,12 +17,12 @@ import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { devMode_AixLastDispatchRequestBody } from '~/modules/aix/client/aix.client'; // [DEV MODE]
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
+import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/PartReassembler';
 
 
 export function ChatPageMenuItems(props: {
@@ -103,11 +103,27 @@ export function ChatPageMenuItems(props: {
         dividers
         onClose={() => setDevModeDialog(null)}
         title='Aix: Last Dispach Request Body'
-        sx={{ minWidth: '80vw', maxWidth: undefined }}
+        sx={{ minWidth: '80vw', maxWidth: undefined, overflow: 'auto' }}
       >
-        <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
-          {devMode_AixLastDispatchRequestBody || 'Contents will be shown after the next request.'}
-        </Typography>
+        {devMode_AixLastDispatchRequest ? (
+          <Box sx={{
+            fontSize: 'sm',
+            display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 2, rowGap: 1,
+          }}>
+            <div>Url</div>
+            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.url}</div>
+            <div>Headers</div>
+            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.headers}</div>
+            <div>Body</div>
+            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.body}</div>
+            {devMode_AixLastDispatchRequest.particles.map(((particleString, idx) => (
+              <React.Fragment key={idx}>
+                <div>Particle {idx + 1}</div>
+                <div style={{ whiteSpace: 'break-spaces' }}>{particleString}</div>
+              </React.Fragment>
+            )))}
+          </Box>
+        ) : 'Contents will be shown after the next request.'}
       </GoodModal>
     ));
   }, []);
