@@ -2,7 +2,7 @@ import * as React from 'react';
 import { AppType, MyAppProps } from 'next/app';
 import { default as Document, DocumentContext, DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import createEmotionServer from '@emotion/server/create-instance';
-import { getInitColorSchemeScript } from '@mui/joy/styles';
+import InitColorSchemeScript from '@mui/joy/InitColorSchemeScript';
 
 import { Brand } from '~/common/app.config';
 import { createEmotionCache } from '~/common/app.theme';
@@ -51,7 +51,7 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {emotionStyleTags}
       </Head>
       <body>
-      {getInitColorSchemeScript()}
+      <InitColorSchemeScript />
       <Main />
       <NextScript />
       </body>

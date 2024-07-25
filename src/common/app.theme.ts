@@ -226,7 +226,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
 const isBrowser = typeof document !== 'undefined';
 
 export function createEmotionCache() {
-  let insertionPoint;
+  let insertionPoint: HTMLElement | undefined;
 
   if (isBrowser) {
     // On the client side, _document.tsx has a meta tag with the name "emotion-insertion-point" at the top of the <head>.
@@ -237,7 +237,7 @@ export function createEmotionCache() {
     insertionPoint = emotionInsertionPoint ?? undefined;
   }
 
-  return createCache({ key: 'mui-style', insertionPoint });
+  return createCache({ key: 'mui-style', insertionPoint: insertionPoint });
 }
 
 // MISC

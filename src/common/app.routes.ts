@@ -3,6 +3,7 @@
 //
 // We will centralize them here, for UI and routing purposes.
 //
+// noinspection Annotator
 
 import Router, { useRouter } from 'next/router';
 
