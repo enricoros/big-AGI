@@ -929,19 +929,34 @@ export function perplexityAIModelSort(a: ModelDescriptionSchema, b: ModelDescrip
 const _knownGroqModels: ManualMappings = [
   {
     isLatest: true,
+    idPrefix: 'llama-3.1-70b-versatile',
+    label: 'Llama 3.1 · 70B',
+    description: 'LLaMA3.1 70b developed by Meta with a context window of 32,768 tokens.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
+    idPrefix: 'llama-3.1-8b-instant',
+    label: 'Llama 3.1 · 8B',
+    description: 'LLaMA3.1 8b developed by Meta with a context window of 32,768 tokens.',
+    contextWindow: 32768,
+    interfaces: [LLM_IF_OAI_Chat],
+  },
+  {
     idPrefix: 'llama3-70b-8192',
     label: 'Llama 3 · 70B',
     description: 'LLaMA3 70b developed by Meta with a context window of 8,192 tokens.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
-    // isLatest: true,
     idPrefix: 'llama3-8b-8192',
     label: 'Llama 3 · 8B',
     description: 'LLaMA3 8b developed by Meta with a context window of 8,192 tokens.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat],
+    hidden: true,
   },
   {
     idPrefix: 'llama2-70b-4096',
