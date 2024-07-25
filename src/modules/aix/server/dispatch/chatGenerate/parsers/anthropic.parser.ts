@@ -90,6 +90,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               break;
             case 'tool_use':
               pt.startFunctionToolCall(content_block.id, content_block.name, 'incr_str', (content_block.input as string) || '');
+              // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
+              if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
+                content_block.input = null;
               break;
             default:
               throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
