@@ -249,20 +249,21 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
                 chatMessages.push({ role: 'user', content: [imageContentPart] });
               break;
 
-            case 'tool_call':
+            case 'tool_invocation':
               // Implementation notes
               // - the assistant called the tool (this is the invocation params) with out without text beforehand
               // - we will append to an existing assistant message, if there's space for a tool invocation
               // - otherwise we'll add an assistant message with null message
 
               // create a new OpenAIWire_ToolCall (specialized to function)
+              const invocation = part.invocation;
               let toolCallPart;
-              switch (part.call.type) {
+              switch (invocation.type) {
                 case 'function_call':
-                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, part.call.name, part.call.args || '');
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, invocation.name, invocation.args || '');
                   break;
                 case 'code_execution':
-                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, 'execute_code' /* suboptimal */, part.call.code || '');
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, 'execute_code' /* suboptimal */, invocation.code || '');
                   break;
                 default:
                   throw new Error(`Unsupported tool call type in Model message: ${(part as any).pt}`);

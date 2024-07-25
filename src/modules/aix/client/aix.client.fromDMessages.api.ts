@@ -68,7 +68,7 @@ export async function aixChatGenerateRequestFromDMessages(messageSequence: Reado
 
           // skipped (non-user)
           case 'error':
-          case 'tool_call':
+          case 'tool_invocation':
           case 'tool_response':
             break;
 
@@ -100,7 +100,7 @@ export async function aixChatGenerateRequestFromDMessages(messageSequence: Reado
         switch (aFragment.part.pt) {
 
           case 'text':
-          case 'tool_call':
+          case 'tool_invocation':
             // Key place where the Aix Zod inferred types are compared to the Typescript defined DMessagePart* types
             // - in case of error, check that the types in `chat.fragments.ts` and `aix.wiretypes.ts` are in sync
             mMsg.parts.push(aFragment.part);

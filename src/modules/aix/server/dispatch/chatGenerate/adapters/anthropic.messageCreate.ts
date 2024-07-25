@@ -116,17 +116,17 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
               throw new Error('Model-generated images are not supported by Anthropic yet');
             break;
 
-          case 'tool_call':
+          case 'tool_invocation':
             let toolUseBlock;
-            switch (part.call.type) {
+            switch (part.invocation.type) {
               case 'function_call':
-                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, part.call.name, part.call.args);
+                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, part.invocation.name, part.invocation.args);
                 break;
               case 'code_execution':
-                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, part.call.code);
+                toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, part.invocation.code);
                 break;
               default:
-                throw new Error(`Unsupported tool call type in Model message: ${(part.call as any).type}`);
+                throw new Error(`Unsupported tool call type in Model message: ${(part.invocation as any).type}`);
             }
             yield { role: 'assistant', content: toolUseBlock };
             break;
