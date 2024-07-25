@@ -114,6 +114,8 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
         + (response.statusText || '')
         + (payload
           ? ` - ${safeErrorString(payload)}` : '')
+         + (payload?.error?.failed_generation // [Groq]
+          ? ` - failed_generation: ${payload.error.failed_generation}` : '')
         + (response.status === 403
           ? ` - is "${url}" accessible by the server?` : '')
         + (response.status === 404
