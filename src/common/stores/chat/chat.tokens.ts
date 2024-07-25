@@ -59,7 +59,7 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         return 0;
       case 'text':
         return estimateTextTokens(cPart.text, llm, debugFrom);
-      case 'tool_call':
+      case 'tool_invocation':
       case 'tool_response':
         console.warn('Unhandled token preview for content type:', cPart.pt);
         return 0;

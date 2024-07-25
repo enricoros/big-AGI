@@ -164,6 +164,10 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
             return '';
           case 'ph':
             return '';
+          // ignore tools
+          case 'tool_invocation':
+          case 'tool_response':
+            return '';
         }
       } else if (isAttachmentFragment(fragment)) {
         switch (fragment.part.pt) {
