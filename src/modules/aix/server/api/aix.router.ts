@@ -4,15 +4,10 @@ import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { AixWire_Particles, AixWire_API, AixWire_API_ChatGenerate } from './aix.wiretypes';
+import { AixWire_API, AixWire_API_ChatGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
-
-
-function* emitDebugRequestBody(s: string) {
-  yield { o: '_debugRequestBody' as const, body: s };
-}
 
 
 export const aixRouter = createTRPCRouter({
@@ -59,8 +54,8 @@ export const aixRouter = createTRPCRouter({
       try {
 
         // [DEV] Debugging the request without requiring a server restart
-        if (input.connectionOptions?.debugDispatchRequestbody && process.env.NODE_ENV === 'development')
-          yield* emitDebugRequestBody(JSON.stringify(dispatch.request.body, null, 2));
+        if (input.connectionOptions?.debugDispatchRequestbody)
+          chatGenerateTx.addDebugRequestInDev(dispatch.request.url, dispatch.request.headers, dispatch.request.body);
 
         // Blocking fetch - may timeout, for instance with long Anthriopic requests (>25s on Vercel)
         dispatchResponse = await fetchResponseOrTRPCThrow({
