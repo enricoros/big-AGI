@@ -11,7 +11,7 @@ import { aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate'
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 
-import type { IPartTransmitter } from './IPartTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
@@ -20,7 +20,7 @@ import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsPars
 /**
  * Interface for the vendor parsers to implement
  */
-export type ChatGenerateParseFunction = (partTransmitter: IPartTransmitter, eventData: string, eventName?: string) => void;
+export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string) => void;
 
 
 /**

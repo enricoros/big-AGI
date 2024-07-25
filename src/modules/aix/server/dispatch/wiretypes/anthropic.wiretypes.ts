@@ -27,7 +27,7 @@ export namespace AnthropicWire_Blocks {
     type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(),
-    input: z.unknown(),
+    input: z.any(),
   });
 
   export const ToolResultBlock_schema = z.object({

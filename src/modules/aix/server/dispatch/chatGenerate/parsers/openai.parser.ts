@@ -2,7 +2,7 @@ import { safeErrorString } from '~/server/wire';
 import { serverSideId } from '~/server/api/trpc.nanoid';
 
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IPartTransmitter } from '../IPartTransmitter';
+import type { IParticleTransmitter } from '../IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
@@ -50,7 +50,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     tool_calls: [],
   };
 
-  return function(pt: IPartTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string) {
 
     // Throws on malformed event data
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
@@ -143,7 +143,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
               arguments: deltaToolCall.function.arguments || '',
             },
           };
-          pt.startFunctionToolCall(created.id, created.function.name, 'incr_str', created.function.arguments);
+          pt.startFunctionCallInvocation(created.id, created.function.name, 'incr_str', created.function.arguments);
           break;
         }
 
@@ -159,7 +159,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         // It's an arguments update - send it
         if (deltaToolCall.function?.arguments) {
           accumulatedToolCall.function.arguments += deltaToolCall.function.arguments;
-          pt.appendFunctionToolCallArgsIStr(accumulatedToolCall.id, deltaToolCall.function.arguments);
+          pt.appendFunctionCallInvocationArgs(accumulatedToolCall.id, deltaToolCall.function.arguments);
         }
 
       } // .choices.tool_calls[]
@@ -182,7 +182,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
 export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction {
 
-  return function(pt: IPartTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string) {
 
     // Throws on malformed event data
     const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(JSON.parse(eventData));
@@ -234,7 +234,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
         if (toolCall.type !== 'function' && !mayBeMistral)
           throw new Error(`unexpected tool_call type: ${toolCall.type}`);
-        pt.startFunctionToolCall(toolCall.id, toolCall.function.name, 'incr_str', toolCall.function.arguments);
+        pt.startFunctionCallInvocation(toolCall.id, toolCall.function.name, 'incr_str', toolCall.function.arguments);
         pt.endMessagePart();
       } // .choices.tool_calls[]
 

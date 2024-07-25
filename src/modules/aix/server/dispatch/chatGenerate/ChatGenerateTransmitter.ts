@@ -3,7 +3,7 @@ import { serverSideId } from '~/server/api/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
-import type { IPartTransmitter } from './IPartTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 
 
 // configuration
@@ -29,14 +29,15 @@ export const IssueSymbols = {
  * - RPC issues: the issue is catched in the Aix router at various stages -- [dispatch-prepare, dispatch-fetch, dispatch-read, dispatch-parse]
  *  - Throwing in the IPartTrasmitter portion will be caught by the caller and be re-injected as a [dispatch-parse] issue
  */
-export class ChatGenerateTransmitter implements IPartTransmitter {
+export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   // Particle queue
-  private currentParticle: AixWire_Particles.ParticleOp | null = null;
+  private currentText: AixWire_Particles.TextParticleOp | null = null;
+  private currentPart: AixWire_Particles.PartParticleOp | null = null;
   private transmissionQueue: AixWire_Particles.ChatGenerateOp[] = [];
 
   // State machinery
-  private lastFunctionCallParticle: AixWire_Particles.ParticleOp | null = null;
+  private lastFunctionCallParticle: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }> | null = null;
 
   // Counters
   private accCounts: AixWire_Particles.ChatGenerateCounts | undefined = undefined;
@@ -51,10 +52,14 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
     // TODO: implement throttling on a particle basis
   }
 
-  private _queueParticle() {
-    if (this.currentParticle) {
-      this.transmissionQueue.push(this.currentParticle);
-      this.currentParticle = null;
+  private _queueParticleS() {
+    if (this.currentText) {
+      this.transmissionQueue.push(this.currentText);
+      this.currentText = null;
+    }
+    if (this.currentPart) {
+      this.transmissionQueue.push(this.currentPart);
+      this.currentPart = null;
     }
   }
 
@@ -66,30 +71,30 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
     if (!this.sentCounts && this.freshCounts && this.accCounts) {
       this.sentCounts = true;
       this.freshCounts = false;
-      yield {
+      this.transmissionQueue.push({
         cg: 'update-counts',
         counts: this.accCounts,
-      };
+      });
     }
-
-    // Queued operations
-    for (const op of this.transmissionQueue)
-      yield op;
-    this.transmissionQueue = [];
 
     // Termination
     if (this.terminationReason) {
-      yield {
+      this.transmissionQueue.push({
         cg: 'end',
         reason: this.terminationReason,
-      };
-      // Keep this in a terminated state, so that every subsequent call will yield errors
+      });
+      // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
       // this.terminationReason = null;
     }
+
+    // Emit queued particles
+    for (const op of this.transmissionQueue)
+      yield op;
+    this.transmissionQueue = [];
   }
 
   * flushParticles(): Generator<AixWire_Particles.ChatGenerateOp> {
-    this._queueParticle();
+    this._queueParticleS();
     this.sentCounts = false; // enable sending counters again
     return yield* this.emitParticles();
   }
@@ -103,6 +108,20 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
     this.setEnded('issue-rpc');
   }
 
+  addDebugRequestInDev(url: string, headers: HeadersInit, body: object) {
+    // [security] only emit in development, as it may contain sensitive information
+    if (process.env.NODE_ENV !== 'development') return;
+    this.transmissionQueue.push({
+      _debug: 'request',
+      security: 'dev-env',
+      request: {
+        url,
+        headers: JSON.stringify(headers, null, 2),
+        body: JSON.stringify(body, null, 2),
+      },
+    });
+  }
+
 
   /// IPartTransmitter
 
@@ -114,17 +133,32 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
   }
 
   /** End the current part and flush it */
-  setDialectTerminatingIssue(dialectText: string, symbol?: string) {
-    this._addIssue('dialect-issue', ` ${symbol} **[${this.prettyDialect} Issue]:** ${dialectText}`, false);
+  setDialectTerminatingIssue(dialectText: string, symbol: string | null) {
+    this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, false);
     this.setEnded('issue-dialect');
   }
 
   /** Closes the current part, also flushing it out */
   endMessagePart() {
     // signals that the part has ended and should be transmitted
-    this._queueParticle();
+    this._queueParticleS();
+    // the following are set above
+    // this.currentText = null;
+    // this.currentPart = null;
     this.lastFunctionCallParticle = null;
     // Note: should set some sending flag or something
+  }
+
+  /** Appends text, creating a part if missing [throttled] */
+  appendText(textChunk: string) {
+    // if there was another Part in the making, queue it
+    if (this.currentPart)
+      this.endMessagePart();
+    this.currentText = {
+      t: textChunk,
+    };
+    // [throttle] send it immediately for now
+    this._queueParticleS();
   }
 
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
@@ -141,19 +175,6 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
     });
   }
 
-  /** Appends text, creating a part if missing [throttled] */
-  appendText(text: string) {
-    if (this.currentParticle) {
-      // [throttle] Note: this is where throttling would be implemented
-      this._queueParticle();
-    }
-    this.currentParticle = {
-      p: 't_',
-      t: text,
-    };
-    this._queueParticle();
-  }
-
   /**
    * Creates a FC part, flushing the previous one if needed, and starts adding data to it
    * @param id if null [Gemini], a new id will be generated to keep it linked to future tool responses
@@ -161,70 +182,68 @@ export class ChatGenerateTransmitter implements IPartTransmitter {
    * @param expectedArgsFmt 'incr_str' | 'json_object' - 'incr_str' for incremental string, 'json_object' for JSON object
    * @param args must be undefined, or match the expected Args Format
    */
-  startFunctionToolCall(id: string | null, functionName: string, expectedArgsFmt: 'incr_str' | 'json_object', args?: string | object | null) {
-    if (this.currentParticle?.p === 'function-call')
+  startFunctionCallInvocation(id: string | null, functionName: string, expectedArgsFmt: 'incr_str' | 'json_object', args: string | object | null) {
+    // validate state
+    if (this.currentPart?.p === 'fci')
       throw new Error('Cannot start a new function call while the previous one is still open [parser-logic]');
-    this._queueParticle();
-    this.currentParticle = {
-      p: 'function-call',
+
+    this.endMessagePart();
+    this.currentPart = {
+      p: 'fci',
       id: id ?? serverSideId('aix-tool-call-id'),
       name: functionName,
     };
     if (args) {
-      if (expectedArgsFmt === 'incr_str') {
-        if (ENABLE_EXTRA_DEV_MESSAGES && typeof args !== 'string')
-          console.warn(`ChatGenerateTransmitter.startFunctionToolCall (${this.prettyDialect}): Expected string args for incremental string, got`, typeof args, args);
-        this.currentParticle.i_args = typeof args === 'string' ? args : JSON.stringify(args);
-      } else if (expectedArgsFmt === 'json_object') {
-        if (ENABLE_EXTRA_DEV_MESSAGES && typeof args !== 'object')
-          console.warn(`ChatGenerateTransmitter.startFunctionToolCall (${this.prettyDialect}): Expected object args for JSON object, got`, typeof args, args);
-        this.currentParticle.i_args = JSON.stringify(args);
-      } else
-        throw new Error(`Unexpected function call argument format: '${expectedArgsFmt}'`);
+      if ((typeof args === 'string' && expectedArgsFmt !== 'incr_str') || (typeof args === 'object' && expectedArgsFmt !== 'json_object'))
+        throw new Error(`unexpected argument format: got '${typeof args}' instead of '${expectedArgsFmt}'`);
+      this.currentPart.i_args = typeof args === 'string' ? args : JSON.stringify(args);
     }
-    // [throttle] Note: for throttling, we may keep this one open for longer instead
-    this.lastFunctionCallParticle = this.currentParticle;
-    this._queueParticle();
+    this.lastFunctionCallParticle = this.currentPart;
+    this._queueParticleS();
   }
 
   /** Appends data to a FC part [throttled] */
-  appendFunctionToolCallArgsIStr(id: string | null, argsJsonChunk: string) {
+  appendFunctionCallInvocationArgs(id: string | null, argsJsonChunk: string) {
     // we expect the last function call to be open
-    if (this.lastFunctionCallParticle?.p !== 'function-call')
-      throw new Error('ChatGenerateTransmitter: cannot process function call arguments while no function call is open');
+    if (this.lastFunctionCallParticle?.p !== 'fci')
+      throw new Error('function-call-tool: cannot append arguments to a non-existing function call');
 
     // we expect the id to match, if provided
-    if (id && this.lastFunctionCallParticle.id !== id)
-      throw new Error(`ChatGenerateTransmitter: cannot append function call arguments to a different function call: ${id} !== ${this.lastFunctionCallParticle.id}`);
+    if (id && id !== this.lastFunctionCallParticle.id)
+      throw new Error('function-call-tool: arguments id mismatch');
 
     // transmit the arguments
-    this._queueParticle();
-    this.currentParticle = {
-      p: 'fc_',
-      i_args: argsJsonChunk,
+    // [throttle] this is where we could operate to accumulate the arguments
+    this._queueParticleS();
+    this.currentPart = {
+      p: '_fci',
+      _args: argsJsonChunk,
     };
-    this._queueParticle();
+    this._queueParticleS();
   }
 
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
-  addCodeExecutionToolCall(id: string | null, language: string, code: string) {
+  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline') {
     this.endMessagePart();
     this.transmissionQueue.push({
-      p: 'code-call',
+      p: 'cei',
       id: id ?? serverSideId('aix-tool-call-id'),
       language,
       code,
+      author,
     });
   }
 
   /** Creates a CE result part, flushing the previous one if needed, and completes it */
-  addCodeExecutionResponse(id: string | null, output: string, error: string | undefined) {
+  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: 'upstream') {
     this.endMessagePart();
     this.transmissionQueue.push({
-      p: 'code-response',
+      p: 'cer',
       id: id ?? serverSideId('aix-tool-response-id'),
-      output,
-      ...(error ? { error } : {}),
+      error,
+      result,
+      executor,
+      environment,
     });
   }
 
