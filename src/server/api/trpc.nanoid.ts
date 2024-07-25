@@ -5,5 +5,5 @@ import { nanoid } from 'nanoid';
  * This one is for server-side use.
  */
 export function serverSideId(_serverScope: 'aix-tool-call-id' | 'aix-tool-response-id', digits?: number) {
-  return nanoid(digits);
+  return 'aix_' + nanoid(digits);
 }
