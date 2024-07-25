@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
-import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
@@ -12,9 +11,10 @@ import TitleIcon from '@mui/icons-material/Title';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
-import { isDevModeLocalhost } from '~/common/util/pwaUtils';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { isDevModeLocalhost } from '~/common/util/pwaUtils';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 
 
 // uncomment for more settings
@@ -33,11 +33,28 @@ export function UxLabsSettings() {
     labsShowCost, setLabsShowCost,
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsDevMode, setLabsDevMode,
+    labsDevNoStreaming, setLabsDevNoStreaming,
   } = useUXLabsStore();
 
   return <>
 
-    {/* 'v1.15 · ' + .. */}
+    {/* [DEV MODE] Settings */}
+
+    {(isDevModeLocalhost || labsDevMode) && (
+      <FormSwitchControl
+        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Developer Mode</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
+        checked={labsDevMode} onChange={setLabsDevMode}
+      />
+    )}
+
+    {labsDevMode && (
+      <FormSwitchControl
+        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Disable Streaming</>} description={labsDevNoStreaming ? 'Enabled' : 'Disabled'}
+        checked={labsDevNoStreaming} onChange={setLabsDevNoStreaming}
+      />
+    )}
+
+    {/* Non-Graduated Settings */}
 
     <FormSwitchControl
       title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Performance</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
@@ -68,13 +85,6 @@ export function UxLabsSettings() {
       title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Show Shortcuts</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
       checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
     />}
-
-    {isDevModeLocalhost && (
-      <FormSwitchControl
-        title={<><EngineeringIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />[DEV Mode]</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
-        checked={labsDevMode} onChange={setLabsDevMode}
-      />
-    )}
 
     {/*
       Other Graduated (removed or backlog):
