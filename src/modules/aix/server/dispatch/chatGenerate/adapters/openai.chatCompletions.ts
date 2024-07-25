@@ -182,11 +182,10 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
               // - doc is rendered as a simple text part, but enclosed in a markdow block
               // - TODO: consider better representation - we use the 'legacy' markdown encoding here,
               //    but we may as well support different ones (e.g. XML) in the future
-              const textContentString = part.pt === 'text'
-                ? part.text
-                : /* doc */ part.data.text.startsWith('```')
-                  ? `\`\`\`${part.ref || ''}\n${part.data.text}\n\`\`\`\n`
-                  : part.data.text;
+              const textContentString =
+                part.pt === 'text' ? part.text
+                  : /* doc */ part.data.text.startsWith('```') ? part.data.text
+                    : `\`\`\`${part.ref || ''}\n${part.data.text}\n\`\`\`\n`;
 
               const textContentPart = OpenAIWire_ContentParts.TextContentPart(textContentString);
 
