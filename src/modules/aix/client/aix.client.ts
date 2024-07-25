@@ -4,7 +4,7 @@ import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry
 
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import { apiStream } from '~/common/util/trpc.client';
-import { getLabsDevMode } from '~/common/state/store-ux-labs';
+import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
@@ -103,15 +103,15 @@ async function _aixChatGenerateContent(
   onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
 ): Promise<void> {
 
-  const sampleFC: boolean = true;
-  const sampleCE: boolean = false;
+  const sampleFC: boolean = aixModel.id.indexOf('models/gemini') === -1;
+  const sampleCE: boolean = aixModel.id.indexOf('models/gemini') !== -1;
 
   if (sampleFC) {
     aixChatGenerate.tools = [
       {
         type: 'function_call',
         function_call: {
-          name: 'get_capybara_info_given_name_and_color_very_long',
+          name: 'get_capybara_info_given_name_and_color',
           description: 'Get the info about capybaras. Call one each per name.',
           input_schema: {
             properties: {
@@ -145,8 +145,9 @@ async function _aixChatGenerateContent(
   }
 
 
+  const streaming = !getLabsDevNoStreaming();
   const operation = await apiStream.aix.chatGenerateContent.mutate(
-    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming: true, connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined },
+    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming, connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined },
     { signal: abortSignal },
   );
 

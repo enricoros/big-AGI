@@ -34,6 +34,9 @@ interface UXLabsStore {
   labsDevMode: boolean;
   setLabsDevMode: (labsDevMode: boolean) => void;
 
+  labsDevNoStreaming: boolean;
+  setLabsDevNoStreaming: (labsDevNoStreaming: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -63,6 +66,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsDevMode: false,
       setLabsDevMode: (labsDevMode: boolean) => set({ labsDevMode }),
 
+      labsDevNoStreaming: false,
+      setLabsDevNoStreaming: (labsDevNoStreaming: boolean) => set({ labsDevNoStreaming }),
+
     }),
     {
       name: 'app-ux-labs',
@@ -91,4 +97,10 @@ export function useLabsDevMode() {
 
 export function getLabsDevMode() {
   return useUXLabsStore.getState().labsDevMode && isDevModeLocalhost;
+}
+
+export function getLabsDevNoStreaming() {
+  // returns true if in dev mode and no streaming is active
+  const { labsDevMode, labsDevNoStreaming } = useUXLabsStore.getState();
+  return labsDevMode && labsDevNoStreaming;
 }
