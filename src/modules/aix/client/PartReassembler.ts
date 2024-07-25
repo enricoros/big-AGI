@@ -1,121 +1,151 @@
-import { createCodeExecutionContentFragment, createCodeExecutionResponseContentFragment, createErrorContentFragment, createTextContentFragment, createToolCallContentFragment, DMessageContentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createTextContentFragment, DMessageContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
+
+
+// hackey?: global to be accessed by the UI
+export let devMode_AixLastDispatchRequest: { url: string, headers: string, body: string, particles: string[] } | null = null;
+
 
 export class PartReassembler {
   private fragments: DMessageContentFragment[] = [];
   private currentTextFragmentIndex: number | null = null;
 
-  processParticle(particle: AixWire_Particles.ChatGenerateOp): void {
-    if ('p' in particle) {
-      this._handleParticleOp(particle);
-    } else if ('cg' in particle) {
-      this._handleControlMessage(particle);
-    }
+  constructor() {
+    devMode_AixLastDispatchRequest = null;
   }
 
-  private _handleParticleOp(particle: AixWire_Particles.ParticleOp): void {
-    switch (particle.p) {
-      case 't_':
-        this.handleTextParticle(particle);
+  reassembleParticle(op: AixWire_Particles.ChatGenerateOp): void {
+    let isDebug = false;
+    switch (true) {
+      // TextParticleOp
+      case 't' in op:
+        this.onAppendText(op);
         break;
-      case 'function-call':
-      case 'fc_':
-        this.handleFunctionCallParticle(particle);
+
+      // PartParticleOp
+      case 'p' in op:
+        switch (op.p) {
+          case 'fci':
+            this.onStartFunctionCallInvocation(op);
+            break;
+          case '_fci':
+            this.onAppendFunctionCallInvocationArgs(op);
+            break;
+          case 'cei':
+            this.onAddCodeExecutionInvocation(op);
+            break;
+          case 'cer':
+            this.onAddCodeExecutionResponse(op);
+            break;
+          default:
+            this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected PartParticleOp: ${JSON.stringify(op)}`));
+        }
         break;
-      case 'code-call':
-        this.handleCodeCallParticle(particle);
+
+      // ChatGenerateOp<{cg: string}>
+      case 'cg' in op:
+        switch (op.cg) {
+          case 'issue':
+            this.onIssue(op);
+            break;
+
+          case 'end':
+          case 'set-model':
+          case 'update-counts':
+            // handled outside
+            break;
+
+          default:
+            this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected ChatGenerateOp: ${JSON.stringify(op)}`));
+        }
         break;
-      case 'code-response':
-        this.handleCodeResponseParticle(particle);
+
+      // Debug:
+      case '_debug' in op:
+        isDebug = true;
+        if (op._debug === 'request')
+          devMode_AixLastDispatchRequest = { ...op.request, particles: [] };
         break;
+
+      default:
+        this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected particle: ${JSON.stringify(op)}`));
     }
+
+    // [DEV] Debugging
+    if (!isDebug && devMode_AixLastDispatchRequest?.particles)
+      devMode_AixLastDispatchRequest.particles.push(JSON.stringify(op));
   }
 
-  private _handleControlMessage(message: Extract<AixWire_Particles.ChatGenerateOp, { cg: string }>): void {
-    switch (message.cg) {
-      case 'issue':
-        this.handleIssue(message.issueText);
-        break;
-      // Handle other control messages if needed
+
+  // Appends the text to the open text part, or creates a new one if none is open
+  private onAppendText(particle: AixWire_Particles.TextParticleOp): void {
+
+    // add to existing TextContentFragment
+    const currentTextFragment = this.currentTextFragmentIndex !== null ? this.fragments[this.currentTextFragmentIndex] : null;
+    if (currentTextFragment && isTextPart(currentTextFragment.part)) {
+      currentTextFragment.part.text += particle.t;
+      return;
     }
+
+    // new TextContentFragment
+    const newTextFragment = createTextContentFragment(particle.t);
+    this.fragments.push(newTextFragment);
+    this.currentTextFragmentIndex = this.fragments.length - 1;
   }
 
-  private handleTextParticle(particle: Extract<AixWire_Particles.ParticleOp, { p: 't_' }>): void {
-    if (this.currentTextFragmentIndex === null || !isTextPart(this.fragments[this.currentTextFragmentIndex].part)) {
-      const newTextFragment = createTextContentFragment(particle.t);
-      this.fragments.push(newTextFragment);
-      this.currentTextFragmentIndex = this.fragments.length - 1;
-    } else {
-      const currentFragment = this.fragments[this.currentTextFragmentIndex];
-      const updatedFragment = specialShallowReplaceTextContentFragment(
-        currentFragment,
-        currentFragment.part.text + particle.t,
-      );
-      this.fragments[this.currentTextFragmentIndex] = updatedFragment;
-    }
-  }
-
-  private handleFunctionCallParticle(particle: Extract<AixWire_Particles.ParticleOp, { p: 'function-call' | 'fc_' }>): void {
-    if (particle.p === 'function-call') {
-      const fragment = createToolCallContentFragment(
-        particle.id,
-        particle.name,
-        particle.i_args || null,
-      );
-      this.fragments.push(fragment);
-      this.currentTextFragmentIndex = null;
-    } else if (this.fragments.length > 0) {
-      const lastFragment = this.fragments[this.fragments.length - 1];
-      if (lastFragment.part.pt === 'tool_call' && lastFragment.part.call.type === 'function_call') {
-        const updatedPart = {
-          ...lastFragment.part,
-          call: {
-            ...lastFragment.part.call,
-            args: (lastFragment.part.call.args || '') + particle.i_args,
-          },
-        };
-        this.fragments[this.fragments.length - 1] = { ...lastFragment, part: updatedPart };
-      }
-    }
-  }
-
-  private handleCodeCallParticle(particle: Extract<AixWire_Particles.ParticleOp, { p: 'code-call' }>): void {
-    const fragment = createCodeExecutionContentFragment(
-      particle.id,
-      particle.code,
-      particle.language,
+  private onStartFunctionCallInvocation(fci: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }>): void {
+    // Break text accumulation
+    this.currentTextFragmentIndex = null;
+    // Start FC accumulation
+    const fragment = create_FunctionCallInvocation_ContentFragment(
+      fci.id,
+      fci.name,
+      fci.i_args || null,
     );
+    // TODO: add _description from the Spec
+    // TODO: add _args_schema from the Spec
     this.fragments.push(fragment);
+  }
+
+  private onAppendFunctionCallInvocationArgs(_fci: Extract<AixWire_Particles.PartParticleOp, { p: '_fci' }>): void {
+    const fragment = this.fragments[this.fragments.length - 1];
+    if (fragment && fragment.part.pt === 'tool_invocation' && fragment.part.invocation.type === 'function_call') {
+      const updatedPart = {
+        ...fragment.part,
+        invocation: {
+          ...fragment.part.invocation,
+          args: (fragment.part.invocation.args || '') + _fci._args,
+        },
+      };
+      this.fragments[this.fragments.length - 1] = { ...fragment, part: updatedPart };
+    } else
+      this.fragments.push(createErrorContentFragment('PartReassembler: unexpected _fc particle without a preceding function-call'));
+  }
+
+  private onAddCodeExecutionInvocation(cei: Extract<AixWire_Particles.PartParticleOp, { p: 'cei' }>): void {
+    this.fragments.push(create_CodeExecutionInvocation_ContentFragment(cei.id, cei.language, cei.code, cei.author));
     this.currentTextFragmentIndex = null;
   }
 
-  private handleCodeResponseParticle(particle: Extract<AixWire_Particles.ParticleOp, { p: 'code-response' }>): void {
-    const fragment = createCodeExecutionResponseContentFragment(
-      particle.id,
-      particle.output,
-      undefined,
-      particle.error,
-    );
-    this.fragments.push(fragment);
+  private onAddCodeExecutionResponse(cer: Extract<AixWire_Particles.PartParticleOp, { p: 'cer' }>): void {
+    this.fragments.push(create_CodeExecutionResponse_ContentFragment(cer.id, cer.error, cer.result, cer.executor, cer.environment));
     this.currentTextFragmentIndex = null;
   }
 
-  private handleIssue(issueText: string): void {
-    if (this.currentTextFragmentIndex !== null && isTextPart(this.fragments[this.currentTextFragmentIndex].part)) {
-      const currentFragment = this.fragments[this.currentTextFragmentIndex];
-      const updatedFragment = specialShallowReplaceTextContentFragment(
-        currentFragment,
-        currentFragment.part.text + ` [ISSUE: ${issueText}]`,
-      );
-      this.fragments[this.currentTextFragmentIndex] = updatedFragment;
-    } else {
-      this.fragments.push(createErrorContentFragment(issueText));
-      this.currentTextFragmentIndex = null;
+  private onIssue({ issueId, issueText }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'issue' }>): void {
+    // NOTE: not sure I like the flow at all here
+    // there seem to be some bad conditions when issues are raised while the active part is not text
+    const currentTextFragment = this.currentTextFragmentIndex !== null ? this.fragments[this.currentTextFragmentIndex] : null;
+    if (currentTextFragment && isTextPart(currentTextFragment.part)) {
+      currentTextFragment.part.text += issueText;
+      return;
     }
+    this.fragments.push(createErrorContentFragment(issueText));
+    this.currentTextFragmentIndex = null;
   }
 
-  getReassembledFragments(): DMessageContentFragment[] {
+  get reassembedFragments(): DMessageContentFragment[] {
     return this.fragments;
   }
 
