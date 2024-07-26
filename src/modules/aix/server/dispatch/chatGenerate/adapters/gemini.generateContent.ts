@@ -180,7 +180,11 @@ function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
           functionDeclarations: [{
             name,
             description,
-            parameters: { type: 'object', ...input_schema },
+            parameters: {
+              type: 'object',
+              properties: input_schema?.properties,
+              required: input_schema?.required,
+            },
           }],
         });
         break;
@@ -193,7 +197,12 @@ function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
         if (tools.some(tool => tool.codeExecution))
           throw new Error('Gemini code interpreter already defined');
 
-        tools.push({ codeExecution: {} });
+        tools.push({
+          codeExecution: {
+            // the official docs have no parameters yet...
+            // https://ai.google.dev/api/caching#tool
+          },
+        });
         break;
 
     }
