@@ -526,6 +526,7 @@ function _prepareRequestData({ access, model, history, context: _context }: Chat
       };
 
     case 'azure':
+    case 'deepseek':
     case 'groq':
     case 'lmstudio':
     case 'localai':

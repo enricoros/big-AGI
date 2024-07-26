@@ -31,12 +31,15 @@ const Prompts: string[] = [
   'Compare the draft character sheet with the original transcript, validating its content and ensuring it captures both the speaker’s overt characteristics and the subtler undertones. Omit unknown information, fine-tune any areas that require clarity, have been overlooked, or require more authenticity. Use clear and illustrative examples from the transcript to refine your sheet and offer meaningful, tangible reference points. Your output is a coherent, comprehensive, and nuanced instruction that begins with \'You are a...\' and  serves as a go-to guide for an actor recreating the persona.',
 ];
 
-const PromptTitles: string[] = [
-  'Common: Creator System Prompt',
-  'Analyze the transcript',
-  'Define the character',
-  'Cross the t\'s',
-];
+const getTitlesForTab = (selectedTab: number): string[] => {
+  const analyzeSubject: string = selectedTab ? 'text' : 'transcript';
+  return [
+    'Common: Creator System Prompt',
+    `Analyze the ${analyzeSubject}`,
+    'Define the character',
+    'Cross the t\'s',
+  ];
+};
 
 // chain to convert a text input string (e.g. youtube transcript) into a persona prompt
 function createChain(instructions: string[], titles: string[]): LLMChainStep[] {
@@ -99,16 +102,18 @@ export function Creator(props: { display: boolean }) {
 
 
   // editable prompts
+  const promptTitles = React.useMemo(() => getTitlesForTab(selectedTab), [selectedTab]);
+
   const {
     strings: editedInstructions, stringEditors: instructionEditors,
-  } = useFormEditTextArray(Prompts, PromptTitles);
+  } = useFormEditTextArray(Prompts, promptTitles);
 
   const { steps: creationChainSteps, id: chainId } = React.useMemo(() => {
     return {
-      steps: createChain(editedInstructions, PromptTitles),
+      steps: createChain(editedInstructions, promptTitles),
       id: uuidv4(),
     };
-  }, [editedInstructions]);
+  }, [editedInstructions, promptTitles]);
 
   const llmLabel = personaLlm?.label || undefined;
   const savePersona = React.useCallback((personaPrompt: string, inputText: string) => {

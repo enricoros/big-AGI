@@ -9,7 +9,7 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import { InlineError } from '~/common/components/InlineError';
 import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
-import { ShortcutKeyName, useGlobalShortcut } from '~/common/components/useGlobalShortcut';
+import { ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -186,9 +186,9 @@ export function ChatMessageList(props: {
     setSelectedMessages(new Set());
   };
 
-  useGlobalShortcut(props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
+  useGlobalShortcuts([[props.isMessageSelectionMode && ShortcutKeyName.Esc, false, false, false, () => {
     props.setIsMessageSelectionMode(false);
-  });
+  }]]);
 
 
   // text-diff functionality: only diff the last message and when it's complete (not typing), and they're similar in size

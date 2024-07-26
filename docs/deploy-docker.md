@@ -59,6 +59,17 @@ To make local services running on your host machine accessible to a Docker conta
 
 <br/>
 
+### Reverse Proxy Configuration
+
+A reverse proxy is a server that sits in front of big-AGI's container and can forwards web
+requests to it. Often used to run multiple web applications, expose them to the internet,
+increase security.
+
+If you're deploying big-AGI behind a reverse proxy, you may want to see
+our [Reverse Proxy Deployment Guide](deploy-reverse-proxy.md) for more information.
+
+<br/>
+
 ### More Information
 
 The [`Dockerfile`](../Dockerfile) describes how to create a Docker image. It establishes a Node.js environment,
