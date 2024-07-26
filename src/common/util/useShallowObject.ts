@@ -1,27 +1,41 @@
 import * as React from 'react';
 
-function shallowEqual(obj1: any, obj2: any): boolean {
-  if (obj1 === obj2) return true;
-  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
+function shallowEqual(a: any, b: any): boolean {
+  // Shallow compare
+  if (a === b) return true;
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
     return false;
   }
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-  if (keys1.length !== keys2.length) return false;
-  for (let key of keys1) {
-    if (!obj2.hasOwnProperty(key) || obj1[key] !== obj2[key]) {
+
+  // Array shallow compare (element equality)
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
+  // Object shallow compare (key and value equality)
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (let key of keysA) {
+    if (!b.hasOwnProperty(key) || a[key] !== b[key]) {
       return false;
     }
   }
   return true;
 }
 
-export function useStableObject<T extends object>(obj: T): T {
-  const ref = React.useRef<T>(obj);
+type StableType<T> = T extends any[] ? T : T extends object ? T : never;
+
+export function useShallowStable<T>(value: T): StableType<T> {
+  const ref = React.useRef<T>(value);
 
   return React.useMemo(() => {
-    if (!shallowEqual(ref.current, obj))
-      ref.current = obj;
+    if (!shallowEqual(ref.current, value))
+      ref.current = value;
     return ref.current;
-  }, [obj]);
+  }, [value]) as StableType<T>;
 }
