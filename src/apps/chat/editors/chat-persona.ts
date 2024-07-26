@@ -119,7 +119,7 @@ export async function llmGenerateContentStream(
 
   try {
 
-    await aixStreamingChatGenerate(llmId, aixChatGenerate, aixContextName, aixContextRef, abortSignal,
+    await aixStreamingChatGenerate(llmId, aixChatGenerate, aixContextName, aixContextRef, true, abortSignal,
       (update: StreamingClientUpdate, done: boolean) => {
 
         // update the incremental message
