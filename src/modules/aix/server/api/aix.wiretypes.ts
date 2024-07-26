@@ -432,6 +432,7 @@ export namespace AixWire_Particles {
   // ChatControl
 
   type ChatControlOp =
+  // | { cg: 'start' } // not really used for now
     | { cg: 'end', reason: CGEndReason }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'set-model', name: string }

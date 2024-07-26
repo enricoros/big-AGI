@@ -54,8 +54,10 @@ export const aixRouter = createTRPCRouter({
       try {
 
         // [DEV] Debugging the request without requiring a server restart
-        if (input.connectionOptions?.debugDispatchRequestbody)
+        if (input.connectionOptions?.debugDispatchRequestbody) {
           chatGenerateTx.addDebugRequestInDev(dispatch.request.url, dispatch.request.headers, dispatch.request.body);
+          yield* chatGenerateTx.emitParticles();
+        }
 
         // Blocking fetch - may timeout, for instance with long Anthriopic requests (>25s on Vercel)
         dispatchResponse = await fetchResponseOrTRPCThrow({

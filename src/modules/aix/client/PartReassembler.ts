@@ -50,10 +50,14 @@ export class PartReassembler {
             this.onIssue(op);
             break;
 
+          // ignored
+          // case 'start':
+          //   break;
+
+          // handled outside
           case 'end':
           case 'set-model':
           case 'update-counts':
-            // handled outside
             break;
 
           default:
