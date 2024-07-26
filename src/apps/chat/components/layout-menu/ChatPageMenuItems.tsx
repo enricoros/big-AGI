@@ -181,7 +181,7 @@ export function ChatPageMenuItems(props: {
     {labsDevMode && <ListDivider />}
 
     {labsDevMode && (
-      <MenuItem disabled={props.disableItems} onClick={handleAixShowLastRequest}>
+      <MenuItem onClick={handleAixShowLastRequest}>
         <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
         AIX: Show Last Request...
       </MenuItem>
