@@ -50,6 +50,11 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   constructor(private readonly prettyDialect: string, _throttleTimeMs: number | undefined) {
     // TODO: implement throttling on a particle basis
+
+    // Not really used for now
+    // this.transmissionQueue.push({
+    //   cg: 'start',
+    // });
   }
 
   private _queueParticleS() {
