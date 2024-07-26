@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { useStableObject } from '~/common/util/useShallowObject';
+
 import { Brand } from '~/common/app.config';
+import { useShallowStable } from '~/common/util/useShallowObject';
 
 
 type MediaSessionAction = 'play' | 'pause' | 'stop' | 'seekbackward' | 'seekforward' | 'previoustrack' | 'nexttrack';
@@ -94,7 +95,7 @@ class MediaSessionManager {
  */
 export function useMediaSessionCallbacks(handlers: MediaSessionCallbacks) {
 
-  const stableHandlers = useStableObject(handlers);
+  const stableHandlers = useShallowStable(handlers);
 
   React.useEffect(() => {
     MediaSessionManager.getInstance().registerComponent(stableHandlers);
