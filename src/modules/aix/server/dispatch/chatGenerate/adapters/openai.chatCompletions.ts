@@ -321,7 +321,7 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
             description: description,
             parameters: {
               type: 'object',
-              properties: input_schema?.properties ? input_schema.properties : {},
+              properties: input_schema?.properties ?? {},
               required: input_schema?.required,
             },
           },

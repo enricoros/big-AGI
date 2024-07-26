@@ -27,6 +27,7 @@ export type AixMessages_ModelMessage = z.infer<typeof AixWire_Content.ModelMessa
 export type AixMessages_ChatMessage = z.infer<typeof AixWire_Content.ChatMessage_schema>;
 
 export type AixTools_ToolDefinition = z.infer<typeof AixWire_Tooling.Tool_schema>;
+export type AixTools_FunctionCallDefinition = Extract<z.infer<typeof AixWire_Tooling.Tool_schema>, { type: 'function_call' }>;
 export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_schema>;
 
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
@@ -267,9 +268,10 @@ export namespace AixWire_Tooling {
     description: z.string(),
     /**
      *  A JSON Schema object defining the expected parameters for the function call.
-     *  (OpenAI, Google: parameters, Anthropic: input_schema)
+     *  (OpenAI + Google: parameters, Anthropic: input_schema)
      */
     input_schema: z.object({
+      // type: z.literal('object'), // Note: every protocol adapter adds this in the structure, here's we're just opting to not add it
       properties: z.record(OpenAPI_Schema.Object_schema),
       required: z.array(z.string()).optional(),
     }).optional(),
