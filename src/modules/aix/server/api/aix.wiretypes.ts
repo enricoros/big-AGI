@@ -363,7 +363,7 @@ export namespace AixWire_API {
 
   export const ContextChatStream_schema = z.object({
     method: z.literal('chat-stream'),
-    name: z.enum(['conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
+    name: z.enum(['DEV', 'conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
     ref: z.string(),
   });
 

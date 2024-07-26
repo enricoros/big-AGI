@@ -68,7 +68,7 @@ import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
-import { ReplyToBubble } from '../message/ReplyToBubble';
+import { ComposerTextAreaActions } from './ComposerTextAreaActions';
 import { StatusBar } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
@@ -253,6 +253,12 @@ export function Composer(props: {
     return enqueued;
   }, [attachmentsTakeAllFragments, handleClear, onAction, replyToGenerateText, targetConversationId]);
 
+
+  const handleAppendAndSend = React.useCallback(async (appendText: string) => {
+    const newText = composeText ? `${composeText} ${appendText}` : appendText;
+    setComposeText(newText);
+    await handleSendAction(chatExecuteMode, newText);
+  }, [chatExecuteMode, composeText, handleSendAction, setComposeText]);
 
   const handleSendClicked = React.useCallback(async () => {
     await handleSendAction(chatExecuteMode, composeText); // 'chat/write/...' button
@@ -641,7 +647,15 @@ export function Composer(props: {
                     onPasteCapture={handleAttachCtrlV}
                     // onFocusCapture={handleFocusModeOn}
                     // onBlurCapture={handleFocusModeOff}
-                    endDecorator={showChatReplyTo && <ReplyToBubble replyToText={replyToGenerateText} onClear={handleReplyToClear} className='reply-to-bubble' />}
+                    endDecorator={
+                      <ComposerTextAreaActions
+                        attachmentDrafts={attachmentDrafts}
+                        showChatReplyTo={showChatReplyTo}
+                        replyToGenerateText={replyToGenerateText}
+                        onAppendAndSend={handleAppendAndSend}
+                        onReplyToClear={handleReplyToClear}
+                      />
+                    }
                     slotProps={{
                       textarea: {
                         enterKeyHint: enterIsNewline ? 'enter' : 'send',
