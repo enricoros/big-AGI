@@ -7,7 +7,7 @@ import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragm
 import { estimateTokensForFragments } from '~/common/stores/chat/chat.tokens';
 
 
-export interface LLMAttachmentDrafts {
+export interface LLMAttachmentDraftsCollection {
   llmAttachmentDrafts: LLMAttachmentDraft[];
   canAttachAllFragments: boolean;
   canInlineSomeFragments: boolean;
@@ -23,7 +23,7 @@ export interface LLMAttachmentDraft {
 }
 
 
-export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachmentDrafts {
+export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachmentDraftsCollection {
 
   /* [Optimization] Use a Ref to store the previous state of llmAttachmentDrafts and chatLLM
    *

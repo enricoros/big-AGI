@@ -157,7 +157,7 @@ export function Composer(props: {
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
 
   // attachments derived state
-  const llmAttachmentDrafts = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
+  const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
 
   // drag/drop
   const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer);
@@ -180,7 +180,7 @@ export function Composer(props: {
       ? estimateTextTokens(debouncedText, props.chatLLM, 'composer text')
       : 0;
   }, [props.chatLLM, debouncedText]);
-  let tokensComposer = tokensComposerTextDebounced + (llmAttachmentDrafts.llmTokenCountApprox || 0);
+  let tokensComposer = tokensComposerTextDebounced + (llmAttachmentDraftsCollection.llmTokenCountApprox || 0);
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
@@ -727,7 +727,8 @@ export function Composer(props: {
               {!!conversationOverlayStore && showLLMAttachments && (
                 <LLMAttachmentsList
                   attachmentDraftsStoreApi={conversationOverlayStore}
-                  llmAttachmentDrafts={llmAttachmentDrafts}
+                  llmAttachmentDrafts={llmAttachmentDraftsCollection.llmAttachmentDrafts}
+                  canInlineSomeFragments={llmAttachmentDraftsCollection.canInlineSomeFragments}
                   onAttachmentDraftsAction={handleAttachmentDraftsAction}
                 />
               )}
@@ -766,7 +767,7 @@ export function Composer(props: {
                   {!assistantAbortible ? (
                     <Button
                       key='composer-act'
-                      fullWidth disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
+                      fullWidth disabled={noConversation || noLLM || !llmAttachmentDraftsCollection.canAttachAllFragments}
                       onClick={handleSendClicked}
                       endDecorator={sendButtonIcon}
                       sx={{ '--Button-gap': '1rem' }}
@@ -812,7 +813,7 @@ export function Composer(props: {
                 {/* [desktop] secondary-top buttons */}
                 {isDesktop && showChatExtras && !assistantAbortible && (
                   <ButtonBeamMemo
-                    disabled={noConversation || noLLM || !llmAttachmentDrafts.canAttachAllFragments}
+                    disabled={noConversation || noLLM || !llmAttachmentDraftsCollection.canAttachAllFragments}
                     hasContent={!!composeText}
                     onClick={handleSendTextBeamClicked}
                   />

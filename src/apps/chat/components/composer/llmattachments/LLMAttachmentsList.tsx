@@ -12,7 +12,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
 
-import type { LLMAttachmentDrafts } from './useLLMAttachmentDrafts';
+import { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
 import { LLMAttachmentMenu } from './LLMAttachmentMenu';
 
@@ -25,7 +25,8 @@ export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
  */
 export function LLMAttachmentsList(props: {
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
-  llmAttachmentDrafts: LLMAttachmentDrafts,
+  llmAttachmentDrafts: LLMAttachmentDraft[];
+  canInlineSomeFragments: boolean;
   onAttachmentDraftsAction: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
 }) {
 
@@ -36,8 +37,7 @@ export function LLMAttachmentsList(props: {
 
   // derived state
 
-  const { llmAttachmentDrafts, canInlineSomeFragments } = props.llmAttachmentDrafts;
-
+  const { llmAttachmentDrafts, canInlineSomeFragments } = props;
   const hasAttachments = llmAttachmentDrafts.length >= 1;
 
   // derived item menu state
@@ -150,8 +150,9 @@ export function LLMAttachmentsList(props: {
     {/* All Drafts Menu */}
     {!!overallMenuAnchor && (
       <CloseableMenu
+        open
         dense placement='top-start'
-        open anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
+        anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
         sx={{ minWidth: 200 }}
       >
         <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
