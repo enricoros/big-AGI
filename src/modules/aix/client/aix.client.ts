@@ -2,7 +2,7 @@ import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.
 import type { DLLMId } from '~/modules/llms/store-llms';
 import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageContentFragment, DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import { apiStream } from '~/common/util/trpc.client';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
 
@@ -23,10 +23,12 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
   llmId: DLLMId,
   aixChatGenerate: AixAPIChatGenerate_Request,
   aixContextName: AixAPI_ContextChatStream['name'],
-  aixContextRef: AixAPI_ContextChatStream['ref'],
+  aixContextRef: string, // AixAPI_ContextChatStream['ref'],
+  // other
+  streaming: boolean,
   abortSignal: AbortSignal,
-  onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
-): Promise<void> {
+  onUpdate?: (update: StreamingClientUpdate, done: boolean) => void,
+): Promise<{ fragments: DMessageContentFragment[] }> {
 
   // Aix Access
   const { llm, vendor } = findVendorForLlmOrThrow<TSourceSetup, TAccess>(llmId);
@@ -54,7 +56,7 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
 
   // execute via the vendor
   // return await vendor.streamingChatGenerateOrThrow(aixAccess, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
-  return await _aixChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, abortSignal, onUpdate);
+  return await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, abortSignal, onUpdate);
 }
 
 
@@ -89,49 +91,51 @@ function _aixModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: st
  *
  * NOTE: onUpdate is callback when a piece of a message (text, model name, typing..) is received
  */
-async function _aixChatGenerateContent(
+async function _aix_LL_ChatGenerateContent(
   // aix inputs
   aixAccess: AixAPI_Access,
   aixModel: AixAPI_Model,
   aixChatGenerate: AixAPIChatGenerate_Request,
   aixContext: AixAPI_ContextChatStream,
   // others
+  streaming: boolean,
   abortSignal: AbortSignal,
-  onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
-): Promise<void> {
+  // TODO: improve onUpdate to have a better signature
+  onUpdate?: (update: StreamingClientUpdate, done: boolean) => void,
+): Promise<{ fragments: DMessageContentFragment[] }> {
 
-  const sampleFC: boolean = aixModel.id.indexOf('models/gemini') === -1;
-  const sampleCE: boolean = aixModel.id.indexOf('models/gemini') !== -1;
+  const sampleFC: boolean = false; // aixModel.id.indexOf('models/gemini') === -1;
+  const sampleCE: boolean = false; // aixModel.id.indexOf('models/gemini') !== -1;
 
-  if (sampleFC) {
-    aixChatGenerate.tools = [
-      {
-        type: 'function_call',
-        function_call: {
-          name: 'get_capybara_info_given_name_and_color',
-          description: 'Get the info about capybaras. Call one each per name.',
-          input_schema: {
-            properties: {
-              'name': {
-                type: 'string',
-                description: 'The name of the capybara',
-                enum: ['enrico', 'coolio'],
-              },
-              'color': {
-                type: 'string',
-                description: 'The color of the capybara. Mandatory!!',
-              },
-              // 'story': {
-              //   type: 'string',
-              //   description: 'A fantastic story about the capybara. Please 10 characters maximum.',
-              // },
-            },
-            required: ['name'],
-          },
-        },
-      },
-    ];
-  }
+  // if (sampleFC) {
+  //   aixChatGenerate.tools = [
+  //     {
+  //       type: 'function_call',
+  //       function_call: {
+  //         name: 'get_capybara_info_given_name_and_color',
+  //         description: 'Get the info about capybaras. Call one each per name.',
+  //         input_schema: {
+  //           properties: {
+  //             'name': {
+  //               type: 'string',
+  //               description: 'The name of the capybara',
+  //               enum: ['enrico', 'coolio'],
+  //             },
+  //             'color': {
+  //               type: 'string',
+  //               description: 'The color of the capybara. Mandatory!!',
+  //             },
+  //             // 'story': {
+  //             //   type: 'string',
+  //             //   description: 'A fantastic story about the capybara. Please 10 characters maximum.',
+  //             // },
+  //           },
+  //           required: ['name'],
+  //         },
+  //       },
+  //     },
+  //   ];
+  // }
   if (sampleCE) {
     aixChatGenerate.tools = [
       {
@@ -141,8 +145,8 @@ async function _aixChatGenerateContent(
     ];
   }
 
-
-  const streaming = !getLabsDevNoStreaming();
+  if (getLabsDevNoStreaming())
+    streaming = false;
   const operation = await apiStream.aix.chatGenerateContent.mutate(
     { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming, connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined },
     { signal: abortSignal },
@@ -157,10 +161,10 @@ async function _aixChatGenerateContent(
 
       const fragments = partReassembler.reassembedFragments;
       console.log('fragments', fragments);
-      onUpdate({ fragments: [...fragments], typing: true }, false);
+      onUpdate?.({ fragments: [...fragments], typing: true }, false);
 
       if ('cg' in update && update.cg === 'set-model') {
-        onUpdate({ originLLM: update.name }, false);
+        onUpdate?.({ originLLM: update.name }, false);
       }
     }
   } catch (error) {
@@ -173,5 +177,9 @@ async function _aixChatGenerateContent(
 
   console.log('HERE', abortSignal.aborted ? 'client-initiated ABORTED' : '');
 
-  onUpdate({ typing: false }, true);
+  onUpdate?.({ typing: false }, true);
+
+  return {
+    fragments: partReassembler.reassembedFragments,
+  };
 }
