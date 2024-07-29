@@ -17,7 +17,7 @@ import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DFolder, useFolderStore } from '~/common/state/store-folders';
-import { DebounceInputMemo } from '~/common/components/DebounceInput';
+import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
@@ -280,7 +280,7 @@ function ChatDrawer(props: {
       <Box sx={{ display: 'flex', flexDirection: 'column', m: 2, gap: 2 }}>
 
         {/* Search Input Field */}
-        <DebounceInputMemo
+        <DebouncedInputMemo
           minChars={2}
           onDebounce={setDebouncedSearchQuery}
           debounceTimeout={300}
