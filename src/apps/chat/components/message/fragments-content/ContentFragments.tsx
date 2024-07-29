@@ -116,7 +116,7 @@ export function ContentFragments(props: {
               imageRefPart={fragment.part}
               fragmentId={fragment.fId}
               contentScaling={props.contentScaling}
-              onFragmentDelete={!isMonoFragment ? props.onFragmentDelete : undefined}
+              onFragmentDelete={/*isMonoFragment ? undefined :*/ props.onFragmentDelete}
               onFragmentReplace={props.onFragmentReplace}
             />
           );
