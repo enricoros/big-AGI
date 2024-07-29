@@ -67,7 +67,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     }
 
     // get the file items - note: important to not have any async/await or we'll lose the items of the data transfer
-    const fileOrFSHandlePromises: (Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null> | File)[] = heuristicBypassImage
+    const fileOrFSHandlePromises = heuristicBypassImage
       ? [] /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */
       : getDataTransferFilesOrPromises(dt.items);
 
@@ -103,7 +103,16 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
         }
 
         // Resolve the file system handle
-        const fileSystemHandle = await fileOrFSHandlePromise;
+        const fileSystemHandleOrFile = await fileOrFSHandlePromise;
+
+        // Special case: the resolution just returned a File object
+        if (fileSystemHandleOrFile instanceof File) {
+          await attachAppendFile(method, fileSystemHandleOrFile, overrideFileNames[fIdx]);
+          continue;
+        }
+
+        // Preferred case: the resolution returned a file system File or Directory handle
+        const fileSystemHandle = fileSystemHandleOrFile;
         switch (fileSystemHandle?.kind) {
 
           // attach file with handle
@@ -270,32 +279,44 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 };
 
 
+/*
+ * Note: was File | Promise<Handles | null>, but we added and extra File fallback in the promise
+ * to handle cases where the handle is null (e.g. Chrome screen captures), which would break the
+ * downstream logic.
+ */
+type FileOrFileHandlePromise = Promise<FileSystemFileHandle | FileSystemDirectoryHandle | File | null> | File;
+
 /**
  * Extracts file system handles or files from a list of data transfer items.
  * Note: the main purpose of this function is to get all the files/handles **upfront** in a
  * datatransfer, as those objects expire with async operations.
  */
-function getDataTransferFilesOrPromises(items: DataTransferItemList) {
-  const results: (File | Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null>)[] = [];
+function getDataTransferFilesOrPromises(items: DataTransferItemList): FileOrFileHandlePromise[] {
+  const results: FileOrFileHandlePromise[] = [];
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     if (item.kind !== 'file')
       continue;
 
-    // extract file system handle if available
+    // Try to get file system handle if available and not forced to use file
     if ('getAsFileSystemHandle' in item && typeof item.getAsFileSystemHandle === 'function') {
       try {
-        const handle = item.getAsFileSystemHandle();
-        if (handle)
-          results.push(handle);
+        const fsHandle = item.getAsFileSystemHandle() as Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null>;
+        if (fsHandle)
+          results.push(fsHandle.then(handleOrNull => {
+            // if null, return a File instead - note that this is a fallback, as we prefer to get the handle
+            // but when pasing screen captures from Chrome, the handle will be null, while the file shall
+            // still be retrievable.
+            return handleOrNull || item.getAsFile();
+          }));
         continue;
       } catch (error) {
         console.error('Error getting file system handle:', error);
       }
     }
 
-    // extract file if no handle available
+    // Fallback to getAsFile
     const file = item.getAsFile();
     if (file)
       results.push(file);
