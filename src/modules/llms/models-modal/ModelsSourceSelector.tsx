@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -44,10 +43,8 @@ export function ModelsSourceSelector(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const { modelSources, addModelSource, removeModelSource } = useModelsStore(state => ({
-    modelSources: state.sources,
-    addModelSource: state.addSource, removeModelSource: state.removeSource,
-  }), shallow);
+  const modelSources = useModelsStore(state => state.sources);
+  const { addSource: addModelSource, removeSource: removeModelSource } = useModelsStore.getState();
 
   const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);
 

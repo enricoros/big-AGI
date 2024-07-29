@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { DLLM, useModelsStore } from '~/modules/llms/store-llms';
 
@@ -12,12 +12,15 @@ type LlmType = 'chat' | 'fast';
 export function useFormRadioLlmType(label: string = 'Model', initialModelType: LlmType = 'fast'): [DLLM | null, React.JSX.Element | null] {
 
   // external state
-  const { chatLLM, fastLLM } = useModelsStore(state => {
+  const { chatLLM, fastLLM } = useModelsStore(useShallow(state => {
     const { chatLLMId, fastLLMId } = state;
     const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
     const fastLLM = fastLLMId ? state.llms.find(llm => llm.id === fastLLMId) ?? null : null;
-    return { chatLLM, fastLLM };
-  }, shallow);
+    return {
+      chatLLM,
+      fastLLM,
+    };
+  }));
 
   const hidden = !chatLLM || !fastLLM || chatLLM === fastLLM;
 

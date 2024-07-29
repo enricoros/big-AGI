@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -24,10 +24,10 @@ export function LinkChatPageMenuItems(props: {
   const {
     renderMarkdown, setRenderMarkdown,
     zenMode, setZenMode,
-  } = useUIPreferencesStore(state => ({
+  } = useUIPreferencesStore(useShallow(state => ({
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     zenMode: state.zenMode, setZenMode: state.setZenMode,
-  }), shallow);
+  })));
 
 
   const handleRenderSystemMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowSystemMessages(event.target.checked);

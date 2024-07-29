@@ -431,7 +431,7 @@ function updateSelectedIds(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId:
 /**
  * Current 'Chat' LLM, or null
  */
-export function useChatLLM() {
+export function useChatLLM(): { chatLLM: DLLM | null } {
   const chatLLM = useModelsStore(state => state.chatLLMId ? state.llms.find(llm => llm.id === state.chatLLMId) ?? null : null);
   return { chatLLM };
 }

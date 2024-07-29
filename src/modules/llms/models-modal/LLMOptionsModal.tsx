@@ -1,6 +1,6 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -14,9 +14,9 @@ import { DLLMId, useModelsStore } from '../store-llms';
 import { findVendorById } from '../vendors/vendors.registry';
 
 
-function VendorLLMOptions(props: { llmId: DLLMId }) {
+function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
   // get LLM (warning: this will refresh all children components on every change of any LLM field)
-  const llm = useModelsStore(state => state.llms.find(llm => llm.id === props.llmId), shallow);
+  const llm = useModelsStore(state => state.llms.find(llm => llm.id === props.llmId));
   if (!llm)
     return 'Options issue: LLM not found for id ' + props.llmId;
 
@@ -41,7 +41,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     isChatLLM, setChatLLMId,
     isFastLLM, setFastLLMId,
     isFuncLLM, setFuncLLMId,
-  } = useModelsStore(state => ({
+  } = useModelsStore(useShallow(state => ({
     llm: state.llms.find(llm => llm.id === props.id),
     removeLLM: state.removeLLM,
     updateLLM: state.updateLLM,
@@ -51,7 +51,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     setChatLLMId: state.setChatLLMId,
     setFastLLMId: state.setFastLLMId,
     setFuncLLMId: state.setFuncLLMId,
-  }), shallow);
+  })));
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
@@ -79,7 +79,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     >
 
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
-        <VendorLLMOptions llmId={props.id} />
+        <VendorLLMOptionsComponent llmId={props.id} />
       </Box>
 
       <Divider />

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
@@ -38,7 +38,10 @@ export function ContentReducer(props: {
 }) {
 
   // external state
-  const { llms, fastLLMId } = useModelsStore(state => ({ llms: state.llms, fastLLMId: state.fastLLMId }), shallow);
+  const { llms, fastLLMId } = useModelsStore(useShallow(state => ({
+    llms: state.llms, // probably relying on the stability of this
+    fastLLMId: state.fastLLMId,
+  })));
 
   // state
   const [reducerModelId, setReducerModelId] = React.useState<DLLMId | null>(fastLLMId);

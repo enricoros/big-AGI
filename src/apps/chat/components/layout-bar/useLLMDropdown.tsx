@@ -201,7 +201,7 @@ export function useChatLLMDropdown() {
   const [llmId, setLlmId] = React.useState<DLLMId | null>(props.initialLlmId);
 
   // external state
-  const llms = useModelsStore(state => state.llms, shallow);
+  const llms = useModelsStore(state => state.llms);
 
   const chatLLMDropdown = React.useMemo(
     () => <LLMDropdown llms={llms} llmId={llmId} setLlmId={setLlmId} />,
