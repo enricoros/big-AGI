@@ -91,6 +91,7 @@ function PageBarDropdown<TValue extends string>(props: {
   onChange: (value: TValue | null) => void,
   // optional
   activeEndDecorator?: React.JSX.Element,
+  prependOption?: React.JSX.Element
   appendOption?: React.JSX.Element,
   placeholder?: string,
   showSymbols?: boolean,
@@ -102,6 +103,8 @@ function PageBarDropdown<TValue extends string>(props: {
     onChange(value);
   }, [onChange]);
 
+  const itemsKeys = Object.keys(props.items);
+
   return (
     <Select
       variant='plain'
@@ -112,25 +115,30 @@ function PageBarDropdown<TValue extends string>(props: {
       slotProps={selectSlotProps}
     >
 
+      {/* Prepender */}
+      {!!props.prependOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}
+      {props.prependOption}
+      {/*{!!props.prependOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ my: 0 }} />}*/}
+
       {/* Scrollable Items list*/}
-      <Box
+      {(itemsKeys.length > 0) && <Box
         sx={{
           overflow: 'auto',
           paddingBlock: 'var(--ListDivider-gap)',
         }}
       >
-        {Object.keys(props.items).map((_itemKey: string, idx: number) => {
+        {itemsKeys.map((_itemKey: string, idx: number) => {
           const _item = props.items[_itemKey];
           const isActive = _itemKey === props.value;
           return _item.type === 'separator' ? (
-            <ListDivider key={'key-sep-' + idx}>
+            <ListDivider key={`sep-${_item.title || idx}`}>
               {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, '--Icon-fontSize': 'var(--joy-fontSize-lg)' }}>*/}
               {/*{_item.icon} */}
               {_item.title}
               {/*</Box>*/}
             </ListDivider>
           ) : (
-            <Option key={'key-' + idx} value={_itemKey}>
+            <Option key={_itemKey} value={_itemKey}>
               {/* Icon / Symbol */}
               {props.showSymbols && (
                 _item.icon ? <ListItemDecorator>{_item.icon}</ListItemDecorator>
@@ -148,12 +156,12 @@ function PageBarDropdown<TValue extends string>(props: {
             </Option>
           );
         })}
-      </Box>
+      </Box>}
 
       {/* Appender */}
       {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ mt: 0 }} />}
       {props.appendOption}
-      {!!props.appendOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}
+      {/*{!!props.appendOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}*/}
 
     </Select>
   );
