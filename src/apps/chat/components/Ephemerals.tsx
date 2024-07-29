@@ -137,11 +137,6 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 
 
 export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId | null, sx?: SxProps }) {
-  // global state
-  // const ephemerals = useChatStore(state => {
-  //   const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-  //   return conversation ? conversation.ephemerals : [];
-  // }, shallow);
 
   const ephemerals = props.ephemerals;
   // if (!ephemerals?.length) return null;

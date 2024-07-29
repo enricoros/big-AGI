@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
@@ -127,14 +127,17 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const showFinder = useUIPreferencesStore(state => state.showPersonaFinder);
   const [showExamples, showExamplescomponent] = useChipBoolean('Examples', false);
   const [showPrompt, showPromptComponent] = useChipBoolean('Prompt', false);
-  const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+  const { systemPurposeId, setSystemPurposeId } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       systemPurposeId: conversation ? conversation.systemPurposeId : null,
       setSystemPurposeId: conversation ? state.setSystemPurposeId : null,
     };
-  }, shallow);
-  const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(state => ({ hiddenPurposeIDs: state.hiddenPurposeIDs, toggleHiddenPurposeId: state.toggleHiddenPurposeId }), shallow);
+  }));
+  const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(useShallow(state => ({
+    hiddenPurposeIDs: state.hiddenPurposeIDs,
+    toggleHiddenPurposeId: state.toggleHiddenPurposeId,
+  })));
   const { chatLLM } = useChatLLM();
 
 

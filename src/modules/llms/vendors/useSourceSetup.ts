@@ -1,4 +1,4 @@
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { type BackendCapabilities, getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
@@ -17,7 +17,7 @@ export function vendorHasBackendCap<TSourceSetup = unknown, TAccess = unknown, T
 export function useSourceSetup<TSourceSetup, TAccess, TLLMOptions>(sourceId: DModelSourceId, vendor: IModelVendor<TSourceSetup, TAccess, TLLMOptions>) {
 
   // invalidates only when the setup changes
-  const { updateSourceSetup, ...rest } = useModelsStore(state => {
+  const { updateSourceSetup, ...rest } = useModelsStore(useShallow(state => {
 
     // find the source (or null)
     const source: DModelSource<TSourceSetup> | null = state.sources.find(source => source.id === sourceId) as DModelSource<TSourceSetup> ?? null;
@@ -36,7 +36,7 @@ export function useSourceSetup<TSourceSetup, TAccess, TLLMOptions>(sourceId: DMo
       sourceSetupValid,
       updateSourceSetup: state.updateSourceSetup,
     };
-  }, shallow);
+  }));
 
   // convenience function for this source
   const updateSetup = (partialSetup: Partial<TSourceSetup>) => updateSourceSetup<TSourceSetup>(sourceId, partialSetup);

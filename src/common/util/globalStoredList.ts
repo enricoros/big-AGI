@@ -99,10 +99,10 @@ export interface VoiceOutModel extends TaggedListItem<VoiceModelId, VoiceModelTa
 const useVoiceOutModels = createStoredTaggetList<VoiceOutModel>('app-voice-synth');
 
 export const useVoiceModel = (modelId: VoiceModelId) => {
-  const { item, modifyItem } = useVoiceOutModels(state => ({
+  const { item, modifyItem } = useVoiceOutModels(useShallow(state => ({
     item: state.items.find(item => item.id === modelId) as Readonly<VoiceOutModel>,
     modifyItem: state.modifyItem,
-  }), shallow);
+  })));
 
   // Memoize all the update functions at once
   const { setMusic, setCount, setFruits } = React.useMemo(() => ({

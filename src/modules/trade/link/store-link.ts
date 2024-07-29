@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 
 export interface SharedChatLinkItem {
@@ -52,16 +52,16 @@ const useLinkStore = create<LinkStore>()(
 
 
 // by AppChatLink
-export const useSharedChatLinkItems = () => useLinkStore(state => state.chatLinkItems, shallow);
+export const useSharedChatLinkItems = () => useLinkStore(useShallow(state => state.chatLinkItems));
 
 // by ChatLinkExport/ChatLinkDetails
 export const rememberChatLinkItem = useLinkStore.getState().chatLinkItemAdd;
 export const updateChatLinkDeletionKey = useLinkStore.getState().chatLinkItemChangeDeletionKey;
 export const forgetChatLinkItem = useLinkStore.getState().chatLinkItemRemove;
-export const useLinkStorageOwnerId = () => useLinkStore(state => ({
+export const useLinkStorageOwnerId = () => useLinkStore(useShallow(state => ({
   linkStorageOwnerId: state.linkStorageOwnerId,
   setLinkStorageOwnerId: state.setLinkStorageOwnerId,
-}), shallow);
+})));
 
 // by Nav
 export function hasNoChatLinkItems() {
