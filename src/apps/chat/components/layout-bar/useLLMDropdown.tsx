@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Box, IconButton, ListItemButton, ListItemDecorator } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
@@ -22,12 +22,17 @@ function LLMDropdown(props: {
   placeholder?: string,
 }) {
 
+  // state
+  const [filterString, setfilterString] = React.useState<string | null>(null);
+
   // external state
   const { openLlmOptions, openModelsSetup } = useOptimaLayout();
 
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
 
+  const llmsCount = llms.filter(llm => !llm.hidden).length;
+  const showFilter = llmsCount >= 50;
 
   const handleChatLLMChange = React.useCallback((value: DLLMId | null) => {
     value && setChatLlmId(value);
@@ -42,12 +47,21 @@ function LLMDropdown(props: {
     const llmItems: DropdownItems = {};
     let prevSourceId: DModelSourceId | null = null;
     let sepCount = 0;
-    for (const llm of llms) {
+
+    const lcFilterString = filterString?.toLowerCase();
+    const filteredLLMs = llms.filter(llm => {
+      if (chatLlmId && llm.id === chatLlmId)
+        return true;
+
+      // filter-out models that don't contain the search string
+      if (lcFilterString && !llm.label.toLowerCase().includes(lcFilterString))
+        return false;
 
       // filter-out hidden models from the dropdown
-      if (!(!llm.hidden || llm.id === chatLlmId))
-        continue;
+      return lcFilterString ? true : !llm.hidden;
+    });
 
+    for (const llm of filteredLLMs) {
       // add separators when changing sources
       if (!prevSourceId || llm.sId !== prevSourceId) {
         const llmVendor = findVendorById(llm._source?.vId ?? undefined);
@@ -77,7 +91,7 @@ function LLMDropdown(props: {
       }
     }
     return llmItems;
-  }, [chatLlmId, llms]);
+  }, [chatLlmId, llms, filterString]);
 
 
   // "Model Options" button (only on the active item)
@@ -103,6 +117,29 @@ function LLMDropdown(props: {
       </IconButton>
     </GoodTooltip>
   ), [handleOpenLLMOptions]);
+
+
+  // "Models Filter" box
+  const llmDropdownPrependOptions = React.useMemo(() =>
+    !showFilter ? undefined : (
+      <Box sx={{ p: 1 }}>
+        <DebouncedInputMemo
+          aggressiveRefocus
+          debounceTimeout={300}
+          onDebounce={setfilterString}
+          placeholder={`Search ${llmsCount} models...`}
+        />
+      </Box>
+    ), [showFilter, llmsCount]);
+
+  // [effect] clear filter when the active model changes
+  // Note: this doesn't work because the debounced component holds the filter string
+  // React.useEffect(() => {
+  //   if (chatLlmId) {
+  //     setsearchQuery(null);
+  //     console.log('cleared');
+  //   }
+  // }, [chatLlmId]);
 
 
   // "Models Setup" button
@@ -135,19 +172,21 @@ function LLMDropdown(props: {
       value={chatLlmId}
       onChange={handleChatLLMChange}
       placeholder={props.placeholder || 'Models …'}
+      prependOption={llmDropdownPrependOptions}
       appendOption={llmDropdownAppendOptions}
       activeEndDecorator={llmDropdownButton}
     />
   );
 }
 
+
 export function useChatLLMDropdown() {
   // external state
-  const { llms, chatLLMId, setChatLLMId } = useModelsStore(state => ({
+  const { llms, chatLLMId, setChatLLMId } = useModelsStore(useShallow(state => ({
     llms: state.llms, // NOTE: we don't need a deep comparison as we reference the same array
     chatLLMId: state.chatLLMId,
     setChatLLMId: state.setChatLLMId,
-  }), shallow);
+  })));
 
   const chatLLMDropdown = React.useMemo(
     () => <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />,
