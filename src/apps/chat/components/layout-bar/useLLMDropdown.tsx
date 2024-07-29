@@ -8,6 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
 import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
 
+import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
