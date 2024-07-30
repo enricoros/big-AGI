@@ -15,6 +15,7 @@ import { DMessageAttachmentFragment, DMessageDocPart, DMessageToolInvocationPart
 import { useShallowStable } from '~/common/util/useShallowObject';
 
 import { ReplyToBubble } from '../message/ReplyToBubble';
+import { getChatAutoAI } from '../../store-app-chat';
 
 
 function aixTextPart(text: string) {
@@ -113,9 +114,12 @@ export function ComposerTextAreaActions(props: {
   onReplyToClear: () => void,
 }) {
 
+  // external state
+  const { autoSuggestAttachmentPrompts } = getChatAutoAI();
+
   const allFragments = useShallowStable(props.attachmentDrafts.flatMap(draft => draft.outputFragments));
 
-  const enableAttachmentGuess = allFragments.length >= 2;
+  const enableAttachmentGuess = autoSuggestAttachmentPrompts && allFragments.length >= 2;
 
   const { data: attachmentInstructionCandidates, error, isPending, isFetching, refetch } = useQuery({
     enabled: enableAttachmentGuess,

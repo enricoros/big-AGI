@@ -15,6 +15,9 @@ interface AppChatStore {
   autoSpeak: ChatAutoSpeakType;
   setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => void;
 
+  autoSuggestAttachmentPrompts: boolean;
+  setAutoSuggestAttachmentPrompts: (autoSuggestAttachmentPrompts: boolean) => void;
+
   autoSuggestDiagrams: boolean,
   setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => void;
 
@@ -63,6 +66,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoSpeak: 'off',
     setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => _set({ autoSpeak }),
+
+    autoSuggestAttachmentPrompts: false,
+    setAutoSuggestAttachmentPrompts: (autoSuggestAttachmentPrompts: boolean) => _set({ autoSuggestAttachmentPrompts }),
 
     autoSuggestDiagrams: false,
     setAutoSuggestDiagrams: (autoSuggestDiagrams: boolean) => _set({ autoSuggestDiagrams }),
@@ -125,11 +131,13 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
 export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoSpeak: state.autoSpeak,
+  autoSuggestAttachmentPrompts: state.autoSuggestAttachmentPrompts,
   autoSuggestDiagrams: state.autoSuggestDiagrams,
   autoSuggestHTMLUI: state.autoSuggestHTMLUI,
   autoSuggestQuestions: state.autoSuggestQuestions,
   autoTitleChat: state.autoTitleChat,
   setAutoSpeak: state.setAutoSpeak,
+  setAutoSuggestAttachmentPrompts: state.setAutoSuggestAttachmentPrompts,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
   setAutoSuggestHTMLUI: state.setAutoSuggestHTMLUI,
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
@@ -138,6 +146,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
 
 export const getChatAutoAI = (): {
   autoSpeak: ChatAutoSpeakType,
+  autoSuggestAttachmentPrompts: boolean,
   autoSuggestDiagrams: boolean,
   autoSuggestHTMLUI: boolean,
   autoSuggestQuestions: boolean,

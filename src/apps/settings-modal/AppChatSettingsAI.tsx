@@ -13,15 +13,26 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 export function AppChatSettingsAI() {
 
   // external state
-  const { autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat, setAutoSuggestDiagrams, setAutoSuggestHTMLUI, setAutoSuggestQuestions, setAutoTitleChat } = useChatAutoAI();
+  const {
+    autoSuggestAttachmentPrompts, setAutoSuggestAttachmentPrompts,
+    autoSuggestDiagrams, setAutoSuggestDiagrams,
+    autoSuggestHTMLUI, setAutoSuggestHTMLUI,
+    // autoSuggestQuestions, setAutoSuggestQuestions,
+    autoTitleChat, setAutoTitleChat,
+  } = useChatAutoAI();
+
+
+  // callbacks
 
   const handleAutoSetChatTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoTitleChat(event.target.checked);
+
+  const handleAutoSuggestAttachmentPromptsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestAttachmentPrompts(event.target.checked);
 
   const handleAutoSuggestDiagramsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestDiagrams(event.target.checked);
 
   const handleAutoSuggestHTMLUIChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestHTMLUI(event.target.checked);
 
-  const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
+  // const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
 
   return <>
 
@@ -30,6 +41,14 @@ export function AppChatSettingsAI() {
                       description={autoTitleChat ? 'LLM Titling' : 'Manual only'} />
       <Switch checked={autoTitleChat} onChange={handleAutoSetChatTitleChange}
               endDecorator={autoTitleChat ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Auto Attachment Prompts'
+                      description={autoSuggestAttachmentPrompts ? 'LLM Prompts' : 'No'} />
+      <Switch checked={autoSuggestAttachmentPrompts} onChange={handleAutoSuggestAttachmentPromptsChange}
+              endDecorator={autoSuggestAttachmentPrompts ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
