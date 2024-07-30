@@ -280,6 +280,7 @@ export function Composer(props: {
   }, [systemPurposeId, targetConversationId]);
 
   const handleDrawOptionsClicked = React.useCallback(() => {
+    // TODO: remove context dependency here
     openPreferencesTab(PreferencesTab.Draw);
   }, [openPreferencesTab]);
 
