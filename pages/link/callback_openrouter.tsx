@@ -7,7 +7,7 @@ import { useModelsStore } from '~/modules/llms/store-llms';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
 import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
-import { withLayout } from '~/common/layout/withLayout';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
 function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
@@ -81,10 +81,11 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
  * Docs: https://openrouter.ai/docs#oauth
  * Example URL: https://localhost:3000/link/callback_openrouter?code=SomeCode
  */
-export default function CallbackPage() {
+export default withNextJSPerPageLayout({ type: 'plain' }, () => {
 
   // external state - get the 'code=...' from the URL
   const { code } = useRouterQuery<{ code: string | undefined }>();
 
-  return withLayout({ type: 'plain' }, <CallbackOpenRouterPage openRouterCode={code} />);
-}
+  return <CallbackOpenRouterPage openRouterCode={code} />;
+
+});
