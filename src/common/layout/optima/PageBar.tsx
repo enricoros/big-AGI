@@ -20,6 +20,7 @@ import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaPortalHasInputs } from './portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
 
@@ -50,15 +51,17 @@ const centerItemsContainerSx: SxProps = {
   '& > *': { WebkitAppRegion: 'no-drag' },
 };
 
-function CenterItemsPortal() {
+function CenterItemsPortal(props: {
+  currentApp?: NavItemApp,
+}) {
+
+  // state
+  const hasInputs = useOptimaPortalHasInputs('optima-portal-toolbar');
   const portalToolbarRef = useOptimaPortalOutRef('optima-portal-toolbar', 'PageBar.CenterItemsContainer');
+
   return (
     <Box ref={portalToolbarRef} sx={centerItemsContainerSx}>
-      {/* TODO */}
-      {/*{appBarItems*/}
-      {/*  ? appBarItems*/}
-      {/*  : <PageBarItemsFallback currentApp={props.currentApp} />*/}
-      {/*}*/}
+      {hasInputs ? null : <PageBarItemsFallback currentApp={props.currentApp} />}
     </Box>
   );
 }
@@ -122,6 +125,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
   const pageMenuAnchor = React.useRef<HTMLButtonElement>(null);
 
   // external state
+  const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
   const {
     appMenuItems,
   } = useOptimaLayout();
@@ -129,9 +133,6 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
     openDrawer,
     isPageMenuOpen, openPageMenu, closePageMenu,
   } = useOptimaDrawers();
-
-  // TODO
-  const noDrawerContent = false;
 
   const commonPageMenuItems = React.useMemo(() => {
     return <CommonPageMenuItems onClose={closePageMenu} />;
@@ -167,12 +168,12 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
       {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (
         <InvertedBarCornerItem>
 
-          {(noDrawerContent || !checkVisibleNav(props.currentApp)) ? (
+          {(!hasDrawerContent || !checkVisibleNav(props.currentApp)) ? (
             <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
               <ArrowBackIcon />
             </IconButton>
           ) : (
-            <IconButton disabled={noDrawerContent} onClick={openDrawer}>
+            <IconButton disabled={!hasDrawerContent} onClick={openDrawer}>
               <MenuIcon />
             </IconButton>
           )}
@@ -181,7 +182,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
       )}
 
       {/* Center Items */}
-      <CenterItemsPortal />
+      <CenterItemsPortal currentApp={props.currentApp} />
 
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>

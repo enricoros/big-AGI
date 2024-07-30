@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { create } from 'zustand';
 
 
@@ -30,7 +29,7 @@ interface OptimaPortalActions {
 }
 
 
-export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActions>((_set) => ({
+export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActions>((_set, _get) => ({
 
   // init state
   portals: {
@@ -41,6 +40,9 @@ export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActi
   // actions
 
   setElement: (id, element) => _set((state) => {
+    // sanity check
+    if (element && _get().portals[id].element)
+      console.warn(`useOptimaPortalsStore.setElement: expected element to be null for ${id}`);
     if (DEBUG_OPTIMA_PORTALS)
       console.log(`${element ? 'Set' : 'Remove'} portal element`, id);
     return {
@@ -53,6 +55,9 @@ export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActi
 
   incrementInputs: (id) => _set((state) => {
     const newInputs = state.portals[id].inputs + 1;
+    // sanity check
+    if (newInputs > 1)
+      console.warn(`useOptimaPortalsStore.incrementInputs: expected inputs to not exceed 1 for ${id}`);
     if (DEBUG_OPTIMA_PORTALS)
       console.log(' + store.incrementInputs', id, newInputs);
     return {
