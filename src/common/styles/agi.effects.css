@@ -27,7 +27,7 @@
 .agi-border-4 > * {
     clip-path: inset(var(--border-width));
     border-radius: var(--border-radius);
-    opacity: 0.96;
+    opacity: 0.92;
 }
 
 .agi-border-4::before {
@@ -47,6 +47,11 @@
     );
     animation: rotation-loop 2.5s linear infinite;
 }
+
+/*.agi-highlight-yellow {*/
+/*    background: linear-gradient(104deg, rgba(255,255,132,0) 0.9%, rgba(255,255,132,1) 2.4%, rgba(255,252,132,1) 50%, rgba(255,255,132,1) 97.6%, rgba(255,255,132,0) 99.1%);*/
+/*    color: red;*/
+/*}*/
 
 /*.agi-border-4::after {*/
 /*    content: "";*/
