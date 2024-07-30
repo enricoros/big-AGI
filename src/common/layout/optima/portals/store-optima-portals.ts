@@ -7,7 +7,7 @@ const DEBUG_OPTIMA_PORTALS = false;
 
 export type OptimaPortalId =
   | 'optima-portal-drawer'
-  | 'optima-portal-properties'
+  // | 'optima-portal-properties'
   | 'optima-portal-toolbar'
   ;
 

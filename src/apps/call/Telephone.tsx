@@ -302,7 +302,7 @@ export function Telephone(props: {
     , [overridePersonaVoice, pushToTalk],
   );
 
-  usePluggableOptimaLayout(null, chatLLMDropdown, menuItems, 'CallUI');
+  usePluggableOptimaLayout(chatLLMDropdown, menuItems, 'CallUI-Call');
 
 
   return <>

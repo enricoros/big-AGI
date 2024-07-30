@@ -15,15 +15,16 @@ import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
+import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
+import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
-import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
+import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessageTextContent, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { themeBgAppChatComposer } from '~/common/app.theme';
@@ -456,10 +457,12 @@ export function AppChat() {
     [focusedPaneConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
-  usePluggableOptimaLayout(drawerContent, focusedBarContent, focusedMenuItems, 'AppChat');
-
+  usePluggableOptimaLayout(null, focusedMenuItems, 'AppChat');
 
   return <>
+
+    <OptimaPortalIn targetPortalId='optima-portal-drawer'>{drawerContent}</OptimaPortalIn>
+    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{focusedBarContent}</OptimaPortalIn>
 
     <PanelGroup
       direction={isMobile ? 'vertical' : 'horizontal'}

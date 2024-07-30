@@ -20,6 +20,7 @@ import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaPortalOut } from './portals/useOptimaPortalOut';
 
 
 const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>
@@ -36,6 +37,31 @@ const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>
       {props.currentApp?.barTitle || props.currentApp?.name || Brand.Title.Base}
     </Typography>
   </Box>;
+
+
+const centerItemsContainerSx: SxProps = {
+  flexGrow: 1,
+  minHeight: 'var(--Bar)',
+  display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
+  my: 'auto',
+  gap: { xs: 0, md: 1 },
+  // [electron] make the blank part of the bar draggable (and not the contents)
+  WebkitAppRegion: 'drag',
+  '& > *': { WebkitAppRegion: 'no-drag' },
+};
+
+function CenterItemsPortal() {
+  const portalToolbarRef = useOptimaPortalOut('optima-portal-toolbar', 'PageBar.CenterItemsContainer');
+  return (
+    <Box ref={portalToolbarRef} sx={centerItemsContainerSx}>
+      {/* TODO */}
+      {/*{appBarItems*/}
+      {/*  ? appBarItems*/}
+      {/*  : <PageBarItemsFallback currentApp={props.currentApp} />*/}
+      {/*}*/}
+    </Box>
+  );
+}
 
 
 function CommonPageMenuItems(props: { onClose: () => void }) {
@@ -97,12 +123,15 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
 
   // external state
   const {
-    appBarItems, appDrawerContent, appMenuItems,
+    appMenuItems,
   } = useOptimaLayout();
   const {
     openDrawer,
     isPageMenuOpen, openPageMenu, closePageMenu,
   } = useOptimaDrawers();
+
+  // TODO
+  const noDrawerContent = false;
 
   const commonPageMenuItems = React.useMemo(() => {
     return <CommonPageMenuItems onClose={closePageMenu} />;
@@ -138,12 +167,12 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
       {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (
         <InvertedBarCornerItem>
 
-          {(!appDrawerContent || !checkVisibleNav(props.currentApp)) ? (
+          {(noDrawerContent || !checkVisibleNav(props.currentApp)) ? (
             <IconButton component={Link} href={ROUTE_INDEX} noLinkStyle>
               <ArrowBackIcon />
             </IconButton>
           ) : (
-            <IconButton disabled={!appDrawerContent} onClick={openDrawer}>
+            <IconButton disabled={noDrawerContent} onClick={openDrawer}>
               <MenuIcon />
             </IconButton>
           )}
@@ -152,21 +181,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
       )}
 
       {/* Center Items */}
-      <Box sx={{
-        flexGrow: 1,
-        minHeight: 'var(--Bar)',
-        display: 'flex', flexFlow: 'row wrap', justifyContent: 'center', alignItems: 'center',
-        my: 'auto',
-        gap: props.isMobile ? 0 : 1,
-        // [electron] make the blank part of the bar draggable (and not the contents)
-        WebkitAppRegion: 'drag',
-        '& > *': { WebkitAppRegion: 'no-drag' },
-      }}>
-        {appBarItems
-          ? appBarItems
-          : <PageBarItemsFallback currentApp={props.currentApp} />
-        }
-      </Box>
+      <CenterItemsPortal />
 
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>

@@ -4,9 +4,9 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
-import { DConversation, DConversationId, conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
 import { animationShadowRingLimey } from '~/common/util/animUtils';
+import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
@@ -242,7 +242,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
   </>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
 
-  usePluggableOptimaLayout(null, null, menuItems, 'CallUI');
+  usePluggableOptimaLayout(null, menuItems, 'CallUI-Contacts');
 
 
   return <>

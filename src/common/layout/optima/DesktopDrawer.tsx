@@ -6,7 +6,7 @@ import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaPortalOut } from './portals/useOptimaPortalOut';
 
 
 // set to 0 to always keep the drawer mounted (smoother on/off)
@@ -50,9 +50,11 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
 
 export function DesktopDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
+  // state
+  const drawerPortalRef = useOptimaPortalOut('optima-portal-drawer', 'DesktopDrawer');
+
   // external state
   const { isDrawerOpen, closeDrawer, openDrawer } = useOptimaDrawers();
-  const { appDrawerContent } = useOptimaLayout();
 
   // local state
   const [softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
@@ -101,16 +103,18 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
     >
 
       <DesktopDrawerTranslatingSheet
+        ref={drawerPortalRef}
         component={props.component}
         sx={{
           transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
         }}
       >
 
-        {/* [UX Responsiveness] Keep Mounted for now */}
-        {(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) &&
-          appDrawerContent
-        }
+        {/* TODO */}
+        {/*/!* [UX Responsiveness] Keep Mounted for now *!/*/}
+        {/*{(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) &&*/}
+        {/*  appDrawerContent*/}
+        {/*}*/}
 
       </DesktopDrawerTranslatingSheet>
 
