@@ -20,6 +20,7 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
+import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
@@ -302,10 +303,11 @@ export function Telephone(props: {
     , [overridePersonaVoice, pushToTalk],
   );
 
-  usePluggableOptimaLayout(chatLLMDropdown, menuItems, 'CallUI-Call');
+  usePluggableOptimaLayout(menuItems, 'CallUI-Call');
 
 
   return <>
+    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{chatLLMDropdown}</OptimaPortalIn>
 
     <Typography
       level='h1'

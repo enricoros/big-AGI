@@ -242,7 +242,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
   </>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
 
-  usePluggableOptimaLayout(null, menuItems, 'CallUI-Contacts');
+  usePluggableOptimaLayout(menuItems, 'CallUI-Contacts');
 
 
   return <>

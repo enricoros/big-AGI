@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
+import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useProcessingQueue } from '~/common/logic/ProcessingQueue';
 
 import { DrawCreate } from './DrawCreate';
@@ -42,27 +42,26 @@ export function AppDraw() {
 
   // pluggable layout
   const { drawSection, drawSectionDropdown } = useDrawSectionDropdown(queueState.items.length, queueCancelAll);
-  usePluggableOptimaLayout(drawSectionDropdown, null, 'AppDraw');
 
-  switch (drawSection) {
-    case 'create':
-      return (
-        <DrawCreate
-          queue={drawCreateQueue}
-          isMobile={isMobile}
-          showHeader={showHeader}
-          onHideHeader={() => setShowHeader(false)}
-          mayWork={mayWork}
-          providers={providers}
-          activeProviderId={activeProviderId}
-          setActiveProviderId={setActiveProviderId}
-        />
-      );
+  return <>
+    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{drawSectionDropdown}</OptimaPortalIn>
 
-    case 'browse':
-      return <DrawGallery domain='draw' />;
+    {drawSection === 'create' ? (
+      <DrawCreate
+        queue={drawCreateQueue}
+        isMobile={isMobile}
+        showHeader={showHeader}
+        onHideHeader={() => setShowHeader(false)}
+        mayWork={mayWork}
+        providers={providers}
+        activeProviderId={activeProviderId}
+        setActiveProviderId={setActiveProviderId}
+      />
+    ) : drawSection === 'browse' ? (
+      <DrawGallery domain='draw' />
+    ) : drawSection === 'media' ? (
+      <DrawGallery domain='app' />
+    ) : null}
 
-    case 'media':
-      return <DrawGallery domain='app' />;
-  }
+  </>;
 }
