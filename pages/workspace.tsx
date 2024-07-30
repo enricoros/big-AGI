@@ -1,12 +1,8 @@
 import * as React from 'react';
 
-import { Box } from '@mui/joy';
+import { AppPlaceholder } from '../src/apps/AppPlaceholder';
 
-// import { AppWorkspace } from '../src/apps/personas/AppWorkspace';
-
-import { withLayout } from '~/common/layout/withLayout';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
-export default function PersonasPage() {
-  return withLayout({ type: 'optima' }, <Box />);
-}
+export default withNextJSPerPageLayout({ type: 'optima' }, () => <AppPlaceholder />);

@@ -24,8 +24,14 @@ import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
 
-const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
-  <>
+const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => {
+
+  // We are using a nextjs per-page layout pattern to bring the (Optima) layout creation to a shared place
+  // This reduces the flicker and the time switching between apps, and seems to not have impact on
+  // the build. This is a good trade-off for now.
+  const getLayout = Component.getLayout ?? ((page: any) => page);
+
+  return <>
 
     <Head>
       <title>{Brand.Title.Common}</title>
@@ -39,7 +45,7 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
             {/* ^ SSR boundary */}
             <ProviderBootstrapLogic>
               <ProviderSnacks>
-                <Component {...pageProps} />
+                {getLayout(<Component {...pageProps} />)}
               </ProviderSnacks>
             </ProviderBootstrapLogic>
           </ProviderBackendCapabilities>
@@ -52,6 +58,7 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) =>
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
 
   </>;
+};
 
 // enables the React Query API invocation
 export default apiQuery.withTRPC(MyApp);

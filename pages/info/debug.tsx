@@ -9,7 +9,7 @@ import { AppPlaceholder } from '../../src/apps/AppPlaceholder';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { getPlantUmlServerUrl } from '~/modules/blocks/code/RenderCode';
 
-import { withLayout } from '~/common/layout/withLayout';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
 // app config
@@ -164,6 +164,4 @@ function AppDebug() {
 }
 
 
-export default function DebugPage() {
-  return withLayout({ type: 'plain' }, <AppDebug />);
-};
+export default withNextJSPerPageLayout({ type: 'plain' }, () => <AppDebug />);
