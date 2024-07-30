@@ -110,7 +110,7 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
         }}
       >
 
-        {/* TODO */}
+        {/* NOTE: this sort of algo was not used when we migrated this to Portals on 2024-07-30, so not restoring it ... */}
         {/*/!* [UX Responsiveness] Keep Mounted for now *!/*/}
         {/*{(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) &&*/}
         {/*  appDrawerContent*/}
