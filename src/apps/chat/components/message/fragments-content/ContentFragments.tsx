@@ -41,6 +41,7 @@ const endLayoutSx: SxProps = {
 export function ContentFragments(props: {
 
   fragments: DMessageFragment[]
+  showEmptyNotice: boolean,
 
   contentScaling: ContentScaling,
   fitScreen: boolean,
@@ -65,14 +66,28 @@ export function ContentFragments(props: {
 }) {
 
   const fromAssistant = props.messageRole === 'assistant';
+  const fromUser = props.messageRole === 'user';
   const isEditingText = !!props.textEditsState;
-  const isMonoFragment = props.fragments.length < 2;
+  // const isMonoFragment = props.fragments.length < 2;
 
   // if no fragments, don't box them
-  if (!props.fragments.length)
+  if (props.showEmptyNotice && isEditingText)
     return null;
 
   return <Box aria-label='message body' sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
+
+    {/* The overall message is empty - show an indication of it */}
+    {props.showEmptyNotice && (
+      <Sheet variant='solid' color='neutral' invertedColors sx={{ mx: 1.5 }}>
+        <ContentPartPlaceholder
+          placeholderText={`empty ${fromAssistant ? 'assistant ' : fromUser ? 'user ' : ''}message - please edit or delete`}
+          messageRole={props.messageRole}
+          contentScaling={props.contentScaling}
+          showAsItalic
+        />
+      </Sheet>
+    )}
+
     {props.fragments.map((fragment) => {
 
       // only proceed with DMessageContentFragment
