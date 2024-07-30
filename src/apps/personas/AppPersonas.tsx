@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Container, ListDivider, Typography } from '@mui/joy';
 
-import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
+import { OptimaDrawerIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 
 import { Creator } from './creator/Creator';
 import { CreatorDrawer } from './creator/CreatorDrawer';
@@ -27,7 +27,7 @@ export function AppPersonas() {
   }, [selectedSimplePersonaId]);
 
   return <>
-    <OptimaPortalIn targetPortalId='optima-portal-drawer'>{drawerContent}</OptimaPortalIn>
+    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
 
     <Box sx={{
       flexGrow: 1,

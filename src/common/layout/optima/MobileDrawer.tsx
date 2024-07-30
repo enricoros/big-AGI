@@ -5,11 +5,11 @@ import { Box, Drawer } from '@mui/joy';
 import type { NavItemApp } from '~/common/app.nav';
 
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaPortalOut } from './portals/useOptimaPortalOut';
+import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
 
 function DrawerContentPortal() {
-  const drawerPortalRef = useOptimaPortalOut('optima-portal-drawer', 'MobileDrawer');
+  const drawerPortalRef = useOptimaPortalOutRef('optima-portal-drawer', 'MobileDrawer');
   return (
     <Box
       ref={drawerPortalRef}

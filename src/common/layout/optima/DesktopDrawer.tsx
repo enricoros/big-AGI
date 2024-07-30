@@ -6,7 +6,7 @@ import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaPortalOut } from './portals/useOptimaPortalOut';
+import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
 
 // set to 0 to always keep the drawer mounted (smoother on/off)
@@ -51,7 +51,7 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
 export function DesktopDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // state
-  const drawerPortalRef = useOptimaPortalOut('optima-portal-drawer', 'DesktopDrawer');
+  const drawerPortalRef = useOptimaPortalOutRef('optima-portal-drawer', 'DesktopDrawer');
 
   // external state
   const { isDrawerOpen, closeDrawer, openDrawer } = useOptimaDrawers();
