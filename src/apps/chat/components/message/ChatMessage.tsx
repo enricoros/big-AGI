@@ -576,7 +576,7 @@ export function ChatMessage(props: {
           {/* Content Fragments */}
           <ContentFragments
             fragments={contentFragments}
-            isMessageEmpty={!messageFragments.length}
+            showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={contentScaling}
             fitScreen={props.fitScreen}
