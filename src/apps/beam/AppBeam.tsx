@@ -8,7 +8,7 @@ import { BeamView } from '~/modules/beam/BeamView';
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
-import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
+import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -76,7 +76,7 @@ export function AppBeam() {
 
 
   return <>
-    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{toolbarItems}</OptimaPortalIn>
+    <OptimaToolbarIn>{toolbarItems}</OptimaToolbarIn>
 
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 

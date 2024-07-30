@@ -20,7 +20,7 @@ import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
-import { useOptimaPortalOut } from './portals/useOptimaPortalOut';
+import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
 
 const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>
@@ -51,7 +51,7 @@ const centerItemsContainerSx: SxProps = {
 };
 
 function CenterItemsPortal() {
-  const portalToolbarRef = useOptimaPortalOut('optima-portal-toolbar', 'PageBar.CenterItemsContainer');
+  const portalToolbarRef = useOptimaPortalOutRef('optima-portal-toolbar', 'PageBar.CenterItemsContainer');
   return (
     <Box ref={portalToolbarRef} sx={centerItemsContainerSx}>
       {/* TODO */}

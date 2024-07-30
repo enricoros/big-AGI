@@ -19,7 +19,7 @@ import type { DConversation, DConversationId } from '~/common/stores/chat/chat.c
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
-import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
+import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -460,9 +460,8 @@ export function AppChat() {
   usePluggableOptimaLayout(focusedMenuItems, 'AppChat');
 
   return <>
-
-    <OptimaPortalIn targetPortalId='optima-portal-drawer'>{drawerContent}</OptimaPortalIn>
-    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{focusedBarContent}</OptimaPortalIn>
+    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
+    <OptimaToolbarIn>{focusedBarContent}</OptimaToolbarIn>
 
     <PanelGroup
       direction={isMobile ? 'vertical' : 'horizontal'}

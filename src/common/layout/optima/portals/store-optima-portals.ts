@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { create } from 'zustand';
 
 
@@ -7,51 +8,71 @@ const DEBUG_OPTIMA_PORTALS = false;
 
 export type OptimaPortalId =
   | 'optima-portal-drawer'
-  // | 'optima-portal-properties'
-  | 'optima-portal-toolbar'
-  ;
+  | 'optima-portal-toolbar';
 
-interface PortalState {
-  portalElements: Map<OptimaPortalId, HTMLElement>;
+
+interface OptimaPortalState {
+  portals: Record<OptimaPortalId, {
+    element: HTMLElement | null;
+    inputs: number;
+  }>;
 }
 
-interface PortalActions {
-  addPortal: (id: OptimaPortalId, element: HTMLElement) => void;
-  removePortal: (id: OptimaPortalId) => void;
+interface OptimaPortalActions {
+
+  // store output elements
+  setElement: (id: OptimaPortalId, element: HTMLElement | null) => void;
+
+  // reference counting
+  incrementInputs: (id: OptimaPortalId) => void;
+  decrementInputs: (id: OptimaPortalId) => void;
+
 }
 
-type PortalStore = PortalState & PortalActions;
 
-
-const useOptimaPortalsStore = create<PortalStore>((set, get) => ({
+export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActions>((_set) => ({
 
   // init state
-  portalElements: new Map(),
+  portals: {
+    'optima-portal-drawer': { element: null, inputs: 0 },
+    'optima-portal-toolbar': { element: null, inputs: 0 },
+  },
 
   // actions
-  addPortal: (id, element) => set((state) => {
-    const newPortals = new Map(state.portalElements);
-    newPortals.set(id, element);
+
+  setElement: (id, element) => _set((state) => {
     if (DEBUG_OPTIMA_PORTALS)
-      console.log(' > store.addPortal', id, !!element);
-    return { portalElements: newPortals };
+      console.log(`${element ? 'Set' : 'Remove'} portal element`, id);
+    return {
+      portals: {
+        ...state.portals,
+        [id]: { ...state.portals[id], element: element },
+      },
+    };
   }),
 
-  removePortal: (id) => set((state) => {
-    const newPortals = new Map(state.portalElements);
-    newPortals.delete(id);
+  incrementInputs: (id) => _set((state) => {
+    const newInputs = state.portals[id].inputs + 1;
     if (DEBUG_OPTIMA_PORTALS)
-      console.log(' < store.removePortal', id);
-    return { portalElements: newPortals };
+      console.log(' + store.incrementInputs', id, newInputs);
+    return {
+      portals: {
+        ...state.portals,
+        [id]: { ...state.portals[id], inputs: newInputs },
+      },
+    };
+  }),
+
+  decrementInputs: (id) => _set((state) => {
+    const newInputs = Math.max(0, state.portals[id].inputs - 1);
+    if (DEBUG_OPTIMA_PORTALS)
+      console.log(' - store.decrementInputs', id, newInputs);
+    return {
+      portals: {
+        ...state.portals,
+        [id]: { ...state.portals[id], inputs: newInputs },
+      },
+    };
   }),
 
 }));
-
-
-export function optimaPortalsActions(): PortalActions {
-  return useOptimaPortalsStore.getState();
-}
-
-export function usePortalElement(id: OptimaPortalId) {
-  return useOptimaPortalsStore((state) => state.portalElements.get(id) || null);
-}

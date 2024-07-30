@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
+import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useProcessingQueue } from '~/common/logic/ProcessingQueue';
 
@@ -44,7 +44,7 @@ export function AppDraw() {
   const { drawSection, drawSectionDropdown } = useDrawSectionDropdown(queueState.items.length, queueCancelAll);
 
   return <>
-    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{drawSectionDropdown}</OptimaPortalIn>
+    <OptimaToolbarIn>{drawSectionDropdown}</OptimaToolbarIn>
 
     {drawSection === 'create' ? (
       <DrawCreate

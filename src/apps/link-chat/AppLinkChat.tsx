@@ -13,7 +13,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
-import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
+import { OptimaDrawerIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -207,7 +207,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
       <title>{capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀</title>
     </Head>
 
-    <OptimaPortalIn targetPortalId='optima-portal-drawer'>{drawerContent}</OptimaPortalIn>
+    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
 
     {isListPage
       ? <ListPlaceholder hasLinks={hasLinks} />
