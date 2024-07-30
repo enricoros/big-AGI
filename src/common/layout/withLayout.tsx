@@ -17,14 +17,19 @@ type WithLayout = {
  */
 export function withLayout(layoutOptions: WithLayout, children: React.ReactNode): React.ReactElement {
 
-  // Optima layout: also wrap it in the OptimaLayoutProvider
-  if (layoutOptions.type === 'optima')
-    return <OptimaLayout {...layoutOptions}>{children}</OptimaLayout>;
+  const { type, ...rest } = layoutOptions;
 
-  else if (layoutOptions.type === 'plain')
-    return <PlainLayout {...layoutOptions}>{children}</PlainLayout>;
+  switch (type) {
 
-  // if no layout is specified, return the children as-is
-  console.error('No layout specified for this top-level page');
-  return <>{children}</>;
+    case 'optima':
+      return <OptimaLayout {...rest}>{children}</OptimaLayout>;
+
+    case 'plain':
+      return <PlainLayout {...rest}>{children}</PlainLayout>;
+
+    default:
+      console.error('No layout specified for this top-level page');
+      return <>{children}</>;
+
+  }
 }
