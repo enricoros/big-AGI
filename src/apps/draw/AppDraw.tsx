@@ -42,7 +42,7 @@ export function AppDraw() {
 
   // pluggable layout
   const { drawSection, drawSectionDropdown } = useDrawSectionDropdown(queueState.items.length, queueCancelAll);
-  usePluggableOptimaLayout(null, drawSectionDropdown, null, 'aa');
+  usePluggableOptimaLayout(drawSectionDropdown, null, 'AppDraw');
 
   switch (drawSection) {
     case 'create':

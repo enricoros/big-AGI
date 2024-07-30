@@ -13,6 +13,7 @@ import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
+import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -197,7 +198,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     onDeleteLink={handleConfirmDeletion}
   />, [handleConfirmDeletion, linkId]);
 
-  usePluggableOptimaLayout(drawerContent, null, pageMenuItems, 'AppChatLink');
+  usePluggableOptimaLayout(null, pageMenuItems, 'AppChatLink');
 
 
   return <>
@@ -205,6 +206,8 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     <Head>
       <title>{capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀</title>
     </Head>
+
+    <OptimaPortalIn targetPortalId='optima-portal-drawer'>{drawerContent}</OptimaPortalIn>
 
     {isListPage
       ? <ListPlaceholder hasLinks={hasLinks} />

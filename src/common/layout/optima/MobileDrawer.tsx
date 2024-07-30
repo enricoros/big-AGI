@@ -1,17 +1,30 @@
 import * as React from 'react';
 
-import { Drawer } from '@mui/joy';
+import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaPortalOut } from './portals/useOptimaPortalOut';
 
+
+function DrawerContentPortal() {
+  const drawerPortalRef = useOptimaPortalOut('optima-portal-drawer', 'MobileDrawer');
+  return (
+    <Box
+      ref={drawerPortalRef}
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    />
+  );
+}
 
 export function MobileDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const { appDrawerContent } = useOptimaLayout();
   const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
 
   return (
@@ -40,7 +53,7 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
       }}
     >
 
-      {appDrawerContent}
+      <DrawerContentPortal />
 
     </Drawer>
   );

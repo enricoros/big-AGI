@@ -8,10 +8,10 @@ import { BeamView } from '~/modules/beam/BeamView';
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
+import { OptimaPortalIn } from '~/common/layout/optima/portals/OptimaPortalIn';
 import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 
 function initTestConversation(): DConversation {
@@ -57,8 +57,7 @@ export function AppBeam() {
   }, [beamStoreApi]);
 
 
-  // layout
-  usePluggableOptimaLayout(null, React.useMemo(() => <>
+  const toolbarItems = React.useMemo(() => <>
     {/* button to toggle debug info */}
     <Button size='sm' variant='plain' color='neutral' onClick={() => setShowDebug(on => !on)}>
       {showDebug ? 'Hide' : 'Show'} debug
@@ -73,10 +72,12 @@ export function AppBeam() {
     <Button size='sm' variant='plain' color='neutral' onClick={handleClose}>
       .close
     </Button>
-  </>, [handleClose, showDebug]), null, 'AppBeam');
+  </>, [handleClose, showDebug]);
 
 
-  return (
+  return <>
+    <OptimaPortalIn targetPortalId='optima-portal-toolbar'>{toolbarItems}</OptimaPortalIn>
+
     <Box sx={{ flexGrow: 1, overflowY: 'auto', position: 'relative' }}>
 
       {isOpen && (
@@ -102,5 +103,6 @@ export function AppBeam() {
       )}
 
     </Box>
-  );
+
+  </>;
 }
