@@ -198,7 +198,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     onDeleteLink={handleConfirmDeletion}
   />, [handleConfirmDeletion, linkId]);
 
-  usePluggableOptimaLayout(null, pageMenuItems, 'AppChatLink');
+  usePluggableOptimaLayout(pageMenuItems, 'AppChatLink');
 
 
   return <>

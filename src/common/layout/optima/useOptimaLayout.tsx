@@ -26,7 +26,6 @@ type PC = React.JSX.Element | null;
 interface OptimaLayoutState {
 
   // pluggable UI
-  appBarItems: PC;
   appMenuItems: PC;
 
   // optima modals that can overlay anything
@@ -42,7 +41,6 @@ interface OptimaLayoutState {
 
 const initialState: OptimaLayoutState = {
 
-  appBarItems: null,
   appMenuItems: null,
 
   showPreferencesTab: 0, // 0 = closed, 1+ open tab n-1
@@ -56,7 +54,6 @@ const initialState: OptimaLayoutState = {
 
 interface OptimaLayoutActions {
   setPluggableComponents: (
-    appBarItems: PC,
     appMenuItems: PC,
   ) => void;
 
@@ -92,8 +89,8 @@ export function OptimaLayoutProvider(props: { children: React.ReactNode }) {
   // actions
   const actions: OptimaLayoutActions = React.useMemo(() => ({
 
-    setPluggableComponents: (appBarItems: PC, appMenuItems: PC) =>
-      setState(state => ({ ...state, appBarItems, appMenuItems })),
+    setPluggableComponents: (appMenuItems: PC) =>
+      setState(state => ({ ...state, appMenuItems })),
 
     openPreferencesTab: (tab?: PreferencesTabType) => setState(state => ({ ...state, showPreferencesTab: tab || PreferencesTab.Chat })),
     closePreferences: () => setState(state => ({ ...state, showPreferencesTab: 0 })),
@@ -148,18 +145,18 @@ export const useOptimaLayout = (): OptimaLayoutState & OptimaLayoutActions => {
 /**
  * used by the active UI client to register its components (and unregister on cleanup)
  */
-export const usePluggableOptimaLayout = (appBarItems: PC, appMenuItems: PC, debugCallerName: string) => {
+export const usePluggableOptimaLayout = (appMenuItems: PC, debugCallerName: string) => {
   const { setPluggableComponents } = useOptimaLayout();
 
   React.useEffect(() => {
     if (DEBUG_OPTIMA_LAYOUT_PLUGGING)
       console.log(' +PLUG layout', debugCallerName);
-    setPluggableComponents(appBarItems, appMenuItems);
+    setPluggableComponents(appMenuItems);
 
     return () => {
       if (DEBUG_OPTIMA_LAYOUT_PLUGGING)
         console.log(' -UNplug layout', debugCallerName);
-      setPluggableComponents(null, null);
+      setPluggableComponents(null);
     };
-  }, [appBarItems, appMenuItems, debugCallerName, setPluggableComponents]);
+  }, [appMenuItems, debugCallerName, setPluggableComponents]);
 };

@@ -457,7 +457,7 @@ export function AppChat() {
     [focusedPaneConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
-  usePluggableOptimaLayout(null, focusedMenuItems, 'AppChat');
+  usePluggableOptimaLayout(focusedMenuItems, 'AppChat');
 
   return <>
 
