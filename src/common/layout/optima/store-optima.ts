@@ -3,36 +3,56 @@ import { create } from 'zustand';
 
 import type { DLLMId } from '~/modules/llms/store-llms';
 
+import { getIsMobile } from '~/common/components/useMatchMedia';
+import { isBrowser } from '~/common/util/pwaUtils';
+import { navItems } from '~/common/app.nav';
 
-// configuration
-export const DEBUG_OPTIMA_PLUGGING = false;
 
-export type OptimaPreferencesTab = 'chat' | 'voice' | 'draw' | 'tools' | undefined;
+export type PreferencesTabId = 'chat' | 'voice' | 'draw' | 'tools' | undefined;
+
 
 interface OptimaState {
 
-  // pluggable UI components
-  appMenuComponent: React.ReactNode;
-
   // modes
-  isFocusedMode: boolean; // when active, the Mobile App menu is not displayed
+  // isFocusedMode: boolean; // when active, the Mobile App menu is not displayed
+
+  // pluggable UI components
+  menuComponent: React.ReactNode;
+
+  // panes
+  drawerIsOpen: boolean;
+  menuIsOpen: boolean;
 
   // modals that can overlay anything
   showKeyboardShortcuts: boolean;
   showModelOptions: DLLMId | false;
   showModels: boolean;
   showPreferences: boolean;
-  preferencesTab: OptimaPreferencesTab;
+  preferencesTab: PreferencesTabId;
 
+}
+
+function initialDrawerOpen() {
+  // mobile: closed by default
+  if (getIsMobile() || !isBrowser)
+    return false;
+
+  // desktop: open by default, unless the route has 'hideDrawer' set - then we boot to closed
+  const bootNavItem = navItems.apps.find(item => item.route === window.location.pathname);
+  return bootNavItem ? !bootNavItem.hideDrawer : false;
 }
 
 const initialState: OptimaState = {
 
-  // pluggable UI components
-  appMenuComponent: null,
-
   // modes
-  isFocusedMode: false,
+  // isFocusedMode: false,
+
+  // pluggable UI components
+  menuComponent: null,
+
+  // panes
+  drawerIsOpen: initialDrawerOpen(),
+  menuIsOpen: false,
 
   // modals that can overlay anything
   showKeyboardShortcuts: false,
@@ -45,7 +65,7 @@ const initialState: OptimaState = {
 
 export interface OptimaActions {
 
-  setIsFocusedMode: (isFocusedMode: boolean) => void;
+  // setIsFocusedMode: (isFocusedMode: boolean) => void;
 
   closeKeyboardShortcuts: () => void;
   openKeyboardShortcuts: () => void;
@@ -57,7 +77,7 @@ export interface OptimaActions {
   openModels: () => void;
 
   closePreferences: () => void;
-  openPreferences: (changeTab?: OptimaPreferencesTab) => void;
+  openPreferences: (changeTab?: PreferencesTabId) => void;
 
 }
 
@@ -66,7 +86,7 @@ export const useOptimaStore = create<OptimaState & OptimaActions>((_set, _get) =
 
   ...initialState,
 
-  setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
+  // setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
 
   closeKeyboardShortcuts: () => _set({ showKeyboardShortcuts: false }),
   openKeyboardShortcuts: () => _set({ showKeyboardShortcuts: true }),

@@ -14,7 +14,7 @@ import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
-import type { OptimaPreferencesTab } from '~/common/layout/optima/store-optima';
+import type { PreferencesTabId } from '~/common/layout/optima/store-optima';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -113,8 +113,8 @@ const settingTaxSx: SxProps = {
  */
 export function SettingsModal(props: {
   open: boolean,
-  tab: OptimaPreferencesTab,
-  setTab: (index: OptimaPreferencesTab) => void,
+  tab: PreferencesTabId,
+  setTab: (index: PreferencesTabId) => void,
   onClose: () => void,
   onOpenShortcuts: () => void,
 }) {
@@ -127,7 +127,7 @@ export function SettingsModal(props: {
   const { setTab } = props;
 
   const handleSetTab = React.useCallback((_event: any, value: string | number | null) => {
-    setTab((value ?? undefined) as OptimaPreferencesTab);
+    setTab((value ?? undefined) as PreferencesTabId);
   }, [setTab]);
 
   return (
