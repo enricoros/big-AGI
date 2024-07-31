@@ -39,6 +39,8 @@ const selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
     },
   },
   listbox: {
+    // Note: we explored disablePortal, which could optimize performance, but it breaks the colors (as they'll look inverted)
+    // disablePortal: false,
     variant: 'outlined',
     sx: {
       // in sync with CloseableMenu
