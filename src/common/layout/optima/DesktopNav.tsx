@@ -23,6 +23,10 @@ const desktopNavBarSx: SxProps = {
   zIndex: themeZIndexDesktopNav,
 };
 
+const bottomGroupSx: SxProps = {
+  mb: 'calc(2 * var(--GroupMarginY))',
+};
+
 
 export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
@@ -181,7 +185,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
         {navAppItems}
       </DesktopNavGroupBox>
 
-      <DesktopNavGroupBox sx={{ mb: 'calc(2 * var(--GroupMarginY))' }}>
+      <DesktopNavGroupBox sx={bottomGroupSx}>
         {navExtLinkItems}
         {navModalItems}
       </DesktopNavGroupBox>
