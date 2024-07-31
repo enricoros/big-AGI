@@ -49,7 +49,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   const isRedirecting = React.useMemo(() => {
     if (doRedirectToNews) {
       // the async is important (esp. on strict mode second pass)
-      navigateToNews().then(() => markNewsAsSeen());
+      navigateToNews().then(() => markNewsAsSeen()).catch(console.error);
       return true;
     }
     return false;

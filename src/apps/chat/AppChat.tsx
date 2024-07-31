@@ -146,12 +146,10 @@ export function AppChat() {
 
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
-  const { activeFolderId } = useFolderStore(({ enableFolders, folders }) => {
+  const activeFolderId = useFolderStore(({ enableFolders, folders }) => {
     const activeFolderId = enableFolders ? _activeFolderId : null;
     const activeFolder = activeFolderId ? folders.find(folder => folder.id === activeFolderId) : null;
-    return {
-      activeFolderId: activeFolder?.id ?? null,
-    };
+    return activeFolder?.id ?? null;
   });
 
 
