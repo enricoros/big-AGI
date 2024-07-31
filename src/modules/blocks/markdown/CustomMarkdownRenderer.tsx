@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import type { Pluggable as UnifiedPluggable } from 'unified';
 import { CSVLink } from 'react-csv';
-import { default as ReactMarkdown } from 'react-markdown';
+import { Components as ReactMarkdownComponents, default as ReactMarkdown } from 'react-markdown';
 import { default as rehypeKatex } from 'rehype-katex';
 import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
@@ -101,7 +102,16 @@ const reactMarkdownComponents = {
   a: LinkRenderer, // override the link renderer to add target="_blank"
   table: TableRenderer, // override the table renderer to show the download CSV links
   // math/inlineMath components are not needed, rehype-katex handles this automatically
-};
+} as ReactMarkdownComponents;
+
+const remarkPluginsStable: UnifiedPluggable[] = [
+  remarkGfm, // GitHub Flavored Markdown
+  [remarkMath, { singleDollarTextMath: false }], // Math
+];
+
+const rehypePluginsStable: UnifiedPluggable[] = [
+  rehypeKatex, // KaTeX
+];
 
 
 /*
@@ -117,14 +127,9 @@ const preprocessMarkdown = (markdownText: string) => markdownText
 export default function CustomMarkdownRenderer(props: { content: string }) {
   return (
     <ReactMarkdown
-      components={reactMarkdownComponents as any}
-      remarkPlugins={[
-        remarkGfm, // GitHub Flavored Markdown
-        [remarkMath, { singleDollarTextMath: false }], // Math
-      ]}
-      rehypePlugins={[
-        rehypeKatex, // KaTeX
-      ]}
+      components={reactMarkdownComponents}
+      remarkPlugins={remarkPluginsStable}
+      rehypePlugins={rehypePluginsStable}
     >
       {preprocessMarkdown(props.content)}
     </ReactMarkdown>
