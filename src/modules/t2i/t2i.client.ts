@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 import { useShallow } from 'zustand/react/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
@@ -11,6 +10,7 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import { shallowEquals } from '~/common/util/useShallowObject';
 
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
@@ -37,7 +37,9 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   const llmsModelSources: LlmsModelSources[] = useStoreWithEqualityFn(useModelsStore,
     ({ llms, sources }) => getLlmsModelSources(llms, sources),
-    (a, b) => a.length === b.length && a.every((_a, i) => shallow(_a, b[i])),
+    (a, b) =>
+      a.length === b.length
+      && a.every((_a, i) => shallowEquals(_a, b[i])),
   );
 
   const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
