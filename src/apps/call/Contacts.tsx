@@ -8,7 +8,7 @@ import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCa
 import { animationShadowRingLimey } from '~/common/util/animUtils';
 import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useSetOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 
 import type { AppCallIntent } from './AppCall';
 import { MockPersona, useMockPersonas } from './state/useMockPersonas';
@@ -242,7 +242,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
   </>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
 
-  usePluggableOptimaLayout(menuItems, 'CallUI-Contacts');
+  useSetOptimaLayoutAppMenu(menuItems, 'CallUI-Contacts');
 
 
   return <>

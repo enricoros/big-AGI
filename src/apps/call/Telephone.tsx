@@ -27,7 +27,7 @@ import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messag
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useSetOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 
 import type { AppCallIntent } from './AppCall';
 import { CallAvatar } from './components/CallAvatar';
@@ -303,7 +303,7 @@ export function Telephone(props: {
     , [overridePersonaVoice, pushToTalk],
   );
 
-  usePluggableOptimaLayout(menuItems, 'CallUI-Call');
+  useSetOptimaLayoutAppMenu(menuItems, 'CallUI-Call');
 
 
   return <>

@@ -20,7 +20,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { navigateToChatLinkList } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { useSetOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 
 import { LinkChatDrawer } from './LinkChatDrawer';
 import { LinkChatPageMenuItems } from './LinkChatPageMenuItems';
@@ -198,7 +198,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     onDeleteLink={handleConfirmDeletion}
   />, [handleConfirmDeletion, linkId]);
 
-  usePluggableOptimaLayout(pageMenuItems, 'AppChatLink');
+  useSetOptimaLayoutAppMenu(pageMenuItems, 'AppChatLink');
 
 
   return <>

@@ -27,13 +27,8 @@ const desktopNavBarSx: SxProps = {
 export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const {
-    isDrawerOpen, toggleDrawer,
-  } = useOptimaDrawers();
-  const {
-    showPreferencesTab, openPreferencesTab,
-    showModelsSetup, openModelsSetup,
-  } = useOptimaLayout();
+  const { isDrawerOpen, toggleDrawer } = useOptimaDrawers();
+  const { showPreferencesTab, openPreferencesTab, showModelsSetup, openModelsSetup } = useOptimaLayout();
   const noLLMs = useModelsStore(state => !state.llms.length);
 
 
