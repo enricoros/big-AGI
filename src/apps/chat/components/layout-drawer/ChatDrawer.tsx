@@ -23,6 +23,7 @@ import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { getIsMobile } from '~/common/components/useMatchMedia';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -59,7 +60,6 @@ export const useFolders = (activeFolderId: string | null) => useFolderStore(useS
 export const ChatDrawerMemo = React.memo(ChatDrawer);
 
 function ChatDrawer(props: {
-  isMobile: boolean,
   activeConversationId: DConversationId | null,
   activeFolderId: string | null,
   chatPanesConversationIds: DConversationId[],
@@ -108,15 +108,15 @@ function ChatDrawer(props: {
 
   const handleButtonNew = React.useCallback(() => {
     onConversationNew(newButtonDontRecycle);
-    if (props.isMobile)
+    if (getIsMobile())
       optimaCloseDrawer();
-  }, [newButtonDontRecycle, onConversationNew, props.isMobile]);
+  }, [newButtonDontRecycle, onConversationNew]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
-    if (closeMenu && props.isMobile)
+    if (closeMenu && getIsMobile())
       optimaCloseDrawer();
-  }, [onConversationActivate, props.isMobile]);
+  }, [onConversationActivate]);
 
   const handleConversationsDeleteFiltered = React.useCallback(() => {
     !!filteredChatIDs?.length && onConversationsDelete(filteredChatIDs, false);

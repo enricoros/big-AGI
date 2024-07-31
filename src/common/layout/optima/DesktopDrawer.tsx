@@ -55,6 +55,7 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
 
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
+  // const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
 
   // local state
   const [_softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
@@ -107,6 +108,7 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
         component={props.component}
         sx={{
           transform: isDrawerOpen ? 'none' : 'translateX(-100%)',
+          // backgroundColor: hasDrawerContent ? undefined : 'background.surface',
         }}
       >
 
