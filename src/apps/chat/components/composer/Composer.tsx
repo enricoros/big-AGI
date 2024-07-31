@@ -26,7 +26,6 @@ import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -37,6 +36,7 @@ import { getConversation, isValidConversation, useChatStore } from '~/common/sto
 import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
+import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
@@ -112,7 +112,6 @@ export function Composer(props: {
   } = useChatExecuteMode(props.capabilityHasT2I, !!props.isMobile);
 
   // external state
-  const { openPreferencesTab /*, setIsFocusedMode*/ } = useOptimaLayout();
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -279,10 +278,7 @@ export function Composer(props: {
     targetConversationId && systemPurposeId && launchAppCall(targetConversationId, systemPurposeId);
   }, [systemPurposeId, targetConversationId]);
 
-  const handleDrawOptionsClicked = React.useCallback(() => {
-    // TODO: remove context dependency here
-    openPreferencesTab(PreferencesTab.Draw);
-  }, [openPreferencesTab]);
+  const handleDrawOptionsClicked = React.useCallback(() => optimaOpenPreferences('draw'), []);
 
   const handleTextImagineClicked = React.useCallback(() => {
     if (!composeText || !targetConversationId) return;

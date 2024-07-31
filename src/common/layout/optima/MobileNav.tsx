@@ -17,7 +17,7 @@ export function MobileNav(props: {
 }) {
 
   // external state
-  // const { isFocusedMode } = useOptimaLayout();
+  // const { isFocusedMode } = useOptima...();
 
 
   // App items

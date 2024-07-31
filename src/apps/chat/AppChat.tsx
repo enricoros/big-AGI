@@ -21,18 +21,17 @@ import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
-import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessageTextContent, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useRouterQuery } from '~/common/app.routes';
-import { useSetOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
@@ -96,8 +95,6 @@ export function AppChat() {
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
   const showAltTitleBar = useUXLabsStore(state => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
-
-  const { openLlmOptions, openModelsSetup, openPreferencesTab } = useOptimaLayout();
 
   const { chatLLM } = useChatLLM();
 
@@ -200,9 +197,9 @@ export function AppChat() {
   const handleExecuteAndOutcome = React.useCallback(async (chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, callerNameDebug: string) => {
     const outcome = await _handleExecute(chatExecuteMode, conversationId, callerNameDebug);
     if (outcome === 'err-no-chatllm')
-      openModelsSetup();
+      optimaOpenModels();
     else if (outcome === 'err-t2i-unconfigured')
-      openPreferencesTab(PreferencesTab.Draw);
+      optimaOpenPreferences('draw');
     else if (outcome === 'err-no-persona')
       addSnackbar({ key: 'chat-no-persona', message: 'No persona selected.', type: 'issue' });
     else if (outcome === 'err-no-conversation')
@@ -210,7 +207,7 @@ export function AppChat() {
     else if (outcome === 'err-no-last-message')
       addSnackbar({ key: 'chat-no-conversation', message: 'No conversation history.', type: 'issue' });
     return outcome === true;
-  }, [openModelsSetup, openPreferencesTab]);
+  }, []);
 
   const handleComposerAction = React.useCallback((conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
 
@@ -393,8 +390,8 @@ export function AppChat() {
   const handleOpenChatLlmOptions = React.useCallback(() => {
     const chatLLMId = getChatLLMId();
     if (!chatLLMId) return;
-    openLlmOptions(chatLLMId);
-  }, [openLlmOptions]);
+    optimaActions().openModelOptions(chatLLMId);
+  }, []);
 
   useGlobalShortcuts('AppChat', React.useMemo(() => [
     // focused conversation
@@ -458,7 +455,7 @@ export function AppChat() {
     [focusedPaneConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
-  useSetOptimaLayoutAppMenu(focusedMenuItems, 'AppChat');
+  useSetOptimaAppMenu(focusedMenuItems, 'AppChat');
 
   return <>
     <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>

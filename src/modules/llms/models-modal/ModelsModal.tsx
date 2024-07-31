@@ -4,8 +4,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { Box, Checkbox, Divider } from '@mui/joy';
 
 import { GoodModal } from '~/common/components/GoodModal';
+import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';
 import { runWhenIdle } from '~/common/util/pwaUtils';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 
 import { DModelSource, DModelSourceId, useModelsStore } from '../store-llms';
 import { createModelSourceForDefaultVendor, findVendorById } from '../vendors/vendors.registry';
@@ -30,11 +30,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   const [showAllSources, setShowAllSources] = React.useState<boolean>(false);
 
   // external state
-  const {
-    closeLlmOptions, closeModelsSetup,
-    openLlmOptions, openModelsSetup,
-    showLlmOptions, showModelsSetup,
-  } = useOptimaLayout();
+  const { showModels, showModelOptions } = useOptimaModelsModalsState();
   const { modelSources, llmCount } = useModelsStore(useShallow(state => ({
     modelSources: state.sources,
     llmCount: state.llms.length,
@@ -52,11 +48,11 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   const autoOpenTrigger = !selectedSourceId && !props.suspendAutoModelsSetup;
   React.useEffect(() => {
     if (autoOpenTrigger)
-      return runWhenIdle(openModelsSetup, 2000);
-  }, [autoOpenTrigger, openModelsSetup]);
+      return runWhenIdle(() => optimaOpenModels(), 2000);
+  }, [autoOpenTrigger]);
 
   // Auto-add the default source - at boot, when no source is present
-  const autoAddTrigger = showModelsSetup && !props.suspendAutoModelsSetup;
+  const autoAddTrigger = showModels && !props.suspendAutoModelsSetup;
   React.useEffect(() => {
     // Note: we use the immediate version to not react to deletions
     const { addSource, sources } = useModelsStore.getState();
@@ -68,7 +64,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   return <>
 
     {/* Sources Setup */}
-    {showModelsSetup && <GoodModal
+    {showModels && <GoodModal
       title={<>Configure <b>AI Models</b></>}
       startButton={
         multiSource ? <Checkbox
@@ -76,7 +72,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
           checked={showAllSources} onChange={() => setShowAllSources(all => !all)}
         /> : undefined
       }
-      open onClose={closeModelsSetup}
+      open onClose={optimaActions().closeModels}
       sx={{
         // forces some shrinkage of the contents (ModelsList)
         overflow: 'auto',
@@ -98,7 +94,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
       {!!llmCount && (
         <ModelsList
           filterSourceId={showAllSources ? null : selectedSourceId}
-          onOpenLLMOptions={openLlmOptions}
+          onOpenLLMOptions={optimaActions().openModelOptions}
           sx={{
             // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
             minHeight: '6rem',
@@ -124,7 +120,9 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     </GoodModal>}
 
     {/* per-LLM options */}
-    {!!showLlmOptions && <LLMOptionsModal id={showLlmOptions} onClose={closeLlmOptions} />}
+    {!!showModelOptions && (
+      <LLMOptionsModal id={showModelOptions} onClose={optimaActions().closeModelOptions} />
+    )}
 
   </>;
 }

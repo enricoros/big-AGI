@@ -9,8 +9,8 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { isPwa } from '~/common/util/pwaUtils';
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { SettingContentScaling } from './SettingContentScaling';
@@ -20,14 +20,10 @@ import { SettingContentScaling } from './SettingContentScaling';
 const SHOW_PURPOSE_FINDER = false;
 
 
-const ModelsSetupButton = () => {
-
-  // external state
-  const { openModelsSetup } = useOptimaLayout();
-
+function ModelsSetupButton() {
   return <Button
     // variant='soft' color='success'
-    onClick={openModelsSetup}
+    onClick={optimaOpenModels}
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
@@ -35,7 +31,7 @@ const ModelsSetupButton = () => {
   >
     Models
   </Button>;
-};
+}
 
 
 export function AppChatSettingsUI() {
