@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { agiUuid } from '~/common/util/idUtils';
@@ -31,7 +31,7 @@ interface FolderActions {
 
 type FolderStore = FolderState & FolderActions;
 
-export const useFolderStore = create<FolderStore>()(devtools(
+export const useFolderStore = create<FolderStore>()(/*devtools(*/
   persist(
     (set, _get) => ({
 
@@ -124,7 +124,7 @@ export const useFolderStore = create<FolderStore>()(devtools(
       name: 'app-folders',
     },
   ),
-));
+);
 
 
 export const FOLDERS_COLOR_PALETTE = [
