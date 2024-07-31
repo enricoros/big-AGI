@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, devtools, persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SystemPurposeId } from '../../../data';
@@ -59,7 +59,7 @@ type ConversationsStore = ChatState & ChatActions;
 
 const defaultConversations: DConversation[] = [createDConversation()];
 
-export const useChatStore = create<ConversationsStore>()(devtools(
+export const useChatStore = create<ConversationsStore>()(/*devtools(*/
   persist(
     (_set, _get) => ({
 
@@ -421,10 +421,7 @@ export const useChatStore = create<ConversationsStore>()(devtools(
       },
 
     }),
-  {
-    name: 'AppChats',
-    enabled: false,
-  }),
+  /*{ name: 'AppChats', enabled: false }), */
 );
 
 
