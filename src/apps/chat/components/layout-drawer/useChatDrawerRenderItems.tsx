@@ -1,10 +1,10 @@
-import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DFolder } from '~/common/state/store-folders';
 import { DMessage, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { shallowEquals } from '~/common/util/useShallowObject';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';
@@ -290,8 +290,8 @@ export function useChatDrawerRenderItems(
     (a, b) => {
       // we only compare the renderNavItems array, which shall be changed if the rest changes
       return a.renderNavItems.length === b.renderNavItems.length
-        && a.renderNavItems.every((_a, i) => shallow(_a, b.renderNavItems[i]))
-        && shallow(a.filteredChatIDs, b.filteredChatIDs)
+        && a.renderNavItems.every((_a, i) => shallowEquals(_a, b.renderNavItems[i]))
+        && shallowEquals(a.filteredChatIDs, b.filteredChatIDs)
         && a.filteredChatsCount === b.filteredChatsCount
         && a.filteredChatsAreEmpty === b.filteredChatsAreEmpty
         && a.filteredChatsBarBasis === b.filteredChatsBarBasis

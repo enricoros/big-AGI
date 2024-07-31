@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
@@ -148,14 +148,16 @@ export function ModelsList(props: {
 }) {
 
   // external state
-  const { chatLLMId, fastLLMId, funcLLMId, llms, updateLLM } = useModelsStore(state => ({
+  const { chatLLMId, fastLLMId, funcLLMId, updateLLM } = useModelsStore(useShallow(state => ({
     chatLLMId: state.chatLLMId,
     fastLLMId: state.fastLLMId,
     funcLLMId: state.funcLLMId,
-    llms: state.llms.filter(llm => !props.filterSourceId || llm.sId === props.filterSourceId),
     updateLLM: state.updateLLM,
-  }), (a, b) => a.chatLLMId === b.chatLLMId && a.fastLLMId === b.fastLLMId && a.funcLLMId === b.funcLLMId && shallow(a.llms, b.llms));
-
+  })));
+  const llms = useModelsStore(useShallow(state =>
+    // note: we don't put this together with the former, to avoid going 1-level too deep in the shallow comparison
+    state.llms.filter(llm => !props.filterSourceId || llm.sId === props.filterSourceId),
+  ));
 
   const { onOpenLLMOptions } = props;
 
