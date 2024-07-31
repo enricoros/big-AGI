@@ -20,6 +20,7 @@ import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
 import { useOptimaDrawers } from './useOptimaDrawers';
 import { useOptimaLayout } from './useOptimaLayout';
+import { useOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 import { useOptimaPortalHasInputs } from './portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
@@ -126,13 +127,8 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
 
   // external state
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
-  const {
-    appMenuItems,
-  } = useOptimaLayout();
-  const {
-    openDrawer,
-    isPageMenuOpen, openPageMenu, closePageMenu,
-  } = useOptimaDrawers();
+  const appMenuItems = useOptimaLayoutAppMenu();
+  const { openDrawer, isPageMenuOpen, openPageMenu, closePageMenu } = useOptimaDrawers();
 
   const commonPageMenuItems = React.useMemo(() => {
     return <CommonPageMenuItems onClose={closePageMenu} />;

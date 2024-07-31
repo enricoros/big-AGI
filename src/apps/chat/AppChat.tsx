@@ -21,7 +21,7 @@ import { ConversationsManager } from '~/common/chats/ConversationsManager';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
-import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
@@ -32,6 +32,7 @@ import { useFolderStore } from '~/common/state/store-folders';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useRouterQuery } from '~/common/app.routes';
+import { useSetOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
@@ -457,7 +458,7 @@ export function AppChat() {
     [focusedPaneConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
-  usePluggableOptimaLayout(focusedMenuItems, 'AppChat');
+  useSetOptimaLayoutAppMenu(focusedMenuItems, 'AppChat');
 
   return <>
     <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
