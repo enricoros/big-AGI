@@ -26,6 +26,12 @@ const bottomGroupSx: SxProps = {
   mb: 'calc(2 * var(--GroupMarginY))',
 };
 
+const navItemsDividerSx: SxProps = {
+  my: 1,
+  width: '50%',
+  mx: 'auto',
+};
+
 
 export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
@@ -69,7 +75,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       const isPaneOpen = isDrawerable && isDrawerOpen;
 
       if (checkDivider(app))
-        return <Divider key={'app-sep-' + appIdx} sx={{ my: 1, width: '50%', mx: 'auto' }} />;
+        return <Divider key={'app-sep-' + appIdx} sx={navItemsDividerSx} />;
 
       return (
         <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name + (app.isDev ? ' [DEV]' : '')}>

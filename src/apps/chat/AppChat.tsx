@@ -421,7 +421,7 @@ export function AppChat() {
 
   const drawerContent = React.useMemo(() =>
       <ChatDrawerMemo
-        isMobile={isMobile}
+        // isMobile={isMobile /* expensive as it undoes the memo; not passed anymore */}
         activeConversationId={focusedPaneConversationId}
         activeFolderId={activeFolderId}
         chatPanesConversationIds={paneUniqueConversationIds}
