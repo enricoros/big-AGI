@@ -17,8 +17,8 @@ import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
-import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
@@ -39,7 +39,6 @@ export function ChatPageMenuItems(props: {
 }) {
 
   // external state
-  const { closePageMenu } = useOptimaDrawers();
   const { canAddPane, isMultiPane, duplicateFocusedPane, removeOtherPanes } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
@@ -64,10 +63,10 @@ export function ChatPageMenuItems(props: {
   }, [handleIncreaseMultiPane, isMultiPane, removeOtherPanes]);
 
 
-  const closeMenu = (event: React.MouseEvent) => {
+  const closeMenu = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    closePageMenu();
-  };
+    optimaCloseAppMenu();
+  }, []);
 
   const handleConversationClear = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);

@@ -7,7 +7,7 @@ import { isPwa } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { PageCore } from './PageCore';
-import { useOptimaDrawers } from './useOptimaDrawers';
+import { useOptimaDrawerOpen } from './useOptima';
 
 
 /**
@@ -18,7 +18,7 @@ import { useOptimaDrawers } from './useOptimaDrawers';
 export function PageWrapper(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile?: boolean, children: React.ReactNode }) {
 
   // external state
-  const { isDrawerOpen } = useOptimaDrawers();
+  const isDrawerOpen = useOptimaDrawerOpen();
   const amplitude = useUIPreferencesStore(state =>
     (isPwa() || props.isMobile || props.currentApp?.fullWidth) ? 'full' : state.centerMode,
   );

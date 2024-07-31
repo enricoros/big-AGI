@@ -18,8 +18,7 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
-import { optimaOpenPreferences, useOptimaAppMenu } from './useOptima';
-import { useOptimaDrawers } from './useOptimaDrawers';
+import { optimaCloseAppMenu, optimaOpenAppMenu, optimaOpenDrawer, optimaOpenPreferences, useOptimaAppMenu, useOptimaAppMenuOpen } from './useOptima';
 import { useOptimaPortalHasInputs } from './portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
@@ -127,16 +126,16 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
   // external state
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
   const appMenuItems = useOptimaAppMenu();
-  const { openDrawer, isPageMenuOpen, openPageMenu, closePageMenu } = useOptimaDrawers();
+  const isAppMenuOpen = useOptimaAppMenuOpen();
 
   const commonPageMenuItems = React.useMemo(() => {
-    return <CommonPageMenuItems onClose={closePageMenu} />;
-  }, [closePageMenu]);
+    return <CommonPageMenuItems onClose={optimaCloseAppMenu} />;
+  }, []);
 
   const handlePageContextMenu = React.useCallback((event: React.MouseEvent) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    openPageMenu();
-  }, [openPageMenu]);
+    optimaOpenAppMenu();
+  }, []);
 
   // [Desktop] hide the app bar if the current app doesn't use it
   const desktopHide = !!props.currentApp?.hideBar && !props.isMobile;
@@ -168,7 +167,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
               <ArrowBackIcon />
             </IconButton>
           ) : (
-            <IconButton disabled={!hasDrawerContent} onClick={openDrawer}>
+            <IconButton disabled={!hasDrawerContent} onClick={optimaOpenDrawer}>
               <MenuIcon />
             </IconButton>
           )}
@@ -184,7 +183,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
         <IconButton
           ref={pageMenuAnchor}
           disabled={!pageMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/}
-          onClick={openPageMenu}
+          onClick={optimaOpenAppMenu}
           onContextMenu={handlePageContextMenu}
         >
           <MoreVertIcon />
@@ -196,10 +195,10 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
     {/*</Box>*/}
 
 
-    {/* Page Menu */}
+    {/* App (fka. Page) Menu */}
     <CloseableMenu
       dense maxHeightGapPx={56 + 24} noBottomPadding={props.isMobile} placement='bottom-end'
-      open={isPageMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={closePageMenu}
+      open={isAppMenuOpen && !!pageMenuAnchor.current} anchorEl={pageMenuAnchor.current} onClose={optimaCloseAppMenu}
       sx={{ minWidth: 280 }}
     >
 

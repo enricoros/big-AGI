@@ -67,6 +67,14 @@ export interface OptimaActions {
 
   // setIsFocusedMode: (isFocusedMode: boolean) => void;
 
+  closeDrawer: () => void;
+  openDrawer: () => void;
+  toggleDrawer: () => void;
+
+  closePageMenu: () => void;
+  openPageMenu: () => void;
+  togglePageMenu: () => void;
+
   closeKeyboardShortcuts: () => void;
   openKeyboardShortcuts: () => void;
 
@@ -82,11 +90,19 @@ export interface OptimaActions {
 }
 
 
-export const useOptimaStore = create<OptimaState & OptimaActions>((_set, _get) => ({
+export const useOptimaStore = create<OptimaState & OptimaActions>((_set) => ({
 
   ...initialState,
 
   // setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
+
+  closeDrawer: () => _set({ drawerIsOpen: false }),
+  openDrawer: () => _set({ drawerIsOpen: true }),
+  toggleDrawer: () => _set((state) => ({ drawerIsOpen: !state.drawerIsOpen })),
+
+  closePageMenu: () => _set({ menuIsOpen: false }),
+  openPageMenu: () => _set({ menuIsOpen: true }),
+  togglePageMenu: () => _set((state) => ({ menuIsOpen: !state.menuIsOpen })),
 
   closeKeyboardShortcuts: () => _set({ showKeyboardShortcuts: false }),
   openKeyboardShortcuts: () => _set({ showKeyboardShortcuts: true }),

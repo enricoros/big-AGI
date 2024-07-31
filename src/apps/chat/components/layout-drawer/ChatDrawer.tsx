@@ -23,8 +23,8 @@ import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
-import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
@@ -82,7 +82,6 @@ function ChatDrawer(props: {
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
   // external state
-  const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
   const {
     clearFilters,
     filterHasDocFragments, toggleFilterHasDocFragments,
@@ -109,14 +108,15 @@ function ChatDrawer(props: {
 
   const handleButtonNew = React.useCallback(() => {
     onConversationNew(newButtonDontRecycle);
-    closeDrawerOnMobile();
-  }, [closeDrawerOnMobile, newButtonDontRecycle, onConversationNew]);
+    if (props.isMobile)
+      optimaCloseDrawer();
+  }, [newButtonDontRecycle, onConversationNew, props.isMobile]);
 
   const handleConversationActivate = React.useCallback((conversationId: DConversationId, closeMenu: boolean) => {
     onConversationActivate(conversationId);
-    if (closeMenu)
-      closeDrawerOnMobile();
-  }, [closeDrawerOnMobile, onConversationActivate]);
+    if (closeMenu && props.isMobile)
+      optimaCloseDrawer();
+  }, [onConversationActivate, props.isMobile]);
 
   const handleConversationsDeleteFiltered = React.useCallback(() => {
     !!filteredChatIDs?.length && onConversationsDelete(filteredChatIDs, false);
@@ -236,7 +236,7 @@ function ChatDrawer(props: {
   return <>
 
     {/* Drawer Header */}
-    <PageDrawerHeader title='Chats' onClose={closeDrawer}>
+    <PageDrawerHeader title='Chats' onClose={optimaCloseDrawer}>
       <Tooltip title={enableFolders ? 'Hide Folders' : 'Use Folders'}>
         <IconButton size='sm' onClick={toggleEnableFolders}>
           {enableFolders ? <FoldersToggleOn /> : <FoldersToggleOff />}
