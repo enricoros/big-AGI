@@ -4,7 +4,7 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
-import { useOptimaDrawers } from './useOptimaDrawers';
+import { optimaCloseDrawer, useOptimaDrawerOpen } from './useOptima';
 import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
 
@@ -25,14 +25,14 @@ function DrawerContentPortal() {
 export function MobileDrawer(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const { isDrawerOpen, closeDrawer } = useOptimaDrawers();
+  const isDrawerOpen = useOptimaDrawerOpen();
 
   return (
     <Drawer
       id='mobile-drawer'
       component={props.component}
       open={isDrawerOpen}
-      onClose={closeDrawer}
+      onClose={optimaCloseDrawer}
       sx={{
         '--Drawer-horizontalSize': 'clamp(var(--AGI-Drawer-width), 30%, 100%)',
         '--Drawer-transitionDuration': '0.2s',

@@ -12,7 +12,6 @@ import { DesktopDrawer } from './DesktopDrawer';
 import { DesktopNav } from './DesktopNav';
 import { MobileDrawer } from './MobileDrawer';
 import { Modals } from './Modals';
-import { OptimaDrawerProvider } from './useOptimaDrawers';
 import { PageWrapper } from './PageWrapper';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from './useOptima';
 
@@ -66,25 +65,21 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
   return <>
 
-    <OptimaDrawerProvider>
+    <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
 
-      <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
+      {!isMobile && checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
 
-        {!isMobile && checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
+      {!isMobile && <DesktopDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
 
-        {!isMobile && <DesktopDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
+      {/*<Panel defaultSize={100}>*/}
+      <PageWrapper key='app-page-wrapper' component='main' isMobile={isMobile} currentApp={currentApp}>
+        {props.children}
+      </PageWrapper>
+      {/*</Panel>*/}
 
-        {/*<Panel defaultSize={100}>*/}
-        <PageWrapper key='app-page-wrapper' component='main' isMobile={isMobile} currentApp={currentApp}>
-          {props.children}
-        </PageWrapper>
-        {/*</Panel>*/}
+      {isMobile && <MobileDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
 
-        {isMobile && <MobileDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
-
-      </PanelGroup>
-
-    </OptimaDrawerProvider>
+    </PanelGroup>
 
     {/* Overlay Modals */}
     <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />

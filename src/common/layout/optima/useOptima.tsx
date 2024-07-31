@@ -10,8 +10,24 @@ export const DEBUG_OPTIMA_PLUGGING = false;
 
 /// Perform UI Actions
 
-export function optimaActions(): Omit<OptimaActions, 'openModels' | 'openPreferences'> {
+export function optimaActions(): Omit<OptimaActions, 'closeDrawer' | 'openDrawer' | 'closePageMenu' | 'openPageMenu' | 'openModels' | 'openPreferences'> {
   return useOptimaStore.getState();
+}
+
+export function optimaCloseDrawer() {
+  useOptimaStore.getState().closeDrawer();
+}
+
+export function optimaOpenDrawer() {
+  useOptimaStore.getState().openDrawer();
+}
+
+export function optimaCloseAppMenu() {
+  useOptimaStore.getState().closePageMenu();
+}
+
+export function optimaOpenAppMenu() {
+  useOptimaStore.getState().openPageMenu();
 }
 
 export function optimaOpenModels() {
@@ -24,6 +40,14 @@ export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
 
 
 /// React to UI State (mainly within the Optima Layout itself)
+
+export function useOptimaDrawerOpen() {
+  return useOptimaStore(({ drawerIsOpen }) => drawerIsOpen);
+}
+
+export function useOptimaAppMenuOpen() {
+  return useOptimaStore(({ menuIsOpen }) => menuIsOpen);
+}
 
 export function useOptimaModalsState() {
   return useOptimaStore(useShallow(state => ({

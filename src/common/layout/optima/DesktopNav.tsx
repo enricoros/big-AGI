@@ -15,8 +15,7 @@ import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { BringTheLove } from './components/BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
-import { optimaOpenModels, optimaOpenPreferences, useOptimaModelsModalsState } from './useOptima';
-import { useOptimaDrawers } from './useOptimaDrawers';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaDrawerOpen, useOptimaModelsModalsState } from './useOptima';
 
 
 const desktopNavBarSx: SxProps = {
@@ -31,7 +30,7 @@ const bottomGroupSx: SxProps = {
 export function DesktopNav(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const { isDrawerOpen, toggleDrawer } = useOptimaDrawers();
+  const isDrawerOpen = useOptimaDrawerOpen();
   const { showModels, showPreferences } = useOptimaModelsModalsState();
   const noLLMs = useModelsStore(state => !state.llms.length);
 
@@ -41,8 +40,8 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
   const logoButtonTogglesPane = (appUsesDrawer && !isDrawerOpen) || isDrawerOpen;
   const handleLogoButtonClick = React.useCallback(() => {
     if (logoButtonTogglesPane)
-      toggleDrawer();
-  }, [logoButtonTogglesPane, toggleDrawer]);
+      optimaActions().toggleDrawer();
+  }, [logoButtonTogglesPane]);
 
 
   // App items
@@ -76,7 +75,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
         <Tooltip key={'n-m-' + app.route.slice(1)} disableInteractive enterDelay={600} title={app.name + (app.isDev ? ' [DEV]' : '')}>
           <DesktopNavIcon
             variant={isActive ? 'solid' : undefined}
-            onClick={isDrawerable ? toggleDrawer : () => Router.push(app.landingRoute || app.route)}
+            onClick={isDrawerable ? optimaActions().toggleDrawer : () => Router.push(app.landingRoute || app.route)}
             className={`${navItemClasses.typeApp} ${isActive ? navItemClasses.active : ''} ${isPaneOpen ? navItemClasses.paneOpen : ''} ${app.isDev ? navItemClasses.dev : ''}`}
           >
             {/*{(isActive && app.iconActive) ? <app.iconActive /> : <app.icon />}*/}
@@ -114,7 +113,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       );
     }
     return components;
-  }, [isDrawerOpen, props.currentApp, toggleDrawer]);
+  }, [isDrawerOpen, props.currentApp]);
 
 
   // External link items

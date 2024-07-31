@@ -10,7 +10,7 @@ import { Link } from '~/common/components/Link';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
 import { getChatLinkRelativePath } from '~/common/app.routes';
-import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
+import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 
 
 /**
@@ -25,10 +25,6 @@ export function LinkChatDrawer(props: {
 
   // state
   const [showDeletionKeys, setShowDeletionKeys] = React.useState<boolean>(false);
-
-
-  // external state
-  const { closeDrawer } = useOptimaDrawers();
 
   // derived state
   const { activeLinkId, onDeleteLink } = props;
@@ -49,7 +45,7 @@ export function LinkChatDrawer(props: {
 
     <PageDrawerHeader
       title='Your Shared Links'
-      onClose={closeDrawer}
+      onClose={optimaCloseDrawer}
     />
 
     <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>

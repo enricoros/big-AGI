@@ -5,7 +5,7 @@ import { Box, Sheet, styled } from '@mui/joy';
 import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
-import { useOptimaDrawers } from './useOptimaDrawers';
+import { optimaCloseDrawer, optimaOpenDrawer, useOptimaDrawerOpen } from './useOptima';
 import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
 
@@ -54,10 +54,10 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
   const drawerPortalRef = useOptimaPortalOutRef('optima-portal-drawer', 'DesktopDrawer');
 
   // external state
-  const { isDrawerOpen, closeDrawer, openDrawer } = useOptimaDrawers();
+  const isDrawerOpen = useOptimaDrawerOpen();
 
   // local state
-  const [softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
+  const [_softDrawerUnmount, setSoftDrawerUnmount] = React.useState(false);
 
 
   // 'soft unmount': remove contents after a delay
@@ -83,15 +83,15 @@ export function DesktopDrawer(props: { component: React.ElementType, currentApp?
   const currentAppUsesDrawer = !props.currentApp?.hideDrawer;
   React.useEffect(() => {
     if (!currentAppUsesDrawer)
-      closeDrawer();
-  }, [closeDrawer, currentAppUsesDrawer]);
+      optimaCloseDrawer();
+  }, [currentAppUsesDrawer]);
 
   // [special case] remove in the future
   const shallOpenNavForSharedLink = !props.currentApp?.hideDrawer && checkVisibleNav(props.currentApp);
   React.useEffect(() => {
     if (shallOpenNavForSharedLink)
-      openDrawer();
-  }, [openDrawer, shallOpenNavForSharedLink]);
+      optimaOpenDrawer();
+  }, [shallOpenNavForSharedLink]);
 
 
   return (

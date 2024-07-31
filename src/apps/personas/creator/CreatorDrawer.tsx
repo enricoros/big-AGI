@@ -9,7 +9,7 @@ import DoneIcon from '@mui/icons-material/Done';
 
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
-import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
+import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 
 import { CreatorDrawerItem } from './CreatorDrawerItem';
 import { deleteSimplePersona, deleteSimplePersonas, useSimplePersonas } from '../store-app-personas';
@@ -25,7 +25,6 @@ export function CreatorDrawer(props: {
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   // external state
-  const { closeDrawer } = useOptimaDrawers();
   const { simplePersonas } = useSimplePersonas();
 
 
@@ -89,7 +88,7 @@ export function CreatorDrawer(props: {
     {/* Drawer Header */}
     <PageDrawerHeader
       title={selectMode ? 'Selection Mode' : 'Recent'}
-      onClose={selectMode ? handleSelectionClose : closeDrawer}
+      onClose={selectMode ? handleSelectionClose : optimaCloseDrawer}
     >
       {hasPersonas && !selectMode && (
         <Tooltip title={selectMode ? 'Done' : 'Select'}>
