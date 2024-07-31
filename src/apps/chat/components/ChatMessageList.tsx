@@ -56,8 +56,8 @@ export function ChatMessageList(props: {
   const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
-  const { conversationMessages, historyTokenCount } = useChatStore(useShallow(state => {
-    const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
+  const { conversationMessages, historyTokenCount } = useChatStore(useShallow(({ conversations }) => {
+    const conversation = conversations.find(conversation => conversation.id === props.conversationId);
     return {
       conversationMessages: conversation ? conversation.messages : [],
       historyTokenCount: conversation ? conversation.tokenCount : 0,
