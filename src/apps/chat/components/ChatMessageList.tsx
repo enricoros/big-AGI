@@ -10,10 +10,10 @@ import type { ConversationHandler } from '~/common/chats/ConversationHandler';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { InlineError } from '~/common/components/InlineError';
-import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { createDMessageTextContent, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
@@ -53,7 +53,6 @@ export function ChatMessageList(props: {
 
   // external state
   const { notifyBooting } = useScrollToBottom();
-  const { openPreferencesTab } = useOptimaLayout();
   const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
   const optionalTranslationWarning = useBrowserTranslationWarning();
@@ -154,21 +153,21 @@ export function ChatMessageList(props: {
 
   const handleTextImagine = React.useCallback(async (text: string) => {
     if (!capabilityHasT2I)
-      return openPreferencesTab(PreferencesTab.Draw);
+      return optimaOpenPreferences('draw');
     if (conversationId) {
       setIsImagining(true);
       await onTextImagine(conversationId, text);
       setIsImagining(false);
     }
-  }, [capabilityHasT2I, conversationId, onTextImagine, openPreferencesTab]);
+  }, [capabilityHasT2I, conversationId, onTextImagine]);
 
   const handleTextSpeak = React.useCallback(async (text: string) => {
     if (!isSpeakable)
-      return openPreferencesTab(PreferencesTab.Voice);
+      return optimaOpenPreferences('voice');
     setIsSpeaking(true);
     await onTextSpeak(text);
     setIsSpeaking(false);
-  }, [isSpeakable, onTextSpeak, openPreferencesTab]);
+  }, [isSpeakable, onTextSpeak]);
 
 
   // operate on the local selection set

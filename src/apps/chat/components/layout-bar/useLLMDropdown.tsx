@@ -12,7 +12,7 @@ import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 
 
 function LLMDropdown(props: {
@@ -25,9 +25,6 @@ function LLMDropdown(props: {
   // state
   const [filterString, setfilterString] = React.useState<string | null>(null);
 
-  // external state
-  const { openLlmOptions, openModelsSetup } = useOptimaLayout();
-
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
 
@@ -39,8 +36,8 @@ function LLMDropdown(props: {
   }, [setChatLlmId]);
 
   const handleOpenLLMOptions = React.useCallback(() => {
-    return chatLlmId && openLlmOptions(chatLlmId);
-  }, [chatLlmId, openLlmOptions]);
+    return chatLlmId && optimaActions().openModelOptions(chatLlmId);
+  }, [chatLlmId]);
 
 
   const llmDropdownItems: DropdownItems = React.useMemo(() => {
@@ -155,7 +152,7 @@ function LLMDropdown(props: {
     {/*  </ListItemButton>*/}
     {/*)}*/}
 
-    <ListItemButton key='menu-llms' onClick={openModelsSetup}>
+    <ListItemButton key='menu-llms' onClick={optimaOpenModels}>
       <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         Models
@@ -163,7 +160,7 @@ function LLMDropdown(props: {
       </Box>
     </ListItemButton>
 
-  </>, [openModelsSetup]);
+  </>, []);
 
 
   return (

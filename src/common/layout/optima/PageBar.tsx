@@ -18,9 +18,8 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
 import { MobileNavListItem } from './MobileNavListItem';
+import { optimaOpenPreferences, useOptimaAppMenu } from './useOptima';
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaLayout } from './useOptimaLayout';
-import { useOptimaLayoutAppMenu } from '~/common/layout/optima/store-optima-layout';
 import { useOptimaPortalHasInputs } from './portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
 
@@ -71,14 +70,14 @@ function CenterItemsPortal(props: {
 function CommonPageMenuItems(props: { onClose: () => void }) {
 
   // external state
-  const { openPreferencesTab } = useOptimaLayout();
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
 
-  const handleShowSettings = (event: React.MouseEvent) => {
+  const { onClose } = props;
+  const handleShowSettings = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    openPreferencesTab();
-    props.onClose();
-  };
+    optimaOpenPreferences();
+    onClose();
+  }, [onClose]);
 
   const handleToggleDarkMode = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -127,7 +126,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
 
   // external state
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
-  const appMenuItems = useOptimaLayoutAppMenu();
+  const appMenuItems = useOptimaAppMenu();
   const { openDrawer, isPageMenuOpen, openPageMenu, closePageMenu } = useOptimaDrawers();
 
   const commonPageMenuItems = React.useMemo(() => {

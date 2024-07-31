@@ -15,8 +15,8 @@ import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { BringTheLove } from './components/BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
+import { optimaOpenModels, optimaOpenPreferences, useOptimaModelsModalsState } from './useOptima';
 import { useOptimaDrawers } from './useOptimaDrawers';
-import { useOptimaLayout } from './useOptimaLayout';
 
 
 const desktopNavBarSx: SxProps = {
@@ -28,7 +28,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
 
   // external state
   const { isDrawerOpen, toggleDrawer } = useOptimaDrawers();
-  const { showPreferencesTab, openPreferencesTab, showModelsSetup, openModelsSetup } = useOptimaLayout();
+  const { showModels, showPreferences } = useOptimaModelsModalsState();
   const noLLMs = useModelsStore(state => !state.llms.length);
 
 
@@ -136,9 +136,9 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     return navItems.modals.map(item => {
 
       // map the overlayId to the corresponding state and action
-      const stateActionMap: { [key: string]: { isActive: boolean, showModal: () => void } } = {
-        settings: { isActive: !!showPreferencesTab, showModal: () => openPreferencesTab() },
-        models: { isActive: showModelsSetup, showModal: openModelsSetup },
+      const stateActionMap: { [key: string]: { isActive: boolean, showModal: (event: React.MouseEvent) => void } } = {
+        settings: { isActive: showPreferences, showModal: () => optimaOpenPreferences(/* avoid passing an event as param */) },
+        models: { isActive: showModels, showModal: () => optimaOpenModels() },
         0: { isActive: false, showModal: () => console.log('Action missing for ', item.overlayId) },
       };
       const { isActive, showModal } = stateActionMap[item.overlayId] ?? stateActionMap[0];
@@ -158,7 +158,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
         </Tooltip>
       );
     });
-  }, [noLLMs, openModelsSetup, openPreferencesTab, showModelsSetup, showPreferencesTab]);
+  }, [noLLMs, showModels, showPreferences]);
 
 
   return (

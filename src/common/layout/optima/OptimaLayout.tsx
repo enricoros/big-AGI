@@ -3,15 +3,18 @@ import { useRouter } from 'next/router';
 import { PanelGroup } from 'react-resizable-panels';
 
 import { checkVisibleNav, navItems } from '~/common/app.nav';
+import { isMacUser } from '~/common/util/pwaUtils';
+import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { DesktopDrawer } from './DesktopDrawer';
 import { DesktopNav } from './DesktopNav';
 import { MobileDrawer } from './MobileDrawer';
 import { Modals } from './Modals';
 import { OptimaDrawerProvider } from './useOptimaDrawers';
-import { OptimaLayoutProvider } from './useOptimaLayout';
 import { PageWrapper } from './PageWrapper';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences } from './useOptima';
 
 
 // this undoes the PanelGroup styling on mobile, as it's not needed
@@ -48,31 +51,43 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
   // derived state
   const currentApp = navItems.apps.find(item => item.route === route);
 
-  return (
-    <OptimaLayoutProvider>
-      <OptimaDrawerProvider>
+  // global shortcuts for Optima
+  useGlobalShortcuts('App', React.useMemo(() => [
+    { key: 'h', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
+    { key: isMacUser ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
+    // Preferences
+    { key: ',', ctrl: true, action: optimaOpenPreferences },
+    // Models
+    { key: 'm', ctrl: true, shift: true, action: optimaOpenModels },
+    // Font Scale
+    { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
+    { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
+  ], []));
 
-        <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
+  return <>
 
-          {!isMobile && checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
+    <OptimaDrawerProvider>
 
-          {!isMobile && <DesktopDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
+      <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
 
-          {/*<Panel defaultSize={100}>*/}
-          <PageWrapper key='app-page-wrapper' component='main' isMobile={isMobile} currentApp={currentApp}>
-            {props.children}
-          </PageWrapper>
-          {/*</Panel>*/}
+        {!isMobile && checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
 
-          {isMobile && <MobileDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
+        {!isMobile && <DesktopDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
 
-        </PanelGroup>
+        {/*<Panel defaultSize={100}>*/}
+        <PageWrapper key='app-page-wrapper' component='main' isMobile={isMobile} currentApp={currentApp}>
+          {props.children}
+        </PageWrapper>
+        {/*</Panel>*/}
 
-      </OptimaDrawerProvider>
+        {isMobile && <MobileDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
 
-      {/* Overlay Modals */}
-      <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+      </PanelGroup>
 
-    </OptimaLayoutProvider>
-  );
+    </OptimaDrawerProvider>
+
+    {/* Overlay Modals */}
+    <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+
+  </>;
 }

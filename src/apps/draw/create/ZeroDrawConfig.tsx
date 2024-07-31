@@ -2,15 +2,14 @@ import * as React from 'react';
 
 import { Button, Card, CardActions, CardContent, Typography } from '@mui/joy';
 
-import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 
 
 export function ZeroDrawConfig() {
 
-  // external state
-  const { openPreferencesTab } = useOptimaLayout();
-
-  const handleConfigureDrawing = () => openPreferencesTab(PreferencesTab.Draw);
+  const handleConfigureDrawing = React.useCallback(() => {
+    optimaOpenPreferences('draw');
+  }, []);
 
   return (
     <Card variant='outlined' color='neutral' sx={{

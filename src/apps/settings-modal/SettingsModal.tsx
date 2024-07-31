@@ -14,8 +14,8 @@ import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
 import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
+import type { OptimaPreferencesTab } from '~/common/layout/optima/store-optima';
 import { GoodModal } from '~/common/components/GoodModal';
-import { PreferencesTab } from '~/common/layout/optima/useOptimaLayout';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
@@ -25,9 +25,10 @@ import { VoiceSettings } from './VoiceSettings';
 
 
 // styled <AccordionGroup variant='plain'> into a Topics component
-const Topics = styled(AccordionGroup)(({ theme }) => ({
+const Topics = styled(AccordionGroup)({
   // round and clip corners
-  borderRadius: theme.radius.md, overflow: 'hidden',
+  borderRadius: 'var(--joy-radius-md)',
+  overflow: 'hidden',
 
   // larger summary, with a spinning icon
   [`& .${accordionSummaryClasses.button}`]: {
@@ -44,7 +45,7 @@ const Topics = styled(AccordionGroup)(({ theme }) => ({
   [`& .${accordionDetailsClasses.content}.${accordionDetailsClasses.expanded}`]: {
     paddingBlock: '1rem',
   },
-}));
+});
 
 function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode, startCollapsed?: boolean, children?: React.ReactNode }) {
 
@@ -112,13 +113,22 @@ const settingTaxSx: SxProps = {
  */
 export function SettingsModal(props: {
   open: boolean,
-  tabIndex: number,
+  tab: OptimaPreferencesTab,
+  setTab: (index: OptimaPreferencesTab) => void,
   onClose: () => void,
   onOpenShortcuts: () => void,
 }) {
 
   // external state
   const isMobile = useIsMobile();
+
+  // handlers
+
+  const { setTab } = props;
+
+  const handleSetTab = React.useCallback((_event: any, value: string | number | null) => {
+    setTab((value ?? undefined) as OptimaPreferencesTab);
+  }, [setTab]);
 
   return (
     <GoodModal
@@ -133,7 +143,11 @@ export function SettingsModal(props: {
 
       <Divider />
 
-      <Tabs aria-label='Settings tabbed menu' defaultValue={props.tabIndex}>
+      <Tabs
+        aria-label='Settings tabbed menu'
+        value={props.tab || 'chat'}
+        onChange={handleSetTab}
+      >
         <TabList
           disableUnderline
           sx={{
@@ -154,13 +168,13 @@ export function SettingsModal(props: {
             },
           }}
         >
-          <Tab disableIndicator value={PreferencesTab.Chat} sx={settingTaxSx}>Chat</Tab>
-          <Tab disableIndicator value={PreferencesTab.Voice} sx={settingTaxSx}>Voice</Tab>
-          <Tab disableIndicator value={PreferencesTab.Draw} sx={settingTaxSx}>Draw</Tab>
-          <Tab disableIndicator value={PreferencesTab.Tools} sx={settingTaxSx}>Tools</Tab>
+          <Tab disableIndicator value='chat' sx={settingTaxSx}>Chat</Tab>
+          <Tab disableIndicator value='voice' sx={settingTaxSx}>Voice</Tab>
+          <Tab disableIndicator value='draw' sx={settingTaxSx}>Draw</Tab>
+          <Tab disableIndicator value='tools' sx={settingTaxSx}>Tools</Tab>
         </TabList>
 
-        <TabPanel value={PreferencesTab.Chat} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='chat' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -174,7 +188,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={PreferencesTab.Voice} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='voice' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
@@ -185,7 +199,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={PreferencesTab.Draw} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='draw' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic>
               <T2ISettings />
@@ -199,7 +213,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value={PreferencesTab.Tools} variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='tools' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
           <Topics>
             <Topic icon={<SearchIcon />} title='Browsing'>
               <BrowseSettings />
