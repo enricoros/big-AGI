@@ -1,7 +1,11 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { DEBUG_OPTIMA_PLUGGING, OptimaActions, OptimaPreferencesTab, useOptimaStore } from './store-optima';
+import { OptimaActions, PreferencesTabId, useOptimaStore } from './store-optima';
+
+
+// configuration
+export const DEBUG_OPTIMA_PLUGGING = false;
 
 
 /// Perform UI Actions
@@ -14,7 +18,7 @@ export function optimaOpenModels() {
   useOptimaStore.getState().openModels();
 }
 
-export function optimaOpenPreferences(changeTab?: OptimaPreferencesTab) {
+export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
   useOptimaStore.getState().openPreferences(changeTab);
 }
 
@@ -44,7 +48,7 @@ export function useOptimaModelsModalsState() {
  * Reacts the App Menu component
  */
 export function useOptimaAppMenu() {
-  return useOptimaStore(state => state.appMenuComponent);
+  return useOptimaStore(state => state.menuComponent);
 }
 
 /**
@@ -54,12 +58,12 @@ export function useSetOptimaAppMenu(menu: React.ReactNode, debugCallerName: stri
   React.useEffect(() => {
     if (DEBUG_OPTIMA_PLUGGING) console.log(' +PLUG layout', debugCallerName);
     useOptimaStore.setState({
-      appMenuComponent: menu,
+      menuComponent: menu,
     });
     return () => {
       if (DEBUG_OPTIMA_PLUGGING) console.log(' -UNplug layout', debugCallerName);
       useOptimaStore.setState({
-        appMenuComponent: null,
+        menuComponent: null,
       });
     };
   }, [debugCallerName, menu]);
