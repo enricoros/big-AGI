@@ -62,16 +62,16 @@ export async function runPersonaOnConversationHead(
     conversationId,
     parallelViewCount,
     abortController.signal,
-    (accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => {
+    (messageOverwrite: StreamMessageUpdate, messageComplete: boolean) => {
       if (abortController.signal.aborted) return;
 
       // typing sound
       // if (messageComplete)
       //   AudioGenerator.basicAstralChimes({ volume: 0.4 }, 0, 2, 250);
 
-      cHandler.messageEdit(assistantMessageId, accumulatedMessage, messageComplete, false);
+      cHandler.messageEdit(assistantMessageId, messageOverwrite, messageComplete, false);
 
-      autoSpeaker?.handleMessage(accumulatedMessage, messageComplete);
+      autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
     },
   );
 
@@ -96,7 +96,7 @@ export async function runPersonaOnConversationHead(
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
-export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
+export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete' | 'metadata'>;
 
 export async function llmGenerateContentStream(
   llmId: DLLMId,
@@ -105,7 +105,7 @@ export async function llmGenerateContentStream(
   aixContextRef: AixAPI_ContextChatStream['ref'],
   parallelViewCount: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   abortSignal: AbortSignal,
-  onMessageUpdated: (incrementalMessage: Partial<StreamMessageUpdate>, messageComplete: boolean) => void,
+  onMessageUpdated: (messageOverwrite: StreamMessageUpdate, messageComplete: boolean) => void,
 ): Promise<StreamMessageStatus> {
 
   const returnStatus: StreamMessageStatus = { outcome: 'success', errorMessage: undefined };
@@ -113,7 +113,7 @@ export async function llmGenerateContentStream(
   const throttler = new ThrottleFunctionCall(parallelViewCount);
 
   // TODO: should clean this up once we have multi-fragment streaming/recombination
-  const incrementalAnswer: StreamMessageUpdate = {
+  const messageOverwrite: StreamMessageUpdate = {
     fragments: [],
   };
 
@@ -122,16 +122,19 @@ export async function llmGenerateContentStream(
     await aixStreamingChatGenerate(llmId, aixChatGenerate, aixContextName, aixContextRef, true, abortSignal,
       (update: StreamingClientUpdate, done: boolean) => {
 
-        // update the incremental message
-        if (update.fragments) incrementalAnswer.fragments = update.fragments;
-        if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
-        if (update.typing !== undefined)
-          incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
+        // convert the StreamingClientUpdate to the StreamMessageUpdate
+        const { typing, stats, fragments, originLLM, metadata } = update;
+        messageOverwrite.pendingIncomplete = typing ? true : undefined;
+        messageOverwrite.fragments = fragments;
+        messageOverwrite.originLLM = originLLM;
+        if (metadata)
+          messageOverwrite.metadata = metadata;
 
-        // throttle the update
-        throttler.handleUpdate(() => {
-          onMessageUpdated(incrementalAnswer, false);
-        });
+        console.log('overwrite', messageOverwrite, stats);
+
+        // throttle the update - and skip the last done message
+        if (!done)
+          throttler.decimate(() => onMessageUpdated(messageOverwrite, done));
       },
     );
 
@@ -139,7 +142,7 @@ export async function llmGenerateContentStream(
     // if (error?.name !== 'AbortError') {
       console.error('Fetch request error:', error);
       const errorFragment = createErrorContentFragment(`Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}`);
-      incrementalAnswer.fragments.push(errorFragment);
+      messageOverwrite.fragments.push(errorFragment);
       returnStatus.outcome = 'errored';
       returnStatus.errorMessage = error.message;
     // } else
@@ -147,9 +150,7 @@ export async function llmGenerateContentStream(
   }
 
   // Ensure the last content is flushed out, and mark as complete
-  throttler.finalize(() => {
-    onMessageUpdated({ ...incrementalAnswer, pendingIncomplete: undefined }, true);
-  });
+  throttler.finalize(() => onMessageUpdated(messageOverwrite, true));
 
   return returnStatus;
 }
@@ -167,7 +168,7 @@ export class ThrottleFunctionCall {
         : baseDelayMs;
   }
 
-  handleUpdate(fn: () => void): void {
+  decimate(fn: () => void): void {
     const now = Date.now();
     if (this.throttleDelay === 0 || this.lastCallTime === 0 || now - this.lastCallTime >= this.throttleDelay) {
       fn();
@@ -177,5 +178,6 @@ export class ThrottleFunctionCall {
 
   finalize(fn: () => void): void {
     fn(); // Always execute the final update
+    this.lastCallTime = 0; // Reset the throttle
   }
 }

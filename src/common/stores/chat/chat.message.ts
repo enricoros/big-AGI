@@ -41,6 +41,7 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 
 export interface DMessageMetadata {
   inReplyToText?: string;           // text this was in reply to
+  ranOutOfTokens?: true;            // if the message was cut off due to token limit
 }
 
 

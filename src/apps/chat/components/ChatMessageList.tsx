@@ -79,6 +79,13 @@ export function ChatMessageList(props: {
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
+  const handleMessageContinue = React.useCallback(async (_messageId: DMessageId /* Ignored for now */) => {
+    if (conversationId && conversationHandler) {
+      conversationHandler.messageAppend(createDMessageTextContent('user', 'Continue')); // [chat] append user:Continue
+      await onConversationExecuteHistory(conversationId);
+    }
+  }, [conversationHandler, conversationId, onConversationExecuteHistory]);
+
 
   // message menu methods proxy
 
@@ -290,6 +297,7 @@ export function ChatMessageList(props: {
               onMessageAssistantFrom={handleMessageAssistantFrom}
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}
+              onMessageContinue={handleMessageContinue}
               onMessageDelete={handleMessageDelete}
               onMessageFragmentAppend={handleMessageAppendFragment}
               onMessageFragmentDelete={handleMessageDeleteFragment}

@@ -2,7 +2,8 @@ import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.
 import type { DLLMId } from '~/modules/llms/store-llms';
 import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DMessageContentFragment, DMessageFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
 
@@ -12,11 +13,23 @@ import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatG
 import { PartReassembler } from './PartReassembler';
 
 
-export type StreamingClientUpdate = Partial<{
-  fragments: DMessageFragment[];
+export type StreamingClientUpdate = {
+  // interpreted
   typing: boolean;
+  stats?: {
+    chatIn?: number,
+    chatOut?: number,
+    chatOutRate?: number,
+    chatTimeInner?: number,
+  };
+
+  // replacers in DMessage
+  fragments: DMessageContentFragment[];
   originLLM: string;
-}>;
+
+  // additive to DMessage
+  metadata?: DMessageMetadata;
+};
 
 
 export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
@@ -28,7 +41,7 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
   streaming: boolean,
   abortSignal: AbortSignal,
   onUpdate?: (update: StreamingClientUpdate, done: boolean) => void,
-): Promise<{ fragments: DMessageContentFragment[] }> {
+): Promise<StreamingClientUpdate> {
 
   // Aix Access
   const { llm, vendor } = findVendorForLlmOrThrow<TSourceSetup, TAccess>(llmId);
@@ -102,9 +115,9 @@ async function _aix_LL_ChatGenerateContent(
   abortSignal: AbortSignal,
   // TODO: improve onUpdate to have a better signature
   onUpdate?: (update: StreamingClientUpdate, done: boolean) => void,
-): Promise<{ fragments: DMessageContentFragment[] }> {
+): Promise<StreamingClientUpdate> {
 
-  const sampleFC: boolean = false; // aixModel.id.indexOf('models/gemini') === -1;
+  // const sampleFC: boolean = false; // aixModel.id.indexOf('models/gemini') === -1;
   const sampleCE: boolean = false; // aixModel.id.indexOf('models/gemini') !== -1;
 
   // if (sampleFC) {
@@ -152,20 +165,61 @@ async function _aix_LL_ChatGenerateContent(
     { signal: abortSignal },
   );
 
+
+  let messageAccumulator: StreamingClientUpdate = {
+    typing: true,
+    // stats: not added until we have it
+    fragments: [],
+    originLLM: aixModel.id,
+    // metadata: not set because additive and overwriting when set
+  };
+
   const partReassembler = new PartReassembler();
 
   try {
     for await (const update of operation) {
       console.log('update', update);
+
+      // reassemble the particles to fragments[]
       partReassembler.reassembleParticle(update);
+      messageAccumulator = {
+        ...messageAccumulator,
+        fragments: [...partReassembler.reassembedFragments],
+      };
 
-      const fragments = partReassembler.reassembedFragments;
-      console.log('fragments', fragments);
-      onUpdate?.({ fragments: [...fragments], typing: true }, false);
+      if ('cg' in update) {
+        switch (update.cg) {
+          case 'end':
+            // NOTE: do something with update.reason?
+            // handle the stop reason
+            switch (update.tokenStopReason) {
+              case 'out-of-tokens':
+                messageAccumulator.metadata = {
+                  ...messageAccumulator.metadata,
+                  ranOutOfTokens: true,
+                };
+                break;
+              case 'cg-issue':              // error fragment already added before
+              case 'filter-content':        // inline text message shall have been added
+              case 'filter-recitation':     // inline text message shall have been added
+              case 'ok':                    // content
+              case 'ok-tool_invocations':   // content + tool invocation
+                break;
+            }
+            break;
 
-      if ('cg' in update && update.cg === 'set-model') {
-        onUpdate?.({ originLLM: update.name }, false);
+          case 'set-model':
+            messageAccumulator.originLLM = update.name;
+            break;
+
+          case 'update-counts':
+            messageAccumulator.stats = update.counts;
+            break;
+        }
       }
+
+      // send the streaming update
+      onUpdate?.(messageAccumulator, false);
     }
   } catch (error) {
     if (error instanceof Error && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'))) {
@@ -177,9 +231,15 @@ async function _aix_LL_ChatGenerateContent(
 
   console.log('HERE', abortSignal.aborted ? 'client-initiated ABORTED' : '');
 
-  onUpdate?.({ typing: false }, true);
-
-  return {
-    fragments: partReassembler.reassembedFragments,
+  // and we're done
+  messageAccumulator = {
+    ...messageAccumulator,
+    typing: false,
   };
+
+  // streaming update
+  onUpdate?.(messageAccumulator, true);
+
+  // return the final accumulated message
+  return messageAccumulator;
 }
