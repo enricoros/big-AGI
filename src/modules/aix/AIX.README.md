@@ -20,25 +20,26 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 
 ## AIX Providers support
 
-| Service    | Chat       | Function Calling | Multi-Modal Input | Streaming | Idiosyncratic | 
-|------------|------------|------------------|-------------------|-----------|---------------|
-| Anthropic  | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  |               |
-| Azure      | ✅          | ✅                |                   | Yes + 📦  |               |
-| Deepseek   | ✅          | ❌ (rejected)     |                   | Yes + 📦  |               |
-| Gemini     | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  | Code ex.: ✅   |
-| Groq       | ✅          | ✅ + Parallel     |                   | Yes + 📦  |               |
-| LM Studio  | ✅          | ❌ (not working)  |                   | Yes  + 📦 |               |
-| Local AI   | ✅          | ✅                |                   | Yes  + 📦 |               |
-| Mistral    | ✅          | ✅                |                   | Yes  + 📦 |               |
-| OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | Yes + 📦  |               |
-| OpenRouter | ✅          | ❌ (inconsistent) |                   | Yes + 📦  |               |
-| Perplexity | ✅          | ❌ (rejected)     |                   | Yes + 📦  |               |
-| TogetherAI | ✅          | ✅                |                   | Yes + 📦  |               |
-| Ollama     | ❌ (broken) | ?                |                   |           |               |
+| Service    | Chat       | Function Calling | Multi-Modal Input | Cont. (1) | Streaming | Idiosyncratic | 
+|------------|------------|------------------|-------------------|-----------|-----------|---------------|
+| Anthropic  | ✅          | ✅ + Parallel     | Img: ✅            | ✅         | Yes + 📦  |               |
+| Azure      | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
+| Deepseek   | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
+| Gemini     | ✅          | ✅ + Parallel     | Img: ✅            | ✅         | Yes + 📦  | Code ex.: ✅   |
+| Groq       | ✅          | ✅ + Parallel     |                   | ✅         | Yes + 📦  |               |
+| LM Studio  | ✅          | ❌ (not working)  |                   | ❌         | Yes  + 📦 |               |
+| Local AI   | ✅          | ✅                |                   | ❌         | Yes  + 📦 |               |
+| Mistral    | ✅          | ✅                |                   | ✅         | Yes  + 📦 |               |
+| OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | ✅         | Yes + 📦  |               |
+| OpenRouter | ✅          | ❌ (inconsistent) |                   | ✅         | Yes + 📦  |               |
+| Perplexity | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
+| TogetherAI | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
+| Ollama (2) | ❌ (broken) | ?                |                   |           |           |               |
 
 Notes:
 
-- Ollama has not been ported to AIX yet due to the custom APIs.
+- 1: Continuation marks: a. sends reason=max-tokens (streaming/non-streaming), b.
+- 2: Ollama has not been ported to AIX yet due to the custom APIs.
 
 ## 1. System Architecture
 

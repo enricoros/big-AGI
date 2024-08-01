@@ -152,19 +152,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
           Object.assign(responseMessage, delta);
 
-          // Unused for now
-          // if (delta.stop_reason) {
-          //   switch (delta.stop_reason) {
-          //     case 'end_turn':
-          //       break;
-          //     case 'max_tokens':
-          //       break;
-          //     case 'stop_sequence':
-          //       break;
-          //     case'tool_use':
-          //       break;
-          //   }
-          // }
+          // -> Token Stop Reason
+          const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
+          if (tokenStopReason !== null)
+            pt.setTokenStopReason(tokenStopReason);
 
           if (usage?.output_tokens && messageStartTime) {
             const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
@@ -222,8 +213,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const isLastBlock = i === content.length - 1;
       switch (contentBlock.type) {
         case 'text':
-          const hitMaxTokens = (isLastBlock && stop_reason === 'max_tokens') ? ` ${IssueSymbols.GenMaxTokens}` : '';
-          pt.appendText(contentBlock.text + hitMaxTokens);
+          pt.appendText(contentBlock.text);
           break;
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
@@ -234,6 +224,11 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
       }
     }
+
+    // -> Token Stop Reason
+    const tokenStopReason = _fromAnthropicStopReason(stop_reason);
+    if (tokenStopReason !== null)
+      pt.setTokenStopReason(tokenStopReason);
 
     // -> Stats
     if (usage) {
@@ -247,4 +242,23 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       });
     }
   };
+}
+
+
+function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.Response['stop_reason']) {
+  switch (stopReason) {
+
+    case 'end_turn':
+    case 'stop_sequence':
+      return 'ok';
+
+    case 'tool_use':
+      return 'ok-tool_invocations';
+
+    case 'max_tokens':
+      return 'out-of-tokens';
+
+    default:
+      return null;
+  }
 }
