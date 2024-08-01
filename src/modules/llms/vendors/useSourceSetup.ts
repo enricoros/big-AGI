@@ -33,6 +33,7 @@ export function useSourceSetup<TSourceSetup, TAccess, TLLMOptions>(sourceId: DMo
       partialSetup: source?.setup ?? null, // NOTE: do not use - prefer ACCESS; only used in 1 edge case now
       access,
       sourceHasLLMs: !!sourceLLMs.length,
+      sourceHasVisibleLLMs: !!sourceLLMs.find(llm => !llm.hidden),
       sourceSetupValid,
       updateSourceSetup: state.updateSourceSetup,
     };

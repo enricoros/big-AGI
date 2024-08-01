@@ -1,6 +1,8 @@
 import * as React from 'react';
 
 import { Box, Button, Typography } from '@mui/joy';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
@@ -19,7 +21,7 @@ import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor
 export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // external state
-  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
+  const { source, sourceHasLLMs, sourceHasVisibleLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
     useSourceSetup(props.sourceId, ModelVendorOpenRouter);
 
   // derived state
@@ -51,6 +53,13 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
       // .forEach(llm => updateLLM(llm.id, { hidden: true }));
       .forEach(llm => removeLLM(llm.id));
   };
+
+  const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
+    const { llms, updateLLM } = useModelsStore.getState();
+    llms
+      .filter(llm => llm.sId === props.sourceId)
+      .forEach(llm => updateLLM(llm.id, { hidden: !visible }));
+  }, [props.sourceId]);
 
   return <>
 
@@ -91,10 +100,17 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
             OpenRouter Login
           </Button>
           <Button
-            color='neutral' variant='outlined'
+            color='neutral' variant='outlined' size='sm'
             onClick={handleHideNonFreeLLMs}
           >
-            Remove Non-Free 🎁
+            Only Free 🎁
+          </Button>
+          <Button
+            color='neutral' variant='outlined' size='sm'
+            onClick={() => handleSetVisibilityAll(!sourceHasVisibleLLMs)}
+            endDecorator={sourceHasVisibleLLMs ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+          >
+            {sourceHasVisibleLLMs ? 'Hide' : 'Show'} All
           </Button>
         </Box>
       }
