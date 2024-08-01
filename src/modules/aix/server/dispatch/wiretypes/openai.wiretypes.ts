@@ -346,7 +346,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     role: z.literal('assistant').optional()
       .nullable(), // [Deepseek] added .nullable()
     content: z.string().nullable().optional(),
-    tool_calls: z.array(ChunkDeltaToolCalls_schema).optional(),
+    tool_calls: z.array(ChunkDeltaToolCalls_schema).optional()
+      .nullable(), // [TogetherAI] added .nullable(), see https://github.com/togethercomputer/together-python/issues/160
   });
 
   const ChunkChoice_schema = z.object({
