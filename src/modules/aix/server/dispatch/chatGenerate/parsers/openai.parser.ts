@@ -185,13 +185,23 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
   return function(pt: IParticleTransmitter, eventData: string) {
 
     // Throws on malformed event data
-    const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(JSON.parse(eventData));
+    const completeData = JSON.parse(eventData);
 
-    // [OpenAI] we don't know if error messages are sent in the non-streaming version - for now we log
-    if (json.error)
-      console.log('AIX: OpenAI-dispatch-NS error:', json.error);
-    if (json.warning)
-      console.log('AIX: OpenAI-dispatch-NS warning:', json.warning);
+    // [OpenRouter] transmits upstream errors as a single field here
+    // Note: we perform pre-decoding as the parser will throw on error
+    if (completeData.error) {
+      // An upstream error will be transmitted as text (throw to transmit as 'error')
+      if ('message' in completeData.error && 'code' in completeData.error)
+        return pt.setDialectTerminatingIssue(completeData.error.message, IssueSymbols.Generic);
+      else
+        console.log('AIX: OpenAI-dispatch-NS error:', completeData.error);
+    }
+    // [OpenAI] we don't know yet if warning messages are sent in non-streaming - for now we log
+    if (completeData.warning)
+      console.log('AIX: OpenAI-dispatch-NS warning:', completeData.warning);
+
+    // Parse the complete response
+    const json = OpenAIWire_API_Chat_Completions.Response_schema.parse(completeData);
 
     // -> Model
     if (json.model)
