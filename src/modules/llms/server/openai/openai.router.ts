@@ -118,6 +118,8 @@ export const llmOpenAIRouter = createTRPCRouter({
           .map((model): ModelDescriptionSchema => {
             const { id: deploymentRef, model: openAIModelId } = model;
             const { id: _deleted, label, ...rest } = azureModelToModelDescription(deploymentRef, openAIModelId, model.created_at, model.updated_at);
+            // unhide all models
+            delete rest.hidden;
             return {
               id: deploymentRef,
               label: `${label} (${deploymentRef})`,
