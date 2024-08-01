@@ -76,7 +76,11 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
 
     // [logging - Connection error] candidate for the logging system
     const errorCause: object | undefined = error ? error?.cause ?? undefined : undefined;
-    console.error(`[${method}] ${moduleName} error (network):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
+
+    // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
+    //       Consider we're also throwing the same, so there will likely be further logging.
+    if (SERVER_DEBUG_WIRE)
+      console.warn(`[${method}] ${moduleName} error (network):`, errorCause || error /* circular struct, don't use JSON.stringify.. */);
 
     // Handle Connection errors - HTTP 400
     throw new TRPCError({
@@ -114,7 +118,7 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
         + (response.statusText || '')
         + (payload
           ? ` - ${safeErrorString(payload)}` : '')
-         + (payload?.error?.failed_generation // [Groq]
+        + (payload?.error?.failed_generation // [Groq]
           ? ` - failed_generation: ${payload.error.failed_generation}` : '')
         + (response.status === 403
           ? ` - is "${url}" accessible by the server?` : '')
