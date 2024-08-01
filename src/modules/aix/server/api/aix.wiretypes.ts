@@ -439,7 +439,7 @@ export namespace AixWire_Particles {
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'set-model', name: string }
     | { cg: 'update-counts', counts: Partial<ChatGenerateCounts> }
-    | { _debug: 'request', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
+    | { cg: '_debugRequest', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
 
   export type CGEndReason =     // the reason for the end of the chat generation
     | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sensds the 'message_stop' event

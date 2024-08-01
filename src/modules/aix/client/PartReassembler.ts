@@ -18,6 +18,7 @@ export class PartReassembler {
   reassembleParticle(op: AixWire_Particles.ChatGenerateOp): void {
     let isDebug = false;
     switch (true) {
+
       // TextParticleOp
       case 't' in op:
         this.onAppendText(op);
@@ -50,26 +51,20 @@ export class PartReassembler {
             this.onIssue(op);
             break;
 
-          // ignored
-          // case 'start':
-          //   break;
-
           // handled outside
           case 'end':
           case 'set-model':
           case 'update-counts':
             break;
 
+          case '_debugRequest':
+            isDebug = true;
+            devMode_AixLastDispatchRequest = { ...op.request, particles: [] };
+            break;
+
           default:
             this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected ChatGenerateOp: ${JSON.stringify(op)}`));
         }
-        break;
-
-      // Debug:
-      case '_debug' in op:
-        isDebug = true;
-        if (op._debug === 'request')
-          devMode_AixLastDispatchRequest = { ...op.request, particles: [] };
         break;
 
       default:

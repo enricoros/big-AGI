@@ -13,7 +13,6 @@ export const IssueSymbols = {
   PromptBlocked: '🚫',
   Recitation: '🦜',
   Language: '🌐',
-  GenMaxTokens: '🧱',
 };
 
 
@@ -123,7 +122,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     // [security] only emit in development, as it may contain sensitive information
     if (process.env.NODE_ENV !== 'development') return;
     this.transmissionQueue.push({
-      _debug: 'request',
+      cg: '_debugRequest',
       security: 'dev-env',
       request: {
         url,
@@ -146,8 +145,6 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
     if (SERVER_DEBUG_WIRE)
       console.log('|token-stop|', reason);
-    if (reason === 'out-of-tokens')
-      this.appendText(` ${IssueSymbols.GenMaxTokens}`);
     this.tokenStopReason = reason;
   }
 
