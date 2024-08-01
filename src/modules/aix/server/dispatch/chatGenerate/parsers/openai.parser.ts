@@ -54,8 +54,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // Throws on malformed event data
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
-    const parsedData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
-    const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(parsedData);
+    const chunkData = JSON.parse(eventData); // this is here just for ease of breakpoint, otherwise it could be inlined
+    const json = OpenAIWire_API_Chat_Completions.ChunkResponse_schema.parse(chunkData);
 
     // -> Model
     if (!hasBegun && json.model) {
@@ -164,13 +164,16 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
       } // .choices.tool_calls[]
 
-      // Finish reason: we don't really need it
-      // Empirically, different dialects will have different reasons for stopping
-      // if (finish_reason)
-      //   pt.setFinishReason(... some mapping ...);
+      // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
+      if (finish_reason) {
+        const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+        if (tokenStopReason !== null)
+          pt.setTokenStopReason(tokenStopReason);
+      }
+
       // Note: not needed anymore - Workaround for implementations that don't send the [DONE] event
       // if (finish_reason === 'max_tokens')
-      //   pt.terminateParser('finish-reason');
+      //   pt.setDialectTerminatingIssue('finish-reason');
 
     } // .choices[]
 
@@ -248,10 +251,45 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         pt.endMessagePart();
       } // .choices.tool_calls[]
 
-      // Finish reason: we don't really need it
-      // ...
+      // Token Stop Reason - expected to be set
+      const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+      if (tokenStopReason !== null)
+        pt.setTokenStopReason(tokenStopReason);
 
     } // .choices[]
 
   };
+}
+
+
+function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
+  // expected: can be missing or nullified in certain cases - both for the streaming and non-streaming versions
+  if (!finish_reason)
+    return null;
+  switch (finish_reason) {
+
+    // [OpenAI] normal reach of a stop condition
+    case 'stop':
+    case 'stop_sequence': // [OpenRouter] Anthropic Claude 1
+    case 'end_turn': // [OpenRouter] Anthropic Claude 3.5 backend
+    case 'COMPLETE': // [OpenRouter] Command R+
+    case 'eos': // [OpenRouter] Phind: CodeLlama
+      return 'ok';
+
+    // [OpenAI] finished due to requesting tool+ to be called
+    case 'tool_calls':
+      return 'ok-tool_invocations';
+
+    // [OpenAI] broken due to reaching the max tokens limit
+    case 'length':
+      return 'out-of-tokens';
+
+    // [OpenAI] broken due to filtering
+    case 'content_filter':
+      return 'filter-content';
+  }
+
+  // Developers: show more finish reasons (not under flag for now, so we can add to the supported set)
+  console.log('AIX: OpenAI-dispatch unexpected finish_reason:', finish_reason);
+  return null;
 }

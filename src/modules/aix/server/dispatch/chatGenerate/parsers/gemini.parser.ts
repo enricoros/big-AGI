@@ -50,31 +50,8 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
     if (candidate0.index !== 0)
       throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
-    // handle missing content
-    if (!candidate0.content) {
-      switch (candidate0.finishReason) {
-
-        case 'MAX_TOKENS':
-          // NOTE: this will show up in the chat as a message as a brick wall
-          // and without the " [Gemini Issue]: Interrupted.." prefix, as it's written in the history
-          // This can be changed in the future?
-          pt.appendText(` ${IssueSymbols.GenMaxTokens}` /* Interrupted: MAX_TOKENS reached */);
-          return pt.setEnded('issue-dialect');
-
-        case 'RECITATION':
-          return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
-
-        case 'SAFETY':
-          return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null);
-
-        default:
-          throw new Error(`server response missing content (finishReason: ${candidate0?.finishReason})`);
-
-      }
-    }
-
     // see the message architecture
-    for (const mPart of candidate0.content.parts) {
+    for (const mPart of (candidate0.content?.parts || [])) {
       switch (true) {
 
         // <- TextPart
@@ -113,6 +90,37 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
 
         default:
           throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
+      }
+    }
+
+    // -> Token Stop Reason
+    if (candidate0.finishReason) {
+      switch (candidate0.finishReason) {
+        case 'STOP':
+          // this is expected for every fragment up to the end, when it may switch to one of the reasons below in the last packet
+          // we cannot assume this signals a good ending, however it will be `pt` to set it to 'ok' if not set to an issue by the end
+          break;
+
+        case 'MAX_TOKENS':
+          pt.setTokenStopReason('out-of-tokens');
+          // NOTE: we call setEnded instread of setDialectTerminatingIssue, because we don't want an extra message appended,
+          // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
+          return pt.setEnded('issue-dialect');
+
+        case 'RECITATION':
+          pt.setTokenStopReason('filter-recitation');
+          return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
+
+        case 'SAFETY':
+          pt.setTokenStopReason('filter-content');
+          return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null);
+
+        case 'LANGUAGE':
+          pt.setTokenStopReason('filter-content');
+          return pt.setDialectTerminatingIssue(`Generation stopped due to LANGUAGE`, IssueSymbols.Language);
+
+        default:
+          throw new Error(`unexpected empty generation (finish reason: ${candidate0?.finishReason})`);
       }
     }
 

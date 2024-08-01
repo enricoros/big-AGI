@@ -435,13 +435,13 @@ export namespace AixWire_Particles {
 
   type ChatControlOp =
   // | { cg: 'start' } // not really used for now
-    | { cg: 'end', reason: CGEndReason }
+    | { cg: 'end', reason: CGEndReason, tokenStopReason: GCTokenStopReason }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'set-model', name: string }
     | { cg: 'update-counts', counts: Partial<ChatGenerateCounts> }
     | { _debug: 'request', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
 
-  export type CGEndReason =
+  export type CGEndReason =     // the reason for the end of the chat generation
     | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sensds the 'message_stop' event
     | 'done-dispatch-aborted'   // this shall never see the light of day, as it was a reaction to the intake being aborted first
     | 'done-dispatch-closed'    // dispatch connection closed
@@ -449,8 +449,20 @@ export namespace AixWire_Particles {
     | 'issue-rpc';              // ended because of an issue
 
   export type CGIssueId =
-    | 'dispatch-prepare' | 'dispatch-fetch' | 'dispatch-read' | 'dispatch-parse' // 4 phases of dispatch
-    | 'dialect-issue';
+    | 'dialect-issue'           // when 'issue-dialect'
+    | 'dispatch-prepare'        // when 'issue-rpc', the 4 phases of GC dispatch
+    | 'dispatch-fetch'
+    | 'dispatch-read'
+    | 'dispatch-parse';
+
+  export type GCTokenStopReason =
+    | 'ok'                      // clean, including reaching 'stop sequences'
+    | 'ok-tool_invocations'     // clean & tool invocations
+    // non-clean
+    | 'cg-issue'                // chat-generation issue (see CGIssueId)
+    | 'filter-content'          // content filter (e.g. profanity)
+    | 'filter-recitation'       // recitation filter (e.g. recitation)
+    | 'out-of-tokens';          // got out of tokens
 
   export type ChatGenerateCounts = {
     chatIn?: number,

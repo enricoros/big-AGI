@@ -12,6 +12,7 @@ export const IssueSymbols = {
   Generic: '❌',
   PromptBlocked: '🚫',
   Recitation: '🦜',
+  Language: '🌐',
   GenMaxTokens: '🧱',
 };
 
@@ -39,13 +40,16 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   // State machinery
   private lastFunctionCallParticle: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }> | null = null;
 
+  // Termination
+  private terminationReason: AixWire_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
+
+  // Token stop reason
+  private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
+
   // Counters
   private accCounts: AixWire_Particles.ChatGenerateCounts | undefined = undefined;
   private sentCounts: boolean = false;
   private freshCounts: boolean = false;
-
-  // Termination
-  private terminationReason: AixWire_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
 
 
   constructor(private readonly prettyDialect: string, _throttleTimeMs: number | undefined) {
@@ -84,9 +88,11 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
     // Termination
     if (this.terminationReason) {
+      const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-rpc';
       this.transmissionQueue.push({
         cg: 'end',
         reason: this.terminationReason,
+        tokenStopReason: this.tokenStopReason || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
       });
       // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
       // this.terminationReason = null;
@@ -135,6 +141,14 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (SERVER_DEBUG_WIRE)
       console.log('|terminate|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
     this.terminationReason = reason;
+  }
+
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
+    if (SERVER_DEBUG_WIRE)
+      console.log('|token-stop|', reason);
+    if (reason === 'out-of-tokens')
+      this.appendText(` ${IssueSymbols.GenMaxTokens}`);
+    this.tokenStopReason = reason;
   }
 
   /** End the current part and flush it */
