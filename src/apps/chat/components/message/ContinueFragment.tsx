@@ -10,7 +10,7 @@ import { ContentPartPlaceholder } from './fragments-content/ContentPartPlacehold
 
 
 // configuration
-const ACTIVE_COLOR: ColorPaletteProp = 'neutral';
+const ACTIVE_COLOR: ColorPaletteProp = 'warning';
 
 
 const containerSx: SxProps = {
