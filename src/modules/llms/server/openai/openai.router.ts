@@ -727,6 +727,6 @@ function parseChatGenerateOutput(message: OpenAIWire_API_Chat_Completions.Respon
   return {
     role: message.role,
     content: message.content,
-    finish_reason: (finish_reason === 'stop' || finish_reason === 'length') ? finish_reason : null,
+    finish_reason: finish_reason === 'stop' ? 'stop' as const : finish_reason === 'length' ? 'length' as const : null,
   };
 }
