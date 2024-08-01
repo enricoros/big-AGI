@@ -345,7 +345,7 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
 export function azureModelToModelDescription(azureDeploymentRef: string, openAIModelIdBase: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
   // if the deployment name mataches an OpenAI model prefix, use that
   const known = _knownOpenAIChatModels.find(base => azureDeploymentRef == base.idPrefix);
-  return fromManualMapping(_knownOpenAIChatModels, known ? azureDeploymentRef : openAIModelIdBase, modelCreated, modelUpdated);
+  return fromManualMapping(_knownOpenAIChatModels, known ? azureDeploymentRef : openAIModelIdBase, modelCreated, modelUpdated, undefined, true);
 }
 
 
@@ -1021,7 +1021,7 @@ type ManualMapping = ({
 } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
 type ManualMappings = ManualMapping[];
 
-function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping): ModelDescriptionSchema {
+function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping, disableSymLink?: boolean): ModelDescriptionSchema {
 
   // find the closest known model, or fall back, or take the last
   const known = mappings.find(base => id === base.idPrefix)
@@ -1031,7 +1031,7 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
 
   // label for symlinks
   let label = known.label;
-  if (known.symLink && id === known.idPrefix)
+  if (!disableSymLink && known.symLink && id === known.idPrefix)
     label = `🔗 ${known.label} → ${known.symLink/*.replace(known.idPrefix, '')*/}`;
 
   // check whether this is a partial map, which indicates an unknown/new variant
