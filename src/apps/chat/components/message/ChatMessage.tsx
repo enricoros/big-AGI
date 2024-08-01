@@ -35,6 +35,7 @@ import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
+import { ContinueFragment } from './ContinueFragment';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { ReplyToBubble } from './ReplyToBubble';
@@ -79,6 +80,7 @@ export function ChatMessage(props: {
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
+  onMessageContinue?: (messageId: string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
@@ -464,6 +466,7 @@ export function ChatMessage(props: {
       {/* (Optional) underlayed top decorator */}
       {props.topDecorator}
 
+
       {/* Message Row: Aside, Fragment[][], Aside2 */}
       <Box role={undefined /* aside | message | ops */} sx={{
         display: 'flex',
@@ -473,22 +476,7 @@ export function ChatMessage(props: {
       }}>
 
 
-        {/* [aside A] Fragments Edit: Apply */}
-        {isEditingText && (
-          <Box sx={messageAsideColumnSx}>
-            {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
-            <Tooltip arrow disableInteractive title='Apply Edits'>
-              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApply} sx={{ mt: 0.25 }}>
-                <CheckRoundedIcon />
-              </IconButton>
-            </Tooltip>
-            <Typography level='body-xs' sx={{ overflowWrap: 'anywhere', mt: 0.25 }}>
-              Done
-            </Typography>
-          </Box>
-        )}
-
-        {/* [aside B] Avatar (Persona) */}
+        {/* [start-Avatar] Avatar (Persona) */}
         {!props.hideAvatar && !isEditingText && (
           <Box sx={isZenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
 
@@ -532,8 +520,23 @@ export function ChatMessage(props: {
           </Box>
         )}
 
+        {/* [start-Edit] Fragments Edit: Apply */}
+        {isEditingText && (
+          <Box sx={messageAsideColumnSx}>
+            {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
+            <Tooltip arrow disableInteractive title='Apply Edits'>
+              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApply} sx={{ mt: 0.25 }}>
+                <CheckRoundedIcon />
+              </IconButton>
+            </Tooltip>
+            <Typography level='body-xs' sx={{ overflowWrap: 'anywhere', mt: 0.25 }}>
+              Done
+            </Typography>
+          </Box>
+        )}
 
-        {/* (many-type) Fragment Classes  */}
+
+        {/* V-Fragments: Image Attachments | Content | Doc Attachments */}
         <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={{
           // style
           flexGrow: 1,  // capture all the space, for edit modes
@@ -598,8 +601,7 @@ export function ChatMessage(props: {
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
           />
-
-          {/* Empty Fragments Edit: if there's no content, have a button to create a new TextContentFragment */}
+          {/* Content Fragments Edit Zero-State: button to create a new TextContentFragment */}
           {isEditingText && !contentFragments.length && (
             <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{ justifyContent: 'flex-start' }}>
               add text ...
@@ -619,9 +621,20 @@ export function ChatMessage(props: {
             />
           )}
 
+          {/* Continue... */}
+          {props.isBottom && !!messageMetadata?.ranOutOfTokens && !!props.onMessageContinue && (
+            <ContinueFragment
+              contentScaling={contentScaling}
+              messageId={messageId}
+              messageRole={messageRole}
+              onContinue={props.onMessageContinue}
+            />
+          )}
+
         </Box>
 
-        {/* Fragments Edit: Cancel */}
+
+        {/* [end-Edit] Fragments Edit: Cancel */}
         {isEditingText && (
           <Box sx={messageAsideColumnSx}>
             {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
