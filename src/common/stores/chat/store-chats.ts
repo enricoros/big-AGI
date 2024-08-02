@@ -7,7 +7,7 @@ import type { SystemPurposeId } from '../../../data';
 import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
 import { convertDConversation_V3_V4 } from '~/modules/trade/trade.types';
 
-import { agiId, agiUuid } from '~/common/util/idUtils';
+import { agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 // Creation dependency on the LiveFile store
@@ -375,7 +375,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
-        // fixup conversations
+        // fixup conversations in-memory
         for (const conversation of (state.conversations || [])) {
           // re-add transient properties
           conversation._abortController = null;
@@ -405,16 +405,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
                 : fragment;
             });
 
-            // cleanup within-v4 - TODO: remove at 2.0.0 ?
+            // cleanup within-v4 - TODO: remove at 2.0.0
             for (const fragment of message.fragments) {
-              // fixup missing fId
-              if (!fragment.fId) {
-                fragment.fId = agiId('chat-dfragment');
-              }
-              // fixup, for attachments without date, use the message date
-              if (isAttachmentFragment(fragment) && !fragment.created) {
-                fragment.created = message.updated || message.created;
-              }
+              // use while in V4
             }
           }
         }
