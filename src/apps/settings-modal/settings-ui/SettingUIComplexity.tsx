@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import type { UIComplexityMode } from '~/common/app.theme';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
-import { UIComplexityMode, useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 const AppearanceOptions: FormSelectOption<UIComplexityMode>[] = [

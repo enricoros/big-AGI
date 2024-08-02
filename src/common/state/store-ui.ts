@@ -2,13 +2,11 @@ import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { ContentScaling } from '~/common/app.theme';
+import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import { browserLangOrUS } from '~/common/util/pwaUtils';
 
 
 // UI Preferences
-
-export type UIComplexityMode = 'minimal' | 'pro' | 'extra';
 
 interface UIPreferencesStore {
 
