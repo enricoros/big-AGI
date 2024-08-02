@@ -11,7 +11,7 @@ import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure
 
 export const importChatGptShareInputSchema = z.union([
   z.object({
-    url: z.string().url().startsWith('https://chat.openai.com/share/'),
+    url: z.string().url().startsWith('https://chatgpt.com/share/'),
   }),
   z.object({
     htmlPage: z.string(),
