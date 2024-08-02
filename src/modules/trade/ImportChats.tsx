@@ -46,7 +46,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
   // derived state
   const isUrl = importMedia === 'link';
   const isSource = importMedia === 'source';
-  const chatGptUrlValid = chatGptUrl.startsWith('https://chat.openai.com/share/') && chatGptUrl.length > 40;
+  const chatGptUrlValid = (chatGptUrl.startsWith('https://chat.openai.com/share/') || chatGptUrl.startsWith('https://chatgpt.com/share/')) && chatGptUrl.length > 40;
 
 
   const handleImportFromFiles = async () => {
@@ -159,12 +159,10 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         <OpenAIIcon sx={{ ml: 'auto', my: 1 }} />
       </Box>
 
-      {isUrl && <InlineError error='Note: this operation may be unreliable as OpenAI is often blocking imports.' severity='warning' sx={{ mt: 0 }} />}
-
       <FormControl>
         {isUrl && <Input
-          variant='outlined' placeholder='https://chat.openai.com/share/...'
-          required error={!chatGptUrlValid}
+          variant='outlined' placeholder='https://chatgpt.com/share/...'
+          required error={!chatGptUrlValid && chatGptUrl.length > 0}
           value={chatGptUrl} onChange={event => setChatGptUrl(event.target.value)}
         />}
         {isSource && <Textarea
@@ -174,6 +172,8 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
           value={chatGptSource} onChange={event => setChatGptSource(event.target.value)}
         />}
       </FormControl>
+
+      {isUrl && chatGptUrlValid && <InlineError error='Note: OpenAI may be blocking imports. Try anyways.' severity='warning' sx={{ mt: 0, boxShadow: 'sm' }} />}
 
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button variant='soft' color='primary' onClick={handleChatGptToggleShown} sx={{ mr: 'auto' }}>

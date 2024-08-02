@@ -10,7 +10,7 @@ const chatGptMessageSchema = z.object({
   }),
   create_time: z.optional(z.number()),
   content: z.object({
-    content_type: z.enum(['text', 'code', 'execution_output']),
+    content_type: z.enum(['text', 'code', 'execution_output', 'model_editable_context']),
     parts: z.optional(z.array(z.string())), // [''] if author.role === 'system', optional if content_type === 'code'
   }),
   status: z.string(),
@@ -68,7 +68,7 @@ const chatGptSharedChatPage = z.object({
 
 export function chatGptParseConversation(htmlPage: string) {
   // extract embedded JSON string
-  const jsonString = htmlPage.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/)?.[1];
+  const jsonString = htmlPage.match(/<script id="__NEXT_DATA__" type="application\/json"[^>]*>(.*?)<\/script>/s)?.[1];
   if (!jsonString)
     throw new TRPCError({
       code: 'BAD_REQUEST',
