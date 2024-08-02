@@ -13,6 +13,10 @@ export function ensureGlobalShortcutHandler() {
 
 function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
 
+  // Quicker-out: if the key is null, stop here
+  if (!event.key)
+    return;
+
   // Quick-out: either the key is escape/left/right, or we have a modifier key pressed -- otherwise we exit
   const lcEventKey = event.key.toLowerCase();
   if (lcEventKey !== 'escape' && lcEventKey !== 'arrowleft' && lcEventKey !== 'arrowright' &&
