@@ -32,7 +32,7 @@ import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
-import { useUIComplexityIsMinimal, useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { ContinueFragment } from './ContinueFragment';
@@ -104,11 +104,11 @@ export function ChatMessage(props: {
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
 
   // external state
-  const zenMode = useUIComplexityIsMinimal();
-  const { adjContentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
+  const { adjContentScaling, doubleClickToEdit, renderMarkdown, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
     adjContentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
     doubleClickToEdit: state.doubleClickToEdit,
     renderMarkdown: state.renderMarkdown,
+    uiComplexityMode: state.complexityMode,
   })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
 
@@ -119,13 +119,13 @@ export function ChatMessage(props: {
     role: messageRole,
     fragments: messageFragments,
     pendingIncomplete: messagePendingIncomplete,
-    avatar: messageAvatar,
     purposeId: messagePurposeId,
     originLLM: messageOriginLLM,
     metadata: messageMetadata,
     created: messageCreated,
     updated: messageUpdated,
   } = props.message;
+  const zenMode = uiComplexityMode === 'minimal';
 
 
   // split the fragments: Image Attachments are rendered as cards, Content is the body (sequence of parts), and other attachment fragments as documents
@@ -421,8 +421,8 @@ export function ChatMessage(props: {
   // avatar
   const showAvatarIcon = !props.hideAvatar && !zenMode;
   const avatarIconEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatarIcon ? makeMessageAvatarIcon(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
-    [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon],
+    () => showAvatarIcon ? makeMessageAvatarIcon(uiComplexityMode, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
+    [messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
   );
 
 
@@ -483,6 +483,7 @@ export function ChatMessage(props: {
             {/* Persona Avatar or Menu Button */}
             <Box
               onClick={(event) => {
+                // [DEBUG][PROD] shift+click to dump the DMessage
                 event.shiftKey && console.log(props.message);
                 handleOpsMenuToggle(event);
               }}
@@ -491,7 +492,7 @@ export function ChatMessage(props: {
               onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
               sx={{ display: 'flex' }}
             >
-              {!isHovering && !opsMenuAnchor && !zenMode ? (
+              {showAvatarIcon && !isHovering && !opsMenuAnchor ? (
                 avatarIconEl
               ) : (
                 <IconButton

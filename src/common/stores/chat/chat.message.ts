@@ -13,9 +13,6 @@ export interface DMessage {
   // pending state (not stored)
   pendingIncomplete?: boolean;        // if true, the message is incomplete (e.g. tokens won't be computed)
 
-  // identity
-  avatar: string | null;              // image URL, or null
-
   // TODO: @deprecated - move to a Persona ID of the persona who wrote it, and still, could be teamwork...
   purposeId?: string;                 // only assistant/system
   originLLM?: string;                 // only assistant - model that generated this message, goes beyond known models
@@ -78,9 +75,6 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
     // pending state
     // pendingIncomplete: false,  // we leave it undefined, same as false
 
-    // identity
-    avatar: null,
-
     // absent
     // purposeId: undefined,
     // originLLM: undefined,
@@ -106,8 +100,6 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     fragments: duplicateDMessageFragments(message.fragments),
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
-
-    avatar: message.avatar,
 
     purposeId: message.purposeId,
     originLLM: message.originLLM,

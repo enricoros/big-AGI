@@ -10,6 +10,7 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
@@ -76,7 +77,7 @@ export interface FolderChangeRequest {
 function ChatDrawerItem(props: {
   // NOTE: always update the Memo comparison if you add or remove props
   item: ChatNavigationItemData,
-  showSymbols: boolean,
+  showSymbols: boolean | 'gif',
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
@@ -194,19 +195,34 @@ function ChatDrawerItem(props: {
   }, [conversationId, deleteArmed, onConversationDeleteNoConfirmation]);
 
 
-  const textSymbol = userSymbol || SystemPurposes[systemPurposeId]?.symbol || '❓';
+  const personaSymbol = userSymbol || SystemPurposes[systemPurposeId]?.symbol || '❓';
+  const personaImageURI = SystemPurposes[systemPurposeId]?.imageUri ?? undefined;
+
 
   const progress = props.bottomBarBasis ? 100 * (searchFrequency || messageCount) / props.bottomBarBasis : 0;
 
   const titleRowComponent = React.useMemo(() => <>
 
     {/* Symbol, if globally enabled */}
-    {props.showSymbols && <ListItemDecorator>
-      {beingGenerated
-        ? (
+    {props.showSymbols && (
+      <ListItemDecorator>
+        {(beingGenerated && props.showSymbols === 'gif') ? (
           <Avatar
-            alt='activity' variant='plain'
+            alt='chat activity'
+            variant='plain'
             src={ANIM_BUSY_TYPING}
+            sx={{
+              width: '1.5rem',
+              height: '1.5rem',
+              borderRadius: 'var(--joy-radius-sm)',
+            }}
+          />
+        ) : beingGenerated ? (
+          <TelegramIcon sx={{ fontSize: 'xl' }} />
+        ) : (personaImageURI && props.showSymbols === 'gif') ? (
+          <Avatar
+            alt={personaSymbol}
+            src={personaImageURI}
             sx={{
               width: '1.5rem',
               height: '1.5rem',
@@ -215,11 +231,11 @@ function ChatDrawerItem(props: {
           />
         ) : (
           <Typography sx={isNew ? { opacity: 0.4, filter: 'grayscale(0.75)' } : undefined}>
-            {/*{isNew ? '' : textSymbol}*/}
-            {textSymbol}
+            {personaSymbol}
           </Typography>
         )}
-    </ListItemDecorator>}
+      </ListItemDecorator>
+    )}
 
     {/* Title */}
     {!isEditingTitle ? (
@@ -264,10 +280,7 @@ function ChatDrawerItem(props: {
       </Box>
     ) : null}
 
-  </>, [
-    beingGenerated, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive,
-    isEditingTitle, isNew, props.showSymbols, searchFrequency, textSymbol, title, userFlagsSummary,
-  ]);
+  </>, [beingGenerated, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (

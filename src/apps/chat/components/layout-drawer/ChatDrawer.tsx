@@ -26,7 +26,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
-import { useUIComplexityIsMinimal, useUIContentScaling } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
@@ -94,8 +94,9 @@ function ChatDrawer(props: {
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
     props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, filterHasDocFragments, navGrouping, searchSorting, showRelativeSize,
   );
-  const contentScaling = useUIContentScaling();
-  const zenMode = useUIComplexityIsMinimal();
+  const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
+  const zenMode = uiComplexityMode === 'minimal';
+  const gifMode = uiComplexityMode === 'extra';
 
 
   // New/Activate/Delete Conversation
@@ -320,7 +321,7 @@ function ChatDrawer(props: {
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
               item={item}
-              showSymbols={showPersonaIcons && !zenMode}
+              showSymbols={!showPersonaIcons ? false : zenMode ? false : gifMode ? 'gif' : true}
               bottomBarBasis={filteredChatsBarBasis}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
