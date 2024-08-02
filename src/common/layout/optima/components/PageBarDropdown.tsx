@@ -133,7 +133,7 @@ function PageBarDropdown<TValue extends string>(props: {
           const _item = props.items[_itemKey];
           const isActive = _itemKey === props.value;
           return _item.type === 'separator' ? (
-            <ListDivider key={`sep-${_item.title || idx}`}>
+            <ListDivider key={_itemKey || `sep-${idx}`}>
               {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, '--Icon-fontSize': 'var(--joy-fontSize-lg)' }}>*/}
               {/*{_item.icon} */}
               {_item.title}

@@ -63,7 +63,7 @@ function LLMDropdown(props: {
       if (!prevSourceId || llm.sId !== prevSourceId) {
         const llmVendor = findVendorById(llm._source?.vId ?? undefined);
         const sourceName = llmVendor?.name || llm.sId;
-        llmItems[`sep-${llm.id}`] = {
+        llmItems[`sep-${llm.sId}`] = {
           type: 'separator',
           title: sourceName,
           icon: llmVendor?.Icon ? <llmVendor.Icon /> : undefined,
