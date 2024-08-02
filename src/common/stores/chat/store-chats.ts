@@ -398,17 +398,17 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
                 if (!validLiveFileIDs.includes(fragment.liveFileId))
                   delete fragment.liveFileId;
 
-              // replace the Content Placeholder fragments [part.pt='ph'] with Error fragments,
-              // to show the aborted ops (instead of just empty blocks)
-              return (isContentFragment(fragment) && fragment.part.pt === 'ph')
-                ? createErrorContentFragment(`${fragment.part.pText} (did not complete)`)
-                : fragment;
+              // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
+              if (isContentFragment(fragment) && fragment.part.pt === 'ph')
+                createErrorContentFragment(`${fragment.part.pText} (did not complete)`);
+
+              return fragment;
             });
 
             // cleanup within-v4 - TODO: remove at 2.0.0
-            for (const fragment of message.fragments) {
-              // use while in V4
-            }
+            // for (const fragment of message.fragments) {
+            //    ...
+            // }
           }
         }
       },
