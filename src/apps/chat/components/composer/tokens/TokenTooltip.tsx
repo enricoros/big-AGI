@@ -1,10 +1,10 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { SxProps } from '@mui/joy/styles/types';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 
 export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, tokenPriceIn?: number, tokenPriceOut?: number): {
@@ -122,7 +122,7 @@ const tooltipMessageSx: SxProps = {
 export function TokenTooltip(props: { message: string | null, color: ColorPaletteProp, placement?: 'top' | 'top-end', children: React.ReactElement }) {
 
   // external state
-  const contentScaling = useUIPreferencesStore(state => state.contentScaling);
+  const contentScaling = useUIContentScaling();
 
   const fontSize = themeScalingMap[adjustContentScaling(contentScaling, -1)]?.blockFontSize ?? undefined;
 

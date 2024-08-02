@@ -8,6 +8,8 @@ import { browserLangOrUS } from '~/common/util/pwaUtils';
 
 // UI Preferences
 
+export type UIComplexityMode = 'minimal' | 'pro' | 'extra';
+
 interface UIPreferencesStore {
 
   // UI Features
@@ -17,6 +19,9 @@ interface UIPreferencesStore {
 
   centerMode: 'narrow' | 'wide' | 'full';
   setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => void;
+
+  complexityMode: UIComplexityMode;
+  setComplexityMode: (complexityMode: UIComplexityMode) => void;
 
   contentScaling: ContentScaling;
   setContentScaling: (contentScaling: ContentScaling) => void;
@@ -38,14 +43,8 @@ interface UIPreferencesStore {
   renderCodeSoftWrap: boolean;
   setRenderCodeSoftWrap: (renderCodeSoftWrap: boolean) => void;
 
-  // showPersonaExamples: boolean;
-  // setShowPersonaExamples: (showPersonaExamples: boolean) => void;
-
   showPersonaFinder: boolean;
   setShowPersonaFinder: (showPersonaFinder: boolean) => void;
-
-  zenMode: 'clean' | 'cleaner';
-  setZenMode: (zenMode: 'clean' | 'cleaner') => void;
 
   // UI Counters
 
@@ -66,6 +65,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       centerMode: 'wide',
       setCenterMode: (centerMode: 'narrow' | 'wide' | 'full') => set({ centerMode }),
+
+      complexityMode: 'pro',
+      setComplexityMode: (complexityMode: UIComplexityMode) => set({ complexityMode }),
 
       // 2024-07-14: 'sm' is the new default, down from 'md'
       contentScaling: 'sm',
@@ -88,15 +90,10 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       renderCodeSoftWrap: false,
       setRenderCodeSoftWrap: (renderCodeSoftWrap: boolean) => set({ renderCodeSoftWrap }),
 
-      // showPersonaExamples: false,
-      // setShowPersonaExamples: (showPersonaExamples: boolean) => set({ showPersonaExamples }),
-
       // Deprecated
       showPersonaFinder: false,
       setShowPersonaFinder: (showPersonaFinder: boolean) => set({ showPersonaFinder }),
 
-      zenMode: 'clean',
-      setZenMode: (zenMode: 'clean' | 'cleaner') => set({ zenMode }),
 
       // UI Counters
 
@@ -135,6 +132,15 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
     },
   ),
 );
+
+
+export function useUIComplexityIsMinimal(): boolean {
+  return useUIPreferencesStore((state) => state.complexityMode === 'minimal');
+}
+
+export function useUIContentScaling(): ContentScaling {
+  return useUIPreferencesStore((state) => state.contentScaling);
+}
 
 
 // former:

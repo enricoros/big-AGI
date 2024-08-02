@@ -4,7 +4,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { SettingContentScaling } from '../settings-modal/settings-ui/SettingContentScaling';
+import { SettingUIComplexity } from '../settings-modal/settings-ui/SettingUIComplexity';
+import { SettingUIContentScaling } from '../settings-modal/settings-ui/SettingUIContentScaling';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -21,12 +22,8 @@ export function LinkChatPageMenuItems(props: {
 
   // external state
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
-  const {
-    renderMarkdown, setRenderMarkdown,
-    zenMode, setZenMode,
-  } = useUIPreferencesStore(useShallow(state => ({
+  const { renderMarkdown, setRenderMarkdown } = useUIPreferencesStore(useShallow(state => ({
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
-    zenMode: state.zenMode, setZenMode: state.setZenMode,
   })));
 
 
@@ -34,16 +31,11 @@ export function LinkChatPageMenuItems(props: {
 
   const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
 
-  const handleZenModeChange = (event: React.ChangeEvent<HTMLInputElement>) => setZenMode(event.target.checked ? 'cleaner' : 'clean');
-
   const { activeLinkId, onDeleteLink } = props;
 
   const handleDeleteLink = React.useCallback(() => {
     activeLinkId && onDeleteLink(activeLinkId);
   }, [activeLinkId, onDeleteLink]);
-
-
-  const zenOn = zenMode === 'cleaner';
 
 
   return <>
@@ -70,18 +62,9 @@ export function LinkChatPageMenuItems(props: {
       />
     </MenuItem>
 
-    <MenuItem onClick={() => setZenMode(zenOn ? 'clean' : 'cleaner')} sx={{ justifyContent: 'space-between' }}>
-      <Typography>
-        Zen
-      </Typography>
-      <Switch
-        checked={zenOn} onChange={handleZenModeChange}
-        // endDecorator={zenOn ? 'On' : 'Off'}
-        slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
-      />
-    </MenuItem>
+    <SettingUIComplexity noLabel />
 
-    <SettingContentScaling noLabel />
+    <SettingUIContentScaling noLabel />
 
     <ListDivider />
 

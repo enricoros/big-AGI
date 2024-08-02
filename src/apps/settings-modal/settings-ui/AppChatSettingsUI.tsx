@@ -8,17 +8,17 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { isPwa } from '~/common/util/pwaUtils';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { SettingContentScaling } from './SettingContentScaling';
+import { SettingUIComplexity } from './SettingUIComplexity';
+import { SettingUIContentScaling } from './SettingUIContentScaling';
 
 
 // configuration
 const SHOW_PURPOSE_FINDER = false;
-
 
 function ModelsSetupButton() {
   return <Button
@@ -44,14 +44,12 @@ export function AppChatSettingsUI() {
     enterIsNewline, setEnterIsNewline,
     renderMarkdown, setRenderMarkdown,
     showPersonaFinder, setShowPersonaFinder,
-    zenMode, setZenMode,
   } = useUIPreferencesStore(useShallow(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
     renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
-    zenMode: state.zenMode, setZenMode: state.setZenMode,
   })));
 
   const handleEnterIsNewlineChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterIsNewline(!event.target.checked);
@@ -102,16 +100,9 @@ export function AppChatSettingsUI() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
 
-    <FormRadioControl
-      title='Appearance'
-      description={zenMode === 'clean' ? 'Show senders' : 'Minimal UI'}
-      options={[
-        { label: 'Clean', value: 'clean' },
-        { label: 'Zen', value: 'cleaner' },
-      ]}
-      value={zenMode} onChange={setZenMode} />
+    <SettingUIComplexity />
 
-    <SettingContentScaling />
+    <SettingUIContentScaling />
 
     {!isPwa() && !isMobile && (
       <FormRadioControl

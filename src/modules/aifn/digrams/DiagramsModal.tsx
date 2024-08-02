@@ -20,7 +20,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
 
@@ -65,7 +65,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
   // external state
   const isMobile = useIsMobile();
-  const contentScaling = useUIPreferencesStore(state => state.contentScaling);
+  const contentScaling = useUIContentScaling();
   const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
 
   // derived state

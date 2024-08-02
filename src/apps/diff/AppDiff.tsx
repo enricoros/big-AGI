@@ -12,7 +12,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { countWords } from '~/common/util/textUtils';
 import { themeScalingMap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { AppSmallContainer } from '../AppSmallContainer';
 
@@ -27,7 +27,7 @@ export function AppDiff() {
 
   // external state
   const isMobile = useIsMobile();
-  const contentScaling = useUIPreferencesStore(state => state.contentScaling);
+  const contentScaling = useUIContentScaling();
   const diffs = useSanityTextDiffs(text2 || '', text1 || '', true);
 
   // memos
