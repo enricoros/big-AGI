@@ -42,7 +42,7 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chats/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
-import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -419,10 +419,28 @@ export function Composer(props: {
 
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
-  useGlobalShortcuts('Composer', React.useMemo(() => [
-    ...(browserSpeechRecognitionCapability().mayWork ? [{ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: recognitionState.isActive ? 'Microphone · Stop & Send' : 'Microphone' }] : []),
-    ...(supportsClipboardRead ? [{ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' }] : []),
-  ], [attachAppendClipboardItems, recognitionState.isActive, toggleRecognition]));
+  useGlobalShortcuts('Composer', React.useMemo(() => {
+    const composerShortcuts: ShortcutObject[] = [];
+    if (supportsClipboardRead)
+      composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
+    if (recognitionState.isActive) {
+      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 1 });
+      composerShortcuts.push({
+        key: ShortcutKey.Esc, action: () => {
+          setMicContinuation(false);
+          toggleRecognition(false);
+        }, description: 'Mic · Stop', level: 1,
+      });
+    } else if (browserSpeechRecognitionCapability().mayWork)
+      composerShortcuts.push({
+        key: 'm', ctrl: true, action: () => {
+          // steal focus from the textarea, in case it has - so that enter cannot work against us
+          (document.activeElement as HTMLElement)?.blur?.();
+          toggleRecognition(false);
+        }, description: 'Microphone',
+      });
+    return composerShortcuts;
+  }, [attachAppendClipboardItems, recognitionState.hasSpeech, recognitionState.isActive, toggleRecognition]));
 
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !recognitionState.errorMessage;

@@ -114,6 +114,7 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
       {/*{!!props.shortcut.altForNonMac && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
       <ShortcutKey onClick={handleClicked}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key.toUpperCase()}</ShortcutKey>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
+      {props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={{ fontSize: 'md' }} />}
     </ShortcutContainer>
   );
 }
@@ -128,7 +129,10 @@ export function StatusBar() {
   // external state
   const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
   const shortcuts = useGlobalShortcutsStore(useShallow(state => {
-    const visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+    let visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+    const maxLevel = Math.max(...visibleShortcuts.map(s => s.level ?? 0));
+    if (maxLevel > 0)
+      visibleShortcuts = visibleShortcuts.filter(s => s.level === maxLevel);
     visibleShortcuts.sort((a, b) => {
       // if they don't have a 'shift', they are sorted first
       if (a.shift !== b.shift)

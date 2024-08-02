@@ -1,11 +1,14 @@
 import * as React from 'react';
 
+import { SvgIcon } from '@mui/joy';
+
 import { useGlobalShortcutsStore } from './store-global-shortcuts';
 
 import { ensureGlobalShortcutHandler } from './globalShortcutsHandler';
 
 
 export const ShortcutKey = {
+  Enter: 'Enter',
   Esc: 'Escape',
   Left: 'ArrowLeft',
   Right: 'ArrowRight',
@@ -19,6 +22,8 @@ export interface ShortcutObject {
   disabled?: boolean;
   action: (() => void) | '_specialPrintShortcuts';
   description?: string;
+  endDecoratorIcon?: typeof SvgIcon;
+  level?: number; // if set, it will exclusively show icons at that level of priority and hide the others
 }
 
 
