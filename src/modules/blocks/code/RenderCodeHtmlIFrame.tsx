@@ -43,7 +43,7 @@ function renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
   });
 }
 
-export function RenderCodeIFrame(props: { htmlCode: string }) {
+export function RenderCodeHtmlIFrame(props: { htmlCode: string }) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   React.useEffect(() => {

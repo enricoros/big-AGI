@@ -9,7 +9,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { HtmlBlock } from '../blocks.types';
 import { OverlayButton, overlayButtonsSx } from '../code/RenderCode';
-import { RenderCodeIFrame } from '~/modules/blocks/code/RenderCodeIFrame';
+import { RenderCodeHtmlIFrame } from '~/modules/blocks/code/RenderCodeHtmlIFrame';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)
@@ -48,7 +48,7 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
 
         {/* Highlighted Code / SVG render */}
         {showHTML
-          ? <RenderCodeIFrame htmlCode={props.htmlBlock.html} />
+          ? <RenderCodeHtmlIFrame htmlCode={props.htmlBlock.html} />
           : <Box>
             <Typography>
               <b>CAUTION</b> - The content you are about to access is an HTML page. It is possible that an
