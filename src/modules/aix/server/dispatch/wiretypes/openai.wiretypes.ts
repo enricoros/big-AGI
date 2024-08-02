@@ -403,6 +403,7 @@ export namespace OpenAIWire_API_Chat_Completions {
         total_tokens: z.number().optional(),
         total_time: z.number().optional(),
       }).optional(),
+      queue_length: z.number().optional(),
     }).optional(),
   });
 
