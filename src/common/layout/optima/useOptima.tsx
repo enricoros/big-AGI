@@ -45,9 +45,11 @@ export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
   useOptimaStore.getState().openPreferences(changeTab);
 }
 
-function _eatMouseEvent(event?: React.MouseEvent) {
-  if (event && 'preventDefault' in event)
-    event.preventDefault();
+function _eatMouseEvent(event?: (React.MouseEvent | React.TouchEvent)) {
+  if (event) {
+    if ('preventDefault' in event) event.preventDefault();
+    // if ('stopPropagation' in event) event.stopPropagation();
+  }
 }
 
 
