@@ -5,11 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Button, Card, CardContent, Divider, Input, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { createDConversationFromJsonV1 } from '~/modules/trade/trade.client';
 import { forgetChatLinkItem, useSharedChatLinkItems } from '~/modules/trade/link/store-link';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { DataAtRestV1 } from '~/common/stores/chat/converters';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
@@ -90,7 +90,7 @@ async function fetchStoredChatV1(objectId: string | null) {
     throw new Error('Unsupported data type: ' + dataType);
 
   // convert to DConversation
-  const restored = createDConversationFromJsonV1(dataObject as any);
+  const restored = DataAtRestV1.recreateConversation(dataObject as any);
   if (!restored)
     throw new Error('Could not restore conversation');
 
