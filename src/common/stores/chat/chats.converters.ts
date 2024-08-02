@@ -1,19 +1,63 @@
-import { SystemPurposeId } from '../../../data';
+import type { SystemPurposeId } from '../../../data';
 
-import { createDConversation, DConversation, type DConversationId } from '~/common/stores/chat/chat.conversation';
-import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
-import { DModelSource } from '~/modules/llms/store-llms';
-import { DFolder } from '~/common/state/store-folders';
+import type { DModelSource } from '~/modules/llms/store-llms';
+
+import type { DFolder } from '~/common/state/store-folders';
+import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
+
+import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
+import { createDMessageTextContent, DMessage } from './chat.message';
+import { createErrorContentFragment, isAttachmentFragment, isContentFragment } from './chat.fragments';
 
 
 export namespace V4ToHeadConverters {
 
-  export function inMemCleanDMessage(_m: DMessage): void {
+  export function inMemHeadCleanDConversation(c: DConversation): void {
+    // re-add transient properties
+    c._abortController = null;
+
+    // fixup .messages[]
+    if (!c.messages)
+      c.messages = [];
+    c.messages.forEach(inMemHeadCleanDMessage);
+  }
+
+
+  /** Used by: chat-store (load), recreation of DMessage */
+  export function inMemHeadCleanDMessage(m: DMessage): void {
+
+    // reset transient properties
+    delete m.pendingIncomplete;
+
+    // cleanup pre-v4 properties (if reimported somehow)
+    delete (m as any).sender;
+    delete (m as any).typing;
+
+    // fixup .fragments[]
+    const validLiveFileIDs = liveFileGetAllValidIDs();
+    for (let i = 0; i < m.fragments.length; i++) {
+      const fragment = m.fragments[i];
+
+      // [GC][LiveFile] remove LiveFile references to invalid objects
+      if (isAttachmentFragment(fragment) && fragment.liveFileId)
+        if (!validLiveFileIDs.includes(fragment.liveFileId))
+          delete fragment.liveFileId;
+
+      // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
+      if (isContentFragment(fragment) && fragment.part.pt === 'ph')
+        m.fragments[i] = createErrorContentFragment(`${fragment.part.pText} (did not complete)`);
+    }
+
+    // run dev upgrades
+    dev_inMemHeadUpgradeDMessage(m);
 
   }
 
-  export function devUpdateAtRestV4s(): void {
-
+  export function dev_inMemHeadUpgradeDMessage(_m: DMessage): void {
+    // cleanup within-v4 - TODO: remove at 2.0.0
+    // for (const fragment of message.fragments) {
+    //    ...
+    // }
   }
 
 }
@@ -186,7 +230,7 @@ export namespace V3StoreDataToHead {
       if (updated) cm.updated = updated;
 
     }
-    V4ToHeadConverters.inMemCleanDMessage(cm);
+    V4ToHeadConverters.inMemHeadCleanDMessage(cm);
     return cm;
   }
 

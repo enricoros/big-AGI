@@ -9,7 +9,7 @@ import { forgetChatLinkItem, useSharedChatLinkItems } from '~/modules/trade/link
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { DataAtRestV1 } from '~/common/stores/chat/converters';
+import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';

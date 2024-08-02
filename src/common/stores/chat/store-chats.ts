@@ -6,17 +6,13 @@ import type { SystemPurposeId } from '../../../data';
 
 import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
 
-import { V3StoreDataToHead } from '~/common/stores/chat/converters';
-
 import { agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
-// Creation dependency on the LiveFile store
-import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
-
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
+import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
+import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
-import { createErrorContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment } from './chat.fragments';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -77,6 +73,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         return newConversation.id;
       },
 
+      /** Used by:
+       * - openAndLoadConversations (via DataAtRestV1.recreateConversation),
+       * - LinkChatViewer(from RestV1),
+       * - ImportChats.handleChatGptLoad(H)
+       */
       importConversation: (conversation: DConversation, preventClash: boolean): DConversationId => {
         const { conversations } = _get();
 
@@ -89,6 +90,10 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             console.warn('Conversation ID clash, changing ID to', conversation.id);
           }
         }
+
+        // every path that leads here should have an equivalent function ran, however, for extra
+        // caution, we sanitize and re-run this here, to upgrade the message to the current version
+        V4ToHeadConverters.inMemHeadCleanDConversation(conversation);
 
         conversation.tokenCount = updateMessagesTokenCounts(conversation.messages, true, 'importConversation');
 
@@ -379,41 +384,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         if (!state) return;
 
         // fixup conversations in-memory
-        for (const conversation of (state.conversations || [])) {
-          // re-add transient properties
-          conversation._abortController = null;
-
-          // fixup .messages[]
-          for (const message of conversation.messages) {
-            // reset transient properties
-            delete message.pendingIncomplete;
-
-            // cleanup pre-v4 properties (if reimported somehow)
-            delete (message as any).sender;
-            delete (message as any).typing;
-
-            // fixup .messages[].fragments[]
-            const validLiveFileIDs = liveFileGetAllValidIDs();
-            message.fragments = message.fragments.map((fragment: DMessageFragment): DMessageFragment => {
-
-              // [GC][LiveFile] remove LiveFile references to invalid objects
-              if (isAttachmentFragment(fragment) && fragment.liveFileId)
-                if (!validLiveFileIDs.includes(fragment.liveFileId))
-                  delete fragment.liveFileId;
-
-              // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
-              if (isContentFragment(fragment) && fragment.part.pt === 'ph')
-                createErrorContentFragment(`${fragment.part.pText} (did not complete)`);
-
-              return fragment;
-            });
-
-            // cleanup within-v4 - TODO: remove at 2.0.0
-            // for (const fragment of message.fragments) {
-            //    ...
-            // }
-          }
-        }
+        (state.conversations || []).forEach(V4ToHeadConverters.inMemHeadCleanDConversation);
       },
 
     }),
