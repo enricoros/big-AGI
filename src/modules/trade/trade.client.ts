@@ -48,7 +48,7 @@ export async function openAndLoadConversations(preventClash: boolean = false): P
       outcome.conversations.push({
         success: false,
         fileName,
-        error: `Invalid file: ${error?.message || error?.toString() || 'unknown error'}`,
+        error: `Issue loading file: ${error?.message || error?.toString() || 'unknown error'}`,
       });
     }
   }
@@ -79,7 +79,7 @@ function loadConversationsFromAtRestV1(fileName: string, obj: any, outcome: Impo
   switch (true) {
 
     // Heuristic (backup): DataAtRestV1.RestAllJsonV1B
-    case hasConversations && hasMessages:
+    case hasConversations && !hasMessages:
       const { conversations, folders } = obj as DataAtRestV1.RestAllJsonV1B;
       for (const conversation of conversations)
         loadSingleChatFromAtRestV1(fileName, conversation, outcome);
