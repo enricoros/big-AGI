@@ -1,6 +1,9 @@
 import { agiUuid } from '~/common/util/idUtils';
 import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
+import type { DLLMId, DModelSourceId } from '~/modules/llms/store-llms';
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+
 
 // Message
 
@@ -32,6 +35,17 @@ export interface DMessage {
 
 export type DMessageId = string;
 export type DMessageRole = 'user' | 'assistant' | 'system';
+
+export type DMessageGenerator = {
+  mgt: 'name';
+  name: string;
+} | {
+  mgt: 'aix';
+  model: string;                      // model that handled the request
+  vId: ModelVendorId;
+  sId: DModelSourceId;
+  mId: DLLMId;
+};
 
 
 // Metadata
