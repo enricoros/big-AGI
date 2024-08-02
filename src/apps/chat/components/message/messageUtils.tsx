@@ -11,6 +11,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { animationColorRainbow } from '~/common/util/animUtils';
+import { UIComplexityMode } from '~/common/app.theme';
 
 
 // Animations
@@ -46,24 +47,32 @@ export const messageZenAsideColumnSx: SxProps = {
 };
 
 export const avatarIconSx = {
-  width: 36,
+  borderRadius: 'sm',
   height: 36,
+  width: 36,
 } as const;
+
+const largerAvatarIconsSx = {
+  ...avatarIconSx,
+  width: 48,
+  height: 48,
+};
 
 
 export function makeMessageAvatarIcon(
-  messageAvatarUrl: string | null,
+  uiComplexityMode: UIComplexityMode,
   messageRole: DMessageRole | string,
   messageOriginLLM: string | undefined,
   messagePurposeId: SystemPurposeId | string | undefined,
   messageIncomplete: boolean,
   larger?: boolean,
 ): React.JSX.Element {
-  const nameByRole = messageRole === 'user' ? 'You' : messageRole === 'assistant' ? 'Assistant' : 'System';
-  if (typeof messageAvatarUrl === 'string' && messageAvatarUrl)
-    return <Avatar alt={nameByRole} src={messageAvatarUrl} />;
 
-  const mascotSx = larger ? { width: 48, height: 48 } : avatarIconSx;
+  const nameOfRole =
+    messageRole === 'user' ? 'You'
+      : messageRole === 'assistant' ? 'Assistant'
+        : 'System';
+
   switch (messageRole) {
     case 'system':
       return <SettingsSuggestIcon sx={avatarIconSx} />;  // https://em-content.zobj.net/thumbs/120/apple/325/robot_1f916.png
@@ -76,23 +85,42 @@ export function makeMessageAvatarIcon(
       const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
       const isReact = messageOriginLLM?.startsWith('react-');
 
-      // animation on incomplete messages
-      if (messageIncomplete)
-        return <Avatar
-          alt={nameByRole} variant='plain'
-          src={isDownload ? ANIM_BUSY_DOWNLOADING
-            : isTextToImage ? ANIM_BUSY_PAINTING
-              : isReact ? ANIM_BUSY_THINKING
-                : ANIM_BUSY_TYPING}
-          sx={{ ...mascotSx, borderRadius: 'sm' }}
-        />;
+      // Extra appearance
+      if (uiComplexityMode === 'extra') {
 
-      // icon: text-to-image
+        // Pending animations (larger too)
+        if (messageIncomplete)
+          return <Avatar
+            variant='plain'
+            alt={nameOfRole}
+            src={isDownload ? ANIM_BUSY_DOWNLOADING
+              : isTextToImage ? ANIM_BUSY_PAINTING
+                : isReact ? ANIM_BUSY_THINKING
+                  : ANIM_BUSY_TYPING}
+            sx={larger ? largerAvatarIconsSx : avatarIconSx}
+          />;
+
+        // Purpose image (if present)
+        const purposeImage = SystemPurposes[messagePurposeId as SystemPurposeId]?.imageUri ?? undefined;
+        if (purposeImage)
+          return <Avatar
+            variant='plain'
+            alt={nameOfRole}
+            src={purposeImage}
+            sx={avatarIconSx}
+          />;
+
+      }
+
+      // mode: text-to-image
       if (isTextToImage)
-        return <FormatPaintOutlinedIcon sx={{
+        return <FormatPaintOutlinedIcon sx={!messageIncomplete ? avatarIconSx : {
           ...avatarIconSx,
-          animation: `${animationColorRainbow} 1s linear 2.66`,
+          animation: `${animationColorRainbow} 1s linear infinite`,
         }} />;
+
+      // TODO: llm symbol (if messageIncomplete)
+      // if (messageIncomplete)
 
       // purpose symbol (if present)
       const symbol = SystemPurposes[messagePurposeId as SystemPurposeId]?.symbol;
@@ -110,7 +138,7 @@ export function makeMessageAvatarIcon(
       // default assistant avatar
       return <SmartToyOutlinedIcon sx={avatarIconSx} />; // https://mui.com/static/images/avatar/2.jpg
   }
-  return <Avatar alt={nameByRole} />;
+  return <Avatar alt={nameOfRole} />;
 }
 
 
