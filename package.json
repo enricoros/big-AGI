@@ -30,7 +30,7 @@
     "@prisma/client": "^5.17.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.11.0",
-    "@tanstack/react-query": "^5.51.15",
+    "@tanstack/react-query": "^5.51.18",
     "@trpc/client": "11.0.0-rc.467",
     "@trpc/next": "11.0.0-rc.467",
     "@trpc/react-query": "11.0.0-rc.467",
@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "0.0.11",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.0.2",
     "@types/nprogress": "^0.2.3",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.4",
