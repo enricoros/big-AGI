@@ -5,7 +5,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Brand } from '~/common/app.config';
-import { DataAtRestV1 } from '~/common/stores/chat/converters';
+import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';

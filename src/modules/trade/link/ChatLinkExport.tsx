@@ -6,7 +6,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { DataAtRestV1 } from '~/common/stores/chat/converters';
+import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { Link } from '~/common/components/Link';
 import { addSnackbar } from '~/common/components/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
