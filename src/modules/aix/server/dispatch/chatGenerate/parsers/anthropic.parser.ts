@@ -33,12 +33,18 @@ import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wire
  * - Begin/End are explicit
  */
 export function createAnthropicMessageParser(): ChatGenerateParseFunction {
+  const parserCreationTimestamp = Date.now();
   let responseMessage: AnthropicWire_API_Message_Create.Response;
   let hasErrored = false;
+  let timeToFirstEvent: number;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
 
   return function(pt: IParticleTransmitter, eventData: string, eventName?: string): void {
+
+    // Time to first event
+    if (timeToFirstEvent === undefined)
+      timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // if we've errored, we should not be receiving more data
     if (hasErrored)
@@ -72,7 +78,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           pt.setModelName(responseMessage.model);
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
-          pt.setCounters({ chatIn: chatInTokens, chatOut: responseMessage.usage.output_tokens });
+          pt.setCounters({
+            chatIn: chatInTokens,
+            chatOut: responseMessage.usage.output_tokens,
+            chatTimeStart: timeToFirstEvent,
+          });
         }
         break;
 
@@ -164,7 +174,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               chatIn: chatInTokens !== undefined ? chatInTokens : -1,
               chatOut: usage.output_tokens,
               chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+              chatTimeStart: timeToFirstEvent,
               chatTimeInner: elapsedTimeSeconds,
+              chatTimeTotal: Date.now() - parserCreationTimestamp,
             });
           }
         } else
@@ -238,7 +250,9 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         chatIn: usage.input_tokens,
         chatOut: usage.output_tokens,
         chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-        chatTimeInner: elapsedTimeSeconds,
+        // chatTimeStart: // meaningless non-streaming
+        // chatTimeInner: // we don't know
+        chatTimeTotal: elapsedTimeSeconds,
       });
     }
   };

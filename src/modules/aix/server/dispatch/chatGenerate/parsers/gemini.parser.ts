@@ -22,11 +22,18 @@ import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wirety
  *  Note that non-streaming calls will contain a complete sequence of complete parts.
  */
 export function createGeminiGenerateContentResponseParser(modelId: string): ChatGenerateParseFunction {
+  const parserCreationTimestamp = Date.now();
   const modelName = modelId.replace('models/', '');
   let hasBegun = false;
+  let timeToFirstEvent: number;
+  let skipSendingTotalTimeOnce = true;
 
   // this can throw, it's caught by the caller
   return function(pt: IParticleTransmitter, eventData: string): void {
+
+    // Time to first event
+    if (timeToFirstEvent === undefined)
+      timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // -> Model
     if (!hasBegun) {
@@ -125,11 +132,16 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
     }
 
     // -> Stats
-    if (generationChunk.usageMetadata)
+    if (generationChunk.usageMetadata) {
       pt.setCounters({
         chatIn: generationChunk.usageMetadata.promptTokenCount,
         chatOut: generationChunk.usageMetadata.candidatesTokenCount,
+        chatTimeStart: timeToFirstEvent,
+        // chatTimeInner: // not reported
+        ...skipSendingTotalTimeOnce ? {} : { chatTimeTotal: Date.now() - parserCreationTimestamp }, // the second...end-1 packets will be held
       });
+      skipSendingTotalTimeOnce = false;
+    }
 
   };
 }

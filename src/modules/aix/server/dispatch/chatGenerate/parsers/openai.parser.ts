@@ -30,8 +30,10 @@ import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretype
  * - There's no explicit end in this data protocol, but it's handled in the caller with a sse:[DONE] event.
  */
 export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunction {
+  const parserCreationTimestamp = Date.now();
   let hasBegun = false;
   let hasWarned = false;
+  let timeToFirstEvent: number | undefined;
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
   // Supporting structure to accumulate the assistant message
@@ -51,6 +53,10 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
   };
 
   return function(pt: IParticleTransmitter, eventData: string) {
+
+    // Time to first event
+    if (timeToFirstEvent === undefined)
+      timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // Throws on malformed event data
     // ```Can you extend the Zod chunk response object parsing (all optional) to include the missing data? The following is an exampel of the object I received:```
@@ -85,6 +91,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         pt.setCounters({
           chatIn: json.usage.prompt_tokens || -1,
           chatOut: json.usage.completion_tokens,
+          ...timeToFirstEvent !== undefined ? { chatTimeStart: timeToFirstEvent } : {},
+          // chatTimeInner: openAI is not reporting the time as seen by the servers
+          chatTimeTotal: Date.now() - parserCreationTimestamp,
         });
 
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
@@ -92,13 +101,18 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         return;
     }
     // [Groq] -> Stats
+    // Note: if still in queue, reset the event stats, until we're out of the queue
+    if (json.x_groq?.queue_length)
+      timeToFirstEvent = undefined;
     if (json.x_groq?.usage) {
       const { prompt_tokens, completion_tokens, completion_time } = json.x_groq.usage;
       pt.setCounters({
         chatIn: prompt_tokens,
         chatOut: completion_tokens,
         chatOutRate: (completion_tokens && completion_time) ? Math.round((completion_tokens / completion_time) * 100) / 100 : undefined,
-        chatTimeInner: completion_time,
+        ...timeToFirstEvent !== undefined ? { chatTimeStart: timeToFirstEvent } : {},
+        chatTimeInner: Math.round((completion_time || 0) * 1000),
+        chatTimeTotal: Date.now() - parserCreationTimestamp,
       });
     }
 
@@ -184,6 +198,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 /// OpenAI non-streaming ChatCompletions
 
 export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction {
+  const parserCreationTimestamp = Date.now();
 
   return function(pt: IParticleTransmitter, eventData: string) {
 
@@ -215,6 +230,9 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       pt.setCounters({
         chatIn: json.usage.prompt_tokens,
         chatOut: json.usage.completion_tokens,
+        // chatTimeStart: ... // not meaningful for non-streaming
+        // chatTimeInner: ... // not measured/reportd by OpenAI
+        chatTimeTotal: Date.now() - parserCreationTimestamp,
       });
 
     // Assumption/validate: expect 1 completion, or stop

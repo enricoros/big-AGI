@@ -468,7 +468,9 @@ export namespace AixWire_Particles {
     chatIn?: number,
     chatOut?: number,
     chatOutRate?: number,
+    chatTimeStart?: number,
     chatTimeInner?: number,
+    chatTimeTotal?: number,
   };
 
 
