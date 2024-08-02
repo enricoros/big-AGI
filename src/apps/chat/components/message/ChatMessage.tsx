@@ -145,6 +145,7 @@ export function ChatMessage(props: {
 
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
+  const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
 
   const textSel = selText ? selText : messageFragmentsReduceText(contentFragments);
@@ -587,7 +588,7 @@ export function ChatMessage(props: {
             messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-            renderTextAsMarkdown={renderMarkdown}
+            renderTextAsMarkdown={renderMarkdown && !fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
             showUnsafeHtml={props.showUnsafeHtml}
 
