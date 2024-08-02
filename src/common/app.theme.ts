@@ -4,6 +4,11 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
 
+// Definitions
+export type UIComplexityMode = 'minimal' | 'pro' | 'extra';
+export type ContentScaling = 'xs' | 'sm' | 'md';
+
+
 // CSS utils
 export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 
@@ -27,7 +32,7 @@ const jetBrainsMono = JetBrains_Mono({
 export const themeCodeFontFamilyCss = jetBrainsMono.style.fontFamily;
 
 
-export const appTheme = extendTheme({
+export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
   fontFamily: {
     body: themeFontFamilyCss,
     display: themeFontFamilyCss,
@@ -111,14 +116,14 @@ export const appTheme = extendTheme({
     //   },
     // },
 
-    // JoyModal: {
-    //   styleOverrides: {
-    //     backdrop: {
-    //       // backdropFilter: 'blur(2px)',
-    //       backdropFilter: 'none',
-    //     },
-    //   },
-    // },
+    JoyModal: !uiComplexityMinimal ? undefined : {
+      styleOverrides: {
+        backdrop: {
+          backdropFilter: 'none',
+          // backdropFilter: 'blur(2px)',
+        },
+      },
+    },
 
     /**
      * Switch: increase the size of the thumb, to a default iconButton
@@ -152,8 +157,7 @@ export const themeZIndexDesktopNav = 27;
 export const themeZIndexOverMobileDrawer = 1301;
 
 
-// Dyanmic UI Sizing
-export type ContentScaling = 'xs' | 'sm' | 'md';
+// Dynamic UI Sizing
 
 export function adjustContentScaling(scaling: ContentScaling, offset?: number) {
   if (!offset) return scaling;
