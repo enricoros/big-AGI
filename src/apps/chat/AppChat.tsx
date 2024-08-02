@@ -8,7 +8,7 @@ import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
-import { downloadConversation, openAndLoadConversations } from '~/modules/trade/trade.client';
+import { downloadSingleChat, openAndLoadConversations } from '~/modules/trade/trade.client';
 import { getChatLLMId, useChatLLM } from '~/modules/llms/store-llms';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
@@ -323,7 +323,7 @@ export function AppChat() {
 
   const handleFileSaveConversation = React.useCallback((conversationId: DConversationId | null) => {
     const conversation = getConversation(conversationId);
-    conversation && downloadConversation(conversation, 'json')
+    conversation && downloadSingleChat(conversation, 'json')
       .then(() => {
         addSnackbar({ key: 'chat-save-as-ok', message: 'File saved.', type: 'success' });
       })

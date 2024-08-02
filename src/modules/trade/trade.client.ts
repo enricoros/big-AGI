@@ -1,20 +1,20 @@
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
-import { defaultSystemPurposeId, SystemPurposeId, SystemPurposes } from '../../data';
+import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { Brand } from '~/common/app.config';
-import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DataAtRestV1 } from '~/common/stores/chat/converters';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useFolderStore } from '~/common/state/store-folders';
 
 import type { ImportedOutcome } from './ImportOutcomeModal';
-import { convertDConversation_V3_V4, convertDMessageV3_to_V4, ExportedAllJsonV1B, ExportedChatJsonV1, ExportedFolderJsonV1 } from './trade.types';
 
 
 /// IMPORT ///
@@ -43,7 +43,7 @@ export async function openAndLoadConversations(preventClash: boolean = false): P
     try {
       const fileString = await blob.text();
       const fileObject = JSON.parse(fileString);
-      loadAllConversationsFromJson(fileName, fileObject, outcome);
+      loadConversationsFromAtRestV1(fileName, fileObject, outcome);
     } catch (error: any) {
       outcome.conversations.push({
         success: false,
@@ -69,75 +69,48 @@ export async function openAndLoadConversations(preventClash: boolean = false): P
 
 /**
  * Restores all conversations in a JSON
- *  - supports both ExportedConversationJsonV1, and ExportedAllJsonV1 files
+ *  - supports both  DataAtRestV1.RestAllJsonV1B, and DataAtRestV1.RestChatJsonV1 files
  */
-function loadAllConversationsFromJson(fileName: string, obj: any, outcome: ImportedOutcome) {
+function loadConversationsFromAtRestV1(fileName: string, obj: any, outcome: ImportedOutcome) {
   // heuristics
   const hasConversations = obj.hasOwnProperty('conversations');
   const hasMessages = obj.hasOwnProperty('messages');
 
-  // parse ExportedAllJsonV1
-  if (hasConversations && !hasMessages) {
-    const { conversations, folders } = obj as ExportedAllJsonV1B;
-    for (const conversation of conversations)
-      pushOutcomeFromJsonV1(fileName, conversation, outcome);
-    // in ExportedAllJsonV1b+, folders weren't there before
-    if (folders?.folders) {
-      const dFolders = folders.folders.map(createFolderFromJsonV1).filter(Boolean) as DFolder[];
-      useFolderStore.getState().importFoldersAppend(dFolders, folders.enableFolders);
-    }
-  }
-  // parse ExportedConversationJsonV1
-  else if (hasMessages && !hasConversations) {
-    pushOutcomeFromJsonV1(fileName, obj as ExportedChatJsonV1, outcome);
-  }
-  // invalid
-  else {
-    outcome.conversations.push({ success: false, fileName, error: `Invalid file: ${fileName}` });
+  switch (true) {
+
+    // Heuristic (backup): DataAtRestV1.RestAllJsonV1B
+    case hasConversations && hasMessages:
+      const { conversations, folders } = obj as DataAtRestV1.RestAllJsonV1B;
+      for (const conversation of conversations)
+        loadSingleChatFromAtRestV1(fileName, conversation, outcome);
+
+      // in ExportedAllJsonV1b+, folders weren't there before
+      if (folders?.folders) {
+        const dFolders = DataAtRestV1.recreateFolders(folders.folders);
+        if (dFolders.length)
+          useFolderStore.getState().importFoldersAppend(dFolders, folders.enableFolders);
+      }
+      break;
+
+    // Heuristic (single):
+    case hasMessages && !hasConversations:
+      const conversation = obj as DataAtRestV1.RestChatJsonV1;
+      loadSingleChatFromAtRestV1(fileName, conversation, outcome);
+      break;
+
+    default:
+      outcome.conversations.push({ success: false, fileName, error: `Invalid file: ${fileName}` });
+      break;
+
   }
 }
 
-function pushOutcomeFromJsonV1(fileName: string, part: ExportedChatJsonV1, outcome: ImportedOutcome) {
-  const restored = createDConversationFromJsonV1(part);
+function loadSingleChatFromAtRestV1(fileName: string, part: DataAtRestV1.RestChatJsonV1, outcome: ImportedOutcome) {
+  const restored = DataAtRestV1.recreateConversation(part);
   if (!restored)
     outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
   else
     outcome.conversations.push({ success: true, fileName, conversation: restored });
-}
-
-
-// NOTE: the tokenCount was removed while still in the JsonV1 format, so here we add it back, for backwards compat
-export function createDConversationFromJsonV1(part: ExportedChatJsonV1 & { tokenCount?: number }) {
-  if (!part || !part.id || !part.messages) {
-    console.warn('createConversationFromJsonV1: invalid conversation json', part);
-    return null;
-  }
-  return convertDConversation_V3_V4({
-    id: part.id,
-    messages: part.messages.map(convertDMessageV3_to_V4),
-    systemPurposeId: (part.systemPurposeId as any) || defaultSystemPurposeId,
-    ...(part.userTitle && { userTitle: part.userTitle }),
-    ...(part.autoTitle && { autoTitle: part.autoTitle }),
-    tokenCount: part.tokenCount || 0,
-    created: part.created || Date.now(),
-    updated: part.updated || Date.now(),
-    // add these back - these fields are not exported
-    _abortController: null,
-  });
-}
-
-function createFolderFromJsonV1(part: ExportedFolderJsonV1) {
-  if (!part || !part.id || !part.title || !part.conversationIds) {
-    console.warn('createFolderFromJsonV1: invalid folder json', part);
-    return null;
-  }
-  const restored: DFolder = {
-    id: part.id,
-    title: part.title,
-    conversationIds: part.conversationIds,
-    color: part.color,
-  };
-  return restored;
 }
 
 
@@ -147,14 +120,14 @@ function createFolderFromJsonV1(part: ExportedFolderJsonV1) {
  * Download all conversations as a JSON file, for backup and future restore
  * @throws {Error} if the user closes the dialog, or file could not be saved
  */
-export async function downloadAllConversationsJson() {
+export async function downloadAllJsonV1B() {
   // conversations and
   const { folders, enableFolders } = useFolderStore.getState();
-  const payload: ExportedAllJsonV1B = {
-    conversations: useChatStore.getState().conversations.map(conversationToJsonV1),
-    folders: { folders, enableFolders },
-    models: { sources: useModelsStore.getState().sources },
-  };
+  const payload = DataAtRestV1.formatAllToJsonV1B(
+    useChatStore.getState().conversations,
+    useModelsStore.getState().sources,
+    folders, enableFolders,
+  );
   const json = JSON.stringify(payload);
   const blob = new Blob([json], { type: 'application/json' });
 
@@ -170,21 +143,25 @@ export async function downloadAllConversationsJson() {
  * Download a conversation as a JSON file, for backup and future restore
  * @throws {Error} if the user closes the dialog, or file could not be saved
  */
-export async function downloadConversation(conversation: DConversation, format: 'json' | 'markdown') {
+export async function downloadSingleChat(conversation: DConversation, format: 'json' | 'markdown') {
 
   let blob: Blob;
   let extension: string;
 
   if (format == 'json') {
+
     // remove fields (abortController, etc.) from the export
-    const exportableConversation: ExportedChatJsonV1 = conversationToJsonV1(conversation);
+    const exportableConversation = DataAtRestV1.formatChatToJsonV1(conversation);
     const json = JSON.stringify(exportableConversation, null, 2);
     blob = new Blob([json], { type: 'application/json' });
     extension = '.json';
+
   } else if (format == 'markdown') {
+
     const exportableMarkdown = conversationToMarkdown(conversation, false, true, (name: string) => `## ${name} ##`);
     blob = new Blob([exportableMarkdown], { type: 'text/markdown' });
     extension = '.md';
+
   } else {
     throw new Error(`Invalid download format: ${format}`);
   }
@@ -227,16 +204,4 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     return (senderWrap?.(senderName) || `### ${senderName}`) + `\n\n${text}\n\n`;
   }).join('---\n\n');
 
-}
-
-export function conversationToJsonV1(_conversation: DConversation): ExportedChatJsonV1 {
-  return {
-    id: _conversation.id,
-    messages: _conversation.messages,
-    systemPurposeId: _conversation.systemPurposeId,
-    userTitle: _conversation.userTitle,
-    autoTitle: _conversation.autoTitle,
-    created: _conversation.created,
-    updated: _conversation.updated,
-  };
 }

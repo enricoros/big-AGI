@@ -13,7 +13,7 @@ import { getConversation } from '~/common/stores/chat/store-chats';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { PublishExport } from './publish/PublishExport';
-import { downloadAllConversationsJson, downloadConversation } from './trade.client';
+import { downloadAllJsonV1B, downloadSingleChat } from './trade.client';
 
 
 export type ExportConfig = {
@@ -46,7 +46,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     if (!props.config.conversationId) return;
     const conversation = getConversation(props.config.conversationId);
     if (!conversation) return;
-    downloadConversation(conversation, 'json')
+    downloadSingleChat(conversation, 'json')
       .then(() => setDownloadedJSONState('ok'))
       .catch(() => setDownloadedJSONState('fail'));
   };
@@ -55,13 +55,13 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     if (!props.config.conversationId) return;
     const conversation = getConversation(props.config.conversationId);
     if (!conversation) return;
-    downloadConversation(conversation, 'markdown')
+    downloadSingleChat(conversation, 'markdown')
       .then(() => setDownloadedMarkdownState('ok'))
       .catch(() => setDownloadedMarkdownState('fail'));
   };
 
   const handleDownloadAllConversationsJSON = () => {
-    downloadAllConversationsJson()
+    downloadAllJsonV1B()
       .then(() => setDownloadedAllState('ok'))
       .catch(() => setDownloadedAllState('fail'));
   };
