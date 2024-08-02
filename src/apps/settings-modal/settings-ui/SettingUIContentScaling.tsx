@@ -8,7 +8,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
-export function SettingContentScaling(props: { noLabel?: boolean }) {
+export function SettingUIContentScaling(props: { noLabel?: boolean }) {
 
   // external state
   const [contentScaling, setContentScaling] = useUIPreferencesStore(useShallow(state => [state.contentScaling, state.setContentScaling]));
@@ -18,7 +18,7 @@ export function SettingContentScaling(props: { noLabel?: boolean }) {
       {!props.noLabel && (
         <FormLabelStart
           title='Text Size'
-          description={contentScaling === 'xs' ? 'Dense' : contentScaling === 'sm' ? 'Default' : 'Comfy'}
+          description={contentScaling === 'xs' ? 'Dense' : contentScaling === 'sm' ? 'Default' : 'Larger'}
         />
       )}
       <Stepper sx={{

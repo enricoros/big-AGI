@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { FormHelperText, FormLabel } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
@@ -11,9 +11,9 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
  * Shared label part (left side)
  */
 const FormLabelStartBase = (props: {
-  title: string | React.JSX.Element,
-  description?: string | React.JSX.Element
-  tooltip?: string | React.JSX.Element,
+  title: React.ReactNode,
+  description?: React.ReactNode,
+  tooltip?: React.ReactNode,
   onClick?: (event: React.MouseEvent) => void,
   sx?: SxProps,
 }) =>
@@ -29,7 +29,7 @@ const FormLabelStartBase = (props: {
         ...props.sx,
       }}
     >
-      {props.title} {props.tooltip && (
+      {props.title} {!!props.tooltip && (
       <GoodTooltip title={props.tooltip}>
         <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
       </GoodTooltip>

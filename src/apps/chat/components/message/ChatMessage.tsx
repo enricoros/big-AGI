@@ -32,7 +32,7 @@ import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIComplexityIsMinimal, useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { ContinueFragment } from './ContinueFragment';
@@ -104,9 +104,9 @@ export function ChatMessage(props: {
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
 
   // external state
-  const { isZenMode, contentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
-    isZenMode: state.zenMode === 'cleaner',
-    contentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
+  const zenMode = useUIComplexityIsMinimal();
+  const { adjContentScaling, doubleClickToEdit, renderMarkdown } = useUIPreferencesStore(useShallow(state => ({
+    adjContentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
     doubleClickToEdit: state.doubleClickToEdit,
     renderMarkdown: state.renderMarkdown,
   })));
@@ -419,7 +419,7 @@ export function ChatMessage(props: {
   const backgroundColor = messageBackground(messageRole, wasEdited, false /*isAssistantError && !errorMessage*/);
 
   // avatar
-  const showAvatarIcon = !props.hideAvatar && !isZenMode;
+  const showAvatarIcon = !props.hideAvatar && !zenMode;
   const avatarIconEl: React.JSX.Element | null = React.useMemo(
     () => showAvatarIcon ? makeMessageAvatarIcon(messageAvatar, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
     [messageAvatar, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon],
@@ -433,8 +433,8 @@ export function ChatMessage(props: {
       sx={{
         // style
         backgroundColor: backgroundColor,
-        px: { xs: 1, md: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2 },
-        py: themeScalingMap[contentScaling]?.chatMessagePadding ?? 2,
+        px: { xs: 1, md: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2 },
+        py: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2,
         // filter: 'url(#agi-futuristic-glow)',
 
         // style: omit border if set externally
@@ -478,7 +478,7 @@ export function ChatMessage(props: {
 
         {/* [start-Avatar] Avatar (Persona) */}
         {!props.hideAvatar && !isEditingText && (
-          <Box sx={isZenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
+          <Box sx={zenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
 
             {/* Persona Avatar or Menu Button */}
             <Box
@@ -491,12 +491,12 @@ export function ChatMessage(props: {
               onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
               sx={{ display: 'flex' }}
             >
-              {!isHovering && !opsMenuAnchor && !isZenMode ? (
+              {!isHovering && !opsMenuAnchor && !zenMode ? (
                 avatarIconEl
               ) : (
                 <IconButton
                   size='sm'
-                  variant={opsMenuAnchor ? 'solid' : (isZenMode && fromAssistant) ? 'plain' : 'soft'}
+                  variant={opsMenuAnchor ? 'solid' : (zenMode && fromAssistant) ? 'plain' : 'soft'}
                   color={(fromAssistant || fromSystem) ? 'neutral' : 'primary'}
                   sx={avatarIconSx}
                 >
@@ -506,7 +506,7 @@ export function ChatMessage(props: {
             </Box>
 
             {/* Assistant (llm/function) name */}
-            {fromAssistant && !isZenMode && (
+            {fromAssistant && !zenMode && (
               <Tooltip arrow title={messagePendingIncomplete ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
                 <Typography level='body-xs' sx={{
                   overflowWrap: 'anywhere',
@@ -569,7 +569,7 @@ export function ChatMessage(props: {
           {imageAttachments.length >= 1 && !isEditingText && (
             <ImageAttachmentFragments
               imageAttachments={imageAttachments}
-              contentScaling={contentScaling}
+              contentScaling={adjContentScaling}
               messageRole={messageRole}
               isMobile={props.isMobile}
               onFragmentDelete={handleFragmentDelete}
@@ -581,7 +581,7 @@ export function ChatMessage(props: {
             fragments={contentFragments}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
-            contentScaling={contentScaling}
+            contentScaling={adjContentScaling}
             fitScreen={props.fitScreen}
             messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
@@ -613,7 +613,7 @@ export function ChatMessage(props: {
             <DocumentAttachmentFragments
               attachmentFragments={nonImageAttachments}
               messageRole={messageRole}
-              contentScaling={contentScaling}
+              contentScaling={adjContentScaling}
               isMobile={props.isMobile}
               renderTextAsMarkdown={renderMarkdown}
               onFragmentDelete={handleFragmentDelete}
@@ -624,7 +624,7 @@ export function ChatMessage(props: {
           {/* Continue... */}
           {props.isBottom && !!messageMetadata?.ranOutOfTokens && !!props.onMessageContinue && (
             <ContinueFragment
-              contentScaling={contentScaling}
+              contentScaling={adjContentScaling}
               messageId={messageId}
               messageRole={messageRole}
               onContinue={props.onMessageContinue}

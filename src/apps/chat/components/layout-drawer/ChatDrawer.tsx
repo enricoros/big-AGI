@@ -26,7 +26,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIComplexityIsMinimal, useUIContentScaling } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
@@ -94,10 +94,8 @@ function ChatDrawer(props: {
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
     props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, filterHasDocFragments, navGrouping, searchSorting, showRelativeSize,
   );
-  const { contentScaling, showSymbols } = useUIPreferencesStore(useShallow(state => ({
-    contentScaling: state.contentScaling,
-    showSymbols: state.zenMode !== 'cleaner',
-  })));
+  const contentScaling = useUIContentScaling();
+  const zenMode = useUIComplexityIsMinimal();
 
 
   // New/Activate/Delete Conversation
@@ -322,7 +320,7 @@ function ChatDrawer(props: {
             <ChatDrawerItemMemo
               key={'nav-chat-' + item.conversationId}
               item={item}
-              showSymbols={showPersonaIcons && showSymbols}
+              showSymbols={showPersonaIcons && !zenMode}
               bottomBarBasis={filteredChatsBarBasis}
               onConversationActivate={handleConversationActivate}
               onConversationBranch={onConversationBranch}
