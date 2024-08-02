@@ -30,6 +30,8 @@ interface OptimaState {
   showPreferences: boolean;
   preferencesTab: PreferencesTabId;
 
+  // timing for drawer
+  lastDrawerOpenTime: number;
 }
 
 function initialDrawerOpen() {
@@ -61,6 +63,8 @@ const initialState: OptimaState = {
   showPreferences: false,
   preferencesTab: 'chat',
 
+  // timing for drawer
+  lastDrawerOpenTime: 0,
 };
 
 export interface OptimaActions {
@@ -90,15 +94,19 @@ export interface OptimaActions {
 }
 
 
-export const useOptimaStore = create<OptimaState & OptimaActions>((_set) => ({
+export const useOptimaStore = create<OptimaState & OptimaActions>((_set, _get) => ({
 
   ...initialState,
 
   // setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
 
-  closeDrawer: () => _set({ drawerIsOpen: false }),
-  openDrawer: () => _set({ drawerIsOpen: true }),
-  toggleDrawer: () => _set((state) => ({ drawerIsOpen: !state.drawerIsOpen })),
+  closeDrawer: () => {
+    // close the drawer, but only if it's been open for 100ms
+    if (Date.now() - _get().lastDrawerOpenTime >= 100)
+      _set({ drawerIsOpen: false });
+  },
+  openDrawer: () => _set({ drawerIsOpen: true, lastDrawerOpenTime: Date.now() }),
+  toggleDrawer: () => _get().drawerIsOpen ? _get().closeDrawer() : _get().openDrawer(),
 
   closePageMenu: () => _set({ menuIsOpen: false }),
   openPageMenu: () => _set({ menuIsOpen: true }),
