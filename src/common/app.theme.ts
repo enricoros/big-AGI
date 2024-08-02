@@ -6,10 +6,6 @@ import { extendTheme } from '@mui/joy';
 
 // CSS utils
 export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
-// export const hideOnDesktop = { display: { xs: 'flex', md: 'none' } };
-
-// Dimensions
-export const formLabelStartWidth = 140;
 
 
 // Theme & Fonts
@@ -20,6 +16,7 @@ const font = Inter({
   display: 'swap',
   fallback: ['Helvetica', 'Arial', 'sans-serif'],
 });
+export const themeFontFamilyCss = font.style.fontFamily;
 
 const jetBrainsMono = JetBrains_Mono({
   weight: ['400', '500', '600', '700'],
@@ -27,12 +24,14 @@ const jetBrainsMono = JetBrains_Mono({
   display: 'swap',
   fallback: ['monospace'],
 });
+export const themeCodeFontFamilyCss = jetBrainsMono.style.fontFamily;
+
 
 export const appTheme = extendTheme({
   fontFamily: {
-    body: font.style.fontFamily,
-    display: font.style.fontFamily,
-    code: jetBrainsMono.style.fontFamily,
+    body: themeFontFamilyCss,
+    display: themeFontFamilyCss,
+    code: themeCodeFontFamilyCss,
   },
   colorSchemes: {
     light: {
@@ -151,8 +150,6 @@ export const themeZIndexPageBar = 25;
 export const themeZIndexDesktopDrawer = 26;
 export const themeZIndexDesktopNav = 27;
 export const themeZIndexOverMobileDrawer = 1301;
-
-export const themeBreakpoints = appTheme.breakpoints.values;
 
 
 // Dyanmic UI Sizing
