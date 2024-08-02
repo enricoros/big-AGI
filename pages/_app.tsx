@@ -18,13 +18,12 @@ import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendC
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
 import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
 import { ProviderSnacks } from '~/common/providers/ProviderSnacks';
-import { ProviderTRPCQuerySettings } from '~/common/providers/ProviderTRPCQuerySettings';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
 
-const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => {
+const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
 
   // We are using a nextjs per-page layout pattern to bring the (Optima) layout creation to a shared place
   // This reduces the flicker and the time switching between apps, and seems to not have impact on
@@ -40,16 +39,14 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => {
 
     <ProviderTheming emotionCache={emotionCache}>
       <ProviderSingleTab>
-        <ProviderTRPCQuerySettings>
-          <ProviderBackendCapabilities>
-            {/* ^ SSR boundary */}
-            <ProviderBootstrapLogic>
-              <ProviderSnacks>
-                {getLayout(<Component {...pageProps} />)}
-              </ProviderSnacks>
-            </ProviderBootstrapLogic>
-          </ProviderBackendCapabilities>
-        </ProviderTRPCQuerySettings>
+        <ProviderBackendCapabilities>
+          {/* ^ SSR boundary */}
+          <ProviderBootstrapLogic>
+            <ProviderSnacks>
+              {getLayout(<Component {...pageProps} />)}
+            </ProviderSnacks>
+          </ProviderBootstrapLogic>
+        </ProviderBackendCapabilities>
       </ProviderSingleTab>
     </ProviderTheming>
 
@@ -60,5 +57,5 @@ const MyApp = ({ Component, emotionCache, pageProps }: MyAppProps) => {
   </>;
 };
 
-// enables the React Query API invocation
-export default apiQuery.withTRPC(MyApp);
+// Initializes React Query and tRPC, and enables the tRPC React Query hooks (apiQuery).
+export default apiQuery.withTRPC(Big_AGI_App);

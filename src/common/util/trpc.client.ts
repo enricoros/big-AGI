@@ -14,6 +14,7 @@ import type { AppRouterNode } from '~/server/api/trpc.router-node';
 import { transformer } from '~/server/api/trpc.transformer';
 
 import { getBaseUrl } from './urlUtils';
+import { reactQueryClientSingleton } from '../app.queryclient';
 
 
 const enableLoggerLink = (opts: any) => {
@@ -28,6 +29,13 @@ const enableLoggerLink = (opts: any) => {
 export const apiQuery = createTRPCNext<AppRouterEdge>({
   config() {
     return {
+      /**
+       * We set the queryClient to a singleton App-wide instance, to use the same client for
+       * both React Query and tRPC. As `withTRPC` in _app.tsx, it will create a QueryClientProvider
+       * component, so we can catch 2 birds with one stone and only create 1 provider, over 1
+       * instance, and reuse the same configuration for both traditional React Query and tRPC.
+       */
+      queryClient: reactQueryClientSingleton(),
       links: [
         loggerLink({ enabled: enableLoggerLink }),
         httpLink({

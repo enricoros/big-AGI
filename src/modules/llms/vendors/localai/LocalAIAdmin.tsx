@@ -127,7 +127,6 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
   // external state
   const { data, error } = apiQuery.llmOpenAI.dialectLocalAI_galleryModelsAvailable.useQuery({ access: props.access }, {
     staleTime: 1000 * 60,
-    refetchOnWindowFocus: false,
   });
 
   // derived state

@@ -62,7 +62,6 @@ function TempPromptImageGen(props: { prompt: DesignerPrompt, sx?: SxProps }) {
     queryKey: ['draw-dpid', dp.uuid],
     queryFn: () => queryActiveGenerateImageVector(dp.prompt, dp._repeatCount),
     refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
     refetchOnMount: false,
     staleTime: Infinity,
   });

@@ -114,7 +114,6 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     enabled: !!linkId,
     queryKey: ['chat-link', linkId],
     queryFn: () => fetchStoredChatV1(linkId),
-    refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
 

@@ -15,7 +15,6 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
   // external state
   const { data, isError, error, isPending } = apiQuery.backend.exchangeOpenRouterKey.useQuery({ code: props.openRouterCode || '' }, {
     enabled: !!props.openRouterCode,
-    refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
 
