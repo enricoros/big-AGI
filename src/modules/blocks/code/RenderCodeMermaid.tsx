@@ -3,8 +3,8 @@ import { create } from 'zustand';
 
 import { Box } from '@mui/joy';
 
-import { appTheme } from '~/common/app.theme';
 import { isBrowser } from '~/common/util/pwaUtils';
+import { themeCodeFontFamilyCss, themeFontFamilyCss } from '~/common/app.theme';
 
 
 /**
@@ -47,7 +47,7 @@ let loadingStarted: boolean = false;
 let loadingError: string | null = null;
 
 
-function loadMermaidFromCDN() {
+function _loadMermaidFromCDN() {
   if (isBrowser && !loadingStarted) {
     loadingStarted = true;
     const script = document.createElement('script');
@@ -55,7 +55,7 @@ function loadMermaidFromCDN() {
     script.defer = true;
     script.onload = () => {
       useMermaidStore.setState({
-        mermaidAPI: initializeMermaid(window.mermaid),
+        mermaidAPI: _initializeMermaid(window.mermaid),
         loadingError: null,
       });
     };
@@ -69,13 +69,18 @@ function loadMermaidFromCDN() {
   }
 }
 
-function initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
+/**
+ * Pass the current font families at loading time. Note that the font families will be compiled by next to something like this:
+ * - code: "'__JetBrains_Mono_dc2b2d', '__JetBrains_Mono_Fallback_dc2b2d', monospace",
+ * - text: "'__Inter_1870e5', '__Inter_Fallback_1870e5', Helvetica, Arial, sans-serif"
+ */
+function _initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
   mermaidAPI.initialize({
     startOnLoad: false,
 
     // gfx options
-    fontFamily: appTheme.fontFamily.code,
-    altFontFamily: appTheme.fontFamily.body,
+    fontFamily: themeCodeFontFamilyCss,
+    altFontFamily: themeFontFamilyCss,
 
     // style configuration
     htmlLabels: true,
@@ -99,10 +104,12 @@ function initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
 
 function useMermaidLoader() {
   const { mermaidAPI } = useMermaidStore();
+
   React.useEffect(() => {
     if (!mermaidAPI)
-      loadMermaidFromCDN();
+      _loadMermaidFromCDN();
   }, [mermaidAPI]);
+
   return { mermaidAPI, isSuccess: !!mermaidAPI, hasStartedLoading: loadingStarted, error: loadingError };
 }
 
