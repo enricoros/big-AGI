@@ -10,7 +10,7 @@ export const DEBUG_OPTIMA_PLUGGING = false;
 
 /// Perform UI Actions
 
-export function optimaActions(): Omit<OptimaActions, 'closeDrawer' | 'openDrawer' | 'closePageMenu' | 'openPageMenu' | 'openModels' | 'openPreferences'> {
+export function optimaActions(): Omit<OptimaActions, 'closeDrawer' | 'openDrawer' | 'toggleDrawer' | 'closePageMenu' | 'openPageMenu' | 'openModels' | 'openPreferences'> {
   return useOptimaStore.getState();
 }
 
@@ -18,15 +18,22 @@ export function optimaCloseDrawer() {
   useOptimaStore.getState().closeDrawer();
 }
 
-export function optimaOpenDrawer() {
+export function optimaOpenDrawer(event?: React.MouseEvent) {
+  _eatMouseEvent(event);
   useOptimaStore.getState().openDrawer();
+}
+
+export function optimaToggleDrawer(event?: React.MouseEvent) {
+  _eatMouseEvent(event);
+  useOptimaStore.getState().toggleDrawer();
 }
 
 export function optimaCloseAppMenu() {
   useOptimaStore.getState().closePageMenu();
 }
 
-export function optimaOpenAppMenu() {
+export function optimaOpenAppMenu(event?: React.MouseEvent) {
+  _eatMouseEvent(event);
   useOptimaStore.getState().openPageMenu();
 }
 
@@ -36,6 +43,11 @@ export function optimaOpenModels() {
 
 export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
   useOptimaStore.getState().openPreferences(changeTab);
+}
+
+function _eatMouseEvent(event?: React.MouseEvent) {
+  if (event && 'preventDefault' in event)
+    event.preventDefault();
 }
 
 

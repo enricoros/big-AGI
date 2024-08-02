@@ -132,11 +132,6 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
     return <CommonPageMenuItems onClose={optimaCloseAppMenu} />;
   }, []);
 
-  const handlePageContextMenu = React.useCallback((event: React.MouseEvent) => {
-    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    optimaOpenAppMenu();
-  }, []);
-
   // [Desktop] hide the app bar if the current app doesn't use it
   const desktopHide = !!props.currentApp?.hideBar && !props.isMobile;
   if (desktopHide)
@@ -167,7 +162,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
               <ArrowBackIcon />
             </IconButton>
           ) : (
-            <IconButton disabled={!hasDrawerContent} onClick={optimaOpenDrawer}>
+            <IconButton disabled={!hasDrawerContent} onPointerDown={optimaOpenDrawer}>
               <MenuIcon />
             </IconButton>
           )}
@@ -175,7 +170,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
         </InvertedBarCornerItem>
       )}
 
-      {/* Center Items */}
+      {/* Pluggable Toolbar Items */}
       <CenterItemsPortal currentApp={props.currentApp} />
 
       {/* Page Menu Anchor */}
@@ -183,8 +178,8 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
         <IconButton
           ref={pageMenuAnchor}
           disabled={!pageMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/}
-          onClick={optimaOpenAppMenu}
-          onContextMenu={handlePageContextMenu}
+          onClick={optimaOpenAppMenu /* onPointerDown doesn't work well with a menu (the 'up' event would close it), so we're still with onClick */}
+          onContextMenu={optimaOpenAppMenu /* important to get the 'preventDefault' for the Right mouse click (to prevent the menu) */}
         >
           <MoreVertIcon />
         </IconButton>
