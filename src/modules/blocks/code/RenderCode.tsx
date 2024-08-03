@@ -11,13 +11,12 @@ import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SchemaIcon from '@mui/icons-material/Schema';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
+import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
+import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { CodeBlock } from '../blocks.types';
-import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
-import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
-import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './RenderCodeMermaid';
@@ -25,13 +24,16 @@ import { RenderCodeSVG } from './RenderCodeSVG';
 import { RenderCodeSyntax } from './RenderCodeSyntax';
 import { heuristicIsBlockPlantUML, RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
 import { heuristicIsBlockPureHTML } from '../html/RenderHtmlResponse';
+import { isCodePenSupported, openInCodePen } from './openInCodePen';
+import { isJSFiddleSupported, openInJsFiddle } from './openInJsFiddle';
+import { isStackBlitzSupported, openInStackBlitz } from './openInStackBlitz';
 
 // style for line-numbers
 import './RenderCode.css';
 
 
 // configuration
-const ALWAYS_SHOW_OVERLAY = false;
+const ALWAYS_SHOW_OVERLAY = true;
 
 
 // RenderCode
@@ -80,6 +82,18 @@ const renderCodecontainerSx: SxProps = {
   [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
 };
 
+const overlayGridSx: SxProps = {
+  ...overlayButtonsSx,
+  display: 'grid',
+  gap: 0.5,
+  justifyItems: 'end',
+};
+
+const overlayFirstRowSx: SxProps = {
+  display: 'flex',
+  gap: 0.5,
+};
+
 function RenderCodeImpl(props: RenderCodeBaseProps & {
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
@@ -105,6 +119,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     highlightCode, inferCodeLanguage,
     optimizeLightweight,
   } = props;
+  // const isEmptyCode = !blockCode /*|| blockCode.trim().length === 0*/;
 
 
   // handlers
@@ -146,9 +161,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   // Language & Highlight
   const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
     const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
-    const highlightedCode = !renderSyntaxHighlight ? null : highlightCode(inferredCodeLanguage, blockCode, renderLineNumbers);
+    const highlightedCode =
+      !renderSyntaxHighlight ? null
+        : blockCode ? highlightCode(inferredCodeLanguage, blockCode, renderLineNumbers)
+          : null;
     return { highlightedCode, inferredCodeLanguage };
   }, [blockCode, blockTitle, highlightCode, inferCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
+
 
   // Title
   let showBlockTitle = (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
@@ -158,10 +177,43 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const isBorderless = (renderHTML || renderSVG) && !showBlockTitle;
 
 
-  const canCodePen = blockComplete && isCodePenSupported(inferredCodeLanguage, isSVGCode);
-  const canJSFiddle = blockComplete && isJSFiddleSupported(inferredCodeLanguage, blockCode);
-  const canStackBlitz = blockComplete && isStackBlitzSupported(inferredCodeLanguage);
-  const canOpenExternally = canCodePen || canJSFiddle || canStackBlitz;
+  // External Buttons
+  const openExternallyButtons = React.useMemo(() => {
+    const buttons: React.ReactNode[] = [];
+
+    const mayExternal = blockCode?.indexOf('\n') > 0;
+    if (!mayExternal || !blockComplete)
+      return buttons;
+
+    const canJSFiddle = isJSFiddleSupported(inferredCodeLanguage, blockCode);
+    if (canJSFiddle) buttons.push(
+      <Tooltip key='jsfiddle' title='Open in JSFiddle' variant='solid'>
+        <OverlayButton variant='outlined' onClick={() => openInJsFiddle(blockCode, inferredCodeLanguage!)}>
+          JS
+        </OverlayButton>
+      </Tooltip>,
+    );
+
+    const canCodePen = isCodePenSupported(inferredCodeLanguage, isSVGCode);
+    if (canCodePen) buttons.push(
+      <Tooltip key='codepen' title='Open in CodePen' variant='solid'>
+        <OverlayButton variant='outlined' onClick={() => openInCodePen(blockCode, inferredCodeLanguage!)}>
+          <CodePenIcon />
+        </OverlayButton>
+      </Tooltip>,
+    );
+
+    const canStackBlitz = isStackBlitzSupported(inferredCodeLanguage);
+    if (canStackBlitz) buttons.push(
+      <Tooltip key='stackBlitz' title='Open in StackBlitz' variant='solid'>
+        <OverlayButton variant='outlined' onClick={() => openInStackBlitz(blockCode, inferredCodeLanguage!, blockTitle)}>
+          <StackBlitzIcon />
+        </OverlayButton>
+      </Tooltip>,
+    );
+
+    return buttons;
+  }, [blockCode, blockComplete, blockTitle, inferredCodeLanguage, isSVGCode]);
 
 
   return (
@@ -191,6 +243,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
           // lots more style, incl font, background, embossing, radius, etc.
           ...props.sx,
+
+          // patch the min height if we have the second row
+          ...(openExternallyButtons.length ? { minHeight: '5.25rem' } : {}),
         }}
       >
 
@@ -216,88 +271,91 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
       {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
       {(ALWAYS_SHOW_OVERLAY || isHovering) && (
-        <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
+        <Box className={overlayButtonsClassName} sx={overlayGridSx}>
 
-          {/* Show HTML */}
-          {isHTMLCode && (
-            <Tooltip title={optimizeLightweight ? null : renderHTML ? 'Hide' : 'Show Web Page'}>
-              <OverlayButton variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
-                <HtmlIcon sx={{ fontSize: 'xl2' }} />
-              </OverlayButton>
-            </Tooltip>
-          )}
+          {/* [row 1] */}
+          <Box sx={overlayFirstRowSx}>
 
-          {/* Show SVG */}
-          {isSVGCode && (
-            <Tooltip title={optimizeLightweight ? null : renderSVG ? 'Show Code' : 'Render SVG'}>
-              <OverlayButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
-                <ChangeHistoryTwoToneIcon />
-              </OverlayButton>
-            </Tooltip>
-          )}
-
-          {/* Show Diagrams */}
-          {(isMermaidCode || isPlantUMLCode) && (
-            <ButtonGroup aria-label='Diagram'>
-              {/* Toggle rendering */}
-              <Tooltip title={optimizeLightweight ? null : (renderMermaid || renderPlantUML) ? 'Show Code' : 'Render Mermaid'}>
-                <OverlayButton variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'} onClick={() => {
-                  if (isMermaidCode) setShowMermaid(on => !on);
-                  if (isPlantUMLCode) setShowPlantUML(on => !on);
-                }}>
-                  <SchemaIcon />
+            {/* Show HTML */}
+            {isHTMLCode && (
+              <Tooltip title={optimizeLightweight ? null : renderHTML ? 'Hide' : 'Show Web Page'}>
+                <OverlayButton variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+                  <HtmlIcon sx={{ fontSize: 'xl2' }} />
                 </OverlayButton>
               </Tooltip>
+            )}
 
-              {/* Fit-To-Screen */}
-              {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
-                <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
-                  <OverlayButton variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
-                    <FitScreenIcon />
+            {/* Show SVG */}
+            {isSVGCode && (
+              <Tooltip title={optimizeLightweight ? null : renderSVG ? 'Show Code' : 'Render SVG'}>
+                <OverlayButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
+                  <ChangeHistoryTwoToneIcon />
+                </OverlayButton>
+              </Tooltip>
+            )}
+
+            {/* Show Diagrams */}
+            {(isMermaidCode || isPlantUMLCode) && (
+              <ButtonGroup aria-label='Diagram'>
+                {/* Toggle rendering */}
+                <Tooltip title={optimizeLightweight ? null : (renderMermaid || renderPlantUML) ? 'Show Code' : 'Render Mermaid'}>
+                  <OverlayButton variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'} onClick={() => {
+                    if (isMermaidCode) setShowMermaid(on => !on);
+                    if (isPlantUMLCode) setShowPlantUML(on => !on);
+                  }}>
+                    <SchemaIcon />
+                  </OverlayButton>
+                </Tooltip>
+
+                {/* Fit-To-Screen */}
+                {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
+                  <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
+                    <OverlayButton variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
+                      <FitScreenIcon />
+                    </OverlayButton>
+                  </Tooltip>
+                )}
+              </ButtonGroup>
+            )}
+
+            {/* Group: Text Options */}
+            <ButtonGroup aria-label='Text and code options'>
+              {/* Soft Wrap toggle */}
+              {renderSyntaxHighlight && (
+                <Tooltip title={optimizeLightweight ? null : 'Toggle Soft Wrap'}>
+                  <OverlayButton disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
+                    <WrapTextIcon />
+                  </OverlayButton>
+                </Tooltip>
+              )}
+
+              {/* Line Numbers toggle */}
+              {renderSyntaxHighlight && (
+                <Tooltip title={optimizeLightweight ? null : 'Toggle Line Numbers'}>
+                  <OverlayButton disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
+                    <NumbersRoundedIcon />
+                  </OverlayButton>
+                </Tooltip>
+              )}
+
+              {/* Copy */}
+              {props.noCopyButton !== true && (
+                <Tooltip title={optimizeLightweight ? null : 'Copy Code'}>
+                  <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
+                    <ContentCopyIcon />
                   </OverlayButton>
                 </Tooltip>
               )}
             </ButtonGroup>
-          )}
+          </Box>
 
-          {/* Group: Open Externally */}
-          {canOpenExternally && (
+          {/* [row 2, optional] Group: Open Externally */}
+          {!!openExternallyButtons.length && (
             <ButtonGroup aria-label='Open code in external editors'>
-              {canJSFiddle && <ButtonJsFiddle code={blockCode} language={inferredCodeLanguage!} />}
-              {canCodePen && <ButtonCodePen code={blockCode} language={inferredCodeLanguage!} />}
-              {canStackBlitz && <ButtonStackBlitz code={blockCode} title={blockTitle} language={inferredCodeLanguage!} />}
+              {openExternallyButtons}
             </ButtonGroup>
           )}
 
-          {/* Group: Text Options */}
-          <ButtonGroup aria-label='Text Options'>
-            {/* Soft Wrap toggle */}
-            {renderSyntaxHighlight && (
-              <Tooltip title={optimizeLightweight ? null : 'Toggle Soft Wrap'}>
-                <OverlayButton disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
-                  <WrapTextIcon />
-                </OverlayButton>
-              </Tooltip>
-            )}
-
-            {/* Line Numbers toggle */}
-            {renderSyntaxHighlight && (
-              <Tooltip title={optimizeLightweight ? null : 'Toggle Line Numbers'}>
-                <OverlayButton disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
-                  <NumbersRoundedIcon />
-                </OverlayButton>
-              </Tooltip>
-            )}
-
-            {/* Copy */}
-            {props.noCopyButton !== true && (
-              <Tooltip title={optimizeLightweight ? null : 'Copy Code'}>
-                <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
-                  <ContentCopyIcon />
-                </OverlayButton>
-              </Tooltip>
-            )}
-          </ButtonGroup>
         </Box>
       )}
 

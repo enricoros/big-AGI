@@ -1,18 +1,11 @@
-import * as React from 'react';
-
-import { Tooltip } from '@mui/joy';
-
-import { OverlayButton } from '../OverlayButton';
-
-
-// JSFiidle is a web-based HTML, CSS, and JavaScript code editor
+// JSFiddle is a web-based HTML, CSS, and JavaScript code editor
 const _languages = ['html', 'css', 'javascript', 'json', 'typescript'];
 
 export function isJSFiddleSupported(language: string | null, code: string) {
   return !!language && _languages.includes(language) && code?.length > 10;
 }
 
-const handleOpenInJsFiddle = (code: string, language: string) => {
+export function openInJsFiddle(code: string, language: string) {
   // heuristics to assing the code to one of the blocks
   const isHTML = language === 'html';
   const isCSS = language === 'css';
@@ -45,15 +38,15 @@ const handleOpenInJsFiddle = (code: string, language: string) => {
   document.body.appendChild(form);
   form.submit();
   document.body.removeChild(form);
-};
-
-
-export function ButtonJsFiddle(props: { code: string, language: string }): React.JSX.Element {
-  return (
-    <Tooltip title='Open in JSFiddle' variant='solid'>
-      <OverlayButton variant='outlined' onClick={() => handleOpenInJsFiddle(props.code, props.language)}>
-        JS
-      </OverlayButton>
-    </Tooltip>
-  );
 }
+
+
+// export function ButtonJsFiddle(props: { code: string, language: string }): React.JSX.Element {
+//   return (
+//     <Tooltip title='Open in JSFiddle' variant='solid'>
+//       <OverlayButton variant='outlined' onClick={() => codeOpenInJsFiddle(props.code, props.language)}>
+//         JS
+//       </OverlayButton>
+//     </Tooltip>
+//   );
+// }

@@ -1,12 +1,5 @@
-import * as React from 'react';
-
-import { Tooltip } from '@mui/joy';
-
 import { Brand } from '~/common/app.config';
-import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
-
-import { OverlayButton } from '../OverlayButton';
 
 
 // CodePen is a web-based HTML, CSS, and JavaScript code editor
@@ -16,7 +9,7 @@ export function isCodePenSupported(language: string | null, isSVG: boolean) {
   return isSVG || (!!language && _languages.includes(language));
 }
 
-const handleOpenInCodePen = (code: string, language: string) => {
+export function openInCodePen(code: string, language: string) {
   // CodePen has 3 editors: HTML, CSS, JS - we decide here where to put the code
   const hasCSS = language === 'css';
   const hasJS = language ? ['javascript', 'json', 'typescript'].includes(language) : false;
@@ -44,15 +37,15 @@ const handleOpenInCodePen = (code: string, language: string) => {
   document.body.appendChild(form);
   form.submit();
   document.body.removeChild(form);
-};
-
-
-export function ButtonCodePen(props: { code: string, language: string }): React.JSX.Element {
-  return (
-    <Tooltip title='Open in CodePen' variant='solid'>
-      <OverlayButton variant='outlined' onClick={() => handleOpenInCodePen(props.code, props.language)}>
-        <CodePenIcon />
-      </OverlayButton>
-    </Tooltip>
-  );
 }
+
+
+// export function OpenInCodePen(props: { code: string, language: string }): React.JSX.Element {
+//   return (
+//     <Tooltip title='Open in CodePen' variant='solid'>
+//       <OverlayButton variant='outlined' onClick={() => openInCodePen(props.code, props.language)}>
+//         <CodePenIcon />
+//       </OverlayButton>
+//     </Tooltip>
+//   );
+// }
