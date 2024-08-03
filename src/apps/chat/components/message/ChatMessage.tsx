@@ -561,6 +561,13 @@ export function ChatMessage(props: {
             </Typography>
           )}
 
+          {/* Special System modified warning */}
+          {fromSystem && wasEdited && (
+            <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>
+              modified by user - auto-update disabled
+            </Typography>
+          )}
+
           {/* Reply-To Bubble */}
           {!!messageMetadata?.inReplyToText && (
             <ReplyToBubble
@@ -592,7 +599,6 @@ export function ChatMessage(props: {
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             renderTextAsMarkdown={renderMarkdown && !fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
-            showTopWarning={(fromSystem && wasEdited) ? 'modified by user - auto-update disabled' : undefined}
             showUnsafeHtml={props.showUnsafeHtml}
 
             textEditsState={textContentEditState}

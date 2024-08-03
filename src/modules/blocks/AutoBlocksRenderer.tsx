@@ -130,7 +130,6 @@ type BlocksRendererProps = {
   fitScreen?: boolean;
   showAsDanger?: boolean;
   showAsItalic?: boolean;
-  showTopWarning?: string;
   showUnsafeHtml?: boolean;
   specialCodePlain?: boolean;
   specialDiagramMode?: boolean;
@@ -240,11 +239,6 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
     >
-
-      {/* Warn about user-edited system message */}
-      {!!props.showTopWarning?.length && (
-        <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>{props.showTopWarning}</Typography>
-      )}
 
       {/* sequence of render components, for each Block */}
       {autoBlocksMemo.map((block, index) => {

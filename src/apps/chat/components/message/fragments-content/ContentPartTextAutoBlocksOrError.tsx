@@ -26,7 +26,6 @@ export function ContentPartTextAutoBlocksOrError(props: {
   renderTextDiff?: TextDiff[];
 
   showUnsafeHtml?: boolean,
-  showTopWarning: string | undefined,
   optiAllowSubBlocksMemo: boolean,
 
   onContextMenu?: (event: React.MouseEvent) => void;
@@ -59,7 +58,6 @@ export function ContentPartTextAutoBlocksOrError(props: {
       contentScaling={props.contentScaling}
       fitScreen={props.fitScreen}
       showUnsafeHtml={props.showUnsafeHtml}
-      showTopWarning={props.showTopWarning}
       renderTextAsMarkdown={props.renderTextAsMarkdown}
       renderTextDiff={props.renderTextDiff}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
