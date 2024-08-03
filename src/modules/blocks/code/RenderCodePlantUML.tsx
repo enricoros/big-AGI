@@ -6,6 +6,15 @@ import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { patchSvgString } from '~/modules/blocks/code/RenderCodeSVG';
 
 
+export function heuristicIsBlockPlantUML(blockCode: string) {
+  return (blockCode.startsWith('@startuml') && blockCode.endsWith('@enduml'))
+    || (blockCode.startsWith('@startmindmap') && blockCode.endsWith('@endmindmap'))
+    || (blockCode.startsWith('@startsalt') && blockCode.endsWith('@endsalt'))
+    || (blockCode.startsWith('@startwbs') && blockCode.endsWith('@endwbs'))
+    || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
+}
+
+
 // PlantUML -> SVG fetchers
 
 export function usePlantUmlSvg(enabled: boolean, blockCode: string) {
