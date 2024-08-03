@@ -8,8 +8,8 @@ import WebIcon from '@mui/icons-material/Web';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { HtmlBlock } from '../blocks.types';
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsSx } from '../code/RenderCode';
-import { RenderCodeHtmlIFrame } from '~/modules/blocks/code/RenderCodeHtmlIFrame';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
+import { RenderCodeHtmlIFrame } from '../code/RenderCodeHtmlIFrame';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)
@@ -41,7 +41,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
           p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',
-          '&:hover > .overlay-buttons': overlayButtonsActiveSx,
+          [`&:hover > ${overlayButtonsClassName}`]: overlayButtonsActiveSx,
           ...sx,
         }}
       >
@@ -68,7 +68,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
         }
 
         {/* External HTML Buttons */}
-        <Box className='overlay-buttons' sx={overlayButtonsSx}>
+        <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
           <Tooltip title={showHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
             <OverlayButton variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
               <WebIcon />

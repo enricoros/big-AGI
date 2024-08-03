@@ -6,7 +6,7 @@ import { Brand } from '~/common/app.config';
 import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
-import { OverlayButton } from './RenderCode';
+import { OverlayButton } from '../OverlayButton';
 
 
 const _languages = [

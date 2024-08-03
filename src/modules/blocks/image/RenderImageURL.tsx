@@ -14,7 +14,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
 import type { ImageBlock } from '../blocks.types';
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsSx } from '../code/RenderCode';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
 
 
 const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;
@@ -164,7 +164,7 @@ export const RenderImageURL = (props: {
           // resizeable image
           '& picture': { display: 'flex', justifyContent: 'center' },
           '& img': { maxWidth: '100%', maxHeight: '100%' },
-          '&:hover .overlay-buttons': overlayButtonsActiveSx,
+          [`&:hover > ${overlayButtonsClassName}`]: overlayButtonsActiveSx,
           '&:hover .overlay-text': overlayButtonsActiveSx,
 
           // layout
@@ -231,7 +231,7 @@ export const RenderImageURL = (props: {
         )}
 
         {/* [overlay] Buttons */}
-        <Box className='overlay-buttons' sx={{
+        <Box className={overlayButtonsClassName} sx={{
           ...overlayButtonsSx,
           display: 'grid',
           gridTemplateColumns: 'auto auto',
