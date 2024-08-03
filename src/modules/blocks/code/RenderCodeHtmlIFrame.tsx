@@ -8,7 +8,17 @@ body { min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
 img, picture, svg, video { display: block;max-width: 100%; }
 `;
 
-function renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
+const customIFrameCss: React.CSSProperties = {
+  flexGrow: 1,
+  width: '100%',
+  height: '54svh',
+  border: 'none',
+  boxSizing: 'border-box',
+  maxWidth: '100%',
+  maxHeight: '100%',
+};
+
+function _renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
   // Note: not using this for now (2024-06-15), or it would remove the JS code
   // which is what makes the HTML interactive.
   // Sanitize the HTML string to remove any potentially harmful content
@@ -44,29 +54,32 @@ function renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
 }
 
 export function RenderCodeHtmlIFrame(props: { htmlCode: string }) {
+
+  // state
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const firstRender = React.useRef(true);
 
   React.useEffect(() => {
+    if (!props.htmlCode)
+      return;
+
+    // Immediately render the first time, but delay subsequent renders
+    const delay = firstRender.current ? 0 : 200;
+    firstRender.current = false;
+
     // Coalesce the rendering of the HTML content to prevent flickering and work around the React StrictMode
     const timeoutId = setTimeout(() => {
       const iframeDoc = iframeRef.current?.contentWindow?.document;
-      iframeDoc && !!props.htmlCode && renderHtmlInIFrame(iframeDoc, props.htmlCode);
-    }, 200);
+      iframeDoc && !!props.htmlCode && _renderHtmlInIFrame(iframeDoc, props.htmlCode);
+    }, delay);
+
     return () => clearTimeout(timeoutId);
   }, [props.htmlCode]);
 
   return (
     <iframe
       ref={iframeRef}
-      style={{
-        flexGrow: 1,
-        width: '100%',
-        height: '54svh',
-        border: 'none',
-        boxSizing: 'border-box',
-        maxWidth: '100%',
-        maxHeight: '100%',
-      }}
+      style={customIFrameCss}
       title='Sandboxed Web Content'
       aria-label='Interactive content frame'
       sandbox='allow-scripts allow-same-origin allow-forms' // restrict to only these
