@@ -1,14 +1,11 @@
-import * as React from 'react';
-
 import { Brand } from '~/common/app.config';
-import { useShallowStable } from '~/common/util/useShallowObject';
 
 
 type MediaSessionAction = 'play' | 'pause' | 'stop' | 'seekbackward' | 'seekforward' | 'previoustrack' | 'nexttrack';
-type MediaSessionCallbacks = Partial<Record<MediaSessionAction, () => void>>;
+export type MediaSessionCallbacks = Partial<Record<MediaSessionAction, () => void>>;
 
 
-class MediaSessionManager {
+export class MediaSessionManager {
 
   private static instance: MediaSessionManager;
 
@@ -84,22 +81,5 @@ class MediaSessionManager {
       }
     });
   }
-
-}
-
-// noinspection JSUnusedGlobalSymbols
-/**
- * Note: this does not seem to be working as of now.
- * The reason is possibly related to us not having an <audio> element in the DOM.
- * @param handlers an object containing zero or more handlers for diverse media session actions
- */
-export function useMediaSessionCallbacks(handlers: MediaSessionCallbacks) {
-
-  const stableHandlers = useShallowStable(handlers);
-
-  React.useEffect(() => {
-    MediaSessionManager.getInstance().registerComponent(stableHandlers);
-    return () => MediaSessionManager.getInstance().unregisterComponent(stableHandlers);
-  }, [stableHandlers]);
 
 }
