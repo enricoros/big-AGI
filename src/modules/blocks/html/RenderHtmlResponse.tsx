@@ -8,7 +8,7 @@ import WebIcon from '@mui/icons-material/Web';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import type { HtmlBlock } from '../blocks.types';
-import { OverlayButton, overlayButtonsSx } from '../code/RenderCode';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsSx } from '../code/RenderCode';
 import { RenderCodeHtmlIFrame } from '~/modules/blocks/code/RenderCodeHtmlIFrame';
 
 
@@ -18,7 +18,7 @@ export function heuristicIsBlockTextHTML(text: string): boolean {
 }
 
 
-export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
+export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
   const [showHTML, setShowHTML] = React.useState(false);
 
   // remove the font* properties from sx
@@ -41,7 +41,7 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
           p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',
-          '&:hover > .overlay-buttons': { opacity: 1 },
+          '&:hover > .overlay-buttons': overlayButtonsActiveSx,
           ...sx,
         }}
       >
@@ -68,7 +68,7 @@ export function RenderHtml(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
         }
 
         {/* External HTML Buttons */}
-        <Box className='overlay-buttons' sx={{ ...overlayButtonsSx, p: 1.5 }}>
+        <Box className='overlay-buttons' sx={overlayButtonsSx}>
           <Tooltip title={showHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
             <OverlayButton variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
               <WebIcon />
