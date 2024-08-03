@@ -31,7 +31,7 @@ function extractTableData(children: React.JSX.Element) {
   }
 
   // Function to traverse and extract data from table rows and cells
-  function traverseAndExtract(elements: any, tableData: any[] = []) {
+  function traverseAndExtract(elements: React.JSX.Element, tableData: any[] = []) {
     React.Children.forEach(elements, (element) => {
       if (element.type === 'tr') {
         const rowData = React.Children.map(element.props.children, (cell) => {
