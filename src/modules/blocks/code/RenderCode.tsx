@@ -167,7 +167,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
             : (renderPlantUML && plantUmlSvgData) ? <RenderCodePlantUML svgCode={plantUmlSvgData} error={plantUmlError} fitScreen={fitScreen} />
               : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
-      {/* Overlay Buttons */}
+      {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
       <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
 
         {/* Show HTML */}
@@ -212,7 +212,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           </ButtonGroup>
         )}
 
-        {/* New Code Window Buttons */}
+        {/* Group: Open Externally */}
         {(canJSFiddle || canCodePen || canStackBlitz) && (
           <ButtonGroup aria-label='Open code in external editors'>
             {canJSFiddle && <ButtonJsFiddle code={blockCode} language={inferredCodeLanguage!} />}
@@ -221,6 +221,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
           </ButtonGroup>
         )}
 
+        {/* Group: Text Options */}
         <ButtonGroup aria-label='Text Options'>
           {/* Soft Wrap toggle */}
           {renderCode && (
