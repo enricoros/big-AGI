@@ -26,9 +26,12 @@ import { RenderCodeSyntax } from './RenderCodeSyntax';
 import { heuristicIsBlockPlantUML, RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
 import { heuristicIsBlockPureHTML } from '../html/RenderHtmlResponse';
 
-
 // style for line-numbers
 import './RenderCode.css';
+
+
+// configuration
+const ALWAYS_SHOW_OVERLAY = false;
 
 
 // RenderCode
@@ -67,7 +70,15 @@ const _DynamicPrism = React.lazy(async () => {
 });
 
 
-//
+// Actual implemetation of the code rendering
+
+const renderCodecontainerSx: SxProps = {
+  // position the overlay buttons - this has to be one level up from the code, otherwise the buttons will h-scroll with the code
+  position: 'relative',
+
+  // fade in children buttons
+  [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
+};
 
 function RenderCodeImpl(props: RenderCodeBaseProps & {
   highlightCode: (inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean) => string,
@@ -75,7 +86,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 }) {
 
   // state
-  // const [isHovering, setIsHovering] = React.useState(false);
+  const [isHovering, setIsHovering] = React.useState(false);
   const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
   const [showHTML, setShowHTML] = React.useState(props.initialShowHTML === true);
   const [showMermaid, setShowMermaid] = React.useState(true);
@@ -97,6 +108,10 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
 
   // handlers
+
+  const handleMouseOverEnter = React.useCallback(() => setIsHovering(true), []);
+
+  const handleMouseOverLeave = React.useCallback(() => setIsHovering(false), []);
 
   const handleCopyToClipboard = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -150,15 +165,14 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
 
   return (
-    <Box sx={{
-      // position the overlay buttons - this has to be one level up from the code, otherwise the buttons will h-scroll with the code
-      position: 'relative',
-    }}>
+    <Box
+      onMouseEnter={ALWAYS_SHOW_OVERLAY ? undefined : handleMouseOverEnter}
+      onMouseLeave={ALWAYS_SHOW_OVERLAY ? undefined : handleMouseOverLeave}
+      sx={renderCodecontainerSx}
+    >
 
       <Box
         component='code'
-        // onMouseEnter={props.isMobile ? undefined : () => setIsHovering(true)}
-        // onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
         sx={{
 
@@ -174,9 +188,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
           // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
           '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? { backgroundColor: 'neutral.500' } : {},
-
-          // fade in children buttons
-          [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
 
           // lots more style, incl font, background, embossing, radius, etc.
           ...props.sx,
@@ -201,7 +212,10 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                 : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
 
-        {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
+      </Box>
+
+      {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
+      {(ALWAYS_SHOW_OVERLAY || isHovering) && (
         <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
 
           {/* Show HTML */}
@@ -285,8 +299,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             )}
           </ButtonGroup>
         </Box>
+      )}
 
-      </Box>
     </Box>
   );
 }

@@ -20,6 +20,7 @@ export function heuristicIsBlockPlantUML(blockCode: string) {
 export const diagramSx: SxProps = {
   textAlign: 'center',
   mx: 'auto',
+  minHeight: 100,
 };
 
 
