@@ -7,7 +7,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { Link } from '~/common/components/Link';
-import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, useDalleStore } from './store-module-dalle';
 import { openAIImageModelsPricing } from './openaiGenerateImages';

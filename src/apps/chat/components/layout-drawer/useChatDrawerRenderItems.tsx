@@ -4,7 +4,7 @@ import type { DFolder } from '~/common/state/store-folders';
 import { DMessage, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
-import { shallowEquals } from '~/common/util/useShallowObject';
+import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { ChatNavigationItemData } from './ChatDrawerItem';

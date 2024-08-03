@@ -8,7 +8,7 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';

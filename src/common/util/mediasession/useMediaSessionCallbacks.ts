@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useShallowStable } from '../useShallowObject';
+import { useShallowStable } from '../hooks/useShallowObject';
 
 import { MediaSessionCallbacks, MediaSessionManager } from './MediaSessionManager';
 

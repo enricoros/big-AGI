@@ -9,7 +9,7 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
-import { shallowEquals } from '~/common/util/useShallowObject';
+import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
