@@ -17,7 +17,7 @@ import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
-import { DocSelColor } from './DocAttachmentFragmentButton';
+import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButton';
 
 
 function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
@@ -151,6 +151,8 @@ export function DocAttachmentFragmentEditor(props: {
       : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
         : '';
 
+  const TitleIcon = buttonIconForFragment(fragment);
+
   return (
     <Box sx={{
       mt: 0.5,
@@ -174,7 +176,7 @@ export function DocAttachmentFragmentEditor(props: {
         alignItems: 'center',
         gap: 1,
       }}>
-        <Typography level='title-sm'>
+        <Typography level='title-sm' startDecorator={TitleIcon ? <TitleIcon /> : null}>
           <TooltipOutlined placement='top-start' color='neutral' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined
             : <Box sx={{ p: 1, display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 1, '& > :nth-of-type(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
               <div>Title</div>
