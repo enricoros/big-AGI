@@ -1,6 +1,6 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
-import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 

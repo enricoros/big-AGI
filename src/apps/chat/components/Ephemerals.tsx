@@ -5,8 +5,8 @@ import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DEphemeral } from '~/common/chats/EphemeralsStore';
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import type { DEphemeral } from '~/common/chat-overlay/EphemeralsStore';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
