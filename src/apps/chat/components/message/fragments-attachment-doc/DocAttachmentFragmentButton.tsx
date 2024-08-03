@@ -7,12 +7,11 @@ import CodeIcon from '@mui/icons-material/Code';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
@@ -27,17 +26,22 @@ const DocUnselColor: ColorPaletteProp = 'primary';
 function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
   switch (part.pt) {
     case 'doc':
-      switch (part.type) {
-        case 'text/plain':
+      switch (part.vdt) {
+        case DVMimeType.TextPlain:
           return TextFieldsIcon;
-        case 'text/html':
+        case DVMimeType.VndAgiCode:
           return CodeIcon;
-        case 'text/markdown':
-          return CodeIcon;
-        case 'application/vnd.agi.ocr':
+        case DVMimeType.VndAgiOcr:
           return part.meta?.srcOcrFrom === 'image' ? AbcIcon : PictureAsPdfIcon;
-        case 'application/vnd.agi.ego':
-          return TelegramIcon;
+        // NOTE: the objective is to grow this set, but wisely
+        // - no rush to fill the space, as we need data at rest & in flight (for auto type conversion) support,
+        //   including the reintepretation of the deta in the Aix.Adapters
+        // case INT_MIME_VND_AGI_EGO_FRAGMENTS:
+        //   return TelegramIcon;
+        // case INT_MIME_AGI_TEXT_HTML:
+        //   return CodeIcon;
+        // case 'text/markdown':
+        //   return CodeIcon;
         default:
           return TextureIcon;
       }
