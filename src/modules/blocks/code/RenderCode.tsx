@@ -19,9 +19,11 @@ import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
 import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
 import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
 import { RenderCodeHtmlIFrame } from './RenderCodeHtmlIFrame';
+import { RenderCodeMermaid } from './RenderCodeMermaid';
+import { RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
+import { RenderCodeSVG } from './RenderCodeSVG';
+import { RenderCodeSyntax } from './RenderCodeSyntax';
 import { heuristicIsBlockTextHTML } from '../html/RenderHtmlResponse';
-import { patchSvgString, RenderCodeMermaid } from './RenderCodeMermaid';
-import { usePlantUmlSvg } from './RenderCodePlantUML';
 
 
 // style for line-numbers
@@ -118,8 +120,8 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
     || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
 
   let renderPlantUML = isPlantUML && showPlantUML;
-  const { plantUmlHtmlData, plantUmlError } = usePlantUmlSvg(renderPlantUML, blockCode);
-  renderPlantUML = renderPlantUML && (!!plantUmlHtmlData || !!plantUmlError);
+  const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, blockCode);
+  renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
 
   const isSVG = (blockCode.startsWith('<svg') || blockCode.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && blockCode.endsWith('</svg>');
   const renderSVG = isSVG && showSVG;
@@ -196,26 +198,11 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
       )}
 
       {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-      {renderHTML
-        ? <RenderCodeHtmlIFrame htmlCode={blockCode} />
-        : renderMermaid
-          ? <RenderCodeMermaid mermaidCode={blockCode} fitScreen={fitScreen} />
-          : <Box component='div'
-                 className='code-container'
-                 dangerouslySetInnerHTML={{
-                   __html:
-                     renderSVG
-                       ? (patchSvgString(fitScreen, blockCode) || 'No SVG code')
-                       : renderPlantUML
-                         ? (patchSvgString(fitScreen, plantUmlHtmlData) || (plantUmlError ? `PlantUML Error: ${plantUmlError.message}` : 'No PlantUML code'))
-                         : highlightedCode,
-                 }}
-                 sx={{
-                   ...(renderSVG ? { lineHeight: 0 } : {}),
-                   ...(renderPlantUML ? { textAlign: 'center', mx: 'auto' } : {}),
-                 }}
-          />}
-
+      {renderHTML ? <RenderCodeHtmlIFrame htmlCode={blockCode} />
+        : renderMermaid ? <RenderCodeMermaid mermaidCode={blockCode} fitScreen={fitScreen} />
+          : renderSVG ? <RenderCodeSVG svgCode={blockCode} fitScreen={fitScreen} />
+            : (renderPlantUML && plantUmlSvgData) ? <RenderCodePlantUML svgCode={plantUmlSvgData} error={plantUmlError} fitScreen={fitScreen} />
+              : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
       {/* Overlay Buttons */}
       <Box className='overlay-buttons' sx={overlayButtonsSx}>
@@ -306,7 +293,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
 }
 
 // Dynamically import the heavy prism functions
-const RenderCodeDynamic = React.lazy(async () => {
+const DynamicPrism = React.lazy(async () => {
 
   // Dynamically import the code highlight functions
   const { highlightCode, inferCodeLanguage } = await import('./codePrism');
@@ -320,7 +307,7 @@ const RenderCodeDynamic = React.lazy(async () => {
 export function RenderCode(props: RenderCodeBaseProps) {
   return (
     <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...props.sx }} />}>
-      <RenderCodeDynamic {...props} />
+      <DynamicPrism {...props} />
     </React.Suspense>
   );
 }

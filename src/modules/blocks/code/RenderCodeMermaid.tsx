@@ -5,6 +5,7 @@ import { Box } from '@mui/joy';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 import { themeCodeFontFamilyCss, themeFontFamilyCss } from '~/common/app.theme';
+import { patchSvgString } from '~/modules/blocks/code/RenderCodeSVG';
 
 
 /**
@@ -168,9 +169,4 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
       style={{ marginInline: 'auto' }}
     />
   );
-
-}
-
-export function patchSvgString(fitScreen: boolean, svgCode?: string | null): string | null {
-  return fitScreen ? svgCode?.replace('<svg ', `<svg style="width: 100%; height: 100%; object-fit: contain" `) || null : svgCode || null;
 }
