@@ -1,4 +1,4 @@
-import { createStore, StateCreator } from 'zustand/vanilla';
+import { createStore as createVanillaStore, StateCreator } from 'zustand/vanilla';
 
 import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
 
@@ -16,7 +16,7 @@ import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from '
 
 export type BeamStore = RootStoreSlice & GatherStoreSlice & ScatterStoreSlice;
 
-export const createBeamVanillaStore = () => createStore<BeamStore>()((...a) => ({
+export const createBeamVanillaStore = () => createVanillaStore<BeamStore>()((...a) => ({
 
   ...createRootSlice(...a),
   ...createScatterSlice(...a),
