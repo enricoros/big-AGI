@@ -1,12 +1,12 @@
 /// STAGE 1 - Mimetype Guessing
 
 type GuessedMimeType = keyof typeof GuessedMimeLookupTable;
-type GuessedMimeInfo = { ext: string[] | null, dt: GuessedMimeDocType }
-type GuessedMimeDocType =
-  | 'plain'     // text/plain, or MIME_VND_AGI_TEXT_OCR
-  | 'markdown'  // text/markdown
-  | 'html'      // text/html
-  | 'code'      // MIME_VND_AGI_TEXT_CODE
+type GuessedMimeInfo = { ext: string[] | null, dt: GuessedMimeContents }
+type GuessedMimeContents =
+  | 'plain'     // text/plain
+  | 'markdown'  //
+  | 'html'      //
+  | 'code'      //
   | 'doc-pdf' | 'doc-msw' | 'doc-msxl' | 'doc-msppt'
   | 'image' | 'audio' | 'video'
   | 'other';
@@ -106,9 +106,9 @@ export function reverseLookupMimeType(fileExtension: string): GuessedMimeType | 
   return null;
 }
 
-// export function lookupDocTypeFromMime(mimeType: GuessedMimeType): GuessedMimeDocType | null {
-//   return GuessedMimeLookupTable[mimeType]?.dt ?? null;
-// }
+export function guessInputContentTypeFromMime(mimeType: GuessedMimeType): GuessedMimeContents {
+  return GuessedMimeLookupTable[mimeType]?.dt ?? 'plain';
+}
 
 export function heuristicMimeTypeFixup(mimeType: GuessedMimeType, fileExtension?: string): GuessedMimeType {
 

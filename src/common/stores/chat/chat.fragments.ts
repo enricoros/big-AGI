@@ -235,12 +235,15 @@ export function createImageAttachmentFragment(title: string, caption: string, da
   return _createAttachmentFragment(title, caption, _create_ImageRef_Part(dataRef, imgAltText, width, height), undefined);
 }
 
-export function specialContentPartToDocAttachmentFragment(title: string, caption: string, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
-  if (isTextPart(contentPart))
-    return createDocAttachmentFragment(title, caption, 'text/plain', createDMessageDataInlineText(contentPart.text, 'text/plain'), ref, docMeta);
-  if (isImageRefPart(contentPart))
-    return createImageAttachmentFragment(title, caption, _duplicate_DataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
-  return createDocAttachmentFragment('Error', 'Content to Attachment', 'text/plain', createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`, 'text/plain'), ref, docMeta);
+export function specialContentPartToDocAttachmentFragment(title: string, caption: string, vdt: DMessageDocMimeType, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
+  switch (true) {
+    case isTextPart(contentPart):
+      return createDocAttachmentFragment(title, caption, vdt, createDMessageDataInlineText(contentPart.text, 'text/plain'), ref, docMeta);
+    case isImageRefPart(contentPart):
+      return createImageAttachmentFragment(title, caption, _duplicate_DataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
+    default:
+      return createDocAttachmentFragment('Error', 'Content to Attachment', vdt, createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`, 'text/plain'), ref, docMeta);
+  }
 }
 
 function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFileId: LiveFileId | undefined): DMessageAttachmentFragment {
