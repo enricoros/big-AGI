@@ -67,14 +67,3 @@ export function openInStackBlitz(code: string, language: string, title?: string)
   form.submit();
   document.body.removeChild(form);
 }
-
-
-// export function OpenInStackBlitz(props: { code: string, language: string, title?: string }): React.JSX.Element {
-//   return (
-//     <Tooltip title='Open in StackBlitz' variant='solid'>
-//       <OverlayButton variant='outlined' onClick={() => handleOpenInStackBlitz(props.code, props.language, props.title)}>
-//         <StackBlitzIcon />
-//       </OverlayButton>
-//     </Tooltip>
-//   );
-// }

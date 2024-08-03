@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WebIcon from '@mui/icons-material/Web';
 
@@ -61,7 +61,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
                 Ignore
               </Button>
               <Button variant='solid' color='danger' onClick={() => setShowHTML(true)}>
-                Show Web Page
+                Show HTML Page
               </Button>
             </Box>
           </Box>
@@ -69,16 +69,12 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
 
         {/* [overlay] Buttons (dangerous-HTML) */}
         <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
-          <Tooltip title={showHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
-            <OverlayButton variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
-              <WebIcon />
-            </OverlayButton>
-          </Tooltip>
-          <Tooltip title='Copy Code' variant='solid'>
-            <OverlayButton variant='outlined' onClick={handleCopyToClipboard}>
-              <ContentCopyIcon />
-            </OverlayButton>
-          </Tooltip>
+          <OverlayButton tooltip={showHTML ? 'Close HTML Page' : 'Show HTML Page'} variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+            <WebIcon />
+          </OverlayButton>
+          <OverlayButton tooltip='Copy Code' variant='outlined' onClick={handleCopyToClipboard}>
+            <ContentCopyIcon />
+          </OverlayButton>
         </Box>
 
       </Box>

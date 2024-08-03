@@ -38,14 +38,3 @@ export function openInCodePen(code: string, language: string) {
   form.submit();
   document.body.removeChild(form);
 }
-
-
-// export function OpenInCodePen(props: { code: string, language: string }): React.JSX.Element {
-//   return (
-//     <Tooltip title='Open in CodePen' variant='solid'>
-//       <OverlayButton variant='outlined' onClick={() => openInCodePen(props.code, props.language)}>
-//         <CodePenIcon />
-//       </OverlayButton>
-//     </Tooltip>
-//   );
-// }
