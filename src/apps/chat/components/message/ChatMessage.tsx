@@ -432,6 +432,9 @@ export function ChatMessage(props: {
       role='chat-message'
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
       sx={{
+        // vars
+        '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0,
+
         // style
         backgroundColor: backgroundColor,
         px: { xs: 1, md: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2 },
@@ -453,8 +456,8 @@ export function ChatMessage(props: {
           zIndex: 1,
         }),
 
-        // style: make room for a top decorator if set
-        '&:hover > button': { opacity: 1 },
+        // for: ENABLE_COPY_MESSAGE_OVERLAY
+        // '&:hover > button': { opacity: 1 },
 
         // layout
         display: 'block', // this is Needed, otherwise there will be a horizontal overflow

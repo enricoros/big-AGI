@@ -3,6 +3,7 @@
     --AGI-Drawer-width: 320px;
     --AGI-Desktop-Drawer-width: clamp(300px, 20.17vw, 400px);
     --AGI-Optima-Radius: 0.75rem; /* var(--joy-radius-lg) */
+    --AGI-overlay-start-opacity: 0;
 }
 
 .agi-ellipsize {

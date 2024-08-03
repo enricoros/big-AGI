@@ -50,7 +50,7 @@ export const overlayButtonsSx: SxProps = {
   gap: 1,
 
   // faded-out defaults
-  opacity: 0.1,
+  opacity: 'var(--AGI-overlay-start-opacity, 0)',
   pointerEvents: 'none',
   transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
   // buttongroup: background
