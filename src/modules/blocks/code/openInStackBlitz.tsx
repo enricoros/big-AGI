@@ -1,12 +1,5 @@
-import * as React from 'react';
-
-import { Tooltip } from '@mui/joy';
-
 import { Brand } from '~/common/app.config';
-import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
-
-import { OverlayButton } from '../OverlayButton';
 
 
 const _languages = [
@@ -37,7 +30,7 @@ export function isStackBlitzSupported(language: string | null) {
   return !!language && _languages.includes(language);
 }
 
-const handleOpenInStackBlitz = (code: string, language: string, title?: string) => {
+export function openInStackBlitz(code: string, language: string, title?: string) {
 
   const template = languageToTemplateMapping[language] || 'javascript'; // Fallback to 'javascript'
   const fileName = languageToFileExtensionMapping[language] || 'index.js'; // Fallback to 'index.js'
@@ -73,15 +66,15 @@ const handleOpenInStackBlitz = (code: string, language: string, title?: string) 
   document.body.appendChild(form);
   form.submit();
   document.body.removeChild(form);
-};
-
-
-export function ButtonStackBlitz(props: { code: string, language: string, title?: string }): React.JSX.Element {
-  return (
-    <Tooltip title='Open in StackBlitz' variant='solid'>
-      <OverlayButton variant='outlined' onClick={() => handleOpenInStackBlitz(props.code, props.language, props.title)}>
-        <StackBlitzIcon />
-      </OverlayButton>
-    </Tooltip>
-  );
 }
+
+
+// export function OpenInStackBlitz(props: { code: string, language: string, title?: string }): React.JSX.Element {
+//   return (
+//     <Tooltip title='Open in StackBlitz' variant='solid'>
+//       <OverlayButton variant='outlined' onClick={() => handleOpenInStackBlitz(props.code, props.language, props.title)}>
+//         <StackBlitzIcon />
+//       </OverlayButton>
+//     </Tooltip>
+//   );
+// }
