@@ -121,11 +121,9 @@ export namespace AixWire_Parts {
 
     // Doc Type, not to be confused the underlying data type
     // TODO: have more precise types here, probably all VND.AGI.* ?
-    type: z.enum([
-      'application/vnd.agi.ego',
+    vdt: z.enum([
+      'application/vnd.agi.code',
       'application/vnd.agi.ocr',
-      'text/html',
-      'text/markdown',
       'text/plain',
     ]),
 

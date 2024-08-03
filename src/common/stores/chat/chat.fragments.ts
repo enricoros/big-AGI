@@ -80,17 +80,17 @@ export type DMessageErrorPart = { pt: 'error', error: string };
 
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 
-export type DMessageDocPart = { pt: 'doc', type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta };
+export type DMessageDocPart = { pt: 'doc', vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta };
 type DMessageDocMimeType =
-  | 'application/vnd.agi.ego'         // for attaching messages
-  // | 'application/vnd.agi.code'        // Blocks > RenderCode
-  // | 'application/vnd.agi.imageRef'    // for image attachments with da - NO: makes no sense, as doc contains data
+// | 'application/vnd.agi.ego.fragments'         // for attaching messages
+// | 'application/vnd.agi.imageRef'    // for image attachments with da - NO: makes no sense, as doc contains data
+// | 'application/vnd.agi.plantuml'
+// | 'image/svg+xml'
+// | 'text/csv'                        // table editor
+// | 'text/html'                       // can be rendered in iframes (RenderCode[HTML])
+// | 'text/markdown'                   // can be rendered as markdown (note that text/plain can also)
+  | 'application/vnd.agi.code'        // Blocks > RenderCode (it's a text/plain)
   | 'application/vnd.agi.ocr'         // images/pdfs converted as text
-  // | 'application/vnd.agi.plantuml'
-  // | 'image/svg+xml'
-  // | 'text/csv'                        // table editor
-  | 'text/html'                       // can be rendered in iframes (RenderCode[HTML])
-  | 'text/markdown'                   // can be rendered as markdown (note that text/plain can also)
   | 'text/plain'                      // e.g. clipboard paste
   ;
 type DMessageDocMeta = {
@@ -227,8 +227,8 @@ function _createContentFragment(part: DMessageContentFragment['part']): DMessage
 }
 
 
-export function createDocAttachmentFragment(l1Title: string, caption: string, type: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
-  return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(type, data, ref, l1Title, meta), liveFileId);
+export function createDocAttachmentFragment(l1Title: string, caption: string, vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
+  return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(vdt, data, ref, l1Title, meta), liveFileId);
 }
 
 export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
@@ -284,8 +284,8 @@ function _create_Error_Part(error: string): DMessageErrorPart {
   return { pt: 'error', error };
 }
 
-function _create_Doc_Part(type: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta): DMessageDocPart {
-  return { pt: 'doc', type, data, ref, l1Title, meta };
+function _create_Doc_Part(vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, meta?: DMessageDocMeta): DMessageDocPart {
+  return { pt: 'doc', vdt, data, ref, l1Title, meta };
 }
 
 function _create_ImageRef_Part(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageImageRefPart {
@@ -319,7 +319,7 @@ function _create_Sentinel_Part(): _DMetaSentinelPart {
 function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
     case 'doc':
-      return _create_Doc_Part(part.type, _duplicate_InlineData(part.data), part.ref, part.l1Title, part.meta ? { ...part.meta } : undefined) as TPart;
+      return _create_Doc_Part(part.vdt, _duplicate_InlineData(part.data), part.ref, part.l1Title, part.meta ? { ...part.meta } : undefined) as TPart;
 
     case 'error':
       return _create_Error_Part(part.error) as TPart;
@@ -350,6 +350,16 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
 
 
 /// Helpers - Data Reference Creation & Duplication
+
+// Document View Mimetype - 3 uses:
+// - DMessageDocPart.vdt: the visual interpretation of the document (the mimetype of data is in .data.mimeType)
+// - AixWire_Parts.DocPart_schema: gives extra semantic meaning to the Doc part (in conjunction with DMessageDocMeta)
+// - used at rest, and in flight - be very careful not to change anything
+export const DVMimeType = {
+  VndAgiCode: 'application/vnd.agi.code',
+  VndAgiOcr: 'application/vnd.agi.ocr',
+  TextPlain: 'text/plain',
+} as const;
 
 export function createDMessageDataInlineText(text: string, mimeType?: string): DMessageDataInline {
   return { idt: 'text', text, mimeType };

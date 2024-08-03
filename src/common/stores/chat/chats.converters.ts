@@ -7,7 +7,7 @@ import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage } from './chat.message';
-import { createErrorContentFragment, isAttachmentFragment, isContentFragment } from './chat.fragments';
+import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from './chat.fragments';
 
 
 export namespace V4ToHeadConverters {
@@ -53,11 +53,19 @@ export namespace V4ToHeadConverters {
 
   }
 
-  export function dev_inMemHeadUpgradeDMessage(_m: DMessage): void {
-    // cleanup within-v4 - TODO: remove at 2.0.0
-    // for (const fragment of message.fragments) {
-    //    ...
-    // }
+  export function dev_inMemHeadUpgradeDMessage(m: DMessage): void {
+    for (const fragment of m.fragments) {
+
+      // Result of a rename of DMessageDocPart.type -> .vdt
+      if (isContentOrAttachmentFragment(fragment) && isDocPart(fragment.part)) {
+        const docPart = fragment.part as any;
+        if ('type' in docPart && !('vdt' in docPart)) {
+          docPart.vdt = docPart.type;
+          delete docPart.type;
+        }
+      }
+
+    }
   }
 
 }
