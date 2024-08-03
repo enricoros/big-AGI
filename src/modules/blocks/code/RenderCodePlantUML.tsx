@@ -1,18 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { Box } from '@mui/joy';
+
 import { frontendSideFetch } from '~/common/util/clientFetchers';
+import { patchSvgString } from '~/modules/blocks/code/RenderCodeSVG';
 
 
 // PlantUML -> SVG fetchers
 
 export function usePlantUmlSvg(enabled: boolean, blockCode: string) {
-  const { data: plantUmlHtmlData, error: plantUmlError } = useQuery({
+  return useQuery({
     enabled,
     queryKey: ['plantuml', blockCode],
     queryFn: () => _fetchPlantUmlSvg(blockCode),
     staleTime: 24 * 60 * 60 * 1000, // 1 day
   });
-  return { plantUmlHtmlData, plantUmlError };
 }
 
 export function getPlantUmlServerUrl(): string {
@@ -57,4 +59,22 @@ async function _fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
     throw new Error('llm syntax issue (it happens!). Please regenerate or change the language model.');
 
   return svg;
+}
+
+
+export function RenderCodePlantUML(props: {
+  svgCode: string | null;
+  error: Error | null;
+  fitScreen: boolean;
+}) {
+  return (
+    <Box
+      component='div'
+      className='code-container'
+      dangerouslySetInnerHTML={{
+        __html: patchSvgString(props.fitScreen, props.svgCode) || (props.error ? `PlantUML Error: ${props.error.message}` : 'No PlantUML code'),
+      }}
+      sx={{ textAlign: 'center', mx: 'auto' }}
+    />
+  );
 }
