@@ -1,4 +1,4 @@
-import { createStore } from 'zustand/vanilla';
+import { createStore as createVanillaStore } from 'zustand/vanilla';
 import { persist } from 'zustand/middleware';
 
 import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
@@ -20,7 +20,7 @@ interface AutoConfStore {
 }
 
 
-const autoConfVanillaStore = createStore<AutoConfStore>()(persist((_set, _get) => ({
+const autoConfVanillaStore = createVanillaStore<AutoConfStore>()(persist((_set, _get) => ({
 
   // init state
   isConfiguring: false,

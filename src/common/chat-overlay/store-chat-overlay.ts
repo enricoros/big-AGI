@@ -1,5 +1,5 @@
 import { StoreApi, useStore } from 'zustand';
-import { createStore } from 'zustand/vanilla';
+import { createStore as createVanillaStore } from 'zustand/vanilla';
 
 import { AttachmentDraftsStoreApi, AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-attachment-drafts-slice';
 import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-composeroverlay-slice';
@@ -9,7 +9,7 @@ import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-c
 
 type PerChatOverlayStore = ComposerOverlayStore & AttachmentsDraftsStore;
 
-export const createPerChatVanillaStore = () => createStore<PerChatOverlayStore>()((...a) => ({
+export const createPerChatVanillaStore = () => createVanillaStore<PerChatOverlayStore>()((...a) => ({
 
   ...createAttachmentDraftsStoreSlice(...a),
   ...createComposerOverlayStoreSlice(...a),
