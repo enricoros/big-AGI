@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { create } from 'zustand';
-
 import { Box } from '@mui/joy';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 import { themeCodeFontFamilyCss, themeFontFamilyCss } from '~/common/app.theme';
-import { patchSvgString } from '~/modules/blocks/code/RenderCodeSVG';
+
+import { diagramSx } from './RenderCodePlantUML';
+import { patchSvgString } from './RenderCodeSVG';
 
 
 /**
@@ -166,7 +167,7 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
       component='div'
       ref={mermaidContainerRef}
       dangerouslySetInnerHTML={{ __html: patchSvgString(props.fitScreen, _svgCode) || 'Loading Diagram...' }}
-      style={{ marginInline: 'auto' }}
+      sx={diagramSx}
     />
   );
 }

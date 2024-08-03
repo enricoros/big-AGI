@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import { frontendSideFetch } from '~/common/util/clientFetchers';
-import { patchSvgString } from '~/modules/blocks/code/RenderCodeSVG';
+
+import { patchSvgString } from './RenderCodeSVG';
 
 
 export function heuristicIsBlockPlantUML(blockCode: string) {
@@ -13,6 +15,12 @@ export function heuristicIsBlockPlantUML(blockCode: string) {
     || (blockCode.startsWith('@startwbs') && blockCode.endsWith('@endwbs'))
     || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
 }
+
+
+export const diagramSx: SxProps = {
+  textAlign: 'center',
+  mx: 'auto',
+};
 
 
 // PlantUML -> SVG fetchers
@@ -83,7 +91,7 @@ export function RenderCodePlantUML(props: {
       dangerouslySetInnerHTML={{
         __html: patchSvgString(props.fitScreen, props.svgCode) || (props.error ? `PlantUML Error: ${props.error.message}` : 'No PlantUML code'),
       }}
-      sx={{ textAlign: 'center', mx: 'auto' }}
+      sx={diagramSx}
     />
   );
 }
