@@ -64,7 +64,7 @@ export function ContentPartTextEditor(props: {
         : props.textPartText /* DMessageTextPart text */
       }
       placeholder={'Edit the message... - Shift+Enter to save'}
-      minRows={2}
+      // minRows={2} // unintuitive
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
       // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
