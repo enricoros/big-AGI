@@ -41,7 +41,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
           p: 1.5, // this block gets a thicker border
           display: 'block',
           overflowX: 'auto',
-          [`&:hover > ${overlayButtonsClassName}`]: overlayButtonsActiveSx,
+          [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
           ...sx,
         }}
       >
