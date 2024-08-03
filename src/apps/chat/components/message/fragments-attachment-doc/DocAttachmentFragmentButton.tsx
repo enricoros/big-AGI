@@ -23,7 +23,7 @@ export const DocSelColor: ColorPaletteProp = 'primary';
 const DocUnselColor: ColorPaletteProp = 'primary';
 
 
-function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
+export function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
   switch (part.pt) {
     case 'doc':
       switch (part.vdt) {
