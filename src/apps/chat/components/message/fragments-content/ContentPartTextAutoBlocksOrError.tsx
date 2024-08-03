@@ -14,7 +14,7 @@ import { explainServiceErrors } from '../explainServiceErrors';
  * The OG part, comprised of text, which can be markdown, have code blocks, etc.
  * Uses BlocksRenderer to render the markdown/code/html/text, etc.
  */
-export function ContentPartTextAutoBlocks(props: {
+export function ContentPartTextAutoBlocksOrError(props: {
   textPartText: string,
 
   messageRole: DMessageRole,
@@ -38,16 +38,16 @@ export function ContentPartTextAutoBlocks(props: {
   const messageText = props.textPartText;
   const fromAssistant = props.messageRole === 'assistant';
 
-  const errorMessage = React.useMemo(
+  const errorNode = React.useMemo(
     () => explainServiceErrors(messageText, fromAssistant, props.messageOriginLLM),
     [fromAssistant, messageText, props.messageOriginLLM],
   );
 
   // if errored, render an Auto-Error message
-  if (errorMessage) {
+  if (errorNode) {
     return (
       <GoodTooltip placement='top' arrow title={messageText}>
-        <div><InlineError error={`${errorMessage}. Hover this message for more details.`} /></div>
+        <div><InlineError error={<>{errorNode} Hover this message for more details.</>} /></div>
       </GoodTooltip>
     );
   }
