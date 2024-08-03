@@ -12,7 +12,7 @@ import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isConten
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { ContentPartTextAutoBlocks } from './ContentPartTextAutoBlocks';
+import { ContentPartTextAutoBlocksOrError } from './ContentPartTextAutoBlocksOrError';
 import { ContentPartTextEditor } from './ContentPartTextEditor';
 
 
@@ -149,7 +149,7 @@ export function ContentFragments(props: {
 
         case 'text':
           return (
-            <ContentPartTextAutoBlocks
+            <ContentPartTextAutoBlocksOrError
               key={fragment.fId}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}
