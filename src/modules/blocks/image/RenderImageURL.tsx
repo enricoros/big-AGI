@@ -10,11 +10,10 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ReplayIcon from '@mui/icons-material/Replay';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
 import type { ImageBlock } from '../blocks.types';
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx, StyledOverlayButton } from '../OverlayButton';
 
 
 const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;
@@ -240,64 +239,52 @@ export const RenderImageURL = (props: {
         <Box className={overlayButtonsClassName} sx={overlayButtonsGridSx}>
 
           {!!props.expandableText && (
-            <GoodTooltip title={infoOpen ? 'Hide Prompt' : 'Show Prompt'}>
-              <OverlayButton variant={infoOpen ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
-                <InfoOutlinedIcon />
-              </OverlayButton>
-            </GoodTooltip>
+            <OverlayButton tooltip={infoOpen ? 'Hide Prompt' : 'Show Prompt'} variant={infoOpen ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
+              <InfoOutlinedIcon />
+            </OverlayButton>
           )}
 
           {!!props.imageURL && (
-            <GoodTooltip title='Open in new tab'>
-              {props.onOpenInNewTab ? (
-                <OverlayButton variant='outlined' color={isCard ? 'primary' : undefined} onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
-                  <OpenInNewIcon />
-                </OverlayButton>
-              ) : props.imageURL.startsWith('http') ? (
-                <OverlayButton variant='outlined' color={isCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.expandableText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
-                  <OpenInNewIcon />
-                </OverlayButton>
-              ) : <span />}
-            </GoodTooltip>
+            props.onOpenInNewTab ? (
+              <OverlayButton tooltip='Open in new tab' variant='outlined' color={isCard ? 'primary' : undefined} onClick={handleOpenInNewTab} sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OpenInNewIcon />
+              </OverlayButton>
+            ) : props.imageURL.startsWith('http') ? (
+              <StyledOverlayButton variant='outlined' color={isCard ? 'primary' : undefined} component={Link} href={props.imageURL} download={props.expandableText || 'Image'} target='_blank' sx={{ gridRow: '1', gridColumn: '2' }}>
+                <OpenInNewIcon />
+              </StyledOverlayButton>
+            ) : <span />
           )}
 
 
           {/* Deletion */}
 
           {deleteArmed && !regenArmed && (
-            <GoodTooltip title='Confirm Deletion'>
-              <OverlayButton variant='outlined' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '1' }}>
-                <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
-              </OverlayButton>
-            </GoodTooltip>
+            <OverlayButton tooltip='Confirm Deletion' placement='bottom' variant='outlined' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '1' }}>
+              <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
+            </OverlayButton>
           )}
 
           {!!onImageDelete && !regenArmed && (
-            <GoodTooltip title={deleteArmed ? 'Cancel Deletion' : 'Delete Image'}>
-              <OverlayButton variant={deleteArmed ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
-                {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-              </OverlayButton>
-            </GoodTooltip>
+            <OverlayButton tooltip={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} placement='bottom' variant={deleteArmed ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleDeleteArmed} sx={{ gridRow: '2', gridColumn: '2' }}>
+              {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+            </OverlayButton>
           )}
 
           {!!onImageRegenerate && !deleteArmed && (
-            <GoodTooltip title={regenArmed ? 'Cancel Regeneration' : 'Draw again with the present configuration'}>
-              <OverlayButton variant={regenArmed ? 'solid' : 'outlined'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
-                {regenArmed
-                  ? <CloseRoundedIcon />
-                  : <ReplayIcon />
-                }
-              </OverlayButton>
-            </GoodTooltip>
+            <OverlayButton tooltip={regenArmed ? 'Cancel Regeneration' : 'Draw again with the present configuration'} placement='bottom' variant={regenArmed ? 'solid' : 'outlined'} onClick={handleToggleRegenArmed} sx={{ gridRow: '2', gridColumn: '1' }}>
+              {regenArmed
+                ? <CloseRoundedIcon />
+                : <ReplayIcon />
+              }
+            </OverlayButton>
           )}
 
           {/* Regenerate [armed, arming] buttons */}
           {regenArmed && !deleteArmed && (
-            <GoodTooltip title='Confirm Regeneration'>
-              <OverlayButton variant='outlined' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
-                <ReplayIcon sx={{ color: 'success.solidBg' }} />
-              </OverlayButton>
-            </GoodTooltip>
+            <OverlayButton tooltip='Confirm Regeneration' placement='bottom' variant='outlined' color='success' onClick={handleImageRegenerate} sx={{ gridRow: '2', gridColumn: '2' }}>
+              <ReplayIcon sx={{ color: 'success.solidBg' }} />
+            </OverlayButton>
           )}
 
         </Box>

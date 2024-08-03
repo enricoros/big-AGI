@@ -39,14 +39,3 @@ export function openInJsFiddle(code: string, language: string) {
   form.submit();
   document.body.removeChild(form);
 }
-
-
-// export function ButtonJsFiddle(props: { code: string, language: string }): React.JSX.Element {
-//   return (
-//     <Tooltip title='Open in JSFiddle' variant='solid'>
-//       <OverlayButton variant='outlined' onClick={() => codeOpenInJsFiddle(props.code, props.language)}>
-//         JS
-//       </OverlayButton>
-//     </Tooltip>
-//   );
-// }
