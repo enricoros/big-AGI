@@ -67,7 +67,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
           </Box>
         }
 
-        {/* External HTML Buttons */}
+        {/* [overlay] Buttons (dangerous-HTML) */}
         <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
           <Tooltip title={showHTML ? 'Hide' : 'Show Web Page'} variant='solid'>
             <OverlayButton variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
