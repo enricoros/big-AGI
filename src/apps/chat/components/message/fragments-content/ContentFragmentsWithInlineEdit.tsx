@@ -38,7 +38,7 @@ const endLayoutSx: SxProps = {
 };
 
 
-export function ContentFragments(props: {
+export function ContentFragmentsWithInlineEdit(props: {
 
   fragments: DMessageFragment[]
   showEmptyNotice: boolean,

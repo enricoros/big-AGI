@@ -34,7 +34,7 @@ import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentF
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { ContentFragments } from './fragments-content/ContentFragments';
+import { ContentFragmentsWithInlineEdit } from './fragments-content/ContentFragmentsWithInlineEdit';
 import { ContinueFragment } from './ContinueFragment';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
@@ -589,7 +589,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Content Fragments */}
-          <ContentFragments
+          <ContentFragmentsWithInlineEdit
             fragments={contentFragments}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
