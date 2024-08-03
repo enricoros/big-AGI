@@ -18,18 +18,22 @@ import type { CodeBlock } from '../blocks.types';
 import { ButtonCodePen, isCodePenSupported } from './ButtonCodePen';
 import { ButtonJsFiddle, isJSFiddleSupported } from './ButtonJSFiddle';
 import { ButtonStackBlitz, isStackBlitzSupported } from './ButtonStackBlitz';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './RenderCodeMermaid';
-import { RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
 import { RenderCodeSVG } from './RenderCodeSVG';
 import { RenderCodeSyntax } from './RenderCodeSyntax';
-import { heuristicIsBlockTextHTML } from '../html/RenderHtmlResponse';
+import { heuristicIsBlockPlantUML, RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
+import { heuristicIsBlockPureHTML } from '../html/RenderHtmlResponse';
 
 
 // style for line-numbers
 import './RenderCode.css';
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '~/modules/blocks/OverlayButton';
 
+
+// RenderCode
+
+export const RenderCodeMemo = React.memo(RenderCode);
 
 interface RenderCodeBaseProps {
   codeBlock: CodeBlock,
@@ -40,12 +44,33 @@ interface RenderCodeBaseProps {
   sx?: SxProps,
 }
 
-interface RenderCodeImplProps extends RenderCodeBaseProps {
-  highlightCode: (inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean) => string,
-  inferCodeLanguage: (blockTitle: string, code: string) => string | null,
+export function RenderCode(props: RenderCodeBaseProps) {
+  return (
+    <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...props.sx }} />}>
+      <_DynamicPrism {...props} />
+    </React.Suspense>
+  );
 }
 
-function RenderCodeImpl(props: RenderCodeImplProps) {
+
+// Lazy loader of the heavy prism functions
+const _DynamicPrism = React.lazy(async () => {
+
+  // Dynamically import the code highlight functions
+  const { highlightCode, inferCodeLanguage } = await import('./codePrism');
+
+  return {
+    default: (props: RenderCodeBaseProps) => <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
+  };
+});
+
+
+//
+
+function RenderCodeImpl(props: RenderCodeBaseProps & {
+  highlightCode: (inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean) => string,
+  inferCodeLanguage: (blockTitle: string, code: string) => string | null,
+}) {
 
   // state
   const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
@@ -67,33 +92,28 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
     optimizeLightweight,
   } = props;
 
+
   // heuristics for specialized rendering
 
-  const isHTML = heuristicIsBlockTextHTML(blockCode);
-  const renderHTML = isHTML && showHTML;
+  const isHTMLCode = heuristicIsBlockPureHTML(blockCode);
+  const renderHTML = isHTMLCode && showHTML;
 
-  const isMermaid = blockTitle === 'mermaid' && blockComplete;
-  const renderMermaid = isMermaid && showMermaid;
+  const isMermaidCode = blockTitle === 'mermaid' && blockComplete;
+  const renderMermaid = isMermaidCode && showMermaid;
 
-  const isPlantUML =
-    (blockCode.startsWith('@startuml') && blockCode.endsWith('@enduml'))
-    || (blockCode.startsWith('@startmindmap') && blockCode.endsWith('@endmindmap'))
-    || (blockCode.startsWith('@startsalt') && blockCode.endsWith('@endsalt'))
-    || (blockCode.startsWith('@startwbs') && blockCode.endsWith('@endwbs'))
-    || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
-
-  let renderPlantUML = isPlantUML && showPlantUML;
+  const isPlantUMLCode = heuristicIsBlockPlantUML(blockCode);
+  let renderPlantUML = isPlantUMLCode && showPlantUML;
   const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, blockCode);
   renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
 
-  const isSVG = (blockCode.startsWith('<svg') || blockCode.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && blockCode.endsWith('</svg>');
-  const renderSVG = isSVG && showSVG;
+  const isSVGCode = (blockCode.startsWith('<svg') || blockCode.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && blockCode.endsWith('</svg>');
+  const renderSVG = isSVGCode && showSVG;
   const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
 
-  const renderCode = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
+  const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
 
 
-  const cannotRenderLineNumbers = !renderCode || showSoftWrap;
+  const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap;
   const renderLineNumbers = showLineNumbers && !cannotRenderLineNumbers;
 
   // heuristic for language, and syntax highlight
@@ -104,13 +124,13 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
   }, [inferCodeLanguage, blockTitle, blockCode, highlightCode, renderLineNumbers]);
 
 
-  const canCodePen = blockComplete && isCodePenSupported(inferredCodeLanguage, isSVG);
+  const canCodePen = blockComplete && isCodePenSupported(inferredCodeLanguage, isSVGCode);
   const canJSFiddle = blockComplete && isJSFiddleSupported(inferredCodeLanguage, blockCode);
   const canStackBlitz = blockComplete && isStackBlitzSupported(inferredCodeLanguage);
 
 
   let showBlockTitle = (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
-  // hide the block title when rendering HTML
+  // Beautify: hide the block title when rendering HTML
   if (renderHTML)
     showBlockTitle = false;
   const isBorderless = (renderHTML || renderSVG) && !showBlockTitle;
@@ -167,11 +187,12 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
             : (renderPlantUML && plantUmlSvgData) ? <RenderCodePlantUML svgCode={plantUmlSvgData} error={plantUmlError} fitScreen={fitScreen} />
               : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
+
       {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
       <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
 
         {/* Show HTML */}
-        {isHTML && (
+        {isHTMLCode && (
           <Tooltip title={optimizeLightweight ? null : renderHTML ? 'Hide' : 'Show Web Page'}>
             <OverlayButton variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
               <HtmlIcon sx={{ fontSize: 'xl2' }} />
@@ -180,7 +201,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         )}
 
         {/* Show SVG */}
-        {isSVG && (
+        {isSVGCode && (
           <Tooltip title={optimizeLightweight ? null : renderSVG ? 'Show Code' : 'Render SVG'}>
             <OverlayButton variant={renderSVG ? 'solid' : 'outlined'} onClick={() => setShowSVG(!showSVG)}>
               <ChangeHistoryTwoToneIcon />
@@ -189,20 +210,20 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         )}
 
         {/* Show Diagrams */}
-        {(isMermaid || isPlantUML) && (
+        {(isMermaidCode || isPlantUMLCode) && (
           <ButtonGroup aria-label='Diagram'>
             {/* Toggle rendering */}
             <Tooltip title={optimizeLightweight ? null : (renderMermaid || renderPlantUML) ? 'Show Code' : 'Render Mermaid'}>
               <OverlayButton variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'} onClick={() => {
-                if (isMermaid) setShowMermaid(on => !on);
-                if (isPlantUML) setShowPlantUML(on => !on);
+                if (isMermaidCode) setShowMermaid(on => !on);
+                if (isPlantUMLCode) setShowPlantUML(on => !on);
               }}>
                 <SchemaIcon />
               </OverlayButton>
             </Tooltip>
 
             {/* Fit-To-Screen */}
-            {((isMermaid && showMermaid) || (isPlantUML && showPlantUML && !plantUmlError) || (isSVG && showSVG && canScaleSVG)) && (
+            {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
               <Tooltip title={optimizeLightweight ? null : fitScreen ? 'Original Size' : 'Fit Screen'}>
                 <OverlayButton variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
                   <FitScreenIcon />
@@ -224,18 +245,18 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         {/* Group: Text Options */}
         <ButtonGroup aria-label='Text Options'>
           {/* Soft Wrap toggle */}
-          {renderCode && (
+          {renderSyntaxHighlight && (
             <Tooltip title={optimizeLightweight ? null : 'Toggle Soft Wrap'}>
-              <OverlayButton disabled={!renderCode} variant={(showSoftWrap && renderCode) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
+              <OverlayButton disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
                 <WrapTextIcon />
               </OverlayButton>
             </Tooltip>
           )}
 
           {/* Line Numbers toggle */}
-          {renderCode && (
+          {renderSyntaxHighlight && (
             <Tooltip title={optimizeLightweight ? null : 'Toggle Line Numbers'}>
-              <OverlayButton disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderCode) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
+              <OverlayButton disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
                 <NumbersRoundedIcon />
               </OverlayButton>
             </Tooltip>
@@ -255,25 +276,3 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
     </Box>
   );
 }
-
-// Dynamically import the heavy prism functions
-const DynamicPrism = React.lazy(async () => {
-
-  // Dynamically import the code highlight functions
-  const { highlightCode, inferCodeLanguage } = await import('./codePrism');
-
-  return {
-    default: (props: RenderCodeBaseProps) =>
-      <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
-  };
-});
-
-export function RenderCode(props: RenderCodeBaseProps) {
-  return (
-    <React.Suspense fallback={<Box component='code' sx={{ p: 1.5, display: 'block', ...props.sx }} />}>
-      <DynamicPrism {...props} />
-    </React.Suspense>
-  );
-}
-
-export const RenderCodeMemo = React.memo(RenderCode);

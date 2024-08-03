@@ -13,7 +13,7 @@ import { RenderCodeHtmlIFrame } from '../code/RenderCodeHtmlIFrame';
 
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)
-export function heuristicIsBlockTextHTML(text: string): boolean {
+export function heuristicIsBlockPureHTML(text: string): boolean {
   return ['<!DOCTYPE html', '<!doctype html', '<head'].some((start) => text.startsWith(start));
 }
 
