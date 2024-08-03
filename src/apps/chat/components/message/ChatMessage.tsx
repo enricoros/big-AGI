@@ -620,6 +620,7 @@ export function ChatMessage(props: {
               messageRole={messageRole}
               contentScaling={adjContentScaling}
               isMobile={props.isMobile}
+              zenMode={zenMode}
               renderTextAsMarkdown={renderMarkdown}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}
