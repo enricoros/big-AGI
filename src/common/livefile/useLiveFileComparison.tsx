@@ -81,7 +81,7 @@ export function useLiveFileComparison(
     // Same content: no diff
     if (fileContent === bufferText) {
       setDiffSummary({ insertions: 0, deletions: 0 });
-      setStatus({ message: isMobile ? 'Identical to File.' : 'Document is identical to the File.', mtype: 'info' });
+      setStatus({ message: isMobile ? 'Identical to File.' : 'The File is identical to this Document.', mtype: 'info' });
       return;
     }
 

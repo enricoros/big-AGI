@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button, Sheet, Typography } from '@mui/joy';
+import { Box, Button, Sheet, Switch, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -35,6 +35,7 @@ export function DocAttachmentFragmentEditor(props: {
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
   isMobile?: boolean,
+  zenMode: boolean,
   renderTextAsMarkdown: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
@@ -137,6 +138,19 @@ export function DocAttachmentFragmentEditor(props: {
   }, [isEditing, skipNextAutoScroll]);
 
 
+  // view as code
+
+  const handleToggleViewAsCode = React.useCallback(() => {
+    setViewAsCode(on => !on);
+  }, []);
+
+
+  // messaging
+  const titleEndText =
+    !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
+      : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
+        : '';
+
   return (
     <Box sx={{
       mt: 0.5,
@@ -162,7 +176,7 @@ export function DocAttachmentFragmentEditor(props: {
       }}>
         <Typography level='title-sm'>
           <TooltipOutlined placement='top-start' color='neutral' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined
-            : <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 0.5, '& > :nth-of-type(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
+            : <Box sx={{ p: 1, display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 1, '& > :nth-of-type(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
               <div>Title</div>
               <div>{fragmentTitle}</div>
               <div>Identifier</div>
@@ -178,11 +192,22 @@ export function DocAttachmentFragmentEditor(props: {
             <span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>
           </TooltipOutlined>
         </Typography>
-        <Typography level='body-xs' sx={{ opacity: 0.5 }}>
-          {fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt ? fragmentDocPart.data.mimeType || '' : ''}
-          {/*{fragmentId}*/}
-          {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.vdt, pt: part.data.mimeType })}*/}
-        </Typography>
+
+        {!props.zenMode && (
+          <Switch
+            size='sm'
+            variant='solid'
+            color='neutral'
+            checked={viewAsCode}
+            onChange={handleToggleViewAsCode}
+            startDecorator={
+              <Typography level='body-xs'>
+                {titleEndText}
+              </Typography>
+            }
+          />
+        )}
+
       </Box>
 
 
@@ -251,7 +276,6 @@ export function DocAttachmentFragmentEditor(props: {
       ) : (
         // Document viewer, including the collapse/expand state inside
         <AutoBlocksRenderer
-          // text={marshallWrapText(part.data.text, /*fragmentTitle ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.vdt, pt: part.data.mimeType }), 'markdown-code')}
           // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
           text={fragmentDocPart.data.text}
           renderAsCodeTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
