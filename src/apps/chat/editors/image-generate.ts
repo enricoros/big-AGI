@@ -2,7 +2,7 @@ import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 import { gcDBImageAssets } from '~/modules/dblobs/dblobs.images';
 import { getActiveTextToImageProviderOrThrow, t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 
-import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { createErrorContentFragment, isContentOrAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { useChatStore } from '~/common/stores/chat/store-chats';

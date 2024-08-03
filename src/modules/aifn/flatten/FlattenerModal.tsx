@@ -7,7 +7,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';

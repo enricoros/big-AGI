@@ -1,7 +1,7 @@
 import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modules/llms/llm.client';
 import { DLLMId, findLLMOrThrow, LLM_IF_OAI_Fn, useModelsStore } from '~/modules/llms/store-llms';
 
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';

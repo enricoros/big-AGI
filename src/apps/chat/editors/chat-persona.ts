@@ -8,7 +8,7 @@ import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions'
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';

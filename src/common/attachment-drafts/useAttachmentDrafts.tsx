@@ -10,7 +10,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { getAllFilesFromDirectoryRecursively } from '~/common/util/fileSystemUtils';
-import { useChatAttachmentsStore } from '~/common/chats/store-chat-overlay';
+import { useChatAttachmentsStore } from '~/common/chat-overlay/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';

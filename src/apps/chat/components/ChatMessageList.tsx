@@ -6,7 +6,7 @@ import { Box, List } from '@mui/joy';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
-import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { InlineError } from '~/common/components/InlineError';
@@ -16,7 +16,7 @@ import { getConversation, useChatStore } from '~/common/stores/chat/store-chats'
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useEphemerals } from '~/common/chats/EphemeralsStore';
+import { useEphemerals } from '~/common/chat-overlay/EphemeralsStore';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';

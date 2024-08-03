@@ -2,7 +2,7 @@ import { Agent } from '~/modules/aifn/react/react';
 import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
-import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 // configuration
