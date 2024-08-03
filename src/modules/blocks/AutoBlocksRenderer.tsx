@@ -1,13 +1,11 @@
 import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
-
-import type { SxProps } from '@mui/joy/styles/types';
 import { Button, Typography } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { ContentScaling, themeScalingMap } from '~/common/app.theme';
+import { ContentScaling } from '~/common/app.theme';
 
 import type { Block, CodeBlock, HtmlBlock, ImageBlock, TextBlock } from './blocks.types';
 import { BlocksContainer } from './BlocksContainer';
@@ -17,6 +15,7 @@ import { RenderTextDiff } from './textdiff/RenderTextDiff';
 import { heuristicIsBlockPureHTML, RenderHtmlResponse } from './html/RenderHtmlResponse';
 import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks, RenderImageURL } from './image/RenderImageURL';
 import { renderCodeMemoOrNot } from './code/RenderCode';
+import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from '~/modules/blocks/blocks.styles';
 
 
 // How long is the user collapsed message
@@ -153,6 +152,9 @@ type BlocksRendererProps = {
 
 /**
  * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
+ * Used by (and more):
+ * - DocAttachmentFragmentEditor
+ * - ContentPartPlaceholder
  */
 export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 
@@ -226,48 +228,10 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
 
   // Memo the styles, to minimize re-renders
 
-  const scaledCodeSx: SxProps = React.useMemo(() => ({
-    my: props.specialCodePlain ? 0 : themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0,
-    backgroundColor: props.specialCodePlain ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-    boxShadow: props.specialCodePlain ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
-    borderRadius: 'sm',
-    fontFamily: 'code',
-    fontSize: themeScalingMap[props.contentScaling]?.blockCodeFontSize ?? '0.875rem',
-    fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
-    fontVariantLigatures: 'none',
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    minWidth: 288,
-    minHeight: '2.75rem',
-  }), [fromAssistant, props.contentScaling, props.specialCodePlain]);
-
-  const scaledImageSx: SxProps = React.useMemo(() => ({
-    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    marginBottom: themeScalingMap[props.contentScaling]?.blockImageGap ?? 1.5,
-  }), [props.contentScaling]);
-
-  const scaledTypographySx: SxProps = React.useMemo(() => ({
-    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    ...(props.showAsDanger ? { color: 'danger.500', fontWeight: 500 } : {}),
-    ...(props.showAsItalic ? { fontStyle: 'italic' } : {}),
-  }), [props.contentScaling, props.showAsDanger, props.showAsItalic]);
-
-
-  const toggleExpansionButtonSx: SxProps = React.useMemo(() => ({
-    width: '100%',
-    fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    ...(props.specialCodePlain ? {
-      // Style when inside the <DocumentFragmentEditor />
-      backgroundColor: 'background.surface',
-      // marginTop: -0.5,
-    } : {
-      // Style when inside <ChatMessage /> in particular for 'user' messages
-      marginTop: 1,
-    }),
-  }), [props.contentScaling, props.specialCodePlain]);
+  const scaledCodeSx = useScaledCodeSx(fromAssistant, props.contentScaling, !!props.specialCodePlain);
+  const scaledImageSx = useScaledImageSx(props.contentScaling);
+  const scaledTypographySx = useScaledTypographySx(props.contentScaling, !!props.showAsDanger, !!props.showAsItalic);
+  const toggleExpansionButtonSx = useToggleExpansionButtonSx(props.contentScaling, !!props.specialCodePlain);
 
 
   return (
