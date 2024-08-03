@@ -13,7 +13,7 @@ import { agiUuid } from '~/common/util/idUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormEditTextArray } from '~/common/components/forms/useFormEditTextArray';
 import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
-import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { FromText } from './FromText';
 import { FromYouTube } from './FromYouTube';

@@ -12,7 +12,7 @@ import { getChatLLMId } from '~/modules/llms/store-llms';
 
 import type { AttachmentDraft } from '~/common/attachment-drafts/attachment.types';
 import { DMessageAttachmentFragment, DMessageDocPart, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
-import { useShallowStable } from '~/common/util/useShallowObject';
+import { useShallowStable } from '~/common/util/hooks/useShallowObject';
 
 import { ReplyToBubble } from '../message/ReplyToBubble';
 import { getChatAutoAI } from '../../store-app-chat';

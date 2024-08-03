@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, FormLabel } from '@mui/joy';
 import SyncIcon from '@mui/icons-material/Sync';
 
-import type { ToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import type { ToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 
 /**
