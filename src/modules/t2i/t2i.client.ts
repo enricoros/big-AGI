@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
@@ -30,10 +29,8 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   // external state
 
-  const { activeProviderId, setActiveProviderId } = useTextToImageStore(useShallow(state => ({
-    activeProviderId: state.activeProviderId,
-    setActiveProviderId: state.setActiveProviderId,
-  })));
+  const activeProviderId = useTextToImageStore(state => state.activeProviderId);
+  const setActiveProviderId = useTextToImageStore.getState().setActiveProviderId;
 
   const llmsModelSources: LlmsModelSources[] = useStoreWithEqualityFn(useModelsStore,
     ({ llms, sources }) => getLlmsModelSources(llms, sources),
