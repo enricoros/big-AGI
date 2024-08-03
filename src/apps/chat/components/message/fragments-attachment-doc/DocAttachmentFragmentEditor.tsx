@@ -12,13 +12,20 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
-import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
+import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
 import { DocSelColor } from './DocAttachmentFragmentButton';
+
+
+function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
+  if (!isDocPart(attachmentFragment.part))
+    return false;
+  // just use the mime of the doc part
+  return attachmentFragment.part.vdt === DVMimeType.VndAgiCode;
+}
 
 
 export function DocAttachmentFragmentEditor(props: {
@@ -32,6 +39,9 @@ export function DocAttachmentFragmentEditor(props: {
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
+
+  // state
+  const [viewAsCode, setViewAsCode] = React.useState(() => inferInitialViewAsCode(props.fragment));
 
   // external state
   const { skipNextAutoScroll } = useScrollToBottom();
@@ -55,7 +65,7 @@ export function DocAttachmentFragmentEditor(props: {
   const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
     // create a new Doc Attachment Fragment
     const newData = createDMessageDataInlineText(newText, fragmentDocPart.data.mimeType);
-    const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.type, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment.liveFileId);
+    const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.vdt, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment.liveFileId);
 
     // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
     newAttachment.fId = fragmentId;
@@ -158,7 +168,7 @@ export function DocAttachmentFragmentEditor(props: {
               <div>Identifier</div>
               <div>{fragmentDocPart.ref}</div>
               <div>Render type</div>
-              <div>{fragmentDocPart.type}</div>
+              <div>{fragmentDocPart.vdt}</div>
               <div>Text Mime type</div>
               <div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>
               <div>Text Buffer Id</div>
@@ -169,9 +179,9 @@ export function DocAttachmentFragmentEditor(props: {
           </TooltipOutlined>
         </Typography>
         <Typography level='body-xs' sx={{ opacity: 0.5 }}>
-          {fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.type ? fragmentDocPart.data.mimeType || '' : ''}
+          {fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt ? fragmentDocPart.data.mimeType || '' : ''}
           {/*{fragmentId}*/}
-          {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType })}*/}
+          {/*{JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.vdt, pt: part.data.mimeType })}*/}
         </Typography>
       </Box>
 
@@ -241,9 +251,10 @@ export function DocAttachmentFragmentEditor(props: {
       ) : (
         // Document viewer, including the collapse/expand state inside
         <AutoBlocksRenderer
-          // text={marshallWrapText(part.data.text, /*fragmentTitle ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.type, pt: part.data.mimeType }), 'markdown-code')}
-          text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
-          // text={part.data.text}
+          // text={marshallWrapText(part.data.text, /*fragmentTitle ||*/ JSON.stringify({ fn: part.meta?.srcFileName, ref: part.ref, meta: part.meta, mt: part.vdt, pt: part.data.mimeType }), 'markdown-code')}
+          // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
+          text={fragmentDocPart.data.text}
+          renderAsCodeTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}
           fitScreen={props.isMobile}
