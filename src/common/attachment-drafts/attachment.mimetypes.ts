@@ -1,34 +1,39 @@
-// Special internal mimetypes (vnd = vendor), to give semantic meaning to the attachment
-export const VND_EGO_FRAGMENTS_MIMETYPE = 'application/vnd.agi.ego.fragments';
-export const VND_WEBPAGE_MIMETYPE = 'application/vnd.agi.webpage';
-
-
 /// STAGE 1 - Mimetype Guessing
 
-export type GuessedMimeDocType =
-  | 'plain'
-  | 'html'
-  | 'code'
+type GuessedMimeType = keyof typeof GuessedMimeLookupTable;
+type GuessedMimeInfo = { ext: string[] | null, dt: GuessedMimeDocType }
+type GuessedMimeDocType =
+  | 'plain'     // text/plain, or MIME_VND_AGI_TEXT_OCR
+  | 'markdown'  // text/markdown
+  | 'html'      // text/html
+  | 'code'      // MIME_VND_AGI_TEXT_CODE
   | 'doc-pdf' | 'doc-msw' | 'doc-msxl' | 'doc-msppt'
   | 'image' | 'audio' | 'video'
   | 'other';
 
-const MIME_LOOKUP: Record<string, { ext: string[] | null, dt: GuessedMimeDocType }> = {
+const GuessedMimeLookupTable: Record<string, GuessedMimeInfo> = {
   // Plain text
+  // - shall be rendered and edited as plain text
   'text/plain': { ext: ['txt', 'text', 'log', 'conf', 'def', 'list', 'in', 'ini'], dt: 'plain' },
 
+  // Markdown
+  // - shall be rendered with sizes and styles, as markdown does
+  'text/markdown': { ext: ['md', 'markdown', 'mdown', 'mkd'], dt: 'markdown' },
+
   // HTML
+  // - shall be rendered as an HTML page
   'text/html': { ext: ['htm', 'html', 'shtml', 'xhtml'], dt: 'html' },
 
+  // SVG treated as code - or shall it not be?
+  'image/svg+xml': { ext: ['svg'], dt: 'code' },
+
   // Code (including various programming languages)
-  'image/svg+xml': { ext: ['svg'], dt: 'code' }, // SVG treated as code
   'text/css': { ext: ['css', 'scss', 'less', 'sass'], dt: 'code' },
   'text/javascript': { ext: ['js', 'mjs', 'jsx'], dt: 'code' },
   'application/x-javascript': { ext: null, dt: 'code' },
   'text/x-typescript': { ext: ['ts', 'tsx', 'd.ts'], dt: 'code' }, // TypeScript files (recommended is application/typescript, but we standardize to text/x-typescript instead as per Gemini's standard)
   'application/x-typescript': { ext: null, dt: 'code' },
   'text/csv': { ext: ['csv', 'tsv'], dt: 'code' },
-  'text/markdown': { ext: ['md', 'markdown', 'mdown', 'mkd'], dt: 'code' },
   'text/x-python': { ext: ['py', 'pyw'], dt: 'code' },
   'application/x-python-code': { ext: null, dt: 'code' },
   'application/json': { ext: ['json', 'jsonld'], dt: 'code' },
@@ -48,6 +53,8 @@ const MIME_LOOKUP: Record<string, { ext: string[] | null, dt: GuessedMimeDocType
 
   // Document formats
   'application/pdf': { ext: ['pdf'], dt: 'doc-pdf' },
+  'application/x-pdf': { ext: null, dt: 'doc-pdf' },
+  'application/acrobat': { ext: null, dt: 'doc-pdf' },
   'application/msword': { ext: ['doc'], dt: 'doc-msw' },
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { ext: ['docx'], dt: 'doc-msw' },
   'application/vnd.ms-excel': { ext: ['xls'], dt: 'doc-msxl' },
@@ -91,34 +98,36 @@ const MIME_LOOKUP: Record<string, { ext: string[] | null, dt: GuessedMimeDocType
 };
 
 
-export function resolveMissingMimetypeFromFileName(fileName: string): string {
+export function reverseLookupMimeType(fileExtension: string): GuessedMimeType | null {
+  for (const [mimeType, { ext }] of Object.entries(GuessedMimeLookupTable)) {
+    if (ext && ext.includes(fileExtension))
+      return mimeType;
+  }
+  return null;
+}
 
+// export function lookupDocTypeFromMime(mimeType: GuessedMimeType): GuessedMimeDocType | null {
+//   return GuessedMimeLookupTable[mimeType]?.dt ?? null;
+// }
+
+export function heuristicMimeTypeFixup(mimeType: GuessedMimeType, fileExtension?: string): GuessedMimeType {
+
+  // Mpeg-transport video steam -> Typescript
+  if (!mimeType.startsWith('text/') && fileExtension && GuessedMimeLookupTable['text/x-typescript']?.ext?.includes(fileExtension))
+    return 'text/x-typescript';
+
+  return mimeType;
 }
 
 
 /// STAGE 2 - Converter mimetypes, to decide which converter(s) to apply to an input
 
-/** MimeTypes to treat as plain text for attachment purposes */
+// MimeTypes to treat as plain text for attachment purposes
 export function mimeTypeIsPlainText(mimeType: string): boolean {
-  // mimetypes to treat as plain text
-  return [
-    'text/plain',
-    'text/html',
-    'text/markdown',
-    'text/csv',
-    'text/css',
-    'text/javascript',
-    'application/json',
-    // https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=node#plain_text_formats
-    'application/rtf',
-    'application/x-javascript',
-    'application/x-python-code',
-    'application/x-typescript',
-    'text/rtf',
-    'text/x-python',
-    'text/x-typescript',
-    'text/xml',
-  ].includes(mimeType);
+  // we include this list: https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=node#plain_text_formats
+  // and include a greater number of plain text files
+  const docType = GuessedMimeLookupTable[mimeType]?.dt;
+  return docType === 'plain' || docType === 'html' || docType === 'code';
 }
 
 // Image Rules across the supported LLMs
@@ -159,31 +168,20 @@ export function mimeTypeIsPlainText(mimeType: string): boolean {
 //    - Max size is 5MB/image on the API
 //    - Up to 20 images in a single request (note, request, not message)
 
-/**
- * (Least common denominator of the instructions above)
- * MimeTypes to treat as supported images for attachment purposes
- */
+// Least common denominator of the instructions above - MimeTypes to treat as supported images for attachment purposes
 export function mimeTypeIsSupportedImage(mimeType: string): boolean {
-  return [
-    'image/png',
-    'image/jpeg',
-    'image/webp',
-    'image/gif',
-  ].includes(mimeType);
+  if (GuessedMimeLookupTable[mimeType]?.dt !== 'image')
+    return false;
+  // We actually narrow it down here to be a tad more restrictive
+  return ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(mimeType);
 }
 
-/** MimeTypes to treat as PDF documents for attachment purposes */
+// MimeTypes to treat as PDF documents for attachment purposes
 export function mimeTypeIsPDF(mimeType: string): boolean {
-  return [
-    'application/pdf',
-    'application/x-pdf',
-    'application/acrobat',
-  ].includes(mimeType);
+  return GuessedMimeLookupTable[mimeType]?.dt === 'doc-pdf';
 }
 
-/** MimeTypes to treat as Word documents for attachment purposes */
+// MimeTypes to treat as Word documents for attachment purposes
 export function mimeTypeIsDocX(mimeType: string): boolean {
-  return [
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ].includes(mimeType);
+  return GuessedMimeLookupTable[mimeType]?.dt === 'doc-msw';
 }

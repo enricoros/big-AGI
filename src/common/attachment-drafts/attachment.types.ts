@@ -34,7 +34,7 @@ export type AttachmentDraft = {
 export type AttachmentDraftId = string;
 
 
-// draft source
+// 0. draft source (filled at the onset)
 
 export type AttachmentDraftSource = {
   media: 'url';
@@ -63,10 +63,7 @@ export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file
 export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
 
-// draft input
-
-export const draftInputMimeEgoFragments = 'application/vnd.agi.ego.fragments';
-export const draftInputMimeWebpage = 'application/vnd.agi.webpage';
+// 1. draft input (loaded from the source)
 
 export type AttachmentDraftInput = {
   mimeType: string; // Original MIME type of the file, or application specific type
@@ -99,7 +96,7 @@ export type DraftEgoFragmentsInputData = {
 }
 
 
-// draft converter
+// 2. draft converters (UI options to convert the input)
 
 export type AttachmentDraftConverter = {
   id: AttachmentDraftConverterType;
@@ -126,6 +123,9 @@ export type AttachmentDraftConverterType =
   | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-null' | 'url-page-image'
   | 'ego-fragments-inlined'
   | 'unhandled';
+
+
+// 3. Output - this is done via DMessageAttachmentFragment[], to be directly compatible with our data
 
 
 /*export type AttachmentDraftPreview = {
