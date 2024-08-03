@@ -49,7 +49,6 @@ export function ContentFragments(props: {
   messageRole: DMessageRole,
   optiAllowSubBlocksMemo?: boolean,
   renderTextAsMarkdown: boolean,
-  showTopWarning?: string,
   showUnsafeHtml?: boolean,
 
   textEditsState: ChatMessageTextPartEditState | null,
@@ -160,7 +159,6 @@ export function ContentFragments(props: {
               renderTextAsMarkdown={props.renderTextAsMarkdown}
               // renderTextDiff={textDiffs || undefined}
               showUnsafeHtml={props.showUnsafeHtml}
-              showTopWarning={props.showTopWarning}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               onContextMenu={props.onContextMenu}
               onDoubleClick={props.onDoubleClick}
