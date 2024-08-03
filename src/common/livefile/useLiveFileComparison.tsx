@@ -255,7 +255,7 @@ export function useLiveFileComparison(
               startDecorator={<LiveFileReloadIcon />}
               aria-label='Load content from disk'
             >
-              {isMobile ? 'Update' : 'Replace from File'}
+              {isMobile ? 'Update' : 'Read File into Document'}
             </Button>
           )}
 
