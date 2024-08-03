@@ -5,11 +5,12 @@ import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
-import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, DVMimeType, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 
+import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, DraftWebInputData } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
-import { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, draftInputMimeEgoFragments, draftInputMimeWebpage, DraftWebInputData } from './attachment.types';
+import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
 
 
@@ -19,96 +20,9 @@ export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
 
-
-// input mimetypes missing
-const RESOLVE_MISSING_FILE_MIMETYPE_MAP: Record<string, string> = {
-  // JavaScript files (official)
-  'js': 'text/javascript',
-  // Python files
-  'py': 'text/x-python',
-  // TypeScript files (recommended is application/typescript, but we standardize to text/x-typescript instead as per Gemini's standard)
-  'ts': 'text/x-typescript',
-  'tsx': 'text/x-typescript',
-  // JSON files
-  'json': 'application/json',
-  'csv': 'text/csv',
-};
-
-// mimetypes to treat as plain text
-const PLAIN_TEXT_MIMETYPES: string[] = [
-  'text/plain',
-  'text/html',
-  'text/markdown',
-  'text/csv',
-  'text/css',
-  'text/javascript',
-  'application/json',
-  // https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=node#plain_text_formats
-  'application/rtf',
-  'application/x-javascript',
-  'application/x-python-code',
-  'application/x-typescript',
-  'text/rtf',
-  'text/x-python',
-  'text/x-typescript',
-  'text/xml',
-];
-
-// Image Rules across the supported LLMs
-//
-// OpenAI: https://platform.openai.com/docs/guides/vision/what-type-of-files-can-i-upload
-//  - Supported Image formats:
-//    - Images are first scaled to fit within a 2048 x 2048 square (if larger), maintaining their aspect ratio.
-//      Then, they are scaled down such that the shortest side of the image is 768px (if larger)
-//    - PNG (.png), JPEG (.jpeg and .jpg), WEBP (.webp), and non-animated GIF (.gif)
-//
-// Google: https://ai.google.dev/gemini-api/docs/prompting_with_media
-//  - Supported Image formats:
-//    - models: gemini-1.5-pro, gemini-pro-vision
-//    - PNG - image/png, JPEG - image/jpeg, WEBP - image/webp, HEIC - image/heic, HEIF - image/heif
-//    - [strat] for prompts containing a single image, it might perform better if that image is placed before the text prompt
-//    - Maximum of 16 individual images for the gemini-pro-vision and 3600 images for gemini-1.5-pro
-//    - No specific limits to the number of pixels in an image; however, larger images are scaled down to
-//    - fit a maximum resolution of 3072 x 3072 while preserving their original aspect ratio
-//
-//  - Supported Audio formats:
-//    - models: gemini-1.5-pro
-//    - WAV - audio/wav, MP3 - audio/mp3, AIFF - audio/aiff, AAC - audio/aac, OGG Vorbis - audio/ogg, FLAC - audio/flac
-//    - The maximum supported length of audio data in a single prompt is 9.5 hours
-//    - Audio files are resampled down to a 16 Kbps data resolution, and multiple channels of audio are combined into a single channel
-//    - No limit of audio files in a single prompt (but < 9.5Hrs)
-//
-//  - Supported Video formats:
-//    - models: gemini-1.5-pro
-//    - video/mp4 video/mpeg, video/mov, video/avi, video/x-flv, video/mpg, video/webm, video/wmv, video/3gpp
-//    - The File API service samples videos into images at 1 frame per second (FPS) and may be subject to change to provide the best
-//      inference quality. Individual images take up 258 tokens regardless of resolution and quality
-//
-// Anthropic: https://docs.anthropic.com/en/docs/vision
-//  - Supported Image formats:
-//    - image/jpeg, image/png, image/gif, and image/webp
-//    - If image’s long edge is more than 1568 pixels, or your image is more than ~1600 tokens, it will first be scaled down
-//      - Max Image Size per Aspect ratio: 1:1 1092x1092 px, 3:4 951x1268 px, 2:3 896x1344 px, 9:16 819x1456 px, 1:2 784x1568 px
-//    - Max size is 5MB/image on the API
-//    - Up to 20 images in a single request (note, request, not message)
-
-// Least common denominator of the types above
-const IMAGE_MIMETYPES: string[] = [
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'image/gif',
-];
-
-// mimetypes to treat as PDFs
-const PDF_MIMETYPES: string[] = [
-  'application/pdf', 'application/x-pdf', 'application/acrobat',
-];
-
-// mimetypes to treat as images
-const DOCX_MIMETYPES: string[] = [
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
+// internal mimes, only used to route data within us (source -> input -> converters)
+const INT_MIME_VND_AGI_EGO_FRAGMENTS = 'application/vnd.agi.ego.fragments';
+const INT_MIME_VND_AGI_WEBPAGE = 'application/vnd.agi.webpage';
 
 
 /**
@@ -154,7 +68,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
           edit({
             label: title || source.refUrl,
             input: {
-              mimeType: draftInputMimeWebpage,
+              mimeType: INT_MIME_VND_AGI_WEBPAGE,
               data: {
                 pageText: text ?? undefined,
                 pageMarkdown: markdown ?? undefined,
@@ -176,22 +90,21 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       edit({ label: source.refPath, ref: source.refPath });
 
       // fix missing/wrong mimetypes
+      let fileMime: string | null = source.fileWithHandle.type;
       const fileExtension = source.refPath.split('.').pop()?.toLowerCase() || undefined;
-      let mimeType = source.fileWithHandle.type;
-      if (!mimeType) {
+      if (!fileMime) {
         // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
         if (fileExtension)
-          mimeType = RESOLVE_MISSING_FILE_MIMETYPE_MAP[fileExtension] ?? undefined;
+          fileMime = reverseLookupMimeType(fileExtension);
+
         // unknown extension or missing extension and mime: falling back to text/plain
-        if (!mimeType) {
+        if (!fileMime) {
           console.warn(`Assuming the attachment is text/plain. From: '${source.origin}', name: ${source.refPath}`);
-          mimeType = 'text/plain';
+          fileMime = 'text/plain';
         }
       } else {
-        // we can possibly fix wrongly assigned transfer mimetypes here
-        // fix the mimetype for TypeScript files (from some old video streaming format on windows...)
-        if ((fileExtension === 'ts' || fileExtension === 'tsx') && !mimeType.startsWith('text/'))
-          mimeType = 'text/x-typescript';
+        // WEAK - Fix wrongly assigned mimetypes - this is a hardcoded hack basically - please remove.
+        fileMime = heuristicMimeTypeFixup(fileMime, fileExtension);
       }
 
       // UX: just a hint of a loading state
@@ -203,7 +116,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
         const fileArrayBuffer = await source.fileWithHandle.arrayBuffer();
         edit({
           input: {
-            mimeType,
+            mimeType: fileMime,
             data: fileArrayBuffer,
             dataSize: fileArrayBuffer.byteLength,
           },
@@ -248,7 +161,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
         label: source.label,
         ref: `${source.egoFragmentsInputData.messageId} - ${source.egoFragmentsInputData.conversationTitle}`,
         input: {
-          mimeType: draftInputMimeEgoFragments,
+          mimeType: INT_MIME_VND_AGI_EGO_FRAGMENTS,
           data: source.egoFragmentsInputData,
         },
       });
@@ -274,7 +187,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
   switch (true) {
 
     // plain text types
-    case PLAIN_TEXT_MIMETYPES.includes(input.mimeType):
+    case mimeTypeIsPlainText(input.mimeType):
       // handle a secondary layer of HTML 'text' origins: drop, paste, and clipboard-read
       const textOriginHtml = source.media === 'text' && input.altMimeType === 'text/html' && !!input.altData;
       const isHtmlTable = !!input.altData?.startsWith('<table');
@@ -295,7 +208,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
 
     // Images (Known/Unknown)
     case input.mimeType.startsWith('image/'):
-      const imageSupported = IMAGE_MIMETYPES.includes(input.mimeType);
+      const imageSupported = mimeTypeIsSupportedImage(input.mimeType);
       converters.push({ id: 'image-resized-high', name: 'Image (high detail)', disabled: !imageSupported });
       converters.push({ id: 'image-resized-low', name: 'Image (low detail)', disabled: !imageSupported });
       converters.push({ id: 'image-original', name: 'Image (original quality)', disabled: !imageSupported });
@@ -305,18 +218,18 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       break;
 
     // PDF
-    case PDF_MIMETYPES.includes(input.mimeType):
+    case mimeTypeIsPDF(input.mimeType):
       converters.push({ id: 'pdf-text', name: 'PDF To Text (OCR)' });
       converters.push({ id: 'pdf-images', name: 'PDF To Images' });
       break;
 
     // DOCX
-    case DOCX_MIMETYPES.includes(input.mimeType):
+    case mimeTypeIsDocX(input.mimeType):
       converters.push({ id: 'docx-to-html', name: 'DOCX to HTML' });
       break;
 
     // URL: custom converters because of a custom input structure with multiple inputs
-    case input.mimeType === draftInputMimeWebpage:
+    case input.mimeType === INT_MIME_VND_AGI_WEBPAGE:
       const pageData = input.data as DraftWebInputData;
       const preferMarkdown = !!pageData.pageMarkdown;
       if (pageData.pageText)
@@ -333,7 +246,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       break;
 
     // EGO
-    case input.mimeType === draftInputMimeEgoFragments:
+    case input.mimeType === INT_MIME_VND_AGI_EGO_FRAGMENTS:
       converters.push({ id: 'ego-fragments-inlined', name: 'Message' });
       break;
 
@@ -367,7 +280,7 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
 
     // Downloaded URL as Text, Markdown, or HTML
     case 'url':
-      let pageTitle = input.mimeType === draftInputMimeWebpage ? (input.data as DraftWebInputData)?.pageTitle : undefined;
+      let pageTitle = inputMime === INT_MIME_VND_AGI_WEBPAGE ? (input.data as DraftWebInputData)?.pageTitle : undefined;
       if (!pageTitle)
         pageTitle = `Web page: ${source.refUrl}`;
       return {
@@ -433,6 +346,32 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
   }
 }
 
+function _guessDocVDT(inputMimeType: string): DMessageDocPart['vdt'] {
+  if (!inputMimeType)
+    return DVMimeType.TextPlain;
+  const inputContentType = guessInputContentTypeFromMime(inputMimeType);
+  switch (inputContentType) {
+    case 'plain':
+    case 'markdown':
+      return DVMimeType.TextPlain;
+
+    case 'html':
+    case 'code':
+      return DVMimeType.VndAgiCode;
+
+    // these would have been converted - let's assume to code, but we don't return here as this code path won't happen
+    // case 'doc-pdf': // plain or OCR, or images
+    // case 'doc-msw': // code (html), or images
+    // case 'doc-msxl': // code (html), or images
+    // case 'doc-msppt': // code (html), or images
+    // case 'image': // images won't get in docs
+    // case 'audio': // same for audio
+    // case 'video': // and video
+    // case 'other': // and this even less
+  }
+  return DVMimeType.TextPlain;
+}
+
 
 /**
  * Converts the input of an AttachmentDraft object based on the selected converter.
@@ -479,7 +418,7 @@ export async function attachmentPerformConversion(
           : undefined;
 
         const textualInlineData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', textualInlineData, refString, docMeta, liveFileId));
+        newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, docMeta, liveFileId));
         break;
 
       // html as-is
@@ -487,7 +426,7 @@ export async function attachmentPerformConversion(
         // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
         //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
         const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', richTextData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, richTextData, refString, docMeta));
         break;
 
       // html cleaned
@@ -500,7 +439,7 @@ export async function attachmentPerformConversion(
           // remove svg elements
           .replace(/<svg[^>]*>.*?<\/svg>/g, '');
         const cleanedHtmlData = createDMessageDataInlineText(cleanerHtml, 'text/html');
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', cleanedHtmlData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, cleanedHtmlData, refString, docMeta));
         break;
 
       // html to markdown table
@@ -513,7 +452,7 @@ export async function attachmentPerformConversion(
           // fallback to text/plain
           tableData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
         }
-        newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? 'text/markdown' : 'text/plain', tableData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? DVMimeType.TextPlain : DVMimeType.TextPlain, tableData, refString, docMeta));
         break;
 
 
@@ -583,7 +522,7 @@ export async function attachmentPerformConversion(
             },
           });
           const imageText = result.data.text;
-          newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(imageText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'image' }));
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(imageText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'image' }));
         } catch (error) {
           console.error(error);
         }
@@ -601,7 +540,7 @@ export async function attachmentPerformConversion(
         const pdfText = await pdfToText(pdfData, (progress: number) => {
           edit(attachment.id, { outputsConversionProgress: progress });
         });
-        newFragments.push(createDocAttachmentFragment(title, caption, 'application/vnd.agi.ocr', createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
         break;
 
       // pdf to images
@@ -627,7 +566,7 @@ export async function attachmentPerformConversion(
         break;
 
 
-      // docx to markdown
+      // docx to html
       case 'docx-to-html':
         if (!(input.data instanceof ArrayBuffer)) {
           console.log('Expected ArrayBuffer for DOCX converter, got:', typeof input.data);
@@ -636,7 +575,7 @@ export async function attachmentPerformConversion(
         try {
           const { convertDocxToHTML } = await import('./file-converters/DocxToMarkdown');
           const { html } = await convertDocxToHTML(input.data);
-          newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', createDMessageDataInlineText(html, 'text/html'), refString, docMeta));
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, createDMessageDataInlineText(html, 'text/html'), refString, docMeta));
         } catch (error) {
           console.error('Error in DOCX to Markdown conversion:', error);
         }
@@ -645,32 +584,32 @@ export async function attachmentPerformConversion(
 
       // url page text
       case 'url-page-text':
-        if (!input.data || input.mimeType !== draftInputMimeWebpage || !(input.data as DraftWebInputData).pageText) {
+        if (!input.data || input.mimeType !== INT_MIME_VND_AGI_WEBPAGE || !(input.data as DraftWebInputData).pageText) {
           console.log('Expected WebPageInputData for url-page-text, got:', input.data);
           break;
         }
         const pageTextData = createDMessageDataInlineText((input.data as DraftWebInputData).pageText!, 'text/plain');
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/plain', pageTextData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, pageTextData, refString, docMeta));
         break;
 
       // url page markdown
       case 'url-page-markdown':
-        if (!input.data || input.mimeType !== draftInputMimeWebpage || !(input.data as DraftWebInputData).pageMarkdown) {
+        if (!input.data || input.mimeType !== INT_MIME_VND_AGI_WEBPAGE || !(input.data as DraftWebInputData).pageMarkdown) {
           console.log('Expected WebPageInputData for url-page-markdown, got:', input.data);
           break;
         }
         const pageMarkdownData = createDMessageDataInlineText((input.data as DraftWebInputData).pageMarkdown!, 'text/markdown');
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/markdown', pageMarkdownData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, pageMarkdownData, refString, docMeta));
         break;
 
       // url page html
       case 'url-page-html':
-        if (!input.data || input.mimeType !== draftInputMimeWebpage || !(input.data as DraftWebInputData).pageCleanedHtml) {
+        if (!input.data || input.mimeType !== INT_MIME_VND_AGI_WEBPAGE || !(input.data as DraftWebInputData).pageCleanedHtml) {
           console.log('Expected WebPageInputData for url-page-html, got:', input.data);
           break;
         }
         const pageHtmlData = createDMessageDataInlineText((input.data as DraftWebInputData).pageCleanedHtml!, 'text/html');
-        newFragments.push(createDocAttachmentFragment(title, caption, 'text/html', pageHtmlData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, pageHtmlData, refString, docMeta));
         break;
 
       // url page null
@@ -702,7 +641,7 @@ export async function attachmentPerformConversion(
 
       // ego: message
       case 'ego-fragments-inlined':
-        if (!input.data || input.mimeType !== draftInputMimeEgoFragments || !(input.data as DraftEgoFragmentsInputData).fragments?.length) {
+        if (!input.data || input.mimeType !== INT_MIME_VND_AGI_EGO_FRAGMENTS || !(input.data as DraftEgoFragmentsInputData).fragments?.length) {
           console.log('Expected non-empty EgoFragmentsInputData for ego-fragments-inlined, got:', input.data);
           break;
         }
@@ -716,7 +655,7 @@ export async function attachmentPerformConversion(
             const fragmentTitle = `Chat Message: ${attachment.label}`;
             const fragmentCaption = 'From chat: ' + draftEgoData.conversationTitle;
             const fragmentRef = humanReadableHyphenated(refString + '-' + draftEgoData.messageId + '-' + fragment.fId);
-            newFragments.push(specialContentPartToDocAttachmentFragment(fragmentTitle, fragmentCaption, fragment.part, fragmentRef, docMeta));
+            newFragments.push(specialContentPartToDocAttachmentFragment(fragmentTitle, fragmentCaption, DVMimeType.TextPlain, fragment.part, fragmentRef, docMeta));
           }
         }
         break;
