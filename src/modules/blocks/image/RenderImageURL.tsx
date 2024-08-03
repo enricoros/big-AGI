@@ -164,7 +164,7 @@ export const RenderImageURL = (props: {
           // resizeable image
           '& picture': { display: 'flex', justifyContent: 'center' },
           '& img': { maxWidth: '100%', maxHeight: '100%' },
-          [`&:hover > ${overlayButtonsClassName}`]: overlayButtonsActiveSx,
+          [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
           '&:hover .overlay-text': overlayButtonsActiveSx,
 
           // layout

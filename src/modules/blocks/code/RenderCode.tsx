@@ -143,7 +143,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? { backgroundColor: 'neutral.500' } : {},
 
         // fade in children buttons
-        [`&:hover > ${overlayButtonsClassName}`]: overlayButtonsActiveSx,
+        [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
 
         // lots more style, incl font, background, embossing, radius, etc.
         ...props.sx,
