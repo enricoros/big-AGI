@@ -6,7 +6,7 @@ import { Brand } from '~/common/app.config';
 import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
-import { OverlayButton } from './RenderCode';
+import { OverlayButton } from '../OverlayButton';
 
 
 // CodePen is a web-based HTML, CSS, and JavaScript code editor

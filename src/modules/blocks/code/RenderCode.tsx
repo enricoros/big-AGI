@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, IconButton, Sheet, styled, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, Sheet, Tooltip, Typography } from '@mui/joy';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
@@ -28,44 +28,7 @@ import { heuristicIsBlockTextHTML } from '../html/RenderHtmlResponse';
 
 // style for line-numbers
 import './RenderCode.css';
-
-
-export const OverlayButton = styled(IconButton)(({ theme, variant }) => ({
-  backgroundColor: variant === 'outlined' ? theme.palette.background.surface : undefined,
-  '--Icon-fontSize': theme.fontSize.lg,
-})) as typeof IconButton;
-
-
-export const overlayButtonsSx: SxProps = {
-  // stick to the top-right corner
-  position: 'absolute',
-  top: 0,
-  right: 0,
-  zIndex: 2, // top of message and its chips
-
-  // stype
-  p: 0.5,
-
-  // layout
-  display: 'flex',
-  flexDirection: 'row',
-  gap: 1,
-
-  // faded-out defaults
-  opacity: 'var(--AGI-overlay-start-opacity, 0)',
-  pointerEvents: 'none',
-  transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
-  // buttongroup: background
-  // '& > div > button': {
-  //   backgroundColor: 'background.surface',
-  //   backdropFilter: 'blur(12px)',
-  // },
-};
-
-export const overlayButtonsActiveSx = {
-  opacity: 1,
-  pointerEvents: 'auto',
-};
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '~/modules/blocks/OverlayButton';
 
 
 interface RenderCodeBaseProps {
@@ -180,7 +143,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
         '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? { backgroundColor: 'neutral.500' } : {},
 
         // fade in children buttons
-        '&:hover > .overlay-buttons': overlayButtonsActiveSx,
+        [`&:hover > ${overlayButtonsClassName}`]: overlayButtonsActiveSx,
 
         // lots more style, incl font, background, embossing, radius, etc.
         ...props.sx,
@@ -205,7 +168,7 @@ function RenderCodeImpl(props: RenderCodeImplProps) {
               : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
       {/* Overlay Buttons */}
-      <Box className='overlay-buttons' sx={overlayButtonsSx}>
+      <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
 
         {/* Show HTML */}
         {isHTML && (

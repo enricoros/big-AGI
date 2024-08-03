@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Tooltip } from '@mui/joy';
 
-import { OverlayButton } from './RenderCode';
+import { OverlayButton } from '../OverlayButton';
 
 
 // JSFiidle is a web-based HTML, CSS, and JavaScript code editor
