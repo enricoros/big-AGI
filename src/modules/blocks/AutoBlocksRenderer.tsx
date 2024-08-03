@@ -11,12 +11,12 @@ import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 import type { Block, CodeBlock, HtmlBlock, ImageBlock, TextBlock } from './blocks.types';
 import { BlocksContainer } from './BlocksContainer';
-import { RenderPlainChatText } from '~/modules/blocks/plaintext/RenderPlainChatText';
-import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
+import { RenderPlainChatText } from './plaintext/RenderPlainChatText';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
 import { heuristicIsBlockPureHTML, RenderHtmlResponse } from './html/RenderHtmlResponse';
 import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks, RenderImageURL } from './image/RenderImageURL';
+import { renderCodeMemoOrNot } from './code/RenderCode';
 
 
 // How long is the user collapsed message
@@ -285,8 +285,8 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
       {/* sequence of render components, for each Block */}
       {autoBlocksMemo.map((block, index) => {
         // Optimization: only memo the non-currently-rendered components, if the message is still in flux
-        const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== autoBlocksMemo.length - 1;
-        const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
+        const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo === true && index < (autoBlocksMemo.length - 1);
+        const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeSubBlockWithMemo);
         const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
         return block.type === 'htmlb' ? <RenderHtmlResponse key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
           : block.type === 'codeb' ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={false /*!optimizeSubBlockWithMemo*/} sx={scaledCodeSx} />
