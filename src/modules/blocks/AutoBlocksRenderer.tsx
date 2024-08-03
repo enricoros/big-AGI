@@ -15,7 +15,7 @@ import { RenderPlainChatText } from '~/modules/blocks/plaintext/RenderPlainChatT
 import { RenderCode, RenderCodeMemo } from './code/RenderCode';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
-import { heuristicIsBlockTextHTML, RenderHtml } from './html/RenderHtml';
+import { heuristicIsBlockTextHTML, RenderHtmlResponse } from './html/RenderHtmlResponse';
 import { heuristicLegacyImageBlocks, heuristicMarkdownImageReferenceBlocks, RenderImageURL } from './image/RenderImageURL';
 
 
@@ -236,7 +236,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
     fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
     fontVariantLigatures: 'none',
     lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    minWidth: 260,
+    minWidth: 288,
     minHeight: '2.75rem',
   }), [fromAssistant, props.contentScaling, props.specialCodePlain]);
 
@@ -288,7 +288,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
         const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo && index !== autoBlocksMemo.length - 1;
         const RenderCodeMemoOrNot = optimizeSubBlockWithMemo ? RenderCodeMemo : RenderCode;
         const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
-        return block.type === 'htmlb' ? <RenderHtml key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
+        return block.type === 'htmlb' ? <RenderHtmlResponse key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
           : block.type === 'codeb' ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={false /*!optimizeSubBlockWithMemo*/} sx={scaledCodeSx} />
             : block.type === 'imageb' ? <RenderImageURL key={'image-' + index} imageURL={block.url} expandableText={block.alt} onImageRegenerate={undefined /* we'd need to have selective fragment editing as there could be many of these URL images in a fragment */} scaledImageSx={scaledImageSx} variant='content-part' />
               : block.type === 'diffb' ? <RenderTextDiff key={'text-diff-' + index} textDiffBlock={block} sx={scaledTypographySx} />
