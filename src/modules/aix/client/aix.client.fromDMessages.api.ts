@@ -19,7 +19,9 @@ export const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 // AIX <> Chat Messages API helpers
 //
 
-export async function aixChatGenerateRequestFromDMessages(messageSequence: Readonly<DMessage[]>): Promise<AixAPIChatGenerate_Request> {
+export async function aixChatGenerateRequestFromDMessages(
+  messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata'>[]> // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
+): Promise<AixAPIChatGenerate_Request> {
   // reduce history
   return await messageSequence.reduce(async (accPromise, m, index) => {
     const acc = await accPromise;

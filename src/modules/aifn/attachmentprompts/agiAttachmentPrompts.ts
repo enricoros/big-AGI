@@ -3,10 +3,11 @@ import { z } from 'zod';
 import { getChatLLMId } from '~/modules/llms/store-llms';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
+import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 import { aixStreamingChatGenerate } from '~/modules/aix/client/aix.client';
 
-import { DMessageAttachmentFragment, DMessageDocPart, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 function aixTextPart(text: string) {
@@ -18,11 +19,12 @@ function aixSystemMessage(text: string) {
 }
 
 
-export async function agiAttachmentPrompts(allFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
+export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
   // sanity checks
   const llmId = getChatLLMId();
-  const docParts = allFragments.filter(f => f.part.pt === 'doc').map(f => f.part) as DMessageDocPart[];
-  const docs_count = docParts.length;
+  // const docParts = attachmentFragments.filter(f => f.part.pt === 'doc').map(f => f.part) as DMessageDocPart[];
+  // const docs_count = docParts.length;
+  const docs_count = attachmentFragments.length;
   if (!llmId || docs_count < 2)
     return [];
 
@@ -50,20 +52,21 @@ export async function agiAttachmentPrompts(allFragments: DMessageAttachmentFragm
       `You are an AI assistant skilled in content analysis and task inference within a chat application. 
 Your function is to examine the attachments provided by the user, understand their nature and potential relationships, guess the user intention, and suggest the most likely and valuable actions the user intends to perform.
 Respond only by calling the propose_user_actions_for_attachments function.`),
-    chatSequence: [{
+    chatSequence: (await aixChatGenerateRequestFromDMessages([{
       role: 'user',
-      parts: [
-        aixTextPart(
-          `The user wants to perform an action for which is attaching ${docs_count} related pieces of content. 
-Analyze the provided content to determine its nature, identify any relationships between the pieces, and infer the most probable task or action the user wants to perform. 
-Then generate ${num_suggestions} orthogonal suggestions for actions the user might want to perform with these files.`),
-        ...docParts,
-      ],
-    }],
+      fragments: [createTextContentFragment(`The user wants to perform an action for which is attaching ${docs_count} related pieces of content.
+Analyze the provided content to determine its nature, identify any relationships between the pieces, and infer the most probable task or action the user wants to perform.`)],
+    }, {
+      role: 'user',
+      fragments: attachmentFragments,
+    }, {
+      role: 'user',
+      fragments: [createTextContentFragment(`Call the function once, filling in order the attachments, the relationships between them, the top ${num_suggestions} orthogonal actions you inferred and the single modst valuable action.`)],
+    }])).chatSequence,
     tools: [
       aixFunctionCallTool({
         name: 'propose_user_actions_for_attachments',
-        description: `Proposes ${num_suggestions} user actions from content analysis of ${docs_count} attached files.`,
+        description: `Proposes ${num_suggestions} user actions from content analysis of ${docs_count} contents.`,
         inputSchema,
       }),
     ],
