@@ -2,7 +2,7 @@
  * Present an error to the user in a human-readable format.
  * Be exhaustive and not repetitive. Ignore the stack trace.
  */
-export function presentErrorToHumans(error: any, devWarnError: boolean = false): string {
+export function presentErrorToHumans(error: any, mdBold: boolean = false, devWarnError: boolean = false): string {
   if (devWarnError)
     console.warn('humanPresentableException', { error });
 
@@ -10,9 +10,16 @@ export function presentErrorToHumans(error: any, devWarnError: boolean = false):
   if (error instanceof Error) {
     let message = error.name ? `[${error.name}] ` : '';
     message += error.message;
+    if (mdBold)
+      message = `**${message}**`;
 
-    if (error.cause)
-      message += ` · Cause: ${presentErrorToHumans(error.cause)}`;
+    if (error.cause) {
+      // shallow print of the message only
+      if (error.cause instanceof Error)
+        message += ` · Cause: ${error.cause.message}`;
+      // to print it fully (not recommended), use the following:
+      // message += ` · Cause: ${presentErrorToHumans(error.cause)}`;
+    }
 
     return message;
   }
