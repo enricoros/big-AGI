@@ -18,7 +18,7 @@ function aixSystemMessage(text: string) {
 }
 
 
-export async function proposeActionsForAttachments(allFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
+export async function agiAttachmentPrompts(allFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
   // sanity checks
   const llmId = getChatLLMId();
   const docParts = allFragments.filter(f => f.part.pt === 'doc').map(f => f.part) as DMessageDocPart[];

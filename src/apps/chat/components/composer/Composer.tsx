@@ -14,18 +14,20 @@ import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { useChatMicTimeoutMsValue } from '../../store-app-chat';
+import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '../../store-app-chat';
 
 import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
+import { useAgiAttachmentPrompts } from '~/modules/aifn/attachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
- import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -42,7 +44,6 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
-import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -142,7 +143,7 @@ export function Composer(props: {
 
   // composer-overlay: for the reply-to state, comes from the conversation overlay
   const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToGenerateText: (chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1') ? store.replyToText?.trim() || null : null,
+    replyToGenerateText: (chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1') ? store.replyToText?.trim() ?? undefined : undefined,
   })));
 
   // don't load URLs if the user is typing a command or there's no capability
@@ -160,6 +161,11 @@ export function Composer(props: {
 
   // drag/drop
   const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer);
+
+  // ai functions
+  const {
+    agiAttachmentPrompts, agiAttachmentPromptsComponent, agiAttachmentPromptsRefetch,
+  } = useAgiAttachmentPrompts(useChatAutoSuggestAttachmentPrompts(), attachmentDrafts);
 
 
   // derived state
@@ -253,7 +259,7 @@ export function Composer(props: {
   }, [attachmentsTakeAllFragments, handleClear, onAction, replyToGenerateText, targetConversationId]);
 
 
-  const handleAppendAndSend = React.useCallback(async (appendText: string) => {
+  const handleAppendTextAndSend = React.useCallback(async (appendText: string) => {
     const newText = composeText ? `${composeText} ${appendText}` : appendText;
     setComposeText(newText);
     await handleSendAction(chatExecuteMode, newText);
@@ -664,11 +670,11 @@ export function Composer(props: {
                     // onBlurCapture={handleFocusModeOff}
                     endDecorator={
                       <ComposerTextAreaActions
-                        attachmentDrafts={attachmentDrafts}
-                        showChatReplyTo={showChatReplyTo}
-                        replyToGenerateText={replyToGenerateText}
-                        onAppendAndSend={handleAppendAndSend}
+                        agiAttachmentButton={agiAttachmentPromptsComponent}
+                        agiAttachmentPrompts={agiAttachmentPrompts}
+                        onAppendAndSend={handleAppendTextAndSend}
                         onReplyToClear={handleReplyToClear}
+                        replyToText={replyToGenerateText}
                       />
                     }
                     slotProps={{
@@ -759,6 +765,7 @@ export function Composer(props: {
                   llmAttachmentDrafts={llmAttachmentDraftsCollection.llmAttachmentDrafts}
                   canInlineSomeFragments={llmAttachmentDraftsCollection.canInlineSomeFragments}
                   onAttachmentDraftsAction={handleAttachmentDraftsAction}
+                  onAgiAttachmentPromptsRefetch={agiAttachmentPromptsRefetch}
                 />
               )}
 

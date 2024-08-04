@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
+import { Box, CircularProgress, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -8,6 +9,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { useAsyncCall } from '~/common/util/hooks/useAsyncCall';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
@@ -28,12 +30,14 @@ export function LLMAttachmentsList(props: {
   llmAttachmentDrafts: LLMAttachmentDraft[];
   canInlineSomeFragments: boolean;
   onAttachmentDraftsAction: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
+  onAgiAttachmentPromptsRefetch: () => Promise<any>,
 }) {
 
   // state
   const [confirmClearAttachmentDrafts, setConfirmClearAttachmentDrafts] = React.useState<boolean>(false);
   const [draftMenu, setDraftMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentDraftId: AttachmentDraftId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [overallIsAgiRefetchingPrompts, handleOverallAgiPromptsRefetch] = useAsyncCall(props.onAgiAttachmentPromptsRefetch);
 
   // derived state
 
@@ -155,6 +159,14 @@ export function LLMAttachmentsList(props: {
         anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
         sx={{ minWidth: 200 }}
       >
+        {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
+        <MenuItem color='primary' variant='soft' onClick={handleOverallAgiPromptsRefetch} disabled={!hasAttachments || overallIsAgiRefetchingPrompts}>
+          <ListItemDecorator>{overallIsAgiRefetchingPrompts ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
+          What to do?
+        </MenuItem>
+
+        <ListDivider />
+
         <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline all text
@@ -163,7 +175,9 @@ export function LLMAttachmentsList(props: {
           <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           Copy all text
         </MenuItem>
+
         <ListDivider />
+
         <MenuItem onClick={handleOverallClear}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
           Remove All{llmAttachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {llmAttachmentDrafts.length} attachments</span> : null}
