@@ -127,7 +127,7 @@ export function mimeTypeIsPlainText(mimeType: string): boolean {
   // we include this list: https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=node#plain_text_formats
   // and include a greater number of plain text files
   const docType = GuessedMimeLookupTable[mimeType]?.dt;
-  return docType === 'plain' || docType === 'html' || docType === 'code';
+  return docType === 'plain' || docType === 'markdown' || docType === 'html' || docType === 'code';
 }
 
 // Image Rules across the supported LLMs
