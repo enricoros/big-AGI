@@ -16,7 +16,7 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
   // Quicker-out: if the key is null, stop here
   if (!event.key)
     return;
-  console.log('event.key', event.key, event.ctrlKey, event.shiftKey, event.altKey);
+
   // Quick-out: either the key is escape/left/right, or we have a modifier key pressed -- otherwise we exit
   const lcEventKey = event.key.toLowerCase();
   if (lcEventKey !== 'escape' && lcEventKey !== 'arrowleft' && lcEventKey !== 'arrowright' &&

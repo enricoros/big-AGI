@@ -10,6 +10,9 @@ import { useShallowStable } from '~/common/util/hooks/useShallowObject';
 import { agiAttachmentPrompts } from './agiAttachmentPrompts';
 
 
+// interface
+
+
 export function useAgiAttachmentPrompts(automatic: boolean, attachmentDrafts: AttachmentDraft[]) {
 
   // external state
@@ -19,14 +22,14 @@ export function useAgiAttachmentPrompts(automatic: boolean, attachmentDrafts: At
   const automaticTrigger = automatic && stableFragments.length >= 2;
 
   // async operation state
-  const { data: prompts, error, isPending, isFetching, isLoading, isRefetching, isStale, refetch } = useQuery({
+  const { data: prompts, error, isPending, isFetching, refetch } = useQuery({
     enabled: automaticTrigger,
     queryKey: ['aifn-prompts-attachments', ...stableFragments.map(f => f.fId).sort()],
     queryFn: async ({ signal }) => agiAttachmentPrompts(stableFragments, signal),
     staleTime: Infinity,
     // placeholderData: keepPreviousData,
   });
-  console.log('state', { isPending, isFetching, isLoading, isRefetching, isStale });
+
   // callbacks
   const handleRefetch = React.useCallback(async () => refetch(), [refetch]);
 
