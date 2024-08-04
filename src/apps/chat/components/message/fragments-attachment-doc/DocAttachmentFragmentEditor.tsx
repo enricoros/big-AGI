@@ -274,7 +274,7 @@ export function DocAttachmentFragmentEditor(props: {
           setEditedText={props.setEditedText}
           onSubmit={handleEditApply}
           onEscapePressed={handleToggleEdit}
-          endDecorator={editedText ? 'Shift+Enter to save · Escape to cancel' : 'No changes. · Escape to cancel'}
+          endDecorator={editedText ? 'Shift+Enter to save · Escape to cancel.' : 'No changes · Escape to cancel.'}
         />
       ) : (
         // Document viewer, including the collapse/expand state inside
