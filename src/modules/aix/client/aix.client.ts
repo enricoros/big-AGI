@@ -221,19 +221,23 @@ async function _aix_LL_ChatGenerateContent(
       // send the streaming update
       onUpdate?.(messageAccumulator, false);
     }
-  } catch (error) {
-    if (error instanceof Error && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'))) {
-      console.log('Client-side aborted');
-    } else {
-      console.error('AIX stream generation Client catch:', (error as any).name, { error });
-    }
+  } catch (error: any) {
+    // something else broke, likely a User Abort, or an Aix server error (e.g. tRPC)
+    const isUserAbort1 = abortSignal.aborted;
+    const isUserAbort2 = (error instanceof Error) && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
+    if (isUserAbort1 || isUserAbort2) {
+      if (isUserAbort1 !== isUserAbort2)
+        partReassembler.reassembleTerminateError(`AbortError mismatch: ${isUserAbort1} !== ${isUserAbort2}`);
+      else
+        partReassembler.reassembleTerminateUserAbort();
+    } else
+      partReassembler.reassembleTerminateError(_safeStringify(error) || error?.message || 'Unknown connection error');
   }
-
-  console.log('HERE', abortSignal.aborted ? 'client-initiated ABORTED' : '');
 
   // and we're done
   messageAccumulator = {
     ...messageAccumulator,
+    fragments: [...partReassembler.reassembedFragments],
     typing: false,
   };
 
@@ -242,4 +246,13 @@ async function _aix_LL_ChatGenerateContent(
 
   // return the final accumulated message
   return messageAccumulator;
+}
+
+
+function _safeStringify(obj: any) {
+  try {
+    return JSON.stringify(obj, null, 2);
+  } catch {
+    return null;
+  }
 }

@@ -440,24 +440,27 @@ export namespace AixWire_Particles {
     | { cg: '_debugRequest', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
 
   export type CGEndReason =     // the reason for the end of the chat generation
+    | 'abort-client'            // user aborted before the end of stream
     | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sensds the 'message_stop' event
     | 'done-dispatch-aborted'   // this shall never see the light of day, as it was a reaction to the intake being aborted first
     | 'done-dispatch-closed'    // dispatch connection closed
-    | 'issue-dialect'           // ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
-    | 'issue-rpc';              // ended because of an issue
+    | 'issue-dialect'           // [1] ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
+    | 'issue-rpc';              // [2] ended because of an issue
 
   export type CGIssueId =
-    | 'dialect-issue'           // when 'issue-dialect'
-    | 'dispatch-prepare'        // when 'issue-rpc', the 4 phases of GC dispatch
-    | 'dispatch-fetch'
-    | 'dispatch-read'
-    | 'dispatch-parse';
+    | 'dialect-issue'           // [1] when end reason = 'issue-dialect'
+    | 'dispatch-prepare'        // [2] when end reason = 'issue-rpc', 4 phases of GC dispatch
+    | 'dispatch-fetch'          // [2] "
+    | 'dispatch-read'           // [2] "
+    | 'dispatch-parse'          // [2] "
+    | 'client-read';            // the aix client encountered an unexpected error (e.g. tRPC)
 
   export type GCTokenStopReason =
     | 'ok'                      // clean, including reaching 'stop sequences'
     | 'ok-tool_invocations'     // clean & tool invocations
-    // non-clean
-    | 'cg-issue'                // chat-generation issue (see CGIssueId)
+    // premature:
+    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId)
+    | 'client-abort-signal'     // the client aborted - likely a user/auto initiation
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
     | 'out-of-tokens';          // got out of tokens
