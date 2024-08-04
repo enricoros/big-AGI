@@ -20,6 +20,15 @@ const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGene
    - Latest version    gemini-1.0-pro-latest    <model>-<generation>-<variation>-latest
    - Latest stable     version  gemini-1.0-pro  <model>-<generation>-<variation>
    - Stable versions   gemini-1.0-pro-001       <model>-<generation>-<variation>-<version>
+
+   Gemini capabilities chart (updated 2024-08-03):
+   - [table stakes] System instructions
+   - JSON Mode, with optional JSON Schema [NOTE: JSON Schema is poorly supported?]
+   - Adjustable Safety Settings
+   - Caching
+   - Tuning
+   - [good] Function calling, with configuration
+   - [great] Code execution
 */
 const _knownGeminiModels: ({
   id: string,
@@ -38,7 +47,7 @@ const _knownGeminiModels: ({
       chatOut: 2.10,  // 1.05 up to 128k tokens, 2.10 prompts > 128k tokens
     },
     trainingDataCutoff: 'May 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // input: audio, images and text
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
   },
   {
     id: 'models/gemini-1.5-flash',
@@ -64,6 +73,17 @@ const _knownGeminiModels: ({
   },
 
   {
+    id: 'models/gemini-1.5-pro-exp-0801',
+    isNewest: true,
+    isPreview: true,
+    pricing: { // ASSUMING - COPIED FROM '-latest'
+      chatIn: 7.00,   // $3.50 / 1 million tokens (for prompts up to 128K tokens), $7.00 / 1 million tokens (for prompts longer than 128K)
+      chatOut: 21.00, // $10.50 / 1 million tokens (128K or less), $21.00 / 1 million tokens (128K+)
+    },
+    trainingDataCutoff: 'May 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
+  },
+  {
     id: 'models/gemini-1.5-pro-latest', // updated regularly and might be a preview version
     isNewest: true,
     isPreview: true,
@@ -72,7 +92,7 @@ const _knownGeminiModels: ({
       chatOut: 21.00, // $10.50 / 1 million tokens (128K or less), $21.00 / 1 million tokens (128K+)
     },
     trainingDataCutoff: 'May 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // input: audio, images and text
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
   },
   {
     id: 'models/gemini-1.5-pro', // latest stable -> 001
