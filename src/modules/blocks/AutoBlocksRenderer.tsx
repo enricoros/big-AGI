@@ -18,7 +18,7 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 
 
 // How long is the user collapsed message
-const USER_COLLAPSED_LINES: number = 7;
+const USER_COLLAPSED_LINES: number = 8;
 
 
 function areBlocksEqual(a: Block, b: Block): boolean {
