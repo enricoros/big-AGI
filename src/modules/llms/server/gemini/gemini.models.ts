@@ -1,6 +1,6 @@
 import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import type { ModelDescriptionSchema } from '../llm.server.types';
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '../../store-llms';
 
 
 // dev options
@@ -225,9 +225,8 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   // use known interfaces, or add chat if this is a generateContent model
   const interfaces: ModelDescriptionSchema['interfaces'] = knownModel?.interfaces || [];
   if (!interfaces.length && hasChatInterfaces) {
-    interfaces.push(LLM_IF_OAI_Chat);
-    // if (geminiVisionNames.some(name => modelId.includes(name)))
-    //   interfaces.push(LLM_IF_OAI_Vision);
+    // newer models get good capabilities by default
+    interfaces.push(LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json);
   }
 
   return {

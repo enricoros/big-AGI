@@ -523,7 +523,7 @@ export namespace GeminiWire_API_Models_List {
     description: z.string(),
     inputTokenLimit: z.number(),
     outputTokenLimit: z.number(),
-    supportedGenerationMethods: z.array(Methods_enum),
+    supportedGenerationMethods: z.array(z.union([Methods_enum, z.string()])), // relaxed with z.union to not break on expansion
     temperature: z.number().optional(),
     topP: z.number().optional(),
     topK: z.number().int().optional(),
