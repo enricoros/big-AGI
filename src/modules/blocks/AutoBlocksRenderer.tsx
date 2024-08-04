@@ -1,6 +1,8 @@
 import * as React from 'react';
 import type { Diff as TextDiff } from '@sanity/diff-match-patch';
-import { Button, Typography } from '@mui/joy';
+
+import type { SxProps } from '@mui/joy/styles/types';
+import { Button, ColorPaletteProp } from '@mui/joy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -8,7 +10,7 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { ContentScaling } from '~/common/app.theme';
 
 import type { Block, CodeBlock, HtmlBlock, ImageBlock, TextBlock } from './blocks.types';
-import { BlocksContainer } from './BlocksContainer';
+import { BlocksContainer } from './BlocksContainers';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainChatText } from './plaintext/RenderPlainChatText';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
@@ -149,6 +151,29 @@ type BlocksRendererProps = {
 };
 
 
+function ToggleExpansionButton(props: {
+  color?: ColorPaletteProp;
+  isCollapsed: boolean;
+  onToggle: () => void;
+  sx: SxProps;
+}) {
+  return (
+    <div style={{ lineHeight: 1 /* Absorbs some weird height issue since the parent has an extended line height (lineHeightChatTextMd) */ }}>
+      <Button
+        variant='soft'
+        color={props.color}
+        size='sm'
+        onClick={props.onToggle}
+        startDecorator={props.isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+        sx={props.sx}
+      >
+        {props.isCollapsed ? 'Show more' : 'Show less'}
+      </Button>
+    </div>
+  );
+}
+
+
 /**
  * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
  * Used by (and more):
@@ -180,12 +205,8 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
     return { text: _text, isTextCollapsed: false };
   }, [forceUserExpanded, fromUser, _text]);
 
-  const handleTextCollapse = React.useCallback(() => {
-    setForceUserExpanded(false);
-  }, []);
-
-  const handleTextUncollapse = React.useCallback(() => {
-    setForceUserExpanded(true);
+  const handleToggleExpansion = React.useCallback(() => {
+    setForceUserExpanded(on => !on);
   }, []);
 
 
@@ -256,25 +277,13 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
       })}
 
       {(isTextCollapsed || forceUserExpanded) && (
-        <div style={{ lineHeight: 1 /* Absorbs some weird height issue since the parent has an extended line height (lineHeightChatTextMd) */ }}>
-          <Button
-            variant='soft'
-            color={props.specialCodePlain ? 'neutral' : undefined}
-            size='sm'
-            onClick={isTextCollapsed ? handleTextUncollapse : handleTextCollapse}
-            startDecorator={isTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-            sx={toggleExpansionButtonSx}
-          >
-            {isTextCollapsed ? 'Show more' : 'Show less'}
-          </Button>
-        </div>
+        <ToggleExpansionButton
+          color={props.specialCodePlain ? 'neutral' : undefined}
+          isCollapsed={isTextCollapsed}
+          onToggle={handleToggleExpansion}
+          sx={toggleExpansionButtonSx}
+        />
       )}
-
-      {/* import VisibilityIcon from '@mui/icons-material/Visibility'; */}
-      {/*<br />*/}
-      {/*<Chip variant='outlined' color='warning' sx={{ mt: 1, fontSize: '0.75em' }} startDecorator={<VisibilityIcon />}>*/}
-      {/*  BlockAction*/}
-      {/*</Chip>*/}
 
     </BlocksContainer>
   );
