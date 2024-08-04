@@ -3,6 +3,7 @@ import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wi
 
 
 // configuration
+const hackyHotFixStartWithUser = true; // "Bad Request - messages: first message must use the "user" role"
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
 const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropic.com/en/docs/about-claude/models
@@ -32,6 +33,13 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   }
   if (currentMessage)
     chatMessages.push(currentMessage);
+
+  // If the first (user) message is missing, copy the first line of the system message
+  if (hackyHotFixStartWithUser && chatMessages.length && chatMessages[0].role !== 'user' && systemMessage?.length) {
+    const hackSystemMessageFirstLine = (systemMessage[0]?.text || '').split('\n')[0];
+    chatMessages.unshift({ role: 'user', content: [AnthropicWire_Blocks.TextBlock(hackSystemMessageFirstLine)] });
+    console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
+  }
 
   // Construct the request payload
   const payload: TRequest = {
