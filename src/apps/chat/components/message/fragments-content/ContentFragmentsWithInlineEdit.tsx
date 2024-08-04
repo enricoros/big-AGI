@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Sheet } from '@mui/joy';
+import { Box, Button, Sheet } from '@mui/joy';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 
@@ -56,6 +56,7 @@ export function ContentFragmentsWithInlineEdit(props: {
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
+  onFragmentBlank: () => void
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 
@@ -68,6 +69,14 @@ export function ContentFragmentsWithInlineEdit(props: {
   const fromUser = props.messageRole === 'user';
   const isEditingText = !!props.textEditsState;
   // const isMonoFragment = props.fragments.length < 2;
+
+  // Content Fragments Edit Zero-State: button to create a new TextContentFragment
+  if (isEditingText && !props.fragments.length)
+    return (
+      <Button variant='plain' color='neutral' onClick={props.onFragmentBlank} sx={{ justifyContent: 'flex-start' }}>
+        add text ...
+      </Button>
+    );
 
   // if no fragments, don't box them
   if (props.showEmptyNotice && isEditingText)
