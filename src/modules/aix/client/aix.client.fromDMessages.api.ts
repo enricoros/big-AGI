@@ -1,11 +1,11 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
-import type { DMessage } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaReplyToPart } from '../server/api/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaInReferenceToPart } from '../server/api/aix.wiretypes';
 
 // TODO: remove console messages to zero, or replace with throws or something
 
@@ -78,12 +78,12 @@ export async function aixChatGenerateRequestFromDMessages(messageSequence: Reado
         return uMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixMessages_UserMessage));
 
-      // handle reply-to metadata, adding a part right after the user text (or at the beginning)
-      if (m.metadata?.inReplyToText) {
+      // handle in-reference-to metadata, adding a part right after the user text (or at the beginning)
+      if (m.metadata?.inReferenceTo?.length) {
         // find the index of the tast text part
         const lastTextPartIndex = aixChatMessageUser.parts.findLastIndex(p => p.pt === 'text');
         // insert the meta part after the last text part (and before the first attachment)
-        aixChatMessageUser.parts.splice(lastTextPartIndex + 1, 0, _clientCreateAixMetaReplyToPart(m.metadata.inReplyToText));
+        aixChatMessageUser.parts.splice(lastTextPartIndex + 1, 0, _clientCreateAixMetaInReferenceToPart(m.metadata.inReferenceTo));
       }
 
       acc.chatSequence.push(aixChatMessageUser);
@@ -179,6 +179,6 @@ function _clientCreateAixInlineImagePart(base64: string, mimeType: string): AixP
   return { pt: 'inline_image', mimeType: (mimeType || 'image/png') as AixParts_InlineImagePart['mimeType'], base64 };
 }
 
-function _clientCreateAixMetaReplyToPart(replyTo: string): AixParts_MetaReplyToPart {
-  return { pt: 'meta_reply_to', replyTo };
+function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): AixParts_MetaInReferenceToPart {
+  return { pt: 'meta_in_reference_to', referTo: items };
 }

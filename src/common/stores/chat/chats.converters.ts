@@ -54,6 +54,9 @@ export namespace V4ToHeadConverters {
   }
 
   export function dev_inMemHeadUpgradeDMessage(m: DMessage): void {
+    // TODO: remove insides for 2.0.0
+
+    // uplevel fragments
     for (const fragment of m.fragments) {
 
       // Result of a rename of DMessageDocPart.type -> .vdt
@@ -64,7 +67,15 @@ export namespace V4ToHeadConverters {
           delete docPart.type;
         }
       }
+    }
 
+    // uplevel metadata: if (metadata?.inReplyToText) cm.metadata = { inReferenceTo: [{ mrt: 'dmsg', mText: metadata.inReplyToText, mRole: 'assistant' }] };
+    if (m.metadata && 'inReplyToText' in m.metadata && m.metadata.inReplyToText) {
+      const replyToText = m.metadata.inReplyToText as string;
+      delete m.metadata.inReplyToText;
+      m.metadata.inReferenceTo = [{
+        mrt: 'dmsg', mText: replyToText, mRole: 'assistant',
+      }];
     }
   }
 
@@ -231,7 +242,10 @@ export namespace V3StoreDataToHead {
       if (id) cm.id = id;
       if (purposeId) cm.purposeId = purposeId;
       if (originLLM) cm.originLLM = originLLM;
-      if (metadata) cm.metadata = metadata;
+      if (metadata?.inReplyToText) {
+        if (!cm.metadata) cm.metadata = {};
+        cm.metadata.inReferenceTo = [{ mrt: 'dmsg', mText: metadata.inReplyToText, mRole: 'assistant' }];
+      }
       if (userFlags) cm.userFlags = userFlags;
       cm.tokenCount = tokenCount || 0;
       if (created) cm.created = created;
@@ -268,9 +282,9 @@ export namespace V3StoreDataToHead {
     originLLM?: string;               // only assistant - model that generated this message, goes beyond known models
 
     metadata?: {                      // metadata, mainly at creation and for UI
-      inReplyToText?: string;         // text this was in reply to
+      inReplyToText?: string;         // V3: text this was in reply to
     };
-    userFlags?: ('starred')[];             // (UI) user-set per-message flags
+    userFlags?: ('starred')[];        // (UI) user-set per-message flags
 
     tokenCount: number;               // cache for token count, using the current Conversation model (0 = not yet calculated)
 

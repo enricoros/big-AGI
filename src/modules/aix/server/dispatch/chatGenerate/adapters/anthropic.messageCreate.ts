@@ -1,4 +1,6 @@
-import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
+import { escapeXml } from '~/server/wire';
+
+import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
 
@@ -98,8 +100,10 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             yield { role: 'user', content: AnthropicWire_Blocks.TextBlock('```' + (part.ref || '') + '\n' + part.data.text + '\n```\n') };
             break;
 
-          case 'meta_reply_to':
-            yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(`<context>The user is referring to this in particular: ${part.replyTo}</context>`) };
+          case 'meta_in_reference_to':
+            const irtXMLString = inReferenceTo_To_XMLString(part);
+            if (irtXMLString)
+              yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(irtXMLString) };
             break;
 
           default:
@@ -205,4 +209,13 @@ function _toAnthropicToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest
     case 'function_call':
       return { type: 'tool' as const, name: itp.function_call.name };
   }
+}
+
+export function inReferenceTo_To_XMLString(irt: AixParts_MetaInReferenceToPart): string | null {
+  const refs = irt.referTo.map(r => escapeXml(r.mText));
+  if (!refs.length)
+    return null; // `<context>User provides no specific references</context>`;
+  return refs.length === 1
+    ? `<context>User refers to this in particular:<ref>${refs[0]}</ref></context>`
+    : `<context>User refers to ${refs.length} items:<ref>${refs.join('</ref><ref>')}</ref></context>`;
 }

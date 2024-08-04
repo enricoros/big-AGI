@@ -1,6 +1,8 @@
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
+import { inReferenceTo_To_XMLString } from './anthropic.messageCreate';
+
 
 // configuration
 const hotFixImagePartsFirst = true;
@@ -90,8 +92,10 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(_toApproximateGeminiDocPart(part));
           break;
 
-        case 'meta_reply_to':
-          parts.push(_toApproximateGeminiReplyTo(part.replyTo));
+        case 'meta_in_reference_to':
+          const irtXMLString = inReferenceTo_To_XMLString(part);
+          if (irtXMLString)
+            parts.push(GeminiWire_ContentParts.TextPart(irtXMLString));
           break;
 
         case 'tool_invocation':
@@ -241,8 +245,4 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
 
 function _toApproximateGeminiDocPart(aixPartsDocPart: AixParts_DocPart): GeminiWire_ContentParts.ContentPart {
   return GeminiWire_ContentParts.TextPart(`\`\`\`${aixPartsDocPart.ref || ''}\n${aixPartsDocPart.data.text}\n\`\`\`\n`);
-}
-
-function _toApproximateGeminiReplyTo(replyTo: string): GeminiWire_ContentParts.ContentPart {
-  return GeminiWire_ContentParts.TextPart(`<context>The user is referring to this in particular: ${replyTo}</context>`);
 }

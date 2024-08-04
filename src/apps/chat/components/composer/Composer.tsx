@@ -26,7 +26,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { DMessageMetadata, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
@@ -42,7 +42,7 @@ import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
-import { useChatOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
+import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -141,10 +141,9 @@ export function Composer(props: {
     ? ConversationsManager.getHandler(props.targetConversationId)?.getOverlayStore() || null
     : null;
 
-  // composer-overlay: for the reply-to state, comes from the conversation overlay
-  const { replyToGenerateText } = useChatOverlayStore(conversationOverlayStore, useShallow(store => ({
-    replyToGenerateText: (chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1') ? store.replyToText?.trim() ?? undefined : undefined,
-  })));
+  // composer-overlay: for the in-reference-to state, comes from the conversation overlay
+  const allowInReferenceTo = chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1';
+  const inReferenceTo = useChatComposerOverlayStore(conversationOverlayStore, store => allowInReferenceTo ? store.inReferenceTo : null);
 
   // don't load URLs if the user is typing a command or there's no capability
   const enableLoadURLsInComposer = useBrowseCapability().inComposer && !composeText.startsWith('/');
@@ -206,14 +205,18 @@ export function Composer(props: {
 
   // Overlay actions
 
-  const handleReplyToClear = React.useCallback(() => {
-    conversationOverlayStore?.getState().setReplyToText(null);
+  const handleRemoveInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
+    conversationOverlayStore?.getState().removeInReferenceTo(item);
+  }, [conversationOverlayStore]);
+
+  const handleInReferenceToClear = React.useCallback(() => {
+    conversationOverlayStore?.getState().clearInReferenceTo();
   }, [conversationOverlayStore]);
 
   React.useEffect(() => {
-    if (replyToGenerateText)
+    if (inReferenceTo?.length)
       setTimeout(() => composerTextAreaRef.current?.focus(), 1 /* prevent focus theft */);
-  }, [composerTextAreaRef, replyToGenerateText]);
+  }, [composerTextAreaRef, inReferenceTo]);
 
 
   // Primary button
@@ -221,8 +224,8 @@ export function Composer(props: {
   const handleClear = React.useCallback(() => {
     setComposeText('');
     attachmentsRemoveAll();
-    handleReplyToClear();
-  }, [attachmentsRemoveAll, handleReplyToClear, setComposeText]);
+    handleInReferenceToClear();
+  }, [attachmentsRemoveAll, handleInReferenceToClear, setComposeText]);
 
 
   const handleSendAction = React.useCallback(async (_chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
@@ -250,13 +253,15 @@ export function Composer(props: {
       return false;
     }
 
+    // prepare the metadata
+    const metadata = inReferenceTo?.length ? { inReferenceTo: inReferenceTo } : undefined;
+
     // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
-    const metadata = replyToGenerateText ? { inReplyToText: replyToGenerateText } : undefined;
     const enqueued = onAction(targetConversationId, _chatExecuteMode, fragments, metadata);
     if (enqueued)
       handleClear();
     return enqueued;
-  }, [attachmentsTakeAllFragments, handleClear, onAction, replyToGenerateText, targetConversationId]);
+  }, [attachmentsTakeAllFragments, handleClear, inReferenceTo, onAction, targetConversationId]);
 
 
   const handleAppendTextAndSend = React.useCallback(async (appendText: string) => {
@@ -518,8 +523,8 @@ export function Composer(props: {
   const isReAct = chatExecuteMode === 'react-content';
   const isDraw = chatExecuteMode === 'generate-image';
 
-  const showChatReplyTo = !!replyToGenerateText;
-  const showChatExtras = isText && !showChatReplyTo;
+  const showChatInReferenceTo = !!inReferenceTo?.length;
+  const showChatExtras = isText && !showChatInReferenceTo;
 
   const sendButtonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
@@ -539,7 +544,7 @@ export function Composer(props: {
     isDraw ? 'Describe an idea or a drawing...'
       : isReAct ? 'Multi-step reasoning question...'
         : isTextBeam ? 'Beam: combine the smarts of models...'
-          : showChatReplyTo ? 'Chat about this'
+          : showChatInReferenceTo ? 'Chat about this'
             : props.isDeveloperMode ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
               : props.capabilityHasT2I ? 'Chat · /beam · /draw · drop files...'
                 : 'Chat · /react · drop files...';
@@ -659,7 +664,7 @@ export function Composer(props: {
                     variant='outlined'
                     color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
                     autoFocus
-                    minRows={isMobile ? 4 : showChatReplyTo ? 4 : 5}
+                    minRows={isMobile ? 4 : showChatInReferenceTo ? 4 : 5}
                     maxRows={isMobile ? 8 : 10}
                     placeholder={textPlaceholder}
                     value={composeText}
@@ -672,9 +677,9 @@ export function Composer(props: {
                       <ComposerTextAreaActions
                         agiAttachmentButton={agiAttachmentPromptsComponent}
                         agiAttachmentPrompts={agiAttachmentPrompts}
+                        inReferenceTo={inReferenceTo}
                         onAppendAndSend={handleAppendTextAndSend}
-                        onReplyToClear={handleReplyToClear}
-                        replyToText={replyToGenerateText}
+                        onRemoveReferenceTo={handleRemoveInReferenceTo}
                       />
                     }
                     slotProps={{
@@ -689,15 +694,15 @@ export function Composer(props: {
                     }}
                     sx={{
                       backgroundColor: 'background.level1',
-                      '&:focus-within': { backgroundColor: 'background.popup', '.reply-to-bubble': { backgroundColor: 'background.popup' } },
+                      '&:focus-within': { backgroundColor: 'background.popup', '.in-reference-to-bubble': { backgroundColor: 'background.popup' } },
                       lineHeight: lineHeightTextareaMd,
                     }} />
 
-                  {!showChatReplyTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
+                  {!showChatInReferenceTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
                     <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} />
                   )}
 
-                  {!showChatReplyTo && tokenLimit > 0 && (
+                  {!showChatInReferenceTo && tokenLimit > 0 && (
                     <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPriceIn={tokenPriceIn} tokenPriceOut={tokenPriceOut} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 

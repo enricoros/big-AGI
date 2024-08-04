@@ -120,3 +120,24 @@ export class ServerDebugWireEvents {
 }
 
 export const createServerDebugWireEvents = () => SERVER_DEBUG_WIRE ? new ServerDebugWireEvents() : null;
+
+
+/** Utility to escape XML, for example to avoid XSS attacks. */
+export function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[&<>"']/g, (match) => {
+    switch (match) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case '\'':
+        return '&#39;';
+      default:
+        return match;
+    }
+  });
+}

@@ -5,6 +5,8 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 
+import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
+
 
 // configuration
 const INLINE_COLOR = 'primary';
@@ -52,38 +54,52 @@ export const inlineMessageBubbleSx: SxProps = {
 };
 
 
-export function ReplyToBubble(props: {
-  replyToText?: string,
-  inlineUserMessage?: boolean
-  onClear?: () => void,
+export function InReferenceToBubble(props: {
+  item: DMetaReferenceItem,
+  onRemove?: (item: DMetaReferenceItem) => void,
   className?: string,
+  bubbleVariant?: 'message',
 }) {
+
+  // derived state
+
+  const variantMessage = props.bubbleVariant === 'message';
+
+  // handlers
+
+  const { onRemove } = props;
+
+  const handleRemoveClicked = React.useCallback(() => {
+    onRemove?.(props.item);
+  }, [onRemove, props.item]);
+
   return (
-    <Box className={props.className} sx={!props.inlineUserMessage ? bubbleComposerSx : inlineMessageBubbleSx}>
+    <Box className={props.className} sx={!variantMessage ? bubbleComposerSx : inlineMessageBubbleSx}>
 
       <Tooltip disableInteractive arrow title='Referring to this assistant text' placement='top'>
         <ReplyRoundedIcon sx={{
-          color: props.inlineUserMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',
+          color: variantMessage ? `${INLINE_COLOR}.outlinedColor` : 'primary.solidBg',
           fontSize: 'xl',
           mt: 0.125,
+          transform: props.item.mRole === 'assistant' ? undefined : 'rotate(105deg)',
         }} />
       </Tooltip>
 
       <Typography level='body-sm' sx={{
         flex: 1,
         ml: 1,
-        mr: props.inlineUserMessage ? 1 : 0.5,
+        mr: variantMessage ? 1 : 0.5,
         overflow: 'auto',
-        maxHeight: props.inlineUserMessage ? '8rem' : '5.75rem',
+        maxHeight: variantMessage ? '8rem' : '5.75rem',
         lineHeight: 'xl',
-        color: props.inlineUserMessage ? 'primary.softActiveColor' : 'text.secondary',
+        color: variantMessage ? 'primary.softActiveColor' : 'text.secondary',
         whiteSpace: 'break-spaces', // 'balance'
       }}>
-        {props.replyToText}
+        {props.item.mText}
       </Typography>
 
-      {!!props.onClear && (
-        <IconButton size='sm' onClick={props.onClear} sx={{ my: -0.5, background: 'none' }}>
+      {!!props.onRemove && (
+        <IconButton size='sm' onClick={handleRemoveClicked} sx={{ my: -0.5, background: 'none' }}>
           <CloseRoundedIcon />
         </IconButton>
       )}

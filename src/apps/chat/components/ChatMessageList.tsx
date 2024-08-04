@@ -11,7 +11,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { InlineError } from '~/common/components/InlineError';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { createDMessageTextContent, DMessageId, DMessageUserFlag, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
@@ -24,6 +24,7 @@ import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessag
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
+import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 
 
 /**
@@ -68,7 +69,7 @@ export function ChatMessageList(props: {
 
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
-
+  const composeCanAddReplyTo = useChatComposerOverlayStore(conversationHandler?.getOverlayStore() ?? null, state => state.inReferenceTo?.length < 5);
 
   // text actions
 
@@ -150,8 +151,8 @@ export function ChatMessageList(props: {
     }), false, false);
   }, [props.conversationHandler]);
 
-  const handleReplyTo = React.useCallback((_messageId: DMessageId, text: string) => {
-    props.conversationHandler?.getOverlayStore().getState().setReplyToText(text);
+  const handleAddInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
+    props.conversationHandler?.getOverlayStore().getState().addInReferenceTo(item);
   }, [props.conversationHandler]);
 
   const handleTextDiagram = React.useCallback(async (messageId: DMessageId, text: string) => {
@@ -294,6 +295,7 @@ export function ChatMessageList(props: {
               isImagining={isImagining}
               isSpeaking={isSpeaking}
               showUnsafeHtml={danger_experimentalHtmlWebUi}
+              onAddInReferenceTo={!composeCanAddReplyTo ? undefined : handleAddInReferenceTo}
               onMessageAssistantFrom={handleMessageAssistantFrom}
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}
@@ -304,7 +306,6 @@ export function ChatMessageList(props: {
               onMessageFragmentReplace={handleMessageReplaceFragment}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
-              onReplyTo={handleReplyTo}
               onTextDiagram={handleTextDiagram}
               onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
               onTextSpeak={isSpeakable ? handleTextSpeak : undefined}
