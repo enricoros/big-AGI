@@ -4,7 +4,7 @@
  */
 export function presentErrorToHumans(error: any, mdBold: boolean = false, devWarnError: boolean = false): string {
   if (devWarnError)
-    console.warn('humanPresentableException', { error });
+    console.warn('presentErrorToHumans', { error });
 
   // Handle Error objects
   if (error instanceof Error) {
@@ -16,9 +16,9 @@ export function presentErrorToHumans(error: any, mdBold: boolean = false, devWar
     if (error.cause) {
       // shallow print of the message only
       if (error.cause instanceof Error)
-        message += ` · Cause: ${error.cause.message}`;
+        message += ` · cause: ${error.cause.message}.`;
       // to print it fully (not recommended), use the following:
-      // message += ` · Cause: ${presentErrorToHumans(error.cause)}`;
+      // message += ` · cause: ${presentErrorToHumans(error.cause)}`;
     }
 
     return message;
