@@ -53,7 +53,7 @@ export const inlineMessageBubbleSx: SxProps = {
 
 
 export function ReplyToBubble(props: {
-  replyToText: string | null,
+  replyToText?: string,
   inlineUserMessage?: boolean
   onClear?: () => void,
   className?: string,

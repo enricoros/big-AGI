@@ -156,6 +156,9 @@ export const getChatAutoAI = (): {
 export const useChatAutoSuggestHTMLUI = (): boolean =>
   useAppChatStore(state => state.autoSuggestHTMLUI);
 
+export const useChatAutoSuggestAttachmentPrompts = (): boolean =>
+  useAppChatStore(state => state.autoSuggestAttachmentPrompts);
+
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);
 

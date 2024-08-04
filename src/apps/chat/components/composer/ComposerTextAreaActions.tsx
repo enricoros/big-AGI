@@ -1,44 +1,20 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
 
-import { Alert, Box, Button, CircularProgress, Sheet } from '@mui/joy';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-
-import { proposeActionsForAttachments } from '~/modules/aifn/autoprompts/autoprompts';
-
-import type { AttachmentDraft } from '~/common/attachment-drafts/attachment.types';
-import { useShallowStable } from '~/common/util/hooks/useShallowObject';
+import { Box, Sheet } from '@mui/joy';
 
 import { ReplyToBubble } from '../message/ReplyToBubble';
-import { getChatAutoAI } from '../../store-app-chat';
 
 
 export function ComposerTextAreaActions(props: {
-  attachmentDrafts: AttachmentDraft[],
-  showChatReplyTo: boolean,
-  replyToGenerateText: string | null,
+  agiAttachmentButton?: React.ReactNode,
+  agiAttachmentPrompts?: string[],
+  replyToText?: string,
   onAppendAndSend: (appendText: string) => Promise<void>,
   onReplyToClear: () => void,
 }) {
 
-  // external state
-  const { autoSuggestAttachmentPrompts } = getChatAutoAI();
-
-  const allFragments = useShallowStable(props.attachmentDrafts.flatMap(draft => draft.outputFragments));
-
-  const enableAttachmentGuess = autoSuggestAttachmentPrompts && allFragments.length >= 2;
-
-  const { data: attachmentInstructionCandidates, error, isPending, isFetching, refetch } = useQuery({
-    enabled: enableAttachmentGuess,
-    queryKey: ['attachment-guess', ...allFragments.map(f => f.fId).sort()],
-    queryFn: async (context) => proposeActionsForAttachments(allFragments, context.signal),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const handleUpdateAttachmentGuess = React.useCallback(async () => await refetch(), [refetch]);
-
-
-  if (!props.showChatReplyTo && !enableAttachmentGuess)
+  // skip the component if there's nothing to show
+  if (!props.agiAttachmentPrompts?.length && !props.agiAttachmentButton && props.replyToText === undefined)
     return null;
 
   return (
@@ -63,17 +39,17 @@ export function ComposerTextAreaActions(props: {
     }}>
 
       {/* Reply-To bubble */}
-      {props.showChatReplyTo && (
+      {props.replyToText !== undefined && (
         <ReplyToBubble
-          replyToText={props.replyToGenerateText}
+          replyToText={props.replyToText}
           onClear={props.onReplyToClear}
           className='reply-to-bubble'
         />
       )}
 
-      {/* User Prompt candidates */}
-      {enableAttachmentGuess && !!attachmentInstructionCandidates?.length && (
-        attachmentInstructionCandidates.map((candidate, index) => (
+      {/* Auto-Prompts from attachments */}
+      {!!props.agiAttachmentPrompts?.length && (
+        props.agiAttachmentPrompts.map((candidate, index) => (
           <Sheet
             key={index}
             color='primary'
@@ -103,31 +79,7 @@ export function ComposerTextAreaActions(props: {
       )}
 
       {/* Guess Action Button */}
-
-      {enableAttachmentGuess && <Box sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
-
-        {/* Guess / Guess Again */}
-        <Button
-          variant='outlined'
-          color='primary'
-          disabled={isFetching}
-          endDecorator={isFetching ? <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '16px' }} /> : <AutoFixHighIcon sx={{ fontSize: '20px' }} />}
-          onClick={handleUpdateAttachmentGuess}
-          sx={{
-            px: 3,
-            backgroundColor: 'background.surface',
-            boxShadow: '0 4px 6px -4px rgb(var(--joy-palette-primary-darkChannel) / 40%)',
-            borderRadius: 'sm',
-          }}
-        >
-          {isFetching ? 'Guessing what to do...' : isPending ? 'Guess what to do' : 'What else could we do'}
-        </Button>
-
-        {!!error && <Alert variant='soft' color='danger'>
-          {error.message || 'Error guessing actions'}
-        </Alert>}
-
-      </Box>}
+      {props.agiAttachmentButton}
 
     </Box>
   );
