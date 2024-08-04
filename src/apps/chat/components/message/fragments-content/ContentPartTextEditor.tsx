@@ -1,9 +1,29 @@
 import * as React from 'react';
 
-import { BlocksTextarea } from '~/modules/blocks/BlocksContainer';
+import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+
+
+const textAreaSlotPropsEnter = {
+  textarea: {
+    enterKeyHint: 'enter',
+  },
+  endDecorator: {
+    sx: {
+      fontSize: 'xs',
+      pl: 0.25,
+    },
+  },
+};
+
+const textAreaSlotPropsDone = {
+  ...textAreaSlotPropsEnter,
+  textarea: {
+    enterKeyHint: 'done',
+  },
+};
 
 
 /**
@@ -17,13 +37,12 @@ export function ContentPartTextEditor(props: {
 
   // visual
   contentScaling: ContentScaling,
+  endDecorator?: React.ReactNode
 
   // edited value
   editedText?: string,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
-
-  // events
-  onEnterPressed: () => void,
+  onSubmit: (withControl: boolean) => void,
   onEscapePressed: () => void,
 }) {
 
@@ -33,7 +52,7 @@ export function ContentPartTextEditor(props: {
   const enterIsNewline = true;
 
   // derived state
-  const { fragmentId, setEditedText, onEnterPressed, onEscapePressed } = props;
+  const { fragmentId, setEditedText, onSubmit, onEscapePressed } = props;
 
   // handlers
   const handleEditTextChanged = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -43,15 +62,16 @@ export function ContentPartTextEditor(props: {
   const handleEditKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       const shiftOrAlt = e.shiftKey || e.altKey;
+      const withControl = e.ctrlKey;
       if (enterIsNewline ? shiftOrAlt : !shiftOrAlt) {
         e.preventDefault();
-        onEnterPressed();
+        onSubmit(withControl);
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
       onEscapePressed();
     }
-  }, [enterIsNewline, onEnterPressed, onEscapePressed]);
+  }, [enterIsNewline, onSubmit, onEscapePressed]);
 
   return (
     <BlocksTextarea
@@ -63,16 +83,13 @@ export function ContentPartTextEditor(props: {
         ? props.editedText /* self-text */
         : props.textPartText /* DMessageTextPart text */
       }
-      placeholder={'Edit the message... - Shift+Enter to save'}
+      placeholder={'Edit the message...'}
       // minRows={2} // unintuitive
+      // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
-      // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
-      slotProps={{
-        textarea: {
-          enterKeyHint: enterIsNewline ? 'enter' : 'done',
-        },
-      }}
+      slotProps={enterIsNewline ? textAreaSlotPropsEnter : textAreaSlotPropsDone}
+      endDecorator={props.endDecorator}
     />
   );
 }

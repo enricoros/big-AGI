@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import { BlocksContainer } from '~/modules/blocks/BlocksContainer';
+import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 import { RenderImageRefDBlob, showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
