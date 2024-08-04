@@ -162,7 +162,7 @@ export class PartReassembler {
     if (MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN) {
       const currentTextFragment = this.currentTextFragmentIndex !== null ? this.fragments[this.currentTextFragmentIndex] : null;
       if (currentTextFragment && isTextPart(currentTextFragment.part)) {
-        currentTextFragment.part.text += issueText;
+        currentTextFragment.part.text += ' ' + issueText;
         return;
       }
     }
