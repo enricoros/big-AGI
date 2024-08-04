@@ -25,7 +25,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageId, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -38,7 +38,7 @@ import { ContentFragmentsWithInlineEdit } from './fragments-content/ContentFragm
 import { ContinueFragment } from './ContinueFragment';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
-import { ReplyToBubble } from './ReplyToBubble';
+import { InReferenceToBubble } from './InReferenceToBubble';
 import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -77,6 +77,7 @@ export function ChatMessage(props: {
   showUnsafeHtml?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
+  onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
@@ -87,7 +88,6 @@ export function ChatMessage(props: {
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
   onMessageTruncate?: (messageId: string) => void,
-  onReplyTo?: (messageId: string, selectedText: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>,
   onTextImagine?: (text: string) => Promise<void>,
   onTextSpeak?: (text: string) => Promise<void>,
@@ -203,7 +203,7 @@ export function ChatMessage(props: {
 
   // Message Operations Menu
 
-  const { onMessageToggleUserFlag } = props;
+  const { onAddInReferenceTo, onMessageToggleUserFlag } = props;
 
   const handleOpsMenuToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
@@ -273,10 +273,10 @@ export function ChatMessage(props: {
     }
   };
 
-  const handleOpsReplyTo = (e: React.MouseEvent) => {
+  const handleOpsAddInReferenceTo = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (props.onReplyTo && textSel.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
-      props.onReplyTo(messageId, textSel.trim());
+    if (onAddInReferenceTo && textSel.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
+      onAddInReferenceTo({ mrt: 'dmsg', mText: textSel.trim(), mRole: messageRole /*, messageId*/ });
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -573,14 +573,15 @@ export function ChatMessage(props: {
             </Typography>
           )}
 
-          {/* Reply-To Bubble */}
-          {!!messageMetadata?.inReplyToText && (
-            <ReplyToBubble
-              inlineUserMessage
-              replyToText={messageMetadata.inReplyToText}
-              className='reply-to-bubble'
+          {/* In-Reference-To Bubble */}
+          {messageMetadata?.inReferenceTo?.map((item, index) => (
+            <InReferenceToBubble
+              key={'irt-' + index}
+              item={item}
+              bubbleVariant='message'
+              className='in-reference-to-bubble'
             />
-          )}
+          ))}
 
           {/* Image Attachment Fragments - just for a prettier display on top of the message */}
           {imageAttachments.length >= 1 && !isEditingText && (
@@ -829,8 +830,8 @@ export function ChatMessage(props: {
                 },
               }}
             >
-              {!!props.onReplyTo && <Tooltip disableInteractive arrow placement='top' title={fromAssistant ? 'Reply' : 'Refer To'}>
-                <IconButton color='primary' onClick={handleOpsReplyTo}>
+              {!!onAddInReferenceTo && <Tooltip disableInteractive arrow placement='top' title={fromAssistant ? 'Reply' : 'Refer To'}>
+                <IconButton color='primary' onClick={handleOpsAddInReferenceTo}>
                   <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />
                 </IconButton>
               </Tooltip>}
@@ -839,7 +840,7 @@ export function ChatMessage(props: {
               {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
               {/*  </IconButton>*/}
               {/*</Tooltip>}*/}
-              {!!props.onReplyTo && fromAssistant && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+              {!!onAddInReferenceTo && fromAssistant && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
               <Tooltip disableInteractive arrow placement='top' title='Copy'>
                 <IconButton onClick={handleOpsCopy}>
                   <ContentCopyIcon />

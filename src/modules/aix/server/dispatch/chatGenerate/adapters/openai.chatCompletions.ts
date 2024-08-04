@@ -1,6 +1,6 @@
 import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router';
 
-import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
+import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
 
@@ -209,9 +209,8 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
                 chatMessages.push({ role: 'user', content: [imageContentPart] });
               break;
 
-            case 'meta_reply_to':
-              const context = `The user is referring to this in particular:\n{{ReplyToText}}`.replace('{{ReplyToText}}', part.replyTo);
-              chatMessages.push({ role: 'system', content: context });
+            case 'meta_in_reference_to':
+              chatMessages.push({ role: 'system', content: _toOpenAIInReferenceToText(part) });
               break;
 
             default:
@@ -352,4 +351,30 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
     case 'function_call':
       return { type: 'function' as const, function: { name: itp.function_call.name } };
   }
+}
+
+function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string {
+  // Get the item texts without roles
+  const items = irt.referTo.map(r => r.mText);
+  if (items.length === 0)
+    return 'CONTEXT: The user provides no specific references.';
+
+  const isShortItem = (text: string): boolean =>
+    text.split('\n').length <= 3 && text.length <= 200;
+
+  const formatItem = (text: string, index?: number): string => {
+    if (isShortItem(text)) {
+      const formatted = text.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+      return index !== undefined ? `${index + 1}. "${formatted}"` : `"${formatted}"`;
+    }
+    return `${index !== undefined ? `ITEM ${index + 1}:\n` : ''}---\n${text}\n---`;
+  };
+
+  // Formely: `The user is referring to this in particular:\n{{ReplyToText}}`.replace('{{ReplyToText}}', part.replyTo);
+  if (items.length === 1)
+    return `CONTEXT: The user is referring to this in particular:\n${formatItem(items[0])}`;
+
+  const allShort = items.every(isShortItem);
+  return `CONTEXT: The user is referring to these ${items.length} in particular:\n\n${
+    items.map((text, index) => formatItem(text, index)).join(allShort ? '\n' : '\n\n')}`;
 }

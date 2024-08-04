@@ -40,7 +40,7 @@ export class ConversationHandler {
 
   inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined): DMessage[] {
     const purposeId = getConversationSystemPurposeId(this.conversationId);
-    // TODO: HACK: find the persona identiy separately from the "first system message", as e.g. right now would take the reply-to and promote as system
+    // TODO: HACK: find the persona identiy separately from the "first system message"
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
 
     let systemMessage: DMessage = systemMessageIndex >= 0

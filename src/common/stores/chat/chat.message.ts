@@ -51,8 +51,15 @@ export type DMessageGenerator = {
 // Metadata
 
 export interface DMessageMetadata {
-  inReplyToText?: string;           // text this was in reply to
-  ranOutOfTokens?: true;            // if the message was cut off due to token limit
+  inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
+  ranOutOfTokens?: true;                // if the message was cut off due to token limit
+}
+
+export interface DMetaReferenceItem {
+  mrt: 'dmsg';                          // for future type discrimination
+  mText: string;
+  mRole: DMessageRole;
+  // messageId?: string;
 }
 
 

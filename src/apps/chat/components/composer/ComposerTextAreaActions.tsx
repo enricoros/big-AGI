@@ -2,19 +2,21 @@ import * as React from 'react';
 
 import { Box, Sheet } from '@mui/joy';
 
-import { ReplyToBubble } from '../message/ReplyToBubble';
+import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
+
+import { InReferenceToBubble } from '../message/InReferenceToBubble';
 
 
 export function ComposerTextAreaActions(props: {
   agiAttachmentButton?: React.ReactNode,
   agiAttachmentPrompts?: string[],
-  replyToText?: string,
+  inReferenceTo?: DMetaReferenceItem[] | null
   onAppendAndSend: (appendText: string) => Promise<void>,
-  onReplyToClear: () => void,
+  onRemoveReferenceTo: (item: DMetaReferenceItem) => void,
 }) {
 
   // skip the component if there's nothing to show
-  if (!props.agiAttachmentPrompts?.length && !props.agiAttachmentButton && props.replyToText === undefined)
+  if (!props.agiAttachmentPrompts?.length && !props.agiAttachmentButton && !props.inReferenceTo?.length)
     return null;
 
   return (
@@ -38,14 +40,15 @@ export function ComposerTextAreaActions(props: {
       },
     }}>
 
-      {/* Reply-To bubble */}
-      {props.replyToText !== undefined && (
-        <ReplyToBubble
-          replyToText={props.replyToText}
-          onClear={props.onReplyToClear}
-          className='reply-to-bubble'
+      {/* In-Reference-To bubbles */}
+      {props.inReferenceTo?.map((item, index) => (
+        <InReferenceToBubble
+          key={index}
+          item={item}
+          onRemove={props.onRemoveReferenceTo}
+          className='in-reference-to-bubble'
         />
-      )}
+      ))}
 
       {/* Auto-Prompts from attachments */}
       {!!props.agiAttachmentPrompts?.length && (
