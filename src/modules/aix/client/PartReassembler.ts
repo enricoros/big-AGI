@@ -2,6 +2,9 @@ import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionRes
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
+// configuration
+const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
+
 
 // hackey?: global to be accessed by the UI
 export let devMode_AixLastDispatchRequest: { url: string, headers: string, body: string, particles: string[] } | null = null;
@@ -13,6 +16,15 @@ export class PartReassembler {
 
   constructor() {
     devMode_AixLastDispatchRequest = null;
+  }
+
+  // reset(): void {
+  //   this.fragments = [];
+  //   this.currentTextFragmentIndex = null;
+  // }
+
+  get reassembedFragments(): DMessageContentFragment[] {
+    return this.fragments;
   }
 
   reassembleParticle(op: AixWire_Particles.ChatGenerateOp): void {
@@ -40,7 +52,7 @@ export class PartReassembler {
             this.onAddCodeExecutionResponse(op);
             break;
           default:
-            this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected PartParticleOp: ${JSON.stringify(op)}`));
+            this.appendReassemblyDevError(`PartReassembler: unexpected PartParticleOp: ${JSON.stringify(op)}`);
         }
         break;
 
@@ -63,12 +75,12 @@ export class PartReassembler {
             break;
 
           default:
-            this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected ChatGenerateOp: ${JSON.stringify(op)}`));
+            this.appendReassemblyDevError(`PartReassembler: unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
         }
         break;
 
       default:
-        this.fragments.push(createErrorContentFragment(`PartReassembler: unexpected particle: ${JSON.stringify(op)}`));
+        this.appendReassemblyDevError(`PartReassembler: unexpected particle: ${JSON.stringify(op)}`);
     }
 
     // [DEV] Debugging
@@ -76,6 +88,18 @@ export class PartReassembler {
       devMode_AixLastDispatchRequest.particles.push(JSON.stringify(op));
   }
 
+  reassembleTerminateUserAbort(): void {
+    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+    // TEMP: remove this
+    this.appendReassemblyDevError('User abort');
+  }
+
+  reassembleTerminateError(errorAsText: string): void {
+    this.onIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
+    this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
+  }
+
+  /// Particle Reassembly ///
 
   // Appends the text to the open text part, or creates a new one if none is open
   private onAppendText(particle: AixWire_Particles.TextParticleOp): void {
@@ -119,7 +143,7 @@ export class PartReassembler {
       };
       this.fragments[this.fragments.length - 1] = { ...fragment, part: updatedPart };
     } else
-      this.fragments.push(createErrorContentFragment('PartReassembler: unexpected _fc particle without a preceding function-call'));
+      this.appendReassemblyDevError('PartReassembler: unexpected _fc particle without a preceding function-call');
   }
 
   private onAddCodeExecutionInvocation(cei: Extract<AixWire_Particles.PartParticleOp, { p: 'cei' }>): void {
@@ -135,21 +159,22 @@ export class PartReassembler {
   private onIssue({ issueId, issueText }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'issue' }>): void {
     // NOTE: not sure I like the flow at all here
     // there seem to be some bad conditions when issues are raised while the active part is not text
-    const currentTextFragment = this.currentTextFragmentIndex !== null ? this.fragments[this.currentTextFragmentIndex] : null;
-    if (currentTextFragment && isTextPart(currentTextFragment.part)) {
-      currentTextFragment.part.text += issueText;
-      return;
+    if (MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN) {
+      const currentTextFragment = this.currentTextFragmentIndex !== null ? this.fragments[this.currentTextFragmentIndex] : null;
+      if (currentTextFragment && isTextPart(currentTextFragment.part)) {
+        currentTextFragment.part.text += issueText;
+        return;
+      }
     }
     this.fragments.push(createErrorContentFragment(issueText));
     this.currentTextFragmentIndex = null;
   }
 
-  get reassembedFragments(): DMessageContentFragment[] {
-    return this.fragments;
-  }
+  // utility
 
-  reset(): void {
-    this.fragments = [];
+  private appendReassemblyDevError(errorText: string): void {
+    this.fragments.push(createErrorContentFragment(errorText));
     this.currentTextFragmentIndex = null;
   }
+
 }
