@@ -27,6 +27,7 @@ import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messag
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { usePlayUrl } from '~/common/util/audio/usePlayUrl';
 import { useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 
 import type { AppCallIntent } from './AppCall';
@@ -144,7 +145,7 @@ export function Telephone(props: {
   }, [isRinging, isConnected]);
 
   // ringtone
-  AudioPlayer.usePlayUrl(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
+  usePlayUrl(isRinging ? '/sounds/chat-ringtone.mp3' : null, 300, 2800 * 2);
 
 
   /// Shortcuts
