@@ -33,9 +33,8 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
       continue;
 
     // Check modifier keys
-    if ((shortcut.ctrl !== undefined && shortcut.ctrl !== event.ctrlKey) ||
-      (shortcut.shift !== undefined && shortcut.shift !== event.shiftKey) /*||
-      (!isMacUser && shortcut.altForNonMac !== undefined && shortcut.altForNonMac !== event.altKey)*/)
+    if ((shortcut.ctrl && !event.ctrlKey) || (!shortcut.ctrl && event.ctrlKey) ||
+      (shortcut.shift === true && !event.shiftKey) || (shortcut.shift === false && event.shiftKey))
       continue;
 
     // Execute the action (and prevent the default browser action)
