@@ -158,7 +158,7 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const { onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;
+  const { onMessageAssistantFrom, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;
 
   const handleFragmentNew = React.useCallback(() => {
     onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
@@ -177,16 +177,21 @@ export function ChatMessage(props: {
 
   const isEditingText = !!textContentEditState;
 
-  const handleEditsApply = React.useCallback(() => {
+  const handleApplyAllEdits = React.useCallback(async (withControl: boolean) => {
     const state = textContentEditState || {};
     setTextContentEditState(null);
-    Object.entries(state).forEach(([fragmentId, editedText]) => {
+    for (const [fragmentId, editedText] of Object.entries(state)) {
       if (editedText.length > 0)
         handleFragmentReplace(fragmentId, createTextContentFragment(editedText));
       else
         handleFragmentDelete(fragmentId);
-    });
-  }, [handleFragmentDelete, handleFragmentReplace, textContentEditState]);
+      // if the user pressd Ctrl, we begin a regeneration from here
+      if (withControl && onMessageAssistantFrom)
+        await onMessageAssistantFrom(messageId, 0);
+    }
+  }, [handleFragmentDelete, handleFragmentReplace, messageId, onMessageAssistantFrom, textContentEditState]);
+
+  const handleEditsApplyClicked = React.useCallback(() => handleApplyAllEdits(false), [handleApplyAllEdits]);
 
   const handleEditsBegin = React.useCallback(() => setTextContentEditState({}), []);
 
@@ -530,7 +535,7 @@ export function ChatMessage(props: {
           <Box sx={messageAsideColumnSx}>
             {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
             <Tooltip arrow disableInteractive title='Apply Edits'>
-              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApply} sx={{ mt: 0.25 }}>
+              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApplyClicked} sx={{ mt: 0.25 }}>
                 <CheckRoundedIcon />
               </IconButton>
             </Tooltip>
@@ -603,7 +608,7 @@ export function ChatMessage(props: {
 
             textEditsState={textContentEditState}
             setEditedText={handleEditSetText}
-            onEditsApply={handleEditsApply}
+            onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
             onFragmentDelete={handleFragmentDelete}

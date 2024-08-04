@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Sheet } from '@mui/joy';
 
-import { BlocksContainer } from '~/modules/blocks/BlocksContainer';
+import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -53,7 +53,7 @@ export function ContentFragmentsWithInlineEdit(props: {
 
   textEditsState: ChatMessageTextPartEditState | null,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
-  onEditsApply: () => void,
+  onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
@@ -103,8 +103,9 @@ export function ContentFragmentsWithInlineEdit(props: {
             contentScaling={props.contentScaling}
             editedText={props.textEditsState[fragment.fId]}
             setEditedText={props.setEditedText}
-            onEnterPressed={props.onEditsApply}
+            onSubmit={props.onEditsApply}
             onEscapePressed={props.onEditsCancel}
+            endDecorator='Shift+Enter to save · Ctrl+Shift+Enter to restart · Escape to cancel'
           />
         );
       }
