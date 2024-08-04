@@ -13,7 +13,8 @@ const textAreaSlotPropsEnter = {
   endDecorator: {
     sx: {
       fontSize: 'xs',
-      pl: 0.25,
+      pl: 0.5,
+      mt: 1.5,
     },
   },
 };
