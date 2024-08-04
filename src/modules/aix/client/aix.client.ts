@@ -6,6 +6,7 @@ import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragment
 import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
+import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
@@ -225,13 +226,14 @@ async function _aix_LL_ChatGenerateContent(
     // something else broke, likely a User Abort, or an Aix server error (e.g. tRPC)
     const isUserAbort1 = abortSignal.aborted;
     const isUserAbort2 = (error instanceof Error) && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
-    if (isUserAbort1 || isUserAbort2) {
+    if (!(isUserAbort1 || isUserAbort2)) {
+      partReassembler.reassembleTerminateError(presentErrorToHumans(error, true, true) || 'Unknown error');
+    } else {
       if (isUserAbort1 !== isUserAbort2)
         partReassembler.reassembleTerminateError(`AbortError mismatch: ${isUserAbort1} !== ${isUserAbort2}`);
       else
         partReassembler.reassembleTerminateUserAbort();
-    } else
-      partReassembler.reassembleTerminateError(_safeStringify(error) || error?.message || 'Unknown connection error');
+    }
   }
 
   // and we're done
@@ -248,11 +250,3 @@ async function _aix_LL_ChatGenerateContent(
   return messageAccumulator;
 }
 
-
-function _safeStringify(obj: any) {
-  try {
-    return JSON.stringify(obj, null, 2);
-  } catch {
-    return null;
-  }
-}
