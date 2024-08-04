@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -611,18 +611,13 @@ export function ChatMessage(props: {
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
+            onFragmentBlank={handleFragmentNew}
             onFragmentDelete={handleFragmentDelete}
             onFragmentReplace={handleFragmentReplace}
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
           />
-          {/* Content Fragments Edit Zero-State: button to create a new TextContentFragment */}
-          {isEditingText && !contentFragments.length && (
-            <Button variant='plain' color='neutral' onClick={handleFragmentNew} sx={{ justifyContent: 'flex-start' }}>
-              add text ...
-            </Button>
-          )}
 
           {/* Document Fragments */}
           {nonImageAttachments.length >= 1 && !isEditingText && (
