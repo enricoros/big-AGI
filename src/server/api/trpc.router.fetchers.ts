@@ -120,9 +120,9 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
           ? ` - ${safeErrorString(payload)}` : '')
         + (payload?.error?.failed_generation // [Groq]
           ? ` - failed_generation: ${payload.error.failed_generation}` : '')
-        + (response.status === 403
+        + (response.status === 403 && !url.includes('app.openpipe.ai' /* [OpenPipe] 403 when the model is associated to the project  */)
           ? ` - is "${url}" accessible by the server?` : '')
-        + (response.status === 404
+        + (response.status === 404 && !url.includes('app.openpipe.ai' /* [OpenPipe] 404 when the model is not found - don't add error details */)
           ? ` - "${url}" cannot be found by the server` : '')
         + (response.status === 502 ?
           ` - is "${url}" not available?` : ''),

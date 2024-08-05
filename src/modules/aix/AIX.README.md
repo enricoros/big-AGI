@@ -31,6 +31,7 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 | Local AI   | ✅          | ✅                |                   | ❌         | Yes  + 📦 |               |
 | Mistral    | ✅          | ✅                |                   | ✅         | Yes  + 📦 |               |
 | OpenAI     | ✅          | ✅ + Parallel     | Img: ✅            | ✅         | Yes + 📦  |               |
+| OpenPipe   | ✅          | ✅                | Img: ✅            | ✅         | Yes + 📦  |               |
 | OpenRouter | ✅          | ❌ (inconsistent) |                   | ✅         | Yes + 📦  |               |
 | Perplexity | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
 | TogetherAI | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
@@ -38,7 +39,7 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 
 Notes:
 
-- 1: Continuation marks: a. sends reason=max-tokens (streaming/non-streaming), b.
+- 1: Continuation marks: a. sends reason=max-tokens (streaming/non-streaming), b. TBA
 - 2: Ollama has not been ported to AIX yet due to the custom APIs.
 
 ## 1. System Architecture

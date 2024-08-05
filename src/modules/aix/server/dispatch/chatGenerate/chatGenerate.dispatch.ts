@@ -71,6 +71,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
     case 'localai':
     case 'mistral':
     case 'openai':
+    case 'openpipe':
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':

@@ -21,6 +21,7 @@ export interface BackendCapabilities {
   hasLlmMistral: boolean;
   hasLlmOllama: boolean;
   hasLlmOpenAI: boolean;
+  hasLlmOpenPipe: boolean;
   hasLlmOpenRouter: boolean;
   hasLlmPerplexity: boolean;
   hasLlmTogetherAI: boolean;
@@ -51,6 +52,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmMistral: false,
     hasLlmOllama: false,
     hasLlmOpenAI: false,
+    hasLlmOpenPipe: false,
     hasLlmOpenRouter: false,
     hasLlmPerplexity: false,
     hasLlmTogetherAI: false,
