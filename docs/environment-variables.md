@@ -34,6 +34,7 @@ LOCALAI_API_HOST=
 LOCALAI_API_KEY=
 MISTRAL_API_KEY=
 OLLAMA_API_HOST=
+OPENPIPE_API_KEY=
 OPENROUTER_API_KEY=
 PERPLEXITY_API_KEY=
 TOGETHERAI_API_KEY=
@@ -100,6 +101,7 @@ requiring the user to enter an API key
 | `LOCALAI_API_KEY`           | The (Optional) API key for LocalAI                                                                             | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                        | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-local-ollama.md](config-local-ollama)              |                                                                   |
+| `OPENPIPE_API_KEY`          | The API key for OpenPipe                                                                                       | Optional                                                          |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                     | Optional                                                          |
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                     | Optional                                                          |
 | `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                    | Optional                                                          |

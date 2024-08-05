@@ -532,6 +532,7 @@ function _prepareRequestData({ access, model, history, context: _context }: Chat
     case 'localai':
     case 'mistral':
     case 'openai':
+    case 'openpipe':
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':
