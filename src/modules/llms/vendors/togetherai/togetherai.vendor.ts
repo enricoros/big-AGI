@@ -46,7 +46,7 @@ export const ModelVendorTogetherAI: IModelVendor<SourceSetupTogetherAI, OpenAIAc
     moderationCheck: false,
   }),
 
-  // there is delay for OpenRouter Free API calls
+  // there is delay for Together Free API calls
   getRateLimitDelay: (_llm, partialSetup) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
