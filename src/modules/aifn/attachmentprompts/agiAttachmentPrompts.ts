@@ -40,7 +40,7 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
     ).describe(`Analysis of the ${docs_count} attachments.`),
     relationships: z.string().describe('Identified patterns, relationships, dependencies and differences between the attachments.'),
     top_orthogonal_user_actions: z.array(
-      z.string().describe('Proposed action, written as a short and precise 5-12 words instruction coming from the user, each starting with an action verb.'),
+      z.string().describe('Proposed action that relates to all the content, written as a authentic 5-15 words instruction coming from the user, each starting with an action verb.'),
     ).describe(`Top${num_suggestions} orthogonal inferred actions, deeply tied to patterns between the content, each action relating to all attachments.`),
     most_valuable_action: z.string().describe(`The most valuable option to take, considering the nature of all attachments. Suggested something at the intersection of the ${docs_count} attachments.`).optional(),
   });
@@ -53,7 +53,7 @@ Respond only by calling the propose_user_actions_for_attachments function.`),
     chatSequence: (await aixChatGenerateRequestFromDMessages([{
       role: 'user',
       fragments: [createTextContentFragment(`The user wants to perform an action for which is attaching ${docs_count} related pieces of content.
-Analyze the provided content to determine its nature, identify any relationships between the pieces, and infer the most probable task or action the user wants to perform.`)],
+Analyze the provided content to determine its nature, identify any relationships between the pieces, and infer the most probable high-value task or action the user wants to perform.`)],
     }, {
       role: 'user',
       fragments: attachmentFragments,
