@@ -120,7 +120,6 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
-  const [isYouTubeTranscriberActive, setIsYouTubeTranscriberActive] = React.useState(false);
 
 
   // external state
@@ -144,6 +143,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   // derived state
 
   const isCustomPurpose = systemPurposeId === 'Custom';
+  const isYouTubeTranscriber = systemPurposeId === 'YouTubeTranscriber';
 
   const { selectedPurpose, fourExamples } = React.useMemo(() => {
     const selectedPurpose: SystemPurposeData | null = systemPurposeId ? (SystemPurposes[systemPurposeId] ?? null) : null;
@@ -163,37 +163,17 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   // Handlers
 
   const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
-    if (purposeId) {
-      if (purposeId === 'YouTubeTranscriber') {
-        // If the YouTube Transcriber tile is clicked, set the state accordingly
-        setIsYouTubeTranscriberActive(true);
-      } else {
-        setIsYouTubeTranscriberActive(false);
-      }
-      if (setSystemPurposeId) {
-        setSystemPurposeId(props.conversationId, purposeId);
-      }
-    }
+    if (purposeId && setSystemPurposeId)
+      setSystemPurposeId(props.conversationId, purposeId);
   }, [props.conversationId, setSystemPurposeId]);
 
-  React.useEffect(() => {
-    const isTranscriberActive = systemPurposeId === 'YouTubeTranscriber';
-    setIsYouTubeTranscriberActive(isTranscriberActive);
-  }, [systemPurposeId]);
-
-
-  const handleAppendTranscriptAsMessage = (messageText: string) => {
-    // Retrieve the appendMessage action from the useChatStore
-    const { appendMessage } = useChatStore.getState();
-
-    const conversationId = props.conversationId;
-
+  const handleAppendTranscriptAsMessage = React.useCallback((messageText: string) => {
     // Create a new message object
     const newMessage = createDMessageTextContent('assistant', messageText); // [chat] append assistant:YouTube transcript
 
     // Append the new message to the conversation
-    appendMessage(conversationId, newMessage);
-  };
+    useChatStore.getState().appendMessage(props.conversationId, newMessage);
+  }, [props.conversationId]);
 
 
   const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -457,10 +437,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         )}
 
         {/* [row -1] YouTube URL */}
-        {isYouTubeTranscriberActive && (
+        {isYouTubeTranscriber && (
           <YouTubeURLInput
-            onSubmit={(transcript) => handleAppendTranscriptAsMessage(transcript)}
-            isFetching={false}
+            onSubmit={handleAppendTranscriptAsMessage}
             sx={{
               gridColumn: '1 / -1',
             }}
