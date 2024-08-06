@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PushPinIcon from '@mui/icons-material/PushPin';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DEphemeral } from '~/common/chat-overlay/EphemeralsStore';
@@ -81,18 +82,23 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     ConversationsManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
   }, [conversationId, ephemeral.id]);
 
+  const handleTogglePinned = React.useCallback(() => {
+    ConversationsManager.getHandler(conversationId).ephemeralsStore.togglePinned(ephemeral.id);
+  }, [conversationId, ephemeral.id]);
+
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
       position: 'relative',
       // border: (i < ephemerals.length - 1) ? `2px solid ${theme.palette.divider}` : undefined,
-      '&:hover > button': { opacity: 1 },
     }}>
 
     {/* Title */}
-    {ephemeral.title && <Typography level='title-sm' sx={{ mb: 1.5 }}>
-      {ephemeral.title} Development Tools
-    </Typography>}
+    {ephemeral.title && (
+      <Typography level='title-sm' sx={{ mb: 1.5 }}>
+        {ephemeral.title} Development Tools
+      </Typography>
+    )}
 
     {/* Vertical | split */}
     <Grid container spacing={2}>
@@ -105,26 +111,52 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
       </Grid>
 
       {/* Right pane (state) */}
-      {!!ephemeral.state && <Grid
-        xs={12} md={6}
-        sx={{
-          borderLeft: { md: `1px dashed` },
-          borderTop: { xs: `1px dashed`, md: 'none' },
-        }}>
-        <StateRenderer state={ephemeral.state} />
-      </Grid>}
+      {!!ephemeral.state && (
+        <Grid
+          xs={12} md={6}
+          sx={{
+            borderLeft: { md: `1px dashed` },
+            borderTop: { xs: `1px dashed`, md: 'none' },
+          }}>
+          <StateRenderer state={ephemeral.state} />
+        </Grid>
+      )}
     </Grid>
 
-    {/* Close button (right of title) */}
-    <IconButton
-      size='sm'
-      onClick={handleDelete}
-      sx={{
-        position: 'absolute', top: 8, right: 8,
-        opacity: { xs: 1, sm: 0.5 }, transition: 'opacity 0.3s',
-      }}>
-      <CloseRoundedIcon />
-    </IconButton>
+
+    {/* Buttons */}
+    <Box sx={{
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      m: 1,
+      display: 'flex',
+      gap: 1,
+    }}>
+
+      {/* Pin button */}
+      <IconButton
+        size='sm'
+        variant={ephemeral.pinned ? 'soft' : 'outlined'}
+        color={ephemeral.pinned ? 'primary' : 'neutral'}
+        onClick={handleTogglePinned}
+        sx={{
+          '& > *': { transition: 'transform 0.2s' },
+        }}
+      >
+        <PushPinIcon sx={ephemeral.pinned ? { transform: 'rotate(45deg)' } : undefined} />
+      </IconButton>
+
+      {/* Close button */}
+      <IconButton
+        size='sm'
+        variant={ephemeral.done ? 'solid' : 'outlined'}
+        onClick={handleDelete}
+      >
+        <CloseRoundedIcon />
+      </IconButton>
+
+    </Box>
 
   </Box>;
 }
