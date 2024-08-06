@@ -14,7 +14,7 @@ Within Big-AGI, users can invoke ReAct to ask complex questions that require mul
 
 Example of ReAct in action, taking a question about current events, googling results, opening a page, and summarizing the information:
 
-![ReAct Video Recording](https://github.com/user-attachments/assets/c3480428-9ab8-4257-a869-2541bf44a062)
+[ReAct Video Recording](https://github.com/user-attachments/assets/c3480428-9ab8-4257-a869-2541bf44a062)
 
 The following tools are implemented in Big-AGI:
 
