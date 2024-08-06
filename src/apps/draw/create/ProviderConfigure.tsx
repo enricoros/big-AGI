@@ -58,7 +58,7 @@ export function ProviderConfigure(props: {
       <ExpanderControlledBox expanded={open}>
         {!!ProviderConfig && (
           <Card variant='outlined' sx={{ mb: 1, borderTopColor: 'primary.softActiveBg' }}>
-            <CardContent sx={{ gap: 1 }}>
+            <CardContent sx={{ gap: 1.5 /* keep in sync with SettingsModal > AccordionDetails > Box */ }}>
               <ProviderConfig />
             </CardContent>
           </Card>

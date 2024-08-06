@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Button, Divider, ListItemContent, Stack, styled, Tab, tabClasses, TabList, TabPanel, Tabs } from '@mui/joy';
+import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, Divider, ListItemContent, styled, Tab, tabClasses, TabList, TabPanel, Tabs } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
@@ -90,9 +90,9 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
       )}
 
       <AccordionDetails>
-        <Stack sx={{ gap: 'calc(var(--Card-padding) / 2)', border: 'none' }}>
+        <Box sx={{ display: 'grid', gap: 1.5 /* keep in sync with ProviderConfigure > ExpanderControlledBox > Card > CardContent (Draw App) */ }}>
           {props.children}
-        </Stack>
+        </Box>
       </AccordionDetails>
 
     </Accordion>
