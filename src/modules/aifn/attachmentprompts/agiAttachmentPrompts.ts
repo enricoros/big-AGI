@@ -31,19 +31,17 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
   const num_suggestions = 3;
 
   const inputSchema = z.object({
-    content_analysis: z.object({
-      attachments: z.array(
-        z.object({
-          name: z.string().describe('Identifier of the file.'),
-          type: z.string().describe('Type or format of the file.'),
-          summary: z.string().describe('Brief summary of the file\'s content, structure, commonalities and uniqueness. Be specific.'),
-        }),
-      ).describe('List of attachments provided for analysis.'),
-      relationships: z.string().describe('Identified patterns, relationships, dependencies and differences between the attachments.'),
-    }).describe(`Analysis of the ${docs_count} attachments.`),
+    attachments_analysis: z.array(
+      z.object({
+        name: z.string().describe('Identifier of the file.'),
+        type: z.string().describe('Type or format of the file.'),
+        summary: z.string().describe('Brief summary of the file\'s content, structure, commonalities and uniqueness. Be specific.'),
+      }),
+    ).describe(`Analysis of the ${docs_count} attachments.`),
+    relationships: z.string().describe('Identified patterns, relationships, dependencies and differences between the attachments.'),
     top_orthogonal_user_actions: z.array(
-      z.string().describe('Proposed action, written as a short 5-10 words instruction coming from the user, each starting with an action verb.'),
-    ).describe(`List of ${num_suggestions} orthogonal inferred actions, deeply tied to patterns between the content, each action relating to all attachments.`),
+      z.string().describe('Proposed action, written as a short and precise 5-12 words instruction coming from the user, each starting with an action verb.'),
+    ).describe(`Top${num_suggestions} orthogonal inferred actions, deeply tied to patterns between the content, each action relating to all attachments.`),
     most_valuable_action: z.string().describe(`The most valuable option to take, considering the nature of all attachments. Suggested something at the intersection of the ${docs_count} attachments.`).optional(),
   });
 
@@ -85,7 +83,8 @@ Analyze the provided content to determine its nature, identify any relationships
     throw new Error('AIX: Unexpected invocation');
   if (!toolInvocation.invocation.args)
     throw new Error('AIX: Missing args');
-  const args = inputSchema.parse(JSON.parse(toolInvocation.invocation.args));
+  const argsJson = JSON.parse(toolInvocation.invocation.args);
+  const args = inputSchema.parse(argsJson);
   if (!args.top_orthogonal_user_actions?.length)
     throw new Error('AIX: Missing output');
 
