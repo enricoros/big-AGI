@@ -27,14 +27,14 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
   const { enableReactTool: enableBrowse } = useBrowseStore.getState();
 
   // create an ephemeral space
-  const eHandler = cHandler.createEphemeral(`Reason+Act`, 'Initializing ReAct..');
+  const hEphemeral = cHandler.createEphemeral(`Reason+Act`, 'Initializing ReAct..');
   let ephemeralText = '';
   const logToEphemeral = (text: string) => {
     console.log(text);
     ephemeralText += (text.length > 300 ? text.slice(0, 300) + '...' : text) + '\n';
-    eHandler.updateText(ephemeralText);
+    hEphemeral.updateText(ephemeralText);
   };
-  const showStateInEphemeral = (state: object) => eHandler.updateState(state);
+  const showStateInEphemeral = (state: object) => hEphemeral.updateState(state);
 
   try {
 
@@ -44,7 +44,8 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
 
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(reactResult), true);
 
-    setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
+    hEphemeral.markAsDone();
+    setTimeout(() => hEphemeral.deleteIfNotPinned(false /* forceIfPinned */), EPHEMERAL_DELETION_DELAY);
 
     return true;
   } catch (error: any) {

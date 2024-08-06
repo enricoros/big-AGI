@@ -14,14 +14,18 @@ export interface DEphemeral {
   title: string;
   text: string;
   state: object;
+  done: boolean;
+  pinned: boolean;
 }
 
-function createDEphemeral(title: string, initialText: string): DEphemeral {
+function createDEphemeral(title: string, initialText: string, pinned: boolean): DEphemeral {
   return {
     id: agiUuid('chat-ephemerals-item'),
     title: title,
     text: initialText,
     state: {},
+    done: false,
+    pinned: pinned,
   };
 }
 
@@ -32,13 +36,14 @@ const [dispatchEphemeralsChanged, installEphemeralsChangedListener] = customEven
  * [store]: diy reactive store for a list of ephemerals
  */
 export class EphemeralsStore extends EventTarget {
+  static lastEphemeralPinned: boolean = false;
   private readonly ephemerals: DEphemeral[] = [];
 
   constructor() {
     super();
   }
 
-  find(): DEphemeral[] {
+  get currentEphemerals(): DEphemeral[] {
     return this.ephemerals;
   }
 
@@ -49,7 +54,6 @@ export class EphemeralsStore extends EventTarget {
 
   delete(ephemeralId: string): void {
     const index = this.ephemerals.findIndex(e => e.id === ephemeralId);
-    console.log('EphemeralsStore: delete', index);
     if (index >= 0) {
       this.ephemerals.splice(index, 1);
       dispatchEphemeralsChanged(this, this.ephemerals);
@@ -57,19 +61,42 @@ export class EphemeralsStore extends EventTarget {
   }
 
   update(ephemeralId: string, update: Partial<DEphemeral>): void {
+    if (update.pinned !== undefined)
+      EphemeralsStore.lastEphemeralPinned = update.pinned;
     const ephemeral = this.ephemerals.find(e => e.id === ephemeralId);
     if (ephemeral) {
       Object.assign(ephemeral, update);
       dispatchEphemeralsChanged(this, this.ephemerals);
     }
   }
+
+
+  // Pinned State
+
+  isPinned(ephemeralId: string): boolean {
+    return this.ephemerals.find(e => e.id === ephemeralId)?.pinned || false;
+  }
+
+  togglePinned(ephemeralId: string): void {
+    const ephemeral = this.ephemerals.find(e => e.id === ephemeralId);
+    if (ephemeral) {
+      // special case: unpinning after it's done
+      if (ephemeral.pinned && ephemeral.done)
+        return this.delete(ephemeralId);
+
+      // while running: toggle pinning
+      ephemeral.pinned = !ephemeral.pinned;
+      dispatchEphemeralsChanged(this, this.ephemerals);
+    }
+  }
+
 }
 
 export class EphemeralHandler {
   private readonly ephemeralId: string;
 
   constructor(title: string, initialText: string, readonly ephemeralsStore: EphemeralsStore) {
-    const dEphemeral = createDEphemeral(title, initialText);
+    const dEphemeral = createDEphemeral(title, initialText, EphemeralsStore.lastEphemeralPinned);
     this.ephemeralId = dEphemeral.id;
     this.ephemeralsStore.append(dEphemeral);
   }
@@ -82,7 +109,13 @@ export class EphemeralHandler {
     this.ephemeralsStore.update(this.ephemeralId, { state });
   }
 
-  delete(): void {
+  markAsDone(): void {
+    this.ephemeralsStore.update(this.ephemeralId, { done: true });
+  }
+
+  deleteIfNotPinned(forceIfPinned: boolean): void {
+    if (!forceIfPinned && this.ephemeralsStore.isPinned(this.ephemeralId))
+      return;
     this.ephemeralsStore.delete(this.ephemeralId);
   }
 }
@@ -92,11 +125,12 @@ export function useEphemerals(conversationHandler: ConversationHandler | null): 
 
   // state
   const [ephemerals, setEphemerals] = React.useState<DEphemeral[]>(
-    () => conversationHandler ? conversationHandler.ephemeralsStore.find() : []);
+    () => conversationHandler ? conversationHandler.ephemeralsStore.currentEphemerals : [],
+  );
 
   React.useEffect(() => {
     if (!conversationHandler) return;
-    return installEphemeralsChangedListener(conversationHandler.ephemeralsStore.find(), conversationHandler.ephemeralsStore, (detail) => setEphemerals([...detail]));
+    return installEphemeralsChangedListener(conversationHandler.ephemeralsStore.currentEphemerals, conversationHandler.ephemeralsStore, (detail) => setEphemerals([...detail]));
   }, [conversationHandler]);
 
   return ephemerals;
