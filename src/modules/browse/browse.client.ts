@@ -50,7 +50,7 @@ export async function callBrowseFetchPage(
   // DEBUG: if there's a screenshot, append it to the dom
   if (DEBUG_SHOW_SCREENSHOT && page.screenshot) {
     const img = document.createElement('img');
-    img.src = page.screenshot.webpDataUrl;
+    img.src = page.screenshot.imgDataUrl;
     img.style.width = `${page.screenshot.width}px`;
     img.style.height = `${page.screenshot.height}px`;
     document.body.appendChild(img);

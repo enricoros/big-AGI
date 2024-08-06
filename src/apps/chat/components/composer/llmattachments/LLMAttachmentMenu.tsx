@@ -197,12 +197,12 @@ export function LLMAttachmentMenu(props: {
             )}
             {!!draftInput?.urlImage && (
               <Typography level='body-sm'>
-                <span style={{ color: 'transparent' }}>🡐</span> {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.webpDataUrl?.length.toLocaleString()}
+                <span style={{ color: 'transparent' }}>🡐</span> {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.imgDataUrl?.length.toLocaleString()}
                 {' · '}
                 <Link onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  showImageDataURLInNewTab(draftInput?.urlImage?.webpDataUrl || '');
+                  showImageDataURLInNewTab(draftInput?.urlImage?.imgDataUrl || '');
                 }}>
                   open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
                 </Link>

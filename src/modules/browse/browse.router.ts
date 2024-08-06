@@ -47,7 +47,7 @@ const fetchPageWorkerOutputSchema = z.object({
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
   screenshot: z.object({
-    webpDataUrl: z.string().startsWith('data:image/webp'),
+    imgDataUrl: z.string().startsWith('data:image/webp'),
     mimeType: z.string().startsWith('image/'),
     width: z.number(),
     height: z.number(),
@@ -198,7 +198,12 @@ async function workerPuppeteer(
         ...(quality && { quality }),
       }) as string;
 
-      result.screenshot = { webpDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
+      result.screenshot = {
+        imgDataUrl: `data:${mimeType};base64,${dataString}`,
+        mimeType,
+        width,
+        height,
+      };
     }
   } catch (error: any) {
     console.error('workerPuppeteer: page.screenshot', error);

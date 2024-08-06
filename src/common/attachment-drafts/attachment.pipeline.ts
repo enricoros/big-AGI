@@ -1,6 +1,6 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
-import { youTubeFetchTranscript } from '~/modules/youtube/useYouTubeTranscript';
+import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
@@ -66,19 +66,20 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       // [YouTube] user is attaching a link to a video: try to download this as a transcript rather than a webpage
       const asYoutubeVideoId = extractYoutubeVideoIDFromURL(source.refUrl);
       if (asYoutubeVideoId) {
-        const transcript = await youTubeFetchTranscript(asYoutubeVideoId).catch(() => null);
-        if (transcript?.videoTitle && transcript?.transcript) {
+        const videoData = await youTubeGetVideoData(asYoutubeVideoId).catch(() => null);
+        if (videoData?.videoTitle && videoData?.transcript) {
           edit({
-            label: transcript.videoTitle,
+            label: videoData.videoTitle,
             input: {
               mimeType: INT_MIME_VND_AGI_YOUTUBE,
               data: {
                 videoId: asYoutubeVideoId,
-                videoTitle: transcript.videoTitle,
-                videoDescription: transcript.videoDescription,
-                videoThumbnailUrl: transcript.thumbnailUrl,
-                videoTranscript: transcript.transcript,
+                videoTitle: videoData.videoTitle,
+                videoDescription: videoData.videoDescription,
+                videoThumbnailUrl: videoData.thumbnailUrl,
+                videoTranscript: videoData.transcript,
               },
+              urlImage: videoData.thumbnailImage ?? undefined,
             },
           });
           break;
@@ -275,6 +276,8 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
     case input.mimeType === INT_MIME_VND_AGI_YOUTUBE:
       converters.push({ id: 'youtube-transcript', name: 'Video Transcript' });
       converters.push({ id: 'youtube-transcript-simple', name: 'Video Transcript (simple)' });
+      if (input.urlImage)
+        converters.push({ id: 'url-page-image', name: 'Add Thumbnail', disabled: !input.urlImage.width || !input.urlImage.height, isCheckbox: true });
       break;
 
     // EGO
@@ -661,9 +664,9 @@ export async function attachmentPerformConversion(
         }
         try {
           // get the data
-          const { mimeType, webpDataUrl } = input.urlImage;
-          const dataIndex = webpDataUrl.indexOf(',');
-          const base64Data = webpDataUrl.slice(dataIndex + 1);
+          const { mimeType, imgDataUrl } = input.urlImage;
+          const dataIndex = imgDataUrl.indexOf(',');
+          const base64Data = imgDataUrl.slice(dataIndex + 1);
           // do not convert, as we're in the optimal webp already
           // do not resize, as the 512x512 is optimal for most LLM Vendors, an a great tradeoff of quality/size/cost
           const screenshotImageF = await imageDataToImageAttachmentFragmentViaDBlob(mimeType, base64Data, source, `Screenshot of ${title}`, caption, false, false);

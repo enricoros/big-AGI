@@ -18,7 +18,7 @@ export interface YTVideoTranscript {
   thumbnailUrl: string;
 }
 
-export async function youTubeFetchTranscript(videoId: string) {
+export async function youTubeGetVideoData(videoId: string) {
   if (USE_FRONTEND_FETCH) {
     // return fetchYouTubeTranscript(videoId, url => frontendSideFetch(url).then(res => res.text()));
     throw new Error('Big-AGI: Browser youtube transcript download is disabled.');
@@ -36,7 +36,7 @@ export function useYouTubeTranscript(videoID: string | null, onNewTranscript: (t
   const { data, isFetching, isError, error } = useQuery({
     enabled: !!videoID,
     queryKey: ['transcript', videoID],
-    queryFn: async () => youTubeFetchTranscript(videoID!),
+    queryFn: async () => youTubeGetVideoData(videoID!),
     staleTime: Infinity,
   });
 

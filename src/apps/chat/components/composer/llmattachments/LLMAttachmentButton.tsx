@@ -120,10 +120,10 @@ function attachmentIcons(attachmentDraft: AttachmentDraft): React.ReactNode {
   return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
     {/* If we have a Web preview, show it first */}
-    {!!attachmentDraft.input?.urlImage?.webpDataUrl && /*!imageDataRefs.length &&*/ (
+    {!!attachmentDraft.input?.urlImage?.imgDataUrl && /*!imageDataRefs.length &&*/ (
       // <Tooltip title={<>This was the page.<br />You can also Add the Screenshot as attachment</>}>
       <RenderImageURL
-        imageURL={attachmentDraft.input.urlImage.webpDataUrl}
+        imageURL={attachmentDraft.input.urlImage.imgDataUrl}
         variant='attachment-button'
         scaledImageSx={{ width: 28, height: 28 }}
       />
