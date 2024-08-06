@@ -67,7 +67,7 @@ export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
 export type AttachmentDraftInput = {
   mimeType: string; // Original MIME type of the file, or application specific type
-  data: string | ArrayBuffer | DraftWebInputData | DraftEgoFragmentsInputData; // The original data of the attachment
+  data: string | ArrayBuffer | DraftWebInputData | DraftYouTubeInputData | DraftEgoFragmentsInputData; // The original data of the attachment
   dataSize?: number; // Size of the original data (for plain/simple 1:1 mime)
   altMimeType?: string; // Alternative MIME type for the input
   altData?: string; // Alternative data for the input
@@ -86,6 +86,14 @@ export type DraftWebInputData = {
   pageMarkdown?: string;
   pageCleanedHtml?: string;
   pageTitle?: string;
+}
+
+export type DraftYouTubeInputData = {
+  videoId: string;
+  videoTitle: string;
+  videoDescription: string;
+  videoThumbnailUrl: string;
+  videoTranscript: string;
 }
 
 export type DraftEgoFragmentsInputData = {
@@ -121,6 +129,7 @@ export type AttachmentDraftConverterType =
   | 'pdf-text' | 'pdf-images'
   | 'docx-to-html'
   | 'url-page-text' | 'url-page-markdown' | 'url-page-html' | 'url-page-null' | 'url-page-image'
+  | 'youtube-transcript' | 'youtube-transcript-simple'
   | 'ego-fragments-inlined'
   | 'unhandled';
 
