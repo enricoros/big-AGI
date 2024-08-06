@@ -26,14 +26,14 @@ interface UIPreferencesStore {
   increaseContentScaling: () => void;
   decreaseContentScaling: () => void;
 
+  disableMarkdown: boolean;
+  setDisableMarkdown: (disableMarkdown: boolean) => void;
+
   doubleClickToEdit: boolean;
   setDoubleClickToEdit: (doubleClickToEdit: boolean) => void;
 
   enterIsNewline: boolean;
   setEnterIsNewline: (enterIsNewline: boolean) => void;
-
-  renderMarkdown: boolean;
-  setRenderMarkdown: (renderMarkdown: boolean) => void;
 
   renderCodeLineNumbers: boolean;
   setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => void;
@@ -76,11 +76,11 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       doubleClickToEdit: false,
       setDoubleClickToEdit: (doubleClickToEdit: boolean) => set({ doubleClickToEdit }),
 
+      disableMarkdown: false,
+      setDisableMarkdown: (disableMarkdown: boolean) => set({ disableMarkdown }),
+
       enterIsNewline: false,
       setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
-
-      renderMarkdown: true,
-      setRenderMarkdown: (renderMarkdown: boolean) => set({ renderMarkdown }),
 
       renderCodeLineNumbers: false,
       setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => set({ renderCodeLineNumbers }),
