@@ -18,6 +18,7 @@ import { SettingUIContentScaling } from './SettingUIContentScaling';
 
 
 // configuration
+const SHOW_MARKDOWN_DISABLE_SETTING = false;
 const SHOW_PURPOSE_FINDER = false;
 
 function ModelsSetupButton() {
@@ -40,15 +41,15 @@ export function AppChatSettingsUI() {
   const isMobile = useIsMobile();
   const {
     centerMode, setCenterMode,
+    disableMarkdown, setDisableMarkdown,
     doubleClickToEdit, setDoubleClickToEdit,
     enterIsNewline, setEnterIsNewline,
-    renderMarkdown, setRenderMarkdown,
     showPersonaFinder, setShowPersonaFinder,
   } = useUIPreferencesStore(useShallow(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
+    disableMarkdown: state.disableMarkdown, setDisableMarkdown: state.setDisableMarkdown,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
-    renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
   })));
 
@@ -56,7 +57,7 @@ export function AppChatSettingsUI() {
 
   const handleDoubleClickToEditChange = (event: React.ChangeEvent<HTMLInputElement>) => setDoubleClickToEdit(event.target.checked);
 
-  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+  const handleDisableMarkdown = (event: React.ChangeEvent<HTMLInputElement>) => setDisableMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPersonaFinder(event.target.checked);
 
@@ -76,13 +77,15 @@ export function AppChatSettingsUI() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Markdown'
-                      description={renderMarkdown ? 'Render markdown' : 'As text'} />
-      <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
-              endDecorator={renderMarkdown ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
+    {SHOW_MARKDOWN_DISABLE_SETTING && (
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <FormLabelStart title='Disable Markdown'
+                        description={disableMarkdown ? 'As text' : 'Render markdown'} />
+        <Switch checked={disableMarkdown} onChange={handleDisableMarkdown}
+                endDecorator={disableMarkdown ? 'On' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+      </FormControl>
+    )}
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Edit mode'

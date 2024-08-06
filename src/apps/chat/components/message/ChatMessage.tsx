@@ -106,10 +106,10 @@ export function ChatMessage(props: {
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
 
   // external state
-  const { adjContentScaling, doubleClickToEdit, renderMarkdown, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
+  const { adjContentScaling, disableMarkdown, doubleClickToEdit, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
     adjContentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
+    disableMarkdown: state.disableMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
-    renderMarkdown: state.renderMarkdown,
     uiComplexityMode: state.complexityMode,
   })));
   const [showDiff, setShowDiff] = useChatShowTextDiff();
@@ -606,7 +606,7 @@ export function ChatMessage(props: {
             messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-            renderTextAsMarkdown={renderMarkdown && !fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
+            renderTextAsMarkdown={!disableMarkdown && !fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showUnsafeHtml={props.showUnsafeHtml}
 
             textEditsState={textContentEditState}
@@ -630,7 +630,7 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               isMobile={props.isMobile}
               zenMode={zenMode}
-              renderTextAsMarkdown={renderMarkdown}
+              renderTextAsMarkdown={!disableMarkdown}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}
             />

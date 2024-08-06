@@ -8,8 +8,8 @@ import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { Brand } from '~/common/app.config';
-import { DMessageId, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
@@ -17,7 +17,6 @@ import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 /**
@@ -38,20 +37,6 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
   const messages = props.conversation.messages;
   const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages);
   const hasMessages = filteredMessages.length > 0;
-
-
-  // Effect: Turn on Markdown (globally) if there are tables in the chat
-
-  React.useEffect(() => {
-    const { renderMarkdown, setRenderMarkdown } = useUIPreferencesStore.getState();
-    if (!renderMarkdown) {
-      const hasMarkdownTables = messages.some(m => messageFragmentsReduceText(m.fragments).includes('|---'));
-      if (hasMarkdownTables) {
-        setRenderMarkdown(true);
-        console.log('Turning on Markdown because of tables');
-      }
-    }
-  }, [messages]);
 
   // Effect: Scroll to bottom of list when messages change
 
