@@ -96,7 +96,7 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     {/* Title */}
     {ephemeral.title && (
       <Typography level='title-sm' sx={{ mb: 1.5 }}>
-        {ephemeral.title} Development Tools
+        {ephemeral.title} Internal Monologue
       </Typography>
     )}
 
