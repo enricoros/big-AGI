@@ -145,8 +145,8 @@ export function LLMAttachmentMenu(props: {
             {(isConverting && c.isActive)
               ? <CircularProgress size='sm' sx={{ '--CircularProgress-size': '1.25rem' }} />
               : !c.isCheckbox
-                ? <Radio checked={c.isActive} disabled={isConverting} />
-                : <Checkbox checked={c.isActive} disabled={isConverting} />
+                ? <Radio key={'rd-' + idx} checked={c.isActive} disabled={isConverting} />
+                : <Checkbox key={'cb-' + idx} checked={c.isActive === true} disabled={isConverting} />
             }
           </ListItemDecorator>
           {c.unsupported
