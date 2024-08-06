@@ -9,11 +9,12 @@ import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYo
 
 interface YouTubeURLInputProps {
   onSubmit: (transcript: string) => void;
-  isFetching: boolean;
   sx?: SxProps;
 }
 
-export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFetching, sx }) => {
+export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, sx }) => {
+
+  // state
   const [url, setUrl] = React.useState('');
   const [submitFlag, setSubmitFlag] = React.useState(false);
 
@@ -27,10 +28,10 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFe
   const videoID = extractVideoID(url);
 
   // Callback function to handle new transcript
-  const handleNewTranscript = (newTranscript: YTVideoTranscript) => {
+  const handleNewTranscript = React.useCallback((newTranscript: YTVideoTranscript) => {
     onSubmit(newTranscript.transcript); // Pass the transcript text to the onSubmit handler
     setSubmitFlag(false); // Reset submit flag after handling
-  };
+  },[onSubmit]);
 
   const { transcript, isFetching: isTranscriptFetching, isError, error } = useYouTubeTranscript(videoID && submitFlag ? videoID : null, handleNewTranscript);
 
@@ -50,7 +51,7 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFe
           required
           type='url'
           fullWidth
-          disabled={isFetching || isTranscriptFetching}
+          disabled={isTranscriptFetching}
           variant='outlined'
           placeholder='Enter YouTube Video URL'
           value={url}
@@ -61,8 +62,8 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFe
         <Button
           type='submit'
           variant='solid'
-          disabled={isFetching || isTranscriptFetching || !url}
-          loading={isFetching || isTranscriptFetching}
+          disabled={isTranscriptFetching || !url}
+          loading={isTranscriptFetching}
           sx={{ minWidth: 140 }}
         >
           Get Transcript
