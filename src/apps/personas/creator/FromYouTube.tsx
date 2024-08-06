@@ -5,19 +5,13 @@ import { Box, Button, Card, IconButton, Input, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 
 import type { SimplePersonaProvenance } from '../store-app-personas';
-
-
-function extractVideoID(videoURL: string): string | null {
-  const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^#&?]*).*/;
-  const match = videoURL.match(regExp);
-  return (match && match[1]?.length == 11) ? match[1] : null;
-}
 
 
 function YouTubeVideoTranscriptCard(props: { transcript: YTVideoTranscript, onClose: () => void, sx?: SxProps }) {
@@ -107,7 +101,7 @@ export function FromYouTube(props: {
   const handleCreateFromTranscript = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // stop the form submit
 
-    const videoId = extractVideoID(videoURL) || null;
+    const videoId = extractYoutubeVideoIDFromURL(videoURL) || null;
     if (!videoId)
       setVideoURL('Invalid');
 
