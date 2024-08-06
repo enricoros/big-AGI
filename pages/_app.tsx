@@ -17,8 +17,8 @@ import '~/common/styles/app.styles.css';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
 import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
-import { ProviderSnacks } from '~/common/providers/ProviderSnacks';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
+import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
@@ -42,9 +42,8 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
         <ProviderBackendCapabilities>
           {/* ^ SSR boundary */}
           <ProviderBootstrapLogic>
-            <ProviderSnacks>
-              {getLayout(<Component {...pageProps} />)}
-            </ProviderSnacks>
+            <SnackbarInsert />
+            {getLayout(<Component {...pageProps} />)}
           </ProviderBootstrapLogic>
         </ProviderBackendCapabilities>
       </ProviderSingleTab>

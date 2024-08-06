@@ -1,4 +1,4 @@
-import { addSnackbar } from '../components/useSnackbarsStore';
+import { addSnackbar } from '../components/snackbar/useSnackbarsStore';
 import { isBrowser, isFirefox } from './pwaUtils';
 
 export function copyToClipboard(text: string, typeLabel: string) {

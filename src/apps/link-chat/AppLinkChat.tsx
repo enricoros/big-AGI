@@ -14,7 +14,7 @@ import { GoodModal } from '~/common/components/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { OptimaDrawerIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';

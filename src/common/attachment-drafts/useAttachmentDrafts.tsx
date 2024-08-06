@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { addSnackbar } from '~/common/components/useSnackbarsStore';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { asValidURL } from '~/common/util/urlUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
