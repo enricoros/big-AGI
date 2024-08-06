@@ -73,7 +73,7 @@ export type AttachmentDraftInput = {
   altData?: string; // Alternative data for the input
   // [media:URL] special for download inputs
   urlImage?: {
-    webpDataUrl: string;
+    imgDataUrl: string;
     mimeType: string;
     width: number;
     height: number;

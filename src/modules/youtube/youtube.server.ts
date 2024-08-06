@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { getImageInformationFromBytes } from '~/modules/t2i/t2i.server';
+
+
 /// THIS IS NORMALLY SERVER-SIDE CODE - do not include/invoke in the frontend ///
 
 
@@ -12,11 +15,17 @@ function extractFromTo(html: string, from: string, to: string, label: string): s
 }
 
 
-interface YouTubeTranscriptData {
+interface YouTubeVideoData {
   videoId: string;
   videoTitle: string;
   videoDescription: string;
   thumbnailUrl: string;
+  thumbnailImage: null | {
+    imgDataUrl: string;
+    mimeType: string;
+    width: number;
+    height: number;
+  };
   transcript: string;
 }
 
@@ -36,7 +45,7 @@ function decodeHtmlEntities(text: string): string {
   );
 }
 
-export async function downloadYouTubeTranscript(videoId: string, fetchTextFn: (url: string) => Promise<string>): Promise<YouTubeTranscriptData> {
+export async function downloadYouTubeVideoData(videoId: string, fetchTextFn: (url: string) => Promise<string>): Promise<YouTubeVideoData> {
 
   // 1. find the captions URL within the video HTML page
   const html = await fetchTextFn(`https://www.youtube.com/watch?v=${videoId}`);
@@ -90,11 +99,45 @@ export async function downloadYouTubeTranscript(videoId: string, fetchTextFn: (u
     .map(seg => seg.utf8)
     .join('');
 
+  // 4. fetch and process the thumbnail image
+  let thumbnailImage: YouTubeVideoData['thumbnailImage'] = null;
+  try {
+    thumbnailImage = await _downloadAndConvertThumbnail(thumbnailUrl);
+  } catch (error) {
+    console.error('Error fetching or processing thumbnail:', error);
+  }
+
   return {
     videoId,
     videoTitle,
     videoDescription,
     thumbnailUrl,
+    thumbnailImage,
     transcript,
   };
+}
+
+
+async function _downloadAndConvertThumbnail(url: string): Promise<YouTubeVideoData['thumbnailImage']> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`Failed to fetch thumbnail: HTTP ${response.status}`);
+      return null;
+    }
+    // get low-level image information
+    const imageBuffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    const imgInfo = getImageInformationFromBytes(imageBuffer);
+    // return the image dataurl and its information
+    return {
+      mimeType: imgInfo.mimeType,
+      imgDataUrl: `data:${imgInfo.mimeType};base64,${base64Image}`,
+      width: imgInfo.width,
+      height: imgInfo.height,
+    };
+  } catch (error) {
+    console.error('Error downloading or processing thumbnail:', error);
+    return null;
+  }
 }
