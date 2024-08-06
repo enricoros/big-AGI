@@ -73,7 +73,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
       increaseContentScaling: () => set((state) => state.contentScaling === 'md' ? state : { contentScaling: state.contentScaling === 'xs' ? 'sm' : 'md' }),
       decreaseContentScaling: () => set((state) => state.contentScaling === 'xs' ? state : { contentScaling: state.contentScaling === 'md' ? 'sm' : 'xs' }),
 
-      doubleClickToEdit: true,
+      doubleClickToEdit: false,
       setDoubleClickToEdit: (doubleClickToEdit: boolean) => set({ doubleClickToEdit }),
 
       enterIsNewline: false,
@@ -111,7 +111,7 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       /* versioning:
        * 1: rename 'enterToSend' to 'enterIsNewline' (flip the meaning)
-       * 2: deault 'contentScaling' to 'sm'
+       * 2: new Big-AGI 2 defaults
        */
       version: 2,
 
@@ -121,9 +121,11 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
         if (state && fromVersion < 1)
           state.enterIsNewline = state['enterToSend'] === false;
 
-        // 2: deault 'contentScaling' to 'sm'
-        if (state && fromVersion < 2)
+        // 2: new Big-AGI 2 defaults
+        if (state && fromVersion < 2) {
           state.contentScaling = 'sm';
+          state.doubleClickToEdit = false;
+        }
 
         return state;
       },
