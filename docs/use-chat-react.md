@@ -12,6 +12,10 @@ Within Big-AGI, users can invoke ReAct to ask complex questions that require mul
 | Chat   | Just type the question            | **Pre-trained knowledge only**                       | Only shows final response          | Quick answers, general knowledge queries         |
 | ReAct  | Type "/react" before the question | **Web loads, Web searches, Wikipedia, calculations** | Shows step-by-step thought process | Complex, multi-step, or research-based questions |
 
+Example of ReAct in action, taking a question about current events, googling results, opening a page, and summarizing the information:
+
+https://github.com/user-attachments/assets/c3480428-9ab8-4257-a869-2541bf44a062
+
 The following tools are implemented in Big-AGI:
 
 - **browse**: loads web pages (URLs) and extracts information, using a correctly configured `Tools > Browsing` API
@@ -37,3 +41,4 @@ The following tools are implemented in Big-AGI:
 - Web searches and browsing may have privacy implications, and require **tool configuration** in the UI.
 - Errors or limitations in accessing external resources may affect results.
 - ReAct does not use the [Tool or Function Calling](https://platform.openai.com/docs/guides/function-calling) feature of AI models, rather uses the old school approach of parsing and executing actions.
+
