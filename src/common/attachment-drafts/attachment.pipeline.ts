@@ -1,4 +1,6 @@
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
+import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
+import { youTubeFetchTranscript } from '~/modules/youtube/useYouTubeTranscript';
 
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
@@ -8,7 +10,7 @@ import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, DVMimeType, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 
-import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, DraftWebInputData } from './attachment.types';
+import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, DraftWebInputData, DraftYouTubeInputData } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
 import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
@@ -23,6 +25,7 @@ const PDF_IMAGE_QUALITY = 0.5;
 // internal mimes, only used to route data within us (source -> input -> converters)
 const INT_MIME_VND_AGI_EGO_FRAGMENTS = 'application/vnd.agi.ego.fragments';
 const INT_MIME_VND_AGI_WEBPAGE = 'application/vnd.agi.webpage';
+const INT_MIME_VND_AGI_YOUTUBE = 'application/vnd.agi.youtube';
 
 
 /**
@@ -59,6 +62,29 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
     // Download URL (page, file, ..) and attach as input
     case 'url':
       edit({ label: source.refUrl, ref: source.refUrl });
+
+      // [YouTube] user is attaching a link to a video: try to download this as a transcript rather than a webpage
+      const asYoutubeVideoId = extractYoutubeVideoIDFromURL(source.refUrl);
+      if (asYoutubeVideoId) {
+        const transcript = await youTubeFetchTranscript(asYoutubeVideoId).catch(() => null);
+        if (transcript?.videoTitle && transcript?.transcript) {
+          edit({
+            label: transcript.videoTitle,
+            input: {
+              mimeType: INT_MIME_VND_AGI_YOUTUBE,
+              data: {
+                videoId: asYoutubeVideoId,
+                videoTitle: transcript.videoTitle,
+                videoDescription: transcript.videoDescription,
+                videoThumbnailUrl: transcript.thumbnailUrl,
+                videoTranscript: transcript.transcript,
+              },
+            },
+          });
+          break;
+        }
+      }
+
       try {
         // fetch the web page
         const { title, content: { html, markdown, text }, screenshot } = await callBrowseFetchPage(
@@ -245,6 +271,12 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       }
       break;
 
+    // YouTube: custom converters
+    case input.mimeType === INT_MIME_VND_AGI_YOUTUBE:
+      converters.push({ id: 'youtube-transcript', name: 'Video Transcript' });
+      converters.push({ id: 'youtube-transcript-simple', name: 'Video Transcript (simple)' });
+      break;
+
     // EGO
     case input.mimeType === INT_MIME_VND_AGI_EGO_FRAGMENTS:
       converters.push({ id: 'ego-fragments-inlined', name: 'Message' });
@@ -280,13 +312,17 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
 
     // Downloaded URL as Text, Markdown, or HTML
     case 'url':
-      let pageTitle = inputMime === INT_MIME_VND_AGI_WEBPAGE ? (input.data as DraftWebInputData)?.pageTitle : undefined;
+      let pageTitle =
+        inputMime === INT_MIME_VND_AGI_WEBPAGE ? (input.data as DraftWebInputData)?.pageTitle
+          : inputMime === INT_MIME_VND_AGI_YOUTUBE ? (input.data as DraftYouTubeInputData)?.videoTitle
+            : undefined;
       if (!pageTitle)
         pageTitle = `Web page: ${source.refUrl}`;
+      const urlRefString = inputMime === INT_MIME_VND_AGI_YOUTUBE ? 'youtube-' + (input.data as DraftYouTubeInputData)?.videoId : pageTitle;
       return {
         title: pageTitle,
         caption: converterName,
-        refString: humanReadableHyphenated(pageTitle),
+        refString: humanReadableHyphenated(urlRefString),
       };
 
     // File of various kinds and coming from various sources
@@ -636,6 +672,22 @@ export async function attachmentPerformConversion(
         } catch (error) {
           console.error('Error attaching screenshot URL image:', error);
         }
+        break;
+
+
+      // youtube transcript
+      case 'youtube-transcript':
+      case 'youtube-transcript-simple':
+        if (!input.data || input.mimeType !== INT_MIME_VND_AGI_YOUTUBE) {
+          console.log('Expected YouTubeInputData for youtube-transcript, got:', input.data);
+          break;
+        }
+        const youtubeData = input.data as DraftYouTubeInputData;
+        const transcriptText =
+          converter.id === 'youtube-transcript-simple' ? youtubeData.videoTranscript
+            : `**YouTube Title**: ${youtubeData.videoTitle}\n\n**YouTube Description**: ${youtubeData.videoDescription}\n\n**YouTube Transcript**:\n${youtubeData.videoTranscript}\n`;
+        const transcriptTextData = createDMessageDataInlineText(transcriptText, 'text/plain');
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, transcriptTextData, refString, docMeta, undefined));
         break;
 
 

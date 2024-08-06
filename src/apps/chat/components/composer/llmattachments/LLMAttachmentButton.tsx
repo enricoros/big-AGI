@@ -15,6 +15,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
@@ -93,6 +94,8 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'url-page-html': HtmlIcon, // was LanguageIcon
   'url-page-null': TextureIcon,
   'url-page-image': ImageOutlinedIcon,
+  'youtube-transcript': YouTubeIcon,
+  'youtube-transcript-simple': YouTubeIcon,
   'ego-fragments-inlined': TelegramIcon,
   'unhandled': TextureIcon,
 };
