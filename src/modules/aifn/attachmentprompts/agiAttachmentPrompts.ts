@@ -25,7 +25,7 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
   // const docParts = attachmentFragments.filter(f => f.part.pt === 'doc').map(f => f.part) as DMessageDocPart[];
   // const docs_count = docParts.length;
   const docs_count = attachmentFragments.length;
-  if (!llmId || docs_count < 2)
+  if (!llmId || docs_count < 1)
     return [];
 
   const num_suggestions = 3;
