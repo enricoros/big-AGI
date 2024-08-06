@@ -69,7 +69,9 @@ export function ChatMessageList(props: {
 
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
-  const composeCanAddReplyTo = useChatComposerOverlayStore(conversationHandler?.getOverlayStore() ?? null, state => state.inReferenceTo?.length < 5);
+  const _composerInReferenceToCount = useChatComposerOverlayStore(conversationHandler?.getOverlayStore() ?? null, state => state.inReferenceTo?.length ?? 0);
+  const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
+  const composerHasInReferenceto = _composerInReferenceToCount > 0;
 
   // text actions
 
@@ -290,12 +292,13 @@ export function ChatMessageList(props: {
               message={message}
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
+              hasInReferenceTo={composerHasInReferenceto}
               isMobile={props.isMobile}
               isBottom={idx === count - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
               showUnsafeHtml={danger_experimentalHtmlWebUi}
-              onAddInReferenceTo={!composeCanAddReplyTo ? undefined : handleAddInReferenceTo}
+              onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
               onMessageAssistantFrom={handleMessageAssistantFrom}
               onMessageBeam={handleMessageBeam}
               onMessageBranch={handleMessageBranch}

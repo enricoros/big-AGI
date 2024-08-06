@@ -17,6 +17,7 @@ import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
+import ReplyAllRoundedIcon from '@mui/icons-material/ReplyAllRounded';
 import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
@@ -68,6 +69,7 @@ export function ChatMessage(props: {
   message: DMessage,
   diffPreviousText?: string,
   fitScreen: boolean,
+  hasInReferenceTo?: boolean;
   isMobile?: boolean,
   isBottom?: boolean,
   isImagining?: boolean,
@@ -804,7 +806,7 @@ export function ChatMessage(props: {
       )}
 
 
-      {/* Bubble */}
+      {/* Bubble Over Toolbar */}
       {ENABLE_BUBBLE && !!bubbleAnchor && (
         <Popper placement='top-start' open anchorEl={bubbleAnchor} slotProps={{
           root: { style: { zIndex: themeZIndexPageBar + 1 } },
@@ -830,9 +832,10 @@ export function ChatMessage(props: {
                 },
               }}
             >
-              {!!onAddInReferenceTo && <Tooltip disableInteractive arrow placement='top' title={fromAssistant ? 'Reply' : 'Refer To'}>
+              {/* Bubble Add Reference */}
+              {!!onAddInReferenceTo && <Tooltip disableInteractive arrow placement='top' title={props.hasInReferenceTo ? 'Reply to this too' : fromAssistant ? 'Reply' : 'Refer To'}>
                 <IconButton color='primary' onClick={handleOpsAddInReferenceTo}>
-                  <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />
+                  {props.hasInReferenceTo ? <ReplyAllRoundedIcon sx={{ fontSize: 'xl' }} /> : <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />}
                 </IconButton>
               </Tooltip>}
               {/*{!!props.onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
@@ -841,12 +844,7 @@ export function ChatMessage(props: {
               {/*  </IconButton>*/}
               {/*</Tooltip>}*/}
               {!!onAddInReferenceTo && fromAssistant && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
-              <Tooltip disableInteractive arrow placement='top' title='Copy'>
-                <IconButton onClick={handleOpsCopy}>
-                  <ContentCopyIcon />
-                </IconButton>
-              </Tooltip>
-              {(!!props.onTextDiagram || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+
               {!!props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
                 <IconButton onClick={couldDiagram ? handleOpsDiagram : undefined}>
                   <AccountTreeOutlinedIcon sx={{ color: couldDiagram ? 'primary' : 'neutral.plainDisabledColor' }} />
@@ -862,6 +860,15 @@ export function ChatMessage(props: {
                   {!props.isSpeaking ? <RecordVoiceOverOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
                 </IconButton>
               </Tooltip>}
+              {(!!props.onTextDiagram || !!props.onTextImagine || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+
+              {/* Bubble Copy */}
+              <Tooltip disableInteractive arrow placement='top' title='Copy'>
+                <IconButton onClick={handleOpsCopy}>
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+
             </ButtonGroup>
           </ClickAwayListener>
         </Popper>
