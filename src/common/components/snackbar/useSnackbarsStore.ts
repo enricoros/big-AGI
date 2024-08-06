@@ -18,7 +18,7 @@ export interface SnackbarMessage {
 interface SnackbarStore {
 
   // state
-  activeSnackbar: SnackbarMessage | null;
+  activeMessage: SnackbarMessage | null;
   activeSnackbarOpen: boolean;
   snackbarQueue: SnackbarMessage[];
 
@@ -34,12 +34,12 @@ interface SnackbarStore {
 export const useSnackbarsStore = create<SnackbarStore>()(
   (_set, _get) => ({
 
-    activeSnackbar: null,
+    activeMessage: null,
     activeSnackbarOpen: true,
     snackbarQueue: [],
 
     addSnackbar: (snackbar: SnackbarMessage): string => {
-      const { activeSnackbar } = _get();
+      const { activeMessage } = _get();
       let { key, ...rest } = snackbar;
 
       // unique key
@@ -47,9 +47,9 @@ export const useSnackbarsStore = create<SnackbarStore>()(
 
       // append the snackbar
       const newSnackbar = { key, ...rest };
-      _set(activeSnackbar === null
+      _set(activeMessage === null
         ? {
-          activeSnackbar: newSnackbar,
+          activeMessage: newSnackbar,
           activeSnackbarOpen: true,
         }
         : {
@@ -66,7 +66,7 @@ export const useSnackbarsStore = create<SnackbarStore>()(
         if (nextQueue.length > 0)
           nextActiveSnackbar = nextQueue.shift(); // Remove the first snackbar from the queue
         return {
-          activeSnackbar: nextActiveSnackbar,
+          activeMessage: nextActiveSnackbar,
           activeSnackbarOpen: nextActiveSnackbar !== null,
           snackbarQueue: nextQueue,
         };
@@ -84,7 +84,7 @@ export const useSnackbarsStore = create<SnackbarStore>()(
     // mostly added for useEffect's unmounts
     removeSnackbar: (key: string) =>
       _set((state) => {
-        let nextActiveSnackbar = state.activeSnackbar;
+        let nextActiveSnackbar = state.activeMessage;
         let nextQueue = [...state.snackbarQueue];
         if (nextActiveSnackbar?.key === key) {
           if (nextQueue.length > 0)
@@ -92,7 +92,7 @@ export const useSnackbarsStore = create<SnackbarStore>()(
           else
             nextActiveSnackbar = null;
           return {
-            activeSnackbar: nextActiveSnackbar,
+            activeMessage: nextActiveSnackbar,
             activeSnackbarOpen: nextActiveSnackbar !== null,
             snackbarQueue: nextQueue,
           };
