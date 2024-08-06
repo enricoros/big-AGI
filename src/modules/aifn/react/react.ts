@@ -38,7 +38,7 @@ Opens the given URL and displays it
 
 ` : '') + `calculate:
 e.g. calculate: 4 * 7 / 3
-Runs a calculation and returns the number - uses Python so be sure to use floating point syntax if necessary
+Runs a simple javascript calculation and returns the number, the input must be javascript 
 
 wikipedia:
 e.g. wikipedia: Django
