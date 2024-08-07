@@ -14,6 +14,7 @@ import '~/common/styles/NProgress.css';
 import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
 
+import { OverlaysInsert } from '~/common/layout/overlays/OverlaysInsert';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
 import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
@@ -44,6 +45,7 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
           <ProviderBootstrapLogic>
             <SnackbarInsert />
             {getLayout(<Component {...pageProps} />)}
+            <OverlaysInsert />
           </ProviderBootstrapLogic>
         </ProviderBackendCapabilities>
       </ProviderSingleTab>
