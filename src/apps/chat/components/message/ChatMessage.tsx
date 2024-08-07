@@ -581,7 +581,6 @@ export function ChatMessage(props: {
               key={'irt-' + index}
               item={item}
               bubbleVariant='message'
-              className='in-reference-to-bubble'
             />
           ))}
 

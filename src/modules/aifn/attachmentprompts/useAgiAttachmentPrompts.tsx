@@ -17,6 +17,7 @@ export interface AgiAttachmentPromptsData {
   isFetching: boolean;
   isPending: boolean;
   refetch: () => Promise<any>;
+  clear: () => void;
 }
 
 const noPrompts: string[] = [];
@@ -24,6 +25,7 @@ const noPrompts: string[] = [];
 export function useAgiAttachmentPrompts(canAutoTrigger: boolean, attachmentDrafts: AttachmentDraft[]): AgiAttachmentPromptsData {
 
   // state
+  const [isCleared, setIsCleared] = React.useState(false);
   const [alreadyRan, setAlreadyRan] = React.useState(false);
 
   // derived
@@ -35,14 +37,18 @@ export function useAgiAttachmentPrompts(canAutoTrigger: boolean, attachmentDraft
   const { data, error, isPending, isFetching, refetch } = useQuery({
     enabled: canAutoTrigger && hasEnoughInput && !alreadyRan,
     queryKey: ['aifn-prompts-attachments', ...fragments.map(f => f.fId).sort()],
-    queryFn: async ({ signal }) => agiAttachmentPrompts(fragments, signal),
+    queryFn: async ({ signal }) => {
+      const data = await agiAttachmentPrompts(fragments, signal);
+      setIsCleared(false);
+      return data;
+    },
     staleTime: 1000 * 60 * 10, // 10 minutes
     // placeholderData: inputCount ? keepPreviousData : undefined,
   });
 
-  React.useEffect(() => {
-    console.log('refetch diff');
-  }, [refetch]);
+  const clear = React.useCallback(() => {
+    setIsCleared(true);
+  }, []);
 
   // derived state
   const isVisible = hasEnoughInput;
@@ -58,11 +64,12 @@ export function useAgiAttachmentPrompts(canAutoTrigger: boolean, attachmentDraft
 
   return useShallowStable({
     isVisible,
-    hasData,
-    prompts: data || noPrompts,
+    hasData: hasData && !isCleared,
+    prompts: isCleared ? noPrompts : data || noPrompts,
     error,
     isFetching,
     isPending,
     refetch,
+    clear,
   });
 }

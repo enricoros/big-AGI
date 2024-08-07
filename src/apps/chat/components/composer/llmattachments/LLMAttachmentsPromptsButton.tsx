@@ -1,10 +1,13 @@
 import * as React from 'react';
 
-import { CircularProgress, IconButton, Tooltip } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, CircularProgress, IconButton, Tooltip } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/attachmentprompts/useAgiAttachmentPrompts';
-import { SxProps } from '@mui/joy/styles/types';
+
+import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+
 import { AGI_SUGGESTIONS_COLOR } from '../textarea/ComposerTextAreaActions';
 
 
@@ -12,21 +15,26 @@ export const LLMAttachmentsPromptsButtonMemo = React.memo(LLMAttachmentsPromptsB
 
 
 const promptGenIconButtonSx: SxProps = {
-  minWidth: 40,
+  // minWidth: 40,
   backgroundColor: 'background.level1',
   boxShadow: `inset 0 4px 6px -4px rgb(var(--joy-palette-${AGI_SUGGESTIONS_COLOR}-darkChannel) / 40%)`,
   borderRadius: '2rem',
   borderBottomLeftRadius: 0,
-  borderColor: `${AGI_SUGGESTIONS_COLOR}.outlinedColor`,
+  // borderColor: `${AGI_SUGGESTIONS_COLOR}.outlinedBorder`,
   // '&:hover': {
   //   backgroundColor: 'background.level1',
   // },
+  '&:hover': {
+    backgroundColor: `${AGI_SUGGESTIONS_COLOR}.solidBg`,
+    borderColor: `${AGI_SUGGESTIONS_COLOR}.solidBg`,
+    color: `${AGI_SUGGESTIONS_COLOR}.solidColor`,
+  },
 };
 
 const brightenSx: SxProps = {
   ...promptGenIconButtonSx,
   backgroundColor: 'background.popup',
-  boxShadow: undefined,
+  boxShadow: 'xs',
 };
 
 function LLMAttachmentsPromptsButton({ data }: { data: AgiAttachmentPromptsData }) {
@@ -34,8 +42,8 @@ function LLMAttachmentsPromptsButton({ data }: { data: AgiAttachmentPromptsData 
   const tooltipTitle =
     data.error ? (data.error.message || 'Error guessing actions')
       : data.isFetching ? null
-        : data.isPending ? 'What to do?'
-          : 'Guess more';
+        : data.isPending ? <Box sx={{ display: 'flex', gap: 1 }}><AgiSquircleIcon inverted sx={{ color: 'white', borderRadius: '1rem' }} /> What to do?</Box>
+          : 'Give me more ideas';
 
   const button = (
     <IconButton
@@ -44,7 +52,8 @@ function LLMAttachmentsPromptsButton({ data }: { data: AgiAttachmentPromptsData 
       size='sm'
       disabled={data.isFetching}
       onClick={data.refetch}
-      sx={data.hasData ? brightenSx : promptGenIconButtonSx}
+      // onClick={data.hasData ? data.clear : data.refetch}
+      sx={(data.hasData && !data.isFetching) ? brightenSx : promptGenIconButtonSx}
     >
       {data.isFetching ? (
         <CircularProgress size='sm' color='neutral' />
@@ -55,7 +64,7 @@ function LLMAttachmentsPromptsButton({ data }: { data: AgiAttachmentPromptsData 
   );
 
   return !tooltipTitle ? button : (
-    <Tooltip variant='outlined' disableInteractive placement='top-end' arrow title={tooltipTitle}>
+    <Tooltip variant='outlined' disableInteractive placement='left' arrow title={tooltipTitle}>
       {button}
     </Tooltip>
   );

@@ -27,7 +27,7 @@
 .agi-border-4 > * {
     clip-path: inset(var(--border-width));
     border-radius: var(--border-radius);
-    opacity: 0.92;
+    opacity: 0.94;
 }
 
 .agi-border-4::before {
