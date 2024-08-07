@@ -31,6 +31,7 @@ import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -76,12 +77,11 @@ const composerClosedSx: SxProps = {
 export function AppChat() {
 
   // state
+  const { showPromisedOverlay } = useOverlayComponents();
   const [isComposerMulticast, setIsComposerMulticast] = React.useState(false);
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
-  const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
-  const [deleteConversationIds, setDeleteConversationIds] = React.useState<DConversationId[] | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitleChange = React.useRef(false);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -353,18 +353,28 @@ export function AppChat() {
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
-  const handleConfirmedClearConversation = React.useCallback(() => {
-    if (clearConversationId) {
-      ConversationsManager.getHandler(clearConversationId).historyClear();
-      setClearConversationId(null);
+  const handleConversationReset = React.useCallback(async (conversationId: DConversationId) => {
+    if (await showPromisedOverlay('chat-reset-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText='Are you sure you want to discard all messages?'
+        positiveActionText='Clear conversation'
+      />,
+    )) {
+      ConversationsManager.getHandler(conversationId).historyClear();
     }
-  }, [clearConversationId]);
+  }, [showPromisedOverlay]);
 
-  const handleConversationClear = React.useCallback((conversationId: DConversationId) => setClearConversationId(conversationId), []);
+  const handleDeleteConversations = React.useCallback(async (conversationIds: DConversationId[], bypassConfirmation: boolean) => {
 
-  const handleDeleteConversations = React.useCallback((conversationIds: DConversationId[], bypassConfirmation: boolean) => {
-    if (!bypassConfirmation)
-      return setDeleteConversationIds(conversationIds);
+    // show confirmation dialog
+    if (!bypassConfirmation && !await showPromisedOverlay('chat-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={`Are you absolutely sure you want to delete ${conversationIds.length === 1 ? 'this conversation' : 'these conversations'}? This action cannot be undone.`}
+        positiveActionText={conversationIds.length === 1 ? 'Delete conversation' : `Yes, delete all ${conversationIds.length} conversations`}
+      />,
+    )) return;
 
     // perform deletion, and return the next (or a new) conversation
     const nextConversationId = deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
@@ -372,15 +382,9 @@ export function AppChat() {
     // switch the focused pane to the new conversation - NOTE: this makes the assumption that deletion had impact on the focused pane
     handleOpenConversationInFocusedPane(nextConversationId);
 
-    setDeleteConversationIds(null);
-
     // run GC for dblobs in this conversation
     void gcChatImageAssets(); // fire/forget
-  }, [deleteConversations, handleOpenConversationInFocusedPane]);
-
-  const handleConfirmedDeleteConversations = React.useCallback(() => {
-    !!deleteConversationIds?.length && handleDeleteConversations(deleteConversationIds, true);
-  }, [deleteConversationIds, handleDeleteConversations]);
+  }, [showPromisedOverlay, deleteConversations, handleOpenConversationInFocusedPane]);
 
 
   // Shortcuts
@@ -398,13 +402,13 @@ export function AppChat() {
     { key: 'o', ctrl: true, action: handleFileOpenConversation },
     { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
     { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
-    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId)) },
+    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
     { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
     { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
     { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationClear, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+  ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   // Pluggable Optima components
@@ -445,12 +449,12 @@ export function AppChat() {
         hasConversations={hasConversations}
         isMessageSelectionMode={isMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
-        onConversationClear={handleConversationClear}
+        onConversationClear={handleConversationReset}
         onConversationFlatten={handleConversationFlatten}
         // onConversationNew={handleConversationNewInFocusedPane}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [focusedPaneConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
+    [focusedPaneConversationId, handleConversationBranch, handleConversationReset, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
   useSetOptimaAppMenu(focusedMenuItems, 'AppChat');
@@ -603,24 +607,6 @@ export function AppChat() {
         config={tradeConfig}
         onConversationActivate={handleOpenConversationInFocusedPane}
         onClose={() => setTradeConfig(null)}
-      />
-    )}
-
-    {/* [confirmation] Reset Conversation */}
-    {!!clearConversationId && (
-      <ConfirmationModal
-        open onClose={() => setClearConversationId(null)} onPositive={handleConfirmedClearConversation}
-        confirmationText='Are you sure you want to discard all messages?'
-        positiveActionText='Clear conversation'
-      />
-    )}
-
-    {/* [confirmation] Delete All */}
-    {!!deleteConversationIds?.length && (
-      <ConfirmationModal
-        open onClose={() => setDeleteConversationIds(null)} onPositive={handleConfirmedDeleteConversations}
-        confirmationText={`Are you absolutely sure you want to delete ${deleteConversationIds.length === 1 ? 'this conversation' : 'these conversations'}? This action cannot be undone.`}
-        positiveActionText={deleteConversationIds.length === 1 ? 'Delete conversation' : `Yes, delete all ${deleteConversationIds.length} conversations`}
       />
     )}
 
