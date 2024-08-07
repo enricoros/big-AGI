@@ -16,7 +16,6 @@ import { useLiveFile } from './liveFile.hooks';
 import { LiveFileSyncButton } from '~/common/livefile/LiveFileSyncButton';
 
 
-
 interface DiffSummary {
   insertions: number;
   deletions: number;
@@ -130,33 +129,28 @@ export function useLiveFileComparison(
     }
   }, [fileHasContent, isLoadingFile, reloadFileContent]);
 
-  const handlePairNewFileWithPicker = React.useCallback(async () => {
-    // Open the file picker
-    const fileWithHandle = await fileOpen({ description: 'Select a File to pair to this document' }).catch(() => null /* The User closed the files picker */);
-    if (!fileWithHandle)
-      return;
-    if (!fileWithHandle.handle) {
-      setStatus({ message: 'Browser does not support LiveFile operations.', mtype: 'error' });
-      return;
-    }
-
+  const handlePairNewFSFHandle = React.useCallback(async (fsfHandle: FileSystemFileHandle) => {
     // Pair the file: create a LiveFile, replace it in the Fragment, and load the preview
     try {
-      const liveFileId = await liveFileCreateOrThrow(fileWithHandle.handle);
+      const liveFileId = await liveFileCreateOrThrow(fsfHandle);
       replaceLiveFileId(liveFileId);
       // Immediately load the preview on this ID
       await handleUpdateFileContent(liveFileId);
     } catch (error: any) {
       setStatus({ message: `Error pairing the file: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`, mtype: 'error' });
     }
-  }, [replaceLiveFileId, handleUpdateFileContent]);
+  }, [handleUpdateFileContent, replaceLiveFileId]);
 
-  const handleSyncButtonClicked = React.useCallback(async () => {
-    if (isPairingValid)
-      await handleUpdateFileContent();
+  const handlePairNewFileWithPicker = React.useCallback(async () => {
+    // Open the file picker
+    const fileWithHandle = await fileOpen({ description: 'Select a File to pair to this document' }).catch(() => null /* The User closed the files picker */);
+    if (!fileWithHandle)
+      return;
+    if (fileWithHandle.handle)
+      await handlePairNewFSFHandle(fileWithHandle.handle);
     else
-      await handlePairNewFileWithPicker();
-  }, [handlePairNewFileWithPicker, handleUpdateFileContent, isPairingValid]);
+      setStatus({ message: 'Browser does not support LiveFile operations.', mtype: 'error' });
+  }, [handlePairNewFSFHandle]);
 
 
   // Save and Load from Disk
@@ -188,10 +182,12 @@ export function useLiveFileComparison(
     <LiveFileSyncButton
       disabled={isSavingFile}
       isPaired={isPairingValid}
-      isRead={fileHasContent}
-      handleSyncButtonClicked={handleSyncButtonClicked}
+      hasContent={fileHasContent}
+      onPairWithFSFHandle={handlePairNewFSFHandle}
+      onPairWithPicker={handlePairNewFileWithPicker}
+      upUpdateFileContent={handleUpdateFileContent}
     />
-  ), [fileHasContent, handleSyncButtonClicked, isPairingValid, isSavingFile]);
+  ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, handleUpdateFileContent, isPairingValid, isSavingFile]);
 
   const liveFileActionBox = React.useMemo(() => {
     if (!status && !fileHasContent) return null;
