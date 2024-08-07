@@ -2,11 +2,14 @@ import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
-import { Box, Button, ColorPaletteProp, IconButton, Sheet } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet } from '@mui/joy';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { WindowFocusObserver } from '~/common/util/windowUtils';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
@@ -36,7 +39,7 @@ function calculateDiffStats(fromText: string, toText: string): DiffSummary {
 
 
 interface FileOperationStatus {
-  message: string;
+  message: React.ReactNode;
   mtype: 'info' | 'changes' | 'success' | 'error';
 }
 
@@ -50,6 +53,7 @@ export function useLiveFileComparison(
 ) {
 
   // state
+  const { showPromisedOverlay } = useOverlayComponents();
   const [diffSummary, setDiffSummary] = React.useState<DiffSummary | null>(null);
   const [status, setStatus] = React.useState<FileOperationStatus | null>(null);
 
@@ -93,13 +97,13 @@ export function useLiveFileComparison(
     setDiffSummary(summary);
     if (summary.insertions && summary.deletions)
       setStatus({
-        message: `Document has ${summary.insertions} insertions and ${summary.deletions} deletions.`,
+        message: <>Document has {summary.insertions} <Box component='span' sx={{ color: 'success.solidBg' }}>insertions</Box> and {summary.deletions} <Box component='span' sx={{ color: 'danger.softColor' }}>deletions</Box>.</>,
         mtype: 'changes',
       });
     else if (summary.insertions)
-      setStatus({ message: `Document has ${summary.insertions} insertions.`, mtype: 'changes' });
+      setStatus({ message: <>Document has {summary.insertions} <Box component='span' sx={{ color: 'success.solidBg' }}>insertions</Box>.</>, mtype: 'changes' });
     else if (summary.deletions)
-      setStatus({ message: `Document has ${summary.deletions} deletions.`, mtype: 'changes' });
+      setStatus({ message: <>Document has {summary.deletions} <Box component='span' sx={{ color: 'danger.softColor' }}>deletions</Box>.</>, mtype: 'changes' });
     else
       setStatus({ message: 'No changes.', mtype: 'info' });
   }, [bufferText, fileContent, isMobile]);
@@ -161,18 +165,29 @@ export function useLiveFileComparison(
       setBufferText(fileContent);
   }, [fileContent, setBufferText]);
 
-  const handleSaveToDisk = React.useCallback(async () => {
+  const handleSaveToDisk = React.useCallback(async (event: React.MouseEvent) => {
     if (!isPairingValid) {
       setStatus({ message: 'No file paired. Please choose a file first.', mtype: 'info' });
       return;
     }
+
+    // ask the user for confirmation before saving to file
+    if (!event.shiftKey && !await showPromisedOverlay('livefile-overwrite', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        title='Overwrite File'
+        positiveActionText='Overwrite'
+        confirmationText='Are you sure you want to overwrite the file with the current contents?'
+      />,
+    )) return;
+
     setStatus({ message: 'Saving to file...', mtype: 'info' });
     const saved = await saveFileContent(bufferText);
     if (!saved) {
       // if not saved, the error will be shown in the effect
     } else
       setStatus({ message: 'Content saved to file.', mtype: 'success' });
-  }, [bufferText, isPairingValid, saveFileContent]);
+  }, [bufferText, isPairingValid, saveFileContent, showPromisedOverlay]);
 
 
   // Memoed components code
@@ -238,7 +253,7 @@ export function useLiveFileComparison(
           {/* Load from file */}
           {fileIsDifferent && !isError && (
             <Button
-              variant={isMobile ? 'outlined' : 'plain'}
+              variant='outlined'
               color='neutral'
               size='sm'
               // disabled={isLoadingFile /* commented to not make this flash */}
@@ -253,7 +268,7 @@ export function useLiveFileComparison(
           {/* Save to File */}
           {fileIsDifferent && !isError && (
             <Button
-              variant={isMobile ? 'outlined' : 'plain'}
+              variant='outlined'
               color='danger'
               size='sm'
               disabled={isSavingFile}
@@ -265,19 +280,38 @@ export function useLiveFileComparison(
             </Button>
           )}
 
-          {/* Reassign File button */}
-          <TooltipOutlined title='Pair a different file' placement='top-end'>
-            <IconButton size='sm' onClick={handlePairNewFileWithPicker}>
-              <LiveFileChooseIcon />
-            </IconButton>
-          </TooltipOutlined>
+          {/* More Controls */}
+          <Dropdown>
 
-          {/* Close button */}
-          <TooltipOutlined title='Disable LiveFile sync' placement='top-end'>
-            <IconButton size='sm' onClick={handleStopLiveFile}>
-              <LiveFileCloseIcon />
-            </IconButton>
-          </TooltipOutlined>
+            <MenuButton
+              aria-label='LiveFile Controls'
+              slots={{ root: IconButton }}
+              slotProps={{ root: { size: 'sm' } }}
+            >
+              <MoreVertIcon />
+            </MenuButton>
+
+            <Menu size='sm' sx={{ minWidth: 200 }}>
+
+              {/* Close button */}
+              <MenuItem onClick={handleStopLiveFile}>
+                <ListItemDecorator>
+                  <LiveFileCloseIcon />
+                </ListItemDecorator>
+                Stop sync
+              </MenuItem>
+
+              {/* Reassign File button */}
+              <MenuItem onClick={handlePairNewFileWithPicker}>
+                <ListItemDecorator>
+                  <LiveFileChooseIcon />
+                </ListItemDecorator>
+                Pair a different file
+              </MenuItem>
+
+            </Menu>
+          </Dropdown>
+
         </Box>
       </Sheet>
     );
