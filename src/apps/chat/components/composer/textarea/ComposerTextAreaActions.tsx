@@ -8,7 +8,6 @@ import type { AgiAttachmentPromptsData } from '~/modules/aifn/attachmentprompts/
 import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 
 import { InReferenceToBubble } from '../../message/InReferenceToBubble';
-import { AttachmentsPromptsButton } from './AttachmentsPromptsButton';
 
 
 // Styles
@@ -60,11 +59,10 @@ export function ComposerTextAreaActions(props: {
 
   // skip the component if there's nothing to show
   const { agiAttachmentPrompts } = props;
-  if (!agiAttachmentPrompts.prompts?.length && !props.agiAttachmentPrompts.isVisible && !props.inReferenceTo?.length)
+  if (!props.inReferenceTo?.length && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
     return null;
 
   return (
-
     <Box sx={textAreaSx}>
 
       {/* In-Reference-To bubbles */}
@@ -91,9 +89,9 @@ export function ComposerTextAreaActions(props: {
       )}
 
       {/* Guess Action Button */}
-      {(agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData) && (
-        <AttachmentsPromptsButton data={props.agiAttachmentPrompts} />
-      )}
+      {/*{(agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData) && (*/}
+      {/*  <AttachmentsPromptsButton data={props.agiAttachmentPrompts} />*/}
+      {/*)}*/}
 
     </Box>
   );
