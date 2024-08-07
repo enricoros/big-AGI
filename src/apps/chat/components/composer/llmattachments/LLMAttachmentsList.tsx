@@ -10,6 +10,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { useAsyncCall } from '~/common/util/hooks/useAsyncCall';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
@@ -34,7 +35,7 @@ export function LLMAttachmentsList(props: {
 }) {
 
   // state
-  const [confirmClearAttachmentDrafts, setConfirmClearAttachmentDrafts] = React.useState<boolean>(false);
+  const { showPromisedOverlay } = useOverlayComponents();
   const [draftMenu, setDraftMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentDraftId: AttachmentDraftId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
   const [overallIsAgiRefetchingPrompts, handleOverallAgiPromptsRefetch] = useAsyncCall(props.onAgiAttachmentPromptsRefetch);
@@ -74,13 +75,19 @@ export function LLMAttachmentsList(props: {
     onAttachmentDraftsAction(null, 'inline-text');
   }, [handleOverallMenuHide, onAttachmentDraftsAction]);
 
-  const handleOverallClear = React.useCallback(() => setConfirmClearAttachmentDrafts(true), []);
-
-  const handleOverallClearConfirmed = React.useCallback(() => {
-    handleOverallMenuHide();
-    setConfirmClearAttachmentDrafts(false);
-    props.attachmentDraftsStoreApi.getState().removeAllAttachmentDrafts();
-  }, [handleOverallMenuHide, props.attachmentDraftsStoreApi]);
+  const handleOverallClear = React.useCallback(async () => {
+    if (await showPromisedOverlay('chat-attachments-clear', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        title='Confirm Removal'
+        positiveActionText='Remove All'
+        confirmationText={`This action will remove all (${llmAttachmentDrafts.length}) attachments. Do you want to proceed?`}
+      />,
+    )) {
+      handleOverallMenuHide();
+      props.attachmentDraftsStoreApi.getState().removeAllAttachmentDrafts();
+    }
+  }, [handleOverallMenuHide, llmAttachmentDrafts.length, props.attachmentDraftsStoreApi, showPromisedOverlay]);
 
 
   // item menu
@@ -137,7 +144,7 @@ export function LLMAttachmentsList(props: {
     </Box>
 
 
-    {/* LLM Draft Menu */}
+    {/* LLM Attachment Draft Menu */}
     {!!itemMenuAnchor && !!itemMenuAttachmentDraft && !!props.attachmentDraftsStoreApi && (
       <LLMAttachmentMenu
         attachmentDraftsStoreApi={props.attachmentDraftsStoreApi}
@@ -183,16 +190,6 @@ export function LLMAttachmentsList(props: {
           Remove All{llmAttachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {llmAttachmentDrafts.length} attachments</span> : null}
         </MenuItem>
       </CloseableMenu>
-    )}
-
-    {/* 'Clear' Confirmation */}
-    {confirmClearAttachmentDrafts && (
-      <ConfirmationModal
-        open onClose={() => setConfirmClearAttachmentDrafts(false)} onPositive={handleOverallClearConfirmed}
-        title='Confirm Removal'
-        positiveActionText='Remove All'
-        confirmationText={`This action will remove all (${llmAttachmentDrafts.length}) attachments. Do you want to proceed?`}
-      />
     )}
 
   </>;
