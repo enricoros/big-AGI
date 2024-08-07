@@ -26,7 +26,7 @@ type AsyncCallResult<TArgs extends any[], TResult> = [
  * - type safe: maintain typescript types throughout
  * - misc: prevent stale closures, memory leaks (on unmount - NOTE: REMOVED!), boilerplate
  */
-export function useAsyncCall<TArgs extends any[], TResult>(asyncFunction: AsyncFunction<TArgs, TResult>): AsyncCallResult<TArgs, TResult> {
+export function useAsyncCallBusy<TArgs extends any[], TResult>(asyncFunction: AsyncFunction<TArgs, TResult>): AsyncCallResult<TArgs, TResult> {
 
   // least amount of state - updated pre, post, and in case of error
   const [state, setState] = React.useState<AsyncState<TResult>>({
