@@ -146,7 +146,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
             [fileId]: {
               ...file,
               isLoading: false,
-              error: `Error loading File: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`,
+              error: `Error reading: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`,
             },
           },
         }));
