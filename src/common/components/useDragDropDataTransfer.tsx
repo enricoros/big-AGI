@@ -1,8 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Card, Typography } from '@mui/joy';
-import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+import { Card, SvgIcon, Typography } from '@mui/joy';
 
 
 // constants
@@ -39,7 +38,13 @@ const dropCardDraggingCardSx: SxProps = {
 
 // Drag/Drop that can be used in any component and invokes a DataTransfer callback on success
 
-export function useDragDropDataTransfer(enabled: boolean, dropText: string, onDropCallback: (dataTransfer: DataTransfer) => Promise<any>) {
+export function useDragDropDataTransfer(
+  enabled: boolean,
+  dropText: string, // that the button says
+  DropIcon: typeof SvgIcon | null, // icon on the button
+  dropVariant: 'largeIcon' | 'startDecorator',
+  onDropCallback: (dataTransfer: DataTransfer) => Promise<any>,
+) {
 
   // state
   const [isDragging, setIsDragging] = React.useState(false);
@@ -86,6 +91,7 @@ export function useDragDropDataTransfer(enabled: boolean, dropText: string, onDr
   }, [_eatDragEvent, onDropCallback]);
 
 
+  // Standardized component looks, only customized based on `dropText` and `DropIcon`
   const dropComponent = React.useMemo(() => {
     if (!enabled) return null;
 
@@ -99,13 +105,21 @@ export function useDragDropDataTransfer(enabled: boolean, dropText: string, onDr
         onDrop={_handleDrop}
         sx={isDragging ? dropCardDraggingCardSx : dropCardInactiveSx}
       >
-        {isDragging && <AttachFileRoundedIcon sx={{ width: 36, height: 36, pointerEvents: 'none' }} />}
-        {isDragging && <Typography level='title-sm' sx={{ pointerEvents: 'none' }}>
-          {dropText}
-        </Typography>}
+        {isDragging && dropVariant === 'largeIcon' && !!DropIcon && (
+          <DropIcon sx={{ width: 36, height: 36, pointerEvents: 'none' }} />
+        )}
+        {isDragging && (
+          <Typography
+            level='title-sm'
+            startDecorator={dropVariant === 'startDecorator' && !!DropIcon && <DropIcon />}
+            sx={{ pointerEvents: 'none' }}
+          >
+            {dropText}
+          </Typography>
+        )}
       </Card>
     );
-  }, [enabled, isDragging, _handleDragLeave, _handleDragOver, _handleDrop, dropText]);
+  }, [enabled, isDragging, _handleDragLeave, _handleDragOver, _handleDrop, dropVariant, DropIcon, dropText]);
 
 
   return {
