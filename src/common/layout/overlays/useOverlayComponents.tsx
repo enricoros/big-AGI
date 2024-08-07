@@ -26,7 +26,13 @@ interface ShowOverlayOptions<TResolve> {
  * - When a new overlay is requested, it will check if it's already open and reject it if so,
  *   and bring it to the front.
  */
-export function useOverlayComponents() {
+export function useOverlayComponents(): {
+  showPromisedOverlay: <TResolve>(
+    overlayId: GlobalOverlayId,
+    options: ShowOverlayOptions<TResolve>,
+    Component: React.ComponentType<OverlayComponentProps<TResolve>>,
+  ) => Promise<TResolve>;
+} {
 
   // keep track of active overlays
   // NOTE: this keeps track of the IDs that are open where this hook is used, while the store keeps track of all the components

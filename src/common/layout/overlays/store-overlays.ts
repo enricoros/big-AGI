@@ -17,8 +17,10 @@ interface OverlayItem {
 }
 
 export type GlobalOverlayId = // string - disabled so we keep an orderliness
+  | 'chat-attachments-clear'
   | 'chat-delete-confirmation'
-  | 'chat-reset-confirmation';
+  | 'chat-reset-confirmation'
+  ;
 
 interface OverlayActions {
   overlayExists: (id: GlobalOverlayId) => boolean;
