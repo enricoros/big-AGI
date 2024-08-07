@@ -43,5 +43,5 @@ export function useComposerDragDrop(
 
   }, [onDataTransfer]);
 
-  return useDragDropDataTransfer(enabled, 'I will hold on to this for you.', AttachFileRoundedIcon as typeof SvgIcon, 'largeIcon', handleComposerDrop);
+  return useDragDropDataTransfer(enabled, 'I will hold on to this for you.', AttachFileRoundedIcon as typeof SvgIcon, 'largeIcon', false, handleComposerDrop);
 }

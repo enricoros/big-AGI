@@ -17,6 +17,8 @@ export function LiveFileSyncButton(props: {
 }) {
 
   const handleDataTransfer = React.useCallback(async (dataTransfer: DataTransfer) => {
+
+
     console.log('LiveFileSyncButton: handleDataTransfer', dataTransfer);
   }, []);
 
@@ -25,7 +27,7 @@ export function LiveFileSyncButton(props: {
     dropComponent,
     handleContainerDragEnter,
     handleContainerDragStart,
-  } = useDragDropDataTransfer(true, 'Pair', UploadFileRoundedIcon as typeof SvgIcon, 'startDecorator', handleDataTransfer);
+  } = useDragDropDataTransfer(true, 'Pair', UploadFileRoundedIcon as typeof SvgIcon, 'startDecorator', true, handleDataTransfer);
 
   return (
     <Box

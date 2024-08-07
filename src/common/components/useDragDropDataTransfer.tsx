@@ -43,6 +43,7 @@ export function useDragDropDataTransfer(
   dropText: string, // that the button says
   DropIcon: typeof SvgIcon | null, // icon on the button
   dropVariant: 'largeIcon' | 'startDecorator',
+  acceptOnlyFiles: boolean,
   onDropCallback: (dataTransfer: DataTransfer) => Promise<any>,
 ) {
 
@@ -60,13 +61,19 @@ export function useDragDropDataTransfer(
 
   const handleContainerDragEnter = React.useCallback((event: React.DragEvent) => {
     const isFromSelf = event.dataTransfer.types.includes(EXCLUDE_SELF_TYPE);
+    if (acceptOnlyFiles) {
+      const hasFiles = Array.from(event.dataTransfer.items).some(item => item.kind === 'file');
+      if (!hasFiles)
+        return;
+    }
     if (!isFromSelf) {
       _eatDragEvent(event);
       setIsDragging(true);
     }
-  }, [_eatDragEvent]);
+  }, [_eatDragEvent, acceptOnlyFiles]);
 
   const handleContainerDragStart = React.useCallback((event: React.DragEvent) => {
+    // This is for drags that originate from the container (e.g. anything within the Textarea's surroundings in Composer)
     event.dataTransfer.setData(EXCLUDE_SELF_TYPE, 'do-not-intercept');
   }, []);
 
