@@ -69,7 +69,7 @@ import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
-import { ComposerTextAreaActions } from './ComposerTextAreaActions';
+import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { StatusBar } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
@@ -162,9 +162,7 @@ export function Composer(props: {
   const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer);
 
   // ai functions
-  const {
-    agiAttachmentPrompts, agiAttachmentPromptsComponent, agiAttachmentPromptsRefetch,
-  } = useAgiAttachmentPrompts(useChatAutoSuggestAttachmentPrompts(), attachmentDrafts);
+  const agiAttachmentPrompts = useAgiAttachmentPrompts(useChatAutoSuggestAttachmentPrompts(), attachmentDrafts);
 
 
   // derived state
@@ -675,7 +673,6 @@ export function Composer(props: {
                     // onBlurCapture={handleFocusModeOff}
                     endDecorator={
                       <ComposerTextAreaActions
-                        agiAttachmentButton={agiAttachmentPromptsComponent}
                         agiAttachmentPrompts={agiAttachmentPrompts}
                         inReferenceTo={inReferenceTo}
                         onAppendAndSend={handleAppendTextAndSend}
@@ -766,11 +763,11 @@ export function Composer(props: {
               {/* Render any Attachments & menu items */}
               {!!conversationOverlayStore && showLLMAttachments && (
                 <LLMAttachmentsList
+                  agiAttachmentPrompts={agiAttachmentPrompts}
                   attachmentDraftsStoreApi={conversationOverlayStore}
-                  llmAttachmentDrafts={llmAttachmentDraftsCollection.llmAttachmentDrafts}
                   canInlineSomeFragments={llmAttachmentDraftsCollection.canInlineSomeFragments}
+                  llmAttachmentDrafts={llmAttachmentDraftsCollection.llmAttachmentDrafts}
                   onAttachmentDraftsAction={handleAttachmentDraftsAction}
-                  onAgiAttachmentPromptsRefetch={agiAttachmentPromptsRefetch}
                 />
               )}
 
