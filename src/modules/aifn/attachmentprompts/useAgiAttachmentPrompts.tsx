@@ -12,8 +12,53 @@ import { agiAttachmentPrompts } from './agiAttachmentPrompts';
 
 // interface
 
+interface AgiAttachmentPrompts {
+  prompts: string[];
+  error: Error | null;
+  isFetching: boolean;
+  isPending: boolean;
+  refetch: () => void;
+}
 
-export function useAgiAttachmentPrompts(automatic: boolean, attachmentDrafts: AttachmentDraft[]) {
+export function useAgiAttachmentPrompts(canAutoTrigger: boolean, attachmentDrafts: AttachmentDraft[]): AgiAttachmentPrompts {
+
+  // state
+  const [alreadyRan, setAlreadyRan] = React.useState(false);
+
+  // derived
+  const fragments = attachmentDrafts.flatMap(draft => draft.outputFragments);
+  const fragmentsCount = fragments.length;
+
+  // async operation state
+  const { data: prompts = [], error, isPending, isFetching, refetch } = useQuery({
+    enabled: canAutoTrigger && fragmentsCount >= 2 && !alreadyRan,
+    queryKey: ['aifn-prompts-attachments', ...fragments.map(f => f.fId).sort()],
+    queryFn: async ({ signal }) => {
+      setAlreadyRan(true);
+      return agiAttachmentPrompts(fragments, signal);
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+    // placeholderData: keepPreviousData,
+  });
+
+  // reload to get ready to run again
+  const resetAlreadyRan = !fragmentsCount && alreadyRan;
+  React.useEffect(() => {
+    if (resetAlreadyRan)
+      setAlreadyRan(false);
+  }, [resetAlreadyRan]);
+
+  return {
+    prompts,
+    error,
+    isFetching,
+    isPending,
+    refetch,
+  };
+}
+
+
+export function useAgiAttachmentPromptsWithButtons(automatic: boolean, attachmentDrafts: AttachmentDraft[]) {
 
   // external state
   const stableFragments = useShallowStable(attachmentDrafts.flatMap(draft => draft.outputFragments));
