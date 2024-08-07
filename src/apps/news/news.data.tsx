@@ -61,7 +61,7 @@ export const NewsItems: NewsItem[] = [
     ]
   }*/
   {
-    versionCode: '1.16.6',
+    versionCode: '1.16.7',
     versionName: 'Crystal Clear',
     versionDate: new Date('2024-06-07T05:00:00Z'),
     // versionDate: new Date('2024-05-13T19:00:00Z'),
@@ -83,6 +83,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.4: <B>8192 tokens</B> support for Claude 3.5 Sonnet</> },
       { text: <>1.16.5: OpenAI <B>GPT-4o Mini</B> support</> },
       { text: <>1.16.6: Groq <B>Llama 3.1</B> support</> },
+      { text: <>1.16.7: Gpt-4o  <B>2024-08-06</B></> },
     ],
   },
   {
