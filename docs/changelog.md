@@ -10,8 +10,9 @@ by release.
 - milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
 - work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
 
-### What's New in 1.16.1...1.16.6 · Jul 25, 2024 (patch releases)
+### What's New in 1.16.1...1.16.7 · Aug 7, 2024 (patch releases)
 
+- 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
 - 1.16.4: 8192 tokens support for Claude 3.5 Sonnet
