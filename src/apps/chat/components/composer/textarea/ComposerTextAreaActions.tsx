@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Sheet } from '@mui/joy';
+import { Box, ColorPaletteProp, Sheet } from '@mui/joy';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/attachmentprompts/useAgiAttachmentPrompts';
 
@@ -9,6 +9,9 @@ import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 
 import { InReferenceToBubble } from '../../message/InReferenceToBubble';
 
+
+// configuration
+export const AGI_SUGGESTIONS_COLOR: ColorPaletteProp = 'primary';
 
 // Styles
 
@@ -31,21 +34,22 @@ const textAreaSx: SxProps = {
   },
 };
 
+
 const suggestedPromptSx: SxProps = {
-  placeSelf: 'end',
+  placeSelf: 'start',
   // width: '100%',
   backgroundColor: 'background.surface',
   border: '1px solid',
-  borderColor: 'primary.outlinedBorder',
-  borderRadius: '2rem',
-  borderTopRightRadius: 0,
+  borderColor: `${AGI_SUGGESTIONS_COLOR}.outlinedColor`,
+  borderRadius: '1rem',
+  borderBottomLeftRadius: 0,
   px: 1.5,
   py: 0.5,
   fontSize: 'sm',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: 'primary.solidBg',
-    color: 'primary.solidColor',
+    backgroundColor: `${AGI_SUGGESTIONS_COLOR}.solidBg`,
+    color: `${AGI_SUGGESTIONS_COLOR}.solidColor`,
   },
 };
 
@@ -79,7 +83,7 @@ export function ComposerTextAreaActions(props: {
       {agiAttachmentPrompts.prompts.map((candidate, index) =>
         <Sheet
           key={index}
-          color='primary'
+          color={AGI_SUGGESTIONS_COLOR}
           variant='soft'
           onClick={() => props.onAppendAndSend(candidate)}
           sx={suggestedPromptSx}
