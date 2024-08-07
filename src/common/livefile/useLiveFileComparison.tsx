@@ -120,13 +120,13 @@ export function useLiveFileComparison(
     setStatus(null);
   }, [closeFileContent]);
 
-  const handleUpdateFileContent = React.useCallback(async (liveFileId?: LiveFileId) => {
-    if (!isLoadingFile) {
-      if (!fileHasContent)
-        setStatus({ message: 'Reading file...', mtype: 'info' });
-      await reloadFileContent(liveFileId);
-      // content and errors will be reactive here (see effects)
-    }
+  const _handleReloadFileContent = React.useCallback(async (liveFileId?: LiveFileId) => {
+    if (isLoadingFile)
+      setStatus({ message: 'Already Loading file...', mtype: 'info' });
+    if (!fileHasContent)
+      setStatus({ message: 'Reading file...', mtype: 'info' });
+    await reloadFileContent(liveFileId);
+    // content and errors will be reactive here (see effects)
   }, [fileHasContent, isLoadingFile, reloadFileContent]);
 
   const handlePairNewFSFHandle = React.useCallback(async (fsfHandle: FileSystemFileHandle) => {
@@ -135,11 +135,11 @@ export function useLiveFileComparison(
       const liveFileId = await liveFileCreateOrThrow(fsfHandle);
       replaceLiveFileId(liveFileId);
       // Immediately load the preview on this ID
-      await handleUpdateFileContent(liveFileId);
+      await _handleReloadFileContent(liveFileId);
     } catch (error: any) {
       setStatus({ message: `Error pairing the file: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`, mtype: 'error' });
     }
-  }, [handleUpdateFileContent, replaceLiveFileId]);
+  }, [_handleReloadFileContent, replaceLiveFileId]);
 
   const handlePairNewFileWithPicker = React.useCallback(async () => {
     // Open the file picker
@@ -185,9 +185,9 @@ export function useLiveFileComparison(
       hasContent={fileHasContent}
       onPairWithFSFHandle={handlePairNewFSFHandle}
       onPairWithPicker={handlePairNewFileWithPicker}
-      upUpdateFileContent={handleUpdateFileContent}
+      upUpdateFileContent={_handleReloadFileContent}
     />
-  ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, handleUpdateFileContent, isPairingValid, isSavingFile]);
+  ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, _handleReloadFileContent, isPairingValid, isSavingFile]);
 
   const liveFileActionBox = React.useMemo(() => {
     if (!status && !fileHasContent) return null;
@@ -213,9 +213,9 @@ export function useLiveFileComparison(
       >
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
 
-          {/* Pair Button */}
+          {/* Refresh Content Button */}
           {isPairingValid && (
-            <IconButton size='sm' onClick={() => handleUpdateFileContent()}>
+            <IconButton size='sm' onClick={() => _handleReloadFileContent()}>
               <LiveFileIcon />
             </IconButton>
           )}
@@ -274,7 +274,7 @@ export function useLiveFileComparison(
         </Box>
       </Alert>
     );
-  }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, handleUpdateFileContent, isMobile, isPairingValid, isSavingFile, status]);
+  }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, _handleReloadFileContent, isMobile, isPairingValid, isSavingFile, status]);
 
 
   // Auto-click on 'refresh' on window focus
@@ -282,9 +282,9 @@ export function useLiveFileComparison(
   React.useEffect(() => {
     return WindowFocusObserver.getInstance().subscribe(async (focused) => {
       if (focused && shallUpdateOnRefocus)
-        await handleUpdateFileContent();
+        await _handleReloadFileContent();
     });
-  }, [handleUpdateFileContent, shallUpdateOnRefocus]);
+  }, [_handleReloadFileContent, shallUpdateOnRefocus]);
 
 
   return {
