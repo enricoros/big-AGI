@@ -662,7 +662,7 @@ export function Composer(props: {
                     variant='outlined'
                     color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
                     autoFocus
-                    minRows={isMobile ? 4 : showChatInReferenceTo ? 4 : 5}
+                    minRows={isMobile ? 4 : agiAttachmentPrompts.hasData ? 3 : showChatInReferenceTo ? 4 : 5}
                     maxRows={isMobile ? 8 : 10}
                     placeholder={textPlaceholder}
                     value={composeText}
@@ -691,7 +691,7 @@ export function Composer(props: {
                     }}
                     sx={{
                       backgroundColor: 'background.level1',
-                      '&:focus-within': { backgroundColor: 'background.popup', '.in-reference-to-bubble': { backgroundColor: 'background.popup' } },
+                      '&:focus-within': { backgroundColor: 'background.popup', '.within-composer-focus': { backgroundColor: 'background.popup' } },
                       lineHeight: lineHeightTextareaMd,
                     }} />
 

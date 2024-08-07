@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ColorPaletteProp, Sheet } from '@mui/joy';
+import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/attachmentprompts/useAgiAttachmentPrompts';
 
@@ -11,20 +11,18 @@ import { InReferenceToBubble } from '../../message/InReferenceToBubble';
 
 
 // configuration
-export const AGI_SUGGESTIONS_COLOR: ColorPaletteProp = 'primary';
+export const AGI_SUGGESTIONS_COLOR: ColorPaletteProp = 'success';
 
 // Styles
 
 const textAreaSx: SxProps = {
   flex: 1,
-  // marginBottom: 0.5,
-  // margin: 1,
-  // marginTop: 0,
 
   // layout
   display: 'grid',
   justifyItems: 'start',
-  gap: 1,
+  gap: 0.5,
+  mb: 0.625,
 
   // Buttons
   [`& button`]: {
@@ -35,21 +33,31 @@ const textAreaSx: SxProps = {
 };
 
 
-const suggestedPromptSx: SxProps = {
+const promptButtonSx: SxProps = {
+  minHeight: '2rem',
   placeSelf: 'start',
-  // width: '100%',
+
+  color: `${AGI_SUGGESTIONS_COLOR}.softActiveColor`,
   backgroundColor: 'background.surface',
   border: '1px solid',
-  borderColor: `${AGI_SUGGESTIONS_COLOR}.outlinedColor`,
+  borderColor: `${AGI_SUGGESTIONS_COLOR}.outlinedBorder`,
   borderRadius: '1rem',
   borderBottomLeftRadius: 0,
-  px: 1.5,
+  boxShadow: 'xs',
+  pl: 1.5,
+  pr: 2,
   py: 0.5,
   fontSize: 'sm',
+  fontWeight: 'normal',
   cursor: 'pointer',
+  transition: 'none',
+  textAlign: 'start',
+  // whiteSpace: 'balance',
   '&:hover': {
     backgroundColor: `${AGI_SUGGESTIONS_COLOR}.solidBg`,
+    borderColor: `${AGI_SUGGESTIONS_COLOR}.solidBg`,
     color: `${AGI_SUGGESTIONS_COLOR}.solidColor`,
+    transition: 'none',
   },
 };
 
@@ -75,21 +83,22 @@ export function ComposerTextAreaActions(props: {
           key={index}
           item={item}
           onRemove={props.onRemoveReferenceTo}
-          className='in-reference-to-bubble'
+          className='within-composer-focus'
         />
       ))}
 
       {/* Auto-Prompts from attachments */}
       {agiAttachmentPrompts.prompts.map((candidate, index) =>
-        <Sheet
+        <Button
           key={index}
           color={AGI_SUGGESTIONS_COLOR}
-          variant='soft'
+          variant='plain'
           onClick={() => props.onAppendAndSend(candidate)}
-          sx={suggestedPromptSx}
+          className='within-composer-focus'
+          sx={promptButtonSx}
         >
           {candidate}
-        </Sheet>,
+        </Button>,
       )}
 
       {/* Guess Action Button */}

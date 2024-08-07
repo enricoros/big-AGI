@@ -117,7 +117,7 @@ export function LLMAttachmentsList(props: {
     <Box sx={{ position: 'relative' }}>
 
       {/* Horizontally scrollable */}
-      <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
+      <Box sx={{ height: '100%', pr: 5, overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
 
         {/* AI Suggestion Button */}
         {(agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData) && (
