@@ -15,9 +15,9 @@ import { LiveFileChooseIcon, LiveFileIcon } from './liveFile.icons';
 const BUTTON_COLOR: ColorPaletteProp = 'neutral';
 
 
-// const controlButtonSx: SxProps = {
-//   // minHeight: 36,
-// };
+const controlButtonSx: SxProps = {
+  minHeight: 36,
+};
 
 const refreshButtonSx: SxProps = {
   // border: '1px solid',
@@ -97,7 +97,7 @@ export function LiveFileControlButton(props: {
               : props.isPaired ? <LiveFileIcon color='success' />
                 : <LiveFileChooseIcon color='success' />
           }
-          sx={props.hasContent ? refreshButtonSx : undefined /* controlButtonSx */}
+          sx={props.hasContent ? refreshButtonSx : controlButtonSx}
         >
           {props.hasContent ? 'Refresh'
             : props.isPaired ? 'Enable Sync'
