@@ -73,8 +73,8 @@ import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { StatusBar } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
+import { useComposerDragDrop } from './useComposerDragDrop';
 import { useComposerStartupText } from './store-composer';
-import { useDragDrop } from './useComposerDragDrop';
 
 
 const zIndexComposerOverlayMic = 10;
@@ -159,7 +159,7 @@ export function Composer(props: {
   const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
 
   // drag/drop
-  const { dragContainerSx, dragDropComponent, handleDragEnter, handleDragStart } = useDragDrop(!!props.isMobile, attachAppendDataTransfer);
+  const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } = useComposerDragDrop(!props.isMobile, attachAppendDataTransfer);
 
   // ai functions
   const agiAttachmentPrompts = useAgiAttachmentPrompts(useChatAutoSuggestAttachmentPrompts(), attachmentDrafts);
@@ -572,8 +572,8 @@ export function Composer(props: {
 
         <Grid
           container
-          onDragEnter={handleDragEnter}
-          onDragStart={handleDragStart}
+          onDragEnter={handleContainerDragEnter}
+          onDragStart={handleContainerDragStart}
           spacing={{ xs: 1, md: 2 }}
           sx={stableGridSx}
         >
@@ -877,7 +877,7 @@ export function Composer(props: {
           </Grid>
 
           {/* overlay: Drag & Drop*/}
-          {dragDropComponent}
+          {dropComponent}
 
         </Grid>
 
