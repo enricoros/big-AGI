@@ -291,15 +291,7 @@ export function useLiveFileComparison(
               <MoreVertIcon />
             </MenuButton>
 
-            <Menu size='sm' sx={{ minWidth: 200 }}>
-
-              {/* Close button */}
-              <MenuItem onClick={handleStopLiveFile}>
-                <ListItemDecorator>
-                  <LiveFileCloseIcon />
-                </ListItemDecorator>
-                Stop sync
-              </MenuItem>
+            <Menu size='md' sx={{ minWidth: 220 }}>
 
               {/* Reassign File button */}
               <MenuItem onClick={handlePairNewFileWithPicker}>
@@ -307,6 +299,16 @@ export function useLiveFileComparison(
                   <LiveFileChooseIcon />
                 </ListItemDecorator>
                 Pair a different file
+              </MenuItem>
+
+              <ListDivider />
+
+              {/* Close button */}
+              <MenuItem onClick={handleStopLiveFile}>
+                <ListItemDecorator>
+                  <LiveFileCloseIcon />
+                </ListItemDecorator>
+                Stop sync
               </MenuItem>
 
             </Menu>
