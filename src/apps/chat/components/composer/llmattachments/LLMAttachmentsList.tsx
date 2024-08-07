@@ -7,15 +7,16 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import type { AgiAttachmentPromptsData } from '~/modules/aifn/attachmentprompts/useAgiAttachmentPrompts';
+
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { useAsyncCall } from '~/common/util/hooks/useAsyncCall';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
 
-import { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
+import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
 import { LLMAttachmentMenu } from './LLMAttachmentMenu';
 
@@ -27,22 +28,21 @@ export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
  * Renderer of attachment drafts, with menus, etc.
  */
 export function LLMAttachmentsList(props: {
+  agiAttachmentPrompts: AgiAttachmentPromptsData
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
-  llmAttachmentDrafts: LLMAttachmentDraft[];
-  canInlineSomeFragments: boolean;
+  canInlineSomeFragments: boolean,
+  llmAttachmentDrafts: LLMAttachmentDraft[],
   onAttachmentDraftsAction: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
-  onAgiAttachmentPromptsRefetch: () => Promise<any>,
 }) {
 
   // state
   const { showPromisedOverlay } = useOverlayComponents();
   const [draftMenu, setDraftMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentDraftId: AttachmentDraftId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
-  const [overallIsAgiRefetchingPrompts, handleOverallAgiPromptsRefetch] = useAsyncCall(props.onAgiAttachmentPromptsRefetch);
 
   // derived state
 
-  const { llmAttachmentDrafts, canInlineSomeFragments } = props;
+  const { agiAttachmentPrompts, canInlineSomeFragments, llmAttachmentDrafts } = props;
   const hasAttachments = llmAttachmentDrafts.length >= 1;
 
   // derived item menu state
@@ -167,8 +167,8 @@ export function LLMAttachmentsList(props: {
         sx={{ minWidth: 200 }}
       >
         {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
-        <MenuItem color='primary' variant='soft' onClick={handleOverallAgiPromptsRefetch} disabled={!hasAttachments || overallIsAgiRefetchingPrompts}>
-          <ListItemDecorator>{overallIsAgiRefetchingPrompts ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
+        <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
+          <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
           What to do?
         </MenuItem>
 
