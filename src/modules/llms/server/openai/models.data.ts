@@ -22,7 +22,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 0.15, chatOut: 0.60 },
-    benchmark: { cbaMmlu: 82.0 },
+    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
   },
   {
     idPrefix: 'gpt-4o-mini',
@@ -36,10 +36,10 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 0.15, chatOut: 0.60 },
-    benchmark: { cbaMmlu: 82.0 },
+    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
   },
 
-  // GPT-4o -> 2024-05-13
+  // GPT-4o -> 2024-05-13 (will be update to 2024-08-06 in the future (3 weeks notice))
   {
     idPrefix: 'gpt-4o',
     label: 'GPT-4o',
@@ -52,7 +52,19 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 5, chatOut: 15 },
-    benchmark: { cbaElo: 1287 },
+    benchmark: { cbaElo: 1286 },
+  },
+  {
+    isLatest: true,
+    idPrefix: 'gpt-4o-2024-08-06',
+    label: 'GPT-4o (2024-08-06)',
+    description: 'Latest snapshot that supports Structured Outputs',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 2.5, chatOut: 10 },
+    benchmark: { cbaElo: 1286 + 1 },
   },
   {
     idPrefix: 'gpt-4o-2024-05-13',
@@ -63,7 +75,8 @@ const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 5, chatOut: 15 },
-    benchmark: { cbaElo: 1287 },
+    benchmark: { cbaElo: 1286 },
+    hidden: true,
   },
 
   // GPT4 Turbo with Vision -> 2024-04-09
@@ -112,8 +125,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'gpt-4-0125-preview', // GPT-4 Turbo preview model
     label: 'GPT-4 Turbo (0125)',
-    description: 'GPT-4 Turbo preview model intended to reduce cases of "laziness" where the model doesn\'t complete a task. Returns a maximum of 4,096 output tokens.',
-    isPreview: true,
+    description: 'GPT-4 Turbo preview model intended to reduce cases of "laziness" where the model doesn\'t complete a task.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
@@ -125,12 +137,11 @@ const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'gpt-4-1106-preview', // GPT-4 Turbo preview model
     label: 'GPT-4 Turbo (1106)',
-    description: 'GPT-4 Turbo preview model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.',
-    isPreview: true,
+    description: 'GPT-4 Turbo preview model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 10, chatOut: 30 },
     benchmark: { cbaElo: 1251 },
     hidden: true,
@@ -234,6 +245,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 30, chatOut: 60 },
     benchmark: { cbaElo: 1161 },
+    isLegacy: true,
   },
 
 
@@ -249,12 +261,11 @@ const _knownOpenAIChatModels: ManualMappings = [
     hidden: true,
   },
 
-
-  // 3.5-Turbo-16k's
+  // 3.5-Turbo's (16ks)
   {
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (0125)',
-    description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls. Returns a maximum of 4,096 output tokens.',
+    description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls.',
     contextWindow: 16385,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
@@ -265,7 +276,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'gpt-3.5-turbo-1106',
     label: '3.5-Turbo (1106)',
-    description: 'The latest GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
+    description: 'GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.',
     contextWindow: 16385,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
