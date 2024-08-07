@@ -3,14 +3,13 @@ import { fileOpen } from 'browser-fs-access';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
 import { Box, Button, ColorPaletteProp, IconButton, Sheet } from '@mui/joy';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { WindowFocusObserver } from '~/common/util/windowUtils';
 
 import type { LiveFileId } from './liveFile.types';
-import { LiveFileChooseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
+import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
 import { LiveFileControlButton } from './LiveFileControlButton';
 import { liveFileCreateOrThrow } from './store-live-file';
 import { useLiveFile } from './liveFile.hooks';
@@ -85,7 +84,7 @@ export function useLiveFileComparison(
     // Same content: no diff
     if (fileContent === bufferText) {
       setDiffSummary({ insertions: 0, deletions: 0 });
-      setStatus({ message: isMobile ? 'Identical to File.' : 'The File is identical to this Document.', mtype: 'info' });
+      setStatus({ message: isMobile ? 'Identical to File.' : 'No changes.' /* 'The File is identical to this Document.'*/, mtype: 'info' });
       return;
     }
 
@@ -114,7 +113,7 @@ export function useLiveFileComparison(
 
   // callbacks
 
-  const handleCloseFile = React.useCallback(async () => {
+  const handleStopLiveFile = React.useCallback(async () => {
     await closeFileContent();
     setDiffSummary(null);
     setStatus(null);
@@ -193,8 +192,10 @@ export function useLiveFileComparison(
   const liveFileActionBox = React.useMemo(() => {
     if (!status && !fileHasContent) return null;
 
+    const isError = status?.mtype === 'error';
+
     const statusColor: ColorPaletteProp =
-      status?.mtype === 'error' ? 'warning'
+      isError ? 'warning'
         : status?.mtype === 'success' ? 'success'
           : status?.mtype === 'changes' ? 'neutral'
             : 'neutral';
@@ -205,7 +206,7 @@ export function useLiveFileComparison(
         color={statusColor}
         sx={{
           display: 'flex',
-          flexFlow: 'row wrap',
+          flexWrap: 'wrap',
           alignItems: 'center',
           borderRadius: 'sm',
           fontSize: 'sm',
@@ -218,21 +219,24 @@ export function useLiveFileComparison(
 
           {/* Refresh Content Button */}
           {isPairingValid && (
-            <IconButton size='sm' onClick={() => _handleReloadFileContent()}>
-              <LiveFileIcon />
-            </IconButton>
+            <TooltipOutlined title='Reload and compare File' placement='top-start' color='success'>
+              <IconButton size='sm' variant='plain' onClick={() => _handleReloadFileContent()}>
+                <LiveFileIcon color='success' />
+              </IconButton>
+            </TooltipOutlined>
           )}
 
           {/* Alert Decorator (startDecorator will have it messy) */}
           {status?.mtype === 'error' && <WarningRoundedIcon sx={{ mr: 1 }} />}
 
           {' '}<span>{status?.message}</span>
+
         </Box>
 
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-          {/* Load from File */}
-          {fileIsDifferent && (
+          {/* Load from file */}
+          {fileIsDifferent && !isError && (
             <Button
               variant={isMobile ? 'outlined' : 'plain'}
               color='neutral'
@@ -242,12 +246,12 @@ export function useLiveFileComparison(
               startDecorator={<LiveFileReloadIcon />}
               aria-label='Load content from disk'
             >
-              {isMobile ? 'Update' : 'Load from File'}
+              {isMobile ? 'Update' : 'Replace with file'}
             </Button>
           )}
 
           {/* Save to File */}
-          {fileIsDifferent && (
+          {fileIsDifferent && !isError && (
             <Button
               variant={isMobile ? 'outlined' : 'plain'}
               color='danger'
@@ -257,27 +261,27 @@ export function useLiveFileComparison(
               startDecorator={<LiveFileSaveIcon />}
               aria-label='Save content to disk'
             >
-              {isMobile ? 'Save' : 'Save to File'}
+              {isMobile ? 'Save' : 'Save to file'}
             </Button>
           )}
 
           {/* Reassign File button */}
-          <TooltipOutlined title='Pair a different File.' placement='top-end'>
+          <TooltipOutlined title='Pair a different file' placement='top-end'>
             <IconButton size='sm' onClick={handlePairNewFileWithPicker}>
               <LiveFileChooseIcon />
             </IconButton>
           </TooltipOutlined>
 
           {/* Close button */}
-          <TooltipOutlined title='Close LiveFile.' placement='top-end'>
-            <IconButton size='sm' onClick={handleCloseFile}>
-              <CloseRoundedIcon />
+          <TooltipOutlined title='Disable LiveFile sync' placement='top-end'>
+            <IconButton size='sm' onClick={handleStopLiveFile}>
+              <LiveFileCloseIcon />
             </IconButton>
           </TooltipOutlined>
         </Box>
       </Sheet>
     );
-  }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, _handleReloadFileContent, isMobile, isPairingValid, isSavingFile, status]);
+  }, [fileHasContent, fileIsDifferent, handleStopLiveFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, _handleReloadFileContent, isMobile, isPairingValid, isSavingFile, status]);
 
 
   // Auto-click on 'refresh' on window focus

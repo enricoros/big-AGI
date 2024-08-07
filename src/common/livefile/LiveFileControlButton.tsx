@@ -84,7 +84,6 @@ export function LiveFileControlButton(props: {
               : 'Set up live file pairing'
         }
         color='success'
-        variant='outlined'
         placement='top-end'
       >
         <Button

@@ -134,8 +134,9 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
             [fileId]: {
               ...file,
               content,
-              isLoading: false,
               lastModified: fileData.lastModified,
+              isLoading: false,
+              error: null,
             },
           },
         }));
