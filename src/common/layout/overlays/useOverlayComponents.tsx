@@ -6,6 +6,7 @@ import { GlobalOverlayId, useOverlayStore } from './store-overlays';
 enum OverlayCloseReason {
   USER_REJECTED = 'USER_REJECTED',
   UNMOUNTED = 'UNMOUNTED',
+  REPLACED = 'REPLACED',
   ALREADY_SHOWN = 'ALREADY_SHOWN',
 }
 
@@ -64,13 +65,21 @@ export function useOverlayComponents(): {
       // Check if the overlay already exists and exit early
       // This is like doReject, but doesn't remove the overlay as we don't insert it
       if (overlayExists(overlayId)) {
-        console.log(`Note: requesting dialog '${overlayId}' while still open.`);
-        if (options.rejectWithValue !== undefined)
-          pResolve(options.rejectWithValue);
-        else
-          pReject(OverlayCloseReason.ALREADY_SHOWN);
-        overlayToFront(overlayId);
-        return;
+
+        // Look if we own a reference to the former overlay to replace
+        const overlayToReplace = activeOverlaysRef.current.find(o => o.id === overlayId);
+        if (!overlayToReplace) {
+          console.log(`Note: Overlay "${overlayId}" already exists, but we don't have a reference to it. Recovery successful.`);
+          if (options.rejectWithValue !== undefined)
+            pResolve(options.rejectWithValue);
+          else
+            pReject(OverlayCloseReason.ALREADY_SHOWN);
+          overlayToFront(overlayId);
+          return;
+        }
+
+        // if it's one of ours, we reject the existing overlay, and remove it, then continue with adding the new one
+        overlayToReplace.doReject(OverlayCloseReason.REPLACED);
       }
 
       const _doRemove = (): boolean => {
