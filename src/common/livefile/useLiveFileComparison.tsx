@@ -2,7 +2,8 @@ import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
-import { Box, Button, ColorPaletteProp, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, Button, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet } from '@mui/joy';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -16,6 +17,30 @@ import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon
 import { LiveFileControlButton } from './LiveFileControlButton';
 import { liveFileCreateOrThrow } from './store-live-file';
 import { useLiveFile } from './liveFile.hooks';
+
+
+const sheetSx: SxProps = {
+  m: 1,
+  mt: 0,
+  p: 1,
+  backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
+  border: '1px solid',
+  borderRadius: 'sm',
+  borderColor: 'neutral.outlinedBorder',
+  boxShadow: `inset 0 4px 6px -6px rgb(var(--joy-palette-neutral-darkChannel) / 40%)`,
+  fontSize: 'sm',
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  gap: 1,
+  'button': {
+    backgroundColor: 'background.surface',
+  },
+  'button:hover': {
+    backgroundColor: 'background.popup',
+    boxShadow: 'xs',
+  },
+};
 
 
 interface DiffSummary {
@@ -204,7 +229,7 @@ export function useLiveFileComparison(
     />
   ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, _handleReloadFileContent, isPairingValid, isSavingFile]);
 
-  const liveFileActionBox = React.useMemo(() => {
+  const liveFileActions = React.useMemo(() => {
     if (!status && !fileHasContent) return null;
 
     const isError = status?.mtype === 'error';
@@ -216,26 +241,14 @@ export function useLiveFileComparison(
             : 'neutral';
 
     return (
-      <Sheet
-        variant='outlined'
-        color={statusColor}
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          borderRadius: 'sm',
-          fontSize: 'sm',
-          gap: 1,
-          p: 1,
-          // boxShadow: 'xs',
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+      <Sheet color={statusColor} sx={sheetSx}>
+
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
           {/* Refresh Content Button */}
           {isPairingValid && (
             <TooltipOutlined title='Reload and compare File' placement='top-start' color='success'>
-              <IconButton size='sm' variant='plain' onClick={() => _handleReloadFileContent()}>
+              <IconButton size='sm' variant='outlined' onClick={() => _handleReloadFileContent()} sx={{ mr: 1 }}>
                 <LiveFileIcon color='success' />
               </IconButton>
             </TooltipOutlined>
@@ -331,7 +344,7 @@ export function useLiveFileComparison(
 
 
   return {
-    liveFileActionBox,
+    liveFileActions,
     liveFileControlButton,
   };
 }

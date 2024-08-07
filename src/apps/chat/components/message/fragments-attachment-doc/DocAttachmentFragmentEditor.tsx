@@ -82,7 +82,7 @@ export function DocAttachmentFragmentEditor(props: {
 
   // LiveFile
 
-  const { liveFileControlButton, liveFileActionBox } = useLiveFileComparison(
+  const { liveFileControlButton, liveFileActions } = useLiveFileComparison(
     fragment.liveFileId ?? null,
     props.isMobile === true,
     fragmentDocPart.data.text,
@@ -167,7 +167,7 @@ export function DocAttachmentFragmentEditor(props: {
 
       {/* Ref of the file */}
       <Box sx={{
-        minHeight: '2.25rem',
+        minHeight: '2.75rem',
         px: 1,
         // layout
         display: 'flex',
@@ -216,6 +216,8 @@ export function DocAttachmentFragmentEditor(props: {
 
       </Box>
 
+      {/* LiveFile  */}
+      {!isEditing && liveFileActions}
 
       {/* Button Bar Edit / Delete commands */}
       <Sheet color='primary' variant='soft' sx={theme => ({
@@ -229,8 +231,6 @@ export function DocAttachmentFragmentEditor(props: {
         display: 'grid',
         gap: 1,
       })}>
-
-        {!isEditing && liveFileActionBox}
 
         {/* Buttons Row */}
         <Box sx={{
