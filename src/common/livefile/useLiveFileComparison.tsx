@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
+import { focusManager } from '@tanstack/react-query';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
 import { Alert, Box, Button, ColorPaletteProp, IconButton } from '@mui/joy';
@@ -69,6 +70,8 @@ export function useLiveFileComparison(
 
   const fileHasContent = fileContent !== undefined;
   const fileIsDifferent = !!diffSummary?.deletions || !!diffSummary?.insertions;
+
+  const shallUpdateOnRefocus = isPairingValid && fileHasContent;
 
 
   // [effect] Auto-compute the diffs when the underlying text changes
@@ -291,6 +294,17 @@ export function useLiveFileComparison(
       </Alert>
     );
   }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, handleSyncButtonClicked, isMobile, isPairingValid, isSavingFile, status]);
+
+
+  // Auto-click on 'refresh' on window focus
+
+  React.useEffect(() => {
+    return focusManager.subscribe(async (focused) => {
+      if (focused && shallUpdateOnRefocus)
+        await handleUpdateFileContent();
+    });
+  }, [handleUpdateFileContent, shallUpdateOnRefocus]);
+
 
   return {
     liveFileSyncButton,
