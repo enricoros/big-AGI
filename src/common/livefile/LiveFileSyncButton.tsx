@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, Button } from '@mui/joy';
+import { Box, Button, SvgIcon } from '@mui/joy';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
@@ -9,9 +10,9 @@ import { LiveFileChooseIcon, LiveFileIcon } from './liveFile.icons';
 
 
 export function LiveFileSyncButton(props: {
-  fileHasContent: boolean;
-  isPairingValid: boolean;
-  isSavingFile: boolean;
+  disabled: boolean;
+  isPaired: boolean;
+  isRead: boolean;
   handleSyncButtonClicked: () => void;
 }) {
 
@@ -24,7 +25,7 @@ export function LiveFileSyncButton(props: {
     dropComponent,
     handleContainerDragEnter,
     handleContainerDragStart,
-  } = useDragDropDataTransfer(true, 'Pair', null, 'startDecorator', handleDataTransfer);
+  } = useDragDropDataTransfer(true, 'Pair', UploadFileRoundedIcon as typeof SvgIcon, 'startDecorator', handleDataTransfer);
 
   return (
     <Box
@@ -35,28 +36,28 @@ export function LiveFileSyncButton(props: {
 
       <TooltipOutlined
         title={
-          props.fileHasContent ? 'Click to reload the File and compare.'
-            : props.isPairingValid ? 'Click to compare with the File contents.'
+          props.isRead ? 'Click to reload the File and compare.'
+            : props.isPaired ? 'Click to compare with the File contents.'
               : 'Setup LiveFile pairing.'
         }
-        color={props.fileHasContent ? 'primary' : 'success'}
-        variant={props.fileHasContent ? undefined : 'solid'}
+        color={props.isRead ? 'primary' : 'success'}
+        variant={props.isRead ? undefined : 'solid'}
       >
         <Button
           variant='soft'
-          color={props.fileHasContent ? 'primary' : 'success'}
+          color={props.isRead ? 'primary' : 'success'}
           size='sm'
-          disabled={props.isSavingFile}
+          disabled={props.disabled}
           onClick={props.handleSyncButtonClicked}
           startDecorator={
-            props.fileHasContent ? <LiveFileIcon />
-              : (props.isPairingValid ? <LiveFileIcon />
+            props.isRead ? <LiveFileIcon />
+              : (props.isPaired ? <LiveFileIcon />
                 : <LiveFileChooseIcon />)
           }
-          aria-label={props.isPairingValid ? 'Sync File' : 'Choose File'}
+          aria-label={props.isPaired ? 'Sync File' : 'Choose File'}
         >
-          {props.fileHasContent ? 'Refresh'
-            : props.isPairingValid ? 'Sync File'
+          {props.isRead ? 'Refresh'
+            : props.isPaired ? 'Sync File'
               : 'Pair File'}
         </Button>
       </TooltipOutlined>

@@ -13,6 +13,8 @@ import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
 import { liveFileCreateOrThrow } from './store-live-file';
 import { useLiveFile } from './liveFile.hooks';
+import { LiveFileSyncButton } from '~/common/livefile/LiveFileSyncButton';
+
 
 
 interface DiffSummary {
@@ -183,35 +185,12 @@ export function useLiveFileComparison(
   // Memoed components code
 
   const liveFileSyncButton = React.useMemo(() => (
-    <TooltipOutlined
-      title={
-        fileHasContent ? 'Click to reload the File and compare.'
-          : isPairingValid ? 'Click to compare with the File contents.'
-            : 'Setup LiveFile pairing.'
-      }
-      color={fileHasContent ? 'primary' : 'success'}
-      variant={fileHasContent ? undefined : 'solid'}
-      // placement='top-end'
-    >
-      <Button
-        variant='soft'
-        color={fileHasContent ? 'primary' : 'success'}
-        size='sm'
-        disabled={/*isLoadingFile ||*/ /* Note: disabled to not flash */ isSavingFile}
-        onClick={handleSyncButtonClicked}
-        startDecorator={
-          fileHasContent ? <LiveFileIcon />
-            : (/*isLoadingFile ? <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />
-              :*/ isPairingValid ? <LiveFileIcon />
-              : <LiveFileChooseIcon />)
-        }
-        aria-label={isPairingValid ? 'Sync File' : 'Choose File'}
-      >
-        {fileHasContent ? 'Refresh'
-          : isPairingValid ? 'Sync File'
-            : 'Pair File'}
-      </Button>
-    </TooltipOutlined>
+    <LiveFileSyncButton
+      disabled={isSavingFile}
+      isPaired={isPairingValid}
+      isRead={fileHasContent}
+      handleSyncButtonClicked={handleSyncButtonClicked}
+    />
   ), [fileHasContent, handleSyncButtonClicked, isPairingValid, isSavingFile]);
 
   const liveFileActionBox = React.useMemo(() => {
@@ -240,7 +219,7 @@ export function useLiveFileComparison(
 
           {/* Pair Button */}
           {isPairingValid && (
-            <IconButton size='sm' onClick={handleSyncButtonClicked}>
+            <IconButton size='sm' onClick={() => handleUpdateFileContent()}>
               <LiveFileIcon />
             </IconButton>
           )}
@@ -299,7 +278,7 @@ export function useLiveFileComparison(
         </Box>
       </Alert>
     );
-  }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, handleSyncButtonClicked, isMobile, isPairingValid, isSavingFile, status]);
+  }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, handleUpdateFileContent, isMobile, isPairingValid, isSavingFile, status]);
 
 
   // Auto-click on 'refresh' on window focus
