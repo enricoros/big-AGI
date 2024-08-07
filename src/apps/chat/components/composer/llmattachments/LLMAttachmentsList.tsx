@@ -19,6 +19,7 @@ import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
 import { LLMAttachmentMenu } from './LLMAttachmentMenu';
+import { LLMAttachmentsPromptsButtonMemo } from './LLMAttachmentsPromptsButton';
 
 
 export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
@@ -115,8 +116,15 @@ export function LLMAttachmentsList(props: {
     {/* Attachment Drafts bar */}
     <Box sx={{ position: 'relative' }}>
 
-      {/* Horizontally scrollable Attachments */}
+      {/* Horizontally scrollable */}
       <Box sx={{ display: 'flex', overflowX: 'auto', gap: 1, height: '100%', pr: 5 }}>
+
+        {/* AI Suggestion Button */}
+        {(agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData) && (
+          <LLMAttachmentsPromptsButtonMemo data={agiAttachmentPrompts} />
+        )}
+
+        {/* Attachment Buttons */}
         {llmAttachmentDrafts.map((llmAttachment) =>
           <LLMAttachmentButtonMemo
             key={llmAttachment.attachmentDraft.id}
@@ -125,6 +133,7 @@ export function LLMAttachmentsList(props: {
             onToggleMenu={handleDraftMenuToggle}
           />,
         )}
+
       </Box>
 
       {/* Overall Menu button */}
