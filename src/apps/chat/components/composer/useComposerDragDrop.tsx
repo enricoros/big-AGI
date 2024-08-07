@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import { SvgIcon } from '@mui/joy';
+import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+
 import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
 
 
@@ -40,5 +43,5 @@ export function useComposerDragDrop(
 
   }, [onDataTransfer]);
 
-  return useDragDropDataTransfer(enabled, 'I will hold on to this for you.', handleComposerDrop);
+  return useDragDropDataTransfer(enabled, 'I will hold on to this for you.', AttachFileRoundedIcon as typeof SvgIcon, 'largeIcon', handleComposerDrop);
 }
