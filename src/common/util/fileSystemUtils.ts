@@ -45,3 +45,54 @@ export async function getAllFilesFromDirectoryRecursively(directoryHandle: FileS
   await traverseDirectory(directoryHandle);
   return list;
 }
+
+
+/// Helpers for handling DataTransfer items that contain File System Handles, and we need to pre-get all the promises to files/handles upfront.
+
+/*
+ * Note: was File | Promise<Handles | null>, but we added and extra File fallback in the promise
+ * to handle cases where the handle is null (e.g. Chrome screen captures), which would break the
+ * downstream logic.
+ */
+type FileOrFileHandlePromise = Promise<FileSystemFileHandle | FileSystemDirectoryHandle | File | null> | File;
+
+/**
+ * Extracts file system handles or files from a list of data transfer items.
+ * Note: the main purpose of this function is to get all the files/handles **upfront** in a
+ * datatransfer, as those objects expire with async operations.
+ */
+export function getDataTransferFilesOrPromises(items: DataTransferItemList, fallbackAsFiles: boolean): FileOrFileHandlePromise[] {
+  const results: FileOrFileHandlePromise[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind !== 'file')
+      continue;
+
+    // Try to get file system handle if available and not forced to use file
+    if ('getAsFileSystemHandle' in item && typeof item.getAsFileSystemHandle === 'function') {
+      try {
+        const fsHandle = item.getAsFileSystemHandle() as Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null>;
+        if (fsHandle)
+          results.push(fsHandle.then(handleOrNull => {
+            // if null, return a File instead - note that this is a fallback, as we prefer to get the handle
+            // but when pasing screen captures from Chrome, the handle will be null, while the file shall
+            // still be retrievable.
+            return handleOrNull || item.getAsFile();
+          }));
+        continue;
+      } catch (error) {
+        console.error('Error getting file system handle:', error);
+      }
+    }
+
+    // Fallback to getAsFile
+    if (fallbackAsFiles) {
+      const file = item.getAsFile();
+      if (file)
+        results.push(file);
+    }
+  }
+
+  return results;
+}

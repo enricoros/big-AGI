@@ -9,7 +9,7 @@ import { getClipboardItems } from '~/common/util/clipboardUtils';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { getAllFilesFromDirectoryRecursively } from '~/common/util/fileSystemUtils';
+import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
 import { useChatAttachmentsStore } from '~/common/chat-overlay/store-chat-overlay';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
@@ -69,7 +69,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     // get the file items - note: important to not have any async/await or we'll lose the items of the data transfer
     const fileOrFSHandlePromises = heuristicBypassImage
       ? [] /* special case: ignore images from Microsoft Office pastes (prioritize the HTML paste) */
-      : getDataTransferFilesOrPromises(dt.items);
+      : getDataTransferFilesOrPromises(dt.items, true);
 
     // attach File(s)
     if (fileOrFSHandlePromises.length) {
@@ -277,53 +277,6 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     attachmentsTakeFragmentsByType,
   };
 };
-
-
-/*
- * Note: was File | Promise<Handles | null>, but we added and extra File fallback in the promise
- * to handle cases where the handle is null (e.g. Chrome screen captures), which would break the
- * downstream logic.
- */
-type FileOrFileHandlePromise = Promise<FileSystemFileHandle | FileSystemDirectoryHandle | File | null> | File;
-
-/**
- * Extracts file system handles or files from a list of data transfer items.
- * Note: the main purpose of this function is to get all the files/handles **upfront** in a
- * datatransfer, as those objects expire with async operations.
- */
-function getDataTransferFilesOrPromises(items: DataTransferItemList): FileOrFileHandlePromise[] {
-  const results: FileOrFileHandlePromise[] = [];
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (item.kind !== 'file')
-      continue;
-
-    // Try to get file system handle if available and not forced to use file
-    if ('getAsFileSystemHandle' in item && typeof item.getAsFileSystemHandle === 'function') {
-      try {
-        const fsHandle = item.getAsFileSystemHandle() as Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null>;
-        if (fsHandle)
-          results.push(fsHandle.then(handleOrNull => {
-            // if null, return a File instead - note that this is a fallback, as we prefer to get the handle
-            // but when pasing screen captures from Chrome, the handle will be null, while the file shall
-            // still be retrievable.
-            return handleOrNull || item.getAsFile();
-          }));
-        continue;
-      } catch (error) {
-        console.error('Error getting file system handle:', error);
-      }
-    }
-
-    // Fallback to getAsFile
-    const file = item.getAsFile();
-    if (file)
-      results.push(file);
-  }
-
-  return results;
-}
 
 
 /**
