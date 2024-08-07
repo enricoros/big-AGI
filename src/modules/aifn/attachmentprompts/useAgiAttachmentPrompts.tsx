@@ -5,7 +5,6 @@ import { Alert, Box, Button, CircularProgress } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 import type { AttachmentDraft } from '~/common/attachment-drafts/attachment.types';
-import { useShallowStable } from '~/common/util/hooks/useShallowObject';
 
 import { agiAttachmentPrompts } from './agiAttachmentPrompts';
 
@@ -13,6 +12,8 @@ import { agiAttachmentPrompts } from './agiAttachmentPrompts';
 // interface
 
 interface AgiAttachmentPrompts {
+  isVisible: boolean;
+  hasData: boolean;
   prompts: string[];
   error: Error | null;
   isFetching: boolean;
@@ -27,28 +28,33 @@ export function useAgiAttachmentPrompts(canAutoTrigger: boolean, attachmentDraft
 
   // derived
   const fragments = attachmentDrafts.flatMap(draft => draft.outputFragments);
-  const fragmentsCount = fragments.length;
+  const fragmentCount = fragments.length;
 
   // async operation state
   const { data: prompts = [], error, isPending, isFetching, refetch } = useQuery({
-    enabled: canAutoTrigger && fragmentsCount >= 2 && !alreadyRan,
+    enabled: false,
     queryKey: ['aifn-prompts-attachments', ...fragments.map(f => f.fId).sort()],
-    queryFn: async ({ signal }) => {
-      setAlreadyRan(true);
-      return agiAttachmentPrompts(fragments, signal);
-    },
+    queryFn: async ({ signal }) => agiAttachmentPrompts(fragments, signal),
     staleTime: 1000 * 60 * 60, // 1 hour
-    // placeholderData: keepPreviousData,
+    // placeholderData: fragmentCount ? keepPreviousData : undefined,
   });
 
-  // reload to get ready to run again
-  const resetAlreadyRan = !fragmentsCount && alreadyRan;
+  // [effect] auto-fetch at the 2nd attachment (only)
+  const autoTrigger = canAutoTrigger && fragmentCount >= 2 && !alreadyRan;
+  const resetAutoTrigger = fragmentCount === 0 && alreadyRan;
   React.useEffect(() => {
-    if (resetAlreadyRan)
+    if (autoTrigger) {
+      setAlreadyRan(true);
+      void refetch();
+    }
+    if (resetAutoTrigger) {
       setAlreadyRan(false);
-  }, [resetAlreadyRan]);
+    }
+  }, [autoTrigger, refetch, resetAutoTrigger]);
 
   return {
+    isVisible: fragmentCount >= 2,
+    hasData: prompts.length > 0,
     prompts,
     error,
     isFetching,
@@ -60,28 +66,16 @@ export function useAgiAttachmentPrompts(canAutoTrigger: boolean, attachmentDraft
 
 export function useAgiAttachmentPromptsWithButtons(automatic: boolean, attachmentDrafts: AttachmentDraft[]) {
 
-  // external state
-  const stableFragments = useShallowStable(attachmentDrafts.flatMap(draft => draft.outputFragments));
-
-  // derived state
-  const automaticTrigger = automatic && stableFragments.length >= 2;
-
-  // async operation state
-  const { data: prompts, error, isPending, isFetching, refetch } = useQuery({
-    enabled: automaticTrigger,
-    queryKey: ['aifn-prompts-attachments', ...stableFragments.map(f => f.fId).sort()],
-    queryFn: async ({ signal }) => agiAttachmentPrompts(stableFragments, signal),
-    staleTime: Infinity,
-    // placeholderData: keepPreviousData,
-  });
+  // Use the useAgiAttachmentPrompts hook
+  const agiAttachmentPrompts = useAgiAttachmentPrompts(automatic, attachmentDrafts);
+  const { isVisible, prompts, error, isPending, isFetching, refetch } = agiAttachmentPrompts;
 
   // callbacks
   const handleRefetch = React.useCallback(async () => refetch(), [refetch]);
 
   // memoed components
 
-  const hasData = !!prompts && prompts.length > 0;
-  const showComponent = hasData || automaticTrigger;
+  const showComponent = isVisible || prompts?.length > 0;
 
   const component = React.useMemo(() => {
     return !showComponent ? null : (
