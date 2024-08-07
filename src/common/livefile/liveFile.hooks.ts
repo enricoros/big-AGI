@@ -16,16 +16,16 @@ export function useLiveFile(liveFileId: LiveFileId | null) {
   const stableData = useLiveFileStore(useShallow((store) => {
 
     // Reference the file
-    const file = liveFileId ? store.liveFiles[liveFileId] ?? null : null;
-    if (!file) return {
+    const liveFile = liveFileId ? store.liveFiles[liveFileId] ?? null : null;
+    if (!liveFile) return {
       isPairingValid: false,
     };
 
     // Extract stable data
-    const { fsHandle, ...rest } = file;
+    const { fsHandle, ...rest } = liveFile;
     return {
       ...rest,
-      isPairingValid: checkPairingValid(file),
+      isPairingValid: checkPairingValid(liveFile),
     };
   }));
 
