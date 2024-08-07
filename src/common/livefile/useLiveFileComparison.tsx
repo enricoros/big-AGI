@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
-import { focusManager } from '@tanstack/react-query';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
 import { Alert, Box, Button, ColorPaletteProp, IconButton } from '@mui/joy';
@@ -8,6 +7,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { WindowFocusObserver } from '~/common/util/windowUtils';
 
 import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
@@ -217,16 +217,16 @@ export function useLiveFileComparison(
   const liveFileActionBox = React.useMemo(() => {
     if (!status && !fileHasContent) return null;
 
-    const statusColor: ColorPaletteProp = status?.mtype === 'error' ? 'danger'
-      : status?.mtype === 'success' ? 'success'
-        : status?.mtype === 'changes' ? 'neutral'
-          : 'neutral';
+    const statusColor: ColorPaletteProp =
+      status?.mtype === 'error' ? 'warning'
+        : status?.mtype === 'success' ? 'success'
+          : status?.mtype === 'changes' ? 'neutral'
+            : 'neutral';
 
     return (
       <Alert
         variant='plain'
         color={statusColor}
-        startDecorator={status?.mtype === 'error' ? <WarningRoundedIcon /> : undefined}
         sx={{
           display: 'flex',
           flexFlow: 'row wrap',
@@ -237,11 +237,17 @@ export function useLiveFileComparison(
         }}
       >
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+
+          {/* Pair Button */}
           {isPairingValid && (
             <IconButton size='sm' onClick={handleSyncButtonClicked}>
               <LiveFileIcon />
             </IconButton>
           )}
+
+          {/* Alert Decorator (startDecorator will have it messy) */}
+          {status?.mtype === 'error' && <WarningRoundedIcon sx={{ mr: 1 }} />}
+
           {' '}<span>{status?.message}</span>
         </Box>
 
@@ -299,7 +305,7 @@ export function useLiveFileComparison(
   // Auto-click on 'refresh' on window focus
 
   React.useEffect(() => {
-    return focusManager.subscribe(async (focused) => {
+    return WindowFocusObserver.getInstance().subscribe(async (focused) => {
       if (focused && shallUpdateOnRefocus)
         await handleUpdateFileContent();
     });
