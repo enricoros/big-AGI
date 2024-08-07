@@ -2,7 +2,7 @@ import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
-import { Alert, Box, Button, ColorPaletteProp, IconButton } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, IconButton, Sheet } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -11,9 +11,9 @@ import { WindowFocusObserver } from '~/common/util/windowUtils';
 
 import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
+import { LiveFileControlButton } from './LiveFileControlButton';
 import { liveFileCreateOrThrow } from './store-live-file';
 import { useLiveFile } from './liveFile.hooks';
-import { LiveFileSyncButton } from '~/common/livefile/LiveFileSyncButton';
 
 
 interface DiffSummary {
@@ -178,14 +178,15 @@ export function useLiveFileComparison(
 
   // Memoed components code
 
-  const liveFileSyncButton = React.useMemo(() => (
-    <LiveFileSyncButton
+  const liveFileControlButton = React.useMemo(() => (
+    <LiveFileControlButton
       disabled={isSavingFile}
-      isPaired={isPairingValid}
       hasContent={fileHasContent}
+      hideWhenHasContent
+      isPaired={isPairingValid}
       onPairWithFSFHandle={handlePairNewFSFHandle}
       onPairWithPicker={handlePairNewFileWithPicker}
-      upUpdateFileContent={_handleReloadFileContent}
+      onUpdateFileContent={_handleReloadFileContent}
     />
   ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, _handleReloadFileContent, isPairingValid, isSavingFile]);
 
@@ -199,16 +200,18 @@ export function useLiveFileComparison(
             : 'neutral';
 
     return (
-      <Alert
-        variant='plain'
+      <Sheet
+        variant='outlined'
         color={statusColor}
         sx={{
           display: 'flex',
           flexFlow: 'row wrap',
           alignItems: 'center',
+          borderRadius: 'sm',
+          fontSize: 'sm',
           gap: 1,
           p: 1,
-          boxShadow: 'xs',
+          // boxShadow: 'xs',
         }}
       >
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
@@ -232,14 +235,14 @@ export function useLiveFileComparison(
           {fileIsDifferent && (
             <Button
               variant={isMobile ? 'outlined' : 'plain'}
-              color='primary'
+              color='neutral'
               size='sm'
               // disabled={isLoadingFile /* commented to not make this flash */}
               onClick={handleLoadFromDisk}
               startDecorator={<LiveFileReloadIcon />}
               aria-label='Load content from disk'
             >
-              {isMobile ? 'Update' : 'Read File into Document'}
+              {isMobile ? 'Update' : 'Load from File'}
             </Button>
           )}
 
@@ -272,7 +275,7 @@ export function useLiveFileComparison(
             </IconButton>
           </TooltipOutlined>
         </Box>
-      </Alert>
+      </Sheet>
     );
   }, [fileHasContent, fileIsDifferent, handleCloseFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, _handleReloadFileContent, isMobile, isPairingValid, isSavingFile, status]);
 
@@ -288,7 +291,7 @@ export function useLiveFileComparison(
 
 
   return {
-    liveFileSyncButton,
     liveFileActionBox,
+    liveFileControlButton,
   };
 }

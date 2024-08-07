@@ -82,7 +82,7 @@ export function DocAttachmentFragmentEditor(props: {
 
   // LiveFile
 
-  const { liveFileSyncButton, liveFileActionBox } = useLiveFileComparison(
+  const { liveFileControlButton, liveFileActionBox } = useLiveFileComparison(
     fragment.liveFileId ?? null,
     props.isMobile === true,
     fragmentDocPart.data.text,
@@ -195,6 +195,10 @@ export function DocAttachmentFragmentEditor(props: {
           </TooltipOutlined>
         </Typography>
 
+        {/* Live File Control button */}
+        {!isEditing && liveFileControlButton}
+
+        {/* Text / Code render switch (auto-detected) */}
         {!props.zenMode && (
           <Switch
             size='sm'
@@ -236,7 +240,7 @@ export function DocAttachmentFragmentEditor(props: {
           gap: 1,
         }}>
 
-
+          {/* Delete / Confirm */}
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button variant='outlined' color={isDeleteArmed ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
               {isDeleteArmed ? 'Cancel' : 'Delete'}
@@ -248,8 +252,7 @@ export function DocAttachmentFragmentEditor(props: {
             )}
           </Box>
 
-          {!isEditing && liveFileSyncButton}
-
+          {/* Edit / Save */}
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button variant='outlined' color={isEditing ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
               {isEditing ? 'Cancel' : 'Edit'}
