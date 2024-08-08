@@ -4,7 +4,7 @@ export interface LiveFile {
   readonly fsHandle: FileSystemFileHandle; // File system handle for file operations
 
   // last-reloaded content of the file
-  content: string | null;         // File content (null if not loaded)
+  content: string | null;         // File content (null if not loaded / last loading failed)
 
   // metadata
   name: string;                   // File name

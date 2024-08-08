@@ -43,9 +43,9 @@ export function useLiveFile(liveFileId: LiveFileId | null) {
       await useLiveFileStore.getState().reloadFileContent(idToLoad);
   }, [liveFileId]);
 
-  const saveFileContent = React.useCallback(async (content: string) => {
+  const writeFileContentAndReload = React.useCallback(async (content: string) => {
     if (!liveFileId) return false;
-    return await useLiveFileStore.getState().saveFileContent(liveFileId, content);
+    return await useLiveFileStore.getState().writeFileContentAndReload(liveFileId, content);
   }, [liveFileId]);
 
 
@@ -59,6 +59,6 @@ export function useLiveFile(liveFileId: LiveFileId | null) {
     // methods
     closeFileContent,
     reloadFileContent,
-    saveFileContent,
+    writeFileContentAndReload,
   };
 }

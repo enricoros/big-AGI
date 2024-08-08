@@ -88,7 +88,7 @@ export function useLiveFileComparison(
     isPairingValid,
     closeFileContent,
     reloadFileContent,
-    saveFileContent,
+    writeFileContentAndReload,
   } = useLiveFile(_liveFileId);
 
   // derived state
@@ -207,12 +207,12 @@ export function useLiveFileComparison(
     )) return;
 
     setStatus({ message: 'Saving to file...', mtype: 'info' });
-    const saved = await saveFileContent(bufferText);
+    const saved = await writeFileContentAndReload(bufferText);
     if (!saved) {
       // if not saved, the error will be shown in the effect
     } else
       setStatus({ message: 'Content saved to file.', mtype: 'success' });
-  }, [bufferText, isPairingValid, saveFileContent, showPromisedOverlay]);
+  }, [bufferText, isPairingValid, showPromisedOverlay, writeFileContentAndReload]);
 
 
   // Memoed components code

@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-
-import type { LiveFile, LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.types';
 import { agiUuid } from '~/common/util/idUtils';
+
+import type { LiveFile, LiveFileId, LiveFileMetadata } from './liveFile.types';
 
 
 // configuration
@@ -29,7 +29,7 @@ interface LiveFileActions {
   // File operations to (re)load and save content
   closeFileContent: (fileId: LiveFileId) => Promise<void>;
   reloadFileContent: (fileId: LiveFileId) => Promise<void>;
-  saveFileContent: (fileId: LiveFileId, content: string) => Promise<boolean>;
+  writeFileContentAndReload: (fileId: LiveFileId, content: string) => Promise<boolean>;
 
   // Metadata is a smaller view on the files data, for listing purposes
   getFileMetadata: (fileId: LiveFileId) => LiveFileMetadata | null;
@@ -102,39 +102,39 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
 
     closeFileContent: async (fileId: LiveFileId) => {
-      const file = _get().liveFiles[fileId];
-      if (!file || file.isSaving) return;
+      const liveFile = _get().liveFiles[fileId];
+      if (!liveFile || liveFile.isSaving) return;
 
       _set((state) => ({
         liveFiles: {
           ...state.liveFiles,
-          [fileId]: { ...file, content: null, error: null },
+          [fileId]: { ...liveFile, content: null, error: null },
         },
       }));
     },
 
     reloadFileContent: async (fileId: LiveFileId) => {
-      const file = _get().liveFiles[fileId];
-      if (!file || file.isLoading || file.isSaving) return;
+      const liveFile = _get().liveFiles[fileId];
+      if (!liveFile || liveFile.isLoading || liveFile.isSaving) return;
 
       _set((state) => ({
         liveFiles: {
           ...state.liveFiles,
-          [fileId]: { ...file, isLoading: true, error: null },
+          [fileId]: { ...liveFile, isLoading: true, error: null },
         },
       }));
 
       try {
-        const fileData = await file.fsHandle.getFile();
-        const content = await fileData.text();
+        const file = await liveFile.fsHandle.getFile();
+        const fileContent = await file.text();
 
         _set((state) => ({
           liveFiles: {
             ...state.liveFiles,
             [fileId]: {
-              ...file,
-              content,
-              lastModified: fileData.lastModified,
+              ...liveFile,
+              content: fileContent,
+              lastModified: file.lastModified,
               isLoading: false,
               error: null,
             },
@@ -145,7 +145,8 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
           liveFiles: {
             ...state.liveFiles,
             [fileId]: {
-              ...file,
+              ...liveFile,
+              content: null,
               isLoading: false,
               error: `Error reading: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`,
             },
@@ -154,28 +155,30 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }
     },
 
-    saveFileContent: async (fileId: LiveFileId, content: string): Promise<boolean> => {
-      const file = _get().liveFiles[fileId];
-      if (!file || file.isSaving) return false;
+    writeFileContentAndReload: async (fileId: LiveFileId, newContent: string): Promise<boolean> => {
+      const liveFile = _get().liveFiles[fileId];
+      if (!liveFile || liveFile.isSaving) return false;
 
       _set((state) => ({
         liveFiles: {
           ...state.liveFiles,
-          [fileId]: { ...file, isSaving: true, error: null },
+          [fileId]: { ...liveFile, isSaving: true, error: null },
         },
       }));
 
       try {
-        const writable = await file.fsHandle.createWritable();
-        await writable.write(content);
+        // Perform the write
+        const writable = await liveFile.fsHandle.createWritable();
+        await writable.write(newContent);
         await writable.close();
 
+        // emulate a 'reload' by replacing the content
         _set((state) => ({
           liveFiles: {
             ...state.liveFiles,
             [fileId]: {
-              ...file,
-              content,
+              ...liveFile,
+              content: newContent,
               isSaving: false,
               lastModified: Date.now(),
             },
@@ -188,7 +191,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
           liveFiles: {
             ...state.liveFiles,
             [fileId]: {
-              ...file,
+              ...liveFile,
               isSaving: false,
               error: `Error saving File: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`,
             },
@@ -200,54 +203,54 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
     updateFileMetadata: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' /*| 'referenceCount'*/>>) =>
       _set((state) => {
-        const file = state.liveFiles[fileId];
-        if (!file) return state;
+        const liveFile = state.liveFiles[fileId];
+        if (!liveFile) return state;
         return {
           liveFiles: {
             ...state.liveFiles,
-            [fileId]: { ...file, ...metadata },
+            [fileId]: { ...liveFile, ...metadata },
           },
         };
       }),
 
     getFileMetadata: (fileId: LiveFileId): LiveFileMetadata | null => {
-      const file = _get().liveFiles[fileId];
-      if (!file) return null;
+      const liveFile = _get().liveFiles[fileId];
+      if (!liveFile) return null;
       return {
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        lastModified: file.lastModified,
-        created: file.created,
-        isPairingValid: checkPairingValid(file),
-        // referenceCount: file.references.size,
+        id: liveFile.id,
+        name: liveFile.name,
+        type: liveFile.type,
+        size: liveFile.size,
+        lastModified: liveFile.lastModified,
+        created: liveFile.created,
+        isPairingValid: checkPairingValid(liveFile),
+        // referenceCount: liveFile.references.size,
       };
     },
 
     // addReference: (fileId: LiveFileId, referenceId: string) =>
     //   _set((state) => {
-    //     const file = state.liveFiles[fileId];
-    //     if (!file) return state;
-    //     const newReferences = new Set(file.references).add(referenceId);
+    //     const liveFile = state.liveFiles[fileId];
+    //     if (!liveFile) return state;
+    //     const newReferences = new Set(liveFile.references).add(referenceId);
     //     return {
     //       liveFiles: {
     //         ...state.liveFiles,
-    //         [fileId]: { ...file, references: newReferences },
+    //         [fileId]: { ...liveFile, references: newReferences },
     //       },
     //     };
     //   }),
     //
     // removeReference: (fileId: LiveFileId, referenceId: string) =>
     //   _set((state) => {
-    //     const file = state.liveFiles[fileId];
-    //     if (!file) return state;
-    //     const newReferences = new Set(file.references);
+    //     const liveFile = state.liveFiles[fileId];
+    //     if (!liveFile) return state;
+    //     const newReferences = new Set(liveFile.references);
     //     newReferences.delete(referenceId);
     //     return {
     //       liveFiles: {
     //         ...state.liveFiles,
-    //         [fileId]: { ...file, references: newReferences },
+    //         [fileId]: { ...liveFile, references: newReferences },
     //       },
     //     };
     //   }),
@@ -261,7 +264,9 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
     onRehydrateStorage: () => (state) => {
       if (!state) return;
 
-      /* Remove invalid LiveFiles that did not survive serialization.
+      /* [GC] Remove invalid LiveFiles that did not survive serialization.
+       * - Note: `store-chats` [GC] will also depend on this
+       *
        * This is an issue because a new LiveFile creation and Pairing will be required.
        * However, it's something we can live with at the moment.
        *
