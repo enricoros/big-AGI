@@ -46,6 +46,7 @@ import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-ov
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
 import type { ActileItem } from './actile/ActileProvider';
 import { providerCommands } from './actile/providerCommands';
@@ -242,7 +243,8 @@ export function Composer(props: {
 
     const canAttach = chatExecuteModeCanAttach(_chatExecuteMode);
     if (canAttach) {
-      const attachmentFragments = await attachmentsTakeAllFragments('global', 'app-chat');
+      const workspaceId = workspaceForConversationIdentity(targetConversationId);
+      const attachmentFragments = await attachmentsTakeAllFragments(workspaceId,'global', 'app-chat');
       fragments.push(...attachmentFragments);
     }
 

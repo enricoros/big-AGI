@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
+
 import { agiUuid } from '~/common/util/idUtils';
 
 import type { LiveFile, LiveFileId, LiveFileMetadata } from './liveFile.types';
@@ -18,34 +20,41 @@ interface LiveFileState {
   // NOTE: FileSystemFileHandle objects are stored here BUT they are NOT serializable
   liveFiles: Record<LiveFileId, LiveFile>;
 
+  // Workspace associations (using arrays instead of Sets for serialization)
+  liveFilesByWorkspace: Record<DWorkspaceId, LiveFileId[]>;
+
 }
 
 interface LiveFileActions {
 
-  // Manage LiveFile objects
+  // CRUD
   addLiveFile: (fileSystemFileHandle: FileSystemFileHandle) => Promise<LiveFileId>;
+  metadataGet: (fileId: LiveFileId) => LiveFileMetadata | null;
+  metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' | 'referenceCount'>>) => void;
   removeLiveFile: (fileId: LiveFileId) => void;
 
-  // Content operations
+  // content updates
   contentClose: (fileId: LiveFileId) => Promise<void>;
   contentReload: (fileId: LiveFileId) => Promise<void>;
   contentWriteAndReload: (fileId: LiveFileId, content: string) => Promise<boolean>;
 
-  // Metadata is a smaller view on the files data, for listing purposes
-  metadataGet: (fileId: LiveFileId) => LiveFileMetadata | null;
-  metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' | 'referenceCount'>>) => void;
+  // workspace associations
+  workspaceAssign: (workspaceId: DWorkspaceId, fileId: LiveFileId) => void;
+  workspaceRemove: (workspaceId: DWorkspaceId, fileId: LiveFileId) => void;
+  workspaceGetLiveFiles: (workspaceId: DWorkspaceId) => LiveFileId[];
 
-  // addReference: (fileId: LiveFileId, referenceId: string) => void;
-  // removeReference: (fileId: LiveFileId, referenceId: string) => void;
 }
 
 
 export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persist(
   (_set, _get) => ({
 
-    // Default state (before loading from storage)
+    // default state before loading from storage
     liveFiles: {},
+    liveFilesByWorkspace: {},
 
+
+    // CRUD
 
     addLiveFile: async (fileSystemFileHandle: FileSystemFileHandle) => {
 
@@ -94,12 +103,44 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       return id;
     },
 
-    removeLiveFile: (fileId: LiveFileId) =>
+    metadataGet: (fileId: LiveFileId): LiveFileMetadata | null => {
+      const liveFile = _get().liveFiles[fileId];
+      if (!liveFile) return null;
+      return {
+        id: liveFile.id,
+        name: liveFile.name,
+        type: liveFile.type,
+        size: liveFile.size,
+        lastModified: liveFile.lastModified,
+        created: liveFile.created,
+        isPairingValid: checkPairingValid(liveFile),
+        // referenceCount: liveFile.references.size,
+      };
+    },
+
+    metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' /*| 'referenceCount'*/>>) =>
       _set((state) => {
-        const { [fileId]: _, ...otherFiles } = state.liveFiles;
-        return { liveFiles: otherFiles };
+        const liveFile = state.liveFiles[fileId];
+        if (!liveFile) return state;
+        return {
+          liveFiles: {
+            ...state.liveFiles,
+            [fileId]: { ...liveFile, ...metadata },
+          },
+        };
       }),
 
+    removeLiveFile: (fileId: LiveFileId) =>
+      _set((state) => {
+        const { [fileId]: _dropped, ...otherFiles } = state.liveFiles;
+        return {
+          liveFiles: otherFiles,
+          liveFilesByWorkspace: _stateFilterLiveFilesByWorkspace(state.liveFilesByWorkspace, id => id !== fileId),
+        };
+      }),
+
+
+    // Content updates
 
     contentClose: async (fileId: LiveFileId) => {
       const liveFile = _get().liveFiles[fileId];
@@ -201,59 +242,42 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }
     },
 
-    metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' /*| 'referenceCount'*/>>) =>
-      _set((state) => {
-        const liveFile = state.liveFiles[fileId];
-        if (!liveFile) return state;
-        return {
-          liveFiles: {
-            ...state.liveFiles,
-            [fileId]: { ...liveFile, ...metadata },
-          },
-        };
-      }),
 
-    metadataGet: (fileId: LiveFileId): LiveFileMetadata | null => {
-      const liveFile = _get().liveFiles[fileId];
-      if (!liveFile) return null;
-      return {
-        id: liveFile.id,
-        name: liveFile.name,
-        type: liveFile.type,
-        size: liveFile.size,
-        lastModified: liveFile.lastModified,
-        created: liveFile.created,
-        isPairingValid: checkPairingValid(liveFile),
-        // referenceCount: liveFile.references.size,
-      };
+    // Workspace associations
+
+    workspaceAssign: (workspaceId: DWorkspaceId, fileId: LiveFileId) => {
+      _set((state) => {
+        const currentFiles = state.liveFilesByWorkspace[workspaceId] || [];
+        if (!currentFiles.includes(fileId)) {
+          return {
+            liveFilesByWorkspace: {
+              ...state.liveFilesByWorkspace,
+              [workspaceId]: [...currentFiles, fileId],
+            },
+          };
+        }
+        return state;
+      });
     },
 
-    // addReference: (fileId: LiveFileId, referenceId: string) =>
-    //   _set((state) => {
-    //     const liveFile = state.liveFiles[fileId];
-    //     if (!liveFile) return state;
-    //     const newReferences = new Set(liveFile.references).add(referenceId);
-    //     return {
-    //       liveFiles: {
-    //         ...state.liveFiles,
-    //         [fileId]: { ...liveFile, references: newReferences },
-    //       },
-    //     };
-    //   }),
-    //
-    // removeReference: (fileId: LiveFileId, referenceId: string) =>
-    //   _set((state) => {
-    //     const liveFile = state.liveFiles[fileId];
-    //     if (!liveFile) return state;
-    //     const newReferences = new Set(liveFile.references);
-    //     newReferences.delete(referenceId);
-    //     return {
-    //       liveFiles: {
-    //         ...state.liveFiles,
-    //         [fileId]: { ...liveFile, references: newReferences },
-    //       },
-    //     };
-    //   }),
+    workspaceRemove: (workspaceId: DWorkspaceId, fileId: LiveFileId) => {
+      _set((state) => {
+        const currentFiles = state.liveFilesByWorkspace[workspaceId];
+        if (!currentFiles) return state;
+
+        return {
+          liveFilesByWorkspace: {
+            ...state.liveFilesByWorkspace,
+            [workspaceId]: currentFiles.filter(id => id !== fileId),
+          },
+        };
+      });
+    },
+
+    workspaceGetLiveFiles: (workspaceId: DWorkspaceId) => {
+      const state = _get();
+      return state.liveFilesByWorkspace[workspaceId] || [];
+    },
 
   }),
   {
@@ -280,13 +304,30 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
         Object.entries(state.liveFiles || {}).filter(([_, file]) => checkPairingValid(file)),
       );
 
+      // Clean up liveFilesByWorkspace
+      const validFileIds = new Set(Object.keys(state.liveFiles));
+      state.liveFilesByWorkspace = _stateFilterLiveFilesByWorkspace(state.liveFilesByWorkspace || {}, id => validFileIds.has(id));
+
     },
 
   },
 ));
 
 
-// utility functions
+// internal utility functions
+function _stateFilterLiveFilesByWorkspace(liveFilesByWorkspace: LiveFileState['liveFilesByWorkspace'], predicate: (fileId: LiveFileId) => boolean): LiveFileState['liveFilesByWorkspace'] {
+  return Object.fromEntries(
+    Object.entries(liveFilesByWorkspace)
+      .map(([workspaceId, fileIds]) => [
+        workspaceId,
+        fileIds.filter(predicate),
+      ])
+      .filter(([_, fileIds]) => fileIds.length > 0),
+  );
+}
+
+
+// public accessors
 export function liveFileCreateOrThrow(fileSystemFileHandle: FileSystemFileHandle): Promise<LiveFileId> {
   return useLiveFileStore.getState().addLiveFile(fileSystemFileHandle);
 }
