@@ -6,7 +6,7 @@ import { checkPairingValid, useLiveFileStore } from './store-live-file';
 
 
 export function useLiveFileMetadata(liveFileId: LiveFileId | undefined): LiveFileMetadata | null {
-  return useLiveFileStore(useShallow((store) => !liveFileId ? null : store.getFileMetadata(liveFileId)));
+  return useLiveFileStore(useShallow((store) => !liveFileId ? null : store.metadataGet(liveFileId)));
 }
 
 
@@ -32,20 +32,20 @@ export function useLiveFile(liveFileId: LiveFileId | null) {
 
   // Callbacks
 
-  const closeFileContent = React.useCallback(async () => {
+  const liveFileContentClose = React.useCallback(async () => {
     if (!liveFileId) return;
-    await useLiveFileStore.getState().closeFileContent(liveFileId);
+    await useLiveFileStore.getState().contentClose(liveFileId);
   }, [liveFileId]);
 
-  const reloadFileContent = React.useCallback(async (loadDifferentFileId?: LiveFileId) => {
+  const liveFileContentReload = React.useCallback(async (loadDifferentFileId?: LiveFileId) => {
     const idToLoad = loadDifferentFileId || liveFileId;
     if (idToLoad)
-      await useLiveFileStore.getState().reloadFileContent(idToLoad);
+      await useLiveFileStore.getState().contentReload(idToLoad);
   }, [liveFileId]);
 
-  const writeFileContentAndReload = React.useCallback(async (content: string) => {
+  const liveFileContentWriteAndReload = React.useCallback(async (content: string) => {
     if (!liveFileId) return false;
-    return await useLiveFileStore.getState().writeFileContentAndReload(liveFileId, content);
+    return await useLiveFileStore.getState().contentWriteAndReload(liveFileId, content);
   }, [liveFileId]);
 
 
@@ -57,8 +57,8 @@ export function useLiveFile(liveFileId: LiveFileId | null) {
     fileData: ('id' in fileData) ? fileData : null,
 
     // methods
-    closeFileContent,
-    reloadFileContent,
-    writeFileContentAndReload,
+    liveFileContentClose,
+    liveFileContentReload,
+    liveFileContentWriteAndReload,
   };
 }
