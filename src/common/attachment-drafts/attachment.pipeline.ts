@@ -8,10 +8,10 @@ import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, DVMimeType, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
-import { liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, DraftWebInputData, DraftYouTubeInputData } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
+import { attachmentGetLiveFileId, attachmentSourceSupportsLiveFile } from './attachment.livefile';
 import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
 
@@ -224,7 +224,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
         converters.push({ id: 'rich-text-table', name: 'Markdown Table' });
 
       // p2: Text
-      converters.push({ id: 'text', name: _sourceContainsFileSystemFileHandle(source) ? 'Text (Live)' : 'Text' });
+      converters.push({ id: 'text', name: attachmentSourceSupportsLiveFile(source) ? 'Text (Live)' : 'Text' });
 
       // p3: Html
       if (textOriginHtml) {
@@ -295,10 +295,6 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
   edit({ converters });
 }
 
-
-function _sourceContainsFileSystemFileHandle(source: AttachmentDraftSource): boolean {
-  return source.media === 'file' && !!source.fileWithHandle.handle && typeof source.fileWithHandle.handle.getFile === 'function';
-}
 
 function _lowCollisionRefString(prefix: string, digits: number): string {
   return `${prefix} ${agiCustomId(digits)}`;
@@ -451,13 +447,9 @@ export async function attachmentPerformConversion(
 
       // text as-is
       case 'text':
-        // [LiveFile] create a LiveFile is we have a file handle, and set it to the attachment
-        const liveFileId = (_sourceContainsFileSystemFileHandle(source) && source.media === 'file' && !!source.fileWithHandle.handle)
-          ? await liveFileCreateOrThrow(source.fileWithHandle.handle).catch(console.error) || undefined
-          : undefined;
-
+        const possibleLiveFileId = await attachmentGetLiveFileId(source);
         const textualInlineData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, docMeta, liveFileId));
+        newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, docMeta, possibleLiveFileId));
         break;
 
       // html as-is
