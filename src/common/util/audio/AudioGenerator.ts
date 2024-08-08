@@ -175,6 +175,29 @@ export namespace AudioGenerator {
   //   o.stop(ctx.currentTime + 0.5);
   // }
 
+  export function basicNote(note: string = 'C4', duration: number = 1, options: SoundOptions = {}) {
+    const ctx = singleContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = 'sine';
+    o.frequency.setValueAtTime(noteToFrequency(note), now);
+
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(options.volume || 0.3, now + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    o.connect(g);
+    g.connect(agMasterGain);
+    // applyRoomAcoustics(ctx, g, options.roomSize || 'small');
+
+    o.start(now);
+    o.stop(now + duration);
+  }
+
   export function basicRandomSound(options: SoundOptions = {}): void {
     const ctx = singleContext();
     if (!ctx) return;
@@ -353,6 +376,171 @@ export namespace AudioGenerator {
 }
 
 
+// export namespace TR909 {
+//   interface TR909Options {
+//     volume?: number;
+//     pitch?: number;
+//     decay?: number;
+//     tone?: number;
+//     noiseType?: 'white' | 'pink';
+//   }
+//
+//   export function kick(options: TR909Options = {}): void {
+//     const ctx = singleContext();
+//     if (!ctx) return;
+//
+//     const now = ctx.currentTime;
+//     const { pitch = 80, decay = 0.35, tone = 0.40, noiseType = 'white' } = options;
+//
+//     // oscillator
+//     const o = ctx.createOscillator();
+//     o.type = 'sine';
+//     o.frequency.setValueAtTime(pitch, now);
+//     o.frequency.exponentialRampToValueAtTime(pitch * 0.5, now + 0.15);
+//
+//     const og = ctx.createGain();
+//     createEnvelope(ctx, og.gain, 0.001, decay, 0.1, 0.1);
+//     o.connect(og);
+//
+//     // noise
+//     const n = createNoise(ctx, decay + 0.1, noiseType);
+//
+//     const ng = ctx.createGain();
+//     createEnvelope(ctx, ng.gain, 0.001, 0.05, 0.1, 0.05);
+//     n.connect(ng);
+//
+//     // filter
+//     const oToneFilter = ctx.createBiquadFilter();
+//     oToneFilter.type = 'lowpass';
+//     oToneFilter.frequency.setValueAtTime(1000 * tone, now);
+//     og.connect(oToneFilter);
+//     ng.connect(oToneFilter);
+//
+//     const compressor = ctx.createDynamicsCompressor();
+//     oToneFilter.connect(compressor);
+//     compressor.connect(agMasterGain);
+//
+//     o.start(now);
+//     n.start(now);
+//     o.stop(now + decay + 0.2);
+//     n.stop(now + decay + 0.1);
+//   }
+//
+//   export function snare(options: TR909Options = {}): void {
+//     const ctx = singleContext();
+//     if (!ctx) return;
+//
+//     const now = ctx.currentTime;
+//     const { pitch = 150, decay = 0.2, tone = 1, noiseType = 'white' } = options;
+//
+//     // Oscillator
+//     const o = ctx.createOscillator();
+//     o.type = 'triangle';
+//     o.frequency.setValueAtTime(pitch, now);
+//
+//     const oscGain = ctx.createGain();
+//     createEnvelope(ctx, oscGain.gain, 0.001, 0.06, 0, 0.1);
+//     o.connect(oscGain);
+//
+//     const oToneFilter = ctx.createBiquadFilter();
+//     oToneFilter.type = 'bandpass';
+//     oToneFilter.frequency.setValueAtTime(400 * tone, now);
+//     oToneFilter.Q.setValueAtTime(1, now);
+//     oscGain.connect(oToneFilter);
+//
+//     // Noise
+//     const n = createNoise(ctx, decay + 0.1, noiseType);
+//
+//     const ng = ctx.createGain();
+//     createEnvelope(ctx, ng.gain, 0.001, decay, 0, 0.01, 0.2);
+//     n.connect(ng);
+//
+//     const nHighpassFilter = ctx.createBiquadFilter();
+//     nHighpassFilter.type = 'highpass';
+//     nHighpassFilter.frequency.setValueAtTime(2000, now);
+//     ng.connect(nHighpassFilter);
+//
+//
+//     // Compressor
+//     const compressor = ctx.createDynamicsCompressor();
+//     oToneFilter.connect(compressor);
+//     nHighpassFilter.connect(compressor);
+//     compressor.connect(agMasterGain);
+//
+//     n.start(now);
+//     o.start(now);
+//     n.stop(now + decay + 0.2);
+//     o.stop(now + decay + 0.2);
+//   }
+//
+//   export function hihat(options: TR909Options = {}): void {
+//     const ctx = singleContext();
+//     if (!ctx) return;
+//
+//     const now = ctx.currentTime;
+//     const { decay = 0.08, tone = 1.5, noiseType = 'white' } = options;
+//
+//     // noise
+//     const noise = createNoise(ctx, decay + 0.05, noiseType);
+//     const noiseGain = ctx.createGain();
+//     createEnvelope(ctx, noiseGain.gain, 0.001, decay, 0.1, 0.05);
+//     noise.connect(noiseGain);
+//
+//     // noise filter
+//     const nHighpassFilter = ctx.createBiquadFilter();
+//     nHighpassFilter.type = 'highpass';
+//     nHighpassFilter.frequency.setValueAtTime(7000 * tone, now);
+//     noiseGain.connect(nHighpassFilter);
+//
+//     // compressor
+//     const compressor = ctx.createDynamicsCompressor();
+//     nHighpassFilter.connect(compressor);
+//     compressor.connect(agMasterGain);
+//
+//     noise.start(now);
+//     noise.stop(now + decay + 0.05);
+//   }
+//
+//   export function clap(options: TR909Options = {}): void {
+//     const ctx = singleContext();
+//     if (!ctx) return;
+//
+//     const now = ctx.currentTime;
+//     const { decay = 0.2, tone = 1, noiseType = 'white' } = options;
+//
+//     // noise 1
+//     const n1 = createNoise(ctx, 0.05, noiseType);
+//     const n1gain = ctx.createGain();
+//     createEnvelope(ctx, n1gain.gain, 0.001, 0.03, 0, 0.02);
+//     n1.connect(n1gain);
+//
+//     // noise 2
+//     const n2 = createNoise(ctx, decay, noiseType);
+//     const n2gain = ctx.createGain();
+//     createEnvelope(ctx, n2gain.gain, 0.02, decay - 0.02, 0.1, 0.05);
+//     n2.connect(n2gain);
+//
+//     // n1 + n2 filter
+//     const bandpassFilter = ctx.createBiquadFilter();
+//     bandpassFilter.type = 'bandpass';
+//     bandpassFilter.frequency.setValueAtTime(1000 * tone, now);
+//     bandpassFilter.Q.setValueAtTime(1.6, now);
+//     n1gain.connect(bandpassFilter);
+//     n2gain.connect(bandpassFilter);
+//
+//     // compressor
+//     const compressor = ctx.createDynamicsCompressor();
+//     bandpassFilter.connect(compressor);
+//     compressor.connect(agMasterGain);
+//
+//     n1.start(now);
+//     n2.start(now + 0.02);
+//     n1.stop(now + 0.05);
+//     n2.stop(now + decay);
+//   }
+// }
+
+
 /// Utility Functions ///
 
 function applyRoomAcoustics(ctx: AudioContext, source: AudioNode, roomSize: 'small' | 'large' = 'small'): void {
@@ -380,10 +568,10 @@ function applyRoomAcoustics(ctx: AudioContext, source: AudioNode, roomSize: 'sma
   source.connect(agMasterGain);
 }
 
-function createEnvelope(ctx: AudioContext, param: AudioParam, attackTime: number, decayTime: number, sustainLevel: number, releaseTime: number): void {
+function createEnvelope(ctx: AudioContext, param: AudioParam, attackTime: number, decayTime: number, sustainLevel: number, releaseTime: number, amplitude?: number): void {
   const now = ctx.currentTime;
   param.setValueAtTime(0, now);
-  param.linearRampToValueAtTime(1, now + attackTime);
+  param.linearRampToValueAtTime(amplitude !== undefined ? amplitude : 1, now + attackTime);
   param.linearRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
   param.linearRampToValueAtTime(0, now + attackTime + decayTime + releaseTime);
 }
@@ -421,6 +609,25 @@ function createNoise(ctx: AudioContext, duration: number, type: 'white' | 'pink'
   noiseSource.buffer = buffer;
   return noiseSource;
 }
+
+function noteToFrequency(note: string /* = 'C4' */): number {
+  const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const octave = parseInt(note.slice(-1));
+  const keyNumber = notes.indexOf(note.slice(0, -1));
+
+  if (keyNumber === -1) throw new Error('Invalid note');
+
+  // A4 is 440 Hz
+  const a4 = 440;
+
+  // Calculate half steps from A4
+  const halfStepsFromA4 = (octave - 4) * 12 + keyNumber - 9;
+
+  // Formula: f = 440 * (2^(1/12))^n
+  // Where n is the number of half steps from A4
+  return a4 * Math.pow(2, halfStepsFromA4 / 12);
+}
+
 
 // (Single) Global Audio Generation Context
 let agCtx: AudioContext;
