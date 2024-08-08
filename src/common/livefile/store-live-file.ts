@@ -23,17 +23,17 @@ interface LiveFileState {
 interface LiveFileActions {
 
   // Manage LiveFile objects
-  addFile: (fileSystemFileHandle: FileSystemFileHandle) => Promise<LiveFileId>;
-  removeFile: (fileId: LiveFileId) => void;
+  addLiveFile: (fileSystemFileHandle: FileSystemFileHandle) => Promise<LiveFileId>;
+  removeLiveFile: (fileId: LiveFileId) => void;
 
-  // File operations to (re)load and save content
-  closeFileContent: (fileId: LiveFileId) => Promise<void>;
-  reloadFileContent: (fileId: LiveFileId) => Promise<void>;
-  writeFileContentAndReload: (fileId: LiveFileId, content: string) => Promise<boolean>;
+  // Content operations
+  contentClose: (fileId: LiveFileId) => Promise<void>;
+  contentReload: (fileId: LiveFileId) => Promise<void>;
+  contentWriteAndReload: (fileId: LiveFileId, content: string) => Promise<boolean>;
 
   // Metadata is a smaller view on the files data, for listing purposes
-  getFileMetadata: (fileId: LiveFileId) => LiveFileMetadata | null;
-  updateFileMetadata: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' | 'referenceCount'>>) => void;
+  metadataGet: (fileId: LiveFileId) => LiveFileMetadata | null;
+  metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' | 'referenceCount'>>) => void;
 
   // addReference: (fileId: LiveFileId, referenceId: string) => void;
   // removeReference: (fileId: LiveFileId, referenceId: string) => void;
@@ -47,7 +47,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
     liveFiles: {},
 
 
-    addFile: async (fileSystemFileHandle: FileSystemFileHandle) => {
+    addLiveFile: async (fileSystemFileHandle: FileSystemFileHandle) => {
 
       // Reuse existing LiveFile if possible
       for (const otherLiveFile of Object.values(_get().liveFiles)) {
@@ -94,14 +94,14 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       return id;
     },
 
-    removeFile: (fileId: LiveFileId) =>
+    removeLiveFile: (fileId: LiveFileId) =>
       _set((state) => {
         const { [fileId]: _, ...otherFiles } = state.liveFiles;
         return { liveFiles: otherFiles };
       }),
 
 
-    closeFileContent: async (fileId: LiveFileId) => {
+    contentClose: async (fileId: LiveFileId) => {
       const liveFile = _get().liveFiles[fileId];
       if (!liveFile || liveFile.isSaving) return;
 
@@ -113,7 +113,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }));
     },
 
-    reloadFileContent: async (fileId: LiveFileId) => {
+    contentReload: async (fileId: LiveFileId) => {
       const liveFile = _get().liveFiles[fileId];
       if (!liveFile || liveFile.isLoading || liveFile.isSaving) return;
 
@@ -155,7 +155,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }
     },
 
-    writeFileContentAndReload: async (fileId: LiveFileId, newContent: string): Promise<boolean> => {
+    contentWriteAndReload: async (fileId: LiveFileId, newContent: string): Promise<boolean> => {
       const liveFile = _get().liveFiles[fileId];
       if (!liveFile || liveFile.isSaving) return false;
 
@@ -201,7 +201,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }
     },
 
-    updateFileMetadata: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' /*| 'referenceCount'*/>>) =>
+    metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' /*| 'referenceCount'*/>>) =>
       _set((state) => {
         const liveFile = state.liveFiles[fileId];
         if (!liveFile) return state;
@@ -213,7 +213,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
         };
       }),
 
-    getFileMetadata: (fileId: LiveFileId): LiveFileMetadata | null => {
+    metadataGet: (fileId: LiveFileId): LiveFileMetadata | null => {
       const liveFile = _get().liveFiles[fileId];
       if (!liveFile) return null;
       return {
@@ -288,7 +288,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
 // utility functions
 export function liveFileCreateOrThrow(fileSystemFileHandle: FileSystemFileHandle): Promise<LiveFileId> {
-  return useLiveFileStore.getState().addFile(fileSystemFileHandle);
+  return useLiveFileStore.getState().addLiveFile(fileSystemFileHandle);
 }
 
 export function liveFileGetAllValidIDs(): LiveFileId[] {

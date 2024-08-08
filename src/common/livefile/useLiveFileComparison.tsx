@@ -86,9 +86,9 @@ export function useLiveFileComparison(
   const {
     fileData,
     isPairingValid,
-    closeFileContent,
-    reloadFileContent,
-    writeFileContentAndReload,
+    liveFileContentClose,
+    liveFileContentReload,
+    liveFileContentWriteAndReload,
   } = useLiveFile(_liveFileId);
 
   // derived state
@@ -143,19 +143,19 @@ export function useLiveFileComparison(
   // callbacks
 
   const handleStopLiveFile = React.useCallback(async () => {
-    await closeFileContent();
+    await liveFileContentClose();
     setDiffSummary(null);
     setStatus(null);
-  }, [closeFileContent]);
+  }, [liveFileContentClose]);
 
   const _handleReloadFileContent = React.useCallback(async (liveFileId?: LiveFileId) => {
     if (isLoadingFile)
       setStatus({ message: 'Already Loading file...', mtype: 'info' });
     if (!fileHasContent)
       setStatus({ message: 'Reading file...', mtype: 'info' });
-    await reloadFileContent(liveFileId);
+    await liveFileContentReload(liveFileId);
     // content and errors will be reactive here (see effects)
-  }, [fileHasContent, isLoadingFile, reloadFileContent]);
+  }, [fileHasContent, isLoadingFile, liveFileContentReload]);
 
   const handlePairNewFSFHandle = React.useCallback(async (fsfHandle: FileSystemFileHandle) => {
     // Pair the file: create a LiveFile, replace it in the Fragment, and load the preview
@@ -207,12 +207,12 @@ export function useLiveFileComparison(
     )) return;
 
     setStatus({ message: 'Saving to file...', mtype: 'info' });
-    const saved = await writeFileContentAndReload(bufferText);
+    const saved = await liveFileContentWriteAndReload(bufferText);
     if (!saved) {
       // if not saved, the error will be shown in the effect
     } else
       setStatus({ message: 'Content saved to file.', mtype: 'success' });
-  }, [bufferText, isPairingValid, showPromisedOverlay, writeFileContentAndReload]);
+  }, [bufferText, isPairingValid, liveFileContentWriteAndReload, showPromisedOverlay]);
 
 
   // Memoed components code
