@@ -27,7 +27,7 @@
     "@mui/material": "^5.16.6",
     "@next/bundle-analyzer": "^14.2.5",
     "@next/third-parties": "^14.2.5",
-    "@prisma/client": "^5.17.0",
+    "@prisma/client": "^5.18.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.11.0",
     "@tanstack/react-query": "^5.51.21",
@@ -41,7 +41,7 @@
     "cheerio": "^1.0.0-rc.12",
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
-    "eventsource-parser": "^1.1.2",
+    "eventsource-parser": "^2.0.1",
     "idb-keyval": "^6.2.1",
     "mammoth": "^1.8.0",
     "nanoid": "^5.0.7",
@@ -87,7 +87,7 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.5",
     "prettier": "^3.3.3",
-    "prisma": "^5.17.0",
+    "prisma": "^5.18.0",
     "typescript": "^5.5.4"
   },
   "engines": {
