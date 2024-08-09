@@ -428,7 +428,7 @@ export function Composer(props: {
 
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
-  useGlobalShortcuts('Composer', React.useMemo(() => {
+  useGlobalShortcuts('ChatComposer', React.useMemo(() => {
     const composerShortcuts: ShortcutObject[] = [];
     if (supportsClipboardRead)
       composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
