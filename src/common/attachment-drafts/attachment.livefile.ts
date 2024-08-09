@@ -1,7 +1,4 @@
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
-import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
-
-import { liveFileCreateOrThrow, useLiveFileStore } from '~/common/livefile/store-live-file';
+import { liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 
 import type { AttachmentDraftSource } from './attachment.types';
 
@@ -19,10 +16,4 @@ export async function attachmentGetLiveFileId(source: AttachmentDraftSource) {
 
   // new or recycled
   return await liveFileCreateOrThrow(source.fileWithHandle.handle).catch(console.error) || undefined;
-}
-
-/** Adds a weak reference from the workspace to the live file */
-export function assignLiveFilesToWorkspace(attachmentFragment: DMessageAttachmentFragment, workspaceId: DWorkspaceId) {
-  if (attachmentFragment.liveFileId)
-    useLiveFileStore.getState().workspaceAssign(workspaceId, attachmentFragment.liveFileId);
 }

@@ -9,10 +9,12 @@ import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms'
 import { agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
+import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
+
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
-import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateCConversation } from './chat.conversation';
+import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -70,6 +72,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           conversations: [newConversation, ...state.conversations],
         }));
 
+        // [workspace] import messages' LiveFiles
+        workspaceActions().importAssignmentsFromMessages(newConversation.id, newConversation.messages);
+
         return newConversation.id;
       },
 
@@ -93,13 +98,16 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
         // every path that leads here should have an equivalent function ran, however, for extra
         // caution, we sanitize and re-run this here, to upgrade the message to the current version
-        V4ToHeadConverters.inMemHeadCleanDConversation(conversation);
+        V4ToHeadConverters.inMemHeadCleanDConversations([conversation]);
 
         conversation.tokenCount = updateMessagesTokenCounts(conversation.messages, true, 'importConversation');
 
         _set({
           conversations: [conversation, ...conversations.filter(_c => _c.id !== conversation.id)],
         });
+
+        // [workspace] import messages' LiveFiles
+        workspaceActions().importAssignmentsFromMessages(conversation.id, conversation.messages);
 
         return conversation.id;
       },
@@ -110,11 +118,14 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         if (!conversation)
           return null;
 
-        const branched = duplicateCConversation(conversation, messageId ?? undefined);
+        const branched = duplicateDConversation(conversation, messageId ?? undefined);
 
         _set({
           conversations: [branched, ...conversations],
         });
+
+        // [workspace] assign all files of workspace1 to workspace2 (HACK until we have workspaces != conversations)
+        workspaceActions().copyAssignments(conversation.id, branched.id);
 
         return branched.id;
       },
@@ -138,6 +149,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _set({
           conversations: newConversations,
         });
+
+        // [workspace] since conversation=workspace for now, remove all workspaces too
+        conversationIds.forEach(conversationId => workspaceActions().remove(conversationId));
 
         // return the next conversation Id in line, if valid
         return newConversations[(cIndex >= 0 && cIndex < newConversations.length) ? cIndex : 0].id;
@@ -176,6 +190,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       historyReplace: (conversationId: DConversationId, newMessages: DMessage[]) =>
         _get()._editConversation(conversationId, conversation => {
           conversation._abortController?.abort();
+
+          // [workspace]
+          // Note: not doing it for now, as all the callers' flows do not contain different LiveFiles,
+          // however, in general, we should act on the messages being replaced!
+
           return {
             messages: newMessages,
             ...(!!newMessages.length ? {} : {
@@ -197,6 +216,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
           const truncatedMessages = conversation.messages.slice(0, Math.max(0, messageIndex + 1 + offset));
 
+          // [workspace]
+          // Note: simple chat truncation does not side-effect workspaces
+
           return {
             messages: truncatedMessages,
             tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
@@ -211,6 +233,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
       appendMessage: (conversationId: DConversationId, message: DMessage) =>
         _get()._editConversation(conversationId, conversation => {
+
+          // [workspace] import message's resources into the workspace
+          workspaceActions().importAssignmentsFromMessages(conversationId, [message]);
 
           if (!message.pendingIncomplete)
             updateMessagesTokenCounts([message], true, 'appendMessage');
@@ -228,6 +253,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId, conversation => {
 
           const messages = conversation.messages.filter(message => message.id !== messageId);
+
+          // [workspace]
+          // Note: simple deletion of a message does not side-effect workspaces
 
           return {
             messages,
@@ -258,6 +286,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             return updatedMessage;
           });
 
+          // [workspaces]
+          // NOTE: we assume that no workspace side-effect-producing change is performed
+
           return {
             messages,
             tokenCount: messages.reduce((sum, message) => sum + 4 + message.tokenCount || 0, 3),
@@ -266,10 +297,15 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         }),
 
 
-      appendMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) =>
+      appendMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => {
         _get().editMessage(conversationId, messageId, message => ({
           fragments: [...message.fragments, fragment],
-        }), removePendingState, touchUpdated),
+        }), removePendingState, touchUpdated);
+
+        // [workspace]
+        // Note: in the future when we have side-effect appends (e.g. new Attachment/Docs/Etc) we may
+        // need implementation of the fragment methods here
+      },
 
       deleteMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragmentId: DMessageFragmentId, removePendingState: boolean, touchUpdated: boolean) =>
         _get().editMessage(conversationId, messageId, message => ({
@@ -384,7 +420,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         if (!state) return;
 
         // fixup conversations in-memory
-        (state.conversations || []).forEach(V4ToHeadConverters.inMemHeadCleanDConversation);
+        V4ToHeadConverters.inMemHeadCleanDConversations(state.conversations || []);
       },
 
     }),

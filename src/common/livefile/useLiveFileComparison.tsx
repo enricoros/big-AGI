@@ -16,7 +16,7 @@ import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
 import { LiveFileControlButton } from './LiveFileControlButton';
 import { liveFileCreateOrThrow } from './store-live-file';
-import { useLiveFile } from './liveFile.hooks';
+import { useLiveFileContent } from './liveFile.hooks';
 
 
 const sheetSx: SxProps = {
@@ -89,7 +89,7 @@ export function useLiveFileComparison(
     liveFileContentClose,
     liveFileContentReload,
     liveFileContentWriteAndReload,
-  } = useLiveFile(_liveFileId);
+  } = useLiveFileContent(_liveFileId);
 
   // derived state
   const fileContent = fileData?.content ?? undefined;

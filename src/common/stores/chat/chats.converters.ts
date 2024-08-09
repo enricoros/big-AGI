@@ -3,6 +3,7 @@ import type { SystemPurposeId } from '../../../data';
 import type { DModelSource } from '~/modules/llms/store-llms';
 
 import type { DFolder } from '~/common/state/store-folders';
+import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
@@ -12,19 +13,27 @@ import { createErrorContentFragment, isAttachmentFragment, isContentFragment, is
 
 export namespace V4ToHeadConverters {
 
-  export function inMemHeadCleanDConversation(c: DConversation): void {
+  export function inMemHeadCleanDConversations(cs: DConversation[]): void {
+    const validLiveFileIDs = liveFileGetAllValidIDs();
+    for (const c of cs)
+      _inMemHeadCleanDConversation(c, validLiveFileIDs);
+  }
+
+  function _inMemHeadCleanDConversation(c: DConversation, validLiveFileIDs: LiveFileId[]): void {
     // re-add transient properties
     c._abortController = null;
 
     // fixup .messages[]
     if (!c.messages)
       c.messages = [];
-    c.messages.forEach(inMemHeadCleanDMessage);
+
+    for (const message of c.messages)
+      inMemHeadCleanDMessage(message, validLiveFileIDs);
   }
 
 
   /** Used by: chat-store (load), recreation of DMessage */
-  export function inMemHeadCleanDMessage(m: DMessage): void {
+  export function inMemHeadCleanDMessage(m: DMessage, validLiveFileIDs: LiveFileId[]): void {
 
     // reset transient properties
     delete m.pendingIncomplete;
@@ -34,11 +43,10 @@ export namespace V4ToHeadConverters {
     delete (m as any).typing;
 
     // fixup .fragments[]
-    const validLiveFileIDs = liveFileGetAllValidIDs();
     for (let i = 0; i < m.fragments.length; i++) {
       const fragment = m.fragments[i];
 
-      // [GC][LiveFile] remove LiveFile references to invalid objects
+      // [GC][LiveFile] remove LiveFile references to invalid objects (also done in store-client-workspace)
       if (isAttachmentFragment(fragment) && fragment.liveFileId)
         if (!validLiveFileIDs.includes(fragment.liveFileId))
           delete fragment.liveFileId;
@@ -252,7 +260,7 @@ export namespace V3StoreDataToHead {
       if (updated) cm.updated = updated;
 
     }
-    V4ToHeadConverters.inMemHeadCleanDMessage(cm);
+    V4ToHeadConverters.inMemHeadCleanDMessage(cm, liveFileGetAllValidIDs());
     return cm;
   }
 
