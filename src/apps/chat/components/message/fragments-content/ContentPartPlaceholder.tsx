@@ -24,6 +24,7 @@ export function ContentPartPlaceholder(props: {
       showAsDanger={props.showAsDanger}
       showAsItalic={props.showAsItalic}
       renderTextAsMarkdown={false}
+      workspaceContents={null}
     />
   );
   //

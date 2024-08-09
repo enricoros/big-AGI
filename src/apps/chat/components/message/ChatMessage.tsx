@@ -619,6 +619,7 @@ export function ChatMessage(props: {
           {/* Content Fragments */}
           <ContentFragmentsWithInlineEdit
             fragments={contentFragments}
+            workspaceContents={props.workspaceContents}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={adjContentScaling}

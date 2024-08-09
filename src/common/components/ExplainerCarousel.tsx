@@ -235,6 +235,7 @@ export function ExplainerCarousel(props: {
               contentScaling='md'
               fitScreen={isMobile}
               renderTextAsMarkdown
+              workspaceContents={null}
             />
           </Box>
         )}

@@ -290,6 +290,7 @@ export function DocAttachmentFragmentEditor(props: {
           fitScreen={props.isMobile}
           specialCodePlain
           renderTextAsMarkdown={props.renderTextAsMarkdown}
+          workspaceContents={null}
         />
       )}
 
