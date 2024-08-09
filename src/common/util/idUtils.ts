@@ -6,6 +6,7 @@ type UidScope =
   | 'beam-fusion'
   | 'beam-preset-config'
   | 'beam-ray'
+  | 'chat-block'
   | 'chat-dconversation'
   | 'chat-dmessage'
   | 'chat-dfragment'
@@ -34,7 +35,7 @@ export function agiUuid(_scope: Exclude<UidScope, 'chat-dfragment'>) {
 /*
  * Smaller version of the above, without claims of uniqueness
  */
-export function agiId(scope: Extract<UidScope, 'chat-dfragment'>) {
+export function agiId(scope: Extract<UidScope, 'chat-dfragment' | 'chat-block'>) {
   // if (scope === 'chat-dfragment')
   //   return 'f-' + nanoid(8);
   return nanoid(scope === 'chat-dfragment' ? 8 : 16);
