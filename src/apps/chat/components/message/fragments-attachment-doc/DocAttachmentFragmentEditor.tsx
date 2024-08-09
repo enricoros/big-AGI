@@ -284,7 +284,7 @@ export function DocAttachmentFragmentEditor(props: {
         <AutoBlocksRenderer
           // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
           text={fragmentDocPart.data.text}
-          renderAsCodeTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
+          renderAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}
           fitScreen={props.isMobile}

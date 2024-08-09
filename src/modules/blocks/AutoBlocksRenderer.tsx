@@ -1,12 +1,13 @@
 import * as React from 'react';
-import type { Diff as TextDiff } from '@sanity/diff-match-patch';
+import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 
+import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { ContentScaling } from '~/common/app.theme';
+import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import type { Block, CodeBlock, HtmlBlock, ImageBlock, TextBlock } from './blocks.types';
 import { BlocksContainer } from './BlocksContainers';
-import { RenderHtmlResponse } from './html/RenderHtmlResponse';
+import { RenderBlockInputs } from './blocks.types';
+import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainChatText } from './plaintext/RenderPlainChatText';
@@ -19,25 +20,6 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 
 // How long is the user collapsed message
 const USER_COLLAPSED_LINES: number = 8;
-
-
-function areBlocksEqual(a: Block, b: Block): boolean {
-  if (a.type !== b.type)
-    return false;
-
-  switch (a.type) {
-    case 'codeb':
-      return a.blockTitle === (b as CodeBlock).blockTitle && a.blockCode === (b as CodeBlock).blockCode && a.complete === (b as CodeBlock).complete;
-    case 'diffb':
-      return false; // diff blocks are never equal
-    case 'htmlb':
-      return a.html === (b as HtmlBlock).html;
-    case 'imageb':
-      return a.url === (b as ImageBlock).url && a.alt === (b as ImageBlock).alt;
-    case 'textb':
-      return a.content === (b as TextBlock).content;
-  }
-}
 
 
 type BlocksRendererProps = {
@@ -53,9 +35,9 @@ type BlocksRendererProps = {
   specialCodePlain?: boolean;
   specialDiagramMode?: boolean;
 
-  renderAsCodeTitle?: string;
+  renderAsCodeWithTitle?: string;
   renderTextAsMarkdown: boolean;
-  renderTextDiff?: TextDiff[];
+  renderSanityTextDiffs?: SanityTextDiff[];
 
   /**
    * optimization: allow memo to all individual blocks except the last one
@@ -78,10 +60,10 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
 
   // state
   const [forceUserExpanded, setForceUserExpanded] = React.useState(false);
-  const prevBlocksRef = React.useRef<Block[]>([]);
+  const prevBlocksRef = React.useRef<RenderBlockInputs>([]);
 
   // derived state
-  const { text: _text, renderTextDiff } = props;
+  const { text: _text, renderSanityTextDiffs } = props;
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
@@ -107,21 +89,26 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
   // Block splitter, with memo and special recycle of former blocks, to help React minimize render work
 
   const autoBlocksMemo = React.useMemo(() => {
+
     // follow outside direction, or activate the auto-splitter based on content
-    const newBlocks: Block[] =
-      props.renderAsCodeTitle ? [{ type: 'codeb', blockTitle: props.renderAsCodeTitle, blockCode: text, complete: true }]
-        : fromSystem ? [{ type: 'textb', content: text }]
-          : (renderTextDiff && renderTextDiff.length >= 1) ? [{ type: 'diffb', textDiffs: renderTextDiff }]
-            : parseBlocksFromText(text);
+    const newBlocks: RenderBlockInputs = [];
+    if (props.renderAsCodeWithTitle)
+      newBlocks.push({ bkt: 'code-bk', title: props.renderAsCodeWithTitle, code: text, isPartial: false });
+    else if (fromSystem)
+      newBlocks.push({ bkt: 'md-bk', content: text });
+    else if (renderSanityTextDiffs && renderSanityTextDiffs.length >= 1)
+      newBlocks.push({ bkt: 'txt-diffs-bk', sanityTextDiffs: renderSanityTextDiffs });
+    else
+      newBlocks.push(...parseBlocksFromText(text));
 
     // recycle the previous blocks if they are the same, for stable references to React
-    const recycledBlocks: Block[] = [];
+    const recycledBlocks: RenderBlockInputs = [];
     for (let i = 0; i < newBlocks.length; i++) {
       const newBlock = newBlocks[i];
-      const prevBlock: Block | undefined = prevBlocksRef.current[i];
+      const prevBlock = prevBlocksRef.current[i] ?? undefined;
 
       // Check if the new block can be replaced by the previous block to maintain reference stability
-      if (prevBlock && areBlocksEqual(prevBlock, newBlock)) {
+      if (prevBlock && shallowEquals(prevBlock, newBlock)) {
         recycledBlocks.push(prevBlock);
       } else {
         // Once a block doesn't match, we use the new blocks from this point forward.
@@ -135,9 +122,9 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
 
     // Apply specialDiagramMode filter if applicable
     return props.specialDiagramMode
-      ? recycledBlocks.filter(block => block.type === 'codeb' || recycledBlocks.length === 1)
+      ? recycledBlocks.filter(({ bkt }) => bkt === 'code-bk' || recycledBlocks.length === 1)
       : recycledBlocks;
-  }, [fromSystem, props.renderAsCodeTitle, props.specialDiagramMode, renderTextDiff, text]);
+  }, [fromSystem, props.renderAsCodeWithTitle, props.specialDiagramMode, renderSanityTextDiffs, text]);
 
 
   // Memo the styles, to minimize re-renders
@@ -156,18 +143,73 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
     >
 
       {/* sequence of render components, for each Block */}
-      {autoBlocksMemo.map((block, index) => {
+      {autoBlocksMemo.map((bkInput, index) => {
+
         // Optimization: only memo the non-currently-rendered components, if the message is still in flux
-        const optimizeSubBlockWithMemo = props.optiAllowSubBlocksMemo === true && index < (autoBlocksMemo.length - 1);
-        const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeSubBlockWithMemo);
-        const RenderMarkdownMemoOrNot = optimizeSubBlockWithMemo ? RenderMarkdownMemo : RenderMarkdown;
-        return block.type === 'htmlb' ? <RenderHtmlResponse key={'html-' + index} htmlBlock={block} sx={scaledCodeSx} />
-          : block.type === 'codeb' ? <RenderCodeMemoOrNot key={'code-' + index} codeBlock={block} fitScreen={props.fitScreen} initialShowHTML={props.showUnsafeHtml} noCopyButton={props.specialDiagramMode} optimizeLightweight={optimizeSubBlockWithMemo} sx={scaledCodeSx} />
-            : block.type === 'imageb' ? <RenderImageURL key={'image-' + index} imageURL={block.url} expandableText={block.alt} onImageRegenerate={undefined /* we'd need to have selective fragment editing as there could be many of these URL images in a fragment */} scaledImageSx={scaledImageSx} variant='content-part' />
-              : block.type === 'diffb' ? <RenderTextDiff key={'text-diff-' + index} textDiffBlock={block} sx={scaledTypographySx} />
-                : (props.renderTextAsMarkdown && !fromSystem && !isUserCommand)
-                  ? <RenderMarkdownMemoOrNot key={'text-md-' + index} textBlock={block} sx={scaledTypographySx} />
-                  : <RenderPlainChatText key={'text-' + index} textBlock={block} sx={scaledTypographySx} />;
+        const optimizeMemoBeforeLastBlock = props.optiAllowSubBlocksMemo === true && index < (autoBlocksMemo.length - 1);
+
+        switch (bkInput.bkt) {
+
+          case 'md-bk':
+            const RenderMarkdownMemoOrNot = optimizeMemoBeforeLastBlock ? RenderMarkdownMemo : RenderMarkdown;
+            return (props.renderTextAsMarkdown && !fromSystem && !isUserCommand) ? (
+              <RenderMarkdownMemoOrNot
+                key={'md-bk-' + index}
+                content={bkInput.content}
+                sx={scaledTypographySx}
+              />
+            ) : (
+              <RenderPlainChatText
+                key={'txt-bk-' + index}
+                content={bkInput.content}
+                sx={scaledTypographySx}
+              />
+            );
+
+          case 'code-bk':
+            const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeMemoBeforeLastBlock);
+            return (
+              <RenderCodeMemoOrNot
+                key={'code-bk-' + index}
+                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
+                fitScreen={props.fitScreen}
+                initialShowHTML={props.showUnsafeHtml}
+                noCopyButton={props.specialDiagramMode}
+                optimizeLightweight={optimizeMemoBeforeLastBlock}
+                sx={scaledCodeSx}
+              />
+            );
+
+          case 'dang-html-bk':
+            return (
+              <RenderDangerousHtml
+                key={'dang-html-bk-' + index}
+                html={bkInput.html}
+                sx={scaledCodeSx}
+              />
+            );
+
+          case 'img-url-bk':
+            return (
+              <RenderImageURL
+                key={'img-url-bk-' + index}
+                imageURL={bkInput.url}
+                expandableText={bkInput.alt}
+                onImageRegenerate={undefined /* we'd need to have selective fragment editing as there could be many of these URL images in a fragment */}
+                scaledImageSx={scaledImageSx}
+                variant='content-part'
+              />
+            );
+
+          case 'txt-diffs-bk':
+            return (
+              <RenderTextDiff
+                key={'txt-diffs-bk-' + index}
+                sanityTextDiffs={bkInput.sanityTextDiffs}
+                sx={scaledTypographySx}
+              />
+            );
+        }
       })}
 
       {(isTextCollapsed || forceUserExpanded) && (

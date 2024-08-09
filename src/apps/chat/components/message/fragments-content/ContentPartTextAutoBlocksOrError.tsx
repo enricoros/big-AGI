@@ -59,7 +59,7 @@ export function ContentPartTextAutoBlocksOrError(props: {
       fitScreen={props.fitScreen}
       showUnsafeHtml={props.showUnsafeHtml}
       renderTextAsMarkdown={props.renderTextAsMarkdown}
-      renderTextDiff={props.renderTextDiff}
+      renderSanityTextDiffs={props.renderTextDiff}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}

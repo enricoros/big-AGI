@@ -166,7 +166,7 @@ export function AppDiff() {
               p: 1,
             }}>
               <RenderTextDiff
-                textDiffBlock={{ type: 'diffb', textDiffs: diffs }}
+                sanityTextDiffs={diffs}
                 sx={scaledTypographySx}
               />
             </Card>

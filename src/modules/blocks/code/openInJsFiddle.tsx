@@ -6,7 +6,7 @@ export function isJSFiddleSupported(language: string | null, code: string) {
 }
 
 export function openInJsFiddle(code: string, language: string) {
-  // heuristics to assing the code to one of the blocks
+  // heuristics to build the request
   const isHTML = language === 'html';
   const isCSS = language === 'css';
   const isJSorUnknown = !isHTML && !isCSS;

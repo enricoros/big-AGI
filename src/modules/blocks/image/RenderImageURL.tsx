@@ -12,36 +12,28 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { Link } from '~/common/components/Link';
 
-import type { ImageBlock } from '../blocks.types';
+import { RenderBlockInputs } from '../blocks.types';
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx, StyledOverlayButton } from '../OverlayButton';
 
 
-const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;
-const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|svg)/i;
-
-const overlayButtonsGridSx: SxProps = {
-  ...overlayButtonsSx,
-  display: 'grid',
-  gridTemplateColumns: 'auto auto',
-  gap: 0.5,
-};
+/// Heuristics to parse Markdown images (as URLs) ///
 
 /**
  * Checks if the entire content consists solely of Markdown image references.
  * If so, returns an array of ImageBlock objects for each image reference.
  * If any non-image content is present or if there are no image references, returns null.
  */
-export function heuristicMarkdownImageReferenceBlocks(fullText: string) {
+export function heuristicAllMarkdownImageReferences(fullText: string) {
 
   // Check if all lines are valid Markdown image references with image URLs
-  const imageBlocks: ImageBlock[] = [];
+  const imageBlocks: RenderBlockInputs = [];
   for (const line of fullText.split('\n')) {
     if (line.trim() === '') continue; // skip empty lines
     const match = mdImageReferenceRegex.exec(line);
     if (match && imageExtensions.test(match[2])) {
       const alt = match[1];
       const url = match[2];
-      imageBlocks.push({ type: 'imageb', url, alt });
+      imageBlocks.push({ bkt: 'img-url-bk', url, alt });
     } else {
       // if there is any outlier line, return null
       return null;
@@ -52,39 +44,24 @@ export function heuristicMarkdownImageReferenceBlocks(fullText: string) {
   return imageBlocks.length > 0 ? imageBlocks : null;
 }
 
-const prodiaUrlRegex = /^(https?:\/\/images\.prodia\.\S+)$/i;
+const mdImageReferenceRegex = /^!\[([^\]]*)]\(([^)]+)\)$/;
+const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|svg)/i;
 
-/**
- * Legacy heuristic for detecting images from "images.prodia." URLs.
- * @deprecated Remove in mid 2024
- */
-export function heuristicLegacyImageBlocks(fullText: string): ImageBlock[] | null {
 
-  // Check if all lines are URLs starting with "http://images.prodia." or "https://images.prodia."
-  const imageBlocks: ImageBlock[] = [];
-  for (const line of fullText.split('\n')) {
-    const match = prodiaUrlRegex.exec(line);
-    if (match) {
-      const url = match[1];
-      imageBlocks.push({ type: 'imageb', url });
-    } else {
-      // if there is any outlier line, return null
-      return null;
-    }
-  }
-
-  // Return the image blocks if all lines are URLs from "images.prodia."
-  return imageBlocks.length > 0 ? imageBlocks : null;
-}
-
+const overlayButtonsGridSx: SxProps = {
+  ...overlayButtonsSx,
+  display: 'grid',
+  gridTemplateColumns: 'auto auto',
+  gap: 0.5,
+};
 
 export type RenderImageURLVarint = 'content-part' | 'attachment-card' | 'attachment-button';
 
 export const RenderImageURL = (props: {
-  imageURL: string | null,              // remote URL, or data URL
-  overlayText?: React.ReactNode, // bottom overlay text
-  expandableText?: string,          // expandable pane below the image
-  variant: RenderImageURLVarint,        // either a responsive Block image, or an inline Card
+  imageURL: string | null,        // remote URL, or data URL: `data:image/png;base64,...`
+  overlayText?: React.ReactNode,  // bottom overlay text
+  expandableText?: string,        // expandable pane below the image
+  variant: RenderImageURLVarint,  // either a responsive Block image, or an inline Card
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
   onImageRegenerate?: () => void,

@@ -8,12 +8,12 @@ import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { patchSvgString } from './RenderCodeSVG';
 
 
-export function heuristicIsBlockPlantUML(blockCode: string) {
-  return (blockCode.startsWith('@startuml') && blockCode.endsWith('@enduml'))
-    || (blockCode.startsWith('@startmindmap') && blockCode.endsWith('@endmindmap'))
-    || (blockCode.startsWith('@startsalt') && blockCode.endsWith('@endsalt'))
-    || (blockCode.startsWith('@startwbs') && blockCode.endsWith('@endwbs'))
-    || (blockCode.startsWith('@startgantt') && blockCode.endsWith('@endgantt'));
+export function heuristicIsCodePlantUML(code: string) {
+  return (code.startsWith('@startuml') && code.endsWith('@enduml'))
+    || (code.startsWith('@startmindmap') && code.endsWith('@endmindmap'))
+    || (code.startsWith('@startsalt') && code.endsWith('@endsalt'))
+    || (code.startsWith('@startwbs') && code.endsWith('@endwbs'))
+    || (code.startsWith('@startgantt') && code.endsWith('@endgantt'));
 }
 
 
@@ -26,11 +26,11 @@ export const diagramSx: SxProps = {
 
 // PlantUML -> SVG fetchers
 
-export function usePlantUmlSvg(enabled: boolean, blockCode: string) {
+export function usePlantUmlSvg(enabled: boolean, code: string) {
   return useQuery({
     enabled,
-    queryKey: ['plantuml', blockCode],
-    queryFn: () => _fetchPlantUmlSvg(blockCode),
+    queryKey: ['plantuml', code],
+    queryFn: () => _fetchPlantUmlSvg(code),
     staleTime: 24 * 60 * 60 * 1000, // 1 day
   });
 }

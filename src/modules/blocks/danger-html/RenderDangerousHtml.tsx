@@ -7,7 +7,6 @@ import WebIcon from '@mui/icons-material/Web';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import type { HtmlBlock } from '../blocks.types';
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from '../code/RenderCodeHtmlIFrame';
 
@@ -18,7 +17,9 @@ export function heuristicIsBlockPureHTML(text: string): boolean {
 }
 
 
-export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }) {
+export function RenderDangerousHtml(props: { html: string, sx?: SxProps }) {
+
+  // state
   const [showHTML, setShowHTML] = React.useState(false);
 
   // remove the font* properties from sx
@@ -29,7 +30,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
 
   const handleCopyToClipboard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(props.htmlBlock.html, 'HTML');
+    copyToClipboard(props.html, 'HTML');
   };
 
   return (
@@ -48,7 +49,7 @@ export function RenderHtmlResponse(props: { htmlBlock: HtmlBlock, sx?: SxProps }
 
         {/* Highlighted Code / SVG render */}
         {showHTML
-          ? <RenderCodeHtmlIFrame htmlCode={props.htmlBlock.html} />
+          ? <RenderCodeHtmlIFrame htmlCode={props.html} />
           : <Box>
             <Typography>
               <b>CAUTION</b> - The content you are about to access is an HTML page. It is possible that an
