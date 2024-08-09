@@ -7,7 +7,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { AppPlaceholder } from '../../src/apps/AppPlaceholder';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
-import { getPlantUmlServerUrl } from '~/modules/blocks/code/RenderCodePlantUML';
+import { getPlantUmlServerUrl } from '~/modules/blocks/code/code-renderers/RenderCodePlantUML';
 
 import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
