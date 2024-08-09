@@ -9,6 +9,7 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { InlineError } from '~/common/components/InlineError';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { createDMessageTextContent, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
@@ -33,6 +34,7 @@ import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-ov
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   conversationHandler: ConversationHandler | null,
+  workspaceContents: WorkspaceContents | null,
   capabilityHasT2I: boolean,
   chatLLMContextTokens: number | null,
   fitScreen: boolean,
@@ -271,7 +273,7 @@ export function ChatMessageList(props: {
         />
       )}
 
-      {filteredMessages.map((message, idx, { length: count }) => {
+      {filteredMessages.map((message, idx) => {
 
           // Optimization: only memo complete components, or we'd be memoizing garbage
           const ChatMessageMemoOrNot = !message.pendingIncomplete ? ChatMessageMemo : ChatMessage;
@@ -294,7 +296,7 @@ export function ChatMessageList(props: {
               fitScreen={props.fitScreen}
               hasInReferenceTo={composerHasInReferenceto}
               isMobile={props.isMobile}
-              isBottom={idx === count - 1}
+              isBottom={idx === filteredMessages.length - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
               showUnsafeHtml={danger_experimentalHtmlWebUi}
