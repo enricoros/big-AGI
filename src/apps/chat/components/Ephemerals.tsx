@@ -1,13 +1,12 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PushPinIcon from '@mui/icons-material/PushPin';
 
-import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DEphemeral } from '~/common/chat-overlay/EphemeralsStore';
-import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
+import type { DEphemeral } from '~/common/chat-overlay/store-ephemeralsoverlay-slice';
+import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
@@ -76,15 +75,20 @@ function StateRenderer(props: { state: object }) {
 }
 
 
-function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
+function EphemeralItem(props: {
+  ephemeral: DEphemeral,
+  conversationHandler: ConversationHandler,
+}) {
+
+  const { ephemeral, conversationHandler } = props;
 
   const handleDelete = React.useCallback(() => {
-    ConversationsManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
-  }, [conversationId, ephemeral.id]);
+    conversationHandler.overlayActions.ephemeralsDelete(ephemeral.id);
+  }, [conversationHandler, ephemeral.id]);
 
   const handleTogglePinned = React.useCallback(() => {
-    ConversationsManager.getHandler(conversationId).ephemeralsStore.togglePinned(ephemeral.id);
-  }, [conversationId, ephemeral.id]);
+    conversationHandler.overlayActions.ephemeralsTogglePinned(ephemeral.id);
+  }, [conversationHandler, ephemeral.id]);
 
   return <Box
     sx={{
@@ -170,13 +174,21 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 // `);
 
 
-export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId, sx?: SxProps }) {
+export function Ephemerals(props: {
+  ephemerals: DEphemeral[],
+  conversationHandler: ConversationHandler,
+  sx?: SxProps
+}) {
   return (
     <Sheet variant='soft' color='success' invertedColors sx={props.sx}>
 
       {props.ephemerals.map((ephemeral, i) => (
-        <EphemeralItem key={`ephemeral-${i}`} conversationId={props.conversationId!} ephemeral={ephemeral} />),
-      )}
+        <EphemeralItem
+          key={`ephemeral-${i}`}
+          ephemeral={ephemeral}
+          conversationHandler={props.conversationHandler}
+        />
+      ))}
 
     </Sheet>
   );

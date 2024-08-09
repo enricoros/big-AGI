@@ -17,7 +17,7 @@ import { getConversation, useChatStore } from '~/common/stores/chat/store-chats'
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useEphemerals } from '~/common/chat-overlay/EphemeralsStore';
+import { useChatOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
@@ -25,7 +25,6 @@ import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessag
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
-import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 
 
 /**
@@ -66,12 +65,14 @@ export function ChatMessageList(props: {
       historyTokenCount: conversation ? conversation.tokenCount : 0,
     };
   }));
-  const ephemerals = useEphemerals(props.conversationHandler);
+  const { _composerInReferenceToCount, ephemerals } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
+    _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
+    ephemerals: state.ephemerals,
+  })));
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;
-  const _composerInReferenceToCount = useChatComposerOverlayStore(conversationHandler?.getOverlayStore() ?? null, state => state.inReferenceTo?.length ?? 0);
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
   const composerHasInReferenceto = _composerInReferenceToCount > 0;
 
@@ -156,7 +157,7 @@ export function ChatMessageList(props: {
   }, [props.conversationHandler]);
 
   const handleAddInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
-    props.conversationHandler?.getOverlayStore().getState().addInReferenceTo(item);
+    props.conversationHandler?.overlayActions.addInReferenceTo(item);
   }, [props.conversationHandler]);
 
   const handleTextDiagram = React.useCallback(async (messageId: DMessageId, text: string) => {
@@ -322,10 +323,10 @@ export function ChatMessageList(props: {
       )}
 
       {/* Render ephemerals (sidebar ReAct output widgets) at the bottom */}
-      {!!ephemerals.length && !!props.conversationId && (
+      {!!ephemerals.length && !!conversationHandler && (
         <Ephemerals
           ephemerals={ephemerals}
-          conversationId={props.conversationId}
+          conversationHandler={conversationHandler}
           sx={{
             mt: 'auto',
             overflowY: 'auto',
