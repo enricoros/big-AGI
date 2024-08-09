@@ -6,6 +6,9 @@ export type RenderBlockInputs = BlockInput[];
 
 // In order of priority from the most frequent to the least
 type BlockInput = {
+  bkId?: string;
+  /* Other fields remain the same */
+} & ({
   /* Rendered as markdown or plain text */
   bkt: 'md-bk';
   content: string;
@@ -28,4 +31,4 @@ type BlockInput = {
   /* Rendered as red/green text diffs */
   bkt: 'txt-diffs-bk';
   sanityTextDiffs: SanityTextDiff[];
-};
+});

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 
+import { agiId } from '~/common/util/idUtils';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { RenderBlockInputs } from './blocks.types';
@@ -43,42 +44,48 @@ export function useTextCollapser(origText: string, enable: boolean) {
 }
 
 
+// Helper function to compare blocks without considering their IDs
+function areBlocksEqualIdIgnored(block1: RenderBlockInputs[number] | undefined, block2: RenderBlockInputs[number] | undefined): boolean {
+  if (!block1 || !block2)
+    return false;
+  const { bkId: _, ...rest1 } = block1;
+  const { bkId: __, ...rest2 } = block2;
+  return shallowEquals(rest1, rest2);
+}
+
 export function useAutoBlocksMemo(text: string, forceCodeWithTitle: string | undefined, forceMarkdown: boolean, forceSanityTextDiffs: SanityTextDiff[] | undefined): RenderBlockInputs {
 
   // state - previous blocks, to stabilize objects
   const prevBlocksRef = React.useRef<RenderBlockInputs>([]);
+  const prevTextRef = React.useRef('');
 
   return React.useMemo(() => {
-
-    // follow outside direction, or activate the auto-splitter based on content
-    const newBlocks: RenderBlockInputs = [];
+    let newBlocks: RenderBlockInputs;
     if (forceCodeWithTitle !== undefined)
-      newBlocks.push({ bkt: 'code-bk', title: forceCodeWithTitle, code: text, isPartial: false });
+      newBlocks = [{ bkt: 'code-bk', title: forceCodeWithTitle, code: text, isPartial: false }];
     else if (forceMarkdown)
-      newBlocks.push({ bkt: 'md-bk', content: text });
+      newBlocks = [{ bkt: 'md-bk', content: text }];
     else if (forceSanityTextDiffs && forceSanityTextDiffs.length >= 1)
-      newBlocks.push({ bkt: 'txt-diffs-bk', sanityTextDiffs: forceSanityTextDiffs });
+      newBlocks = [{ bkt: 'txt-diffs-bk', sanityTextDiffs: forceSanityTextDiffs }];
     else
-      newBlocks.push(...parseBlocksFromText(text));
+      newBlocks = parseBlocksFromText(text);
 
-    // recycle the previous blocks if they are the same, for stable references to React
-    const recycledBlocks: RenderBlockInputs = [];
-    for (let i = 0; i < newBlocks.length; i++) {
-      const newBlock = newBlocks[i];
-      const prevBlock = prevBlocksRef.current[i] ?? undefined;
+    const recycledBlocks: RenderBlockInputs = newBlocks.map((newBlock, index) => {
+      const prevBlock = prevBlocksRef.current[index] ?? undefined;
+      const isLastBlock = index === newBlocks.length - 1;
+      const isStreaming = isLastBlock && text.startsWith(prevTextRef.current);
 
-      // Check if the new block can be replaced by the previous block to maintain reference stability
-      if (prevBlock && shallowEquals(prevBlock, newBlock)) {
-        recycledBlocks.push(prevBlock);
-      } else {
-        // Once a block doesn't match, we use the new blocks from this point forward.
-        recycledBlocks.push(...newBlocks.slice(i));
-        break;
-      }
-    }
+      if (areBlocksEqualIdIgnored(prevBlock, newBlock))
+        return prevBlock;
 
-    // Update prevBlocksRef with the current blocks for the next render
+      if (isStreaming && prevBlock?.bkt === newBlock.bkt)
+        return { ...newBlock, bkId: prevBlock.bkId };
+
+      return { ...newBlock, bkId: agiId('chat-block') };
+    });
+
     prevBlocksRef.current = recycledBlocks;
+    prevTextRef.current = text;
 
     return recycledBlocks;
   }, [forceCodeWithTitle, forceMarkdown, forceSanityTextDiffs, text]);
