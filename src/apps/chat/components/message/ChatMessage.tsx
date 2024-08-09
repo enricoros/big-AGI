@@ -24,6 +24,7 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
@@ -51,6 +52,26 @@ const BUBBLE_MIN_TEXT_LENGTH = 3;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
+
+
+const messageBodySx: SxProps = {
+  display: 'flex',
+  alignItems: 'flex-start', // avatars at the top, and honor 'static' position
+  gap: { xs: 0, md: 1 },
+};
+
+const messageBodyReverseSx: SxProps = {
+  ...messageBodySx,
+  flexDirection: 'row-reverse',
+};
+
+const personaAvatarOrMenuSx: SxProps = {
+  display: 'flex',
+};
+
+const editButtonWrapSx: SxProps = {
+  overflowWrap: 'anywhere',
+};
 
 
 export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: string };
@@ -479,13 +500,10 @@ export function ChatMessage(props: {
 
 
       {/* Message Row: Aside, Fragment[][], Aside2 */}
-      <Box role={undefined /* aside | message | ops */} sx={{
-        display: 'flex',
-        flexDirection: !fromAssistant ? 'row-reverse' : 'row',
-        alignItems: 'flex-start', // avatars at the top, and honor 'static' position
-        gap: { xs: 0, md: 1 },
-      }}>
-
+      <Box
+        role={undefined /* aside | message | ops */}
+        sx={fromAssistant ? messageBodySx : messageBodyReverseSx}
+      >
 
         {/* [start-Avatar] Avatar (Persona) */}
         {!props.hideAvatar && !isEditingText && (
@@ -501,7 +519,7 @@ export function ChatMessage(props: {
               onContextMenu={handleOpsMenuToggle}
               onMouseEnter={props.isMobile ? undefined : () => setIsHovering(true)}
               onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
-              sx={{ display: 'flex' }}
+              sx={personaAvatarOrMenuSx}
             >
               {showAvatarIcon && !isHovering && !opsMenuAnchor ? (
                 avatarIconEl
@@ -534,14 +552,13 @@ export function ChatMessage(props: {
 
         {/* [start-Edit] Fragments Edit: Apply */}
         {isEditingText && (
-          <Box sx={messageAsideColumnSx}>
-            {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
+          <Box sx={messageAsideColumnSx} className='msg-edit-button'>
             <Tooltip arrow disableInteractive title='Apply Edits'>
-              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApplyClicked} sx={{ mt: 0.25 }}>
+              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApplyClicked}>
                 <CheckRoundedIcon />
               </IconButton>
             </Tooltip>
-            <Typography level='body-xs' sx={{ overflowWrap: 'anywhere', mt: 0.25 }}>
+            <Typography level='body-xs' sx={editButtonWrapSx}>
               Done
             </Typography>
           </Box>
@@ -650,14 +667,13 @@ export function ChatMessage(props: {
 
         {/* [end-Edit] Fragments Edit: Cancel */}
         {isEditingText && (
-          <Box sx={messageAsideColumnSx}>
-            {/*<Typography level='body-xs'>&nbsp;</Typography>*/}
+          <Box sx={messageAsideColumnSx} className='msg-edit-button'>
             <Tooltip arrow disableInteractive title='Discard Edits'>
-              <IconButton size='md' onClick={handleEditsCancel}>
+              <IconButton size='sm' variant='solid' onClick={handleEditsCancel}>
                 <CloseRoundedIcon />
               </IconButton>
             </Tooltip>
-            <Typography level='body-xs' sx={{ overflowWrap: 'anywhere' }}>
+            <Typography level='body-xs' sx={editButtonWrapSx}>
               Cancel
             </Typography>
           </Box>
