@@ -88,6 +88,7 @@ export const ChatMessageMemo = React.memo(ChatMessage);
  */
 export function ChatMessage(props: {
   message: DMessage,
+  workspaceContents: WorkspaceContents | null,
   diffPreviousText?: string,
   fitScreen: boolean,
   hasInReferenceTo?: boolean;
