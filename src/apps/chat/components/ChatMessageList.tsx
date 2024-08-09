@@ -318,7 +318,8 @@ export function ChatMessageList(props: {
         },
       )}
 
-      {!!ephemerals.length && (
+      {/* Render ephemerals (sidebar ReAct output widgets) at the bottom */}
+      {!!ephemerals.length && !!props.conversationId && (
         <Ephemerals
           ephemerals={ephemerals}
           conversationId={props.conversationId}

@@ -90,6 +90,8 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
     sx={{
       p: { xs: 1, md: 2 },
       position: 'relative',
+      borderTop: '1px solid',
+      borderTopColor: 'divider',
       // border: (i < ephemerals.length - 1) ? `2px solid ${theme.palette.divider}` : undefined,
     }}>
 
@@ -168,25 +170,13 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 // `);
 
 
-export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId | null, sx?: SxProps }) {
-
-  const ephemerals = props.ephemerals;
-  // if (!ephemerals?.length) return null;
-
+export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId, sx?: SxProps }) {
   return (
-    <Sheet
-      variant='soft' color='success' invertedColors
-      sx={{
-        borderTop: '1px solid',
-        borderTopColor: 'divider',
-        // backgroundImage: `url("data:image/svg+xml,${dashedBorderSVG.replace('currentColor', '%23A1E8A1')}")`,
-        // backgroundSize: '100% 100%',
-        // backgroundRepeat: 'no-repeat',
-        ...(props.sx || {}),
-      }}>
+    <Sheet variant='soft' color='success' invertedColors sx={props.sx}>
 
-      {ephemerals.map((ephemeral, i) =>
-        props.conversationId && <EphemeralItem key={`ephemeral-${i}`} conversationId={props.conversationId} ephemeral={ephemeral} />)}
+      {props.ephemerals.map((ephemeral, i) => (
+        <EphemeralItem key={`ephemeral-${i}`} conversationId={props.conversationId!} ephemeral={ephemeral} />),
+      )}
 
     </Sheet>
   );
