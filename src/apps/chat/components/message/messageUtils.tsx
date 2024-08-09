@@ -37,6 +37,11 @@ export const messageAsideColumnSx: SxProps = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+
+  // when with the 'edit-button' class
+  '&.msg-edit-button': {
+    gap: 0.25,
+  },
 };
 
 export const messageZenAsideColumnSx: SxProps = {

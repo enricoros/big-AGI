@@ -114,7 +114,7 @@ export function ContentFragmentsWithInlineEdit(props: {
             setEditedText={props.setEditedText}
             onSubmit={props.onEditsApply}
             onEscapePressed={props.onEditsCancel}
-            endDecorator='Shift+Enter to save · Ctrl+Shift+Enter to restart · Escape to cancel.'
+            endDecorator='Shift+Enter to save · Ctrl+Shift+Enter to restart · Escape to cancel'
           />
         );
       }
