@@ -11,8 +11,8 @@ import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/com
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 
-import { EphemeralHandler, EphemeralsStore } from './EphemeralsStore';
 import { createPerChatVanillaStore } from './store-chat-overlay';
+import { createDEphemeral } from '~/common/chat-overlay/store-ephemeralsoverlay-slice';
 
 
 /**
@@ -27,8 +27,6 @@ export class ConversationHandler {
 
   private readonly beamStore = createBeamVanillaStore();
   private readonly overlayStore = createPerChatVanillaStore();
-  readonly ephemeralsStore: EphemeralsStore = new EphemeralsStore();
-
 
   constructor(conversationId: DConversationId) {
     this.chatActions = useChatStore.getState();
@@ -184,13 +182,35 @@ export class ConversationHandler {
 
   // Ephemerals
 
-  createEphemeral(title: string, initialText: string): EphemeralHandler {
-    return new EphemeralHandler(title, initialText, this.ephemeralsStore);
+  createEphemeralHandler(title: string, initialText: string) {
+    const { ephemeralsAppend, ephemeralsUpdate, ephemeralsDelete, ephemeralsIsPinned } = this.overlayActions;
+
+    // create and append
+    const ephemeral = createDEphemeral(title, initialText);
+    const eId = ephemeral.id;
+    ephemeralsAppend(ephemeral);
+
+    // return a 'handler' (manipulation functions)
+    return {
+      updateText: (text: string) => ephemeralsUpdate(eId, { text }),
+      updateState: (state: object) => ephemeralsUpdate(eId, { state }),
+      markAsDone: () => ephemeralsUpdate(eId, { done: true }),
+      deleteIfNotPinned: () => {
+        if (!ephemeralsIsPinned(eId))
+          ephemeralsDelete(eId);
+      },
+    };
   }
 
 
   // Overlay Store
 
-  getOverlayStore = () => this.overlayStore;
+  get conversationOverlayStore() {
+    return this.overlayStore;
+  }
+
+  get overlayActions() {
+    return this.overlayStore.getState();
+  }
 
 }

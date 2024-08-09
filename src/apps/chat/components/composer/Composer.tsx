@@ -138,7 +138,7 @@ export function Composer(props: {
 
   // external overlay state (extra conversationId-dependent state)
   const conversationOverlayStore = props.targetConversationId
-    ? ConversationsManager.getHandler(props.targetConversationId)?.getOverlayStore() || null
+    ? ConversationsManager.getHandler(props.targetConversationId)?.conversationOverlayStore ?? null
     : null;
 
   // composer-overlay: for the in-reference-to state, comes from the conversation overlay

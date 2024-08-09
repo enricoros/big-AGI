@@ -1,7 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 
 import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
-import type { StoreApi } from 'zustand';
 
 
 /// Chat Overlay Store: per-chat overlay state ///
@@ -21,7 +20,6 @@ export interface ComposerOverlayStore extends ComposerOverlayState {
 
 }
 
-export type ComposerOverlayStoreApi = StoreApi<ComposerOverlayStore>;
 
 /**
  * NOTE: the Composer state is managed primarily by the component, however there's some state that's:
