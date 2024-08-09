@@ -218,6 +218,35 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   }, [blockCode, blockComplete, blockTitle, noTooltips, inferredCodeLanguage, isSVGCode]);
 
 
+  // style
+
+  const isRenderingDiagram = renderMermaid || renderPlantUML;
+  const hasExternalButtons = openExternallyButtons.length > 0;
+
+  const codeSx: SxProps = React.useMemo(() => ({
+
+    // style
+    p: isBorderless ? 0 : 1.5, // this block gets a thicker border (but we 'fullscreen' html in case there's no title)
+    overflowX: 'auto', // ensure per-block x-scrolling
+    whiteSpace: showSoftWrap ? 'break-spaces' : 'pre',
+
+    // layout
+    display: 'flex',
+    flexDirection: 'column',
+    // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
+
+    // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
+    '[data-joy-color-scheme="dark"] &': isRenderingDiagram ? { backgroundColor: 'neutral.500' } : {},
+
+    // lots more style, incl font, background, embossing, radius, etc.
+    ...props.sx,
+
+    // patch the min height if we have the second row
+    ...(hasExternalButtons ? { minHeight: '5.25rem' } : {}),
+
+  }), [hasExternalButtons, isBorderless, isRenderingDiagram, props.sx, showSoftWrap]);
+
+
   return (
     <Box
       // onMouseEnter={handleMouseOverEnter}
@@ -228,27 +257,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
       <Box
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
-        sx={{
-
-          // style
-          p: isBorderless ? 0 : 1.5, // this block gets a thicker border (but we 'fullscreen' html in case there's no title)
-          overflowX: 'auto', // ensure per-block x-scrolling
-          whiteSpace: showSoftWrap ? 'break-spaces' : 'pre',
-
-          // layout
-          display: 'flex',
-          flexDirection: 'column',
-          // justifyContent: (renderMermaid || renderPlantUML) ? 'center' : undefined,
-
-          // fix for SVG diagrams over dark mode: https://github.com/enricoros/big-AGI/issues/520
-          '[data-joy-color-scheme="dark"] &': (renderPlantUML || renderMermaid) ? { backgroundColor: 'neutral.500' } : {},
-
-          // lots more style, incl font, background, embossing, radius, etc.
-          ...props.sx,
-
-          // patch the min height if we have the second row
-          ...(openExternallyButtons.length ? { minHeight: '5.25rem' } : {}),
-        }}
+        sx={codeSx}
       >
 
         {/* Markdown Title (File/Type) */}
