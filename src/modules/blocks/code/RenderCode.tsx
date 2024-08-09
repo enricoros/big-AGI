@@ -12,8 +12,6 @@ import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
 import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
-import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
-import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -24,9 +22,7 @@ import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
-import { isCodePenSupported, openInCodePen } from './buttons/openInCodePen';
-import { isJSFiddleSupported, openInJsFiddle } from './buttons/openInJsFiddle';
-import { isStackBlitzSupported, openInStackBlitz } from './buttons/openInStackBlitz';
+import { useOpenInExternalButtons } from './buttons/useOpenInExternalButtons';
 
 // style for line-numbers
 import './RenderCode.css';
@@ -127,7 +123,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   // derived props
   const {
     title: blockTitle,
-    code: blockCode,
+    code,
     isPartial: blockIsPartial,
     highlightCode,
     inferCodeLanguage,
@@ -144,26 +140,26 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const handleCopyToClipboard = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    copyToClipboard(blockCode, 'Code');
-  }, [blockCode]);
+    copyToClipboard(code, 'Code');
+  }, [code]);
 
 
   // heuristics for specialized rendering
 
-  const isHTMLCode = heuristicIsBlockPureHTML(blockCode);
+  const isHTMLCode = heuristicIsBlockPureHTML(code);
   const renderHTML = isHTMLCode && showHTML;
 
   const isMermaidCode = blockTitle === 'mermaid' && !blockIsPartial;
   const renderMermaid = isMermaidCode && showMermaid;
 
-  const isPlantUMLCode = heuristicIsCodePlantUML(blockCode);
+  const isPlantUMLCode = heuristicIsCodePlantUML(code);
   let renderPlantUML = isPlantUMLCode && showPlantUML;
-  const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, blockCode);
+  const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, code);
   renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
 
-  const isSVGCode = (blockCode.startsWith('<svg') || blockCode.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && blockCode.endsWith('</svg>');
+  const isSVGCode = (code.startsWith('<svg') || code.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && code.endsWith('</svg>');
   const renderSVG = isSVGCode && showSVG;
-  const canScaleSVG = renderSVG && blockCode.includes('viewBox="');
+  const canScaleSVG = renderSVG && code.includes('viewBox="');
 
   const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
 
@@ -174,13 +170,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // Language & Highlight
   const { highlightedCode, inferredCodeLanguage } = React.useMemo(() => {
-    const inferredCodeLanguage = inferCodeLanguage(blockTitle, blockCode);
+    const inferredCodeLanguage = inferCodeLanguage(blockTitle, code);
     const highlightedCode =
       !renderSyntaxHighlight ? null
-        : blockCode ? highlightCode(inferredCodeLanguage, blockCode, renderLineNumbers)
+        : code ? highlightCode(inferredCodeLanguage, code, renderLineNumbers)
           : null;
     return { highlightedCode, inferredCodeLanguage };
-  }, [blockCode, blockTitle, highlightCode, inferCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
+  }, [code, blockTitle, highlightCode, inferCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
 
 
   // Title
@@ -192,37 +188,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
 
   // External Buttons
-  const openExternallyButtons = React.useMemo(() => {
-    const buttons: React.ReactNode[] = [];
-
-    const mayExternal = blockCode?.indexOf('\n') > 0;
-    if (!mayExternal || blockIsPartial)
-      return buttons;
-
-    const canJSFiddle = isJSFiddleSupported(inferredCodeLanguage, blockCode);
-    if (canJSFiddle) buttons.push(
-      <OverlayButton key='jsfiddle' tooltip={noTooltips ? null : 'Open in JSFiddle'} placement='bottom' onClick={() => openInJsFiddle(blockCode, inferredCodeLanguage!)}>
-        JS
-      </OverlayButton>,
-    );
-
-    const canCodePen = isCodePenSupported(inferredCodeLanguage, isSVGCode);
-    if (canCodePen) buttons.push(
-      <OverlayButton key='codepen' tooltip={noTooltips ? null : 'Open in CodePen'} placement='bottom' onClick={() => openInCodePen(blockCode, inferredCodeLanguage!)}>
-        <CodePenIcon />
-      </OverlayButton>,
-    );
-
-    const canStackBlitz = isStackBlitzSupported(inferredCodeLanguage);
-    if (canStackBlitz) buttons.push(
-      <OverlayButton key='stackblitz' tooltip={noTooltips ? null : 'Open in StackBlitz'} placement='bottom' onClick={() => openInStackBlitz(blockCode, inferredCodeLanguage!, blockTitle)}>
-        <StackBlitzIcon />
-      </OverlayButton>,
-    );
-
-    return buttons;
-  }, [blockCode, blockIsPartial, blockTitle, inferredCodeLanguage, isSVGCode, noTooltips]);
-
+  const openExternallyButtons = useOpenInExternalButtons(code, blockTitle, blockIsPartial, inferredCodeLanguage, isSVGCode, noTooltips === true);
 
   // style
 
@@ -277,9 +243,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         )}
 
         {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-        {renderHTML ? <RenderCodeHtmlIFrame htmlCode={blockCode} />
-          : renderMermaid ? <RenderCodeMermaid mermaidCode={blockCode} fitScreen={fitScreen} />
-            : renderSVG ? <RenderCodeSVG svgCode={blockCode} fitScreen={fitScreen} />
+        {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
+          : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
+            : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
               : (renderPlantUML && plantUmlSvgData) ? <RenderCodePlantUML svgCode={plantUmlSvgData} error={plantUmlError} fitScreen={fitScreen} />
                 : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
