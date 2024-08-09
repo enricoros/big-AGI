@@ -4,10 +4,8 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
 
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
-import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
 
 import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
-import { assignLiveFilesToWorkspace } from './attachment.livefile';
 import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './attachment.pipeline';
 import { removeAttachmentOwnedDBAsset, transferAttachmentOwnedDBAsset } from './attachment.dblobs';
 
@@ -32,7 +30,7 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
    * Extracts all fragments from the all drafts and transfers ownership to the caller.
    * This store is cleared.
    */
-  takeAllFragments: (workspaceId: DWorkspaceId, newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => Promise<DMessageAttachmentFragment[]>;
+  takeAllFragments: (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => Promise<DMessageAttachmentFragment[]>;
 
   /**
    * Extracts typed fragments from the attachment drafts and optionally removes them from the store.
@@ -178,7 +176,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     await attachmentPerformConversion(attachmentDraft, _editAttachment, _replaceAttachmentOutputFragments);
   },
 
-  takeAllFragments: async (workspaceId: DWorkspaceId, newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => {
+  takeAllFragments: async (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => {
     // get all the fragments
     const transferredFragments: DMessageAttachmentFragment[] =
       _get().attachmentDrafts.flatMap(draft => draft.outputFragments);
@@ -186,10 +184,6 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     // [dblob] transfer ownership (await for transferAttachmentOwnedDBAsset)
     for (const transferredFragment of transferredFragments)
       await transferAttachmentOwnedDBAsset(transferredFragment, newContextId, newScopeId);
-
-    // Assign LiveFiles to the WorkspaceId
-    for (const transferredFragment of transferredFragments)
-      assignLiveFilesToWorkspace(transferredFragment, workspaceId);
 
     // clear state
     _set({ attachmentDrafts: [] });

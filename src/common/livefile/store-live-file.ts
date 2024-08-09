@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
-
 import { agiUuid } from '~/common/util/idUtils';
+
+// import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 
 import type { LiveFile, LiveFileId, LiveFileMetadata } from './liveFile.types';
 
@@ -20,9 +20,6 @@ interface LiveFileState {
   // NOTE: FileSystemFileHandle objects are stored here BUT they are NOT serializable
   liveFiles: Record<LiveFileId, LiveFile>;
 
-  // Workspace associations (using arrays instead of Sets for serialization)
-  liveFilesByWorkspace: Record<DWorkspaceId, LiveFileId[]>;
-
 }
 
 interface LiveFileActions {
@@ -31,17 +28,12 @@ interface LiveFileActions {
   addLiveFile: (fileSystemFileHandle: FileSystemFileHandle) => Promise<LiveFileId>;
   metadataGet: (fileId: LiveFileId) => LiveFileMetadata | null;
   metadataUpdate: (fileId: LiveFileId, metadata: Partial<Omit<LiveFileMetadata, 'id' | 'referenceCount'>>) => void;
-  removeLiveFile: (fileId: LiveFileId) => void;
+  // removeLiveFile: (fileId: LiveFileId) => void;
 
   // content updates
   contentClose: (fileId: LiveFileId) => Promise<void>;
   contentReload: (fileId: LiveFileId) => Promise<void>;
   contentWriteAndReload: (fileId: LiveFileId, content: string) => Promise<boolean>;
-
-  // workspace associations
-  workspaceAssign: (workspaceId: DWorkspaceId, fileId: LiveFileId) => void;
-  workspaceRemove: (workspaceId: DWorkspaceId, fileId: LiveFileId) => void;
-  workspaceGetLiveFiles: (workspaceId: DWorkspaceId) => LiveFileId[];
 
 }
 
@@ -51,7 +43,6 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
     // default state before loading from storage
     liveFiles: {},
-    liveFilesByWorkspace: {},
 
 
     // CRUD
@@ -130,14 +121,17 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
         };
       }),
 
-    removeLiveFile: (fileId: LiveFileId) =>
-      _set((state) => {
-        const { [fileId]: _dropped, ...otherFiles } = state.liveFiles;
-        return {
-          liveFiles: otherFiles,
-          liveFilesByWorkspace: _stateFilterLiveFilesByWorkspace(state.liveFilesByWorkspace, id => id !== fileId),
-        };
-      }),
+    // removeLiveFile: (fileId: LiveFileId) =>
+    //   _set((state) => {
+    //     const { [fileId]: _dropped, ...otherFiles } = state.liveFiles;
+    //     // [workspace] remove this LiveFile from all workspaces that have it
+    //     // NOTE: the caller will have to also call:
+    //     // - workspaceActions().liveFileUnassignFromAll(fileId);
+    //     // we can't do it from here, because it will circularly depend on workspaceActions
+    //     return {
+    //       liveFiles: otherFiles,
+    //     };
+    //   }),
 
 
     // Content updates
@@ -242,43 +236,6 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }
     },
 
-
-    // Workspace associations
-
-    workspaceAssign: (workspaceId: DWorkspaceId, fileId: LiveFileId) => {
-      _set((state) => {
-        const currentFiles = state.liveFilesByWorkspace[workspaceId] || [];
-        if (!currentFiles.includes(fileId)) {
-          return {
-            liveFilesByWorkspace: {
-              ...state.liveFilesByWorkspace,
-              [workspaceId]: [...currentFiles, fileId],
-            },
-          };
-        }
-        return state;
-      });
-    },
-
-    workspaceRemove: (workspaceId: DWorkspaceId, fileId: LiveFileId) => {
-      _set((state) => {
-        const currentFiles = state.liveFilesByWorkspace[workspaceId];
-        if (!currentFiles) return state;
-
-        return {
-          liveFilesByWorkspace: {
-            ...state.liveFilesByWorkspace,
-            [workspaceId]: currentFiles.filter(id => id !== fileId),
-          },
-        };
-      });
-    },
-
-    workspaceGetLiveFiles: (workspaceId: DWorkspaceId) => {
-      const state = _get();
-      return state.liveFilesByWorkspace[workspaceId] || [];
-    },
-
   }),
   {
 
@@ -304,27 +261,10 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
         Object.entries(state.liveFiles || {}).filter(([_, file]) => checkPairingValid(file)),
       );
 
-      // Clean up liveFilesByWorkspace
-      const validFileIds = new Set(Object.keys(state.liveFiles));
-      state.liveFilesByWorkspace = _stateFilterLiveFilesByWorkspace(state.liveFilesByWorkspace || {}, id => validFileIds.has(id));
-
     },
 
   },
 ));
-
-
-// internal utility functions
-function _stateFilterLiveFilesByWorkspace(liveFilesByWorkspace: LiveFileState['liveFilesByWorkspace'], predicate: (fileId: LiveFileId) => boolean): LiveFileState['liveFilesByWorkspace'] {
-  return Object.fromEntries(
-    Object.entries(liveFilesByWorkspace)
-      .map(([workspaceId, fileIds]) => [
-        workspaceId,
-        fileIds.filter(predicate),
-      ])
-      .filter(([_, fileIds]) => fileIds.length > 0),
-  );
-}
 
 
 // public accessors

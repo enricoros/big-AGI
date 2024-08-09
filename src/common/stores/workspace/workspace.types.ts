@@ -7,6 +7,6 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 export type DWorkspaceId = string;
 
 // this is just used as a future architecture placeholder
-export function workspaceForConversationIdentity(conversationId: DConversationId): DWorkspaceId {
+export function workspaceForConversationIdentity(conversationId: DConversationId | null): DWorkspaceId | null {
   return conversationId;
 }

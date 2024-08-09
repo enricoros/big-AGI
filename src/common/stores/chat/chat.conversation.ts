@@ -65,7 +65,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
   };
 }
 
-export function duplicateCConversation(conversation: DConversation, lastMessageId?: DMessageId): DConversation {
+export function duplicateDConversation(conversation: DConversation, lastMessageId?: DMessageId): DConversation {
 
   // cut short messages, if requested
   let messagesToKeep = conversation.messages.length; // By default, include all messages if messageId is null

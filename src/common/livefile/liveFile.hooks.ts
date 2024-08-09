@@ -6,11 +6,12 @@ import { checkPairingValid, useLiveFileStore } from './store-live-file';
 
 
 export function useLiveFileMetadata(liveFileId: LiveFileId | undefined): LiveFileMetadata | null {
-  return useLiveFileStore(useShallow((store) => !liveFileId ? null : store.metadataGet(liveFileId)));
+  return useLiveFileStore(useShallow((store) =>
+    !liveFileId ? null : store.metadataGet(liveFileId),
+  ));
 }
 
-
-export function useLiveFile(liveFileId: LiveFileId | null) {
+export function useLiveFileContent(liveFileId: LiveFileId | null) {
 
   // React to changes in data
   const stableData = useLiveFileStore(useShallow((store) => {
