@@ -18,15 +18,15 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
-import { RenderCodeHtmlIFrame } from './RenderCodeHtmlIFrame';
-import { RenderCodeMermaid } from './RenderCodeMermaid';
-import { RenderCodeSVG } from './RenderCodeSVG';
-import { RenderCodeSyntax } from './RenderCodeSyntax';
+import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
+import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
+import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
+import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
-import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
-import { isCodePenSupported, openInCodePen } from './openInCodePen';
-import { isJSFiddleSupported, openInJsFiddle } from './openInJsFiddle';
-import { isStackBlitzSupported, openInStackBlitz } from './openInStackBlitz';
+import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
+import { isCodePenSupported, openInCodePen } from './buttons/openInCodePen';
+import { isJSFiddleSupported, openInJsFiddle } from './buttons/openInJsFiddle';
+import { isStackBlitzSupported, openInStackBlitz } from './buttons/openInStackBlitz';
 
 // style for line-numbers
 import './RenderCode.css';
@@ -68,7 +68,7 @@ function RenderCode(props: RenderCodeBaseProps) {
 const _DynamicPrism = React.lazy(async () => {
 
   // Dynamically import the code highlight functions
-  const { highlightCode, inferCodeLanguage } = await import('./codePrism');
+  const { highlightCode, inferCodeLanguage } = await import('./highlight/codePrism');
 
   return {
     default: (props: RenderCodeBaseProps) => <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
