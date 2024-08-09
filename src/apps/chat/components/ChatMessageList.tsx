@@ -12,7 +12,7 @@ import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/
 import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { InlineError } from '~/common/components/InlineError';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { createDMessageTextContent, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
@@ -26,6 +26,8 @@ import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
 
+
+const stableNoMessages: DMessage[] = [];
 
 /**
  * A list of ChatMessages
@@ -61,13 +63,13 @@ export function ChatMessageList(props: {
   const { conversationMessages, historyTokenCount } = useChatStore(useShallow(({ conversations }) => {
     const conversation = conversations.find(conversation => conversation.id === props.conversationId);
     return {
-      conversationMessages: conversation ? conversation.messages : [],
+      conversationMessages: conversation ? conversation.messages : stableNoMessages,
       historyTokenCount: conversation ? conversation.tokenCount : 0,
     };
   }));
   const { _composerInReferenceToCount, ephemerals } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
-    ephemerals: state.ephemerals,
+    ephemerals: state.ephemerals?.length ? state.ephemerals : null,
   })));
   const { mayWork: isSpeakable } = useCapabilityElevenLabs();
 
@@ -323,7 +325,7 @@ export function ChatMessageList(props: {
       )}
 
       {/* Render ephemerals (sidebar ReAct output widgets) at the bottom */}
-      {!!ephemerals.length && !!conversationHandler && (
+      {!!ephemerals?.length && !!conversationHandler && (
         <Ephemerals
           ephemerals={ephemerals}
           conversationHandler={conversationHandler}
