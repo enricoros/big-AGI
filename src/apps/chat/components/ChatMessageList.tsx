@@ -292,6 +292,7 @@ export function ChatMessageList(props: {
             <ChatMessageMemoOrNot
               key={'msg-' + message.id}
               message={message}
+              workspaceContents={props.workspaceContents}
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
               hasInReferenceTo={composerHasInReferenceto}

@@ -143,6 +143,7 @@ export function Fusion(props: {
           {!!fusion.outputDMessage && (
             <ChatMessageMemo
               message={fusion.outputDMessage}
+              workspaceContents={null /* a single fusion, when done */}
               fitScreen={true}
               hideAvatar
               showUnsafeHtml={true}

@@ -206,6 +206,7 @@ export function BeamRay(props: {
           {!!ray.message && (
             <ChatMessageMemo
               message={ray.message}
+              workspaceContents={null /* a single ray being generated */}
               fitScreen={true}
               hideAvatar
               showUnsafeHtml={true}
