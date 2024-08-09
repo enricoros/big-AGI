@@ -110,6 +110,7 @@ export const useClientWorkspaceStore = create<WorkspaceState & WorkspaceActions>
               newFileIds.push(fragment.liveFileId);
           });
         });
+        console.log('importAssignmentsFromMessages', { workspaceId, existingFiles, newFileIds });
 
         return {
           liveFilesByWorkspace: {

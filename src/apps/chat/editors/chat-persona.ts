@@ -130,7 +130,7 @@ export async function llmGenerateContentStream(
         if (metadata)
           messageOverwrite.metadata = metadata;
 
-        // console.log('overwrite', messageOverwrite, stats);
+        console.log('overwrite', messageOverwrite, stats);
 
         // throttle the update - and skip the last done message
         if (!done)

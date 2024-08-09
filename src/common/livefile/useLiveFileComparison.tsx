@@ -7,10 +7,12 @@ import { Box, Button, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListI
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { WindowFocusObserver } from '~/common/util/windowUtils';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
+import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 
 import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
@@ -71,6 +73,7 @@ interface FileOperationStatus {
 
 export function useLiveFileComparison(
   _liveFileId: LiveFileId | null,
+  workspaceId: DWorkspaceId | null,
   isMobile: boolean,
   bufferText: string,
   setBufferText: (text: string) => void,
@@ -161,13 +164,17 @@ export function useLiveFileComparison(
     // Pair the file: create a LiveFile, replace it in the Fragment, and load the preview
     try {
       const liveFileId = await liveFileCreateOrThrow(fsfHandle);
+      if (!workspaceId)
+        console.warn('[DEV] No workspaceId to pair the file with.');
+      else
+        workspaceActions().liveFileAssign(workspaceId, liveFileId);
       replaceLiveFileId(liveFileId);
       // Immediately load the preview on this ID
       await _handleReloadFileContent(liveFileId);
     } catch (error: any) {
       setStatus({ message: `Error pairing the file: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`, mtype: 'error' });
     }
-  }, [_handleReloadFileContent, replaceLiveFileId]);
+  }, [_handleReloadFileContent, replaceLiveFileId, workspaceId]);
 
   const handlePairNewFileWithPicker = React.useCallback(async () => {
     // Open the file picker

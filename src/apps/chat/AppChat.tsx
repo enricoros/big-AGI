@@ -159,7 +159,7 @@ export function AppChat() {
   } = useConversation(focusedPaneConversationId);
 
   const focusedWorkspaceContents = useWorkspaceContents(focusedPaneConversationId);
-
+console.log(focusedWorkspaceContents, focusedPaneConversationId);
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
   const activeFolderId = useFolderStore(({ enableFolders, folders }) => {

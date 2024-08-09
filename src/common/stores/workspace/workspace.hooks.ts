@@ -9,6 +9,7 @@ import { useClientWorkspaceStore } from './store-client-workspace';
 
 
 export interface WorkspaceContents {
+  workspaceId: DWorkspaceId;
   liveFilesMetadata: LiveFileMetadata[];
 }
 
@@ -34,14 +35,16 @@ export function useWorkspaceContents(workspaceId: DWorkspaceId | null): Workspac
 
   return React.useMemo(() => {
     // stable out
-    if (!workspaceLiveFiles || !workspaceLiveFiles.length)
-      return null; // stableWorkspace;
+    // if (!workspaceLiveFiles || !workspaceLiveFiles.length)
+    //   return null; // stableWorkspace;
+    console.log('workspaceLiveFileIds', { workspaceId, workspaceLiveFiles });
 
     // creation of the woekspace contents (stabilized thought the memo inputs)
     const { metadataGet } = useLiveFileStore.getState();
-    const liveFilesMetadata = workspaceLiveFiles.map(lf => metadataGet(lf.id)).filter(Boolean) as LiveFileMetadata[];
+    const liveFilesMetadata = (workspaceLiveFiles || []).map(lf => metadataGet(lf.id)).filter(Boolean) as LiveFileMetadata[];
     return {
+      workspaceId: workspaceId!,
       liveFilesMetadata,
     };
-  }, [workspaceLiveFiles]);
+  }, [workspaceId, workspaceLiveFiles]);
 }

@@ -10,6 +10,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
@@ -37,6 +38,7 @@ export function DocAttachmentFragmentEditor(props: {
   isMobile?: boolean,
   zenMode: boolean,
   renderTextAsMarkdown: boolean,
+  workspaceId: DWorkspaceId | null,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
@@ -84,6 +86,7 @@ export function DocAttachmentFragmentEditor(props: {
 
   const { liveFileControlButton, liveFileActions } = useLiveFileComparison(
     fragment.liveFileId ?? null,
+    props.workspaceId,
     props.isMobile === true,
     fragmentDocPart.data.text,
     handleReplaceDocFragmentText,
