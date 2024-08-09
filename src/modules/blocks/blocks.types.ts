@@ -1,15 +1,31 @@
-import type { Diff as TextDiff } from '@sanity/diff-match-patch';
+import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 
-// Block types
-export type Block =
-  | CodeBlock
-  | HtmlBlock
-  | ImageBlock
-  | TextBlock
-  | TextDiffBlock;
 
-export type CodeBlock = { type: 'codeb'; blockTitle: string; blockCode: string; complete: boolean; };
-export type HtmlBlock = { type: 'htmlb'; html: string; };
-export type ImageBlock = { type: 'imageb'; url: string; alt?: string }; // Added optional alt property
-export type TextBlock = { type: 'textb'; content: string; }; // for Text or Markdown
-export type TextDiffBlock = { type: 'diffb'; textDiffs: TextDiff[] };
+export type RenderBlockInputs = BlockInput[];
+
+
+// In order of priority from the most frequent to the least
+type BlockInput = {
+  /* Rendered as markdown or plain text */
+  bkt: 'md-bk';
+  content: string;
+} | {
+  /* Rendered as Code (can be copied, LiveFile'd, etc) */
+  bkt: 'code-bk';
+  title: string;
+  code: string;
+  isPartial: boolean;
+} | {
+  /* Rendered as HTML (dangerous) */
+  bkt: 'dang-html-bk';
+  html: string;
+} | {
+  /* (Markdown Image) Rendered as an image */
+  bkt: 'img-url-bk';
+  url: string;
+  alt?: string;
+} | {
+  /* Rendered as red/green text diffs */
+  bkt: 'txt-diffs-bk';
+  sanityTextDiffs: SanityTextDiff[];
+};

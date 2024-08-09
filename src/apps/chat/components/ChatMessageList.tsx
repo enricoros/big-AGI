@@ -236,6 +236,20 @@ export function ChatMessageList(props: {
   }, [conversationId, notifyBooting]);
 
 
+  // style memo
+  const listSx: SxProps = React.useMemo(() => ({
+    p: 0,
+    ...props.sx,
+
+    // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
+    // marginBottom: '-1px',
+
+    // layout
+    display: 'flex',
+    flexDirection: 'column',
+  }), [props.sx]);
+
+
   // no content: show the persona selector
 
   const filteredMessages = conversationMessages
@@ -252,17 +266,7 @@ export function ChatMessageList(props: {
     );
 
   return (
-    <List role='chat-messages-list' sx={{
-      p: 0,
-      ...(props.sx || {}),
-
-      // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
-      // marginBottom: '-1px',
-
-      // layout
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <List role='chat-messages-list' sx={listSx}>
 
       {optionalTranslationWarning}
 

@@ -82,7 +82,7 @@ export const PersonaPromptCard = (props: { content: string }) =>
       <Alert variant='soft' color='success' sx={{ mb: 1 }}>
         You may now copy the text below and use it as Custom prompt!
       </Alert>
-      <RenderMarkdownMemo textBlock={{ type: 'textb', content: props.content }} />
+      <RenderMarkdownMemo content={props.content} />
     </CardContent>
   </Card>;
 

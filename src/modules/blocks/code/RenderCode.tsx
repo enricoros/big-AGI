@@ -16,14 +16,13 @@ import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIco
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import type { CodeBlock } from '../blocks.types';
 import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './RenderCodeMermaid';
 import { RenderCodeSVG } from './RenderCodeSVG';
 import { RenderCodeSyntax } from './RenderCodeSyntax';
-import { heuristicIsBlockPlantUML, RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
-import { heuristicIsBlockPureHTML } from '../html/RenderHtmlResponse';
+import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
+import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './RenderCodePlantUML';
 import { isCodePenSupported, openInCodePen } from './openInCodePen';
 import { isJSFiddleSupported, openInJsFiddle } from './openInJsFiddle';
 import { isStackBlitzSupported, openInStackBlitz } from './openInStackBlitz';
@@ -44,7 +43,9 @@ export const renderCodeMemoOrNot = (memo: boolean) => memo ? RenderCodeMemo : Re
 const RenderCodeMemo = React.memo(RenderCode);
 
 interface RenderCodeBaseProps {
-  codeBlock: CodeBlock,
+  title: string,
+  code: string,
+  isPartial: boolean,
   fitScreen?: boolean,
   initialShowHTML?: boolean,
   noCopyButton?: boolean,
@@ -103,7 +104,7 @@ const overlayFirstRowSx: SxProps = {
 };
 
 function RenderCodeImpl(props: RenderCodeBaseProps & {
-  highlightCode: (inferredCodeLanguage: string | null, blockCode: string, addLineNumbers: boolean) => string,
+  highlightCode: (inferredCodeLanguage: string | null, code: string, addLineNumbers: boolean) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
 }) {
 
@@ -123,8 +124,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // derived props
   const {
-    codeBlock: { blockTitle, blockCode, complete: blockComplete },
-    highlightCode, inferCodeLanguage,
+    title: blockTitle,
+    code: blockCode,
+    isPartial: blockIsPartial,
+    highlightCode,
+    inferCodeLanguage,
   } = props;
 
   const noTooltips = props.optimizeLightweight /*|| !isHovering*/;
@@ -147,10 +151,10 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const isHTMLCode = heuristicIsBlockPureHTML(blockCode);
   const renderHTML = isHTMLCode && showHTML;
 
-  const isMermaidCode = blockTitle === 'mermaid' && blockComplete;
+  const isMermaidCode = blockTitle === 'mermaid' && !blockIsPartial;
   const renderMermaid = isMermaidCode && showMermaid;
 
-  const isPlantUMLCode = heuristicIsBlockPlantUML(blockCode);
+  const isPlantUMLCode = heuristicIsCodePlantUML(blockCode);
   let renderPlantUML = isPlantUMLCode && showPlantUML;
   const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, blockCode);
   renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
@@ -190,7 +194,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     const buttons: React.ReactNode[] = [];
 
     const mayExternal = blockCode?.indexOf('\n') > 0;
-    if (!mayExternal || !blockComplete)
+    if (!mayExternal || blockIsPartial)
       return buttons;
 
     const canJSFiddle = isJSFiddleSupported(inferredCodeLanguage, blockCode);
@@ -215,7 +219,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     );
 
     return buttons;
-  }, [blockCode, blockComplete, blockTitle, noTooltips, inferredCodeLanguage, isSVGCode]);
+  }, [blockCode, blockIsPartial, blockTitle, inferredCodeLanguage, isSVGCode, noTooltips]);
 
 
   // style

@@ -1,15 +1,13 @@
 import * as React from 'react';
-import { cleanupEfficiency, Diff as TextDiff, DIFF_DELETE, DIFF_INSERT, makeDiff } from '@sanity/diff-match-patch';
+import { cleanupEfficiency, Diff as SanityTextDiff, DIFF_DELETE, DIFF_INSERT, makeDiff } from '@sanity/diff-match-patch';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Typography, useTheme } from '@mui/joy';
 
-import type { TextDiffBlock } from '../blocks.types';
-
 
 export function useSanityTextDiffs(_text: string, _diffText: string | undefined, enabled: boolean) {
   // state
-  const [diffs, setDiffs] = React.useState<TextDiff[] | null>(null);
+  const [diffs, setDiffs] = React.useState<SanityTextDiff[] | null>(null);
 
   const inputText = enabled ? _text : null;
   const inputPrevText = enabled ? _diffText : null;
@@ -37,13 +35,10 @@ export function useSanityTextDiffs(_text: string, _diffText: string | undefined,
 }
 
 
-export const RenderTextDiff = (props: { textDiffBlock: TextDiffBlock; sx?: SxProps; }) => {
+export const RenderTextDiff = (props: { sanityTextDiffs: SanityTextDiff[]; sx?: SxProps; }) => {
 
   // external state
   const theme = useTheme();
-
-  // derived state
-  const textDiffs: TextDiff[] = props.textDiffBlock.textDiffs;
 
   // text added
   const styleAdd = {
@@ -76,7 +71,7 @@ export const RenderTextDiff = (props: { textDiffBlock: TextDiffBlock; sx?: SxPro
         ...props.sx,
       }}
     >
-      {textDiffs.map(([op, text], index) =>
+      {props.sanityTextDiffs.map(([op, text], index) =>
         <Box component='span' key={'diff-' + index} sx={op === DIFF_DELETE ? styleSub : op === DIFF_INSERT ? styleAdd : styleUnchanged}>{text}</Box>)}
     </Typography>
   );
