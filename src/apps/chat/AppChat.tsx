@@ -34,6 +34,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useWorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
@@ -143,6 +144,8 @@ export function AppChat() {
     branchConversation,
     deleteConversations,
   } = useConversation(focusedPaneConversationId);
+
+  const focusedWorkspaceContents = useWorkspaceContents(focusedPaneConversationId);
 
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
@@ -528,6 +531,7 @@ export function AppChat() {
                 <ChatMessageList
                   conversationId={_paneConversationId}
                   conversationHandler={_paneChatHandler}
+                  workspaceContents={_paneIsFocused ? focusedWorkspaceContents : null}
                   capabilityHasT2I={capabilityHasT2I}
                   chatLLMContextTokens={chatLLM?.contextTokens ?? null}
                   fitScreen={isMobile || isMultiPane}

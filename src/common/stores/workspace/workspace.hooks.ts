@@ -8,37 +8,40 @@ import type { DWorkspaceId } from './workspace.types';
 import { useClientWorkspaceStore } from './store-client-workspace';
 
 
-const stableNoMetadata: LiveFileMetadata[] = [];
+export interface WorkspaceContents {
+  liveFilesMetadata: LiveFileMetadata[];
+}
 
-export function useWorkspaceLiveFilesMetadata(workspaceId: DWorkspaceId | null): LiveFileMetadata[] {
+// const stableWorkspace: WorkspaceContents = {
+//   liveFilesMetadata: [],
+// };
+
+export function useWorkspaceContents(workspaceId: DWorkspaceId | null): WorkspaceContents | null {
 
   // stable reference to the LiveFileIds
-  const workspaceLiveFileIds: LiveFileId[] | null = useClientWorkspaceStore(useShallow(state => {
-    // if there's nothing for this workspace, return an empty array
-    if (!workspaceId || !state.liveFilesByWorkspace[workspaceId]?.length)
-      return null;
-
-    // get an array of live file ids
-    return state.liveFilesByWorkspace[workspaceId];
-  }));
+  // - w/out useShallow as updates to the array contents are real
+  const workspaceLiveFileIds: LiveFileId[] | null = useClientWorkspaceStore(state =>
+    (!workspaceId || !state.liveFilesByWorkspace[workspaceId]?.length) ? null
+      : state.liveFilesByWorkspace[workspaceId],
+  );
 
   // reactive stable reference to the LiveFiles
-  const workspaceLiveFiles: LiveFile[] | null = useLiveFileStore(useShallow(state => {
-    if (!workspaceLiveFileIds || !workspaceLiveFileIds.length)
-      return null;
+  // - with useShallow as map recreates the array every time
+  const workspaceLiveFiles: LiveFile[] | null = useLiveFileStore(useShallow(state =>
+    !workspaceLiveFileIds?.length ? null
+      : workspaceLiveFileIds.map(id => state.liveFiles[id]).filter(Boolean),
+  ));
 
-    return workspaceLiveFileIds.map(id => state.liveFiles[id]).filter(Boolean);
-  }));
-
-  // memoized metadata for files
   return React.useMemo(() => {
-    console.log('useWorkspaceLiveFilesMetadata - rememo', workspaceLiveFiles);
-
+    // stable out
     if (!workspaceLiveFiles || !workspaceLiveFiles.length)
-      return stableNoMetadata;
+      return null; // stableWorkspace;
 
-    // otherwise return the metadata for the live files
+    // creation of the woekspace contents (stabilized thought the memo inputs)
     const { metadataGet } = useLiveFileStore.getState();
-    return workspaceLiveFiles.map(lf => metadataGet(lf.id)).filter(Boolean) as LiveFileMetadata[];
+    const liveFilesMetadata = workspaceLiveFiles.map(lf => metadataGet(lf.id)).filter(Boolean) as LiveFileMetadata[];
+    return {
+      liveFilesMetadata,
+    };
   }, [workspaceLiveFiles]);
 }
