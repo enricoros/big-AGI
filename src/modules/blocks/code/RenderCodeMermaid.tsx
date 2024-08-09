@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { create } from 'zustand';
-import { Box } from '@mui/joy';
+import { useQuery } from '@tanstack/react-query';
+
+import { Box, Typography } from '@mui/joy';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 import { themeCodeFontFamilyCss, themeFontFamilyCss } from '~/common/app.theme';
 
-import { diagramSx } from './RenderCodePlantUML';
+import { diagramErrorSx, diagramSx } from './RenderCodePlantUML';
 import { patchSvgString } from './RenderCodeSVG';
 
 
@@ -18,7 +20,7 @@ import { patchSvgString } from './RenderCodeSVG';
  * options are updated accordingly.
  */
 const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
-
+const MERMAID_ERROR_PREFIX: string = '[Mermaid]';
 
 interface MermaidAPI {
   initialize: (config: any) => void;
@@ -119,55 +121,44 @@ function useMermaidLoader() {
 export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boolean }) {
 
   // state
-  const [_svgCode, setSvgCode] = React.useState<string | null>(null);
-  const hasUnmounted = React.useRef(false);
   const mermaidContainerRef = React.useRef<HTMLDivElement>(null);
 
   // external state
-  const { mermaidAPI, error: mermaidError } = useMermaidLoader();
-
+  const { mermaidAPI, error: mermaidLoadError } = useMermaidLoader();
 
   // [effect] re-render on code changes
-  React.useEffect(() => {
+  const { data } = useQuery({
+    enabled: !!mermaidAPI && !!props.mermaidCode,
+    queryKey: ['mermaid', props.mermaidCode],
+    queryFn: async () => {
+      try {
+        const elementId = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
+        const { svg } = await mermaidAPI!.render(elementId, props.mermaidCode, mermaidContainerRef.current!);
+        return svg;
+      } catch (error: any) {
+        return MERMAID_ERROR_PREFIX + ' ' + (error?.message || 'invalid.');
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 24, // 1 day
+  });
 
-    if (!mermaidAPI)
-      return;
-
-    const updateSvgCode = () => {
-      const elementId = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
-      mermaidAPI
-        .render(elementId, props.mermaidCode, mermaidContainerRef.current!)
-        .then(({ svg }) => {
-          if (mermaidContainerRef.current && !hasUnmounted.current) {
-            setSvgCode(svg);
-            // bindFunctions?.(mermaidContainerRef.current);
-          }
-        })
-        .catch((error) =>
-          console.warn('The AI-generated Mermaid code is invalid, please try again. Details below:\n >>', error.message),
-        );
-    };
-
-    // strict-mode de-bounce, plus watch for unmounts
-    hasUnmounted.current = false;
-    const timeout = setTimeout(updateSvgCode, 0);
-    return () => {
-      hasUnmounted.current = true;
-      clearTimeout(timeout);
-    };
-  }, [mermaidAPI, props.mermaidCode]);
-
-
-  // render errors when loading Mermaid. for syntax errors, the Error SVG will be rendered in-place
-  if (mermaidError)
-    return <div>Error: {mermaidError}</div>;
+  // derived
+  const hasMermaidLoadError = !!mermaidLoadError;
+  const hasSvgError = data?.startsWith(MERMAID_ERROR_PREFIX);
 
   return (
-    <Box
-      component='div'
-      ref={mermaidContainerRef}
-      dangerouslySetInnerHTML={{ __html: patchSvgString(props.fitScreen, _svgCode) || 'Loading Diagram...' }}
-      sx={diagramSx}
-    />
+    <Box component='div'>
+      {hasSvgError && (
+        <Typography level='body-sm' color='danger' variant='soft' sx={{ mb: 2, borderRadius: 'xs' }}>
+          Mermaid: issue with generated diagrams code.
+        </Typography>
+      )}
+      <Box
+        component='div'
+        ref={mermaidContainerRef}
+        dangerouslySetInnerHTML={{ __html: hasMermaidLoadError ? mermaidLoadError : (patchSvgString(props.fitScreen, data) || 'Loading Diagram...') }}
+        sx={hasSvgError ? diagramErrorSx : diagramSx}
+      />
+    </Box>
   );
 }

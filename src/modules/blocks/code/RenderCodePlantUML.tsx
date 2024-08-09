@@ -23,6 +23,12 @@ export const diagramSx: SxProps = {
   minHeight: 100,
 };
 
+export const diagramErrorSx: SxProps = {
+  ...diagramSx,
+  textAlign: undefined,
+  whiteSpace: 'break-spaces',
+};
+
 
 // PlantUML -> SVG fetchers
 
