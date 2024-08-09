@@ -51,6 +51,7 @@ export function ShortcutsModal(props: { onClose: () => void }) {
         contentScaling='sm'
         fitScreen={isMobile}
         renderTextAsMarkdown
+        workspaceContents={null}
       />
     </GoodModal>
   );

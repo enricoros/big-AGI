@@ -7,6 +7,7 @@ import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
@@ -41,6 +42,7 @@ const endLayoutSx: SxProps = {
 export function ContentFragmentsWithInlineEdit(props: {
 
   fragments: DMessageFragment[]
+  workspaceContents: WorkspaceContents | null,
   showEmptyNotice: boolean,
 
   contentScaling: ContentScaling,
@@ -160,10 +162,12 @@ export function ContentFragmentsWithInlineEdit(props: {
             />
           );
 
+        // This is the most frequent part by far, and can be broken down into sub-blocks
         case 'text':
           return (
             <ContentPartTextAutoBlocksOrError
               key={fragment.fId}
+              workspaceContents={props.workspaceContents}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}
               messageRole={props.messageRole}

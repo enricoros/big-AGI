@@ -11,6 +11,7 @@ import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
+import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
 import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -50,6 +51,7 @@ interface RenderCodeBaseProps {
   initialShowHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
+  workspaceContents: WorkspaceContents | null,
   sx?: SxProps,
 }
 
