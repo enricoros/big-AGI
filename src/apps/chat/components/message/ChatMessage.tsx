@@ -447,6 +447,41 @@ export function ChatMessage(props: {
   // style
   const backgroundColor = messageBackground(messageRole, wasEdited, false /*isAssistantError && !errorMessage*/);
 
+  const listItemSx: SxProps = React.useMemo(() => ({
+    // vars
+    '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0,
+
+    // style
+    backgroundColor: backgroundColor,
+    px: { xs: 1, md: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2 },
+    py: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2,
+    // filter: 'url(#agi-futuristic-glow)',
+
+    // style: omit border if set externally
+    ...(!('borderBottom' in (props.sx || {})) && {
+      borderBottom: '1px solid',
+      borderBottomColor: 'divider',
+    }),
+
+    // style: when starred
+    ...(isUserStarred && {
+      outline: '3px solid',
+      outlineColor: 'primary.solidBg',
+      boxShadow: 'lg',
+      borderRadius: 'lg',
+      zIndex: 1,
+    }),
+
+    // for: ENABLE_COPY_MESSAGE_OVERLAY
+    // '&:hover > button': { opacity: 1 },
+
+    // layout
+    display: 'block', // this is Needed, otherwise there will be a horizontal overflow
+
+    ...props.sx,
+  }), [adjContentScaling, backgroundColor, isUserStarred, props.sx, uiComplexityMode]);
+
+
   // avatar
   const showAvatarIcon = !props.hideAvatar && !zenMode;
   const avatarIconEl: React.JSX.Element | null = React.useMemo(
@@ -459,39 +494,7 @@ export function ChatMessage(props: {
     <ListItem
       role='chat-message'
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
-      sx={{
-        // vars
-        '--AGI-overlay-start-opacity': uiComplexityMode === 'extra' ? 0.1 : 0,
-
-        // style
-        backgroundColor: backgroundColor,
-        px: { xs: 1, md: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2 },
-        py: themeScalingMap[adjContentScaling]?.chatMessagePadding ?? 2,
-        // filter: 'url(#agi-futuristic-glow)',
-
-        // style: omit border if set externally
-        ...(!('borderBottom' in (props.sx || {})) && {
-          borderBottom: '1px solid',
-          borderBottomColor: 'divider',
-        }),
-
-        // style: when starred
-        ...(isUserStarred && {
-          outline: '3px solid',
-          outlineColor: 'primary.solidBg',
-          boxShadow: 'lg',
-          borderRadius: 'lg',
-          zIndex: 1,
-        }),
-
-        // for: ENABLE_COPY_MESSAGE_OVERLAY
-        // '&:hover > button': { opacity: 1 },
-
-        // layout
-        display: 'block', // this is Needed, otherwise there will be a horizontal overflow
-
-        ...props.sx,
-      }}
+      sx={listItemSx}
       // className={messagePendingIncomplete ? 'agi-border-4' /* CSS Effect while in progress */ : undefined}
     >
 
