@@ -51,16 +51,16 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
   const currentApp = navItems.apps.find(item => item.route === route);
 
   // global shortcuts for Optima
-  useGlobalShortcuts('App', React.useMemo(() => [
-    { key: 'h', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
-    { key: isMacUser ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
-    // Preferences
+  useGlobalShortcuts('OptimaApp', React.useMemo(() => [
+    // Preferences & Model dialogs
     { key: ',', ctrl: true, action: optimaOpenPreferences },
-    // Models
     { key: 'm', ctrl: true, shift: true, action: optimaOpenModels },
     // Font Scale
     { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
     { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
+    // Shortcuts
+    { key: isMacUser ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
+    { key: 'h', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
   ], []));
 
   return <>
