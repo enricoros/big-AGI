@@ -60,6 +60,19 @@ export interface AppChatIntent {
   initialConversationId: string | null;
 }
 
+const scrollToBottomSx = {
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const chatMessageListSx: SxProps = {
+  flexGrow: 1,
+};
+
+const chatBeamWrapperSx: SxProps = {
+  flexGrow: 1,
+  // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
+};
 
 const composerOpenSx: SxProps = {
   zIndex: 21, // just to allocate a surface, and potentially have a shadow
@@ -524,7 +537,7 @@ export function AppChat() {
             <ScrollToBottom
               bootToBottom
               stickToBottomInitial
-              sx={{ display: 'flex', flexDirection: 'column' }}
+              sx={scrollToBottomSx}
             >
 
               {!_paneBeamIsOpen && (
@@ -543,9 +556,7 @@ export function AppChat() {
                   onTextDiagram={handleTextDiagram}
                   onTextImagine={handleImagineFromText}
                   onTextSpeak={handleTextSpeak}
-                  sx={{
-                    flexGrow: 1,
-                  }}
+                  sx={chatMessageListSx}
                 />
               )}
 
@@ -553,10 +564,7 @@ export function AppChat() {
                 <ChatBeamWrapper
                   beamStore={_paneBeamStore}
                   isMobile={isMobile}
-                  inlineSx={{
-                    flexGrow: 1,
-                    // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
-                  }}
+                  inlineSx={chatBeamWrapperSx}
                 />
               )}
 
@@ -594,7 +602,12 @@ export function AppChat() {
     />
 
     {/* Diagrams */}
-    {!!diagramConfig && <DiagramsModal config={diagramConfig} onClose={() => setDiagramConfig(null)} />}
+    {!!diagramConfig && (
+      <DiagramsModal
+        config={diagramConfig}
+        onClose={() => setDiagramConfig(null)}
+      />
+    )}
 
     {/* Flatten */}
     {!!flattenConversationId && (
