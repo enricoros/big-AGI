@@ -652,6 +652,7 @@ export function ChatMessage(props: {
               isMobile={props.isMobile}
               zenMode={zenMode}
               renderTextAsMarkdown={!disableMarkdown}
+              workspaceId={props.workspaceContents?.workspaceId || null}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}
             />

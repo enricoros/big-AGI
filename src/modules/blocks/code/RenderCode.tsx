@@ -120,6 +120,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     setShowSoftWrap: state.setRenderCodeSoftWrap,
   })));
 
+  console.log('RenderCodeImpl', props.workspaceContents);
+
   // derived props
   const {
     title: blockTitle,
