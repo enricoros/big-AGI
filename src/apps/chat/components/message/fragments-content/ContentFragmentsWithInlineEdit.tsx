@@ -78,8 +78,12 @@ export function ContentFragmentsWithInlineEdit(props: {
       </Button>
     );
 
-  // if no fragments, don't box them
+  // when editing text, don't show the empty notice
   if (props.showEmptyNotice && isEditingText)
+    return null;
+
+  // if no fragments, don't box them
+  if (!props.showEmptyNotice && !props.fragments.length)
     return null;
 
   return <Box aria-label='message body' sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>

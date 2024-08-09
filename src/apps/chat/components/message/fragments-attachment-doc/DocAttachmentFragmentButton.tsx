@@ -90,7 +90,7 @@ export function DocAttachmentFragmentButton(props: {
     fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
     border: '1px solid',
     borderRadius: 'sm',
-    boxShadow: 'xs',
+    boxShadow: `0px 3px 4px -2px rgb(var(--joy-palette-${isSelected ? DocSelColor : DocUnselColor}-darkChannel) / ${isSelected ? 50 : 20}%)`,
     ...isSelected ? {
       borderColor: `${DocSelColor}.solidBg`,
     } : {

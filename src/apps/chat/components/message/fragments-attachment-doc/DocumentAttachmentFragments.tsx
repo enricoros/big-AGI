@@ -69,8 +69,6 @@ export function DocumentAttachmentFragments(props: {
 
       {/* Horizontally scrollable Document buttons */}
       <Box sx={{
-        pb: 0.5, // 4px:  to show the button shadow
-
         // layout
         display: 'flex',
         flexWrap: 'wrap',
