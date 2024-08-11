@@ -12,7 +12,7 @@ import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isConten
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { ContentPartTextAutoBlocksOrError } from './ContentPartTextAutoBlocksOrError';
+import { ContentPartText_AutoBlocks } from './ContentPartText_AutoBlocks';
 import { ContentPartTextEditor } from './ContentPartTextEditor';
 
 
@@ -38,7 +38,7 @@ const endLayoutSx: SxProps = {
 };
 
 
-export function ContentFragmentsWithInlineEdit(props: {
+export function ContentFragments(props: {
 
   fragments: DMessageFragment[]
   showEmptyNotice: boolean,
@@ -164,7 +164,7 @@ export function ContentFragmentsWithInlineEdit(props: {
         // This is the most frequent part by far, and can be broken down into sub-blocks
         case 'text':
           return (
-            <ContentPartTextAutoBlocksOrError
+            <ContentPartText_AutoBlocks
               key={fragment.fId}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}

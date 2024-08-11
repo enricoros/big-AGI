@@ -14,7 +14,7 @@ import { explainServiceErrors } from '../explainServiceErrors';
  * The OG part, comprised of text, which can be markdown, have code blocks, etc.
  * Uses BlocksRenderer to render the markdown/code/html/text, etc.
  */
-export function ContentPartTextAutoBlocksOrError(props: {
+export function ContentPartText_AutoBlocks(props: {
   textPartText: string,
 
   messageRole: DMessageRole,
