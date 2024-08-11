@@ -4,6 +4,7 @@ import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 
 
 const textAreaSlotPropsEnter = {
@@ -35,10 +36,11 @@ export function ContentPartTextEditor(props: {
   // current value
   textPartText: string,
   fragmentId: DMessageFragmentId,
+  enableRestart?: boolean,
 
   // visual
   contentScaling: ContentScaling,
-  endDecorator?: React.ReactNode
+  // endDecorator?: React.ReactNode
 
   // edited value
   editedText?: string,
@@ -46,6 +48,9 @@ export function ContentPartTextEditor(props: {
   onSubmit: (withControl: boolean) => void,
   onEscapePressed: () => void,
 }) {
+
+  // state
+  const [isFocused, setIsFocused] = React.useState(false);
 
   // external
   // NOTE: we disabled `useUIPreferencesStore(state => state.enterIsNewline)` on 2024-06-19, as it's
@@ -74,6 +79,14 @@ export function ContentPartTextEditor(props: {
     }
   }, [enterIsNewline, onSubmit, onEscapePressed]);
 
+  // shortcuts
+  const isEdited = props.editedText !== undefined;
+  useGlobalShortcuts('ContentPartTextEditor', React.useMemo(() => !isFocused ? [] : [
+    { key: ShortcutKey.Enter, shift: true, description: 'Save', disabled: !isEdited && props.enableRestart !== true, level: 1, action: () => onSubmit(false) },
+    ...props.enableRestart ? [{ key: ShortcutKey.Enter, ctrl: true, shift: true, description: 'Save & Retry', disabled: !isEdited, level: 1, action: () => onSubmit(true) }] : [],
+    { key: ShortcutKey.Esc, description: 'Cancel', level: 1, action: onEscapePressed },
+  ], [isEdited, isFocused, props.enableRestart, onEscapePressed, onSubmit]));
+
   return (
     <BlocksTextarea
       variant={/*props.invertedColors ? 'plain' :*/ 'soft'}
@@ -85,12 +98,14 @@ export function ContentPartTextEditor(props: {
         : props.textPartText /* DMessageTextPart text */
       }
       placeholder={'Edit the message...'}
-      // minRows={2} // unintuitive
+      minRows={1.5} // unintuitive
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
       // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
       slotProps={enterIsNewline ? textAreaSlotPropsEnter : textAreaSlotPropsDone}
-      endDecorator={props.endDecorator}
+      // endDecorator={props.endDecorator}
     />
   );
 }

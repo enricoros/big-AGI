@@ -114,11 +114,12 @@ export function ContentFragmentsWithInlineEdit(props: {
             textPartText={isTextPart(fragment.part) ? fragment.part.text : fragment.part.error}
             fragmentId={fragment.fId}
             contentScaling={props.contentScaling}
+            enableRestart
             editedText={props.textEditsState[fragment.fId]}
             setEditedText={props.setEditedText}
             onSubmit={props.onEditsApply}
             onEscapePressed={props.onEditsCancel}
-            endDecorator='Shift+Enter to save · Ctrl+Shift+Enter to restart · Escape to cancel'
+            // endDecorator='Shift+Enter to save · Ctrl+Shift+Enter to restart · Escape to cancel'
           />
         );
       }
