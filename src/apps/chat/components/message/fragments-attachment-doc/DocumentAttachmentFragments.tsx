@@ -21,7 +21,7 @@ export function DocumentAttachmentFragments(props: {
   contentScaling: ContentScaling,
   isMobile?: boolean,
   zenMode: boolean,
-  renderTextAsMarkdown: boolean,
+  disableMarkdownText: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
 }) {
@@ -97,7 +97,7 @@ export function DocumentAttachmentFragments(props: {
           contentScaling={props.contentScaling}
           isMobile={props.isMobile}
           zenMode={props.zenMode}
-          renderTextAsMarkdown={props.renderTextAsMarkdown}
+          disableMarkdownText={props.disableMarkdownText}
           onFragmentDelete={props.onFragmentDelete}
           onFragmentReplace={handleFragmentReplace}
         />

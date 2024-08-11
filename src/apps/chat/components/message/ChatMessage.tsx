@@ -624,7 +624,7 @@ export function ChatMessage(props: {
             messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
-            renderTextAsMarkdown={!disableMarkdown && !fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
+            disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showUnsafeHtml={props.showUnsafeHtml}
 
             textEditsState={textContentEditState}
@@ -648,7 +648,7 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               isMobile={props.isMobile}
               zenMode={zenMode}
-              renderTextAsMarkdown={!disableMarkdown}
+              disableMarkdownText={disableMarkdown}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}
             />

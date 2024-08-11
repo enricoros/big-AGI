@@ -4,13 +4,16 @@ import type { SxProps } from '@mui/joy/styles/types';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
+import type { AutoBlocksCodeRenderVariant } from './AutoBlocksRenderer';
+
+
 // Styles for the various block components
 
-export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentScaling, specialCodePlain: boolean): SxProps {
+export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentScaling, codeRenderVariant: AutoBlocksCodeRenderVariant): SxProps {
   return React.useMemo(() => ({
-    my: specialCodePlain ? 0 : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
-    backgroundColor: specialCodePlain ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-    boxShadow: specialCodePlain ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
+    my: codeRenderVariant === 'plain' ? 0 : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
+    backgroundColor: codeRenderVariant === 'plain' ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+    boxShadow: codeRenderVariant === 'plain' ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
     borderRadius: 'sm',
     fontFamily: 'code',
     fontSize: themeScalingMap[contentScaling]?.blockCodeFontSize ?? '0.875rem',
@@ -19,7 +22,7 @@ export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentS
     lineHeight: themeScalingMap[contentScaling]?.blockLineHeight ?? 1.75,
     minWidth: 288,
     minHeight: '2.75rem',
-  }), [fromAssistant, contentScaling, specialCodePlain]);
+  }), [codeRenderVariant, contentScaling, fromAssistant]);
 }
 
 export function useScaledImageSx(contentScaling: ContentScaling): SxProps {
@@ -39,13 +42,13 @@ export function useScaledTypographySx(contentScaling: ContentScaling, showAsDang
   }), [contentScaling, showAsDanger, showAsItalic]);
 }
 
-export function useToggleExpansionButtonSx(contentScaling: ContentScaling, specialCodePlain: boolean): SxProps {
+export function useToggleExpansionButtonSx(contentScaling: ContentScaling, codeRenderVariant: AutoBlocksCodeRenderVariant): SxProps {
   return React.useMemo(() => ({
     width: '100%',
     fontSize: themeScalingMap[contentScaling]?.fragmentButtonFontSize ?? undefined,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
-    ...(specialCodePlain ? {
+    ...(codeRenderVariant === 'plain' ? {
       // Style when inside the <DocumentFragmentEditor />
       backgroundColor: 'background.surface',
       // marginTop: -0.5,
@@ -53,5 +56,5 @@ export function useToggleExpansionButtonSx(contentScaling: ContentScaling, speci
       // Style when inside <ChatMessage /> in particular for 'user' messages
       marginTop: 1,
     }),
-  }), [contentScaling, specialCodePlain]);
+  }), [codeRenderVariant, contentScaling]);
 }

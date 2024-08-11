@@ -37,7 +37,7 @@ export function DocAttachmentFragmentEditor(props: {
   contentScaling: ContentScaling,
   isMobile?: boolean,
   zenMode: boolean,
-  renderTextAsMarkdown: boolean,
+  disableMarkdownText: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
@@ -291,8 +291,8 @@ export function DocAttachmentFragmentEditor(props: {
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}
           fitScreen={props.isMobile}
-          specialCodePlain
-          renderTextAsMarkdown={props.renderTextAsMarkdown}
+          codeRenderVariant='plain'
+          textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
         />
       )}
 
