@@ -112,7 +112,7 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
       {!!props.shortcut.ctrl && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
       {!!props.shortcut.shift && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Shift')}</ShortcutKey>}
       {/*{!!props.shortcut.altForNonMac && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <ShortcutKey onClick={handleClicked}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key.toUpperCase()}</ShortcutKey>
+      <ShortcutKey onClick={handleClicked}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</ShortcutKey>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
       {props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={{ fontSize: 'md' }} />}
     </ShortcutContainer>
@@ -146,8 +146,11 @@ export function StatusBar() {
   }));
 
   // handlers
-  const handleHideShortcuts = React.useCallback(() => {
-    useUXLabsStore.getState().setLabsShowShortcutBar(false);
+  const handleHideShortcuts = React.useCallback((event: React.MouseEvent) => {
+    if (event.shiftKey)
+      console.log(useGlobalShortcutsStore.getState().shortcutGroups);
+    else
+      useUXLabsStore.getState().setLabsShowShortcutBar(false);
   }, []);
 
   // React to modifiers
