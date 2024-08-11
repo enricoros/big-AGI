@@ -5,6 +5,7 @@
 
 # Supabase - ignored for now
 /supabase/
+/*.sql
 
 # dependencies
 /node_modules
