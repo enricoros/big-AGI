@@ -10,6 +10,6 @@ export type DWorkspaceId = string;
 /**
  * Make the V2 shortcut of having conversation=workspace evident and searachable.
  */
-export function workspaceForConversationIdentity(conversationId: DConversationId | null): DWorkspaceId | null {
+export function workspaceForConversationIdentity<T extends DConversationId | null>(conversationId: T): T {
   return conversationId;
 }
