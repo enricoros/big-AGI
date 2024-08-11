@@ -227,6 +227,8 @@ async function _aix_LL_ChatGenerateContent(
     const isUserAbort1 = abortSignal.aborted;
     const isUserAbort2 = (error instanceof Error) && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
     if (!(isUserAbort1 || isUserAbort2)) {
+      if (process.env.NODE_ENV === 'development')
+        console.error('[DEV] Aix streaming Error:', error);
       partReassembler.reassembleTerminateError(presentErrorToHumans(error, true, true) || 'Unknown error');
     } else {
       if (isUserAbort1 !== isUserAbort2)
