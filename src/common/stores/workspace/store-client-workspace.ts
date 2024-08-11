@@ -9,6 +9,10 @@ import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 import type { DWorkspaceId } from './workspace.types';
 
 
+/**
+ * A workspace must have only weak references to the contained information.
+ * Strong resolution will be performed at the user levels, going by IDs.
+ */
 interface WorkspaceState {
 
   // Workspace associations (using arrays instead of Sets for serialization)
@@ -138,7 +142,6 @@ export const useClientWorkspaceStore = create<WorkspaceState & WorkspaceActions>
           ])
           .filter(([_, fileIds]) => fileIds.length > 0),
       );
-
     },
 
   },

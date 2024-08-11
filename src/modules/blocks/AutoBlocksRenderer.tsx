@@ -3,7 +3,6 @@ import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 
 import { BlocksContainer } from './BlocksContainers';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
@@ -39,9 +38,6 @@ type BlocksRendererProps = {
    * work in progress on that
    */
   optiAllowSubBlocksMemo?: boolean;
-
-  // prop drilled to the depths (AppChat > ChatMessageList > ChatMessageMemoOrNot > ContentFragmentsWithInlineEdit > ContentPartTextAutoBlocksOrError > AutoBlocksRenderer)
-  workspaceContents: WorkspaceContents | null,
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
@@ -120,7 +116,6 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
                 initialShowHTML={props.showUnsafeHtml}
                 noCopyButton={props.specialDiagramMode}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
-                workspaceContents={props.workspaceContents}
                 sx={scaledCodeSx}
               />
             );

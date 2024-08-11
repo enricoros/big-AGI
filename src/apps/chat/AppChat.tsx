@@ -23,6 +23,7 @@ import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
+import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessageTextContent, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
@@ -34,7 +35,6 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
-import { useWorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
@@ -158,8 +158,10 @@ export function AppChat() {
     deleteConversations,
   } = useConversation(focusedPaneConversationId);
 
-  const focusedWorkspaceContents = useWorkspaceContents(focusedPaneConversationId);
-console.log(focusedWorkspaceContents, focusedPaneConversationId);
+  // this will be used for the side panel
+  // const focusedConversationWorkspaceId = workspaceForConversationIdentity(focusedPaneConversationId);
+  //// const focusedConversationWorkspace = useWorkspaceIdForConversation(focusedPaneConversationId);
+
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
   const activeFolderId = useFolderStore(({ enableFolders, folders }) => {
@@ -488,12 +490,12 @@ console.log(focusedWorkspaceContents, focusedPaneConversationId);
         const _paneIsFocused = idx === focusedPaneIndex;
         const _paneConversationId = pane.conversationId;
         const _paneChatHandler = paneHandlers[idx] ?? null;
-        const _paneBeamStore = paneBeamStores[idx] ?? null;
-        const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStore;
+        const _paneBeamStoreApi = paneBeamStores[idx] ?? null;
+        const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStoreApi;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${pane.paneId}`;
         const _sepId = `sep-pane-${idx}`;
-        return <React.Fragment key={_keyAndId}>
+        return <WorkspaceIdProvider conversationId={_paneIsFocused ? _paneConversationId : null} key={_keyAndId}>
 
           <Panel
             id={_keyAndId}
@@ -544,7 +546,6 @@ console.log(focusedWorkspaceContents, focusedPaneConversationId);
                 <ChatMessageList
                   conversationId={_paneConversationId}
                   conversationHandler={_paneChatHandler}
-                  workspaceContents={_paneIsFocused ? focusedWorkspaceContents : null}
                   capabilityHasT2I={capabilityHasT2I}
                   chatLLMContextTokens={chatLLM?.contextTokens ?? null}
                   fitScreen={isMobile || isMultiPane}
@@ -562,7 +563,7 @@ console.log(focusedWorkspaceContents, focusedPaneConversationId);
 
               {_paneBeamIsOpen && (
                 <ChatBeamWrapper
-                  beamStore={_paneBeamStore}
+                  beamStore={_paneBeamStoreApi}
                   isMobile={isMobile}
                   inlineSx={chatBeamWrapperSx}
                 />
@@ -582,7 +583,7 @@ console.log(focusedWorkspaceContents, focusedPaneConversationId);
             </PanelResizeHandle>
           )}
 
-        </React.Fragment>;
+        </WorkspaceIdProvider>;
       })}
 
     </PanelGroup>

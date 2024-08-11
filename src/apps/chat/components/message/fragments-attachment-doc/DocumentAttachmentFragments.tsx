@@ -4,7 +4,6 @@ import { Box } from '@mui/joy';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { DocAttachmentFragmentButton } from './DocAttachmentFragmentButton';
@@ -23,7 +22,6 @@ export function DocumentAttachmentFragments(props: {
   isMobile?: boolean,
   zenMode: boolean,
   renderTextAsMarkdown: boolean,
-  workspaceId: DWorkspaceId | null,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
 }) {
@@ -100,7 +98,6 @@ export function DocumentAttachmentFragments(props: {
           isMobile={props.isMobile}
           zenMode={props.zenMode}
           renderTextAsMarkdown={props.renderTextAsMarkdown}
-          workspaceId={props.workspaceId}
           onFragmentDelete={props.onFragmentDelete}
           onFragmentReplace={handleFragmentReplace}
         />

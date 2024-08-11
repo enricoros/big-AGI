@@ -121,7 +121,6 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
             {filteredMessages.map((message, idx) =>
               <ChatMessageMemo
                 key={'msg-' + message.id}
-                workspaceContents={null /* shared chat - no workspace */}
                 message={message}
                 fitScreen={isMobile}
                 isMobile={isMobile}

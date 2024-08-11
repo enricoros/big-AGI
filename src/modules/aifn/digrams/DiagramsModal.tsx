@@ -230,7 +230,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
             renderTextAsMarkdown={false}
             specialCodePlain
             specialDiagramMode
-            workspaceContents={null}
             // Edit is moved from the BlocksRenderer to the ContentPartText
             // onMessageEdit={(text) => setMessage({ ...message, text })}
           />

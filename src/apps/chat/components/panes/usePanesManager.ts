@@ -344,7 +344,7 @@ export function usePanesManager() {
     _onConversationsChanged: state._onConversationsChanged,
   })));
 
-  // use Conversation IDs[]
+  // use changes in Conversation IDs[] to trigger the existence check
   const conversationIDs: DConversationId[] = useChatStore(useShallow(state =>
     state.conversations.map(_c => _c.id),
   ));

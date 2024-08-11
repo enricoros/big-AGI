@@ -46,7 +46,6 @@ export function ZeroGallery(props: { domain: 'draw' | 'app' }) {
         contentScaling='sm'
         fitScreen
         renderTextAsMarkdown
-        workspaceContents={null}
       />
       {/*</Typography>*/}
     </Card>
