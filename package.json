@@ -30,7 +30,7 @@
     "@prisma/client": "^5.18.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.11.0",
-    "@tanstack/react-query": "^5.51.21",
+    "@tanstack/react-query": "^5.51.23",
     "@trpc/client": "11.0.0-rc.477",
     "@trpc/next": "11.0.0-rc.477",
     "@trpc/react-query": "11.0.0-rc.477",
