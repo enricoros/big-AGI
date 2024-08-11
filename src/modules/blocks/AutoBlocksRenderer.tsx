@@ -20,6 +20,8 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 // export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 // AutoBlocksRenderer.displayName = 'AutoBlocksRenderer';
 
+export type AutoBlocksCodeRenderVariant = 'outlined' | 'plain' | 'enhanced';
+
 /**
  * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
  * Used by (and more):
@@ -36,12 +38,13 @@ export function AutoBlocksRenderer(props: {
   showAsDanger?: boolean;
   showAsItalic?: boolean;
   showUnsafeHtml?: boolean;
-  specialCodePlain?: boolean;
-  specialDiagramMode?: boolean;
 
   renderAsCodeWithTitle?: string;
-  renderTextAsMarkdown: boolean;
   renderSanityTextDiffs?: SanityTextDiff[];
+
+  blocksProcessor?: 'diagram',
+  codeRenderVariant?: AutoBlocksCodeRenderVariant /* default: outlined */,
+  textRenderVariant: 'markdown' | 'text',
 
   /**
    * optimization: allow memo to all individual blocks except the last one
@@ -66,14 +69,14 @@ export function AutoBlocksRenderer(props: {
     useAutoBlocksMemoSemiStable(text, props.renderAsCodeWithTitle, fromSystem, props.renderSanityTextDiffs);
 
   // apply specialDiagramMode filter if applicable
-  if (props.specialDiagramMode)
+  if (props.blocksProcessor === 'diagram')
     autoBlocksStable = autoBlocksStable.filter(({ bkt }) => bkt === 'code-bk' || autoBlocksStable.length === 1);
 
   // Memo the styles, to minimize re-renders
-  const scaledCodeSx = useScaledCodeSx(fromAssistant, props.contentScaling, !!props.specialCodePlain);
+  const scaledCodeSx = useScaledCodeSx(fromAssistant, props.contentScaling, props.codeRenderVariant || 'outlined');
   const scaledImageSx = useScaledImageSx(props.contentScaling);
   const scaledTypographySx = useScaledTypographySx(props.contentScaling, !!props.showAsDanger, !!props.showAsItalic);
-  const toggleExpansionButtonSx = useToggleExpansionButtonSx(props.contentScaling, !!props.specialCodePlain);
+  const toggleExpansionButtonSx = useToggleExpansionButtonSx(props.contentScaling, props.codeRenderVariant || 'outlined');
 
 
   return (
@@ -93,15 +96,15 @@ export function AutoBlocksRenderer(props: {
 
           case 'md-bk':
             const RenderMarkdownMemoOrNot = optimizeMemoBeforeLastBlock ? RenderMarkdownMemo : RenderMarkdown;
-            return (props.renderTextAsMarkdown && !fromSystem && !isUserCommand) ? (
-              <RenderMarkdownMemoOrNot
-                key={'md-bk-' + index}
+            return (props.textRenderVariant === 'text' || fromSystem || isUserCommand) ? (
+              <RenderPlainChatText
+                key={'txt-bk-' + index}
                 content={bkInput.content}
                 sx={scaledTypographySx}
               />
             ) : (
-              <RenderPlainChatText
-                key={'txt-bk-' + index}
+              <RenderMarkdownMemoOrNot
+                key={'md-bk-' + index}
                 content={bkInput.content}
                 sx={scaledTypographySx}
               />
@@ -116,7 +119,7 @@ export function AutoBlocksRenderer(props: {
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
                 fitScreen={props.fitScreen}
                 initialShowHTML={props.showUnsafeHtml}
-                noCopyButton={props.specialDiagramMode}
+                noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
                 sx={scaledCodeSx}
               />
@@ -156,7 +159,7 @@ export function AutoBlocksRenderer(props: {
 
       {(isTextCollapsed || forceTextExpanded) && (
         <ToggleExpansionButton
-          color={props.specialCodePlain ? 'neutral' : undefined}
+          color={props.codeRenderVariant === 'plain' ? 'neutral' : undefined}
           isCollapsed={isTextCollapsed}
           onToggle={handleToggleExpansion}
           sx={toggleExpansionButtonSx}

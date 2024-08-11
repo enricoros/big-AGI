@@ -50,7 +50,7 @@ export function ShortcutsModal(props: { onClose: () => void }) {
         fromRole='assistant'
         contentScaling='sm'
         fitScreen={isMobile}
-        renderTextAsMarkdown
+        textRenderVariant='markdown'
       />
     </GoodModal>
   );

@@ -227,9 +227,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
             fromRole='assistant'
             contentScaling={adjustContentScaling(contentScaling, -1)}
             fitScreen={isMobile}
-            renderTextAsMarkdown={false}
-            specialCodePlain
-            specialDiagramMode
+            blocksProcessor='diagram'
+            codeRenderVariant='plain'
+            textRenderVariant='text'
             // Edit is moved from the BlocksRenderer to the ContentPartText
             // onMessageEdit={(text) => setMessage({ ...message, text })}
           />

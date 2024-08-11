@@ -22,7 +22,7 @@ export function ContentPartText_AutoBlocks(props: {
 
   contentScaling: ContentScaling,
   fitScreen: boolean,
-  renderTextAsMarkdown: boolean,
+  disableMarkdownText: boolean,
   renderTextDiff?: TextDiff[];
 
   showUnsafeHtml?: boolean,
@@ -58,8 +58,9 @@ export function ContentPartText_AutoBlocks(props: {
       contentScaling={props.contentScaling}
       fitScreen={props.fitScreen}
       showUnsafeHtml={props.showUnsafeHtml}
-      renderTextAsMarkdown={props.renderTextAsMarkdown}
       renderSanityTextDiffs={props.renderTextDiff}
+      codeRenderVariant='outlined'
+      textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}

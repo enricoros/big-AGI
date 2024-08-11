@@ -45,7 +45,7 @@ export function ZeroGallery(props: { domain: 'draw' | 'app' }) {
         fromRole='assistant'
         contentScaling='sm'
         fitScreen
-        renderTextAsMarkdown
+        textRenderVariant='markdown'
       />
       {/*</Typography>*/}
     </Card>

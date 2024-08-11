@@ -23,7 +23,7 @@ export function ContentPartPlaceholder(props: {
       fitScreen={false}
       showAsDanger={props.showAsDanger}
       showAsItalic={props.showAsItalic}
-      renderTextAsMarkdown={false}
+      textRenderVariant='text'
     />
   );
   //
