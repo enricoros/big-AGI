@@ -100,6 +100,7 @@ function ChatDrawerItem(props: {
     title,
     userSymbol,
     userFlagsSummary,
+    containsDocAttachments,
     containsImageAssets,
     folder,
     messageCount,
@@ -270,17 +271,17 @@ function ChatDrawerItem(props: {
       <Typography level='body-sm'>
         {searchFrequency}
       </Typography>
-    ) : (props.showSymbols && (userFlagsSummary || containsImageAssets)) ? (
+    ) : (props.showSymbols && (userFlagsSummary || containsDocAttachments || containsImageAssets)) ? (
       <Box sx={{
         fontSize: 'xs',
         whiteSpace: 'nowrap',
         pointerEvents: 'none',
       }}>
-        {userFlagsSummary}{containsImageAssets && '🖍️'}
+        {userFlagsSummary}{containsDocAttachments && '📄'}{containsImageAssets && '🖍️'}
       </Box>
     ) : null}
 
-  </>, [beingGenerated, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
+  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
