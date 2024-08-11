@@ -36,7 +36,7 @@ const BUTTON_RADIUS = '4px'; // note: can't use 'sm', 'md', etc.
 
 export const renderCodeMemoOrNot = (memo: boolean) => memo ? RenderCodeMemo : RenderCode;
 
-const RenderCodeMemo = React.memo(RenderCode);
+export const RenderCodeMemo = React.memo(RenderCode);
 
 interface RenderCodeBaseProps {
   semiStableId: string | undefined,
