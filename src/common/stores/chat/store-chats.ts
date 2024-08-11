@@ -10,6 +10,7 @@ import { agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 
 import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
+import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
 import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
 import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
@@ -73,7 +74,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         }));
 
         // [workspace] import messages' LiveFiles
-        workspaceActions().importAssignmentsFromMessages(newConversation.id, newConversation.messages);
+        workspaceActions().importAssignmentsFromMessages(workspaceForConversationIdentity(newConversation.id), newConversation.messages);
 
         return newConversation.id;
       },
@@ -107,7 +108,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         });
 
         // [workspace] import messages' LiveFiles
-        workspaceActions().importAssignmentsFromMessages(conversation.id, conversation.messages);
+        workspaceActions().importAssignmentsFromMessages(workspaceForConversationIdentity(conversation.id), conversation.messages);
 
         return conversation.id;
       },
@@ -125,7 +126,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         });
 
         // [workspace] assign all files of workspace1 to workspace2 (HACK until we have workspaces != conversations)
-        workspaceActions().copyAssignments(conversation.id, branched.id);
+        workspaceActions().copyAssignments(workspaceForConversationIdentity(conversation.id), workspaceForConversationIdentity(branched.id));
 
         return branched.id;
       },
@@ -151,7 +152,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         });
 
         // [workspace] since conversation=workspace for now, remove all workspaces too
-        conversationIds.forEach(conversationId => workspaceActions().remove(conversationId));
+        conversationIds.forEach(conversationId => workspaceActions().remove(workspaceForConversationIdentity(conversationId)));
 
         // return the next conversation Id in line, if valid
         return newConversations[(cIndex >= 0 && cIndex < newConversations.length) ? cIndex : 0].id;
@@ -235,7 +236,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId, conversation => {
 
           // [workspace] import message's resources into the workspace
-          workspaceActions().importAssignmentsFromMessages(conversationId, [message]);
+          workspaceActions().importAssignmentsFromMessages(workspaceForConversationIdentity(conversationId), [message]);
 
           if (!message.pendingIncomplete)
             updateMessagesTokenCounts([message], true, 'appendMessage');
