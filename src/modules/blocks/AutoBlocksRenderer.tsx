@@ -5,6 +5,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 import { BlocksContainer } from './BlocksContainers';
+import { EnhancedRenderCode } from './code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
@@ -112,7 +113,18 @@ export function AutoBlocksRenderer(props: {
 
           case 'code-bk':
             const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeMemoBeforeLastBlock);
-            return (
+            return (props.codeRenderVariant === 'enhanced' && !bkInput.isPartial) ? (
+              <EnhancedRenderCode
+                key={'code-bk-' + index}
+                semiStableId={bkInput.bkId}
+                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
+                fitScreen={props.fitScreen}
+                initialShowHTML={props.showUnsafeHtml}
+                noCopyButton={props.blocksProcessor === 'diagram'}
+                optimizeLightweight={optimizeMemoBeforeLastBlock}
+                sx={scaledCodeSx}
+              />
+            ) : (
               <RenderCodeMemoOrNot
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
