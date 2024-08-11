@@ -112,6 +112,7 @@ export function AutoBlocksRenderer(props: {
             return (
               <RenderCodeMemoOrNot
                 key={'code-bk-' + index}
+                semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
                 fitScreen={props.fitScreen}
                 initialShowHTML={props.showUnsafeHtml}
