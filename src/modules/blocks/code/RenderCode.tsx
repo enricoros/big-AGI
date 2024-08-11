@@ -39,6 +39,7 @@ export const renderCodeMemoOrNot = (memo: boolean) => memo ? RenderCodeMemo : Re
 const RenderCodeMemo = React.memo(RenderCode);
 
 interface RenderCodeBaseProps {
+  semiStableId: string | undefined,
   title: string,
   code: string,
   isPartial: boolean,
