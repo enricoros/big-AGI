@@ -23,7 +23,9 @@ function deserializeWithWorkaround<T = unknown>(object: any): T {
 
   // Second-level (object.json: {..}) mutability workaround
   if (object && object instanceof Object && object?.meta && object?.json) {
-    object = { ...object, json: { ...object.json } };
+    console.log('deserializeWithWorkaround', object, superjson.deserialize(object));
+    // object = { ...object, json: { ...object.json } };
+    // console.log('deserializeWithWorkaround', object, superjson.deserialize(object));
   }
 
   return superjson.deserialize<T>(object);
