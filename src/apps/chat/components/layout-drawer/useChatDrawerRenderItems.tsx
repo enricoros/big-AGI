@@ -158,7 +158,7 @@ export function useChatDrawerRenderItems(
             title,
             userSymbol: _c.userSymbol || undefined,
             userFlagsSummary,
-            containsDocAttachments,
+            containsDocAttachments: containsDocAttachments && filterHasDocFragments, // special case: only show this icon when filtering - too many icons otherwise
             containsImageAssets,
             folder: !allFolders.length
               ? undefined                             // don't show folder select if folders are disabled

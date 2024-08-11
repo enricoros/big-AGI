@@ -12,11 +12,21 @@ import { RenderPlainChatText } from './plaintext/RenderPlainChatText';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { renderCodeMemoOrNot } from './code/RenderCode';
-import { useAutoBlocksMemo, useTextCollapser } from './blocks.hooks';
+import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
 
-type BlocksRendererProps = {
+// To get to the 'ref' version (which doesn't seem to be used anymore, and was used to isolate the source of the bubble bar):
+// export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
+// AutoBlocksRenderer.displayName = 'AutoBlocksRenderer';
+
+/**
+ * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
+ * Used by (and more):
+ * - DocAttachmentFragmentEditor
+ * - ContentPartPlaceholder
+ */
+export function AutoBlocksRenderer(props: {
   // required
   text: string;
   fromRole: DMessageRole;
@@ -41,16 +51,7 @@ type BlocksRendererProps = {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
-};
-
-
-/**
- * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
- * Used by (and more):
- * - DocAttachmentFragmentEditor
- * - ContentPartPlaceholder
- */
-export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
+}) {
 
   // props-derived state
   const fromAssistant = props.fromRole === 'assistant';
@@ -62,7 +63,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
   const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } =
     useTextCollapser(props.text, fromUser);
   let autoBlocksStable =
-    useAutoBlocksMemo(text, props.renderAsCodeWithTitle, fromSystem, props.renderSanityTextDiffs);
+    useAutoBlocksMemoSemiStable(text, props.renderAsCodeWithTitle, fromSystem, props.renderSanityTextDiffs);
 
   // apply specialDiagramMode filter if applicable
   if (props.specialDiagramMode)
@@ -77,7 +78,7 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
 
   return (
     <BlocksContainer
-      ref={ref}
+      // ref={ref /* this will assign the ref, now not needed anymore */}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
     >
@@ -163,6 +164,4 @@ export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendere
 
     </BlocksContainer>
   );
-});
-
-AutoBlocksRenderer.displayName = 'AutoBlocksRenderer';
+}

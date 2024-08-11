@@ -53,7 +53,15 @@ function areBlocksEqualIdIgnored(block1: RenderBlockInputs[number] | undefined, 
   return shallowEquals(rest1, rest2);
 }
 
-export function useAutoBlocksMemo(text: string, forceCodeWithTitle: string | undefined, forceMarkdown: boolean, forceSanityTextDiffs: SanityTextDiff[] | undefined): RenderBlockInputs {
+
+/**
+ * Note: this will keep generally stable IDs, but will change them when:
+ * - when the AutoBlocksRenderer goes from non-memo to Memo: reassigned: *
+ * - when the text is still being parsed, e.g. a string will find a "```" block
+ *   as part of the the running text, in which case the growing text will be
+ *   reassigned (when it's chopped to before the code block, in the next call)
+ */
+export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: string | undefined, forceMarkdown: boolean, forceSanityTextDiffs: SanityTextDiff[] | undefined): RenderBlockInputs {
 
   // state - previous blocks, to stabilize objects
   const prevBlocksRef = React.useRef<RenderBlockInputs>([]);
