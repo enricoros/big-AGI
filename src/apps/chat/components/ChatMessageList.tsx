@@ -9,7 +9,6 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { InlineError } from '~/common/components/InlineError';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
@@ -35,7 +34,6 @@ const stableNoMessages: DMessage[] = [];
 export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   conversationHandler: ConversationHandler | null,
-  workspaceContents: WorkspaceContents | null,
   capabilityHasT2I: boolean,
   chatLLMContextTokens: number | null,
   fitScreen: boolean,
@@ -299,7 +297,6 @@ export function ChatMessageList(props: {
             <ChatMessageMemoOrNot
               key={'msg-' + message.id}
               message={message}
-              workspaceContents={props.workspaceContents}
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
               hasInReferenceTo={composerHasInReferenceto}

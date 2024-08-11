@@ -80,7 +80,6 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
         inputs.updateInstructionComponent(
           <ChatMessage
             message={inputs.intermediateDMessage}
-            workspaceContents={null /* this is a merge being generated, in progress */}
             fitScreen={true}
             hideAvatar
             adjustContentScaling={-1}

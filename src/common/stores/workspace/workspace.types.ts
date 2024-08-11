@@ -6,7 +6,10 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
  */
 export type DWorkspaceId = string;
 
-// this is just used as a future architecture placeholder
+
+/**
+ * Make the V2 shortcut of having conversation=workspace evident and searachable.
+ */
 export function workspaceForConversationIdentity(conversationId: DConversationId | null): DWorkspaceId | null {
   return conversationId;
 }

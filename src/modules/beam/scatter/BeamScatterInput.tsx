@@ -89,7 +89,6 @@ export function BeamScatterInput(props: {
     <Box sx={BEAM_INVERT_BACKGROUND ? userMessageWrapperINVSx : userMessageWrapperSx}>
       <ChatMessageMemo
         message={lastHistoryMessage}
-        workspaceContents={null /* User Message (last message in history) */}
         fitScreen={props.isMobile}
         isMobile={props.isMobile}
         adjustContentScaling={-1}

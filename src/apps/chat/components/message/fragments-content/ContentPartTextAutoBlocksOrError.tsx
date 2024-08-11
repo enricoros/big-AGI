@@ -5,7 +5,6 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 
@@ -17,7 +16,6 @@ import { explainServiceErrors } from '../explainServiceErrors';
  */
 export function ContentPartTextAutoBlocksOrError(props: {
   textPartText: string,
-  workspaceContents: WorkspaceContents | null,
 
   messageRole: DMessageRole,
   messageOriginLLM?: string,
@@ -63,7 +61,6 @@ export function ContentPartTextAutoBlocksOrError(props: {
       renderTextAsMarkdown={props.renderTextAsMarkdown}
       renderSanityTextDiffs={props.renderTextDiff}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
-      workspaceContents={props.workspaceContents}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
     />

@@ -24,7 +24,6 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
-import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
@@ -88,7 +87,6 @@ export const ChatMessageMemo = React.memo(ChatMessage);
  */
 export function ChatMessage(props: {
   message: DMessage,
-  workspaceContents: WorkspaceContents | null,
   diffPreviousText?: string,
   fitScreen: boolean,
   hasInReferenceTo?: boolean;
@@ -619,7 +617,6 @@ export function ChatMessage(props: {
           {/* Content Fragments */}
           <ContentFragmentsWithInlineEdit
             fragments={contentFragments}
-            workspaceContents={props.workspaceContents}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={adjContentScaling}
@@ -652,7 +649,6 @@ export function ChatMessage(props: {
               isMobile={props.isMobile}
               zenMode={zenMode}
               renderTextAsMarkdown={!disableMarkdown}
-              workspaceId={props.workspaceContents?.workspaceId || null}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}
             />

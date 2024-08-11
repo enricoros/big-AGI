@@ -11,7 +11,6 @@ import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
-import type { WorkspaceContents } from '~/common/stores/workspace/workspace.hooks';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -47,7 +46,6 @@ interface RenderCodeBaseProps {
   initialShowHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
-  workspaceContents: WorkspaceContents | null,
   sx?: SxProps,
 }
 
@@ -119,8 +117,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     setShowLineNumbers: state.setRenderCodeLineNumbers,
     setShowSoftWrap: state.setRenderCodeSoftWrap,
   })));
-
-  console.log('RenderCodeImpl', props.workspaceContents);
 
   // derived props
   const {
