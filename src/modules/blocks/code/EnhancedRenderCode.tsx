@@ -33,7 +33,7 @@ export function EnhancedRenderCode(props: {
   color?: ColorPaletteProp;
   contentScaling: ContentScaling;
 
-  onLiveFileCreate?: () => void,
+  // onLiveFileCreate?: () => void,
 }) {
 
   // state
@@ -72,7 +72,7 @@ export function EnhancedRenderCode(props: {
     <Box sx={enhancedCodePanelTitleTooltipSx}>
       {/* This is what we have */}
       <div>Title</div>
-      <div>{props.title}</div>
+      <div>{props.title || '(empty)'}</div>
       {/*<div>Language</div>*/}
       {/*<div>{props.language}</div>*/}
       <div>Code Length</div>

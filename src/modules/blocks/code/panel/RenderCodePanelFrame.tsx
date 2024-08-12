@@ -10,7 +10,8 @@ export const enhancedCodePanelTitleTooltipSx: SxProps = {
   p: 1,
   display: 'grid',
   gridTemplateColumns: 'auto 1fr',
-  columnGap: 1,
+  alignItems: 'center',
+  columnGap: 2,
   rowGap: 1,
   '& > :nth-of-type(odd)': {
     color: 'text.tertiary',
