@@ -62,7 +62,7 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, sx }
         >
           Get Transcript
         </Button>
-        {isError && <div>Error fetching transcript. Please try again.</div>}
+        {isError && <div>Error fetching transcript. Please try again. ${JSON.stringify(error)}</div>}
       </form>
     </Box>
   );
