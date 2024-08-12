@@ -7,8 +7,10 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 // import { isMacUser } from '~/common/util/pwaUtils';
 import type { ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 
@@ -123,6 +125,7 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
 export function StatusBar() {
 
   // state (modifiers pressed/not)
+  const { showPromisedOverlay } = useOverlayComponents();
   // const [ctrlPressed, setCtrlPressed] = React.useState(false);
   // const [shiftPressed, setShiftPressed] = React.useState(false);
 
@@ -147,11 +150,18 @@ export function StatusBar() {
 
   // handlers
   const handleHideShortcuts = React.useCallback((event: React.MouseEvent) => {
-    if (event.shiftKey)
+    if (event.shiftKey) {
       console.log(useGlobalShortcutsStore.getState().shortcutGroups);
-    else
-      useUXLabsStore.getState().setLabsShowShortcutBar(false);
-  }, []);
+      return;
+    }
+    showPromisedOverlay('shortcuts-confirm-close', {}, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText='Remove productivity tips and shortcuts? You can add it back in Settings > Labs.'
+        positiveActionText='Remove'
+      />).then(() => useUXLabsStore.getState().setLabsShowShortcutBar(false)).catch(() => { /* ignore closure */
+    });
+  }, [showPromisedOverlay]);
 
   // React to modifiers
   // React.useEffect(() => {
