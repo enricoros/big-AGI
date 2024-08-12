@@ -55,7 +55,7 @@ export function RenderCodePanelFrame(props: {
       // add top margin (gutter) only of this is not the first block in the sequence
       ...(props.gutterBlock && {
         '&:not(:first-of-type)': { mt: themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 1 },
-        '&:not(:last-of-type)': { mb: themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 1 },
+        '&:not(:last-of-type)': { mb: themeScalingMap[props.contentScaling]?.blockCodeMarginY /* * 1.25 */ ?? 1 },
       }),
       backgroundColor: /*props.noOuterShadow ? 'background.popup' :*/ 'background.surface',
       border: '1px solid',
@@ -143,6 +143,7 @@ export function RenderCodePanelFrame(props: {
         </Sheet>
       )}
 
+      {/* contents */}
       {props.children}
 
     </Box>

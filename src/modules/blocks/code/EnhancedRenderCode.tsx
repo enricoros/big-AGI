@@ -5,12 +5,13 @@ import { Box, ColorPaletteProp, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
-import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
+import { getCodeCollapseManager } from './codeCollapseManager';
 
 
 export function EnhancedRenderCode(props: {
@@ -51,6 +52,13 @@ export function EnhancedRenderCode(props: {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
   }, []);
+
+
+  // effects
+  React.useEffect(() => {
+    return getCodeCollapseManager().addCollapseAllListener((collapseAll: boolean) => setIsCodeCollapsed(collapseAll));
+  }, []);
+
 
   // components
 
