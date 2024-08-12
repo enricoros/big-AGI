@@ -178,7 +178,7 @@ export function StatusBar() {
     <StatusBarContainer aria-label='Status bar'>
 
       {/* Close Button */}
-      <GoodTooltip usePlain arrow placement='top' title={hideButtonTooltip}>
+      <GoodTooltip variantOutlined arrow placement='top' title={hideButtonTooltip}>
         <IconButton size='sm' sx={hideButtonSx} onClick={handleHideShortcuts}>
           <CloseRoundedIcon />
         </IconButton>
