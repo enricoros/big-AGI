@@ -1,14 +1,58 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ColorPaletteProp, Typography } from '@mui/joy';
+import { Box, ColorPaletteProp, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
+
+
+/**
+ * Small hidden context menu to toggle the code enhancer, globally.
+ */
+function CodeEnhancerMenu(props: { anchor: HTMLElement, onClose: () => void }) {
+
+  // state
+  const { labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks } = useUXLabsStore(useShallow(state => ({
+    labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
+    setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
+  })));
+
+  const toggleEnhanceCodeBlocks = React.useCallback(() => {
+    // turn blocks on (may not even be called, ever)
+    if (!labsEnhanceCodeBlocks) {
+      setLabsEnhanceCodeBlocks(true);
+      return;
+    }
+    // ask to turn the blocks off
+    // showPromisedOverlay('') ...
+    setLabsEnhanceCodeBlocks(false);
+  }, [labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks]);
+
+  return (
+    <CloseableMenu
+      dense
+      open anchorEl={props.anchor} onClose={props.onClose}
+      sx={{ minWidth: 280 }}
+    >
+
+      {/* A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems */}
+      <MenuItem onClick={toggleEnhanceCodeBlocks}>
+        <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>
+        Enhance Legacy Code <CodeIcon />
+      </MenuItem>
+
+    </CloseableMenu>
+  );
+}
 
 
 export function EnhancedRenderCode(props: {
@@ -33,6 +77,7 @@ export function EnhancedRenderCode(props: {
 }) {
 
   // state
+  const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   // const [isCopied, setIsCopied] = React.useState(false);
 
 
@@ -59,8 +104,8 @@ export function EnhancedRenderCode(props: {
       {/* This is what we have */}
       <div>Title</div>
       <div>{props.title}</div>
-      <div>Language</div>
-      <div>{props.language}</div>
+      {/*<div>Language</div>*/}
+      {/*<div>{props.language}</div>*/}
       <div>Code Length</div>
       <div>{props.code.length} characters</div>
       <div>Code Lines</div>
@@ -81,7 +126,7 @@ export function EnhancedRenderCode(props: {
       {/*<div>Text Buffer Id</div>*/}
       {/*<div>{fragmentId}</div>*/}
     </Box>
-  ), [props.code, props.language, props.semiStableId, props.title]);
+  ), [props.code, props.semiStableId, props.title]);
 
   const headerRow = React.useMemo(() => <>
 
@@ -135,23 +180,24 @@ export function EnhancedRenderCode(props: {
   // </>, [props.onLiveFileCreate]);
 
 
-  const patchedCodeSx = React.useMemo((): SxProps => ({
-    ...props.codeSx,
-    my: undefined,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  }), [props.codeSx]);
+  const handleCloseContextMenu = React.useCallback(() => setContextMenuAnchor(null), []);
+
+  const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  }, []);
 
 
   return (
     <RenderCodePanelFrame
       color={props.color || 'neutral'}
-      noShadow
-      // frameVariant='solid'
+      gutterBlock
+      noOuterShadow
       contentScaling={props.contentScaling}
       headerRow={headerRow}
       // subHeaderInline={subHeaderInline}
       // toolbarRow={toolbarRow}
+      onContextMenu={handleToggleContextMenu}
     >
 
       <RenderCodeMemo
@@ -161,8 +207,16 @@ export function EnhancedRenderCode(props: {
         initialShowHTML={props.initialShowHTML}
         noCopyButton={props.noCopyButton}
         optimizeLightweight={props.optimizeLightweight}
-        sx={patchedCodeSx}
+        sx={props.codeSx}
       />
+
+      {/* Context Menu */}
+      {contextMenuAnchor && (
+        <CodeEnhancerMenu
+          anchor={contextMenuAnchor}
+          onClose={handleCloseContextMenu}
+        />
+      )}
 
     </RenderCodePanelFrame>
   );

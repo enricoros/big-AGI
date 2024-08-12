@@ -11,10 +11,20 @@ import type { AutoBlocksCodeRenderVariant } from './AutoBlocksRenderer';
 
 export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentScaling, codeRenderVariant: AutoBlocksCodeRenderVariant): SxProps {
   return React.useMemo(() => ({
-    my: codeRenderVariant === 'plain' ? 0 : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
-    backgroundColor: codeRenderVariant === 'plain' ? 'background.surface' : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
-    boxShadow: codeRenderVariant === 'plain' ? undefined : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
+    my:
+      (codeRenderVariant === 'plain' || codeRenderVariant === 'enhanced') ? 0
+        : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
+    backgroundColor:
+      codeRenderVariant === 'plain' ? 'background.surface'
+        : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg',
+    boxShadow:
+      codeRenderVariant === 'plain' ? undefined
+        : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
     borderRadius: 'sm',
+    ...(codeRenderVariant === 'enhanced' && {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    }),
     fontFamily: 'code',
     fontSize: themeScalingMap[contentScaling]?.blockCodeFontSize ?? '0.875rem',
     fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump

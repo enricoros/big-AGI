@@ -21,7 +21,7 @@ const editLayoutSx: SxProps = {
   gap: 1.5,     // see why we give more space on ChatMessage
 
   // horizontal separator between messages (second part+ and before)
-  // '& > *:not(:first-child)': {
+  // '& > *:not(:first-of-type)': {
   //   borderTop: '1px solid',
   //   borderTopColor: 'background.level3',
   // },

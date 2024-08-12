@@ -60,6 +60,17 @@ export function DocumentAttachmentFragments(props: {
   }, []);
 
 
+  // memos
+  const buttonsSx = React.useMemo(() => ({
+    // layout
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 1,
+    justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
+    ...selectedFragment && { mb: 1 },
+  }), [props.messageRole, selectedFragment]);
+
+
   return (
     <Box aria-label={`${props.attachmentFragments.length} attachments`} sx={{
       // layout
@@ -67,14 +78,8 @@ export function DocumentAttachmentFragments(props: {
       flexDirection: 'column',
     }}>
 
-      {/* Horizontally scrollable Document buttons */}
-      <Box sx={{
-        // layout
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 1,
-        justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
-      }}>
+      {/* Document buttons */}
+      <Box sx={buttonsSx}>
         {props.attachmentFragments.map((attachmentFragment) =>
           <DocAttachmentFragmentButton
             key={attachmentFragment.fId}
