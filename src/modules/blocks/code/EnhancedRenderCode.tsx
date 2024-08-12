@@ -1,58 +1,15 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ColorPaletteProp, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import { Box, ColorPaletteProp, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { ContentScaling } from '~/common/app.theme';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
-
-
-/**
- * Small hidden context menu to toggle the code enhancer, globally.
- */
-function CodeEnhancerMenu(props: { anchor: HTMLElement, onClose: () => void }) {
-
-  // state
-  const { labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks } = useUXLabsStore(useShallow(state => ({
-    labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
-    setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
-  })));
-
-  const toggleEnhanceCodeBlocks = React.useCallback(() => {
-    // turn blocks on (may not even be called, ever)
-    if (!labsEnhanceCodeBlocks) {
-      setLabsEnhanceCodeBlocks(true);
-      return;
-    }
-    // ask to turn the blocks off
-    // showPromisedOverlay('') ...
-    setLabsEnhanceCodeBlocks(false);
-  }, [labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks]);
-
-  return (
-    <CloseableMenu
-      dense
-      open anchorEl={props.anchor} onClose={props.onClose}
-      sx={{ minWidth: 280 }}
-    >
-
-      {/* A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems */}
-      <MenuItem onClick={toggleEnhanceCodeBlocks}>
-        <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>
-        Enhance Legacy Code <CodeIcon />
-      </MenuItem>
-
-    </CloseableMenu>
-  );
-}
 
 
 export function EnhancedRenderCode(props: {
@@ -212,7 +169,7 @@ export function EnhancedRenderCode(props: {
 
       {/* Context Menu */}
       {contextMenuAnchor && (
-        <CodeEnhancerMenu
+        <EnhancedRenderCodeMenu
           anchor={contextMenuAnchor}
           onClose={handleCloseContextMenu}
         />

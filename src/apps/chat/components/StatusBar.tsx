@@ -159,8 +159,8 @@ export function StatusBar() {
         open onClose={onUserReject} onPositive={() => onResolve(true)}
         confirmationText='Remove productivity tips and shortcuts? You can add it back in Settings > Labs.'
         positiveActionText='Remove'
-      />).then(() => useUXLabsStore.getState().setLabsShowShortcutBar(false)).catch(() => { /* ignore closure */
-    });
+      />,
+    ).then(() => useUXLabsStore.getState().setLabsShowShortcutBar(false)).catch(() => null /* ignore closure */);
   }, [showPromisedOverlay]);
 
   // React to modifiers
