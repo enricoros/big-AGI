@@ -43,22 +43,27 @@ export function EnhancedRenderCode(props: {
 
   // hooks
 
+  const handleCloseContextMenu = React.useCallback(() => setContextMenuAnchor(null), []);
+
   const handleToggleCodeCollapse = React.useCallback(() => {
     setIsCodeCollapsed(c => !c);
-  }, []);
-
-  const handleCloseContextMenu = React.useCallback(() => setContextMenuAnchor(null), []);
+    handleCloseContextMenu();
+  }, [handleCloseContextMenu]);
 
   const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    event.stopPropagation();
     setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
   }, []);
 
 
   // effects
   React.useEffect(() => {
-    return getCodeCollapseManager().addCollapseAllListener((collapseAll: boolean) => setIsCodeCollapsed(collapseAll));
-  }, []);
+    return getCodeCollapseManager().addCollapseAllListener((collapseAll: boolean) => {
+      setIsCodeCollapsed(collapseAll);
+      handleCloseContextMenu();
+    });
+  }, [handleCloseContextMenu]);
 
 
   // components
@@ -94,18 +99,21 @@ export function EnhancedRenderCode(props: {
 
   const headerRow = React.useMemo(() => <>
     {/* Icon and Title */}
-    <Typography level='title-sm' startDecorator={<CodeIcon />}>
-      <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
-        {/*<span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>*/}
-        <span>{props.title || 'Code'}</span>
-      </TooltipOutlined>
-    </Typography>
+    <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <CodeIcon />
+        <Typography level='title-sm'>
+          {props.title || 'Code'}
+        </Typography>
+      </Box>
+    </TooltipOutlined>
 
     {/* Menu Options button */}
     <IconButton
       size='sm'
       onClick={handleToggleContextMenu}
       onContextMenu={handleToggleContextMenu}
+      sx={{ mr: -0.5 }}
     >
       <MoreVertIcon />
     </IconButton>
@@ -122,7 +130,7 @@ export function EnhancedRenderCode(props: {
     {/*>*/}
     {/*  {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}*/}
     {/*</StyledOverlayButton>*/}
-  </>, [headerTooltipContents, props.title]);
+  </>, [handleToggleContextMenu, headerTooltipContents, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -160,7 +168,7 @@ export function EnhancedRenderCode(props: {
       contentScaling={props.contentScaling}
       headerRow={headerRow}
       // onHeaderClick={handleToggleCodeCollapse}
-      // onHeaderContext={handleToggleContextMenu}
+      onHeaderContext={handleToggleContextMenu}
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
