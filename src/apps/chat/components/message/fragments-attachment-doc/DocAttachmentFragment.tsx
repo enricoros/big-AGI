@@ -180,11 +180,14 @@ export function DocAttachmentFragment(props: {
           : '';
 
     return <>
-      <Typography level='title-sm' startDecorator={TitleIcon ? <TitleIcon /> : null}>
-        <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
-          <span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>
-        </TooltipOutlined>
-      </Typography>
+      <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {TitleIcon && <TitleIcon />}
+          <Typography level='title-sm'>
+            {fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}
+          </Typography>
+        </Box>
+      </TooltipOutlined>
 
       {/* Live File Control button */}
       {!isEditing && liveFileControlButton}
