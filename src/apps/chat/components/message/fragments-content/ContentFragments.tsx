@@ -49,6 +49,7 @@ export function ContentFragments(props: {
   messageRole: DMessageRole,
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
+  enhanceCodeBlocks: boolean,
   showUnsafeHtml?: boolean,
 
   textEditsState: ChatMessageTextPartEditState | null,
@@ -173,6 +174,7 @@ export function ContentFragments(props: {
               contentScaling={props.contentScaling}
               fitScreen={props.fitScreen}
               disableMarkdownText={props.disableMarkdownText}
+              enhanceCodeBlocks={props.enhanceCodeBlocks}
               // renderTextDiff={textDiffs || undefined}
               showUnsafeHtml={props.showUnsafeHtml}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
