@@ -6,6 +6,7 @@ import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wi
 
 // configuration
 const hackyHotFixStartWithUser = true; // "Bad Request - messages: first message must use the "user" role"
+const hotFixDownmixSystemText = true;
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
 const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropic.com/en/docs/about-claude/models
@@ -16,9 +17,10 @@ type TRequest = AnthropicWire_API_Message_Create.Request;
 export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
 
   // Convert the system message
-  const systemMessage: TRequest['system'] = chatGenerate.systemMessage?.parts.length
-    ? chatGenerate.systemMessage.parts.map((part) => AnthropicWire_Blocks.TextBlock(part.text))
-    : undefined;
+  const systemMessage: TRequest['system'] =
+    !chatGenerate.systemMessage?.parts.length ? undefined
+      : hotFixDownmixSystemText ? chatGenerate.systemMessage.parts.map(part => part.text).join('\n')
+        : chatGenerate.systemMessage.parts.map((part) => AnthropicWire_Blocks.TextBlock(part.text));
 
   // Transform the chat messages into Anthropic's format
   const chatMessages: TRequest['messages'] = [];
@@ -37,8 +39,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     chatMessages.push(currentMessage);
 
   // If the first (user) message is missing, copy the first line of the system message
-  if (hackyHotFixStartWithUser && chatMessages.length && chatMessages[0].role !== 'user' && systemMessage?.length) {
-    const hackSystemMessageFirstLine = (systemMessage[0]?.text || '').split('\n')[0];
+  if (hackyHotFixStartWithUser && chatMessages.length && chatMessages[0].role !== 'user' && systemMessage) {
+    const hackSystemMessageFirstLine = typeof systemMessage === 'string' ? systemMessage.split('\n')[0]
+      : systemMessage[0]?.text?.split('\n')[0] || '';
     chatMessages.unshift({ role: 'user', content: [AnthropicWire_Blocks.TextBlock(hackSystemMessageFirstLine)] });
     console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
   }
