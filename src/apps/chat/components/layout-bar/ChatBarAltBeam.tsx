@@ -86,14 +86,14 @@ export function ChatBarAltBeam(props: {
 
         {/* [desktop] maximize button, or a disabled spacer  */}
         {!props.isMobile && (
-          <GoodTooltip usePlain title={<Box sx={{ p: 1 }}>Maximize</Box>}>
+          <GoodTooltip variantOutlined title={<Box sx={{ p: 1 }}>Maximize</Box>}>
             <IconButton size='sm' onClick={handleMaximizeBeam}>
               <FullscreenRoundedIcon />
             </IconButton>
           </GoodTooltip>
         )}
 
-        <GoodTooltip usePlain title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke combo='Esc' /></Box>}>
+        <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke combo='Esc' /></Box>}>
           <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
             <CloseRoundedIcon />
           </IconButton>
