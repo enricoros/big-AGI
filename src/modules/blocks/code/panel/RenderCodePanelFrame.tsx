@@ -3,10 +3,27 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, Sheet, useColorScheme } from '@mui/joy';
 
+import type { ContentScaling } from '~/common/app.theme';
+
+
+export const enhancedCodePanelTitleTooltipSx: SxProps = {
+  p: 1,
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  columnGap: 1,
+  rowGap: 1,
+  '& > :nth-of-type(odd)': {
+    color: 'text.tertiary',
+    fontSize: 'xs',
+  },
+};
+
 
 export function RenderCodePanelFrame(props: {
   color: ColorPaletteProp,
   toolbarColor?: ColorPaletteProp,
+  noShadow?: boolean;
+  contentScaling: ContentScaling,
   headerRow?: React.ReactNode;
   subHeaderInline?: React.ReactNode;
   toolbarRow?: React.ReactNode;
@@ -24,7 +41,7 @@ export function RenderCodePanelFrame(props: {
       border: '1px solid',
       borderColor: `${props.color}.outlinedBorder`,
       borderRadius: 'sm',
-      boxShadow: 'sm',
+      ...(!props.noShadow && { boxShadow: 'sm' }),
       // boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
       // contain: 'paint',
     },
@@ -35,7 +52,7 @@ export function RenderCodePanelFrame(props: {
     },
     {
       // header row 1
-      minHeight: '2.75rem',
+      minHeight: props.contentScaling === 'xs' ? undefined : props.contentScaling === 'sm' ? '2.25rem' : '2.75rem',
       mx: 1,
       // layout
       display: 'flex',
@@ -60,7 +77,7 @@ export function RenderCodePanelFrame(props: {
       gap: 1,
     },
 
-  ], [isDarkMode, props.color, props.toolbarColor]);
+  ], [isDarkMode, props.color, props.contentScaling, props.noShadow, props.toolbarColor]);
 
   return (
     <Box sx={frameSx}>
