@@ -13,6 +13,7 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useSourceSetup } from '../useSourceSetup';
 
 import { ModelVendorOpenPipe } from './openpipe.vendor';
+import { ExternalLink } from '~/common/components/ExternalLink';
 
 
 const OPENPIPE_API_KEY_LINK = 'https://app.openpipe.ai/settings';
@@ -71,8 +72,9 @@ export function OpenPipeSourceSetup(props: { sourceId: DModelSourceId }) {
     />
 
     <Typography level='body-sm'>
-      <Link href='https://openpipe.ai/' target='_blank'>OpenPipe.ai</Link> allows you to record your chat data,
-      and fine-tune and deploy custom models that outperform GPT-4 at a fraction of the cost.
+      <ExternalLink href='https://openpipe.ai/'>OpenPipe</ExternalLink> allows you to <strong>record your chats</strong>,
+      and <strong>fine-tune</strong> and deploy custom models that outperform GPT-4 at a
+      fraction of the cost.
     </Typography>
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
