@@ -22,8 +22,6 @@ import { useLiveFileContent } from './liveFile.hooks';
 
 
 const sheetSx: SxProps = {
-  m: 1,
-  mt: 0,
   p: 1,
   backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
   border: '1px solid',

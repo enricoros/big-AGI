@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { Box, Button, Sheet, Switch, Typography } from '@mui/joy';
+
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, Button, Switch, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -7,6 +9,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { RenderCodePanelFrame } from '~/modules/blocks/code/panel/RenderCodePanelFrame';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -20,6 +23,18 @@ import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { TextFragmentEditor } from '../fragments-content/TextFragmentEditor';
 import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButton';
 
+
+const panelTitleTooltipSx: SxProps = {
+  p: 1,
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  columnGap: 1,
+  rowGap: 1,
+  '& > :nth-of-type(odd)': {
+    color: 'text.tertiary',
+    fontSize: 'xs',
+  },
+};
 
 function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
   if (!isDocPart(attachmentFragment.part))
@@ -56,11 +71,12 @@ export function DocAttachmentFragment(props: {
 
 
   const fragmentId = fragment.fId;
-  const fragmentTitle = (isDocPart(fragment.part) ? fragment.part.l1Title : '') || fragment.title;
   const fragmentDocPart = fragment.part;
 
   if (!isDocPart(fragmentDocPart))
     throw new Error('Unexpected part type: ' + fragmentDocPart.pt);
+
+  const fragmentTitle = fragmentDocPart.l1Title || fragment.title;
 
 
   // hooks
@@ -148,128 +164,107 @@ export function DocAttachmentFragment(props: {
   }, []);
 
 
-  // messaging
-  const titleEndText =
-    !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
-      : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
-        : '';
+  // memoed components
 
-  const TitleIcon = buttonIconForFragment(fragment);
+  const headerTooltipContents = React.useMemo(() => (
+    <Box sx={panelTitleTooltipSx}>
+      <div>Attachment Title</div>
+      <div>{fragment.title}</div>
+      <div>Doc Title</div>
+      <div>{fragmentDocPart.l1Title}</div>
+      <div>Identifier</div>
+      <div>{fragmentDocPart.ref}</div>
+      <div>Render type</div>
+      <div>{fragmentDocPart.vdt}</div>
+      <div>Text Mime type</div>
+      <div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>
+      <div>Text Buffer Id</div>
+      <div>{fragmentId}</div>
+    </Box>
+  ), [fragment.title, fragmentDocPart, fragmentId]);
 
-  return (
+
+  const headerRow = React.useMemo(() => {
+    const TitleIcon = buttonIconForFragment(fragmentDocPart);
+
+    const titleEndText =
+      !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
+        : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
+          : '';
+
+    return <>
+      <Typography level='title-sm' startDecorator={TitleIcon ? <TitleIcon /> : null}>
+        <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
+          <span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>
+        </TooltipOutlined>
+      </Typography>
+
+      {/* Live File Control button */}
+      {!isEditing && liveFileControlButton}
+
+      {/* Text / Code render switch (auto-detected) */}
+      {!props.zenMode && (
+        <Switch
+          size='sm'
+          variant='solid'
+          color='neutral'
+          checked={viewAsCode}
+          onChange={handleToggleViewAsCode}
+          startDecorator={
+            <Typography level='body-xs'>
+              {titleEndText}
+            </Typography>
+          }
+        />
+      )}
+    </>;
+  }, [fragmentDocPart, handleToggleViewAsCode, headerTooltipContents, isEditing, liveFileControlButton, props.zenMode, viewAsCode]);
+
+
+  const toolbarRow = React.useMemo(() => (
     <Box sx={{
-      mt: 0.5,
-      backgroundColor: 'background.surface',
-      border: '1px solid',
-      borderColor: `${DocSelColor}.outlinedBorder`,
-      borderRadius: 'sm',
-      // contain: 'paint',
-      boxShadow: 'sm',
-      // boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: 1,
     }}>
 
-      {/* Ref of the file */}
-      <Box sx={{
-        minHeight: '2.75rem',
-        px: 1,
-        // layout
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 1,
-      }}>
-        <Typography level='title-sm' startDecorator={TitleIcon ? <TitleIcon /> : null}>
-          <TooltipOutlined placement='top-start' color='neutral' title={fragmentDocPart.ref === fragmentDocPart.meta?.srcFileName ? undefined
-            : <Box sx={{ p: 1, display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1, rowGap: 1, '& > :nth-of-type(odd)': { color: 'text.tertiary', fontSize: 'xs' } }}>
-              <div>Title</div>
-              <div>{fragmentTitle}</div>
-              <div>Identifier</div>
-              <div>{fragmentDocPart.ref}</div>
-              <div>Render type</div>
-              <div>{fragmentDocPart.vdt}</div>
-              <div>Text Mime type</div>
-              <div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>
-              <div>Text Buffer Id</div>
-              <div>{fragmentId}</div>
-            </Box>
-          }>
-            <span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>
-          </TooltipOutlined>
-        </Typography>
-
-        {/* Live File Control button */}
-        {!isEditing && liveFileControlButton}
-
-        {/* Text / Code render switch (auto-detected) */}
-        {!props.zenMode && (
-          <Switch
-            size='sm'
-            variant='solid'
-            color='neutral'
-            checked={viewAsCode}
-            onChange={handleToggleViewAsCode}
-            startDecorator={
-              <Typography level='body-xs'>
-                {titleEndText}
-              </Typography>
-            }
-          />
+      {/* Delete / Confirm */}
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button variant='outlined' color={isDeleteArmed ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
+          {isDeleteArmed ? 'Cancel' : 'Delete'}
+        </Button>
+        {isDeleteArmed && (
+          <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
+            Delete
+          </Button>
         )}
-
       </Box>
 
-      {/* LiveFile  */}
-      {!isEditing && liveFileActions}
+      {/* Edit / Save */}
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button variant='outlined' color={isEditing ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
+          {isEditing ? 'Cancel' : 'Edit'}
+        </Button>
+        {isEditing && (
+          <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
+            Save
+          </Button>
+        )}
+      </Box>
+    </Box>
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing]);
 
-      {/* Button Bar Edit / Delete commands */}
-      <Sheet color='primary' variant='soft' sx={theme => ({
-        backgroundColor: theme.palette.mode === 'light' ? 'primary.50' : 'primary.900',
-        borderBottom: '1px solid',
-        borderBottomColor: isEditing ? 'transparent' : 'primary.outlinedBorder',
-        borderTop: '1px solid',
-        borderTopColor: 'primary.outlinedBorder',
-        p: 1,
-        // layout
-        display: 'grid',
-        gap: 1,
-      })}>
 
-        {/* Buttons Row */}
-        <Box sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          gap: 1,
-        }}>
+  return (
+    <RenderCodePanelFrame
+      color={DocSelColor}
+      headerRow={headerRow}
+      subHeaderInline={!isEditing && liveFileActions}
+      toolbarRow={toolbarRow}
+    >
 
-          {/* Delete / Confirm */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant='outlined' color={isDeleteArmed ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
-              {isDeleteArmed ? 'Cancel' : 'Delete'}
-            </Button>
-            {isDeleteArmed && (
-              <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
-                Delete
-              </Button>
-            )}
-          </Box>
-
-          {/* Edit / Save */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant='outlined' color={isEditing ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
-              {isEditing ? 'Cancel' : 'Edit'}
-            </Button>
-            {isEditing && (
-              <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
-                Save
-              </Button>
-            )}
-          </Box>
-        </Box>
-
-      </Sheet>
-
+      {/* Show / Edit the Document Attachment Part */}
       {isEditing ? (
         // Document Editor
         <TextFragmentEditor
@@ -296,6 +291,6 @@ export function DocAttachmentFragment(props: {
         />
       )}
 
-    </Box>
+    </RenderCodePanelFrame>
   );
 }
