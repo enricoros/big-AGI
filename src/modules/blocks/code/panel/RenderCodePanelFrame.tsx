@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, Sheet, useColorScheme } from '@mui/joy';
 
-import type { ContentScaling } from '~/common/app.theme';
+import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 
 export const enhancedCodePanelTitleTooltipSx: SxProps = {
@@ -22,12 +22,13 @@ export const enhancedCodePanelTitleTooltipSx: SxProps = {
 export function RenderCodePanelFrame(props: {
   color: ColorPaletteProp;
   toolbarColor?: ColorPaletteProp;
-  noShadow?: boolean;
-  frameVariant?: 'solid';
+  gutterBlock?: boolean;
+  noOuterShadow?: boolean;
   contentScaling: ContentScaling;
-  headerRow?: React.ReactNode;
+  headerRow: React.ReactNode;
   subHeaderInline?: React.ReactNode;
   toolbarRow?: React.ReactNode;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
   children: React.ReactNode;
 }) {
 
@@ -37,12 +38,16 @@ export function RenderCodePanelFrame(props: {
   const [frameSx, headersBlockSx, headerRowSx, subHeaderContainedSx, toolbarRowSx] = React.useMemo((): SxProps[] => [
     {
       // frame
-      mt: 0.5,
-      backgroundColor: 'background.surface',
+      // add top margin (gutter) only of this is not the first block in the sequence
+      ...(props.gutterBlock && {
+        '&:not(:first-of-type)': { mt: themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 1 },
+        '&:not(:last-of-type)': { mb: themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 1 },
+      }),
+      backgroundColor: /*props.noOuterShadow ? 'background.popup' :*/ 'background.surface',
       border: '1px solid',
       borderColor: `${props.color}.outlinedBorder`,
       borderRadius: 'sm',
-      ...(!props.noShadow && { boxShadow: 'sm' }),
+      ...(!props.noOuterShadow && { boxShadow: 'sm' }),
       // boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
       // contain: 'paint',
     },
@@ -53,8 +58,15 @@ export function RenderCodePanelFrame(props: {
     },
     {
       // header row 1
-      minHeight: props.contentScaling === 'xs' ? undefined : props.contentScaling === 'sm' ? '2.25rem' : '2.5rem',
-      mx: 1,
+      // see DocAttachmentFragmentButton.buttonSx for the same scaling
+      minHeight: props.contentScaling === 'xs' ? '2.25rem' : props.contentScaling === 'sm' ? '2.375rem' : '2.5rem',
+      px: 1,
+      // borderRadius: 'sm',
+      // borderBottomLeftRadius: 0,
+      // borderBottomRightRadius: 0,
+      // '&:hover': {
+      //   backgroundColor: `background.popup`,
+      // },
       // layout
       display: 'flex',
       flexWrap: 'wrap',
@@ -78,24 +90,22 @@ export function RenderCodePanelFrame(props: {
       gap: 1,
     },
 
-  ], [isDarkMode, props.color, props.contentScaling, props.noShadow, props.toolbarColor]);
+  ], [isDarkMode, props.color, props.contentScaling, props.gutterBlock, props.noOuterShadow, props.toolbarColor]);
 
   return (
     <Box sx={frameSx}>
 
       {/* header(s) */}
-      {(props.headerRow || props.subHeaderInline) && (
-        <Box sx={headersBlockSx}>
-          <Box sx={headerRowSx}>
-            {props.headerRow}
-          </Box>
-          {props.subHeaderInline && (
-            <Box sx={subHeaderContainedSx}>
-              {props.subHeaderInline}
-            </Box>
-          )}
+      <Box sx={headersBlockSx} onContextMenu={props.onContextMenu}>
+        <Box sx={headerRowSx}>
+          {props.headerRow}
         </Box>
-      )}
+        {props.subHeaderInline && (
+          <Box sx={subHeaderContainedSx}>
+            {props.subHeaderInline}
+          </Box>
+        )}
+      </Box>
 
       {/* toolbar */}
       {props.toolbarRow && (
