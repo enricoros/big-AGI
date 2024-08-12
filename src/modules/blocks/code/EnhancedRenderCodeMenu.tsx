@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { ListDivider, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -18,6 +20,8 @@ import { getCodeCollapseManager } from './codeCollapseManager';
 export function EnhancedRenderCodeMenu(props: {
   anchor: HTMLElement,
   onClose: () => void,
+  isCollapsed: boolean,
+  onToggleCollapse: () => void,
 }) {
 
   // state
@@ -60,21 +64,19 @@ export function EnhancedRenderCodeMenu(props: {
     <CloseableMenu
       dense
       open anchorEl={props.anchor} onClose={props.onClose}
+      placement='bottom-end'
       sx={{ minWidth: 250 }}
     >
 
-      <ListItem>
-        <Typography level='body-sm'>Code Blocks</Typography>
-      </ListItem>
-
-      <MenuItem onClick={handleExpandAllCodeBlocks}>
-        <ListItemDecorator />
-        Expand All
+      <MenuItem onClick={props.onToggleCollapse}>
+        <ListItemDecorator>{props.isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}</ListItemDecorator>
+        {/*<ListItemDecorator />*/}
+        {props.isCollapsed ? 'Expand' : 'Collapse'}
       </MenuItem>
 
-      <MenuItem onClick={handleCollapseAllCodeBlocks}>
+      <MenuItem onClick={props.isCollapsed ? handleExpandAllCodeBlocks : handleCollapseAllCodeBlocks}>
         <ListItemDecorator />
-        Collapse All
+        {props.isCollapsed ? 'Expand' : 'Collapse'} All Blocks
       </MenuItem>
 
       <ListDivider />
