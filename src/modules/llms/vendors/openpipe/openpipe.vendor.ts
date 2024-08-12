@@ -33,7 +33,7 @@ export const ModelVendorOpenPipe: IModelVendor<SourceSetupOpenPipe, OpenAIAccess
     openPipeTags: '',
   }),
   validateSetup: (setup) => {
-    return setup.openPipeKey?.length >= 64;
+    return setup.openPipeKey?.length >= 40;
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'openpipe',
