@@ -28,12 +28,26 @@ export function RenderCodePanelFrame(props: {
   headerRow: React.ReactNode;
   subHeaderInline?: React.ReactNode;
   toolbarRow?: React.ReactNode;
-  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onHeaderClick?: () => void;
+  onHeaderContext?: (event: React.MouseEvent<HTMLElement>) => void;
   children: React.ReactNode;
 }) {
 
   // react to scheme change
   const isDarkMode = useColorScheme().mode === 'dark';
+
+  // handlers
+
+  const { onHeaderClick } = props;
+  const isClickableHeader = !!onHeaderClick;
+
+  const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
+    if (onHeaderClick && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      onHeaderClick();
+    }
+  }, [onHeaderClick]);
+
 
   const [frameSx, headersBlockSx, headerRowSx, subHeaderContainedSx, toolbarRowSx] = React.useMemo((): SxProps[] => [
     {
@@ -56,6 +70,13 @@ export function RenderCodePanelFrame(props: {
       // border moved to: Toolbar (for the Attachment Doc Part) and children (for the Code block)
       // borderBottom: '1px solid',
       // borderBottomColor: `${props.toolbarColor || props.color}.outlinedBorder`,
+      ...(isClickableHeader && {
+        cursor: 'pointer',
+        borderRadius: 'sm',
+        '&:hover': {
+          backgroundColor: 'background.popup',
+        },
+      }),
     },
     {
       // header row 1
@@ -65,9 +86,6 @@ export function RenderCodePanelFrame(props: {
       // borderRadius: 'sm',
       // borderBottomLeftRadius: 0,
       // borderBottomRightRadius: 0,
-      // '&:hover': {
-      //   backgroundColor: `background.popup`,
-      // },
       // layout
       display: 'flex',
       flexWrap: 'wrap',
@@ -93,13 +111,21 @@ export function RenderCodePanelFrame(props: {
       gap: 1,
     },
 
-  ], [isDarkMode, props.color, props.contentScaling, props.gutterBlock, props.noOuterShadow, props.toolbarColor]);
+  ], [isClickableHeader, isDarkMode, props.color, props.contentScaling, props.gutterBlock, props.noOuterShadow, props.toolbarColor]);
 
   return (
     <Box sx={frameSx}>
 
       {/* header(s) */}
-      <Box sx={headersBlockSx} onContextMenu={props.onContextMenu}>
+      <Box
+        aria-label={isClickableHeader ? 'Click to expand/collapse' : undefined}
+        role={isClickableHeader ? 'button' : undefined}
+        tabIndex={isClickableHeader ? 0 : undefined}
+        onKeyDown={handleKeyDown}
+        onClick={props.onHeaderClick}
+        onContextMenu={props.onHeaderContext}
+        sx={headersBlockSx}
+      >
         <Box sx={headerRowSx}>
           {props.headerRow}
         </Box>

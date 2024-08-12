@@ -11,9 +11,6 @@ import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { StyledOverlayButton } from '~/modules/blocks/OverlayButton';
 
 
 export function EnhancedRenderCode(props: {
@@ -95,16 +92,16 @@ export function EnhancedRenderCode(props: {
       </TooltipOutlined>
     </Typography>
 
-    {/* Collapsing Button */}
-    <StyledOverlayButton
-      size='sm'
-      variant='plain'
-      color='neutral'
-      onClick={handleToggleCodeCollapse}
-    >
-      {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-    </StyledOverlayButton>
-  </>, [handleToggleCodeCollapse, headerTooltipContents, isCodeCollapsed, props.title]);
+    {/*/!* Collapsing Button *!/*/}
+    {/*<StyledOverlayButton*/}
+    {/*  size='sm'*/}
+    {/*  variant='plain'*/}
+    {/*  color='neutral'*/}
+    {/*  onClick={handleToggleCodeCollapse}*/}
+    {/*>*/}
+    {/*  {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}*/}
+    {/*</StyledOverlayButton>*/}
+  </>, [headerTooltipContents, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -141,11 +138,11 @@ export function EnhancedRenderCode(props: {
       noOuterShadow
       contentScaling={props.contentScaling}
       headerRow={headerRow}
-      // subHeaderInline={subHeaderInline}
-      // toolbarRow={toolbarRow}
-      onContextMenu={handleToggleContextMenu}
+      onHeaderClick={handleToggleCodeCollapse}
+      onHeaderContext={handleToggleContextMenu}
     >
 
+      {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
       <ExpanderControlledBox expanded={!isCodeCollapsed}>
         <RenderCodeMemo
           semiStableId={props.semiStableId}
