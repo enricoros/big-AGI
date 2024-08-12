@@ -13,7 +13,7 @@ import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { ContentPartImageRef } from './ContentPartImageRef';
 import { ContentPartPlaceholder } from './ContentPartPlaceholder';
 import { ContentPartText_AutoBlocks } from './ContentPartText_AutoBlocks';
-import { ContentPartTextEditor } from './ContentPartTextEditor';
+import { TextFragmentEditor } from './TextFragmentEditor';
 
 
 const editLayoutSx: SxProps = {
@@ -109,7 +109,7 @@ export function ContentFragments(props: {
       // editing for text parts
       if (props.textEditsState && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
         return (
-          <ContentPartTextEditor
+          <TextFragmentEditor
             key={'edit-' + fragment.fId}
             textPartText={isTextPart(fragment.part) ? fragment.part.text : fragment.part.error}
             fragmentId={fragment.fId}

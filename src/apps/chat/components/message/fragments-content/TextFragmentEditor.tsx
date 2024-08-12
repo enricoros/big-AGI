@@ -32,7 +32,7 @@ const textAreaSlotPropsDone = {
  * Very similar to <InlineTextArea /> but with externally controlled state rather than internal.
  * Made it for as the editing alternative for <ContentPartText />.
  */
-export function ContentPartTextEditor(props: {
+export function TextFragmentEditor(props: {
   // current value
   textPartText: string,
   fragmentId: DMessageFragmentId,
