@@ -17,7 +17,7 @@ import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProv
 import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
-import { ContentPartTextEditor } from '../fragments-content/ContentPartTextEditor';
+import { TextFragmentEditor } from '../fragments-content/TextFragmentEditor';
 import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButton';
 
 
@@ -29,7 +29,7 @@ function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) 
 }
 
 
-export function DocAttachmentFragmentEditor(props: {
+export function DocAttachmentFragment(props: {
   fragment: DMessageAttachmentFragment,
   editedText?: string,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
@@ -272,7 +272,7 @@ export function DocAttachmentFragmentEditor(props: {
 
       {isEditing ? (
         // Document Editor
-        <ContentPartTextEditor
+        <TextFragmentEditor
           textPartText={fragmentDocPart.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}

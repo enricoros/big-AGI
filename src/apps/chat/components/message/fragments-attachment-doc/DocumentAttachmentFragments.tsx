@@ -7,7 +7,7 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { DocAttachmentFragmentButton } from './DocAttachmentFragmentButton';
-import { DocAttachmentFragmentEditor } from './DocAttachmentFragmentEditor';
+import { DocAttachmentFragment } from './DocAttachmentFragment';
 
 
 /**
@@ -88,7 +88,7 @@ export function DocumentAttachmentFragments(props: {
 
       {/* Document Viewer & Editor */}
       {!!selectedFragment && (
-        <DocAttachmentFragmentEditor
+        <DocAttachmentFragment
           key={selectedFragment.fId /* this is here for the useLiveFile hook which otherwise would migrate state across fragments */}
           fragment={selectedFragment}
           messageRole={props.messageRole}
