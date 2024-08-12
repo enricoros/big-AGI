@@ -20,10 +20,11 @@ export const enhancedCodePanelTitleTooltipSx: SxProps = {
 
 
 export function RenderCodePanelFrame(props: {
-  color: ColorPaletteProp,
-  toolbarColor?: ColorPaletteProp,
+  color: ColorPaletteProp;
+  toolbarColor?: ColorPaletteProp;
   noShadow?: boolean;
-  contentScaling: ContentScaling,
+  frameVariant?: 'solid';
+  contentScaling: ContentScaling;
   headerRow?: React.ReactNode;
   subHeaderInline?: React.ReactNode;
   toolbarRow?: React.ReactNode;
@@ -52,7 +53,7 @@ export function RenderCodePanelFrame(props: {
     },
     {
       // header row 1
-      minHeight: props.contentScaling === 'xs' ? undefined : props.contentScaling === 'sm' ? '2.25rem' : '2.75rem',
+      minHeight: props.contentScaling === 'xs' ? undefined : props.contentScaling === 'sm' ? '2.25rem' : '2.5rem',
       mx: 1,
       // layout
       display: 'flex',

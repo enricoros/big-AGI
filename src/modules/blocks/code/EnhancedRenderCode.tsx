@@ -1,9 +1,8 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ColorPaletteProp, Typography } from '@mui/joy';
+import { Box, ColorPaletteProp, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
-import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -120,20 +119,20 @@ export function EnhancedRenderCode(props: {
   </>, [headerTooltipContents, props.title]);
 
 
-  const toolbarRow = React.useMemo(() => <>
-    {props.onLiveFileCreate && (
-      <Button
-        size='sm'
-        variant='outlined'
-        color='neutral'
-        startDecorator={<LiveHelpIcon />}
-        onClick={props.onLiveFileCreate}
-      >
-        Create Live File
-      </Button>
-    )}
-    {/* Add more toolbar items here */}
-  </>, [props.onLiveFileCreate]);
+  // const toolbarRow = React.useMemo(() => <>
+  //   {props.onLiveFileCreate && (
+  //     <Button
+  //       size='sm'
+  //       variant='outlined'
+  //       color='neutral'
+  //       startDecorator={<LiveHelpIcon />}
+  //       onClick={props.onLiveFileCreate}
+  //     >
+  //       Create Live File
+  //     </Button>
+  //   )}
+  //   {/* Add more toolbar items here */}
+  // </>, [props.onLiveFileCreate]);
 
 
   const patchedCodeSx = React.useMemo((): SxProps => ({
@@ -148,10 +147,11 @@ export function EnhancedRenderCode(props: {
     <RenderCodePanelFrame
       color={props.color || 'neutral'}
       noShadow
+      // frameVariant='solid'
       contentScaling={props.contentScaling}
       headerRow={headerRow}
       // subHeaderInline={subHeaderInline}
-      toolbarRow={toolbarRow}
+      // toolbarRow={toolbarRow}
     >
 
       <RenderCodeMemo
