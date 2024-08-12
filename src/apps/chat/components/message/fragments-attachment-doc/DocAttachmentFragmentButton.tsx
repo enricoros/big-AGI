@@ -23,7 +23,7 @@ export const DocSelColor: ColorPaletteProp = 'primary';
 const DocUnselColor: ColorPaletteProp = 'primary';
 
 
-export function buttonIconForFragment({ part }: DMessageAttachmentFragment): React.ComponentType<any> {
+export function buttonIconForFragment(part: DMessageAttachmentFragment['part']): React.ComponentType<any> {
   switch (part.pt) {
     case 'doc':
       switch (part.vdt) {
@@ -104,7 +104,7 @@ export function DocAttachmentFragmentButton(props: {
 
   const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
-  const Icon = isSelected ? ExpandCircleDownIcon : buttonIconForFragment(fragment);
+  const Icon = isSelected ? ExpandCircleDownIcon : buttonIconForFragment(fragment.part);
 
   return (
     <Button
