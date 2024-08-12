@@ -43,7 +43,8 @@ function TokenBadge(props: {
 
   const showAltCosts = !!props.showCost && !!costMax && costMin !== undefined;
   if (showAltCosts) {
-    badgeValue = (!props.enableHover || isHovering)
+    // Note: switched to 'min cost (>= ...)' on mobile as well, to restore the former behavior, just uncomment the !props.enableHover (a proxy for isMobile)
+    badgeValue = (/*!props.enableHover ||*/ isHovering)
       ? '< ' + formatTokenCost(costMax)
       : '> ' + formatTokenCost(costMin);
   } else {
