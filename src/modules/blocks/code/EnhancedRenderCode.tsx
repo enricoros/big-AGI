@@ -167,7 +167,7 @@ export function EnhancedRenderCode(props: {
       noOuterShadow
       contentScaling={props.contentScaling}
       headerRow={headerRow}
-      // onHeaderClick={handleToggleCodeCollapse}
+      onHeaderClick={props.fitScreen ? handleToggleCodeCollapse : undefined}
       onHeaderContext={handleToggleContextMenu}
     >
 
