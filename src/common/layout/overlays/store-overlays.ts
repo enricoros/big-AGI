@@ -22,6 +22,7 @@ export type GlobalOverlayId = // string - disabled so we keep an orderliness
   | 'chat-reset-confirmation'
   | 'livefile-overwrite'
   | 'shortcuts-confirm-close'
+  | 'blocks-off-enhance-code'
   ;
 
 interface OverlayActions {
