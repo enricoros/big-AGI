@@ -11,8 +11,10 @@ import type { AutoBlocksCodeRenderVariant } from './AutoBlocksRenderer';
 
 export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentScaling, codeRenderVariant: AutoBlocksCodeRenderVariant): SxProps {
   return React.useMemo(() => ({
+    // Note: we don't handle 'enhanced' here, as we'll do it when the EnhancedRenderCode
+    //       kicks in for real, and in what instance we patch this object.
     my:
-      (codeRenderVariant === 'plain' || codeRenderVariant === 'enhanced') ? 0
+      codeRenderVariant === 'plain' ? 0
         : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
     backgroundColor:
       codeRenderVariant === 'plain' ? 'background.surface'
@@ -21,10 +23,6 @@ export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentS
       codeRenderVariant === 'plain' ? undefined
         : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
     borderRadius: 'sm',
-    ...(codeRenderVariant === 'enhanced' && {
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-    }),
     fontFamily: 'code',
     fontSize: themeScalingMap[contentScaling]?.blockCodeFontSize ?? '0.875rem',
     fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
