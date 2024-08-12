@@ -11,7 +11,7 @@ import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
+import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -129,17 +129,12 @@ export const llmOpenAIRouter = createTRPCRouter({
         return { models };
       }
 
-
-      // [OpenPipe] there's no API for models listing yet
-      if (access.dialect === 'openpipe')
-        return { models: openPipeModelDescriptions().sort(openPipeModelSort) };
-
       // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/discuss/65cf7fd19ac9a5002e8f1341)
       if (access.dialect === 'perplexity')
         return { models: perplexityAIModelDescriptions().sort(perplexityAIModelSort) };
 
 
-      // [non-Azure]: fetch openAI-style for all but Azure (will be then used in each dialect)
+      // [OpenAI-dialects]: fetch openAI-style for all but Azure (will be then used in each dialect)
       const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire_API_Models_List.Response>(access, '/v1/models');
 
       // [Together] missing the .data property
@@ -147,6 +142,10 @@ export const llmOpenAIRouter = createTRPCRouter({
         return { models: togetherAIModelsToModelDescriptions(openAIWireModelsResponse) };
 
       let openAIModels = openAIWireModelsResponse.data || [];
+
+      // [OpenPipe]: does not have the { object: 'list', data: [ ... ] } wrapper
+      if (access.dialect === 'openpipe')
+        openAIModels = (openAIWireModelsResponse as any) || [];
 
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
       const preCount = openAIModels.length;
@@ -240,6 +239,13 @@ export const llmOpenAIRouter = createTRPCRouter({
               // }
               // return bId.localeCompare(aId);
             });
+          break;
+
+        case 'openpipe':
+          models = [
+            ...openAIModels.map(openPipeModelToModelDescriptions),
+            ...openPipeModelDescriptions().sort(openPipeModelSort),
+          ];
           break;
 
         case 'openrouter':
