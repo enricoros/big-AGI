@@ -10,6 +10,10 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
+import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { StyledOverlayButton } from '~/modules/blocks/OverlayButton';
 
 
 export function EnhancedRenderCode(props: {
@@ -35,26 +39,23 @@ export function EnhancedRenderCode(props: {
 
   // state
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
-  // const [isCopied, setIsCopied] = React.useState(false);
+  const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(false);
 
 
-  // const handleCopyToClipboard = () => {
-  //   copyToClipboard(props.code, 'Code');
-  //   setIsCopied(true);
-  //   setTimeout(() => setIsCopied(false), 2000);
-  // };
-  //
-  // const handleDownload = () => {
-  //   const blob = new Blob([props.code], { type: 'text/plain' });
-  //   const url = URL.createObjectURL(blob);
-  //   const a = document.createElement('a');
-  //   a.href = url;
-  //   a.download = `${props.title || 'code'}.${props.language}`;
-  //   document.body.appendChild(a);
-  //   a.click();
-  //   document.body.removeChild(a);
-  //   URL.revokeObjectURL(url);
-  // };
+  // hooks
+
+  const handleToggleCodeCollapse = React.useCallback(() => {
+    setIsCodeCollapsed(c => !c);
+  }, []);
+
+  const handleCloseContextMenu = React.useCallback(() => setContextMenuAnchor(null), []);
+
+  const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  }, []);
+
+  // components
 
   const headerTooltipContents = React.useMemo(() => (
     <Box sx={enhancedCodePanelTitleTooltipSx}>
@@ -86,7 +87,7 @@ export function EnhancedRenderCode(props: {
   ), [props.code, props.semiStableId, props.title]);
 
   const headerRow = React.useMemo(() => <>
-
+    {/* Icon and Title */}
     <Typography level='title-sm' startDecorator={<CodeIcon />}>
       <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
         {/*<span>{fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}</span>*/}
@@ -94,32 +95,16 @@ export function EnhancedRenderCode(props: {
       </TooltipOutlined>
     </Typography>
 
-    {/*<Box sx={{ display: 'flex', gap: 1 }}>*/}
-    {/*  {!props.noCopyButton && (*/}
-    {/*    <Tooltip title={isCopied ? 'Copied!' : 'Copy code'} variant='solid'>*/}
-    {/*      <IconButton*/}
-    {/*        size='sm'*/}
-    {/*        variant='outlined'*/}
-    {/*        color={isCopied ? 'success' : 'neutral'}*/}
-    {/*        onClick={handleCopyToClipboard}*/}
-    {/*      >*/}
-    {/*        <ContentCopyIcon />*/}
-    {/*      </IconButton>*/}
-    {/*    </Tooltip>*/}
-    {/*  )}*/}
-    {/*  <Tooltip title='Download code' variant='solid'>*/}
-    {/*    <IconButton*/}
-    {/*      size='sm'*/}
-    {/*      variant='outlined'*/}
-    {/*      color='neutral'*/}
-    {/*      onClick={handleDownload}*/}
-    {/*    >*/}
-    {/*      <FileDownloadIcon />*/}
-    {/*    </IconButton>*/}
-    {/*  </Tooltip>*/}
-    {/*</Box>*/}
-  </>, [headerTooltipContents, props.title]);
-
+    {/* Collapsing Button */}
+    <StyledOverlayButton
+      size='sm'
+      variant='plain'
+      color='neutral'
+      onClick={handleToggleCodeCollapse}
+    >
+      {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+    </StyledOverlayButton>
+  </>, [handleToggleCodeCollapse, headerTooltipContents, isCodeCollapsed, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -137,12 +122,16 @@ export function EnhancedRenderCode(props: {
   // </>, [props.onLiveFileCreate]);
 
 
-  const handleCloseContextMenu = React.useCallback(() => setContextMenuAnchor(null), []);
+  // styles
 
-  const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
-  }, []);
+  const patchCodeSx = React.useMemo(() => ({
+    ...props.codeSx,
+    my: 0,
+    borderTop: '1px solid',
+    borderTopColor: `neutral.outlinedBorder`,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  }), [props.codeSx]);
 
 
   return (
@@ -157,15 +146,17 @@ export function EnhancedRenderCode(props: {
       onContextMenu={handleToggleContextMenu}
     >
 
-      <RenderCodeMemo
-        semiStableId={props.semiStableId}
-        code={props.code} title={props.title} isPartial={props.isPartial}
-        fitScreen={props.fitScreen}
-        initialShowHTML={props.initialShowHTML}
-        noCopyButton={props.noCopyButton}
-        optimizeLightweight={props.optimizeLightweight}
-        sx={props.codeSx}
-      />
+      <ExpanderControlledBox expanded={!isCodeCollapsed}>
+        <RenderCodeMemo
+          semiStableId={props.semiStableId}
+          code={props.code} title={props.title} isPartial={props.isPartial}
+          fitScreen={props.fitScreen}
+          initialShowHTML={props.initialShowHTML}
+          noCopyButton={props.noCopyButton}
+          optimizeLightweight={props.optimizeLightweight}
+          sx={patchCodeSx}
+        />
+      </ExpanderControlledBox>
 
       {/* Context Menu */}
       {contextMenuAnchor && (
