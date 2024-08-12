@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Switch, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -9,7 +8,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
-import { RenderCodePanelFrame } from '~/modules/blocks/code/panel/RenderCodePanelFrame';
+import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '~/modules/blocks/code/panel/RenderCodePanelFrame';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -23,18 +22,6 @@ import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 import { TextFragmentEditor } from '../fragments-content/TextFragmentEditor';
 import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButton';
 
-
-const panelTitleTooltipSx: SxProps = {
-  p: 1,
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
-  columnGap: 1,
-  rowGap: 1,
-  '& > :nth-of-type(odd)': {
-    color: 'text.tertiary',
-    fontSize: 'xs',
-  },
-};
 
 function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
   if (!isDocPart(attachmentFragment.part))
@@ -167,7 +154,7 @@ export function DocAttachmentFragment(props: {
   // memoed components
 
   const headerTooltipContents = React.useMemo(() => (
-    <Box sx={panelTitleTooltipSx}>
+    <Box sx={enhancedCodePanelTitleTooltipSx}>
       <div>Attachment Title</div>
       <div>{fragment.title}</div>
       <div>Doc Title</div>
@@ -259,6 +246,7 @@ export function DocAttachmentFragment(props: {
   return (
     <RenderCodePanelFrame
       color={DocSelColor}
+      contentScaling={props.contentScaling}
       headerRow={headerRow}
       subHeaderInline={!isEditing && liveFileActions}
       toolbarRow={toolbarRow}

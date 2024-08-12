@@ -118,11 +118,12 @@ export function AutoBlocksRenderer(props: {
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
+                contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
                 initialShowHTML={props.showUnsafeHtml}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
-                sx={scaledCodeSx}
+                codeSx={scaledCodeSx}
               />
             ) : (
               <RenderCodeMemoOrNot
