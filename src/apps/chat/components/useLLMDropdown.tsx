@@ -12,6 +12,7 @@ import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/compo
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { DebounceInputMemo } from '~/common/components/DebounceInput';
 
 
 function LLMDropdown(props: {
@@ -23,6 +24,7 @@ function LLMDropdown(props: {
 
   // external state
   const { openLlmOptions, openModelsSetup } = useOptimaLayout();
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
 
   // derived state
   const { chatLlmId, llms, setChatLlmId } = props;
@@ -42,6 +44,11 @@ function LLMDropdown(props: {
     let prevSourceId: DModelSourceId | null = null;
     let sepCount = 0;
     for (const llm of llms) {
+
+      const regex = new RegExp(debouncedSearchQuery, 'i');
+      const matches = llm.label.match(regex);
+      if (!matches)
+        continue;
 
       // filter-out hidden models from the dropdown
       if (!(!llm.hidden || llm.id === chatLlmId))
@@ -76,7 +83,7 @@ function LLMDropdown(props: {
       }
     }
     return llmItems;
-  }, [chatLlmId, llms]);
+  }, [chatLlmId, llms, debouncedSearchQuery]);
 
 
   // "Model Options" button (only on the active item)
@@ -127,6 +134,19 @@ function LLMDropdown(props: {
 
   </>, [openModelsSetup]);
 
+  // "Models Search" box
+  const llmDropdownPrependOptions = React.useMemo(() => <>
+
+    <DebounceInputMemo
+      style={{ border: "none", outline: "none", boxShadow: "none", background: "none" }}
+      minChars={2}
+      onDebounce={setDebouncedSearchQuery}
+      debounceTimeout={300}
+      placeholder='Model Search...'
+      aria-label='Model Search'
+    />
+
+  </>, []);
 
   return (
     <PageBarDropdownMemo
@@ -134,6 +154,7 @@ function LLMDropdown(props: {
       value={chatLlmId}
       onChange={handleChatLLMChange}
       placeholder={props.placeholder || 'Models …'}
+      prependOption={llmDropdownPrependOptions}
       appendOption={llmDropdownAppendOptions}
       activeEndDecorator={llmDropdownButton}
     />

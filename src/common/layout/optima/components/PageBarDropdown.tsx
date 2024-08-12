@@ -92,6 +92,7 @@ function PageBarDropdown<TValue extends string>(props: {
   // optional
   activeEndDecorator?: React.JSX.Element,
   appendOption?: React.JSX.Element,
+  prependOption?: React.JSX.Element,
   placeholder?: string,
   showSymbols?: boolean,
 }) {
@@ -111,6 +112,11 @@ function PageBarDropdown<TValue extends string>(props: {
       indicator={<KeyboardArrowDownIcon />}
       slotProps={selectSlotProps}
     >
+
+      {/* Prepender */}
+      {!!props.prependOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ mt: 0 }} />}
+      {props.prependOption}
+      {!!props.prependOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}
 
       {/* Scrollable Items list*/}
       <Box
