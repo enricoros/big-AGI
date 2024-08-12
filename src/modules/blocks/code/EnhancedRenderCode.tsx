@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ColorPaletteProp, Typography } from '@mui/joy';
+import { Box, ColorPaletteProp, IconButton, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { ContentScaling } from '~/common/app.theme';
@@ -12,6 +12,7 @@ import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 
 export function EnhancedRenderCode(props: {
@@ -100,7 +101,19 @@ export function EnhancedRenderCode(props: {
       </TooltipOutlined>
     </Typography>
 
+    {/* Menu Options button */}
+    <IconButton
+      size='sm'
+      onClick={handleToggleContextMenu}
+      onContextMenu={handleToggleContextMenu}
+    >
+      <MoreVertIcon />
+    </IconButton>
+
+
     {/*/!* Collapsing Button *!/*/}
+
+
     {/*<StyledOverlayButton*/}
     {/*  size='sm'*/}
     {/*  variant='plain'*/}
@@ -146,8 +159,8 @@ export function EnhancedRenderCode(props: {
       noOuterShadow
       contentScaling={props.contentScaling}
       headerRow={headerRow}
-      onHeaderClick={handleToggleCodeCollapse}
-      onHeaderContext={handleToggleContextMenu}
+      // onHeaderClick={handleToggleCodeCollapse}
+      // onHeaderContext={handleToggleContextMenu}
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
@@ -168,6 +181,8 @@ export function EnhancedRenderCode(props: {
         <EnhancedRenderCodeMenu
           anchor={contextMenuAnchor}
           onClose={handleCloseContextMenu}
+          isCollapsed={isCodeCollapsed}
+          onToggleCollapse={handleToggleCodeCollapse}
         />
       )}
 
