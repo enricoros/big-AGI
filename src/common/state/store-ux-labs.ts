@@ -20,6 +20,9 @@ interface UXLabsStore {
   labsChatBarAlt: false | 'title',
   setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => void;
 
+  labsEnhanceCodeBlocks: boolean;
+  setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => void;
+
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
 
@@ -51,6 +54,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsChatBarAlt: false,
       setLabsChatBarAlt: (labsChatBarAlt: false | 'title') => set({ labsChatBarAlt }),
+
+      labsEnhanceCodeBlocks: true,
+      setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => set({ labsEnhanceCodeBlocks }),
 
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),

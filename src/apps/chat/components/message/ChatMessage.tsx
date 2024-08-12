@@ -34,6 +34,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { ContinueFragment } from './ContinueFragment';
@@ -132,6 +133,7 @@ export function ChatMessage(props: {
     doubleClickToEdit: state.doubleClickToEdit,
     uiComplexityMode: state.complexityMode,
   })));
+  const labsEnhanceCodeBlocks = useUXLabsStore(state => state.labsEnhanceCodeBlocks);
   const [showDiff, setShowDiff] = useChatShowTextDiff();
 
 
@@ -626,6 +628,7 @@ export function ChatMessage(props: {
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             showUnsafeHtml={props.showUnsafeHtml}
+            enhanceCodeBlocks={labsEnhanceCodeBlocks}
 
             textEditsState={textContentEditState}
             setEditedText={handleEditSetText}

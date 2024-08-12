@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import CodeIcon from '@mui/icons-material/Code';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
@@ -29,6 +30,7 @@ export function UxLabsSettings() {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
     labsCameraDesktop, setLabsCameraDesktop,
     labsChatBarAlt, setLabsChatBarAlt,
+    labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks,
     labsHighPerformance, setLabsHighPerformance,
     labsShowCost, setLabsShowCost,
     labsShowShortcutBar, setLabsShowShortcutBar,
@@ -55,6 +57,11 @@ export function UxLabsSettings() {
     )}
 
     {/* Non-Graduated Settings */}
+
+    <FormSwitchControl
+      title={<><CodeIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Enhance Legacy Code</>} description={labsEnhanceCodeBlocks ? 'Auto-Enhance' : 'Disabled'}
+      checked={labsEnhanceCodeBlocks} onChange={setLabsEnhanceCodeBlocks}
+    />
 
     <FormSwitchControl
       title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Performance</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
