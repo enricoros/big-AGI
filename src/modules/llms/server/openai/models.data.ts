@@ -5,6 +5,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, L
 import type { ModelDescriptionSchema } from '../llm.server.types';
 import { wireGroqModelsListOutputSchema } from './groq.wiretypes';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';
+import { wireOpenPipeModelOutputSchema } from './openpipe.wiretypes';
 import { wireOpenrouterModelsListOutputSchema } from './openrouter.wiretypes';
 import { wireTogetherAIListOutputSchema } from './togetherai.wiretypes';
 
@@ -759,13 +760,13 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   // },
 
   // Default finetune, not available at the onset
-  {
-    id: 'mistral-ft-optimized-1227',
-    label: 'OpenPipe · Mistral FT Optimized',
-    description: 'OpenPipe optimized Mistral fine-tuned model',
-    contextWindow: 32768, // Assuming similar to Mixtral, as it's Mistral-based
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn], // Assuming similar to Mixtral
-  },
+  // {
+  //   id: 'mistral-ft-optimized-1227',
+  //   label: 'OpenPipe · Mistral FT Optimized',
+  //   description: 'OpenPipe optimized Mistral fine-tuned model',
+  //   contextWindow: 32768, // Assuming similar to Mixtral, as it's Mistral-based
+  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn], // Assuming similar to Mixtral
+  // },
 
   // Finetune-able models, but not present
   // {
@@ -810,6 +811,58 @@ export function openPipeModelSort(a: ModelDescriptionSchema, b: ModelDescription
     return aPrefixIndex - bPrefixIndex;
   // Then by reverse label (newer versions first)
   return b.label.localeCompare(a.label);
+}
+
+export function openPipeModelToModelDescriptions(wireModel: object): ModelDescriptionSchema {
+  // parse the model
+  const model = wireOpenPipeModelOutputSchema.parse(wireModel);
+
+  // parse the ISO strings
+  let created: number | undefined;
+  let updated: number | undefined;
+  try {
+    created = Date.parse(model.created) || undefined;
+    updated = Date.parse(model.updated) || undefined;
+  } catch (e) {
+    // .. prevent issues
+  }
+
+  // patch label and description based on the `.openpipe` field
+  let label = 'OpenPipe · ' + model.name;
+  let description = model.description || 'Fine-tuned model.';
+  switch (model.openpipe?.status) {
+    case 'PENDING':
+      label = `🟦 ${label} (PENDING)`;
+      break;
+    case 'TRAINING':
+      label = `🟦 ${label} (TRAINING)`;
+      break;
+    case 'DEPLOYED':
+      label = `🟩 ${label} (DEPLOYED)`;
+      break;
+    case 'ERROR':
+      label = `🟥 ${label} (ERROR)`;
+      break;
+    case 'DEPRECATED':
+      label = `🟨 ${label} (DEPRECATED)`;
+      break;
+  }
+  if (model.openpipe?.baseModel)
+    description += `\n\nBased on: ${model.openpipe.baseModel}`;
+  if (model.openpipe?.datasetId)
+    description += `\nDataset Id: ${model.openpipe.datasetId}`;
+  if (model.openpipe?.errorMessage)
+    description += `\n\nError: ${model.openpipe.errorMessage}\n`;
+
+  return fromManualMapping([], model.id, created, updated, {
+    idPrefix: model.id,
+    label,
+    description,
+    contextWindow: model.contextWindow,
+    maxCompletionTokens: model.maxCompletionTokens,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: model.pricing,
+  });
 }
 
 
