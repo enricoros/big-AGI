@@ -27,10 +27,25 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
 
+  /* NOTE on `disableEnforceFocus`:
+   * This is a workaround for mobile drawer focus issues, when pressing the 3-dot menu button
+   * on the `Search...` input field will flash-and-hide the menu.
+   *
+   * This prop disables the default focus trap behavior of the Drawer.
+   * It allows focus to move freely outside the Drawer, which is useful
+   * when the Drawer contains components (like Menus) that need to manage
+   * their own focus.
+   *
+   * This prevents unexpected focus resets to the Drawer content when interacting with
+   * nested interactive elements.
+   *
+   * See also `windowUtils.useDocumentFocusDebugger` for debugging focus issues.
+   */
   return (
     <Drawer
       id='mobile-drawer'
       component={props.component}
+      disableEnforceFocus
       open={isDrawerOpen}
       onClose={optimaCloseDrawer}
       sx={{

@@ -65,12 +65,64 @@ export class WindowFocusObserver {
   }
 }
 
+/* // Uncomment to have a great debugging tool for focus issues, tracking every movement within the document. Use LLMs to explain.
 
-// // React to window visibility changes.
-// export function useWindowFocus(): boolean {
-//   const [isWindowFocused, setIsWindowFocused] = React.useState<boolean>(() =>
-//     WindowFocusObserver.getInstance().windowFocusState,
-//   );
-//   React.useEffect(() => WindowFocusObserver.getInstance().subscribe(setIsWindowFocused), []);
-//   return isWindowFocused;
-// }
+export function useDocumentFocusDebugger() {
+  const previousFocusRef = React.useRef<Element | null>(null);
+
+  React.useEffect(() => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') return;
+
+    const handleFocusChange = (event: FocusEvent) => {
+      const currentFocus = event.target as Element;
+
+      if (currentFocus !== previousFocusRef.current) {
+        const prevInfo = _getElementInfo(previousFocusRef.current);
+        const currentInfo = _getElementInfo(currentFocus);
+
+        console.group('Focus Change');
+        console.log(`Time: ${new Date().toISOString()}`);
+        console.log(`Event: ${event.type}`);
+        console.log('Previous focus:', prevInfo);
+        console.log('Current focus:', currentInfo);
+        console.log('Stack trace:', new Error().stack);
+        console.groupEnd();
+
+        previousFocusRef.current = currentFocus;
+      }
+    };
+
+    document.addEventListener('focus', handleFocusChange, true);
+    document.addEventListener('blur', handleFocusChange, true);
+
+    return () => {
+      document.removeEventListener('focus', handleFocusChange, true);
+      document.removeEventListener('blur', handleFocusChange, true);
+    };
+  }, []);
+}
+
+function _getElementInfo(element: Element | null) {
+  if (!element) return 'None';
+
+  return {
+    tagName: element.tagName,
+    id: element.id,
+    className: element.className,
+    textContent: element.textContent?.slice(0, 50) ?? '',
+    componentName: _getReactComponentName(element),
+  };
+}
+
+function _getReactComponentName(element: Element): string {
+  const reactKey = Object.keys(element).find(key => key.startsWith('__reactFiber$'));
+  if (reactKey) {
+    const fiber = (element as any)[reactKey];
+    if (fiber && fiber.return && fiber.return.type) {
+      return fiber.return.type.name || 'Unknown';
+    }
+  }
+  return 'Unknown';
+}
+*/
