@@ -92,8 +92,8 @@ export function DocAttachmentFragment(props: {
     workspaceId,
     props.isMobile,
     fragmentDocPart.data.text,
-    handleReplaceDocFragmentText,
     handleReplaceFragmentLiveFileId,
+    handleReplaceDocFragmentText,
   );
 
 

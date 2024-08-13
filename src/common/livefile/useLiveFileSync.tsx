@@ -74,8 +74,8 @@ export function useLiveFileSync(
   workspaceId: DWorkspaceId | null,
   isMobile: boolean,
   bufferText: string,
-  setBufferText: (text: string) => void,
-  replaceLiveFileId: (liveFileId: LiveFileId) => void,
+  onReplaceLiveFileId: (liveFileId: LiveFileId) => void,
+  onSetBufferText: (text: string) => void,
 ) {
 
   // state
@@ -166,13 +166,13 @@ export function useLiveFileSync(
         console.warn('[DEV] No workspaceId to pair the file with.');
       else
         workspaceActions().liveFileAssign(workspaceId, liveFileId);
-      replaceLiveFileId(liveFileId);
+      onReplaceLiveFileId(liveFileId);
       // Immediately load the preview on this ID
       await _handleReloadFileContent(liveFileId);
     } catch (error: any) {
       setStatus({ message: `Error pairing the file: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`, mtype: 'error' });
     }
-  }, [_handleReloadFileContent, replaceLiveFileId, workspaceId]);
+  }, [_handleReloadFileContent, onReplaceLiveFileId, workspaceId]);
 
   const handlePairNewFileWithPicker = React.useCallback(async () => {
     // Open the file picker
@@ -192,8 +192,8 @@ export function useLiveFileSync(
     if (fileContent === undefined)
       setStatus({ message: 'No file content loaded. Please preview changes first.', mtype: 'info' });
     else
-      setBufferText(fileContent);
-  }, [fileContent, setBufferText]);
+      onSetBufferText(fileContent);
+  }, [fileContent, onSetBufferText]);
 
   const handleSaveToDisk = React.useCallback(async (event: React.MouseEvent) => {
     if (!isPairingValid) {
