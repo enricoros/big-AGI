@@ -33,7 +33,7 @@ interface LiveFileActions {
 
   // content updates
   contentClose: (fileId: LiveFileId) => Promise<void>;
-  contentReload: (fileId: LiveFileId) => Promise<void>;
+  contentReloadFromDisk: (fileId: LiveFileId) => Promise<void>;
   contentWriteAndReload: (fileId: LiveFileId, content: string) => Promise<boolean>;
 
 }
@@ -149,7 +149,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
       }));
     },
 
-    contentReload: async (fileId: LiveFileId) => {
+    contentReloadFromDisk: async (fileId: LiveFileId) => {
       const liveFile = _get().liveFiles[fileId];
       if (!liveFile || liveFile.isLoading || liveFile.isSaving) return;
 
