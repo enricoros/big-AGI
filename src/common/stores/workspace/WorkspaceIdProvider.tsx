@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 
-import { workspaceForConversationIdentity, DWorkspaceId } from './workspace.types';
+import { DWorkspaceId, workspaceForConversationIdentity } from './workspace.types';
 
 
 // The Context and the data it will prop-drill
@@ -40,6 +40,5 @@ export function useContextWorkspaceId() {
   const value = React.useContext(WorkspaceContext);
   if (!value)
     throw new Error('Missing WorkspaceProvider');
-  console.log('useContextWorkspaceId', value);
   return value.workspaceId;
 }
