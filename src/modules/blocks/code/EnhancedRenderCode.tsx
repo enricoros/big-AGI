@@ -3,16 +3,19 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, IconButton, Typography } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import type { ContentScaling } from '~/common/app.theme';
+import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
+import { useLiveFileSync } from '~/common/livefile/useLiveFileSync';
 
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 
 export function EnhancedRenderCode(props: {
@@ -39,6 +42,40 @@ export function EnhancedRenderCode(props: {
   // state
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(false);
+
+  // external state
+  const workspaceId = useContextWorkspaceId();
+
+
+  // LiveFile sync
+
+  // const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
+  //   // create a new Doc Attachment Fragment
+  //   const newData = createDMessageDataInlineText(newText, fragmentDocPart.data.mimeType);
+  //   const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.vdt, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment.liveFileId);
+  //
+  //   // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
+  //   newAttachment.fId = fragmentId;
+  //
+  //   // replace this fragment with the new one
+  //   onFragmentReplace(fragmentId, newAttachment);
+  // }, [fragment.caption, fragment.liveFileId, fragmentDocPart, fragmentId, fragmentTitle, onFragmentReplace]);
+
+  /* Very Local State
+   * this will easily get wiped just on a component remount - so it's just a temporary 'solution'.
+   */
+  const [liveFileId, setLiveFileId] = React.useState<LiveFileId | null>(null);
+
+  console.warn('TODO: from here!')
+
+  const { liveFileControlButton, liveFileActions } = useLiveFileSync(
+    liveFileId,
+    workspaceId,
+    props.fitScreen === true, // as a proxy for isMobile
+    props.code,
+    setLiveFileId,
+    (text: string) => null,
+  );
 
 
   // hooks
@@ -118,6 +155,11 @@ export function EnhancedRenderCode(props: {
       </Box>
     </TooltipOutlined>
 
+    {/* LiveFile */}
+    <Box sx={{ ml: 'auto' }}>
+      {liveFileControlButton}
+    </Box>
+
     {/* Menu Options button */}
     <IconButton
       size='sm'
@@ -140,7 +182,7 @@ export function EnhancedRenderCode(props: {
     {/*>*/}
     {/*  {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}*/}
     {/*</StyledOverlayButton>*/}
-  </>, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, props.title]);
+  </>, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileControlButton, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -177,6 +219,7 @@ export function EnhancedRenderCode(props: {
       noOuterShadow
       contentScaling={props.contentScaling}
       headerRow={headerRow}
+      subHeaderInline={liveFileActions}
       onHeaderClick={props.fitScreen ? handleToggleCodeCollapse : undefined}
       onHeaderContext={handleToggleContextMenu}
     >
