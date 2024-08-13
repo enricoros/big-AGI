@@ -5,7 +5,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 import { BlocksContainer } from './BlocksContainers';
-import { EnhancedRenderCode } from './code/EnhancedRenderCode';
+import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
