@@ -17,7 +17,7 @@ import { workspaceActions } from '~/common/stores/workspace/store-client-workspa
 import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
 import { LiveFileControlButton } from './LiveFileControlButton';
-import { liveFileCreateOrThrow } from './store-live-file';
+import { isLiveFileSupported, liveFileCreateOrThrow } from './store-live-file';
 import { useLiveFileContent } from './useLiveFileContent';
 
 
@@ -222,7 +222,7 @@ export function useLiveFileComparison(
 
   // Memoed components code
 
-  const liveFileControlButton = React.useMemo(() => (
+  const liveFileControlButton = React.useMemo(() => !isLiveFileSupported() ? null : (
     <LiveFileControlButton
       disabled={isSavingFile}
       hasContent={fileHasContent}
@@ -235,7 +235,8 @@ export function useLiveFileComparison(
   ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, _handleReloadFileContent, isPairingValid, isSavingFile]);
 
   const liveFileActions = React.useMemo(() => {
-    if (!status && !fileHasContent) return null;
+    if (!isLiveFileSupported() || (!status && !fileHasContent))
+      return null;
 
     const isError = status?.mtype === 'error';
 

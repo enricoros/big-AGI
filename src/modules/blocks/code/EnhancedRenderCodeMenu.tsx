@@ -8,6 +8,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { useLabsDevMode, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -66,6 +67,7 @@ export function EnhancedRenderCodeMenu(props: {
     setLabsEnhanceCodeLiveFile(!labsEnhanceCodeLiveFile);
   }, [labsEnhanceCodeLiveFile, setLabsEnhanceCodeLiveFile]);
 
+  const liveFileSupported = isLiveFileSupported();
 
   return (
     <CloseableMenu
@@ -88,9 +90,9 @@ export function EnhancedRenderCodeMenu(props: {
 
       <ListDivider />
 
-      <MenuItem onClick={toggleEnhanceCodeLiveFile}>
-        <ListItemDecorator>{labsEnhanceCodeLiveFile && <CheckRoundedIcon />}</ListItemDecorator>
-        Enable LiveFile
+      <MenuItem onClick={toggleEnhanceCodeLiveFile} disabled={!liveFileSupported}>
+        <ListItemDecorator>{(labsEnhanceCodeLiveFile && liveFileSupported) && <CheckRoundedIcon />}</ListItemDecorator>
+        {liveFileSupported ? 'Enable LiveFile' : 'LiveFile - No Browser Support'}
       </MenuItem>
 
       {labsDevMode && (
