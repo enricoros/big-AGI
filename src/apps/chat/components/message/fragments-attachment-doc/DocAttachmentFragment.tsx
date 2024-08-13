@@ -16,7 +16,7 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
-import { useLiveFileComparison } from '~/common/livefile/useLiveFileComparison';
+import { useLiveFileSync } from '~/common/livefile/useLiveFileSync';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { TextFragmentEditor } from '../fragments-content/TextFragmentEditor';
@@ -85,9 +85,9 @@ export function DocAttachmentFragment(props: {
   }, [fragment, fragmentId, onFragmentReplace]);
 
 
-  // LiveFile
+  // LiveFile sync
 
-  const { liveFileControlButton, liveFileActions } = useLiveFileComparison(
+  const { liveFileControlButton, liveFileActions } = useLiveFileSync(
     fragment.liveFileId ?? null,
     workspaceId,
     props.isMobile === true,
