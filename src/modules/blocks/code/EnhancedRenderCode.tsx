@@ -71,14 +71,16 @@ export function EnhancedRenderCode(props: {
   const headerTooltipContents = React.useMemo(() => (
     <Box sx={enhancedCodePanelTitleTooltipSx}>
       {/* This is what we have */}
+      <div><strong>Code Block</strong></div>
+      <div></div>
       <div>Title</div>
       <div>{props.title || '(empty)'}</div>
       {/*<div>Language</div>*/}
       {/*<div>{props.language}</div>*/}
-      <div>Code Length</div>
-      <div>{props.code.length} characters</div>
       <div>Code Lines</div>
       <div>{props.code.split('\n').length} lines</div>
+      <div>Code Length</div>
+      <div>{props.code.length} characters</div>
       <div>semiStableId</div>
       <div>{props.semiStableId || '(none)'}</div>
       {/* This is what attachments carry */}
@@ -101,7 +103,15 @@ export function EnhancedRenderCode(props: {
     {/* Icon and Title */}
     <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <CodeIcon />
+        <CodeIcon
+          aria-hidden
+          onClick={handleToggleCodeCollapse}
+          sx={{
+            transform: isCodeCollapsed ? 'rotate(-90deg)' : 'none',
+            transition: 'transform 0.2s cubic-bezier(.17,.84,.44,1)',
+            cursor: 'pointer',
+          }}
+        />
         <Typography level='title-sm'>
           {props.title || 'Code'}
         </Typography>
@@ -130,7 +140,7 @@ export function EnhancedRenderCode(props: {
     {/*>*/}
     {/*  {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}*/}
     {/*</StyledOverlayButton>*/}
-  </>, [handleToggleContextMenu, headerTooltipContents, props.title]);
+  </>, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
