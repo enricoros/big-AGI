@@ -13,8 +13,8 @@ import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProv
 import { useLiveFileSync } from '../../../apps/chat/components/message/fragments-attachment-doc/livefile-sync/useLiveFileSync';
 
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
-import { RenderCodeMemo } from './RenderCode';
-import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './RenderCodePanelFrame';
+import { RenderCodeMemo } from '../code/RenderCode';
+import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '../code/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
 
 
