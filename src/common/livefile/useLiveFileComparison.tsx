@@ -18,7 +18,7 @@ import type { LiveFileId } from './liveFile.types';
 import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
 import { LiveFileControlButton } from './LiveFileControlButton';
 import { liveFileCreateOrThrow } from './store-live-file';
-import { useLiveFileContent } from './liveFile.hooks';
+import { useLiveFileContent } from './useLiveFileContent';
 
 
 const sheetSx: SxProps = {

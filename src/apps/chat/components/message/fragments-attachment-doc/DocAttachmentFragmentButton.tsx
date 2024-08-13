@@ -15,7 +15,7 @@ import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart }
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
-import { useLiveFileMetadata } from '~/common/livefile/liveFile.hooks';
+import { useLiveFileMetadata } from '~/common/livefile/useLiveFileMetadata';
 
 
 // configuration
