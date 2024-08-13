@@ -817,6 +817,9 @@ export function openPipeModelToModelDescriptions(wireModel: object): ModelDescri
   // parse the model
   const model = wireOpenPipeModelOutputSchema.parse(wireModel);
 
+  // note: model.id is a UUID, but when making the requests, this is the id we use
+  const namedId = `openpipe:${model.name}`;
+
   // parse the ISO strings
   let created: number | undefined;
   let updated: number | undefined;
@@ -847,15 +850,17 @@ export function openPipeModelToModelDescriptions(wireModel: object): ModelDescri
       label = `🟨 ${label} (DEPRECATED)`;
       break;
   }
+
   if (model.openpipe?.baseModel)
     description += `\n\nBased on: ${model.openpipe.baseModel}`;
   if (model.openpipe?.datasetId)
     description += `\nDataset Id: ${model.openpipe.datasetId}`;
   if (model.openpipe?.errorMessage)
     description += `\n\nError: ${model.openpipe.errorMessage}\n`;
+  description += `\n\nUUID: ${model.id}`;
 
-  return fromManualMapping([], model.id, created, updated, {
-    idPrefix: model.id,
+  return fromManualMapping([], namedId, created, updated, {
+    idPrefix: namedId,
     label,
     description,
     contextWindow: model.contextWindow,
