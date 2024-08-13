@@ -46,6 +46,7 @@ export function BeamRayGrid(props: {
           rayIndexWeak={index}
           beamStore={props.beamStore}
           hadImportedRays={props.hadImportedRays}
+          isMobile={props.isMobile}
           isRemovable={raysCount > SCATTER_RAY_MIN}
           rayId={rayId}
           // linkedLlmId={props.linkedLlmId}

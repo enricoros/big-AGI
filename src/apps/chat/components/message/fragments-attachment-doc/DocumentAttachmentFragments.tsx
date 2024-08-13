@@ -19,7 +19,7 @@ export function DocumentAttachmentFragments(props: {
   attachmentFragments: DMessageAttachmentFragment[],
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
-  isMobile?: boolean,
+  isMobile: boolean,
   zenMode: boolean,
   disableMarkdownText: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,

@@ -9,6 +9,7 @@ import type { VChatMessageIn } from '~/modules/llms/llm.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { getIsMobile } from '~/common/components/useMatchMedia';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
@@ -76,11 +77,13 @@ export async function executeChatGenerate(_i: ChatGenerateInstruction, inputs: E
 
       case 'chat-message':
       default:
+        const isMobile = getIsMobile(); // no need to react to this
         // recreate the UI for this
         inputs.updateInstructionComponent(
           <ChatMessage
             message={inputs.intermediateDMessage}
-            fitScreen={true}
+            fitScreen={isMobile}
+            isMobile={isMobile}
             hideAvatar
             adjustContentScaling={-1}
             sx={!getBeamCardScrolling() ? beamCardMessageSx : beamCardMessageScrollingSx}

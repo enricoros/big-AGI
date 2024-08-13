@@ -111,6 +111,7 @@ export function BeamFusionGrid(props: {
           key={'fusion-' + fusionId}
           beamStore={props.beamStore}
           fusionId={fusionId}
+          isMobile={props.isMobile}
         />
       ))}
 

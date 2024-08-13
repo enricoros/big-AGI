@@ -227,6 +227,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
             fromRole='assistant'
             contentScaling={adjustContentScaling(contentScaling, -1)}
             fitScreen={isMobile}
+            isMobile={isMobile}
             blocksProcessor='diagram'
             codeRenderVariant='plain'
             textRenderVariant='text'

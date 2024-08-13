@@ -103,7 +103,7 @@ export function ChatMessage(props: {
   diffPreviousText?: string,
   fitScreen: boolean,
   hasInReferenceTo?: boolean;
-  isMobile?: boolean,
+  isMobile: boolean,
   isBottom?: boolean,
   isImagining?: boolean,
   isSpeaking?: boolean,
@@ -621,6 +621,7 @@ export function ChatMessage(props: {
 
             contentScaling={adjContentScaling}
             fitScreen={props.fitScreen}
+            isMobile={props.isMobile}
             messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}

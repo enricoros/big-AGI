@@ -16,6 +16,7 @@ import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/u
 import { animationTextShadowLimey } from '~/common/util/animUtils';
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 
 // configuration
@@ -126,6 +127,7 @@ export function ExplainerCarousel(props: {
 
   // external state
   const isMobile = useIsMobile();
+  const contentScaling = useUIContentScaling();
 
   // derived state
   const { onFinished } = props;
@@ -232,8 +234,9 @@ export function ExplainerCarousel(props: {
             <AutoBlocksRenderer
               text={mdText}
               fromRole='assistant'
-              contentScaling='md'
+              contentScaling={contentScaling /* was: 'md' */}
               fitScreen={isMobile}
+              isMobile={isMobile}
               textRenderVariant='markdown'
             />
           </Box>
