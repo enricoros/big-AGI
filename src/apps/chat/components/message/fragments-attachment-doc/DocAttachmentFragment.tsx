@@ -8,7 +8,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
-import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '~/modules/blocks/code/panel/RenderCodePanelFrame';
+import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '~/modules/blocks/code/RenderCodePanelFrame';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';

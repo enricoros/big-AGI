@@ -14,7 +14,7 @@ import { useLiveFileSync } from '../../../apps/chat/components/message/fragments
 
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';
-import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './panel/RenderCodePanelFrame';
+import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from './RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
 
 
