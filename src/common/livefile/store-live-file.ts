@@ -268,6 +268,19 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
 
 // public accessors
+
+/**
+ * Checks for Browser support for FileSystemFileHandle, which is the core of the LiveFile feature.
+ * - we only check for FileSystemFileHandle for now, not other supports.
+ * - within the Attachments subsystem, the presence of FileSystemFileHandle drives the creation, so we don't check for suport there.
+ * - in the (at-rest) fragments, we link to the generic LiveFileId, which gets checked for validity at load.
+ * - in the Attachment Doc Fragments UI, we check the flag to show the LiveFileControlButton at all.
+ * - in the EnhancedRenderCode component, we check the flag to let the user choose/pair the file or not.
+ */
+export function isLiveFileSupported(): boolean {
+  return 'FileSystemFileHandle' in window && typeof FileSystemFileHandle === 'function';
+}
+
 export function liveFileCreateOrThrow(fileSystemFileHandle: FileSystemFileHandle): Promise<LiveFileId> {
   return useLiveFileStore.getState().addLiveFile(fileSystemFileHandle);
 }
