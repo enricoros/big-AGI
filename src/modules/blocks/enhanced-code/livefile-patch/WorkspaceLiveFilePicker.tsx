@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { Box, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem } from '@mui/joy';
+import { Box, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem } from '@mui/joy';
+import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.types';
 import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorkspaceContentsMetadata';
-import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 
 /**
@@ -51,24 +51,24 @@ export function WorkspaceLiveFilePicker(props: {
     <Dropdown>
 
       {/* Activation button */}
-      <TooltipOutlined color='success' title='Select a LiveFile to patch' placement='top-end'>
-        <MenuButton
-          aria-label='Pair File'
-          slots={{ root: IconButton }}
-          slotProps={{
-            root: {
-              color: liveFileId ? 'success' : undefined,
-              // variant: liveFileId ? undefined : undefined,
-              size: 'sm',
-            },
-          }}
-          sx={{
-            ml: 'auto',
-          }}
-        >
-          <LiveFilePatchIcon />
-        </MenuButton>
-      </TooltipOutlined>
+      {/*<TooltipOutlined color='success' title='Apply to LiveFile' placement='top-end'>*/}
+      <MenuButton
+        aria-label='Pair File'
+        slots={{ root: IconButton }}
+        slotProps={{
+          root: {
+            color: liveFileId ? 'success' : undefined,
+            // variant: liveFileId ? undefined : undefined,
+            size: 'sm',
+          },
+        }}
+        sx={{
+          ml: 'auto',
+        }}
+      >
+        <LiveFilePatchIcon />
+      </MenuButton>
+      {/*</TooltipOutlined>*/}
 
       {/* List of the Workspace LiveFiles to pair */}
       <Menu
@@ -83,9 +83,13 @@ export function WorkspaceLiveFilePicker(props: {
         {/*</ListItem>*/}
 
         {wLiveFiles.map((lfm: LiveFileMetadata) => (
-          <MenuItem key={lfm.id} onClick={() => onSelectLiveFile(lfm.id)}>
+          <MenuItem
+            key={lfm.id}
+            selected={lfm.id === liveFileId}
+            onClick={() => onSelectLiveFile(lfm.id)}
+          >
             <ListItemDecorator><CodeIcon sx={{ fontSize: 'lg' }} /></ListItemDecorator>
-            <Box sx={{ mr: 1 }}>
+            <Box>
               {lfm.name}
               <Box component='span' sx={{ fontSize: 'xs', display: 'block' }}>
                 {lfm.size?.toLocaleString() || '(unknown)'} bytes {lfm.type ? `· ${lfm.type}` : ''}
@@ -94,12 +98,14 @@ export function WorkspaceLiveFilePicker(props: {
           </MenuItem>
         ))}
 
-        <ListDivider />
+        {/*<ListDivider />*/}
 
-        <MenuItem disabled={!liveFileId} onClick={() => onSelectLiveFile(null)}>
-          <ListItemDecorator />
-          Remove Pairing
-        </MenuItem>
+        {!!liveFileId && (
+          <MenuItem disabled={!liveFileId} onClick={() => onSelectLiveFile(null)}>
+            <ListItemDecorator><ClearIcon /></ListItemDecorator>
+            Remove
+          </MenuItem>
+        )}
       </Menu>
     </Dropdown>
   );
