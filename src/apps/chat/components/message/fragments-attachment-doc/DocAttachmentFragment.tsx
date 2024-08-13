@@ -16,11 +16,11 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
-import { useLiveFileSync } from '~/common/livefile/useLiveFileSync';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { TextFragmentEditor } from '../fragments-content/TextFragmentEditor';
 import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButton';
+import { useLiveFileSync } from './livefile-sync/useLiveFileSync';
 
 
 function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {

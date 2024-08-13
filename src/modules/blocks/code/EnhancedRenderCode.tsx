@@ -10,7 +10,7 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
-import { useLiveFileSync } from '~/common/livefile/useLiveFileSync';
+import { useLiveFileSync } from '../../../apps/chat/components/message/fragments-attachment-doc/livefile-sync/useLiveFileSync';
 
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from './RenderCode';

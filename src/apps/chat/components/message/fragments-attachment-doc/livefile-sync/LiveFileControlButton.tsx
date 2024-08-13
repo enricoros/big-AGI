@@ -8,7 +8,7 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
 import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
 
-import { LiveFileChooseIcon, LiveFileIcon } from './liveFile.icons';
+import { LiveFileChooseIcon, LiveFileIcon } from '~/common/livefile/liveFile.icons';
 
 
 // configuration
