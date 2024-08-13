@@ -6,16 +6,14 @@ import CodeIcon from '@mui/icons-material/Code';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
-import { useLiveFileSync } from '../../../apps/chat/components/message/fragments-attachment-doc/livefile-sync/useLiveFileSync';
 
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
 import { RenderCodeMemo } from '../code/RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '../code/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
+import { useLiveFilePatch } from './livefile-patch/useLiveFilePatch';
 
 
 export function EnhancedRenderCode(props: {
@@ -25,7 +23,8 @@ export function EnhancedRenderCode(props: {
   code: string,
   isPartial: boolean,
 
-  fitScreen?: boolean,
+  fitScreen: boolean,
+  isMobile: boolean,
   initialShowHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
@@ -43,42 +42,14 @@ export function EnhancedRenderCode(props: {
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(false);
 
-  // external state
-  const workspaceId = useContextWorkspaceId();
-
-
-  // LiveFile sync
-
-  // const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
-  //   // create a new Doc Attachment Fragment
-  //   const newData = createDMessageDataInlineText(newText, fragmentDocPart.data.mimeType);
-  //   const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.vdt, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment.liveFileId);
-  //
-  //   // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
-  //   newAttachment.fId = fragmentId;
-  //
-  //   // replace this fragment with the new one
-  //   onFragmentReplace(fragmentId, newAttachment);
-  // }, [fragment.caption, fragment.liveFileId, fragmentDocPart, fragmentId, fragmentTitle, onFragmentReplace]);
-
-  /* Very Local State
-   * this will easily get wiped just on a component remount - so it's just a temporary 'solution'.
-   */
-  const [liveFileId, setLiveFileId] = React.useState<LiveFileId | null>(null);
-
-  console.warn('TODO: from here!')
-
-  const { liveFileControlButton, liveFileActions } = useLiveFileSync(
-    liveFileId,
-    workspaceId,
-    props.fitScreen === true, // as a proxy for isMobile
-    props.code,
-    setLiveFileId,
-    (text: string) => null,
+  // LiveFile - patch state
+  const { button: liveFileButton, actionBar: liveFileActionBar } = useLiveFilePatch(
+    props.title, props.code, props.isPartial,
+    props.isMobile,
   );
 
 
-  // hooks
+  // handlers
 
   const handleCloseContextMenu = React.useCallback(() => setContextMenuAnchor(null), []);
 
@@ -155,10 +126,8 @@ export function EnhancedRenderCode(props: {
       </Box>
     </TooltipOutlined>
 
-    {/* LiveFile */}
-    <Box sx={{ ml: 'auto' }}>
-      {liveFileControlButton}
-    </Box>
+    {/* LiveFile - Select */}
+    {liveFileButton}
 
     {/* Menu Options button */}
     <IconButton
@@ -170,19 +139,7 @@ export function EnhancedRenderCode(props: {
       <MoreVertIcon />
     </IconButton>
 
-
-    {/*/!* Collapsing Button *!/*/}
-
-
-    {/*<StyledOverlayButton*/}
-    {/*  size='sm'*/}
-    {/*  variant='plain'*/}
-    {/*  color='neutral'*/}
-    {/*  onClick={handleToggleCodeCollapse}*/}
-    {/*>*/}
-    {/*  {isCodeCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}*/}
-    {/*</StyledOverlayButton>*/}
-  </>, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileControlButton, props.title]);
+  </>, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -219,7 +176,7 @@ export function EnhancedRenderCode(props: {
       noOuterShadow
       contentScaling={props.contentScaling}
       headerRow={headerRow}
-      subHeaderInline={liveFileActions}
+      subHeaderInline={liveFileActionBar}
       onHeaderClick={props.fitScreen ? handleToggleCodeCollapse : undefined}
       onHeaderContext={handleToggleContextMenu}
     >

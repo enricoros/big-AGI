@@ -122,6 +122,7 @@ export function AutoBlocksRenderer(props: {
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
                 contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
+                isMobile={props.isMobile}
                 initialShowHTML={props.showUnsafeHtml}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
