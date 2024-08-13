@@ -111,7 +111,8 @@ function RayControls(props: {
 
 export function BeamRay(props: {
   beamStore: BeamStoreApi,
-  hadImportedRays: boolean
+  hadImportedRays: boolean,
+  isMobile: boolean,
   isRemovable: boolean,
   rayId: string,
   rayIndexWeak: number,
@@ -207,6 +208,7 @@ export function BeamRay(props: {
             <ChatMessageMemo
               message={ray.message}
               fitScreen={true}
+              isMobile={props.isMobile}
               hideAvatar
               showUnsafeHtml={true}
               adjustContentScaling={-1}

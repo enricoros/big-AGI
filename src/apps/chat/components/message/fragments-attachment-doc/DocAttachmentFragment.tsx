@@ -37,7 +37,7 @@ export function DocAttachmentFragment(props: {
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
-  isMobile?: boolean,
+  isMobile: boolean,
   zenMode: boolean,
   disableMarkdownText: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
@@ -90,7 +90,7 @@ export function DocAttachmentFragment(props: {
   const { liveFileControlButton, liveFileActions } = useLiveFileSync(
     fragment.liveFileId ?? null,
     workspaceId,
-    props.isMobile === true,
+    props.isMobile,
     fragmentDocPart.data.text,
     handleReplaceDocFragmentText,
     handleReplaceFragmentLiveFileId,
@@ -277,6 +277,7 @@ export function DocAttachmentFragment(props: {
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}
           fitScreen={props.isMobile}
+          isMobile={props.isMobile}
           codeRenderVariant='plain'
           textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
         />

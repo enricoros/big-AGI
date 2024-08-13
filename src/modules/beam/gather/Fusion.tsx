@@ -28,6 +28,7 @@ import { useBeamCardScrolling } from '../store-module-beam';
 export function Fusion(props: {
   beamStore: BeamStoreApi,
   fusionId: string,
+  isMobile: boolean,
 }) {
 
   // external state
@@ -144,6 +145,7 @@ export function Fusion(props: {
             <ChatMessageMemo
               message={fusion.outputDMessage}
               fitScreen={true}
+              isMobile={props.isMobile}
               hideAvatar
               showUnsafeHtml={true}
               adjustContentScaling={-1}

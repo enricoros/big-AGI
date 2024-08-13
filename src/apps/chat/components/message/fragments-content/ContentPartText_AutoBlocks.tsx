@@ -21,6 +21,7 @@ export function ContentPartText_AutoBlocks(props: {
   messageOriginLLM?: string,
 
   contentScaling: ContentScaling,
+  isMobile: boolean,
   fitScreen: boolean,
   disableMarkdownText: boolean,
   enhanceCodeBlocks: boolean,
@@ -58,6 +59,7 @@ export function ContentPartText_AutoBlocks(props: {
       fromRole={props.messageRole}
       contentScaling={props.contentScaling}
       fitScreen={props.fitScreen}
+      isMobile={props.isMobile}
       showUnsafeHtml={props.showUnsafeHtml}
       renderSanityTextDiffs={props.renderTextDiff}
       codeRenderVariant={props.enhanceCodeBlocks ? 'enhanced' : 'outlined'}

@@ -35,7 +35,9 @@ export function AutoBlocksRenderer(props: {
   fromRole: DMessageRole;
 
   contentScaling: ContentScaling;
-  fitScreen?: boolean;
+  fitScreen: boolean;
+  isMobile: boolean;
+
   showAsDanger?: boolean;
   showAsItalic?: boolean;
   showUnsafeHtml?: boolean;

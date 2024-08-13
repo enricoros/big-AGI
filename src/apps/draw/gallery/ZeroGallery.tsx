@@ -4,6 +4,9 @@ import { Card } from '@mui/joy';
 
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
+import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIContentScaling } from '~/common/state/store-ui';
+
 
 const zeroGalleryMd = `
 ### {{title}}
@@ -20,10 +23,16 @@ Your past creations will appear here once you start drawing.
 
 
 export function ZeroGallery(props: { domain: 'draw' | 'app' }) {
+
+  // external state
+  const isMobile = useIsMobile();
+  const contentScaling = useUIContentScaling();
+
   const text = zeroGalleryMd.replace('{{title}}', props.domain === 'draw'
     ? 'Empty Gallery'
     : 'No App Media',
   );
+
   return (
     <Card variant='soft' sx={{
       maxWidth: 'max(50%, 340px)',
@@ -43,8 +52,9 @@ export function ZeroGallery(props: { domain: 'draw' | 'app' }) {
       <AutoBlocksRenderer
         text={text}
         fromRole='assistant'
-        contentScaling='sm'
-        fitScreen
+        contentScaling={contentScaling}
+        fitScreen={isMobile}
+        isMobile={isMobile}
         textRenderVariant='markdown'
       />
       {/*</Typography>*/}

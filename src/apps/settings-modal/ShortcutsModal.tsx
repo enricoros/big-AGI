@@ -5,6 +5,7 @@ import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import { GoodModal } from '~/common/components/GoodModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 
 const shortcutsMd = platformAwareKeystrokes(`
@@ -40,16 +41,17 @@ const shortcutsMd = platformAwareKeystrokes(`
 export function ShortcutsModal(props: { onClose: () => void }) {
 
   // external state
-  const isMobile
-    = useIsMobile();
+  const isMobile = useIsMobile();
+  const contentScaling = useUIContentScaling();
 
   return (
     <GoodModal open title='Desktop Shortcuts' onClose={props.onClose}>
       <AutoBlocksRenderer
         text={shortcutsMd}
         fromRole='assistant'
-        contentScaling='sm'
+        contentScaling={contentScaling}
         fitScreen={isMobile}
+        isMobile={isMobile}
         textRenderVariant='markdown'
       />
     </GoodModal>
