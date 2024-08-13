@@ -21,7 +21,7 @@ import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
-import { useOpenInExternalButtons } from './buttons/useOpenInExternalButtons';
+import { useOpenInExternalButtons } from '~/modules/blocks/code/code-buttons/useOpenInExternalButtons';
 
 // style for line-numbers
 import './RenderCode.css';
@@ -63,7 +63,7 @@ function RenderCode(props: RenderCodeBaseProps) {
 const _DynamicPrism = React.lazy(async () => {
 
   // Dynamically import the code highlight functions
-  const { highlightCode, inferCodeLanguage } = await import('./highlight/codePrism');
+  const { highlightCode, inferCodeLanguage } = await import('~/modules/blocks/code/code-highlight/codePrism');
 
   return {
     default: (props: RenderCodeBaseProps) => <RenderCodeImpl highlightCode={highlightCode} inferCodeLanguage={inferCodeLanguage} {...props} />,
