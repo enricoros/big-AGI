@@ -183,7 +183,7 @@ export function useLiveFileSync(
     if (fileWithHandle.handle)
       await handlePairNewFSFHandle(fileWithHandle.handle);
     else
-      setStatus({ message: 'Browser does not support LiveFile operations.', mtype: 'error' });
+      setStatus({ message: `Browser does not support LiveFile operations. ${isLiveFileSupported() ? 'No filesystem handles.' : ''}`, mtype: 'error' });
   }, [handlePairNewFSFHandle]);
 
 
