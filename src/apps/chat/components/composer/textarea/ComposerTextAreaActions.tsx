@@ -7,7 +7,7 @@ import type { AgiAttachmentPromptsData } from '~/modules/aifn/attachmentprompts/
 
 import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 
-import { InReferenceToBubble } from '../../message/InReferenceToBubble';
+import { InReferenceToBubble } from '../../message/in-reference-to/InReferenceToBubble';
 
 
 // configuration

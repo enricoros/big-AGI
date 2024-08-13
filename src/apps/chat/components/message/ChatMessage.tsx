@@ -40,7 +40,7 @@ import { ContentFragments } from './fragments-content/ContentFragments';
 import { ContinueFragment } from './ContinueFragment';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
-import { InReferenceToBubble } from './InReferenceToBubble';
+import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 
@@ -71,6 +71,18 @@ const personaAvatarOrMenuSx: SxProps = {
 
 const editButtonWrapSx: SxProps = {
   overflowWrap: 'anywhere',
+};
+
+const fragmentsListSx: SxProps = {
+  // style
+  flexGrow: 1,  // capture all the space, for edit modes
+  minWidth: 0,  // VERY important, otherwise very wide messages will overflow the container, causing scroll on the whole page
+  my: 'auto',   // v-center content if there's any gap (e.g. single line of text)
+
+  // layout
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1.5,     // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
 };
 
 
@@ -570,17 +582,7 @@ export function ChatMessage(props: {
 
 
         {/* V-Fragments: Image Attachments | Content | Doc Attachments */}
-        <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={{
-          // style
-          flexGrow: 1,  // capture all the space, for edit modes
-          minWidth: 0,  // VERY important, otherwise very wide messages will overflow the container, causing scroll on the whole page
-          my: 'auto',   // v-center content if there's any gap (e.g. single line of text)
-
-          // layout
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1.5,     // we give a bit more space between the 'classes' of fragments (content, attachments, etc.)
-        }}>
+        <Box ref={blocksRendererRef /* restricts the BUBBLE menu to the children of this */} sx={fragmentsListSx}>
 
           {/* (optional) Message date */}
           {(props.showBlocksDate === true && !!(messageUpdated || messageCreated)) && (
@@ -597,13 +599,9 @@ export function ChatMessage(props: {
           )}
 
           {/* In-Reference-To Bubble */}
-          {messageMetadata?.inReferenceTo?.map((item, index) => (
-            <InReferenceToBubble
-              key={'irt-' + index}
-              item={item}
-              bubbleVariant='message'
-            />
-          ))}
+          {!!messageMetadata?.inReferenceTo?.length && (
+            <InReferenceToList items={messageMetadata.inReferenceTo} />
+          )}
 
           {/* Image Attachment Fragments - just for a prettier display on top of the message */}
           {imageAttachments.length >= 1 && !isEditingText && (
