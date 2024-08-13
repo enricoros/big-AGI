@@ -838,7 +838,7 @@ export function openPipeModelToModelDescriptions(wireModel: object): ModelDescri
       label = `🟦 ${label} (TRAINING)`;
       break;
     case 'DEPLOYED':
-      label = `🟩 ${label} (DEPLOYED)`;
+      label = `🟩 ${label}`;
       break;
     case 'ERROR':
       label = `🟥 ${label} (ERROR)`;
