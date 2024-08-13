@@ -89,7 +89,7 @@ export function useLiveFileSync(
     fileData,
     isPairingValid,
     liveFileContentClose,
-    liveFileContentReload,
+    liveFileContentReloadFromDisk,
     liveFileContentWriteAndReload,
   } = useLiveFileContent(_liveFileId);
 
@@ -155,9 +155,9 @@ export function useLiveFileSync(
       setStatus({ message: 'Already Loading file...', mtype: 'info' });
     if (!fileHasContent)
       setStatus({ message: 'Reading file...', mtype: 'info' });
-    await liveFileContentReload(liveFileId);
+    await liveFileContentReloadFromDisk(liveFileId);
     // content and errors will be reactive here (see effects)
-  }, [fileHasContent, isLoadingFile, liveFileContentReload]);
+  }, [fileHasContent, isLoadingFile, liveFileContentReloadFromDisk]);
 
   const handlePairNewFSFHandle = React.useCallback(async (fsfHandle: FileSystemFileHandle) => {
     // Pair the file: create a LiveFile, replace it in the Fragment, and load the preview

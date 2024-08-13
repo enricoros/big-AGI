@@ -32,10 +32,10 @@ export function useLiveFileContent(liveFileId: LiveFileId | null) {
     await useLiveFileStore.getState().contentClose(liveFileId);
   }, [liveFileId]);
 
-  const liveFileContentReload = React.useCallback(async (loadDifferentFileId?: LiveFileId) => {
+  const liveFileContentReloadFromDisk = React.useCallback(async (loadDifferentFileId?: LiveFileId) => {
     const idToLoad = loadDifferentFileId || liveFileId;
     if (idToLoad)
-      await useLiveFileStore.getState().contentReload(idToLoad);
+      await useLiveFileStore.getState().contentReloadFromDisk(idToLoad);
   }, [liveFileId]);
 
   const liveFileContentWriteAndReload = React.useCallback(async (content: string) => {
@@ -53,7 +53,7 @@ export function useLiveFileContent(liveFileId: LiveFileId | null) {
 
     // methods
     liveFileContentClose,
-    liveFileContentReload,
+    liveFileContentReloadFromDisk,
     liveFileContentWriteAndReload,
   };
 }
