@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import { agiUuid } from '~/common/util/idUtils';
 
 // import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
-import { isAndroid } from '~/common/util/pwaUtils';
+import { isAndroid, isIPhoneUser } from '~/common/util/pwaUtils';
 
 import type { LiveFile, LiveFileId, LiveFileMetadata } from './liveFile.types';
 
@@ -279,7 +279,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
  * - in the EnhancedRenderCode component, we check the flag to let the user choose/pair the file or not.
  */
 export function isLiveFileSupported(): boolean {
-  return 'FileSystemFileHandle' in window && typeof FileSystemFileHandle === 'function' && !isAndroid;
+  return 'FileSystemFileHandle' in window && typeof FileSystemFileHandle === 'function' && !isAndroid && !isIPhoneUser;
 }
 
 export function liveFileCreateOrThrow(fileSystemFileHandle: FileSystemFileHandle): Promise<LiveFileId> {
