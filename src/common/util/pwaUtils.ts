@@ -9,6 +9,7 @@ const safeUA = isBrowser ? window.navigator?.userAgent || '' : '';
 export const isIPhoneUser = /iPhone|iPod/.test(safeUA);
 export const isMacUser = /Macintosh|MacIntel|MacPPC|Mac68K|iPad/.test(safeUA);
 export const isChromeDesktop = safeUA.includes('Chrome') && !safeUA.includes('Mobile');
+export const isAndroid = safeUA.includes('Android');
 export const isFirefox = safeUA.includes('Firefox');
 
 // frontend language
