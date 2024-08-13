@@ -7,13 +7,13 @@ import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProv
 import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorkspaceContentsMetadata';
 
 import type { LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.types';
-import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
 
 
 const buttonContainerSx: SxProps = {
-  ml: 'auto',
+  // ml: 'auto',
 };
 
 
@@ -87,7 +87,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
             },
           },
         }}
-        endDecorator={<LiveFileIcon color='success' />}
+        endDecorator={<LiveFilePatchIcon color='success' />}
         sx={buttonContainerSx}
       >
         {liveFilesMetadata.toReversed().map((lfm: LiveFileMetadata) => (
