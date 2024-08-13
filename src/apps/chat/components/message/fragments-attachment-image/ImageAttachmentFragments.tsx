@@ -62,7 +62,6 @@ export function ImageAttachmentFragments(props: {
   imageAttachments: DMessageAttachmentFragment[],
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
-  isMobile?: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
 }) {
 
@@ -88,7 +87,7 @@ export function ImageAttachmentFragments(props: {
           throw new Error('Unexpected part type: ' + attachmentFragment.part.pt);
 
         const { title, part: imageRefPart } = attachmentFragment;
-        const { dataRef, altText } = imageRefPart;
+        const { dataRef /*, altText */ } = imageRefPart;
 
         // only support rendering DBLob images as cards for now
         if (dataRef.reftype === 'dblob') {

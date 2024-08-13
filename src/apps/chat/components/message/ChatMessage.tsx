@@ -609,7 +609,6 @@ export function ChatMessage(props: {
               imageAttachments={imageAttachments}
               contentScaling={adjContentScaling}
               messageRole={messageRole}
-              isMobile={props.isMobile}
               onFragmentDelete={handleFragmentDelete}
             />
           )}

@@ -16,7 +16,7 @@ import { animationBackgroundBeamGather, animationColorBeamScatterINV, animationE
 
 export function ChatBarAltBeam(props: {
   beamStore: BeamStoreApi,
-  isMobile?: boolean
+  isMobile: boolean,
 }) {
 
   // state

@@ -117,7 +117,7 @@ function CommonPageMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function PageBar(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile?: boolean, sx?: SxProps }) {
+export function PageBar(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
@@ -154,7 +154,7 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
     >
 
       {/* [Mobile] Drawer button */}
-      {(!!props.isMobile || !checkVisibleNav(props.currentApp)) && (
+      {(props.isMobile || !checkVisibleNav(props.currentApp)) && (
         <InvertedBarCornerItem>
 
           {(!hasDrawerContent || !checkVisibleNav(props.currentApp)) ? (
@@ -205,8 +205,8 @@ export function PageBar(props: { component: React.ElementType, currentApp?: NavI
       {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
 
       {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
-      {!!props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {!!props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}
+      {props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
+      {props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}
 
     </CloseableMenu>
 

@@ -89,7 +89,7 @@ const paddingBoxSx: SxProps = {
  * A React component for composing messages, with attachments and different modes.
  */
 export function Composer(props: {
-  isMobile?: boolean;
+  isMobile: boolean;
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
   targetConversationId: DConversationId | null;
@@ -110,7 +110,7 @@ export function Composer(props: {
     chatExecuteMode,
     chatExecuteModeSendColor, chatExecuteModeSendLabel,
     chatExecuteMenuComponent, chatExecuteMenuShown, showChatExecuteMenu,
-  } = useChatExecuteMode(props.capabilityHasT2I, !!props.isMobile);
+  } = useChatExecuteMode(props.capabilityHasT2I, props.isMobile);
 
   // external state
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
@@ -168,7 +168,7 @@ export function Composer(props: {
   // derived state
 
   const { composerTextAreaRef, targetConversationId, onAction, onTextImagine } = props;
-  const isMobile = !!props.isMobile;
+  const isMobile = props.isMobile;
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
   const noLLM = !props.chatLLM;
