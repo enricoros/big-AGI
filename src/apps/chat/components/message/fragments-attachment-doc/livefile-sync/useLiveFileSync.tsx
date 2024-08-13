@@ -14,11 +14,12 @@ import { WindowFocusObserver } from '~/common/util/windowUtils';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 
-import type { LiveFileId } from './liveFile.types';
-import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from './liveFile.icons';
+import type { LiveFileId } from '~/common/livefile/liveFile.types';
+import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from '~/common/livefile/liveFile.icons';
+import { isLiveFileSupported, liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
+import { useLiveFileContent } from '~/common/livefile/useLiveFileContent';
+
 import { LiveFileControlButton } from './LiveFileControlButton';
-import { isLiveFileSupported, liveFileCreateOrThrow } from './store-live-file';
-import { useLiveFileContent } from './useLiveFileContent';
 
 
 const sheetSx: SxProps = {
