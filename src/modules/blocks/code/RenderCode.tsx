@@ -14,7 +14,7 @@ import WrapTextIcon from '@mui/icons-material/WrapText';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
+import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
 import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
@@ -29,7 +29,6 @@ import './RenderCode.css';
 
 // configuration
 const ALWAYS_SHOW_OVERLAY = true;
-const BUTTON_RADIUS = '4px'; // note: can't use 'sm', 'md', etc.
 
 
 // RenderCode
@@ -85,15 +84,12 @@ const renderCodecontainerSx: SxProps = {
 };
 
 const overlayGridSx: SxProps = {
-  ...overlayButtonsSx,
+  ...overlayButtonsTopRightSx,
   display: 'grid',
   gap: 0.5,
   justifyItems: 'end',
 };
 
-const overlayGroupSx: SxProps = {
-  '--ButtonGroup-radius': BUTTON_RADIUS,
-};
 
 const overlayFirstRowSx: SxProps = {
   display: 'flex',
@@ -260,21 +256,21 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
             {/* Show HTML */}
             {isHTMLCode && (
-              <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+              <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' smShadow onClick={() => setShowHTML(!showHTML)}>
                 <HtmlIcon sx={{ fontSize: 'xl2' }} />
               </OverlayButton>
             )}
 
             {/* Show SVG */}
             {isSVGCode && (
-              <OverlayButton tooltip={noTooltips ? null : renderSVG ? 'Show Code' : 'Render SVG'} variant={renderSVG ? 'solid' : 'outlined'} color='warning' onClick={() => setShowSVG(!showSVG)}>
+              <OverlayButton tooltip={noTooltips ? null : renderSVG ? 'Show Code' : 'Render SVG'} variant={renderSVG ? 'solid' : 'outlined'} color='warning' smShadow onClick={() => setShowSVG(!showSVG)}>
                 <ChangeHistoryTwoToneIcon />
               </OverlayButton>
             )}
 
             {/* Show Diagrams */}
             {(isMermaidCode || isPlantUMLCode) && (
-              <ButtonGroup aria-label='Diagram' sx={overlayGroupSx}>
+              <ButtonGroup aria-label='Diagram' sx={overlayGroupWithShadowSx}>
                 {/* Toggle rendering */}
                 <OverlayButton tooltip={noTooltips ? null : (renderMermaid || renderPlantUML) ? 'Show Code' : isMermaidCode ? 'Mermaid Diagram' : 'PlantUML Diagram'} variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'} onClick={() => {
                   if (isMermaidCode) setShowMermaid(on => !on);
@@ -293,7 +289,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             )}
 
             {/* Group: Text Options */}
-            <ButtonGroup aria-label='Text and code options' sx={overlayGroupSx}>
+            <ButtonGroup aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
               {/* Soft Wrap toggle */}
               {renderSyntaxHighlight && (
                 <OverlayButton tooltip={noTooltips ? null : 'Soft Wrap'} disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
@@ -319,7 +315,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
           {/* [row 2, optional] Group: Open Externally */}
           {!!openExternallyButtons.length && (
-            <ButtonGroup aria-label='Open code in external editors' sx={overlayGroupSx}>
+            <ButtonGroup aria-label='Open code in external editors' sx={overlayGroupWithShadowSx}>
               {openExternallyButtons}
             </ButtonGroup>
           )}
