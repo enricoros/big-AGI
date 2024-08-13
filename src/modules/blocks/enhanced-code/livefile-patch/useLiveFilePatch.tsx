@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Typography } from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorkspaceContentsMetadata';
@@ -36,16 +36,21 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
 
   // components
 
-  const button = React.useMemo(() => !isEnabled ? null : <>
+  const button = React.useMemo(() => !isEnabled ? null : (
 
-    <WorkspaceLiveFilePicker
-      autoSelectName={title}
-      enabled={isEnabled}
-      liveFileId={liveFileId}
-      onSelectLiveFile={setLiveFileId}
-    />
+    <Box sx={{ ml: 'auto' }}>
 
-  </>, [isEnabled, liveFileId, title]);
+      <WorkspaceLiveFilePicker
+        autoSelectName={title}
+        buttonLabel='Apply to ...'
+        enabled={isEnabled}
+        liveFileId={liveFileId}
+        onSelectLiveFile={setLiveFileId}
+      />
+
+    </Box>
+
+  ), [isEnabled, liveFileId, title]);
 
 
   const actionBar = React.useMemo(() => (!isEnabled || !liveFilesMetadata || true) ? null : (

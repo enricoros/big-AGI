@@ -1,10 +1,11 @@
 import * as React from 'react';
 
-import { Box, Dropdown, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem } from '@mui/joy';
+import { Box, Button, IconButton, ListItemDecorator, MenuItem } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.types';
+import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorkspaceContentsMetadata';
@@ -14,12 +15,15 @@ import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorks
  * Allows selection of LiveFiles in the current Workspace
  */
 export function WorkspaceLiveFilePicker(props: {
-  enabled: boolean;
   autoSelectName: string | null;
+  buttonLabel: string;
+  enabled: boolean;
   liveFileId: LiveFileId | null;
   onSelectLiveFile: (id: LiveFileId | null) => void;
 }) {
 
+  // state for anchor
+  const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
 
   // external state
   const workspaceId = useContextWorkspaceId();
@@ -47,37 +51,61 @@ export function WorkspaceLiveFilePicker(props: {
   }, [enabled, wLiveFiles, autoSelectName, onSelectLiveFile]);
 
 
-  return (
-    <Dropdown>
+  // handlers
 
-      {/* Activation button */}
-      {/*<TooltipOutlined color='success' title='Apply to LiveFile' placement='top-end'>*/}
-      <MenuButton
-        aria-label='Pair File'
-        slots={{ root: IconButton }}
-        slotProps={{
-          root: {
-            color: liveFileId ? 'success' : undefined,
-            // variant: liveFileId ? undefined : undefined,
-            size: 'sm',
-          },
-        }}
-        sx={{
-          ml: 'auto',
-        }}
+  const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault(); // added for the Right mouse click (to prevent the menu)
+    setMenuAnchor(anchor => anchor ? null : event.currentTarget);
+  }, []);
+
+  const handleCloseMenu = React.useCallback(() => {
+    setMenuAnchor(null);
+  }, []);
+
+  const handleSelectLiveFile = React.useCallback((id: LiveFileId | null) => {
+    onSelectLiveFile(id);
+    setMenuAnchor(null);
+  }, [onSelectLiveFile]);
+
+
+  return <>
+
+    {/*<TooltipOutlined*/}
+    {/*  title='Apply to LiveFile'*/}
+    {/*  color='success'*/}
+    {/*  placement='top-end'*/}
+    {/*>*/}
+    {liveFileId ? (
+      <IconButton
+        color='success'
+        size='sm'
+        onClick={handleToggleMenu}
       >
-        <LiveFilePatchIcon />
-      </MenuButton>
-      {/*</TooltipOutlined>*/}
+        <LiveFilePatchIcon color='success' />
+      </IconButton>
+    ) : (
+      <Button
+        variant='plain'
+        color='neutral'
+        size='sm'
+        onClick={handleToggleMenu}
+        // endDecorator={<LiveFilePatchIcon color='success' />}
+      >
+        {props.buttonLabel}
+      </Button>
+    )}
+    {/*</TooltipOutlined>*/}
 
-      {/* List of the Workspace LiveFiles to pair */}
-      <Menu
+
+    {/* Menu: list of workspace files */}
+    {!!menuAnchor && (
+      <CloseableMenu
+        open
+        anchorEl={menuAnchor}
+        onClose={handleCloseMenu}
         placement='bottom-start'
-        sx={{
-          minWidth: 200,
-          zIndex: 'var(--joy-zIndex-modal)', /* on top of its own modal in FS */
-        }}
       >
+
         {/*<ListItem>*/}
         {/*  <Typography level='body-sm'>Recent Workspace Files</Typography>*/}
         {/*</ListItem>*/}
@@ -86,7 +114,7 @@ export function WorkspaceLiveFilePicker(props: {
           <MenuItem
             key={lfm.id}
             selected={lfm.id === liveFileId}
-            onClick={() => onSelectLiveFile(lfm.id)}
+            onClick={() => handleSelectLiveFile(lfm.id)}
           >
             <ListItemDecorator><CodeIcon sx={{ fontSize: 'lg' }} /></ListItemDecorator>
             <Box>
@@ -101,12 +129,14 @@ export function WorkspaceLiveFilePicker(props: {
         {/*<ListDivider />*/}
 
         {!!liveFileId && (
-          <MenuItem disabled={!liveFileId} onClick={() => onSelectLiveFile(null)}>
+          <MenuItem disabled={!liveFileId} onClick={() => handleSelectLiveFile(null)}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Remove
           </MenuItem>
         )}
-      </Menu>
-    </Dropdown>
-  );
+
+      </CloseableMenu>
+    )}
+
+  </>;
 }
