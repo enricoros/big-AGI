@@ -29,7 +29,7 @@ const pageCoreMobileNavSx: SxProps = {
 export const PageCore = (props: {
   component: React.ElementType,
   currentApp?: NavItemApp,
-  isMobile?: boolean,
+  isMobile: boolean,
   children: React.ReactNode,
 }) =>
   <Box
