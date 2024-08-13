@@ -13,7 +13,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { Link } from '~/common/components/Link';
 
 import { RenderBlockInputs } from '../blocks.types';
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx, StyledOverlayButton } from '../OverlayButton';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, StyledOverlayButton } from '../OverlayButton';
 
 
 /// Heuristics to parse Markdown images (as URLs) ///
@@ -49,7 +49,7 @@ const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|svg)/i;
 
 
 const overlayButtonsGridSx: SxProps = {
-  ...overlayButtonsSx,
+  ...overlayButtonsTopRightSx,
   display: 'grid',
   gridTemplateColumns: 'auto auto',
   gap: 0.5,

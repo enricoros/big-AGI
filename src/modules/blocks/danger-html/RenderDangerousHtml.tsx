@@ -7,7 +7,7 @@ import WebIcon from '@mui/icons-material/Web';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
-import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsSx } from '../OverlayButton';
+import { OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from '../code/code-renderers/RenderCodeHtmlIFrame';
 
 
@@ -69,13 +69,16 @@ export function RenderDangerousHtml(props: { html: string, sx?: SxProps }) {
         }
 
         {/* [overlay] Buttons (dangerous-HTML) */}
-        <Box className={overlayButtonsClassName} sx={overlayButtonsSx}>
-          <OverlayButton tooltip={showHTML ? 'Close HTML Page' : 'Show HTML Page'} variant={showHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+        <Box className={overlayButtonsClassName} sx={overlayButtonsTopRightSx}>
+
+          <OverlayButton tooltip={showHTML ? 'Close HTML Page' : 'Show HTML Page'} variant={showHTML ? 'solid' : 'outlined'} color='danger' smShadow onClick={() => setShowHTML(!showHTML)}>
             <WebIcon />
           </OverlayButton>
-          <OverlayButton tooltip='Copy Code' variant='outlined' onClick={handleCopyToClipboard}>
+
+          <OverlayButton tooltip='Copy Code' variant='outlined' smShadow onClick={handleCopyToClipboard}>
             <ContentCopyIcon />
           </OverlayButton>
+
         </Box>
 
       </Box>
