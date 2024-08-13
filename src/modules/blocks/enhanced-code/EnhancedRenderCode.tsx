@@ -177,7 +177,7 @@ export function EnhancedRenderCode(props: {
       contentScaling={props.contentScaling}
       headerRow={headerRow}
       subHeaderInline={liveFileActionBar}
-      onHeaderClick={props.fitScreen ? handleToggleCodeCollapse : undefined}
+      onHeaderClick={/*props.isMobile ? handleToggleCodeCollapse :*/ undefined}
       onHeaderContext={handleToggleContextMenu}
     >
 

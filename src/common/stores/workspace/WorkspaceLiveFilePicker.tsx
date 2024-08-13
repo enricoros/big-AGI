@@ -1,14 +1,15 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, ListItemDecorator, MenuItem } from '@mui/joy';
+import { Box, Button, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 
 import type { LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.types';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
-import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
-import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorkspaceContentsMetadata';
+
+import { useContextWorkspaceId } from './WorkspaceIdProvider';
+import { useWorkspaceContentsMetadata } from './useWorkspaceContentsMetadata';
 
 
 /**
@@ -17,9 +18,9 @@ import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorks
 export function WorkspaceLiveFilePicker(props: {
   autoSelectName: string | null;
   buttonLabel: string;
-  enabled: boolean;
   liveFileId: LiveFileId | null;
   onSelectLiveFile: (id: LiveFileId | null) => void;
+  // tooltipLabel?: string;
 }) {
 
   // state for anchor
@@ -27,16 +28,16 @@ export function WorkspaceLiveFilePicker(props: {
 
   // external state
   const workspaceId = useContextWorkspaceId();
-  const { liveFilesMetadata: wLiveFiles } = useWorkspaceContentsMetadata(props.enabled ? workspaceId : null);
+  const { liveFilesMetadata: wLiveFiles } = useWorkspaceContentsMetadata(workspaceId);
 
   // set as disabled when empty
-  const enabled = wLiveFiles.length > 0;
+  const haveLiveFiles = wLiveFiles.length > 0;
   const { autoSelectName, liveFileId, onSelectLiveFile } = props;
 
 
   // [effect] auto-select a LiveFileId
   React.useEffect(() => {
-    if (!enabled || !wLiveFiles.length)
+    if (!haveLiveFiles || !wLiveFiles.length)
       return;
 
     if (wLiveFiles.length === 1) {
@@ -48,7 +49,7 @@ export function WorkspaceLiveFilePicker(props: {
       if (lfm)
         onSelectLiveFile(lfm.id);
     }
-  }, [enabled, wLiveFiles, autoSelectName, onSelectLiveFile]);
+  }, [haveLiveFiles, wLiveFiles, autoSelectName, onSelectLiveFile]);
 
 
   // handlers
@@ -68,10 +69,14 @@ export function WorkspaceLiveFilePicker(props: {
   }, [onSelectLiveFile]);
 
 
+  // Note: in the future let this be, we can show a file picker that adds LiveFiles to the workspace
+  if (!haveLiveFiles)
+    return null;
+
   return <>
 
     {/*<TooltipOutlined*/}
-    {/*  title='Apply to LiveFile'*/}
+    {/*  title={tooltipLabel} */}
     {/*  color='success'*/}
     {/*  placement='top-end'*/}
     {/*>*/}
@@ -89,7 +94,7 @@ export function WorkspaceLiveFilePicker(props: {
         color='neutral'
         size='sm'
         onClick={handleToggleMenu}
-        // endDecorator={<LiveFilePatchIcon color='success' />}
+        endDecorator={<LiveFilePatchIcon />}
       >
         {props.buttonLabel}
       </Button>
@@ -126,8 +131,7 @@ export function WorkspaceLiveFilePicker(props: {
           </MenuItem>
         ))}
 
-        {/*<ListDivider />*/}
-
+        {!!liveFileId && <ListDivider />}
         {!!liveFileId && (
           <MenuItem disabled={!liveFileId} onClick={() => handleSelectLiveFile(null)}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>

@@ -1,15 +1,12 @@
 import * as React from 'react';
 
-import { Box, Typography } from '@mui/joy';
-
-import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
-import { useWorkspaceContentsMetadata } from '~/common/stores/workspace/useWorkspaceContentsMetadata';
+import { Box, Button, Typography } from '@mui/joy';
 
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { WorkspaceLiveFilePicker } from './WorkspaceLiveFilePicker';
+import { WorkspaceLiveFilePicker } from '~/common/stores/workspace/WorkspaceLiveFilePicker';
 
 
 export function useLiveFilePatch(title: string, code: string, isPartial: boolean, isMobile: boolean) {
@@ -21,43 +18,49 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   const [liveFileId, setLiveFileId] = React.useState<LiveFileId | null>(null);
 
   // external state
-  let isEnabled = useUXLabsStore((state) => state.labsEnhanceCodeLiveFile && isLiveFileSupported());
-  const workspaceId = useContextWorkspaceId();
-  const { liveFilesMetadata } = useWorkspaceContentsMetadata(isEnabled ? workspaceId : null);
-
-
-  // reset enablement if no live files
-  if (!liveFilesMetadata?.length)
-    isEnabled = false;
+  const isEnabled = useUXLabsStore((state) => state.labsEnhanceCodeLiveFile && isLiveFileSupported());
 
 
   // handlers
+  const handleLiveFileSelected = React.useCallback((id: LiveFileId | null) => {
+    setLiveFileId(id);
+  }, []);
 
 
   // components
 
   const button = React.useMemo(() => !isEnabled ? null : (
+    <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
 
-    <Box sx={{ ml: 'auto' }}>
+      {/* Patch LiveFile */}
+      {!!liveFileId && (
+        <Button
+          variant='plain'
+          color='neutral'
+          size='sm'
+          onClick={() => setLiveFileId(null)}
+        >
+          TODO - TEST
+        </Button>
+      )}
 
+      {/* Pick LiveFile */}
       <WorkspaceLiveFilePicker
         autoSelectName={title}
-        buttonLabel='Apply to ...'
-        enabled={isEnabled}
+        buttonLabel='Apply'
         liveFileId={liveFileId}
-        onSelectLiveFile={setLiveFileId}
+        onSelectLiveFile={handleLiveFileSelected}
       />
 
     </Box>
+  ), [handleLiveFileSelected, isEnabled, liveFileId, title]);
 
-  ), [isEnabled, liveFileId, title]);
 
-
-  const actionBar = React.useMemo(() => (!isEnabled || !liveFilesMetadata || true) ? null : (
+  const actionBar = React.useMemo(() => (!isEnabled || !liveFileId || true) ? null : (
     <Typography>
-      {JSON.stringify(liveFilesMetadata)}
+      {JSON.stringify(liveFileId)}
     </Typography>
-  ), [liveFilesMetadata, isEnabled]);
+  ), [liveFileId, isEnabled]);
 
 
   return {
