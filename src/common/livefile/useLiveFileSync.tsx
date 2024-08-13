@@ -69,7 +69,7 @@ interface FileOperationStatus {
 }
 
 
-export function useLiveFileComparison(
+export function useLiveFileSync(
   _liveFileId: LiveFileId | null,
   workspaceId: DWorkspaceId | null,
   isMobile: boolean,
