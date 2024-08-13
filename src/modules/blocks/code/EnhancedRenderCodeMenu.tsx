@@ -8,8 +8,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { useLabsDevMode, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { getCodeCollapseManager } from './codeCollapseManager';
 
@@ -26,9 +26,12 @@ export function EnhancedRenderCodeMenu(props: {
 
   // state
   const { showPromisedOverlay } = useOverlayComponents();
-  const { labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks } = useUXLabsStore(useShallow(state => ({
+  const labsDevMode = useLabsDevMode();
+  const { labsEnhanceCodeBlocks, labsEnhanceCodeLiveFile, setLabsEnhanceCodeBlocks, setLabsEnhanceCodeLiveFile } = useUXLabsStore(useShallow(state => ({
     labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
+    labsEnhanceCodeLiveFile: state.labsEnhanceCodeLiveFile,
     setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
+    setLabsEnhanceCodeLiveFile: state.setLabsEnhanceCodeLiveFile,
   })));
 
 
@@ -59,11 +62,15 @@ export function EnhancedRenderCodeMenu(props: {
     ).then(() => setLabsEnhanceCodeBlocks(false)).catch(() => null /* ignore closure */);
   }, [labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks, showPromisedOverlay]);
 
+  const toggleEnhanceCodeLiveFile = React.useCallback(() => {
+    setLabsEnhanceCodeLiveFile(!labsEnhanceCodeLiveFile);
+  }, [labsEnhanceCodeLiveFile, setLabsEnhanceCodeLiveFile]);
+
 
   return (
     <CloseableMenu
-      dense
-      open anchorEl={props.anchor} onClose={props.onClose}
+      open={true} dense
+      anchorEl={props.anchor} onClose={props.onClose}
       placement='bottom-end'
       sx={{ minWidth: 250 }}
     >
@@ -81,11 +88,18 @@ export function EnhancedRenderCodeMenu(props: {
 
       <ListDivider />
 
-      {/* A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems */}
-      <MenuItem onClick={toggleEnhanceCodeBlocks}>
-        <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>
-        Enhanced Code Blocks
+      <MenuItem onClick={toggleEnhanceCodeLiveFile}>
+        <ListItemDecorator>{labsEnhanceCodeLiveFile && <CheckRoundedIcon />}</ListItemDecorator>
+        Enable LiveFile
       </MenuItem>
+
+      {labsDevMode && (
+        // A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems
+        <MenuItem onClick={toggleEnhanceCodeBlocks}>
+          <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>
+          [DEV] Enhanced Blocks
+        </MenuItem>
+      )}
 
     </CloseableMenu>
   );

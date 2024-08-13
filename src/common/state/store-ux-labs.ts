@@ -23,6 +23,9 @@ interface UXLabsStore {
   labsEnhanceCodeBlocks: boolean;
   setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => void;
 
+  labsEnhanceCodeLiveFile: boolean;
+  setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => void;
+
   labsHighPerformance: boolean;
   setLabsHighPerformance: (labsHighPerformance: boolean) => void;
 
@@ -57,6 +60,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsEnhanceCodeBlocks: true,
       setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => set({ labsEnhanceCodeBlocks }),
+
+      labsEnhanceCodeLiveFile: true,
+      setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => set({ labsEnhanceCodeLiveFile }),
 
       labsHighPerformance: false,
       setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
