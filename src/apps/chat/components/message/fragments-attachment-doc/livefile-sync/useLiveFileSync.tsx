@@ -2,7 +2,6 @@ import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
 import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
-import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet } from '@mui/joy';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -17,31 +16,10 @@ import { workspaceActions } from '~/common/stores/workspace/store-client-workspa
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { LiveFileChooseIcon, LiveFileCloseIcon, LiveFileIcon, LiveFileReloadIcon, LiveFileSaveIcon } from '~/common/livefile/liveFile.icons';
 import { isLiveFileSupported, liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
+import { liveFileSheetSx } from '~/common/livefile/livefile.theme';
 import { useLiveFileContent } from '~/common/livefile/useLiveFileContent';
 
 import { LiveFileControlButton } from './LiveFileControlButton';
-
-
-const sheetSx: SxProps = {
-  p: 1,
-  backgroundColor: 'rgb(var(--joy-palette-neutral-lightChannel) / 20%)',
-  border: '1px solid',
-  borderRadius: 'sm',
-  borderColor: 'neutral.outlinedBorder',
-  boxShadow: `inset 0 4px 6px -6px rgb(var(--joy-palette-neutral-darkChannel) / 40%)`,
-  fontSize: 'sm',
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  gap: 1,
-  'button': {
-    backgroundColor: 'background.surface',
-  },
-  'button:hover': {
-    backgroundColor: 'background.popup',
-    boxShadow: 'xs',
-  },
-};
 
 
 interface DiffSummary {
@@ -248,7 +226,7 @@ export function useLiveFileSync(
             : 'neutral';
 
     return (
-      <Sheet color={statusColor} sx={sheetSx}>
+      <Sheet color={statusColor} sx={liveFileSheetSx}>
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
