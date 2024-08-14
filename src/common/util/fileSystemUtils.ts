@@ -96,3 +96,25 @@ export function getDataTransferFilesOrPromises(items: DataTransferItemList, fall
 
   return results;
 }
+
+
+/**
+ * Utility function to get the first file system handle from a DataTransfer object.
+ * Note that a DataTransfer object can contain multiple files, but we assume the first is the one.
+ */
+export async function getFirstFileSystemFileHandle(dataTransfer: DataTransfer): Promise<FileSystemFileHandle | null> {
+
+  // get FileSystemFileHandle objects from the DataTransfer
+  const fileOrFSHandlePromises = getDataTransferFilesOrPromises(dataTransfer.items, false);
+  if (!fileOrFSHandlePromises.length)
+    return null;
+
+  // resolve the promises to get the actual files/handles
+  const filesOrHandles = await Promise.all(fileOrFSHandlePromises);
+  for (let filesOrHandle of filesOrHandles)
+    if (!(filesOrHandle instanceof File) && filesOrHandle?.kind === 'file' && filesOrHandle)
+      return filesOrHandle;
+
+  // no file system handle found
+  return null;
+}
