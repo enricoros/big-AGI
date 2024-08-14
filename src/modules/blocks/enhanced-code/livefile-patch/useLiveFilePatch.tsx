@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, Typography } from '@mui/joy';
 
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
-import { isLiveFileSupported } from '~/common/livefile/store-live-file';
+import { isLiveFileSupported, liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { WorkspaceLiveFilePicker } from '~/common/stores/workspace/WorkspaceLiveFilePicker';
@@ -26,11 +26,29 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
     setLiveFileId(id);
   }, []);
 
+  const handleSelectNewFile = React.useCallback(async () => {
+    try {
+      const fileHandle = await window.showSaveFilePicker({
+        suggestedName: title,
+        // types: [{ description: 'Text Files', accept: { 'text/plain': ['.txt'] } }],
+      });
+      const newLiveFileId = await liveFileCreateOrThrow(fileHandle);
+      setLiveFileId(newLiveFileId);
+    } catch (error) {
+      console.error('Error creating new file:', error);
+    }
+  }, [title]);
+
 
   // components
 
   const button = React.useMemo(() => !isEnabled ? null : (
-    <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box sx={{
+      ml: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0, // otherwise the button icon seems far
+    }}>
 
       {/* Patch LiveFile */}
       {!!liveFileId && (
@@ -50,6 +68,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
         buttonLabel='Insert...'
         liveFileId={liveFileId}
         onSelectLiveFile={handleLiveFileSelected}
+        onSelectNewFile={handleSelectNewFile}
       />
 
     </Box>
