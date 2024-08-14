@@ -6,8 +6,7 @@ import CodeIcon from '@mui/icons-material/Code';
 
 import type { LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.types';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { LiveFileChooseIcon } from '~/common/livefile/liveFile.icons';
-import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
+import { LiveFileChooseIcon, LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getFirstFileSystemFileHandle } from '~/common/util/fileSystemUtils';
 import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
@@ -100,10 +99,13 @@ export function WorkspaceLiveFilePicker(props: {
   const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } =
     useDragDropDataTransfer(true, 'Select', LiveFileChooseIcon as typeof SvgIcon, 'startDecorator', true, handleDataTransferDrop);
 
+  // styles
+  const containerSx = React.useMemo(() => ({
+    ...dragContainerSx,
+    display: 'flex',
+    alignItems: 'center',
+  }), [dragContainerSx]);
 
-  // Note: in the future let this be, we can show a file picker that adds LiveFiles to the workspace
-  // if (!haveLiveFiles)
-  //   return null;
 
   const showRemove = !!liveFileId && props.allowRemove === true;
 
@@ -113,10 +115,10 @@ export function WorkspaceLiveFilePicker(props: {
     <Box
       onDragEnter={handleContainerDragEnter}
       onDragStart={handleContainerDragStart}
-      sx={dragContainerSx}
+      sx={containerSx}
     >
       {!liveFileId ? (
-        <TooltipOutlined title={props.labelTooltip} color='success' placement='top-end'>
+        <TooltipOutlined title={props.labelTooltip} placement='top-end'>
           <Button
             variant='plain'
             color='neutral'
@@ -133,7 +135,8 @@ export function WorkspaceLiveFilePicker(props: {
           size='sm'
           onClick={handleToggleMenu}
         >
-          <LiveFilePatchIcon color='success' />
+          <LiveFileIcon />
+          {/*<LiveFilePatchIcon color='success' />*/}
         </IconButton>
       )}
 
