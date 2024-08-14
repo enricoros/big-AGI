@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import { Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, SvgIcon, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 
@@ -8,10 +8,13 @@ import type { LiveFileId, LiveFileMetadata } from '~/common/livefile/liveFile.ty
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { LiveFileChooseIcon } from '~/common/livefile/liveFile.icons';
 import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { getFirstFileSystemFileHandle } from '~/common/util/fileSystemUtils';
+import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
 
 import type { DWorkspaceId } from './workspace.types';
+import { useContextWorkspaceId } from './WorkspaceIdProvider';
 import { useWorkspaceContentsMetadata } from './useWorkspaceContentsMetadata';
-import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 
 
 // configuration
@@ -22,13 +25,14 @@ const ENABLE_AUTO_WORKSPACE_PICK = false;
  * Allows selection of LiveFiles in the current Workspace
  */
 export function WorkspaceLiveFilePicker(props: {
-  autoSelectName: string | null;
-  buttonLabel: string;
-  liveFileId: LiveFileId | null;
   allowRemove?: boolean;
+  autoSelectName: string | null;
+  labelButton: string;
+  labelTooltip?: string;
+  liveFileId: LiveFileId | null;
   onSelectLiveFile: (id: LiveFileId | null) => void;
-  onSelectNewFile?: (workspaceId: DWorkspaceId | null) => void;
-  // tooltipLabel?: string;
+  onSelectFileOpen?: (workspaceId: DWorkspaceId | null) => Promise<void>;
+  onSelectFileSystemFileHandle?: (workspaceId: DWorkspaceId | null, fsHandle: FileSystemFileHandle) => Promise<void>;
 }) {
 
   // state for anchor
@@ -40,7 +44,7 @@ export function WorkspaceLiveFilePicker(props: {
 
   // set as disabled when empty
   const haveLiveFiles = wLiveFiles.length > 0;
-  const { autoSelectName, liveFileId, onSelectLiveFile, onSelectNewFile } = props;
+  const { autoSelectName, liveFileId, onSelectLiveFile, onSelectFileOpen, onSelectFileSystemFileHandle } = props;
 
 
   // [effect] auto-select a LiveFileId
@@ -72,16 +76,29 @@ export function WorkspaceLiveFilePicker(props: {
   }, []);
 
   const handleSelectLiveFile = React.useCallback((id: LiveFileId | null) => {
-    onSelectLiveFile(id);
     setMenuAnchor(null);
+    onSelectLiveFile(id);
   }, [onSelectLiveFile]);
 
-  const handleSelectNewFile = React.useCallback(() => {
-    if (onSelectNewFile) {
-      onSelectNewFile(workspaceId);
+  const handleSelectNewFile = React.useCallback(async () => {
+    if (onSelectFileOpen) {
       setMenuAnchor(null);
+      await onSelectFileOpen(workspaceId);
     }
-  }, [onSelectNewFile, workspaceId]);
+  }, [onSelectFileOpen, workspaceId]);
+
+  const handleDataTransferDrop = React.useCallback(async (dataTransfer: DataTransfer) => {
+    if (onSelectFileSystemFileHandle) {
+      const fsfHandle = await getFirstFileSystemFileHandle(dataTransfer);
+      if (fsfHandle) {
+        setMenuAnchor(null);
+        await onSelectFileSystemFileHandle(workspaceId, fsfHandle);
+      }
+    }
+  }, [onSelectFileSystemFileHandle, workspaceId]);
+
+  const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } =
+    useDragDropDataTransfer(true, 'Select', LiveFileChooseIcon as typeof SvgIcon, 'startDecorator', true, handleDataTransferDrop);
 
 
   // Note: in the future let this be, we can show a file picker that adds LiveFiles to the workspace
@@ -92,35 +109,42 @@ export function WorkspaceLiveFilePicker(props: {
 
   return <>
 
-    {/*<TooltipOutlined*/}
-    {/*  title={tooltipLabel} */}
-    {/*  color='success'*/}
-    {/*  placement='top-end'*/}
-    {/*>*/}
-    {liveFileId ? (
-      <IconButton
-        color='success'
-        size='sm'
-        onClick={handleToggleMenu}
-      >
-        <LiveFilePatchIcon color='success' />
-      </IconButton>
-    ) : (
-      <Button
-        variant='plain'
-        color='neutral'
-        size='sm'
-        onClick={handleToggleMenu}
-        endDecorator={<LiveFileChooseIcon color='success' />}
-        // endDecorator={<LiveFilePatchIcon color='success' />}
-      >
-        {props.buttonLabel}
-      </Button>
-    )}
-    {/*</TooltipOutlined>*/}
+    {/* Main Button, also a drop target */}
+    <Box
+      onDragEnter={handleContainerDragEnter}
+      onDragStart={handleContainerDragStart}
+      sx={dragContainerSx}
+    >
+      {liveFileId && (
+        <IconButton
+          color='success'
+          size='sm'
+          onClick={handleToggleMenu}
+        >
+          <LiveFilePatchIcon color='success' />
+        </IconButton>
+      )}
+
+      {!liveFileId && (
+        <TooltipOutlined title={props.labelTooltip} color='success' placement='top-end'>
+          <Button
+            variant='plain'
+            color='neutral'
+            size='sm'
+            onClick={handleToggleMenu}
+            endDecorator={<LiveFileChooseIcon />}
+            // endDecorator={<LiveFilePatchIcon color='success' />}
+          >
+            {props.labelButton}
+          </Button>
+        </TooltipOutlined>
+      )}
+
+      {dropComponent}
+    </Box>
 
 
-    {/* Menu: list of workspace files */}
+    {/* Select/Upload file menu */}
     {!!menuAnchor && (
       <CloseableMenu
         open
@@ -155,7 +179,7 @@ export function WorkspaceLiveFilePicker(props: {
         ))}
 
         {/* Pair a new file */}
-        {!!props.onSelectNewFile && (
+        {!!props.onSelectFileOpen && (
           <MenuItem onClick={handleSelectNewFile} sx={haveLiveFiles ? { minHeight: '3rem' } : undefined}>
             <ListItemDecorator>
               <LiveFileChooseIcon />

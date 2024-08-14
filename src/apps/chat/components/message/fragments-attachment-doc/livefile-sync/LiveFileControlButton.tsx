@@ -5,7 +5,7 @@ import { Box, Button, ColorPaletteProp, SvgIcon } from '@mui/joy';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
+import { getFirstFileSystemFileHandle } from '~/common/util/fileSystemUtils';
 import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
 
 import { LiveFileChooseIcon, LiveFileIcon } from '~/common/livefile/liveFile.icons';
@@ -41,19 +41,9 @@ export function LiveFileControlButton(props: {
   // state
 
   const handleDataTransfer = React.useCallback(async (dataTransfer: DataTransfer) => {
-    // get FileSystemFileHandle objects from the DataTransfer
-    const fileOrFSHandlePromises = getDataTransferFilesOrPromises(dataTransfer.items, false);
-    if (!fileOrFSHandlePromises.length)
-      return;
-
-    // resolve the promises to get the actual files/handles
-    const filesOrHandles = await Promise.all(fileOrFSHandlePromises);
-    for (let filesOrHandle of filesOrHandles) {
-      if (!(filesOrHandle instanceof File) && filesOrHandle?.kind === 'file' && filesOrHandle) {
-        await onPairWithFSFHandle(filesOrHandle);
-        break;
-      }
-    }
+    const fsfHandle = await getFirstFileSystemFileHandle(dataTransfer);
+    if (fsfHandle)
+      await onPairWithFSFHandle(fsfHandle);
   }, [onPairWithFSFHandle]);
 
   const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } =
