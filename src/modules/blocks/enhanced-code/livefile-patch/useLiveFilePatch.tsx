@@ -96,8 +96,8 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
       <WorkspaceLiveFilePicker
         allowRemove
         autoSelectName={title}
-        labelButton='Insert...'
-        labelTooltip='Insert this code into a file'
+        labelButton='Insert ...'
+        labelTooltip='Apply this change to your file'
         liveFileId={liveFileId}
         onSelectFileOpen={handleSelectFilePicker}
         onSelectFileSystemFileHandle={handleSelectFileSystemFileHandle}

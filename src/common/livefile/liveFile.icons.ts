@@ -6,12 +6,14 @@ import MultipleStopIcon from '@mui/icons-material/MultipleStop';
 import SaveIcon from '@mui/icons-material/SaveOutlined';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 // import UploadFileIcon from '@mui/icons-material/UploadFile';
+import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
 
 export const LiveFileIcon = styled(MultipleStopIcon)({
   rotate: '90deg',
 });
 
 export { FileOpenOutlinedIcon as LiveFileChooseIcon };
+export { LiveFilePatchIcon as LiveFilePatchIcon };
 export { MobiledataOffIcon as LiveFileCloseIcon };
 export { SaveIcon as LiveFileSaveIcon };
 export { SystemUpdateAltIcon as LiveFileReloadIcon };
