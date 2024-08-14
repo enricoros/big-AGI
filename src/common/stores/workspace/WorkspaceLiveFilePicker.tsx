@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, IconButton, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
+import { Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 
@@ -10,6 +10,10 @@ import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
 
 import { useContextWorkspaceId } from './WorkspaceIdProvider';
 import { useWorkspaceContentsMetadata } from './useWorkspaceContentsMetadata';
+
+
+// configuration
+const ENABLE_AUTO_WORKSPACE_PICK = false
 
 
 /**
@@ -37,7 +41,7 @@ export function WorkspaceLiveFilePicker(props: {
 
   // [effect] auto-select a LiveFileId
   React.useEffect(() => {
-    if (!haveLiveFiles || !wLiveFiles.length)
+    if (!ENABLE_AUTO_WORKSPACE_PICK || !haveLiveFiles || !wLiveFiles.length)
       return;
 
     if (wLiveFiles.length === 1) {
@@ -70,8 +74,8 @@ export function WorkspaceLiveFilePicker(props: {
 
 
   // Note: in the future let this be, we can show a file picker that adds LiveFiles to the workspace
-  if (!haveLiveFiles)
-    return null;
+  // if (!haveLiveFiles)
+  //   return null;
 
   return <>
 
@@ -109,13 +113,16 @@ export function WorkspaceLiveFilePicker(props: {
         anchorEl={menuAnchor}
         onClose={handleCloseMenu}
         placement='bottom-start'
+        sx={{ minWidth: 200 }}
       >
 
-        {/*<ListItem>*/}
-        {/*  <Typography level='body-sm'>Recent Workspace Files</Typography>*/}
-        {/*</ListItem>*/}
-
-        {wLiveFiles.map((lfm: LiveFileMetadata) => (
+        {/* Workspace Files (if any) */}
+        {haveLiveFiles && (
+          <ListItem>
+            <Typography level='body-sm'>Recent Workspace Files</Typography>
+          </ListItem>
+        )}
+        {haveLiveFiles && wLiveFiles.map((lfm: LiveFileMetadata) => (
           <MenuItem
             key={lfm.id}
             selected={lfm.id === liveFileId}
@@ -131,6 +138,14 @@ export function WorkspaceLiveFilePicker(props: {
           </MenuItem>
         ))}
 
+        {/* Pair a new file */}
+        {!haveLiveFiles && (
+          <Box>
+            Add file picker here?s
+          </Box>
+        )}
+
+        {/* Remove pairing */}
         {!!liveFileId && <ListDivider />}
         {!!liveFileId && (
           <MenuItem disabled={!liveFileId} onClick={() => handleSelectLiveFile(null)}>
