@@ -27,33 +27,41 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   const isEnabled = useUXLabsStore((state) => state.labsEnhanceCodeLiveFile && isLiveFileSupported());
 
 
-  // handlers
-
-  const handleSelectLiveFile = React.useCallback((id: LiveFileId | null) => {
-    setLiveFileId(id);
+  // [effect] apply the text to the LiveFile
+  const processLiveFile = React.useCallback(async (liveFileId: LiveFileId) => {
+    console.log('Processing LiveFile:', liveFileId);
+    // const success = await liveFileWriteAndReload(id, code);
+    // if (!success)
+    //   setStatus({ message: 'Error writing to the file.', mtype: 'error' });
   }, []);
 
+
+  // handlers
+
+  const handleSelectLiveFile = React.useCallback(async (id: LiveFileId | null) => {
+    setLiveFileId(id);
+    if (id)
+      await processLiveFile(id);
+  }, [processLiveFile]);
+
   const handleSelectFileSystemFileHandle = React.useCallback(async (workspaceId: DWorkspaceId | null, fsfHandle: FileSystemFileHandle) => {
-    // Create a new LiveFile and attach it to the workspace
     try {
-      const newLiveFileId = await liveFileCreateOrThrow(fsfHandle);
-      setLiveFileId(newLiveFileId);
+      const newId = await liveFileCreateOrThrow(fsfHandle);
+      setLiveFileId(newId);
 
-      // Pair the file with the workspace
-      if (!workspaceId)
-        console.warn('[DEV] No workspaceId to pair the file with.');
+      // Attach it to the workspace
+      if (workspaceId)
+        workspaceActions().liveFileAssign(workspaceId, newId);
       else
-        workspaceActions().liveFileAssign(workspaceId, newLiveFileId);
+        console.warn('[DEV] No workspaceId to pair the file with.');
 
-      // TODO: Implement file content writing logic here
-      // For example:
-      // await liveFileContentWriteAndReload(code);
-
+      // proceed
+      await processLiveFile(newId);
     } catch (error) {
       console.error('Error creating new file:', error);
       // setStatus({ message: `Error pairing the file: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`, mtype: 'error' });
     }
-  }, []);
+  }, [processLiveFile]);
 
   const handleSelectFilePicker = React.useCallback(async (workspaceId: DWorkspaceId | null) => {
     // pick a file
@@ -73,26 +81,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   // components
 
   const button = React.useMemo(() => !isEnabled ? null : (
-    <Box sx={{
-      ml: 'auto',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 0, // otherwise the button icon seems far
-    }}>
-
-      {/*/!* Patch LiveFile *!/*/}
-      {/*{!!liveFileId && (*/}
-      {/*  <Button*/}
-      {/*    variant='plain'*/}
-      {/*    color='neutral'*/}
-      {/*    size='sm'*/}
-      {/*    onClick={() => setLiveFileId(null)}*/}
-      {/*  >*/}
-      {/*    TODO - TEST*/}
-      {/*  </Button>*/}
-      {/*)}*/}
-
-      {/* Pick LiveFile */}
+    <Box sx={{ ml: 'auto' }}>
       <WorkspaceLiveFilePicker
         allowRemove
         autoSelectName={title}
@@ -103,10 +92,8 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
         onSelectFileSystemFileHandle={handleSelectFileSystemFileHandle}
         onSelectLiveFile={handleSelectLiveFile}
       />
-
     </Box>
   ), [handleSelectLiveFile, handleSelectFilePicker, handleSelectFileSystemFileHandle, isEnabled, liveFileId, title]);
-
 
   const actionBar = React.useMemo(() => (!isEnabled || !liveFileId || true) ? null : (
     <Typography>

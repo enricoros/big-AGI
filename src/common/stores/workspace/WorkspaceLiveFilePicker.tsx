@@ -29,7 +29,7 @@ export function WorkspaceLiveFilePicker(props: {
   labelButton: string;
   labelTooltip?: string;
   liveFileId: LiveFileId | null;
-  onSelectLiveFile: (id: LiveFileId | null) => void;
+  onSelectLiveFile: (id: LiveFileId | null) => Promise<void>;
   onSelectFileOpen: (workspaceId: DWorkspaceId | null) => Promise<void>;
   onSelectFileSystemFileHandle?: (workspaceId: DWorkspaceId | null, fsHandle: FileSystemFileHandle) => Promise<void>;
 }) {
