@@ -36,6 +36,11 @@ export const useGlobalShortcutsStore = create<ShortcutsStore>((set, get) => ({
       };
     }),
 
-  getAllShortcuts: () => Object.values(get().shortcutGroups).flat(),
+  /**
+   * Returns all shortcuts, priritized by level (descending).
+   */
+  getAllShortcuts: () => Object.values(get().shortcutGroups)
+    .flat()
+    .sort((a, b) => (b.level ?? 0) - (a.level ?? 0)),
 
 }));
