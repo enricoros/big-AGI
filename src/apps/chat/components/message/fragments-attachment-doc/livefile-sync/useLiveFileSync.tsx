@@ -176,7 +176,7 @@ export function useLiveFileSync(
   }, [_handleReloadFileContent, onReplaceLiveFileId, workspaceId]);
 
   const handlePairNewFileWithPicker = React.useCallback(async () => {
-    // Open the file picker
+    // pick a file
     const fileWithHandle = await fileOpen({ description: 'Select a File to pair to this document' }).catch(() => null /* The User closed the files picker */);
     if (!fileWithHandle)
       return;
