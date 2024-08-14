@@ -9,8 +9,9 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { LiveFileChooseIcon } from '~/common/livefile/liveFile.icons';
 import { LiveFilePatchIcon } from '~/common/components/icons/LiveFilePatchIcon';
 
-import { useContextWorkspaceId } from './WorkspaceIdProvider';
+import type { DWorkspaceId } from './workspace.types';
 import { useWorkspaceContentsMetadata } from './useWorkspaceContentsMetadata';
+import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 
 
 // configuration
@@ -26,7 +27,7 @@ export function WorkspaceLiveFilePicker(props: {
   liveFileId: LiveFileId | null;
   allowRemove?: boolean;
   onSelectLiveFile: (id: LiveFileId | null) => void;
-  onSelectNewFile?: () => void;
+  onSelectNewFile?: (workspaceId: DWorkspaceId | null) => void;
   // tooltipLabel?: string;
 }) {
 
@@ -77,10 +78,10 @@ export function WorkspaceLiveFilePicker(props: {
 
   const handleSelectNewFile = React.useCallback(() => {
     if (onSelectNewFile) {
-      onSelectNewFile();
+      onSelectNewFile(workspaceId);
       setMenuAnchor(null);
     }
-  }, [onSelectNewFile]);
+  }, [onSelectNewFile, workspaceId]);
 
 
   // Note: in the future let this be, we can show a file picker that adds LiveFiles to the workspace
@@ -110,7 +111,8 @@ export function WorkspaceLiveFilePicker(props: {
         color='neutral'
         size='sm'
         onClick={handleToggleMenu}
-        endDecorator={<LiveFilePatchIcon />}
+        endDecorator={<LiveFileChooseIcon color='success' />}
+        // endDecorator={<LiveFilePatchIcon color='success' />}
       >
         {props.buttonLabel}
       </Button>
@@ -143,7 +145,7 @@ export function WorkspaceLiveFilePicker(props: {
             sx={{ border: 'none' }}
           >
             <ListItemDecorator><CodeIcon sx={{ fontSize: 'lg' }} /></ListItemDecorator>
-            <Box>
+            <Box sx={{ fontSize: 'sm' }}>
               {lfm.name}
               <Box component='span' sx={{ fontSize: 'xs', display: 'block', color: 'text.tertiary' }}>
                 {lfm.size?.toLocaleString() || '(unknown)'} bytes {lfm.type ? `· ${lfm.type}` : ''}
