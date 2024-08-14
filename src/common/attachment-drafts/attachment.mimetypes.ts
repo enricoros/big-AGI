@@ -36,6 +36,7 @@ const GuessedMimeLookupTable: Record<string, GuessedMimeInfo> = {
   'text/csv': { ext: ['csv', 'tsv'], dt: 'code' },
   'text/x-python': { ext: ['py', 'pyw'], dt: 'code' },
   'application/x-python-code': { ext: null, dt: 'code' },
+  'application/x-ipynb+json': { ext: ['ipynb'], dt: 'code' },
   'application/json': { ext: ['json', 'jsonld'], dt: 'code' },
   'text/xml': { ext: ['xml', 'xsl', 'xsd', 'rss', 'atom'], dt: 'code' },
   'application/rtf': { ext: ['rtf'], dt: 'code' },
