@@ -151,6 +151,8 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
     contentReloadFromDisk: async (fileId: LiveFileId) => {
       const liveFile = _get().liveFiles[fileId];
+
+      // Note: .isLoading will also coalesce multiple concurrent reloads into one, as only the first goes through basically
       if (!liveFile || liveFile.isLoading || liveFile.isSaving) return;
 
       _set((state) => ({
