@@ -143,10 +143,6 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       let openAIModels = openAIWireModelsResponse.data || [];
 
-      // [OpenPipe]: does not have the { object: 'list', data: [ ... ] } wrapper
-      if (access.dialect === 'openpipe')
-        openAIModels = (openAIWireModelsResponse as any) || [];
-
       // de-duplicate by ids (can happen for local servers.. upstream bugs)
       const preCount = openAIModels.length;
       openAIModels = openAIModels.filter((model, index) => openAIModels.findIndex(m => m.id === model.id) === index);
