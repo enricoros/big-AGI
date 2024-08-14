@@ -428,6 +428,10 @@ export function Composer(props: {
 
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
+  useGlobalShortcuts('ChatComposer.Gen', React.useMemo(() => [
+    ...(assistantAbortible ? [{ key: ShortcutKey.Esc, action: handleStopClicked, description: 'Stop', level: 2 }] : []),
+  ], [assistantAbortible, handleStopClicked]));
+
   useGlobalShortcuts('ChatComposer', React.useMemo(() => {
     const composerShortcuts: ShortcutObject[] = [];
     if (supportsClipboardRead)
