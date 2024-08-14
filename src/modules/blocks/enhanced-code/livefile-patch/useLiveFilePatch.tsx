@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
-import { Box, ColorPaletteProp, Sheet } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
 
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -15,11 +15,23 @@ import { isLiveFileSupported, liveFileCreateOrThrow, useLiveFileStore } from '~/
 import { liveFileSheetSx } from '~/common/livefile/livefile.theme';
 
 
+// Helper function to apply patch (to be implemented)
+function applyPatch(srcContent: string, patch: string): string {
+  // Implement patch application logic
+  return srcContent; // Placeholder
+}
+
+
 interface FileOperationStatus {
   message: React.ReactNode;
   mtype: 'info' | 'changes' | 'success' | 'error';
 }
 
+interface PatchState {
+  srcContent: string | null;
+  patchContent: string | null;
+  newContent: string | null;
+}
 
 export function useLiveFilePatch(title: string, code: string, isPartial: boolean, isMobile: boolean) {
 
@@ -29,6 +41,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
    */
   const [liveFileId, setLiveFileId] = React.useState<LiveFileId | null>(null);
   const [status, setStatus] = React.useState<FileOperationStatus | null>(null);
+  const [patchState, setPatchState] = React.useState<PatchState>({ srcContent: null, patchContent: null, newContent: null });
 
   // external state
   const isEnabled = useUXLabsStore((state) => state.labsEnhanceCodeLiveFile && isLiveFileSupported());
@@ -36,47 +49,64 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   const { contentReloadFromDisk, contentWriteAndReload } = useLiveFileStore();
 
   const processLiveFile = React.useCallback(async (fileId: LiveFileId) => {
-    setStatus({ message: 'Processing file...', mtype: 'info' });
+    // reset state
+    setStatus({ message: 'Processing...', mtype: 'info' });
+    setPatchState({ srcContent: null, patchContent: null, newContent: null });
 
     try {
+
       // Step 1: Load the latest version of the file
-      await contentReloadFromDisk(fileId);
-      const srcFile = useLiveFileStore.getState().liveFiles[fileId];
+      setStatus({ message: 'Loading latest file version...', mtype: 'info' });
+      const srcContent = await contentReloadFromDisk(fileId);
+      if (!srcContent)
+        return setStatus({ message: 'Failed to load file content.', mtype: 'error' });
+      setPatchState(prev => ({ ...prev, srcContent }));
 
-      // Step 2: Generate patch (to be implemented)
-      // const patch = await generatePatch(srcFile.content!, code);
+      // Step 2: Generate patch
+      setStatus({ message: 'Generating patch...', mtype: 'info' });
+      // const patch = await generatePatch(srcContent, code);
+      const patchContent = '...';
+      setPatchState(prev => ({ ...prev, patchContent }));
 
-      // Step 3: Apply patch and check if it succeeds (to be implemented)
-      // const newContent = applyPatch(srcFile.content!, patch);
-
-      // For now, we'll just use the new code directly
-      const newContent = code;
+      // Step 3: Apply patch and check if it succeeds
+      setStatus({ message: 'Verifying patch...', mtype: 'info' });
+      const newContent = applyPatch(srcContent, patchContent);
+      setPatchState(prev => ({ ...prev, newContent }));
 
       // Step 4: Success - user can decide to proceed
-      setStatus({ message: 'Patch generated successfully. Ready to apply.', mtype: 'success' });
+      setStatus({ message: 'Patch generated and applied successfully. Ready to save.', mtype: 'success' });
 
-      // You can add a confirmation step here before writing to the file
-      const shouldWrite = window.confirm('Patch generated successfully. Do you want to apply it to the file?');
-      if (shouldWrite) {
-        setStatus({ message: 'Applying patch...', mtype: 'info' });
-        const writeSuccess = await contentWriteAndReload(fileId, newContent);
-        if (!writeSuccess) {
-          throw new Error('Failed to write to file');
-        }
-        setStatus({ message: 'Patch applied successfully.', mtype: 'success' });
-      }
     } catch (error) {
       setStatus({
         message: `Error: ${error instanceof Error ? error.message : 'An unknown error occurred'}`,
         mtype: 'error',
       });
     }
-  }, [code, contentReloadFromDisk, contentWriteAndReload]);
+  }, [contentReloadFromDisk]);
+
+  const handleSavePatch = React.useCallback(async () => {
+    if (!liveFileId || !patchState.newContent) return;
+
+    setStatus({ message: 'Saving changes to file...', mtype: 'info' });
+    try {
+      const writeSuccess = await contentWriteAndReload(liveFileId, patchState.newContent);
+      if (!writeSuccess) {
+        throw new Error('Failed to write to file');
+      }
+      setStatus({ message: 'Changes saved successfully.', mtype: 'success' });
+    } catch (error) {
+      setStatus({
+        message: `Error saving changes: ${error instanceof Error ? error.message : 'An unknown error occurred'}`,
+        mtype: 'error',
+      });
+    }
+  }, [liveFileId, patchState.newContent, contentWriteAndReload]);
 
   const handleSelectLiveFile = React.useCallback(async (id: LiveFileId | null) => {
     setLiveFileId(id);
-    if (id)
+    if (id) {
       await processLiveFile(id);
+    }
   }, [processLiveFile]);
 
   const handleSelectFileSystemFileHandle = React.useCallback(async (workspaceId: DWorkspaceId | null, fsfHandle: FileSystemFileHandle) => {
@@ -151,11 +181,25 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
     return (
       <Sheet color={statusColor} sx={liveFileSheetSx}>
 
-        {status.message}
+        <Typography>{status.message}</Typography>
+
+        {status.mtype === 'success' && patchState.newContent && (
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+
+            <Button onClick={handleSavePatch} color='success' size='sm'>
+              Save Changes
+            </Button>
+
+            <Button onClick={() => processLiveFile(liveFileId)} color='neutral' size='sm'>
+              Regenerate Patch
+            </Button>
+
+          </Box>
+        )}
 
       </Sheet>
     );
-  }, [isEnabled, liveFileId, status]);
+  }, [isEnabled, liveFileId, status, patchState.newContent, handleSavePatch, processLiveFile]);
 
   return {
     button,
