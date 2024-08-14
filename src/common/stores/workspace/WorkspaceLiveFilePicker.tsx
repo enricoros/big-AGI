@@ -124,7 +124,7 @@ export function WorkspaceLiveFilePicker(props: {
         {/* Workspace Files (if any) */}
         {haveLiveFiles && (
           <ListItem>
-            <Typography level='body-sm'>Workspace Files:</Typography>
+            <Typography level='body-sm'>Select Target:</Typography>
           </ListItem>
         )}
         {haveLiveFiles && wLiveFiles.map((lfm: LiveFileMetadata) => (
