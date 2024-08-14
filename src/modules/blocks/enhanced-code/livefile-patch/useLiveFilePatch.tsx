@@ -47,7 +47,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
       {/* Pick LiveFile */}
       <WorkspaceLiveFilePicker
         autoSelectName={title}
-        buttonLabel='Apply'
+        buttonLabel='Insert...'
         liveFileId={liveFileId}
         onSelectLiveFile={handleLiveFileSelected}
       />
