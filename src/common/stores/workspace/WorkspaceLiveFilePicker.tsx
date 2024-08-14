@@ -31,7 +31,7 @@ export function WorkspaceLiveFilePicker(props: {
   labelTooltip?: string;
   liveFileId: LiveFileId | null;
   onSelectLiveFile: (id: LiveFileId | null) => void;
-  onSelectFileOpen?: (workspaceId: DWorkspaceId | null) => Promise<void>;
+  onSelectFileOpen: (workspaceId: DWorkspaceId | null) => Promise<void>;
   onSelectFileSystemFileHandle?: (workspaceId: DWorkspaceId | null, fsHandle: FileSystemFileHandle) => Promise<void>;
 }) {
 
@@ -115,17 +115,7 @@ export function WorkspaceLiveFilePicker(props: {
       onDragStart={handleContainerDragStart}
       sx={dragContainerSx}
     >
-      {liveFileId && (
-        <IconButton
-          color='success'
-          size='sm'
-          onClick={handleToggleMenu}
-        >
-          <LiveFilePatchIcon color='success' />
-        </IconButton>
-      )}
-
-      {!liveFileId && (
+      {!liveFileId ? (
         <TooltipOutlined title={props.labelTooltip} color='success' placement='top-end'>
           <Button
             variant='plain'
@@ -138,6 +128,13 @@ export function WorkspaceLiveFilePicker(props: {
             {props.labelButton}
           </Button>
         </TooltipOutlined>
+      ) : (
+        <IconButton
+          size='sm'
+          onClick={handleToggleMenu}
+        >
+          <LiveFilePatchIcon color='success' />
+        </IconButton>
       )}
 
       {dropComponent}
@@ -168,32 +165,33 @@ export function WorkspaceLiveFilePicker(props: {
             onClick={() => handleSelectLiveFile(lfm.id)}
             sx={{ border: 'none' }}
           >
-            <ListItemDecorator><CodeIcon sx={{ fontSize: 'lg' }} /></ListItemDecorator>
-            <Box sx={{ fontSize: 'sm' }}>
-              {lfm.name}
-              <Box component='span' sx={{ fontSize: 'xs', display: 'block', color: 'text.tertiary' }}>
-                {lfm.size?.toLocaleString() || '(unknown)'} bytes {lfm.type ? `· ${lfm.type}` : ''}
-              </Box>
-            </Box>
+            <ListItemDecorator><CodeIcon /></ListItemDecorator>
+            {/*<Box>*/}
+            {lfm.name}
+            {/*<Box component='span' sx={{ fontSize: 'xs', display: 'block', color: 'text.tertiary' }}>*/}
+            {/*  {lfm.size?.toLocaleString() || '(unknown)'} bytes {lfm.type ? `· ${lfm.type}` : ''}*/}
+            {/*</Box>*/}
+            {/*</Box>*/}
           </MenuItem>
         ))}
 
         {/* Pair a new file */}
-        {!!props.onSelectFileOpen && (
-          <MenuItem onClick={handleSelectNewFile} sx={haveLiveFiles ? { minHeight: '3rem' } : undefined}>
-            <ListItemDecorator>
-              <LiveFileChooseIcon />
-            </ListItemDecorator>
-            Other target file...
-          </MenuItem>
-        )}
+        {haveLiveFiles && <ListDivider sx={{ my: 0 }} />}
+        <MenuItem
+          onClick={handleSelectNewFile}
+          // sx={haveLiveFiles ? { minHeight: '3rem' } : undefined}
+        >
+          <ListItemDecorator>
+            <LiveFileChooseIcon />
+          </ListItemDecorator>
+          Open File...
+        </MenuItem>
 
         {/* Remove pairing */}
-        {showRemove && <ListDivider />}
         {showRemove && (
           <MenuItem disabled={!liveFileId} onClick={() => handleSelectLiveFile(null)}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
-            Remove
+            Close
           </MenuItem>
         )}
 
