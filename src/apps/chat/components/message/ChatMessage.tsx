@@ -221,10 +221,10 @@ export function ChatMessage(props: {
         handleFragmentReplace(fragmentId, createTextContentFragment(editedText));
       else
         handleFragmentDelete(fragmentId);
-      // if the user pressd Ctrl, we begin a regeneration from here
-      if (withControl && onMessageAssistantFrom)
-        await onMessageAssistantFrom(messageId, 0);
     }
+    // if the user pressd Ctrl, we begin a regeneration from here
+    if (withControl && onMessageAssistantFrom)
+      await onMessageAssistantFrom(messageId, 0);
   }, [handleFragmentDelete, handleFragmentReplace, messageId, onMessageAssistantFrom, textContentEditState]);
 
   const handleEditsApplyClicked = React.useCallback(() => handleApplyAllEdits(false), [handleApplyAllEdits]);
