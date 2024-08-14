@@ -23,6 +23,7 @@ export function WorkspaceLiveFilePicker(props: {
   autoSelectName: string | null;
   buttonLabel: string;
   liveFileId: LiveFileId | null;
+  allowRemove?: boolean;
   onSelectLiveFile: (id: LiveFileId | null) => void;
   // tooltipLabel?: string;
 }) {
@@ -77,6 +78,8 @@ export function WorkspaceLiveFilePicker(props: {
   // if (!haveLiveFiles)
   //   return null;
 
+  const showRemove = !!liveFileId && props.allowRemove === true;
+
   return <>
 
     {/*<TooltipOutlined*/}
@@ -112,14 +115,16 @@ export function WorkspaceLiveFilePicker(props: {
         open
         anchorEl={menuAnchor}
         onClose={handleCloseMenu}
+        noTopPadding
+        noBottomPadding
         placement='bottom-start'
-        sx={{ minWidth: 200 }}
+        sx={{ minWidth: 240 }}
       >
 
         {/* Workspace Files (if any) */}
         {haveLiveFiles && (
           <ListItem>
-            <Typography level='body-sm'>Workspace Files</Typography>
+            <Typography level='body-sm'>Workspace Files:</Typography>
           </ListItem>
         )}
         {haveLiveFiles && wLiveFiles.map((lfm: LiveFileMetadata) => (
@@ -131,7 +136,7 @@ export function WorkspaceLiveFilePicker(props: {
             <ListItemDecorator><CodeIcon sx={{ fontSize: 'lg' }} /></ListItemDecorator>
             <Box>
               {lfm.name}
-              <Box component='span' sx={{ fontSize: 'xs', display: 'block' }}>
+              <Box component='span' sx={{ fontSize: 'xs', display: 'block', color: 'text.tertiary' }}>
                 {lfm.size?.toLocaleString() || '(unknown)'} bytes {lfm.type ? `· ${lfm.type}` : ''}
               </Box>
             </Box>
@@ -146,8 +151,8 @@ export function WorkspaceLiveFilePicker(props: {
         )}
 
         {/* Remove pairing */}
-        {!!liveFileId && <ListDivider />}
-        {!!liveFileId && (
+        {showRemove && <ListDivider />}
+        {showRemove && (
           <MenuItem disabled={!liveFileId} onClick={() => handleSelectLiveFile(null)}>
             <ListItemDecorator><ClearIcon /></ListItemDecorator>
             Remove
