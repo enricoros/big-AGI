@@ -199,13 +199,9 @@ export function DrawCreate(props: {
             {/*    );*/}
 
 
-            <Box sx={{background:'red'}}>a</Box>
-            <Box>a</Box>
-            <Box>a</Box>
-            <Box>a</Box>
-            <Box>a</Box>
-            <Box>a</Box>
           </Box>
+
+          <Box sx={{background:'red'}}>THIS APPLICATION IS IN DEV - NOT PROD - DO NOT USE</Box>
 
           {/* Fallback */}
           <ZeroGenerations />
