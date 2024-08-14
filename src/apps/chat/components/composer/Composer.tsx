@@ -18,7 +18,7 @@ import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '.
 
 import type { DLLM } from '~/modules/llms/store-llms';
 import type { LLMOptionsOpenAI } from '~/modules/llms/vendors/openai/openai.vendor';
-import { useAgiAttachmentPrompts } from '~/modules/aifn/attachmentprompts/useAgiAttachmentPrompts';
+import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
