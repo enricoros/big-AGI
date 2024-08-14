@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
 
-import { Box, Button, Typography } from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -80,20 +80,21 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
       gap: 0, // otherwise the button icon seems far
     }}>
 
-      {/* Patch LiveFile */}
-      {!!liveFileId && (
-        <Button
-          variant='plain'
-          color='neutral'
-          size='sm'
-          onClick={() => setLiveFileId(null)}
-        >
-          TODO - TEST
-        </Button>
-      )}
+      {/*/!* Patch LiveFile *!/*/}
+      {/*{!!liveFileId && (*/}
+      {/*  <Button*/}
+      {/*    variant='plain'*/}
+      {/*    color='neutral'*/}
+      {/*    size='sm'*/}
+      {/*    onClick={() => setLiveFileId(null)}*/}
+      {/*  >*/}
+      {/*    TODO - TEST*/}
+      {/*  </Button>*/}
+      {/*)}*/}
 
       {/* Pick LiveFile */}
       <WorkspaceLiveFilePicker
+        allowRemove
         autoSelectName={title}
         labelButton='Insert...'
         labelTooltip='Insert this code into a file'
