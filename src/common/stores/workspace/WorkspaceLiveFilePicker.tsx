@@ -13,7 +13,7 @@ import { useWorkspaceContentsMetadata } from './useWorkspaceContentsMetadata';
 
 
 // configuration
-const ENABLE_AUTO_WORKSPACE_PICK = false
+const ENABLE_AUTO_WORKSPACE_PICK = false;
 
 
 /**
@@ -119,7 +119,7 @@ export function WorkspaceLiveFilePicker(props: {
         {/* Workspace Files (if any) */}
         {haveLiveFiles && (
           <ListItem>
-            <Typography level='body-sm'>Recent Workspace Files</Typography>
+            <Typography level='body-sm'>Workspace Files</Typography>
           </ListItem>
         )}
         {haveLiveFiles && wLiveFiles.map((lfm: LiveFileMetadata) => (
