@@ -31,7 +31,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isAttachmentFragment, isContentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -43,6 +43,7 @@ import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAtta
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
+import { useFragmentBuckets } from './useFragmentBuckets';
 
 
 // Enable the menu on text selection
@@ -163,32 +164,29 @@ export function ChatMessage(props: {
   } = props.message;
   const zenMode = uiComplexityMode === 'minimal';
 
-
-  // split the fragments: Image Attachments are rendered as cards, Content is the body (sequence of parts), and other attachment fragments as documents
-  const contentFragments: DMessageContentFragment[] = [];
-  const imageAttachments: DMessageAttachmentFragment[] = [];
-  const nonImageAttachments: DMessageAttachmentFragment[] = [];
-  messageFragments.forEach(fragment => {
-    if (isContentFragment(fragment)) contentFragments.push(fragment);
-    else if (isAttachmentFragment(fragment)) {
-      if (isImageRefPart(fragment.part)) imageAttachments.push(fragment);
-      else nonImageAttachments.push(fragment);
-    } else
-      console.warn('Unexpected fragment type:', fragment.ft);
-  });
-
-  const isUserStarred = messageHasUserFlag(props.message, 'starred');
-
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
+  const isUserStarred = messageHasUserFlag(props.message, 'starred');
 
-  const textSel = selText ? selText : messageFragmentsReduceText(contentFragments);
-  const isSpecialT2I = textSel.startsWith('https://images.prodia.xyz/') || textSel.startsWith('/draw ') || textSel.startsWith('/imagine ') || textSel.startsWith('/img ');
-  const couldDiagram = textSel.length >= 100 && !isSpecialT2I;
-  const couldImagine = textSel.length >= 3 && !isSpecialT2I;
+  const {
+    imageAttachments,     // Stamp-sized Images
+    contentFragments,     // Text (Markdown + Code + ... blocks), Errors, (large) Images, Placeholders
+    nonImageAttachments,  // Document Attachments, likely the User dropped them in
+  } = useFragmentBuckets(messageFragments);
+
+  const { fragmentText, selTextMatchCount } = React.useMemo(() => ({
+    fragmentText: messageFragmentsReduceText(contentFragments),
+    selTextMatchCount: (!selText || selText?.length < 3) ? 0 : contentFragments.filter(fragment => isTextPart(fragment.part) && fragment.part.text.includes(selText)).length,
+  }), [contentFragments, selText]);
+
+  const textSubject = selText ? selText : fragmentText;
+  const isSpecialT2I = textSubject.startsWith('https://images.prodia.xyz/') || textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
+  const couldDiagram = textSubject.length >= 100 && !isSpecialT2I;
+  const couldImagine = textSubject.length >= 3 && !isSpecialT2I;
   const couldSpeak = couldImagine;
+
 
   // TODO: fix the diffing
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
@@ -249,7 +247,7 @@ export function ChatMessage(props: {
   const handleCloseOpsMenu = React.useCallback(() => setOpsMenuAnchor(null), []);
 
   const handleOpsCopy = (e: React.MouseEvent) => {
-    copyToClipboard(textSel, 'Text');
+    copyToClipboard(textSubject, 'Text');
     e.preventDefault();
     handleCloseOpsMenu();
     closeContextMenu();
@@ -292,7 +290,7 @@ export function ChatMessage(props: {
   const handleOpsDiagram = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextDiagram) {
-      await props.onTextDiagram(messageId, textSel);
+      await props.onTextDiagram(messageId, textSubject);
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -302,7 +300,7 @@ export function ChatMessage(props: {
   const handleOpsImagine = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextImagine) {
-      await props.onTextImagine(textSel);
+      await props.onTextImagine(textSubject);
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -311,8 +309,8 @@ export function ChatMessage(props: {
 
   const handleOpsAddInReferenceTo = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (onAddInReferenceTo && textSel.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
-      onAddInReferenceTo({ mrt: 'dmsg', mText: textSel.trim(), mRole: messageRole /*, messageId*/ });
+    if (onAddInReferenceTo && textSubject.trim().length >= BUBBLE_MIN_TEXT_LENGTH) {
+      onAddInReferenceTo({ mrt: 'dmsg', mText: textSubject.trim(), mRole: messageRole /*, messageId*/ });
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -322,7 +320,7 @@ export function ChatMessage(props: {
   const handleOpsSpeak = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextSpeak) {
-      await props.onTextSpeak(textSel);
+      await props.onTextSpeak(textSubject);
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
