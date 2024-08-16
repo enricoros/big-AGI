@@ -591,7 +591,7 @@ export function ChatMessage(props: {
 
           {/* (special case) System modified warning */}
           {fromSystem && wasEdited && (
-            <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5 }}>
+            <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5, textAlign: 'end' }}>
               modified by user - auto-update disabled
             </Typography>
           )}
