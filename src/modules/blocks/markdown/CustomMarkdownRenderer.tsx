@@ -11,8 +11,60 @@ import { Button } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
 
 
-// Extracts table data from jsx element in table renderer
-function extractTableData(children: React.JSX.Element) {
+// LinkRenderer adds a target="_blank" to all links
+
+interface LinkRendererProps {
+  node?: any; // an optional field we want to not pass to the <table/> element
+  children: React.JSX.Element;
+}
+
+const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
+  <a {...props} target='_blank' rel='noopener'>
+    {children}
+  </a>
+);
+
+
+// Mark Renderer adds a yellow background to the text
+const MarkRenderer = ({ children }: { children: React.ReactNode }) => (
+  <mark style={{ backgroundColor: 'yellow', padding: '0.2em' }}>{children}</mark>
+);
+
+
+// TableRenderer adds a CSV Download Link
+
+interface TableRendererProps {
+  node?: any; // an optional field we want to not pass to element
+  children: React.JSX.Element;
+}
+
+function TableRenderer({ children, node, ...props }: TableRendererProps) {
+
+  // Apply custom styles or modifications here
+  const tableData = _extractTableData(children);
+
+  return (
+    <>
+      <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.5rem' }} {...props}>
+        {children}
+      </table>
+
+      {/* Download CSV link */}
+      {tableData?.length >= 1 && (
+        <CSVLink filename='big-agi-export' data={tableData}>
+          <Button variant='outlined' color='neutral' size='md' endDecorator={<DownloadIcon />} sx={{
+            mb: '1rem',
+            backgroundColor: 'background.popup', // make this button 'pop' a bit from the page
+          }}>
+            Download table as .csv
+          </Button>
+        </CSVLink>
+      )}
+    </>
+  );
+}
+
+function _extractTableData(children: React.JSX.Element) {
 
   // Function to extract text from a React element or component
   function extractText(element: any): String {
@@ -50,53 +102,7 @@ function extractTableData(children: React.JSX.Element) {
 }
 
 
-// TableRenderer adds a CSV Download Link
-
-interface TableRendererProps {
-  node?: any; // an optional field we want to not pass to element
-  children: React.JSX.Element;
-}
-
-function TableRenderer({ children, node, ...props }: TableRendererProps) {
-
-  // Apply custom styles or modifications here
-  const tableData = extractTableData(children);
-
-  return (
-    <>
-      <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.5rem' }} {...props}>
-        {children}
-      </table>
-
-      {/* Download CSV link */}
-      {tableData?.length >= 1 && (
-        <CSVLink filename='big-agi-export' data={tableData}>
-          <Button variant='outlined' color='neutral' size='md' endDecorator={<DownloadIcon />} sx={{
-            mb: '1rem',
-            backgroundColor: 'background.popup', // make this button 'pop' a bit from the page
-          }}>
-            Download table as .csv
-          </Button>
-        </CSVLink>
-      )}
-    </>
-  );
-}
-
-
-// LinkRenderer adds a target="_blank" to all links
-
-interface LinkRendererProps {
-  node?: any; // an optional field we want to not pass to the <table/> element
-  children: React.JSX.Element;
-}
-
-const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
-  <a {...props} target='_blank' rel='noopener'>
-    {children}
-  </a>
-);
-
+// shared components for the markdown renderer
 
 const reactMarkdownComponents = {
   a: LinkRenderer, // override the link renderer to add target="_blank"
