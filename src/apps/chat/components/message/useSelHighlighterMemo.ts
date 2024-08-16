@@ -3,9 +3,23 @@ import * as React from 'react';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
 
+import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
 
-// configuration
-const MIN_SEL_LENGTH = 3;
+
+/* Note: future evolution of Marking:
+ * 'data-purpose'?: 'review' | 'important' | 'note'; // Purpose of the highlight
+ * 'data-user-id'?: string; // Unique user identifier
+ * 'data-context'?: string; // Context or description of the highlight
+ * 'data-version'?: string; // Version of the document/content
+ * 'data-platform'?: 'web' | 'mobile' | 'extension'; // Platform or tool that created the highlight
+ * 'data-category'?: string; // Category for organization
+ *
+ * Example:
+ * <mark id="highlight-123" data-purpose="important" data-user-id="user123" data-context="Key point in the document" data-version="1.0" data-platform="web" data-category="summary">
+ *   This is an important highlight.
+ * </mark>
+ */
+const APPLY_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
 
 
 export function useSelHighlighterMemo(
@@ -18,33 +32,28 @@ export function useSelHighlighterMemo(
   return React.useMemo(() => {
 
     // Existence check
-    if (!selText
-      || selText.length < MIN_SEL_LENGTH
-      || selText.includes('```') // checks that we don't include a code block start (or end) in the selection
-      || !fromAssistant
-      || !onMessageFragmentReplace
-    )
+    if (!selText || selText.length < BUBBLE_MIN_TEXT_LENGTH || !fromAssistant || !onMessageFragmentReplace)
       return null;
 
     // Create the highlighter function, if there's 1 and only 1 occurrence of the selection
     const highlightFunction = contentFragments.reduce((acc: false /* not found */ | (() => void) | true /* more than one */, fragment) => {
       if (!acc && isTextPart(fragment.part)) {
-        const text = fragment.part.text;
-        let index = text.indexOf(selText);
+        const fragmentText = fragment.part.text;
+        let index = fragmentText.indexOf(selText);
 
         while (index !== -1) {
 
           // If we've found more than one occurrence, we can stop
           if (acc) return true;
 
-          index = text.indexOf(selText, index + 1);
+          index = fragmentText.indexOf(selText, index + 1);
 
           // make the highlighter function
           acc = () => {
-            const highlighted = `==${selText}==`;
+            const highlighted = APPLY_HIGHLIGHT(selText);
             const newFragmentText =
-              text.includes(highlighted) ? text.replace(highlighted, selText) // toggles selection
-                : text.replace(selText, highlighted);
+              fragmentText.includes(highlighted) ? fragmentText.replace(highlighted, selText) // toggles selection
+                : fragmentText.replace(selText, highlighted);
             onMessageFragmentReplace(messageId, fragment.fId, createTextContentFragment(newFragmentText));
           };
         }

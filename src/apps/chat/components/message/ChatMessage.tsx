@@ -51,7 +51,7 @@ import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 // Enable the menu on text selection
 const ENABLE_CONTEXT_MENU = false;
 const ENABLE_BUBBLE = true;
-const BUBBLE_MIN_TEXT_LENGTH = 3;
+export const BUBBLE_MIN_TEXT_LENGTH = 3;
 
 // Enable the hover button to copy the whole message. The Copy button is also available in Blocks, or in the Avatar Menu.
 const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
