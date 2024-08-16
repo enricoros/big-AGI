@@ -129,10 +129,7 @@ export namespace AnthropicWire_API_Message_Create {
     /**
      * If you want to include a system prompt, you can use the top-level system parameter — there is no "system" role for input messages in the Messages API.
      */
-    system: z.union([
-      z.array(AnthropicWire_Blocks.TextBlock_schema),
-      z.string(), // only adding this for: https://github.com/enricoros/big-AGI/issues/618 - we shall just have parts in the future
-    ]).optional(),
+    system: z.array(AnthropicWire_Blocks.TextBlock_schema).optional(),
 
     /**
      * (required) Input messages. - operates on alternating user and assistant conversational turns - the first message must always use the user role
