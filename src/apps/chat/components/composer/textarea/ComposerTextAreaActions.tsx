@@ -94,7 +94,8 @@ export function ComposerTextAreaActions(props: {
           color={AGI_SUGGESTIONS_COLOR}
           variant='plain'
           onClick={() => props.onAppendAndSend(candidate)}
-          className='within-composer-focus'
+          // disabled as otherwise it gets white when hovering and the composer has focus
+          // className='within-composer-focus'
           sx={promptButtonSx}
         >
           {candidate}
