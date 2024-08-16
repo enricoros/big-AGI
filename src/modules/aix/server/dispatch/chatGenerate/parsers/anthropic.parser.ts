@@ -80,6 +80,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           chatInTokens = responseMessage.usage.input_tokens;
           pt.setCounters({
             chatIn: chatInTokens,
+            chatInCacheRead: responseMessage.usage.cache_read_input_tokens || 0,
+            chatInCacheWrite: responseMessage.usage.cache_creation_input_tokens || 0,
             chatOut: responseMessage.usage.output_tokens,
             chatTimeStart: timeToFirstEvent,
           });
@@ -248,6 +250,8 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
       pt.setCounters({
         chatIn: usage.input_tokens,
+        chatInCacheRead: usage.cache_read_input_tokens || 0,
+        chatInCacheWrite: usage.cache_creation_input_tokens || 0,
         chatOut: usage.output_tokens,
         chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
         // chatTimeStart: // meaningless non-streaming

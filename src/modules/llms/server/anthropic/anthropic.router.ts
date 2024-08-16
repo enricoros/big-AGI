@@ -18,9 +18,14 @@ import { hardcodedAnthropicModels } from './anthropic.models';
 // Default hosts
 const DEFAULT_API_VERSION_HEADERS = {
   'anthropic-version': '2023-06-01',
-  // Former Betas:
-  // - messages-2023-12-15: to use the Messages API
-  'anthropic-beta': 'max-tokens-3-5-sonnet-2024-07-15',
+  // Betas:
+  // - messages-2023-12-15: to use the Messages API [now default]
+  // - max-tokens-3-5-sonnet-2024-07-15
+  //
+  // - prompt-caching-2024-07-31: to use the prompt caching feature; adds to any API invocation:
+  //   - message_start.message.usage.cache_creation_input_tokens: number
+  //   - message_start.message.usage.cache_read_input_tokens: number
+  'anthropic-beta': 'prompt-caching-2024-07-31,max-tokens-3-5-sonnet-2024-07-15',
 };
 const DEFAULT_MAX_TOKENS = 2048;
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
@@ -153,6 +158,7 @@ export const anthropicAccessSchema = z.object({
   dialect: z.literal('anthropic'),
   anthropicKey: z.string().trim(),
   anthropicHost: z.string().trim().nullable(),
+  anthropicAutoCache: z.boolean(),
   heliconeKey: z.string().trim().nullable(),
 });
 export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;

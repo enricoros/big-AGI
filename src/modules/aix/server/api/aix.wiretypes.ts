@@ -471,6 +471,8 @@ export namespace AixWire_Particles {
 
   export type ChatGenerateCounts = {
     chatIn?: number,
+    chatInCacheRead?: number,
+    chatInCacheWrite?: number,
     chatOut?: number,
     chatOutRate?: number,
     chatTimeStart?: number,
