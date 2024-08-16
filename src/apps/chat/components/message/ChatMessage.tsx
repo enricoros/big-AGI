@@ -860,7 +860,7 @@ export function ChatMessage(props: {
               {/*  </IconButton>*/}
               {/*</Tooltip>}*/}
 
-              {!!onAddInReferenceTo && fromAssistant && <Divider />}
+              {!!onAddInReferenceTo && <Divider />}
 
               {!!props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
                 <IconButton onClick={couldDiagram ? handleOpsDiagram : undefined}>
