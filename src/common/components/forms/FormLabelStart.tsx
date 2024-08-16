@@ -30,7 +30,7 @@ const FormLabelStartBase = (props: {
       }}
     >
       {props.title} {!!props.tooltip && (
-      <GoodTooltip title={props.tooltip}>
+      <GoodTooltip title={props.tooltip} arrow placement='top'>
         <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
       </GoodTooltip>
     )}
