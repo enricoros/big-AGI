@@ -18,6 +18,7 @@ export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.s
 export interface SourceSetupAnthropic {
   anthropicKey: string;
   anthropicHost: string;
+  anthropicAutoCache: boolean;
   heliconeKey: string;
 }
 
@@ -39,6 +40,7 @@ export const ModelVendorAnthropic: IModelVendor<SourceSetupAnthropic, AnthropicA
     dialect: 'anthropic',
     anthropicKey: partialSetup?.anthropicKey || '',
     anthropicHost: partialSetup?.anthropicHost || null,
+    anthropicAutoCache: partialSetup?.anthropicAutoCache || false,
     heliconeKey: partialSetup?.heliconeKey || null,
   }),
 

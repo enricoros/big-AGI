@@ -9,12 +9,20 @@ export namespace AnthropicWire_Blocks {
 
   /// Content parts - Input and Output
 
-  export const TextBlock_schema = z.object({
+  const _CacheControl_schema = z.object({
+    type: z.literal('ephemeral'),
+  });
+
+  const _CommonBlock_schema = z.object({
+    cache_control: _CacheControl_schema.optional(),
+  });
+
+  export const TextBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('text'),
     text: z.string(),
   });
 
-  export const ImageBlock_schema = z.object({
+  export const ImageBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('image'),
     source: z.object({
       type: z.literal('base64'),
@@ -23,14 +31,14 @@ export namespace AnthropicWire_Blocks {
     }),
   });
 
-  export const ToolUseBlock_schema = z.object({
+  export const ToolUseBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(),
     input: z.any(),
   });
 
-  export const ToolResultBlock_schema = z.object({
+  export const ToolResultBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_result'),
     tool_use_id: z.string(),
     // NOTE: could be a string too, but we force it to be an array for a better implementation
@@ -52,6 +60,10 @@ export namespace AnthropicWire_Blocks {
 
   export function ToolResultBlock(tool_use_id: string, content: z.infer<typeof ToolResultBlock_schema>['content'], is_error?: boolean): z.infer<typeof ToolResultBlock_schema> {
     return { type: 'tool_result', tool_use_id, content: content?.length ? content : undefined, is_error };
+  }
+
+  export function blockSetCacheControl(block: z.infer<typeof _CommonBlock_schema>, cacheControl: z.infer<typeof _CacheControl_schema>['type']): void {
+    block.cache_control = { type: cacheControl };
   }
 
 }
@@ -241,6 +253,8 @@ export namespace AnthropicWire_API_Message_Create {
     // Billing and rate-limit usage.
     usage: z.object({
       input_tokens: z.number(),
+      cache_creation_input_tokens: z.number().optional(),
+      cache_read_input_tokens: z.number().optional(),
       output_tokens: z.number(),
     }),
   });

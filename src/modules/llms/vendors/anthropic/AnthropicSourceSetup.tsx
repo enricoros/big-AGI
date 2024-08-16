@@ -5,6 +5,7 @@ import { Alert } from '@mui/joy';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -28,7 +29,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     useSourceSetup(props.sourceId, ModelVendorAnthropic);
 
   // derived state
-  const { anthropicKey, anthropicHost, heliconeKey } = access;
+  const { anthropicKey, anthropicHost, anthropicAutoCache, heliconeKey } = access;
 
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
@@ -56,6 +57,14 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
       value={anthropicKey} onChange={value => updateSetup({ anthropicKey: value })}
       required={needsUserKey} isError={keyError}
       placeholder='sk-...'
+    />
+
+    <FormSwitchControl
+      title='Prompt Auto-Caching' on='Enabled' off='Disabled'
+      tooltip='Caching makes new input a bit more expensive, and reusing the input much cheaper. Auto-breakpoints: always set on the last 2 user messages. See Anthropic docs for details and pricing.'
+      description={anthropicAutoCache ? <>Auto-breakpoints</> : 'Disabled'}
+      checked={anthropicAutoCache}
+      onChange={on => updateSetup({ anthropicAutoCache: on })}
     />
 
     {advanced.on && <FormTextField

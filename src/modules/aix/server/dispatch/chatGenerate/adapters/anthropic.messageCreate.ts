@@ -13,7 +13,7 @@ const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropi
 
 type TRequest = AnthropicWire_API_Message_Create.Request;
 
-export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
+export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, anthropicAutoCache: boolean): TRequest {
 
   // Convert the system message
   const systemMessage: TRequest['system'] =
@@ -41,6 +41,24 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     const hackSystemMessageFirstLine = (systemMessage[0]?.text || '').split('\n')[0];
     chatMessages.unshift({ role: 'user', content: [AnthropicWire_Blocks.TextBlock(hackSystemMessageFirstLine)] });
     console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
+  }
+
+  // If auto-caching is enabled, we will add the cache hints (AnthropicWire_Blocks.blockSetCacheControl(true)) to the last two messages with an user role, in-place
+  if (anthropicAutoCache && chatMessages.length) {
+    // Add cache_control to the system message
+    if (systemMessage?.length)
+      AnthropicWire_Blocks.blockSetCacheControl(systemMessage[0], 'ephemeral');
+
+    // Add cache_control to the end of the last two user messages
+    let breakpointsRemaining = 2;
+    for (let i = chatMessages.length - 1; i >= 0; i--) {
+      if (chatMessages[i].role === 'user' && chatMessages[i].content.length) {
+        const lastBlock = chatMessages[i].content[chatMessages[i].content.length - 1];
+        AnthropicWire_Blocks.blockSetCacheControl(lastBlock, 'ephemeral');
+        if (--breakpointsRemaining <= 0)
+          break;
+      }
+    }
   }
 
   // Construct the request payload
