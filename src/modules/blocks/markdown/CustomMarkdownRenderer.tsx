@@ -6,6 +6,7 @@ import { Components as ReactMarkdownComponents, default as ReactMarkdown } from 
 import { default as rehypeKatex } from 'rehype-katex';
 import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
+import { remarkMark } from 'remark-mark-highlight';
 
 import { Button } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -26,9 +27,14 @@ const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
 
 
 // Mark Renderer adds a yellow background to the text
-const MarkRenderer = ({ children }: { children: React.ReactNode }) => (
-  <mark style={{ backgroundColor: 'yellow', padding: '0.2em' }}>{children}</mark>
-);
+function MarkRenderer({ children }: { children: React.ReactNode }) {
+  // Mark by default has a yellow background, but we want to set a custom class here, so we can style it
+  return (
+    <mark className='agi-highlight'>
+      {children}
+    </mark>
+  );
+}
 
 
 // TableRenderer adds a CSV Download Link
@@ -106,12 +112,14 @@ function _extractTableData(children: React.JSX.Element) {
 
 const reactMarkdownComponents = {
   a: LinkRenderer, // override the link renderer to add target="_blank"
+  mark: MarkRenderer, // renders the <mark> tag
   table: TableRenderer, // override the table renderer to show the download CSV links
   // math/inlineMath components are not needed, rehype-katex handles this automatically
 } as ReactMarkdownComponents;
 
 const remarkPluginsStable: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
+  remarkMark, // Mark-Highlight, for ==yellow==
   [remarkMath, { singleDollarTextMath: false }], // Math
 ];
 
@@ -127,8 +135,12 @@ const rehypePluginsStable: UnifiedPluggable[] = [
  * with other markdown syntax.
  */
 const preprocessMarkdown = (markdownText: string) => markdownText
+  // Replace LaTeX delimiters with $$...$$
   .replace(/\s\\\((.*?)\\\)/gs, (_match, p1) => ` $$${p1}$$`) // Replace inline LaTeX delimiters \( and \) with $$
-  .replace(/\s\\\[(.*?)\\]/gs, (_match, p1) => ` $$${p1}$$`); // Replace block LaTeX delimiters \[ and \] with $$
+  .replace(/\s\\\[(.*?)\\]/gs, (_match, p1) => ` $$${p1}$$`) // Replace block LaTeX delimiters \[ and \] with $$
+  // Replace <mark>...</mark> with ==...==, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
+  .replace(/<mark>(.+?)<\/mark>/g, (_match, p1) => ` ==${p1}==`);
+
 
 export default function CustomMarkdownRenderer(props: { content: string }) {
   return (

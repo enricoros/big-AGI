@@ -61,6 +61,7 @@
     "react-timeago": "^7.2.0",
     "rehype-katex": "^7.0.0",
     "remark-gfm": "^4.0.0",
+    "remark-mark-highlight": "^0.1.1",
     "remark-math": "^6.0.0",
     "sharp": "^0.33.4",
     "superjson": "^2.2.1",
