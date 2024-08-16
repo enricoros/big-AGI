@@ -46,8 +46,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   // If auto-caching is enabled, we will add the cache hints (AnthropicWire_Blocks.blockSetCacheControl(true)) to the last two messages with an user role, in-place
   if (anthropicAutoCache && chatMessages.length) {
     // Add cache_control to the system message
-    if (systemMessage?.length)
-      AnthropicWire_Blocks.blockSetCacheControl(systemMessage[0], 'ephemeral');
+    // NOTE: 2024-08-16: disabled because the system message is most often too short and user attachments are in the first user message
+    // will enable again once Anthropic sorts things out
+    // if (systemMessage?.length)
+    //   AnthropicWire_Blocks.blockSetCacheControl(systemMessage[0], 'ephemeral');
 
     // Add cache_control to the end of the last two user messages
     let breakpointsRemaining = 2;
