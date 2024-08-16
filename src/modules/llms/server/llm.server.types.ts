@@ -4,16 +4,23 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, L
 
 // Model Description: a superset of LLM model descriptors
 
+/**
+ * All Costs are in USD per 1M tokens, unless noted otherwise
+ */
 const pricingSchema = z.object({
-  chatIn: z.number().optional(), // Cost per Million input tokens
-  chatOut: z.number().optional(), // Cost per Million output tokens
+  // Fresh Input, Input written to cache, Input read from cache
+  chatIn: z.number().optional(),
+  chatInCacheRead: z.number().optional(),
+  chatInCacheWrite: z.number().optional(),
+  // Output tokens (don't support non-linear pricing yet)
+  chatOut: z.number().optional(),
 });
 
 const benchmarkSchema = z.object({
   cbaElo: z.number().optional(),
   cbaMmlu: z.number().optional(),
-  heCode: z.number().optional(), // HumanEval, code, 0-shot
-  vqaMmmu: z.number().optional(), // Visual Question Answering, MMMU, 0-shot
+  // heCode: z.number().optional(), // HumanEval, code, 0-shot
+  // vqaMmmu: z.number().optional(), // Visual Question Answering, MMMU, 0-shot
 });
 
 // const rateLimitsSchema = z.object({

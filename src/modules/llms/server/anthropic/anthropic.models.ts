@@ -30,14 +30,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    pricing: { chatIn: 3, chatOut: 15 },
-    benchmark: {
-      heCode: 92.0,
-      vqaMmmu: 68.3,
-      // TODO: Update with official benchmarks when available
-      cbaElo: 1256 - 1, // Placeholder
-      cbaMmlu: 86.8 - 1, // Placeholder
-    },
+    pricing: { chatIn: 3, chatInCacheWrite: 3.75, chatInCacheRead: 0.30, chatOut: 15 },
+    benchmark: { cbaElo: 1271, cbaMmlu: 88.7 },
   },
   // {
   //   id: 'claude-3.5-haiku', // ...
@@ -66,8 +60,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    pricing: { chatIn: 15, chatOut: 75 },
-    benchmark: { cbaElo: 1256, cbaMmlu: 86.8 },
+    pricing: { chatIn: 15, chatInCacheWrite: 18.75, chatInCacheRead: 1.50, chatOut: 75 },
+    benchmark: { cbaElo: 1248, cbaMmlu: 86.8 },
   },
   {
     id: 'claude-3-sonnet-20240229',
@@ -79,7 +73,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     pricing: { chatIn: 3, chatOut: 15 },
-    benchmark: { cbaElo: 1203, cbaMmlu: 79 },
+    benchmark: { cbaElo: 1201, cbaMmlu: 79 },
     hidden: true,
   },
   {
@@ -91,8 +85,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    pricing: { chatIn: 0.25, chatOut: 1.25 },
-    benchmark: { cbaElo: 1181, cbaMmlu: 75.2 },
+    pricing: { chatIn: 0.25, chatInCacheWrite: 0.30, chatInCacheRead: 0.03, chatOut: 1.25 },
+    benchmark: { cbaElo: 1178, cbaMmlu: 75.2 },
   },
 
   // Claude 2 models
@@ -107,6 +101,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     pricing: { chatIn: 8, chatOut: 24 },
     benchmark: { cbaElo: 1119 },
     hidden: true,
+    isLegacy: true,
   },
   {
     id: 'claude-2.0',
@@ -119,6 +114,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     pricing: { chatIn: 8, chatOut: 24 },
     benchmark: { cbaElo: 1131, cbaMmlu: 78.5 },
     hidden: true,
+    isLegacy: true,
   },
   {
     id: 'claude-instant-1.2',
@@ -130,6 +126,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     interfaces: [LLM_IF_OAI_Chat],
     pricing: { chatIn: 0.8, chatOut: 2.4 },
     hidden: true,
+    isLegacy: true,
   },
   // {
   //   id: 'claude-instant-1.1',
