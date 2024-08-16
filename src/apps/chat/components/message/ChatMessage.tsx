@@ -32,7 +32,7 @@ import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -45,7 +45,7 @@ import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 import { useFragmentBuckets } from './useFragmentBuckets';
-import { useSelMatchIsSingle } from './useSelMatchIsSingle';
+import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
 
 // Enable the menu on text selection
@@ -179,7 +179,7 @@ export function ChatMessage(props: {
   } = useFragmentBuckets(messageFragments);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
-  const selMatchIsSingle = useSelMatchIsSingle(selText, contentFragments);
+  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, props.onMessageFragmentReplace);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
   const isSpecialT2I = textSubject.startsWith('https://images.prodia.xyz/') || textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
@@ -438,21 +438,6 @@ export function ChatMessage(props: {
     setBubbleAnchor(anchorEl);
     setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
   }, [closeBubble]);
-
-
-  const handleOpsMarkHighlight = React.useCallback((e: React.MouseEvent) => {
-    // Simplification: apples highlight when there's a perfect reverse match from text selection, which came from the html, which came from the markdown
-    if (selText?.length && selMatchIsSingle) {
-      const selectedFragment = contentFragments.find(fragment => isTextPart(fragment.part) && fragment.part.text.includes(selText));
-      if (selectedFragment && selectedFragment.part.pt === 'text') {
-        const newFragmentText = selectedFragment.part.text.replace(selText, `==${selText}==`);
-        handleFragmentReplace(selectedFragment.fId, createTextContentFragment(newFragmentText));
-      } else
-        console.log('[DEV] Could not find the fragment for the selected text:', selText);
-    }
-    e.preventDefault();
-    handleCloseOpsMenu();
-  }, [contentFragments, handleCloseOpsMenu, handleFragmentReplace, selMatchIsSingle, selText]);
 
 
   // Blocks renderer
@@ -895,12 +880,15 @@ export function ChatMessage(props: {
 
               {(!!props.onTextDiagram || !!props.onTextImagine || !!props.onTextSpeak) && <Divider />}
 
-              {/* Highlight (edits fragment) */}
-              <Tooltip disableInteractive arrow placement='top' title='Permanent Highlight'>
-                <IconButton disabled={!selMatchIsSingle} onClick={handleOpsMarkHighlight}>
-                  <MarkHighlightIcon highlightColor={selMatchIsSingle ? 'yellow' : undefined} />
+              {/* Highlight (edits fragment, only for assistant messages) */}
+              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Highlighter'>
+                <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
+                  handleHighlightSelText();
+                  closeBubble();
+                }}>
+                  <MarkHighlightIcon hcolor={handleHighlightSelText ? 'yellow' : undefined} />
                 </IconButton>
-              </Tooltip>
+              </Tooltip>}
 
               {/* Bubble Copy */}
               <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
