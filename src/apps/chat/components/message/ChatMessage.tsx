@@ -44,6 +44,7 @@ import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 import { useFragmentBuckets } from './useFragmentBuckets';
+import { useSelMatchIsSingle } from './useSelMatchIsSingle';
 
 
 // Enable the menu on text selection
@@ -176,12 +177,10 @@ export function ChatMessage(props: {
     nonImageAttachments,  // Document Attachments, likely the User dropped them in
   } = useFragmentBuckets(messageFragments);
 
-  const { fragmentText, selTextMatchCount } = React.useMemo(() => ({
-    fragmentText: messageFragmentsReduceText(contentFragments),
-    selTextMatchCount: (!selText || selText?.length < 3) ? 0 : contentFragments.filter(fragment => isTextPart(fragment.part) && fragment.part.text.includes(selText)).length,
-  }), [contentFragments, selText]);
+  const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
+  const selMatchIsSingle = useSelMatchIsSingle(selText, contentFragments);
 
-  const textSubject = selText ? selText : fragmentText;
+  const textSubject = selText ? selText : fragmentFlattenedText;
   const isSpecialT2I = textSubject.startsWith('https://images.prodia.xyz/') || textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
   const couldDiagram = textSubject.length >= 100 && !isSpecialT2I;
   const couldImagine = textSubject.length >= 3 && !isSpecialT2I;
