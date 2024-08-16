@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, ButtonGroup, CircularProgress, Divider, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -28,6 +28,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -437,6 +438,21 @@ export function ChatMessage(props: {
     setBubbleAnchor(anchorEl);
     setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
   }, [closeBubble]);
+
+
+  const handleOpsMarkHighlight = React.useCallback((e: React.MouseEvent) => {
+    // Simplification: apples highlight when there's a perfect reverse match from text selection, which came from the html, which came from the markdown
+    if (selText?.length && selMatchIsSingle) {
+      const selectedFragment = contentFragments.find(fragment => isTextPart(fragment.part) && fragment.part.text.includes(selText));
+      if (selectedFragment && selectedFragment.part.pt === 'text') {
+        const newFragmentText = selectedFragment.part.text.replace(selText, `==${selText}==`);
+        handleFragmentReplace(selectedFragment.fId, createTextContentFragment(newFragmentText));
+      } else
+        console.log('[DEV] Could not find the fragment for the selected text:', selText);
+    }
+    e.preventDefault();
+    handleCloseOpsMenu();
+  }, [contentFragments, handleCloseOpsMenu, handleFragmentReplace, selMatchIsSingle, selText]);
 
 
   // Blocks renderer
@@ -858,7 +874,8 @@ export function ChatMessage(props: {
               {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
               {/*  </IconButton>*/}
               {/*</Tooltip>}*/}
-              {!!onAddInReferenceTo && fromAssistant && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+
+              {!!onAddInReferenceTo && fromAssistant && <Divider />}
 
               {!!props.onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
                 <IconButton onClick={couldDiagram ? handleOpsDiagram : undefined}>
@@ -875,10 +892,18 @@ export function ChatMessage(props: {
                   {!props.isSpeaking ? <RecordVoiceOverOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
                 </IconButton>
               </Tooltip>}
-              {(!!props.onTextDiagram || !!props.onTextImagine || !!props.onTextSpeak) && <MoreVertIcon sx={{ color: 'neutral.outlinedBorder', fontSize: 'md' }} />}
+
+              {(!!props.onTextDiagram || !!props.onTextImagine || !!props.onTextSpeak) && <Divider />}
+
+              {/* Highlight (edits fragment) */}
+              <Tooltip disableInteractive arrow placement='top' title='Permanent Highlight'>
+                <IconButton disabled={!selMatchIsSingle} onClick={handleOpsMarkHighlight}>
+                  <MarkHighlightIcon highlightColor={selMatchIsSingle ? 'yellow' : undefined} />
+                </IconButton>
+              </Tooltip>
 
               {/* Bubble Copy */}
-              <Tooltip disableInteractive arrow placement='top' title='Copy'>
+              <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
                 <IconButton onClick={handleOpsCopy}>
                   <ContentCopyIcon />
                 </IconButton>
