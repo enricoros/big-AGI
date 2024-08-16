@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { useLiveFileStore } from '~/common/livefile/store-live-file';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -22,7 +21,8 @@ interface PatchState {
 // Helper function to apply patch (to be implemented)
 function applyPatch(srcContent: string, patch: string): string {
   // Implement patch application logic
-  return srcContent; // Placeholder
+  // FIXME: this just overwrites, LOL
+  return patch;
 }
 
 
@@ -68,7 +68,7 @@ export function usePatchingWorkflow(targetLiveFileId: LiveFileId | null, textBuf
   const generatePatch = React.useCallback(async (srcContent: string, code: string): Promise<string> => {
     setStatus({ message: 'Generating patch...', mtype: 'info' });
     // const patch = await generatePatch(srcContent, code);
-    const patchContent = '...';
+    const patchContent = code;
     setPatchState(prev => ({ ...prev, patchContent }));
     return patchContent;
   }, []);
@@ -110,6 +110,11 @@ export function usePatchingWorkflow(targetLiveFileId: LiveFileId | null, textBuf
     return writeSuccess;
   }, [canSave]);
 
+  const targetOverwriteWithPatch = React.useCallback(async () => {
+    if (!canSave) return;
+    await targetWriteAndReload(targetLiveFileId!, patchState.newContent!);
+  }, [canSave, patchState.newContent, targetLiveFileId, targetWriteAndReload]);
+
   // [effect] save changes once newContent is set
   // React.useEffect(() => {
   //   if (!canSave) return;
@@ -129,8 +134,10 @@ export function usePatchingWorkflow(targetLiveFileId: LiveFileId | null, textBuf
 
   return {
     status,
+    patchState,
     targetApplyPatch: verifyPatch,
     targetGeneratePatch: generatePatch,
     targetReloadFromDisk,
+    targetOverwriteWithPatch,
   };
 }

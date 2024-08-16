@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
-import { Box, Button, Chip, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
+import { Box, Button, Chip, ColorPaletteProp, Sheet } from '@mui/joy';
 
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -14,7 +14,6 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { isLiveFileSupported, liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 import { liveFileSheetSx } from '~/common/livefile/livefile.theme';
 import { usePatchingWorkflow } from '~/modules/blocks/enhanced-code/livefile-patch/usePatchingWorkflow';
-import { LiveFileReloadIcon } from '~/common/livefile/liveFile.icons';
 
 
 export function useLiveFilePatch(title: string, code: string, isPartial: boolean, isMobile: boolean) {
@@ -29,7 +28,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   const isEnabled = useUXLabsStore((state) => state.labsEnhanceCodeLiveFile && isLiveFileSupported());
 
 
-  const { status } = usePatchingWorkflow(liveFileId, code);
+  const { status, patchState, targetOverwriteWithPatch } = usePatchingWorkflow(liveFileId, code);
 
   // const processLiveFile = React.useCallback(async (fileId: LiveFileId) => {
   //   // reset state
@@ -181,19 +180,19 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
         </Button>
 
 
-        {/*{status.mtype === 'success' && patchState.newContent && (*/}
-        {/*  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>*/}
+        {status.mtype === 'success' && patchState.newContent && (
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
 
-        {/*    <Button onClick={handleSavePatch} color='success' size='sm'>*/}
-        {/*      Save Changes*/}
-        {/*    </Button>*/}
+            <Button onClick={targetOverwriteWithPatch} variant='outlined' color='success' size='sm'>
+              Overwrite File
+            </Button>
 
-        {/*    <Button onClick={() => processLiveFile(liveFileId)} color='neutral' size='sm'>*/}
-        {/*      Regenerate Patch*/}
-        {/*    </Button>*/}
+            {/*<Button onClick={() => processLiveFile(liveFileId)} color='neutral' size='sm'>*/}
+            {/*  Regenerate Patch*/}
+            {/*</Button>*/}
 
-        {/*  </Box>*/}
-        {/*)}*/}
+          </Box>
+        )}
 
       </Sheet>
     );
