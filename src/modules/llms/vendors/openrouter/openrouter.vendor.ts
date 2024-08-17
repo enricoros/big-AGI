@@ -58,7 +58,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   }),
 
   // there is delay for OpenRouter Free API calls
-  getRateLimitDelay: (llm) => {
+  rateLimitChatGenerate: async (llm) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
     const wait = llm.pricing?.chat?._isFree
@@ -68,12 +68,12 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
     if (elapsed < wait) {
       const delay = wait - elapsed;
       nextGenerationTs = now + delay;
-      return delay;
+      await new Promise(resolve => setTimeout(resolve, delay));
     } else {
       nextGenerationTs = now;
-      return 0;
     }
   },
+
 
   // OpenAI transport ('openrouter' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
