@@ -1,17 +1,18 @@
 import { apiAsync } from '~/common/util/trpc.client';
 
-import type { DModelSourceId } from '../../llms/store-llms';
 import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
-import { findAccessForSourceOrThrow } from '../../llms/vendors/vendors.registry';
+
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { T2iCreateImageOutput } from '../t2i.server';
-
 import { useDalleStore } from './store-module-dalle';
+
 
 /**
  * Client function to call the OpenAI image generation API.
  */
-export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
+export async function openAIGenerateImagesOrThrow(modelServiceId: DModelsServiceId, prompt: string, count: number): Promise<T2iCreateImageOutput[]> {
 
   // Use the current settings
   const {
@@ -30,7 +31,7 @@ export async function openAIGenerateImagesOrThrow(modelSourceId: DModelSourceId,
   // Function to generate images in batches
   const generateImagesBatch = async (imageCount: number): Promise<T2iCreateImageOutput[]> =>
     apiAsync.llmOpenAI.createImages.mutate({
-      access: findAccessForSourceOrThrow<unknown, OpenAIAccessSchema>(modelSourceId).transportAccess,
+      access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceId).transportAccess,
       config: {
         prompt,
         count: imageCount,

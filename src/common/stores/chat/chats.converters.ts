@@ -1,10 +1,10 @@
 import type { SystemPurposeId } from '../../../data';
 
-import type { DModelSource } from '~/modules/llms/store-llms';
-
 import type { DFolder } from '~/common/state/store-folders';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
+
+import type { DModelsService } from '~/common/stores/llms/dmodelsservice.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage } from './chat.message';
@@ -145,7 +145,7 @@ export namespace DataAtRestV1 {
   /// Head -> Rest V1 ///
 
   /** Used by: downloadAllJsonV1B */
-  export function formatAllToJsonV1B(conversations: DConversation[], modelSources: DModelSource[], folders: DFolder[], enableFolders: boolean): RestAllJsonV1B {
+  export function formatAllToJsonV1B(conversations: DConversation[], modelSources: DModelsService[], folders: DFolder[], enableFolders: boolean): RestAllJsonV1B {
     return {
       conversations: (conversations || []).map(formatChatToJsonV1),
       models: { sources: modelSources },
@@ -172,7 +172,7 @@ export namespace DataAtRestV1 {
 
   export type RestAllJsonV1B = {
     conversations: RestChatJsonV1[];
-    models: { sources: DModelSource[] };
+    models: { sources: DModelsService[] };
     folders?: { folders: RestFolderJsonV1[]; enableFolders: boolean };
   }
 

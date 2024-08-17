@@ -6,14 +6,15 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import { findLLMOrThrow } from '~/modules/llms/store-llms';
-import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
+import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
@@ -57,7 +58,7 @@ export function Fusion(props: {
         const llm = findLLMOrThrow(llmId);
         return {
           llmLabel: llm.label,
-          llmVendorIcon: findVendorById(llm._source?.vId)?.Icon,
+          llmVendorIcon: findModelVendor(llm.vId)?.Icon,
         };
       } catch (e) {
       }

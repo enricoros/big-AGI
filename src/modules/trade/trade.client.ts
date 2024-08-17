@@ -2,8 +2,6 @@ import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
-import { useModelsStore } from '~/modules/llms/store-llms';
-
 import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -13,6 +11,7 @@ import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/state/store-folders';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { ImportedOutcome } from './ImportOutcomeModal';
 

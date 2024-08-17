@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert, Typography } from '@mui/joy';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -10,9 +11,8 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorTogetherAI } from './togetherai.vendor';
 
@@ -20,27 +20,28 @@ import { ModelVendorTogetherAI } from './togetherai.vendor';
 const TOGETHERAI_REG_LINK = 'https://api.together.xyz/settings/api-keys';
 
 
-export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
+export function TogetherAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
   const advanced = useToggleableBoolean();
 
   // external state
   const {
-    source, sourceHasLLMs, access,
-    partialSetup, sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
-  } = useSourceSetup(props.sourceId, ModelVendorTogetherAI);
+    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    partialSettings, serviceSetupValid, updateSettings,
+  } = useServiceSetup(props.serviceId, ModelVendorTogetherAI);
 
   // derived state
-  const { oaiKey: togetherKey } = access;
+  const { oaiKey: togetherKey } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
   // validate if url is a well formed proper url with zod
-  const shallFetchSucceed = !needsUserKey || (!!togetherKey && sourceSetupValid);
-  const showKeyError = !!togetherKey && !sourceSetupValid;
+  const shallFetchSucceed = !needsUserKey || (!!togetherKey && serviceSetupValid);
+  const showKeyError = !!togetherKey && !serviceSetupValid;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
 
   return <>
@@ -51,7 +52,7 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
         ? !togetherKey && <Link level='body-sm' href={TOGETHERAI_REG_LINK} target='_blank'>request Key</Link>
         : <AlreadySet />}
       </>}
-      value={togetherKey} onChange={value => updateSetup({ togetherKey: value })}
+      value={togetherKey} onChange={value => updateSettings({ togetherKey: value })}
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
@@ -64,12 +65,12 @@ export function TogetherAISourceSetup(props: { sourceId: DModelSourceId }) {
 
     {advanced.on && <FormSwitchControl
       title='Rate Limiter' on='Enabled' off='Disabled'
-      description={partialSetup?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
-      checked={partialSetup?.togetherFreeTrial ?? false}
-      onChange={on => updateSetup({ togetherFreeTrial: on })}
+      description={partialSettings?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
+      checked={partialSettings?.togetherFreeTrial ?? false}
+      onChange={on => updateSettings({ togetherFreeTrial: on })}
     />}
 
-    {advanced.on && !!partialSetup?.togetherFreeTrial && <Alert variant='soft'>
+    {advanced.on && !!partialSettings?.togetherFreeTrial && <Alert variant='soft'>
       Note: Please refresh the models list if you toggle the rate limiter.
     </Alert>}
 

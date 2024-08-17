@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Badge } from '@mui/joy';
 
+import type { DModelPricingV1 } from '~/common/stores/llms/dllm.types';
+
 import { formatTokenCost, tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 
 
@@ -16,6 +18,8 @@ function TokenBadge(props: {
   responseMax?: number,
   limit: number,
 
+  // FIXME: continue from here
+  tokenPricing?: DModelPricingV1,
   tokenPriceIn?: number,
   tokenPriceOut?: number,
 

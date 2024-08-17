@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Typography } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
@@ -11,21 +12,20 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { VideoPlayer } from '~/common/components/VideoPlayer';
 
-import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorLMStudio } from './lmstudio.vendor';
 
 
-export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
+export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { source, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorLMStudio);
+  const { service, serviceAccess, updateSettings } =
+    useServiceSetup(props.serviceId, ModelVendorLMStudio);
 
   // derived state
-  const { oaiHost } = access;
+  const { oaiHost } = serviceAccess;
 
   // validate if url is a well formed proper url with zod
   const urlSchema = z.string().url().startsWith('http');
@@ -34,7 +34,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(false /* use button only (we don't have server-side conf) */, source);
+    useLlmUpdateModels(false /* use button only (we don't have server-side conf) */, service);
 
   return <>
 
@@ -59,7 +59,7 @@ export function LMStudioSourceSetup(props: { sourceId: DModelSourceId }) {
       required noKey
       rightLabel={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-lmstudio.md' target='_blank'>Learn more</Link>}
       placeholder='e.g., http://127.0.0.1:1234'
-      value={oaiHost} onChange={value => updateSetup({ oaiHost: value })}
+      value={oaiHost} onChange={value => updateSettings({ oaiHost: value })}
     />
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />

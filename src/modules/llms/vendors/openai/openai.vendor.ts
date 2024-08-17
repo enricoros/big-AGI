@@ -7,7 +7,7 @@ import type { VChatContextRef, VChatGenerateContextName, VChatMessageOrFunctionC
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
 import { OpenAILLMOptions } from './OpenAILLMOptions';
-import { OpenAISourceSetup } from './OpenAISourceSetup';
+import { OpenAIServiceSetup } from './OpenAIServiceSetup';
 
 
 // shared constants
@@ -18,7 +18,7 @@ export const FALLBACK_LLM_TEMPERATURE = 0.5;
 // special symbols
 // export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.startsWith('sk-') && apiKey.length > 40;
 
-export interface SourceSetupOpenAI {
+export interface DOpenAIServiceSettings {
   oaiKey: string;
   oaiOrg: string;
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
@@ -26,13 +26,13 @@ export interface SourceSetupOpenAI {
   moderationCheck: boolean;
 }
 
-export interface LLMOptionsOpenAI {
+export interface DOpenAILLMOptions {
   llmRef: string;
   llmTemperature: number;
   llmResponseTokens: number | null;
 }
 
-export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSchema, LLMOptionsOpenAI> = {
+export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'openai',
   name: 'OpenAI',
   rank: 10,
@@ -42,7 +42,7 @@ export const ModelVendorOpenAI: IModelVendor<SourceSetupOpenAI, OpenAIAccessSche
 
   // components
   Icon: OpenAIIcon,
-  SourceSetupComponent: OpenAISourceSetup,
+  ServiceSetupComponent: OpenAIServiceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions

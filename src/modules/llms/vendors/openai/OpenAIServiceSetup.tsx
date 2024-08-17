@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { Brand } from '~/common/app.config';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
@@ -12,9 +13,8 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOpenAI } from './openai.vendor';
 
@@ -23,17 +23,18 @@ import { ModelVendorOpenAI } from './openai.vendor';
 const HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 
 
-export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
+export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
-  const advanced = useToggleableBoolean(!!props.sourceId?.includes('-'));
+  const advanced = useToggleableBoolean(!!props.serviceId?.includes('-'));
 
   // external state
-  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorOpenAI);
+  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, updateSettings } =
+    useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
-  const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = access;
+  const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -41,7 +42,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
   return <>
 
@@ -52,7 +53,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
         : <AlreadySet />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
-      value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
+      value={oaiKey} onChange={value => updateSettings({ oaiKey: value })}
       required={needsUserKey} isError={keyError}
       placeholder='sk-...'
     />
@@ -64,7 +65,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       description={<><Link level='body-sm' href='https://www.helicone.ai' target='_blank'>Helicone</Link>, <Link level='body-sm' href='https://developers.cloudflare.com/ai-gateway/' target='_blank'>Cloudflare</Link></>}
       placeholder={`e.g., ${HELICONE_OPENAI_HOST}, https://gateway.ai.cloudflare.com/v1/<ACCOUNT_TAG>/<GATEWAY_URL_SLUG>/openai, etc..`}
       value={oaiHost}
-      onChange={text => updateSetup({ oaiHost: text })}
+      onChange={text => updateSettings({ oaiHost: text })}
     />}
 
     {advanced.on && <FormTextField
@@ -73,7 +74,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
       value={oaiOrg}
-      onChange={text => updateSetup({ oaiOrg: text })}
+      onChange={text => updateSettings({ oaiOrg: text })}
     />}
 
     {advanced.on && <FormTextField
@@ -82,7 +83,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'
       value={heliKey}
-      onChange={text => updateSetup({ heliKey: text })}
+      onChange={text => updateSettings({ heliKey: text })}
     />}
 
     {!!heliKey && <Alert variant='soft' color={oaiHost?.includes(HELICONE_OPENAI_HOST) ? 'success' : 'warning'}>
@@ -98,7 +99,7 @@ export function OpenAISourceSetup(props: { sourceId: DModelSourceId }) {
         {' '}<Link level='body-sm' href='https://openai.com/policies/usage-policies' target='_blank'>policy</Link>
       </>}
       checked={moderationCheck}
-      onChange={on => updateSetup({ moderationCheck: on })}
+      onChange={on => updateSettings({ moderationCheck: on })}
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />

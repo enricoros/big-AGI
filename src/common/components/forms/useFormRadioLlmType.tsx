@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { DLLM, useModelsStore } from '~/modules/llms/store-llms';
+import type { DLLM } from '~/common/stores/llms/dllm.types';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
-import { FormRadioOption } from './FormRadioControl';
+import type { FormRadioOption } from './FormRadioControl';
 import { useFormRadio } from './useFormRadio';
 
 

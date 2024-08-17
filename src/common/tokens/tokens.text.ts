@@ -1,6 +1,6 @@
 import type { Tiktoken, TiktokenEncoding, TiktokenModel } from 'tiktoken';
 
-import type { DLLM } from '~/modules/llms/store-llms';
+import type { DLLM } from '~/common/stores/llms/dllm.types';
 
 
 // Do not set this to true in production, it's very verbose

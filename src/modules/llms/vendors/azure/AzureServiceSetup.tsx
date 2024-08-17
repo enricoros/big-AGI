@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -8,21 +9,21 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { asValidURL } from '~/common/util/urlUtils';
 
-import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { isValidAzureApiKey, ModelVendorAzure } from './azure.vendor';
 
 
-export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
+export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { source, sourceHasLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorAzure);
+  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, updateSettings } =
+    useServiceSetup(props.serviceId, ModelVendorAzure);
 
   // derived state
-  const { oaiKey: azureKey, oaiHost: azureEndpoint } = access;
+  const { oaiKey: azureKey, oaiHost: azureEndpoint } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
   const keyValid = isValidAzureApiKey(azureKey);
   const keyError = (/*needsUserKey ||*/ !!azureKey) && !keyValid;
@@ -32,7 +33,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
   return <>
 
@@ -43,7 +44,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='https://your-resource-name.openai.azure.com/'
       isError={hostError}
       value={azureEndpoint}
-      onChange={text => updateSetup({ azureEndpoint: text })}
+      onChange={text => updateSettings({ azureEndpoint: text })}
     />
 
     <FormInputKey
@@ -52,7 +53,7 @@ export function AzureSourceSetup(props: { sourceId: DModelSourceId }) {
         ? !azureKey && <Link level='body-sm' href='https://azure.microsoft.com/en-us/products/ai-services/openai-service' target='_blank'>request Key</Link>
         : <AlreadySet />}
       </>}
-      value={azureKey} onChange={value => updateSetup({ azureKey: value })}
+      value={azureKey} onChange={value => updateSettings({ azureKey: value })}
       required={needsUserKey} isError={keyError}
       placeholder='...'
     />

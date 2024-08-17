@@ -1,9 +1,10 @@
-import type { DLLM } from '~/modules/llms/store-llms';
+import type { DLLM } from '~/common/stores/llms/dllm.types';
 
 
 export function imageTokensForLLM(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM) {
   // for the guidelines, see `attachment.pipeline.ts` (lists the latest URLs)
-  switch (llm._source?.vId) {
+  // Note: we may resolve the service or use the access, for non-OpenAI services even if they're on the OpenAI protocol
+  switch (llm.vId) {
     case 'openai':
       // missing values
       if (!width || !height) {
@@ -51,7 +52,7 @@ export function imageTokensForLLM(width: number | undefined, height: number | un
       return 258;
 
     default:
-      console.warn('Unhandled token preview for image with llm:', llm._source?.vId);
+      console.warn('Unhandled token preview for image with llm:', llm.vId);
       return 0;
   }
 }

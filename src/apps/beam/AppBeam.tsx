@@ -6,12 +6,12 @@ import { Box, Button, Typography } from '@mui/joy';
 import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 import { BeamView } from '~/modules/beam/BeamView';
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
-import { useModelsStore } from '~/modules/llms/store-llms';
 
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 
 function initTestConversation(): DConversation {

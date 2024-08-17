@@ -1,8 +1,8 @@
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { apiAsync } from '~/common/util/trpc.client';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
 import type { ChatStreamingInputSchema, ChatStreamingPreambleModelSchema, ChatStreamingPreambleStartSchema } from '../server/llm.server.streaming';
-import type { DLLMId } from '../store-llms';
 import type { VChatContextRef, VChatFunctionIn, VChatMessageIn, VChatStreamContextName } from '../llm.client';
 
 import type { OpenAIAccessSchema } from '../server/openai/openai.router';
@@ -23,7 +23,7 @@ export type StreamingClientUpdate = Partial<{
  *
  * NOTE: onUpdate is callback when a piece of a message (text, model name, typing..) is received
  */
-export async function unifiedStreamingClient<TSourceSetup = unknown, TLLMOptions = unknown>(
+export async function unifiedStreamingClient<TLLMOptions = unknown>(
   access: ChatStreamingInputSchema['access'],
   llmId: DLLMId,
   llmOptions: TLLMOptions,

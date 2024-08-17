@@ -1,7 +1,9 @@
 import * as React from 'react';
 
-import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
+
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
 // set to true to log to the console

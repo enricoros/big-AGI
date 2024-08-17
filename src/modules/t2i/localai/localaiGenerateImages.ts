@@ -1,6 +1,6 @@
 // import { apiAsync } from '~/common/util/trpc.client';
 //
-// import type { DModelSourceId } from '~/modules/llms/store-llms';
+// import type { DModelsServiceId } from '~/modules/llms/store-llms';
 // import { findAccessForSourceOrThrow } from '~/modules/llms/vendors/vendors.registry';
 //
 // /*
@@ -10,7 +10,7 @@
 //  * To be continued.
 //  */
 //
-// export async function localaiGenerateImages(modelSourceId: DModelSourceId, prompt: string, _count: number): Promise<string[]> {
+// export async function localaiGenerateImages(modelsServiceId: DModelsServiceId, prompt: string, _count: number): Promise<string[]> {
 //
 //   // parallelize the image generation depending on how many images can a model generate
 //   const imagePromises: Promise<string[]>[] = [];
@@ -20,7 +20,7 @@
 //     const perRequestCount = 1; // Math.min(_count, isD3 ? 1 : 10);
 //
 //     const imageRefPromise = apiAsync.llmOpenAI.createImages.mutate({
-//       access: findAccessForSourceOrThrow(modelSourceId),
+//       access: findAccessForSourceOrThrow(modelsServiceId),
 //       config: {
 //         prompt: prompt,
 //         count: perRequestCount,

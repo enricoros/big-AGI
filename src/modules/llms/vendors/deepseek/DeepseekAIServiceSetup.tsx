@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
@@ -7,9 +8,8 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorDeepseek } from './deepseekai.vendor';
 
@@ -17,27 +17,28 @@ import { ModelVendorDeepseek } from './deepseekai.vendor';
 const DEEPSEEK_REG_LINK = 'https://platform.deepseek.com/api_keys';
 
 
-export function DeepseekAISourceSetup(props: { sourceId: DModelSourceId }) {
+export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
   const advanced = useToggleableBoolean();
 
   // external state
   const {
-    source, sourceHasLLMs, access,
-    sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
-  } = useSourceSetup(props.sourceId, ModelVendorDeepseek);
+    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    serviceSetupValid, updateSettings,
+  } = useServiceSetup(props.serviceId, ModelVendorDeepseek);
 
   // derived state
-  const { oaiKey: deepseekKey } = access;
+  const { oaiKey: deepseekKey } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
   // validate if url is a well formed proper url with zod
-  const shallFetchSucceed = !needsUserKey || (!!deepseekKey && sourceSetupValid);
-  const showKeyError = !!deepseekKey && !sourceSetupValid;
+  const shallFetchSucceed = !needsUserKey || (!!deepseekKey && serviceSetupValid);
+  const showKeyError = !!deepseekKey && !serviceSetupValid;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
 
   return <>
@@ -48,7 +49,7 @@ export function DeepseekAISourceSetup(props: { sourceId: DModelSourceId }) {
         ? !deepseekKey && <Link level='body-sm' href={DEEPSEEK_REG_LINK} target='_blank'>request Key</Link>
         : <AlreadySet />}
       </>}
-      value={deepseekKey} onChange={value => updateSetup({ deepseekKey: value })}
+      value={deepseekKey} onChange={value => updateSettings({ deepseekKey: value })}
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />

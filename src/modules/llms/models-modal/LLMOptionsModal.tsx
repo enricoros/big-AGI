@@ -7,11 +7,12 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import type { DLLMId, DModelPricingV1, ModelPriceOrBreakpoints, ModelPricePerToken } from '~/common/stores/llms/dllm.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
-import { DLLMId, useModelsStore } from '../store-llms';
-import { findVendorById } from '../vendors/vendors.registry';
+import { findModelVendor } from '../vendors/vendors.registry';
 
 
 function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
@@ -21,11 +22,44 @@ function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
     return 'Options issue: LLM not found for id ' + props.llmId;
 
   // get vendor
-  const vendor = findVendorById(llm._source.vId);
+  const vendor = findModelVendor(llm.vId);
   if (!vendor)
-    return 'Options issue: Vendor not found for LLM ' + props.llmId + ', source ' + llm._source.id;
+    return `Options issue: Vendor not found for LLM ${props.llmId}, service ${llm.sId}, vendor ${llm.vId}`;
 
   return <vendor.LLMOptionsComponent llm={llm} />;
+}
+
+
+function prettyPricingComponent(chatPricing: DModelPricingV1['chat']): React.ReactNode {
+  if (!chatPricing) return 'Pricing not available';
+
+  const formatPrice = (price: ModelPricePerToken | ModelPriceOrBreakpoints | undefined): string => {
+    if (!price) return 'N/A';
+    if (price === 'free') return 'Free';
+    if (typeof price === 'number') return `$${price.toFixed(4)}`;
+    if (Array.isArray(price)) {
+      return price.map(bp => `${bp.iTo === null ? '>' : '<='} ${bp.iTo} tokens: ${formatPrice(bp.p)}`).join(', ');
+    }
+    return 'Unknown';
+  };
+
+  const inputPrice = formatPrice(chatPricing.input);
+  const outputPrice = formatPrice(chatPricing.output);
+
+  let cacheInfo = '';
+  if (chatPricing.cache) {
+    const { read, write, duration } = chatPricing.cache;
+    cacheInfo = `Cache: Read ${formatPrice(read)}, Write ${formatPrice(write)}, Duration: ${duration}s`;
+  }
+
+  return (
+    <Typography level='body-sm'>
+      <strong>Pricing ($/M tokens):</strong><br />
+      Input: {inputPrice}<br />
+      Output: {outputPrice}<br />
+      {cacheInfo && <>{cacheInfo}<br /></>}
+    </Typography>
+  );
 }
 
 
@@ -135,7 +169,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
-            {!!llm.pricing && <>pricing: $<b>{llm.pricing.chatIn || '(unk) '}</b>/M in, $<b>{llm.pricing.chatOut || '(unk) '}</b>/M out<br /></>}
+            {!!llm.pricing?.chat && prettyPricingComponent(llm.pricing.chat)}
             {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
             config: {JSON.stringify(llm.options)}
           </Typography>

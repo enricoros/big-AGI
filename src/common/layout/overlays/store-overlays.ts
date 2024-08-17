@@ -23,7 +23,8 @@ export type GlobalOverlayId = // string - disabled so we keep an orderliness
   | 'livefile-overwrite'
   | 'shortcuts-confirm-close'
   | 'blocks-off-enhance-code'
-  // | 'agi-patch-workflow-save' // make sure we use it
+  | 'llms-service-remove'
+// | 'agi-patch-workflow-save' // make sure we use it
   ;
 
 interface OverlayActions {

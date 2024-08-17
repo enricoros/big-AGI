@@ -4,28 +4,30 @@ import { Box, Button, Typography } from '@mui/joy';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
-import { DModelSourceId, useModelsStore } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
 
 
-export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
+export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { source, sourceHasLLMs, sourceHasVisibleLLMs, access, hasNoBackendCap: needsUserKey, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorOpenRouter);
+  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceHasVisibleLLMs, updateSettings } =
+    useServiceSetup(props.serviceId, ModelVendorOpenRouter);
 
   // derived state
-  const { oaiKey } = access;
+  const { oaiKey } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;
@@ -33,7 +35,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source, true);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service, true);
 
 
   const handleOpenRouterLogin = () => {
@@ -44,12 +46,16 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
     // ...bye / see you soon at the callback location...
   };
 
-  const handleHideNonFreeLLMs = () => {
+  const handleRemoveNonFreeLLMs = () => {
     // A bit of a hack
     const { llms, removeLLM } = useModelsStore.getState();
     llms
-      .filter(llm => llm.sId === props.sourceId)
-      .filter(llm => llm.pricing?.chatIn !== 0 && llm.pricing?.chatOut !== 0)
+      .filter(llm => llm.sId === props.serviceId)
+      .filter(llm => {
+        const chatPricing = llm.pricing?.chat || undefined;
+        if (!chatPricing) return true;
+        return chatPricing.input !== 'free' || chatPricing.output !== 'free';
+      })
       // .forEach(llm => updateLLM(llm.id, { hidden: true }));
       .forEach(llm => removeLLM(llm.id));
   };
@@ -57,9 +63,9 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
   const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
     const { llms, updateLLM } = useModelsStore.getState();
     llms
-      .filter(llm => llm.sId === props.sourceId)
+      .filter(llm => llm.sId === props.serviceId)
       .forEach(llm => updateLLM(llm.id, { hidden: !visible }));
-  }, [props.sourceId]);
+  }, [props.serviceId]);
 
   return <>
 
@@ -78,7 +84,7 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
         : <AlreadySet />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://openrouter.ai/activity' target='_blank'>check usage</Link>}
       </>}
-      value={oaiKey} onChange={value => updateSetup({ oaiKey: value })}
+      value={oaiKey} onChange={value => updateSettings({ oaiKey: value })}
       required={needsUserKey} isError={keyError}
       placeholder='sk-or-...'
     />
@@ -101,16 +107,16 @@ export function OpenRouterSourceSetup(props: { sourceId: DModelSourceId }) {
           </Button>
           <Button
             color='neutral' variant='outlined' size='sm'
-            onClick={handleHideNonFreeLLMs}
+            onClick={handleRemoveNonFreeLLMs}
           >
             Only Free 🎁
           </Button>
           <Button
             color='neutral' variant='outlined' size='sm'
-            onClick={() => handleSetVisibilityAll(!sourceHasVisibleLLMs)}
-            endDecorator={sourceHasVisibleLLMs ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+            onClick={() => handleSetVisibilityAll(!serviceHasVisibleLLMs)}
+            endDecorator={serviceHasVisibleLLMs ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
           >
-            {sourceHasVisibleLLMs ? 'Hide' : 'Show'} All
+            {serviceHasVisibleLLMs ? 'Hide' : 'Show'} All
           </Button>
         </Box>
       }

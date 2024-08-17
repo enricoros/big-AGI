@@ -1,8 +1,10 @@
-import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
-
-import { browserLangOrUS } from '~/common/util/pwaUtils';
-import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
 import { suggestUIMixin } from '~/modules/aifn/autosuggestions/autoSuggestions';
+
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import { browserLangOrUS } from '~/common/util/pwaUtils';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
+
+import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
 
 /*type Variables =
   | '{{Today}}'

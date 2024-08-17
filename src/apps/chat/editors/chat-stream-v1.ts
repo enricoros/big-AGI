@@ -1,10 +1,10 @@
-import type { DLLMId } from '~/modules/llms/store-llms';
 import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStreamingClient';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, messageFragmentsReduceText, messageFragmentsReplaceLastContentText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 
