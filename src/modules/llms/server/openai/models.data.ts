@@ -23,7 +23,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 0.15, chatOut: 0.60 },
+    chatPrice: { input: 0.15, output: 0.60 },
     benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
   },
   {
@@ -37,7 +37,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 0.15, chatOut: 0.60 },
+    chatPrice: { input: 0.15, output: 0.60 },
     benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
   },
 
@@ -53,7 +53,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 5, chatOut: 15 },
+    chatPrice: { input: 5, output: 15 },
     benchmark: { cbaElo: 1286 },
   },
   {
@@ -65,18 +65,18 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 2.5, chatOut: 10 },
+    chatPrice: { input: 2.5, output: 10 },
     benchmark: { cbaElo: 1286 + 1 },
   },
   {
     idPrefix: 'gpt-4o-2024-05-13',
     label: 'GPT-4o (2024-05-13)',
-    description: 'Advanced, multimodal flagship model that’s cheaper and faster than GPT-4 Turbo.',
+    description: 'Advanced, multimodal flagship model that\'s cheaper and faster than GPT-4 Turbo.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 5, chatOut: 15 },
+    chatPrice: { input: 5, output: 15 },
     benchmark: { cbaElo: 1286 },
     hidden: true,
   },
@@ -93,7 +93,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1257 },
   },
   {
@@ -104,7 +104,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1257 },
   },
 
@@ -121,7 +121,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1245 },
   },
   {
@@ -132,7 +132,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1245 },
     hidden: true,
   },
@@ -144,7 +144,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1251 },
     hidden: true,
   },
@@ -161,7 +161,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     hidden: true, // Deprecated in favor of gpt-4-turbo
   },
   {
@@ -173,7 +173,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Apr 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 10, chatOut: 30 },
+    chatPrice: { input: 10, output: 30 },
     hidden: true, // Deprecated in favor of gpt-4-turbo
   },
 
@@ -188,7 +188,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 60, chatOut: 120 },
+    chatPrice: { input: 60, output: 120 },
     hidden: true,
   },
   {
@@ -198,7 +198,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 60, chatOut: 120 },
+    chatPrice: { input: 60, output: 120 },
     hidden: true,
   },
   {
@@ -208,7 +208,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 60, chatOut: 120 },
+    chatPrice: { input: 60, output: 120 },
     hidden: true,
   },
 
@@ -221,7 +221,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 30, chatOut: 60 },
+    chatPrice: { input: 30, output: 60 },
     benchmark: { cbaElo: 1161 },
   },
   {
@@ -231,7 +231,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 30, chatOut: 60 },
+    chatPrice: { input: 30, output: 60 },
     benchmark: { cbaElo: 1186 },
     hidden: true,
   },
@@ -245,7 +245,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 8192,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 30, chatOut: 60 },
+    chatPrice: { input: 30, output: 60 },
     benchmark: { cbaElo: 1161 },
     isLegacy: true,
   },
@@ -259,7 +259,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 4097,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [/* NO: LLM_IF_OAI_Chat,*/ LLM_IF_OAI_Complete],
-    pricing: { chatIn: 1.5, chatOut: 2 },
+    chatPrice: { input: 1.5, output: 2 },
     hidden: true,
   },
 
@@ -272,7 +272,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 0.5, chatOut: 1.5 },
+    chatPrice: { input: 0.5, output: 1.5 },
     benchmark: { cbaElo: 1105 },
   },
   {
@@ -283,7 +283,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 1, chatOut: 2 },
+    chatPrice: { input: 1, output: 2 },
     benchmark: { cbaElo: 1072 },
     hidden: true,
   },
@@ -298,7 +298,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 0.5, chatOut: 1.5 },
+    chatPrice: { input: 0.5, output: 1.5 },
     benchmark: { cbaElo: 1105 },
   },
 
@@ -372,10 +372,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat],
     maxCompletionTokens: 4096,
-    pricing: {
-      chatIn: 0.14,
-      chatOut: 0.28,
-    },
+    chatPrice: { input: 0.14, output: 0.28 },
   },
   {
     idPrefix: 'deepseek-coder',
@@ -384,10 +381,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat],
     maxCompletionTokens: 4096,
-    pricing: {
-      chatIn: 0.14,
-      chatOut: 0.28,
-    },
+    chatPrice: { input: 0.14, output: 0.28 },
   },
 ];
 
@@ -463,14 +457,24 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 // and the pricing available on: https://mistral.ai/technology/#pricing
 
 const _knownMistralChatModels: ManualMappings = [
+  // Mistral Nemo
+  {
+    idPrefix: 'open-mistral-nemo-2407',
+    label: 'Mistral Nemo (2407)',
+    description: 'Mistral Nemo is a state-of-the-art 12B model developed with NVIDIA.',
+    contextWindow: 131072, // 128K tokens
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 0.3, output: 0.3 },
+  },
+
   // Codestral
   {
     idPrefix: 'codestral-2405',
     label: 'Codestral (2405)',
-    description: 'Designed and optimized for code generation tasks.',
+    description: 'State-of-the-art Mistral model trained specifically for code tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 1, chatOut: 3 },
+    chatPrice: { input: 1, output: 3 },
   },
   {
     idPrefix: 'codestral-latest',
@@ -478,32 +482,40 @@ const _knownMistralChatModels: ManualMappings = [
     symLink: 'mistral-codestral-2405',
     hidden: true,
     // copied
-    description: 'Designed and optimized for code generation tasks.',
+    description: 'State-of-the-art Mistral model trained specifically for code tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 1, chatOut: 3 },
+    chatPrice: { input: 1, output: 3 },
   },
 
   // Large
+  {
+    idPrefix: 'mistral-large-2407',
+    label: 'Mistral Large 2 (2407)',
+    description: 'Top-tier reasoning for high-complexity tasks, for your most sophisticated needs.',
+    contextWindow: 131072, // 128K tokens
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 3, output: 9 },
+  },
   {
     idPrefix: 'mistral-large-2402',
     label: 'Mistral Large (2402)',
     description: 'Top-tier reasoning for high-complexity tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 4, chatOut: 12 },
+    chatPrice: { input: 4, output: 12 },
     benchmark: { cbaElo: 1159 },
   },
   {
     idPrefix: 'mistral-large-latest',
     label: 'Mistral Large (latest)',
-    symLink: 'mistral-large-2402',
+    symLink: 'mistral-large-2407',
     hidden: true,
     // copied
-    description: 'Top-tier reasoning for high-complexity tasks.',
-    contextWindow: 32768,
+    description: 'Top-tier reasoning for high-complexity tasks, for your most sophisticated needs.',
+    contextWindow: 131072, // 128K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 4, chatOut: 12 },
+    chatPrice: { input: 3, output: 9 },
     benchmark: { cbaElo: 1159 },
   },
 
@@ -514,7 +526,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mixtral 8x22B model',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 2, chatOut: 6 },
+    chatPrice: { input: 2, output: 6 },
   },
   {
     idPrefix: 'open-mixtral-8x22b',
@@ -525,7 +537,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mixtral 8x22B model',
     contextWindow: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 2, chatOut: 6 },
+    chatPrice: { input: 2, output: 6 },
   },
   // Medium (Deprecated)
   {
@@ -534,7 +546,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Ideal for intermediate tasks that require moderate reasoning (Data extraction, Summarizing a Document, Writing emails, Writing a Job Description, or Writing Product Descriptions)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 2.7, chatOut: 8.1 },
+    chatPrice: { input: 2.7, output: 8.1 },
     benchmark: { cbaElo: 1148 },
     isLegacy: true,
     hidden: true,
@@ -547,7 +559,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Ideal for intermediate tasks that require moderate reasoning (Data extraction, Summarizing a Document, Writing emails, Writing a Job Description, or Writing Product Descriptions)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 2.7, chatOut: 8.1 },
+    chatPrice: { input: 2.7, output: 8.1 },
     benchmark: { cbaElo: 1148 },
     isLegacy: true,
     hidden: true,
@@ -560,7 +572,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Ideal for intermediate tasks that require moderate reasoning (Data extraction, Summarizing a Document, Writing emails, Writing a Job Description, or Writing Product Descriptions)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 2.7, chatOut: 8.1 },
+    chatPrice: { input: 2.7, output: 8.1 },
     benchmark: { cbaElo: 1148 },
     isLegacy: true,
     hidden: true,
@@ -573,7 +585,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'A sparse mixture of experts model. As such, it leverages up to 45B parameters but only uses about 12B during inference, leading to better inference throughput at the cost of more vRAM.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 0.7, chatOut: 0.7 },
+    chatPrice: { input: 0.7, output: 0.7 },
   },
   // Small (deprecated)
   {
@@ -582,7 +594,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 1, chatOut: 3 },
+    chatPrice: { input: 1, output: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -594,7 +606,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 1, chatOut: 3 },
+    chatPrice: { input: 1, output: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -604,7 +616,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Aka open-mixtral-8x7b. Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 1, chatOut: 3 },
+    chatPrice: { input: 1, output: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -616,7 +628,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Aka open-mixtral-8x7b. Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation)',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 1, chatOut: 3 },
+    chatPrice: { input: 1, output: 3 },
     hidden: true,
     isLegacy: true,
   },
@@ -629,7 +641,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'The first dense model released by Mistral AI, perfect for experimentation, customization, and quick iteration. At the time of the release, it matched the capabilities of models up to 30B parameters.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    pricing: { chatIn: 0.25, chatOut: 0.25 },
+    chatPrice: { input: 0.25, output: 0.25 },
   },
   // Tiny (deprecated)
   {
@@ -660,7 +672,7 @@ const _knownMistralChatModels: ManualMappings = [
     maxCompletionTokens: 1024, // HACK - it's 1024 dimensions, but those are not 'completion tokens'
     contextWindow: 8192, // Updated context window
     interfaces: [],
-    pricing: { chatIn: 0.1, chatOut: 0.1 },
+    chatPrice: { input: 0.1, output: 0.1 },
     hidden: true,
   },
 ];
@@ -710,7 +722,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 0.15, chatOut: 0.60 },
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4o-mini-2024-07-18')?.chatPrice,
     benchmark: { cbaMmlu: 82.0 },
   },
   {
@@ -721,7 +733,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 5, chatOut: 15 },
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-4o-2024-05-13')?.chatPrice,
     benchmark: { cbaElo: 1287 },
   },
   {
@@ -732,7 +744,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 1, chatOut: 2 },
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-3.5-turbo-1106')?.chatPrice,
     benchmark: { cbaElo: 1072 },
   },
   {
@@ -743,7 +755,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 0.5, chatOut: 1.5 },
+    chatPrice: _knownOpenAIChatModels.find(m => m.idPrefix === 'gpt-3.5-turbo-0125')?.chatPrice,
     benchmark: { cbaElo: 1105 },
   },
 
@@ -756,7 +768,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   //   maxCompletionTokens: 8192,
   //   trainingDataCutoff: 'Apr 2024',
   //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-  //   pricing: { chatIn: 3, chatOut: 15 },
+  //   pricing: { input: 3, output: 15 },
   // },
 
   // Default finetune, not available at the onset
@@ -859,15 +871,24 @@ export function openPipeModelToModelDescriptions(wireModel: object): ModelDescri
     description += `\n\nError: ${model.openpipe.errorMessage}\n`;
   description += `\n\nUUID: ${model.id}`;
 
-  return fromManualMapping([], namedId, created, updated, {
+
+  const manualMapping: ManualMapping = {
     idPrefix: namedId,
     label,
     description,
     contextWindow: model.contextWindow,
     maxCompletionTokens: model.maxCompletionTokens,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: model.pricing,
-  });
+  };
+
+  if (model.pricing) {
+    manualMapping.chatPrice = {
+      input: model.pricing.chatIn,
+      output: model.pricing.chatOut,
+    };
+  }
+
+  return fromManualMapping([], namedId, created, updated, manualMapping);
 }
 
 
@@ -904,13 +925,15 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const model = wireOpenrouterModelsListOutputSchema.parse(wireModel);
 
   // parse pricing
-  const pricing: ModelDescriptionSchema['pricing'] = {
-    chatIn: parseFloat(model.pricing.prompt) * 1000 * 1000,
-    chatOut: parseFloat(model.pricing.completion) * 1000 * 1000,
+  const inputPrice = parseFloat(model.pricing.prompt);
+  const outputPrice = parseFloat(model.pricing.completion);
+  const chatPrice: ModelDescriptionSchema['chatPrice'] = {
+    input: inputPrice ? inputPrice * 1000 * 1000 : 'free',
+    output: outputPrice ? outputPrice * 1000 * 1000 : 'free',
     // image...
     // request...
   };
-  const seemsFree = pricing.chatIn === 0 && pricing.chatOut === 0;
+  const seemsFree = chatPrice.input === 'free' && chatPrice.output === 'free';
 
   // openrouter provides the fields we need as part of the model object
   let label = model.name || model.id.replace('/', ' · ');
@@ -932,7 +955,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     // trainingDataCutoff: ...
     interfaces: [LLM_IF_OAI_Chat],
     // benchmark: ...
-    pricing,
+    chatPrice,
     hidden,
   });
 }
@@ -1207,6 +1230,7 @@ type ManualMapping = ({
   isLegacy?: boolean,
   symLink?: string
 } & Omit<ModelDescriptionSchema, 'id' | 'created' | 'updated'>);
+
 type ManualMappings = ManualMapping[];
 
 function fromManualMapping(mappings: ManualMappings, id: string, created?: number, updated?: number, fallback?: ManualMapping, disableSymLink?: boolean): ModelDescriptionSchema {
@@ -1225,8 +1249,8 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
   // check whether this is a partial map, which indicates an unknown/new variant
   const suffix = id.slice(known.idPrefix.length).trim();
 
-  // return the model description sheet
-  return {
+  // create the model description
+  const md: ModelDescriptionSchema = {
     id,
     label: label
       + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : '')
@@ -1236,11 +1260,20 @@ function fromManualMapping(mappings: ManualMappings, id: string, created?: numbe
     updated: updated || created || 0,
     description: known.description,
     contextWindow: known.contextWindow,
-    ...(!!known.maxCompletionTokens && { maxCompletionTokens: known.maxCompletionTokens }),
-    ...(!!known.trainingDataCutoff && { trainingDataCutoff: known.trainingDataCutoff }),
     interfaces: known.interfaces,
-    ...(!!known.benchmark && { benchmark: known.benchmark }),
-    ...(!!known.pricing && { pricing: known.pricing }),
-    ...(!!known.hidden && { hidden: known.hidden }),
   };
+
+  // apply optional fields
+  if (known.maxCompletionTokens)
+    md.maxCompletionTokens = known.maxCompletionTokens;
+  if (known.trainingDataCutoff)
+    md.trainingDataCutoff = known.trainingDataCutoff;
+  if (known.benchmark)
+    md.benchmark = known.benchmark;
+  if (known.chatPrice)
+    md.chatPrice = known.chatPrice;
+  if (known.hidden)
+    md.hidden = true;
+
+  return md;
 }

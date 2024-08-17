@@ -32,32 +32,42 @@ const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGene
    - [good] Function calling, with configuration
    - [great] Code execution
 */
+
+const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: [{ upTo: 128000, price: 0.075 }, { upTo: null, price: 0.15 }],
+  output: [{ upTo: 128000, price: 0.30 }, { upTo: null, price: 0.60 }],
+};
+
+const gemini15ProPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: [{ upTo: 128000, price: 3.50 }, { upTo: null, price: 7.00 }],
+  output: [{ upTo: 128000, price: 10.50 }, { upTo: null, price: 21.00 }],
+};
+
+const gemini10ProPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.50,
+  output: 1.50,
+};
+
 const _knownGeminiModels: ({
   id: string,
   isNewest?: boolean,
   isPreview?: boolean
   symLink?: string
-} & Pick<ModelDescriptionSchema, 'interfaces' | 'pricing' | 'trainingDataCutoff' | 'hidden'>)[] = [
+} & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'trainingDataCutoff' | 'hidden'>)[] = [
 
   // Generation 1.5
   {
     id: 'models/gemini-1.5-flash-latest', // updated regularly and might be a preview version
     isNewest: true,
     isPreview: true,
-    pricing: {
-      chatIn: 0.70,   // 0.35 up to 128k tokens, 0.70 prompts > 128k tokens
-      chatOut: 2.10,  // 1.05 up to 128k tokens, 2.10 prompts > 128k tokens
-    },
+    chatPrice: gemini15FlashPricing,
     trainingDataCutoff: 'May 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
   },
   {
     id: 'models/gemini-1.5-flash',
     // copied from above
-    pricing: {
-      chatIn: 0.70,   // 0.35 up to 128k tokens, 0.70 prompts > 128k tokens
-      chatOut: 2.10,  // 1.05 up to 128k tokens, 2.10 prompts > 128k tokens
-    },
+    chatPrice: gemini15FlashPricing,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // input: audio, images and text
     hidden: true,
@@ -65,10 +75,7 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemini-1.5-flash-001',
     // copied from above
-    pricing: {
-      chatIn: 0.70,   // 0.35 up to 128k tokens, 0.70 prompts > 128k tokens
-      chatOut: 2.10,  // 1.05 up to 128k tokens, 2.10 prompts > 128k tokens
-    },
+    chatPrice: gemini15FlashPricing,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // input: audio, images and text
     hidden: true,
@@ -78,10 +85,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-1.5-pro-exp-0801',
     isNewest: true,
     isPreview: true,
-    pricing: { // ASSUMING - COPIED FROM '-latest'
-      chatIn: 7.00,   // $3.50 / 1 million tokens (for prompts up to 128K tokens), $7.00 / 1 million tokens (for prompts longer than 128K)
-      chatOut: 21.00, // $10.50 / 1 million tokens (128K or less), $21.00 / 1 million tokens (128K+)
-    },
+    chatPrice: gemini15ProPricing,
     trainingDataCutoff: 'May 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
   },
@@ -89,20 +93,14 @@ const _knownGeminiModels: ({
     id: 'models/gemini-1.5-pro-latest', // updated regularly and might be a preview version
     isNewest: true,
     isPreview: true,
-    pricing: {
-      chatIn: 7.00,   // $3.50 / 1 million tokens (for prompts up to 128K tokens), $7.00 / 1 million tokens (for prompts longer than 128K)
-      chatOut: 21.00, // $10.50 / 1 million tokens (128K or less), $21.00 / 1 million tokens (128K+)
-    },
+    chatPrice: gemini15ProPricing,
     trainingDataCutoff: 'May 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
   },
   {
     id: 'models/gemini-1.5-pro', // latest stable -> 001
     // copied from above
-    pricing: {
-      chatIn: 7.00,   // $3.50 / 1 million tokens (for prompts up to 128K tokens), $7.00 / 1 million tokens (for prompts longer than 128K)
-      chatOut: 21.00, // $10.50 / 1 million tokens (128K or less), $21.00 / 1 million tokens (128K+)
-    },
+    chatPrice: gemini15ProPricing,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
@@ -110,10 +108,7 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemini-1.5-pro-001', // stable snapshot
     // copied from above
-    pricing: {
-      chatIn: 7.00,   // $3.50 / 1 million tokens (for prompts up to 128K tokens), $7.00 / 1 million tokens (for prompts longer than 128K)
-      chatOut: 21.00, // $10.50 / 1 million tokens (128K or less), $21.00 / 1 million tokens (128K+)
-    },
+    chatPrice: gemini15ProPricing,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
@@ -123,27 +118,18 @@ const _knownGeminiModels: ({
   // Generation 1.0
   {
     id: 'models/gemini-1.0-pro-latest',
-    pricing: {
-      chatIn: 0.50,
-      chatOut: 1.50,
-    },
+    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
     id: 'models/gemini-1.0-pro',
-    pricing: {
-      chatIn: 0.50,
-      chatOut: 1.50,
-    },
+    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   },
   {
     id: 'models/gemini-1.0-pro-001',
-    pricing: {
-      chatIn: 0.50,
-      chatOut: 1.50,
-    },
+    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   },
@@ -151,10 +137,7 @@ const _knownGeminiModels: ({
   // Generation 1.0 + Vision
   {
     id: 'models/gemini-1.0-pro-vision-latest',
-    pricing: {
-      chatIn: 0.50,
-      chatOut: 1.50,
-    },
+    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // Text and Images
     hidden: true,
   },
@@ -164,10 +147,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-pro',
     symLink: 'models/gemini-1.0-pro',
     // copied from symlinked
-    pricing: {
-      chatIn: 0.50,
-      chatOut: 1.50,
-    },
+    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   },
@@ -175,10 +155,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-pro-vision',
     // copied from symlinked
     symLink: 'models/gemini-1.0-pro-vision',
-    pricing: {
-      chatIn: 0.50,
-      chatOut: 1.50,
-    },
+    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // Text and Images
     hidden: true,
   },
@@ -243,7 +220,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     interfaces,
     // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
     // benchmarks: ...
-    pricing: knownModel?.pricing, // TODO: needs <>128k, and per-character and per-image pricing
+    chatPrice: knownModel?.chatPrice,
     hidden,
   };
 }
