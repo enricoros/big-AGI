@@ -50,7 +50,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           body: aixToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,
-        chatGenerateParse: createGeminiGenerateContentResponseParser(model.id),
+        chatGenerateParse: createGeminiGenerateContentResponseParser(model.id, streaming),
       };
 
     case 'ollama':

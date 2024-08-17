@@ -252,12 +252,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     // -> Stats
     if (usage) {
       const elapsedTimeMilliseconds = Date.now() - parserCreationTimestamp;
-      const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
-      const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+      // const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
+      // const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
       const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
         TIn: usage.input_tokens,
         TOut: usage.output_tokens,
-        vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+        // vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
         // dtStart: // we don't know
         // dtInner: // we don't know
         dtAll: elapsedTimeMilliseconds,
