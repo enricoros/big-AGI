@@ -152,10 +152,8 @@ export async function llmChatGenerateOrThrow<TServiceSettings extends object = {
   // get the access
   const { serviceSettings, transportAccess, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
-  // get any vendor-specific rate limit delay
-  const delay = vendor.getRateLimitDelay?.(llm, serviceSettings) ?? 0;
-  if (delay > 0)
-    await new Promise(resolve => setTimeout(resolve, delay));
+  // apply any vendor-specific rate limit
+  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
 
   // execute via the vendor
   return await vendor.rpcChatGenerateOrThrow(transportAccess, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, maxTokens);
@@ -184,10 +182,8 @@ export async function llmStreamingChatGenerate<
   // get the access
   const { serviceSettings, transportAccess, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
-  // get any vendor-specific rate limit delay
-  const delay = vendor.getRateLimitDelay?.(llm, serviceSettings) ?? 0;
-  if (delay > 0)
-    await new Promise(resolve => setTimeout(resolve, delay));
+  // apply any vendor-specific rate limit
+  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
 
   // execute via the vendor
   // return await unifiedStreamingClient(access, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);

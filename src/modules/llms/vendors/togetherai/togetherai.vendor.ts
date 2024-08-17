@@ -47,7 +47,7 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
   }),
 
   // there is delay for Together Free API calls
-  getRateLimitDelay: (_llm, partialSetup) => {
+  rateLimitChatGenerate: async (_llm, partialSetup) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
     const wait = partialSetup?.togetherFreeTrial
@@ -57,10 +57,9 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
     if (elapsed < wait) {
       const delay = wait - elapsed;
       nextGenerationTs = now + delay;
-      return delay;
+      await new Promise(resolve => setTimeout(resolve, delay));
     } else {
       nextGenerationTs = now;
-      return 0;
     }
   },
 

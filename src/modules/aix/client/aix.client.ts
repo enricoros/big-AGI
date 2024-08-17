@@ -45,17 +45,11 @@ export async function aixStreamingChatGenerate<TServiceSettings extends object =
   const llm = findLLMOrThrow(llmId);
   const { transportAccess: aixAccess, serviceSettings, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
-  // Aix Model - FIXME: relax the forced cast
-  // const llmOptions = llm.options;
+  // Aix Model
   const aixModel = _aixModelFromLLMOptions(llm.options, llmId);
 
   // Aix Context
   const aixContext = { method: 'chat-stream', name: aixContextName, ref: aixContextRef } as const;
-
-  // Simple rate limiting (vendor-specific)
-  const delay = vendor.getRateLimitDelay?.(llm, serviceSettings) ?? 0;
-  if (delay > 0)
-    await new Promise(resolve => setTimeout(resolve, delay));
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
   // if (aixAccess.dialect === 'openai' && aixAccess.moderationCheck) {
@@ -64,10 +58,14 @@ export async function aixStreamingChatGenerate<TServiceSettings extends object =
   //     return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
   // }
 
-  // execute via the vendor
-  // return await vendor.streamingChatGenerateOrThrow(aixAccess, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
+  // apply any vendor-specific rate limit
+  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
+
+  // Aix Low-Level Chat Generation
   const value = await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, abortSignal, onUpdate);
 
+  //
+  //
   console.log(value.metrics);
 
   return value;

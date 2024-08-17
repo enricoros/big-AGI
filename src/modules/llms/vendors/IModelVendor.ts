@@ -36,7 +36,7 @@ export interface IModelVendor<TServiceSettings = unknown, TAccess = unknown, TLL
 
   getTransportAccess(setup?: Partial<TServiceSettings>): TAccess;
 
-  getRateLimitDelay?(llm: TDLLM, setup: Partial<TServiceSettings>): number;
+  rateLimitChatGenerate?(llm: TDLLM, setup: Partial<TServiceSettings>): Promise<void>;
 
   rpcUpdateModelsOrThrow(
     access: TAccess,
