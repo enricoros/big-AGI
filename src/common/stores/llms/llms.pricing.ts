@@ -1,6 +1,8 @@
 import type { DLLM, DPriceChatGenerate, DPricePerMToken, DTieredPrice } from './dllm.types';
 
 
+/// detect Free Pricing
+
 export function isModelPriceFree(priceChatGenerate: DPriceChatGenerate): boolean {
   if (!priceChatGenerate) return true;
   return _isPriceFree(priceChatGenerate.input) && _isPriceFree(priceChatGenerate.output);
@@ -16,6 +18,28 @@ function _isPriceFree(price: DTieredPrice | undefined): boolean {
 
 function _isPricePerMTokenFree(price: DPricePerMToken): boolean {
   return price === 'free' || price === 0;
+}
+
+
+/// Human readable price formatting
+
+export function getPriceForTokens(inputTokens: number, tokens: number, pricing: DTieredPrice | undefined): number | undefined {
+  if (!pricing) return undefined;
+  if (pricing === 'free') return 0;
+  if (typeof pricing === 'number') return tokens * pricing / 1e6;
+
+  // Find the applicable tier based on input tokens
+  const applicableTier = pricing.find(tier => tier.upTo === null || inputTokens <= tier.upTo);
+
+  // This should not happen if the pricing is well-formed
+  if (!applicableTier) {
+    console.log('[DEV] getPriceForTokens: No applicable tier found for input tokens', { inputTokens, pricing });
+    return undefined;
+  }
+
+  // Apply the price of the found tier to all tokens
+  if (applicableTier.price === 'free') return 0;
+  return tokens * applicableTier.price / 1e6;
 }
 
 

@@ -13,15 +13,12 @@ import { formatTokenCost, tokenCountsMathAndMessage, TokenTooltip } from './Toke
 export const TokenBadgeMemo = React.memo(TokenBadge);
 
 function TokenBadge(props: {
+  chatPricing?: DPriceChatGenerate,
+
   direct: number,
   history?: number,
   responseMax?: number,
   limit: number,
-
-  // FIXME: continue from here
-  tokenPricing?: DPriceChatGenerate,
-  tokenPriceIn?: number,
-  tokenPriceOut?: number,
 
   enableHover?: boolean,
   showCost?: boolean
@@ -34,7 +31,7 @@ function TokenBadge(props: {
   const [isHovering, setIsHovering] = React.useState(false);
 
   const { message, color, remainingTokens, costMax, costMin } =
-    tokenCountsMathAndMessage(props.limit, props.direct, props.history, props.responseMax, props.tokenPriceIn, props.tokenPriceOut);
+    tokenCountsMathAndMessage(props.limit, props.direct, props.history, props.responseMax, props.chatPricing);
 
 
   // handlers

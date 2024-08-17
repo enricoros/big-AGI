@@ -188,7 +188,7 @@ export function Composer(props: {
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (props.chatLLM?.options as DOpenAILLMOptions /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
-  const tokenPricing = props.chatLLM?.pricing?.chat;
+  const tokenChatPricing = props.chatLLM?.pricing?.chat;
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targe)
@@ -699,11 +699,11 @@ export function Composer(props: {
                     }} />
 
                   {!showChatInReferenceTo && tokenLimit > 0 && (tokensComposer > 0 || (tokensHistory + tokensReponseMax) > 0) && (
-                    <TokenProgressbarMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPricing={tokenPricing} />
+                    <TokenProgressbarMemo chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} />
                   )}
 
                   {!showChatInReferenceTo && tokenLimit > 0 && (
-                    <TokenBadgeMemo direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} tokenPricing={tokenPricing} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                    <TokenBadgeMemo chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensReponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 
                 </Box>
