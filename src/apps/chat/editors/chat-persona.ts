@@ -122,14 +122,14 @@ export async function llmGenerateContentStream(
       (update: StreamingClientUpdate, done: boolean) => {
 
         // convert the StreamingClientUpdate to the StreamMessageUpdate
-        const { typing, stats, fragments, originLLM, metadata } = update;
+        const { typing, metrics, fragments, modelName, metadata } = update;
         messageOverwrite.pendingIncomplete = typing ? true : undefined;
         messageOverwrite.fragments = fragments;
-        messageOverwrite.originLLM = originLLM;
+        messageOverwrite.originLLM = modelName;
         if (metadata)
           messageOverwrite.metadata = metadata;
 
-        console.log('overwrite', messageOverwrite, stats);
+        console.log('overwrite', messageOverwrite, metrics);
 
         // throttle the update - and skip the last done message
         if (!done)

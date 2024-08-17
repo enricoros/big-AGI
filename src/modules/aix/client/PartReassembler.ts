@@ -65,8 +65,8 @@ export class PartReassembler {
 
           // handled outside
           case 'end':
+          case 'set-metrics':
           case 'set-model':
-          case 'update-counts':
             break;
 
           case '_debugRequest':

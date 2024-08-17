@@ -1,5 +1,6 @@
 import { safeErrorString } from '~/server/wire';
 
+import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from '../IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
@@ -78,13 +79,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           pt.setModelName(responseMessage.model);
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
-          pt.setCounters({
-            chatIn: chatInTokens,
-            chatInCacheRead: responseMessage.usage.cache_read_input_tokens || 0,
-            chatInCacheWrite: responseMessage.usage.cache_creation_input_tokens || 0,
-            chatOut: responseMessage.usage.output_tokens,
-            chatTimeStart: timeToFirstEvent,
-          });
+          const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+            TIn: chatInTokens,
+            TOut: responseMessage.usage.output_tokens,
+            dtStart: timeToFirstEvent,
+          };
+          if (responseMessage.usage.cache_read_input_tokens !== undefined)
+            metricsUpdate.TCacheRead = responseMessage.usage.cache_read_input_tokens;
+          if (responseMessage.usage.cache_creation_input_tokens !== undefined)
+            metricsUpdate.TCacheWrite = responseMessage.usage.cache_creation_input_tokens;
+          pt.updateMetrics(metricsUpdate);
         }
         break;
 
@@ -170,15 +174,16 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             pt.setTokenStopReason(tokenStopReason);
 
           if (usage?.output_tokens && messageStartTime) {
-            const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
+            const elapsedTimeMilliseconds = Date.now() - messageStartTime;
+            const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
             const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-            pt.setCounters({
-              chatIn: chatInTokens !== undefined ? chatInTokens : -1,
-              chatOut: usage.output_tokens,
-              chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-              chatTimeStart: timeToFirstEvent,
-              chatTimeInner: elapsedTimeSeconds,
-              chatTimeTotal: Date.now() - parserCreationTimestamp,
+            pt.updateMetrics({
+              TIn: chatInTokens !== undefined ? chatInTokens : -1,
+              TOut: usage.output_tokens,
+              vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+              dtStart: timeToFirstEvent,
+              dtInner: elapsedTimeMilliseconds,
+              dtAll: Date.now() - parserCreationTimestamp,
             });
           }
         } else
@@ -205,7 +210,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
 
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
-  let messageStartTime: number = Date.now();
+  const parserCreationTimestamp = Date.now();
 
   return function(pt: IParticleTransmitter, fullData: string): void {
 
@@ -246,18 +251,22 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
     // -> Stats
     if (usage) {
-      const elapsedTimeSeconds = (Date.now() - messageStartTime) / 1000;
+      const elapsedTimeMilliseconds = Date.now() - parserCreationTimestamp;
+      const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
       const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-      pt.setCounters({
-        chatIn: usage.input_tokens,
-        chatInCacheRead: usage.cache_read_input_tokens || 0,
-        chatInCacheWrite: usage.cache_creation_input_tokens || 0,
-        chatOut: usage.output_tokens,
-        chatOutRate: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-        // chatTimeStart: // meaningless non-streaming
-        // chatTimeInner: // we don't know
-        chatTimeTotal: elapsedTimeSeconds,
-      });
+      const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+        TIn: usage.input_tokens,
+        TOut: usage.output_tokens,
+        vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+        // dtStart: // we don't know
+        // dtInner: // we don't know
+        dtAll: elapsedTimeMilliseconds,
+      };
+      if (usage.cache_read_input_tokens !== undefined)
+        metricsUpdate.TCacheRead = usage.cache_read_input_tokens;
+      if (usage.cache_creation_input_tokens !== undefined)
+        metricsUpdate.TCacheWrite = usage.cache_creation_input_tokens;
+      pt.updateMetrics(metricsUpdate);
     }
   };
 }

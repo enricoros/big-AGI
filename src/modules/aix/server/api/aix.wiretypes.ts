@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+// We return for now the same object that ends up stored
+import type { DChatGenerateMetrics } from '~/common/stores/metrics/metrics.types';
 // Used to align Partlces to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
@@ -439,8 +441,8 @@ export namespace AixWire_Particles {
   // | { cg: 'start' } // not really used for now
     | { cg: 'end', reason: CGEndReason, tokenStopReason: GCTokenStopReason }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
+    | { cg: 'set-metrics', metrics: ChatGenerateMetrics }
     | { cg: 'set-model', name: string }
-    | { cg: 'update-counts', counts: Partial<ChatGenerateCounts> }
     | { cg: '_debugRequest', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
 
   export type CGEndReason =     // the reason for the end of the chat generation
@@ -469,17 +471,12 @@ export namespace AixWire_Particles {
     | 'filter-recitation'       // recitation filter (e.g. recitation)
     | 'out-of-tokens';          // got out of tokens
 
-  export type ChatGenerateCounts = {
-    chatIn?: number,
-    chatInCacheRead?: number,
-    chatInCacheWrite?: number,
-    chatOut?: number,
-    chatOutRate?: number,
-    chatTimeStart?: number,
-    chatTimeInner?: number,
-    chatTimeTotal?: number,
-  };
-
+  /**
+   * NOTE: break compatbility with this D-stored-type only when we'll
+   * start to need backwards-incompatible Particle->Reassembler flexibility,
+   * which can't be just extended in the D-stored-type.
+   */
+  export type ChatGenerateMetrics = Omit<DChatGenerateMetrics, 'TAll' | 'vTOutAll'>;
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts
 
