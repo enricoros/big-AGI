@@ -1,6 +1,7 @@
 import { safeErrorString } from '~/server/wire';
 import { serverSideId } from '~/server/api/trpc.nanoid';
 
+import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from '../IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
@@ -87,14 +88,17 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // -> Stats
     if (json.usage) {
-      if (json.usage.completion_tokens !== undefined)
-        pt.setCounters({
-          chatIn: json.usage.prompt_tokens || -1,
-          chatOut: json.usage.completion_tokens,
-          ...timeToFirstEvent !== undefined ? { chatTimeStart: timeToFirstEvent } : {},
-          // chatTimeInner: openAI is not reporting the time as seen by the servers
-          chatTimeTotal: Date.now() - parserCreationTimestamp,
-        });
+      if (json.usage.completion_tokens !== undefined) {
+        const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+          TIn: json.usage.prompt_tokens || -1,
+          TOut: json.usage.completion_tokens,
+          // dtInner: openAI is not reporting the time as seen by the servers
+          dtAll: Date.now() - parserCreationTimestamp,
+        };
+        if (timeToFirstEvent !== undefined)
+          metricsUpdate.dtStart = timeToFirstEvent;
+        pt.updateMetrics(metricsUpdate);
+      }
 
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
       if (!json.choices.length)
@@ -106,14 +110,16 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       timeToFirstEvent = undefined;
     if (json.x_groq?.usage) {
       const { prompt_tokens, completion_tokens, completion_time } = json.x_groq.usage;
-      pt.setCounters({
-        chatIn: prompt_tokens,
-        chatOut: completion_tokens,
-        chatOutRate: (completion_tokens && completion_time) ? Math.round((completion_tokens / completion_time) * 100) / 100 : undefined,
-        ...timeToFirstEvent !== undefined ? { chatTimeStart: timeToFirstEvent } : {},
-        chatTimeInner: Math.round((completion_time || 0) * 1000),
-        chatTimeTotal: Date.now() - parserCreationTimestamp,
-      });
+      const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+        TIn: prompt_tokens,
+        TOut: completion_tokens,
+        vTOutInner: (completion_tokens && completion_time) ? Math.round((completion_tokens / completion_time) * 100) / 100 : undefined,
+        dtInner: Math.round((completion_time || 0) * 1000),
+        dtAll: Date.now() - parserCreationTimestamp,
+      };
+      if (timeToFirstEvent !== undefined)
+        metricsUpdate.dtStart = timeToFirstEvent;
+      pt.updateMetrics(metricsUpdate);
     }
 
     // expect: 1 completion, or stop
@@ -227,12 +233,13 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
     // -> Stats
     if (json.usage)
-      pt.setCounters({
-        chatIn: json.usage.prompt_tokens,
-        chatOut: json.usage.completion_tokens,
-        // chatTimeStart: ... // not meaningful for non-streaming
-        // chatTimeInner: ... // not measured/reportd by OpenAI
-        chatTimeTotal: Date.now() - parserCreationTimestamp,
+      pt.updateMetrics({
+        TIn: json.usage.prompt_tokens,
+        TOut: json.usage.completion_tokens,
+        // vTOutInner: ...   // we don't have the inner time to compute this
+        // dtStart: ... // not meaningful for non-streaming
+        // dtInner: ... // not measured/reportd by OpenAI
+        dtAll: Date.now() - parserCreationTimestamp,
       });
 
     // Assumption/validate: expect 1 completion, or stop

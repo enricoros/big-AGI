@@ -45,10 +45,10 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   // Token stop reason
   private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
 
-  // Counters
-  private accCounts: AixWire_Particles.ChatGenerateCounts | undefined = undefined;
-  private sentCounts: boolean = false;
-  private freshCounts: boolean = false;
+  // Metrics
+  private accMetrics: AixWire_Particles.ChatGenerateMetrics | undefined = undefined;
+  private sentMetrics: boolean = false;
+  private freshMetrics: boolean = false;
 
 
   constructor(private readonly prettyDialect: string, _throttleTimeMs: number | undefined) {
@@ -75,13 +75,13 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   /// aix.router.ts
 
   * emitParticles(): Generator<AixWire_Particles.ChatGenerateOp> {
-    // Counters: emit at the beginning and the end -- if there's data to transmit
-    if (!this.sentCounts && this.freshCounts && this.accCounts) {
-      this.sentCounts = true;
-      this.freshCounts = false;
+    // Metrics: emit at the beginning and the end -- if there's data to transmit
+    if (!this.sentMetrics && this.freshMetrics && this.accMetrics) {
+      this.sentMetrics = true;
+      this.freshMetrics = false;
       this.transmissionQueue.push({
-        cg: 'update-counts',
-        counts: this.accCounts,
+        cg: 'set-metrics',
+        metrics: this.accMetrics,
       });
     }
 
@@ -105,7 +105,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   * flushParticles(): Generator<AixWire_Particles.ChatGenerateOp> {
     this._queueParticleS();
-    this.sentCounts = false; // enable sending counters again
+    this.sentMetrics = false; // enable sending metrics again
     return yield* this.emitParticles();
   }
 
@@ -271,19 +271,19 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     });
   }
 
-  /** Update the counters, sent twice (after the first call, and then at the end of the transmission) */
-  setCounters(counts: AixWire_Particles.ChatGenerateCounts) {
-    if (!this.accCounts)
-      this.accCounts = {};
+  /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
+  updateMetrics(update: Partial<AixWire_Particles.ChatGenerateMetrics>) {
+    if (!this.accMetrics)
+      this.accMetrics = {};
 
     // similar to Object.assign, but takes care of removing the "undefined" entries
-    for (const key in counts) {
-      const value = (counts as any)[key] as number | undefined;
+    for (const key in update) {
+      const value = (update as any)[key] as number | undefined;
       if (value !== undefined)
-        (this.accCounts as any)[key] = value;
+        (this.accMetrics as any)[key] = value;
     }
 
-    this.freshCounts = true;
+    this.freshMetrics = true;
   }
 
 }

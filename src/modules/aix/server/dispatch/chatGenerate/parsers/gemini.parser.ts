@@ -1,3 +1,4 @@
+import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from '../IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
@@ -26,7 +27,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
   const modelName = modelId.replace('models/', '');
   let hasBegun = false;
   let timeToFirstEvent: number;
-  let skipSendingTotalTimeOnce = true;
+  let skipComputingTotalsOnce = true;
 
   // this can throw, it's caught by the caller
   return function(pt: IParticleTransmitter, eventData: string): void {
@@ -153,14 +154,22 @@ export function createGeminiGenerateContentResponseParser(modelId: string): Chat
 
     // -> Stats
     if (generationChunk.usageMetadata) {
-      pt.setCounters({
-        chatIn: generationChunk.usageMetadata.promptTokenCount,
-        chatOut: generationChunk.usageMetadata.candidatesTokenCount,
-        chatTimeStart: timeToFirstEvent,
-        // chatTimeInner: // not reported
-        ...skipSendingTotalTimeOnce ? {} : { chatTimeTotal: Date.now() - parserCreationTimestamp }, // the second...end-1 packets will be held
-      });
-      skipSendingTotalTimeOnce = false;
+      const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+        TIn: generationChunk.usageMetadata.promptTokenCount,
+        TOut: generationChunk.usageMetadata.candidatesTokenCount,
+        dtStart: timeToFirstEvent,
+      };
+      // the first end-1 packet will be skipped
+      if (!skipComputingTotalsOnce) {
+        metricsUpdate.dtAll = Date.now() - parserCreationTimestamp;
+        if (metricsUpdate.dtAll > timeToFirstEvent)
+          metricsUpdate.dtInner = metricsUpdate.dtAll - timeToFirstEvent;
+        if (metricsUpdate.TOut)
+          metricsUpdate.vTOutInner = Math.round(100 * 1000 /*ms/s*/ * metricsUpdate.TOut / (metricsUpdate.dtInner || metricsUpdate.dtAll)) / 100;
+      }
+      pt.updateMetrics(metricsUpdate);
+      // the second (end) packet will be sent
+      skipComputingTotalsOnce = false;
     }
 
   };

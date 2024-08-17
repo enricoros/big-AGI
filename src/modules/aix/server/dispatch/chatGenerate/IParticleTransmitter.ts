@@ -47,7 +47,7 @@ export interface IParticleTransmitter {
   /** Communicates the finish reason to the client */
   setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
 
-  /** Update the counters, sent twice (after the first call, and then at the end of the transmission) */
-  setCounters(counts: AixWire_Particles.ChatGenerateCounts): void;
+  /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
+  updateMetrics(update: Partial<AixWire_Particles.ChatGenerateMetrics>): void;
 
 }

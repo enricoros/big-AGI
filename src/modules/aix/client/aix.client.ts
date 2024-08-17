@@ -1,6 +1,7 @@
 import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.streaming';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
+import type { DChatGenerateMetrics } from '~/common/stores/metrics/metrics.types';
 import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
@@ -18,16 +19,11 @@ import { PartReassembler } from './PartReassembler';
 export type StreamingClientUpdate = {
   // interpreted
   typing: boolean;
-  stats?: {
-    chatIn?: number,
-    chatOut?: number,
-    chatOutRate?: number,
-    chatTimeInner?: number,
-  };
+  metrics: DChatGenerateMetrics;
 
   // replacers in DMessage
   fragments: DMessageContentFragment[];
-  originLLM: string;
+  modelName: string;
 
   // additive to DMessage
   metadata?: DMessageMetadata;
@@ -70,7 +66,11 @@ export async function aixStreamingChatGenerate<TServiceSettings extends object =
 
   // execute via the vendor
   // return await vendor.streamingChatGenerateOrThrow(aixAccess, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
-  return await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, abortSignal, onUpdate);
+  const value = await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, abortSignal, onUpdate);
+
+  console.log(value.metrics);
+
+  return value;
 }
 
 
@@ -168,10 +168,10 @@ async function _aix_LL_ChatGenerateContent(
 
 
   let messageAccumulator: StreamingClientUpdate = {
-    typing: true,
-    // stats: not added until we have it
     fragments: [],
-    originLLM: aixModel.id,
+    metrics: {},
+    modelName: aixModel.id,
+    typing: true,
     // metadata: not set because additive and overwriting when set
   };
 
@@ -208,13 +208,11 @@ async function _aix_LL_ChatGenerateContent(
                 break;
             }
             break;
-
-          case 'set-model':
-            messageAccumulator.originLLM = update.name;
+          case 'set-metrics':
+            messageAccumulator.metrics = update.metrics;
             break;
-
-          case 'update-counts':
-            messageAccumulator.stats = update.counts;
+          case 'set-model':
+            messageAccumulator.modelName = update.name;
             break;
         }
       }
@@ -237,6 +235,12 @@ async function _aix_LL_ChatGenerateContent(
         partReassembler.reassembleTerminateUserAbort();
     }
   }
+
+  // add aggregate metrics
+  const metrics = messageAccumulator.metrics;
+  metrics.TAll = (metrics.TIn || 0) + (metrics.TOut || 0) + (metrics.TCacheRead || 0) + (metrics.TCacheWrite || 0);
+  if (metrics.TOut !== undefined && metrics.dtAll !== undefined && metrics.dtAll > 0)
+    metrics.vTOutAll = Math.round(100 * metrics.TOut / (metrics.dtAll / 1000)) / 100;
 
   // and we're done
   messageAccumulator = {
