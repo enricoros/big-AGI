@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
+import { Box, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -77,18 +77,19 @@ export function EnhancedRenderCodeMenu(props: {
       sx={{ minWidth: 250 }}
     >
 
-      <MenuItem onClick={props.onToggleCollapse}>
-        <ListItemDecorator>{props.isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}</ListItemDecorator>
-        {/*<ListItemDecorator />*/}
-        {props.isCollapsed ? 'Expand' : 'Collapse'}
-      </MenuItem>
-
-      <MenuItem onClick={props.isCollapsed ? handleExpandAllCodeBlocks : handleCollapseAllCodeBlocks}>
-        <ListItemDecorator />
-        {props.isCollapsed ? 'Expand' : 'Collapse'} All Blocks
-      </MenuItem>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <MenuItem onClick={props.onToggleCollapse} sx={{ flex: 2 }}>
+          <ListItemDecorator>{props.isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}</ListItemDecorator>
+          {props.isCollapsed ? 'Expand' : 'Collapse'}
+        </MenuItem>
+        <MenuItem onClick={props.isCollapsed ? handleExpandAllCodeBlocks : handleCollapseAllCodeBlocks} sx={{ justifyContent: 'center', flex: 1 }}>
+          All
+        </MenuItem>
+      </Box>
 
       <ListDivider />
+
+      {/* TODO: add Download here */}
 
       <MenuItem onClick={toggleEnhanceCodeLiveFile} disabled={!liveFileSupported}>
         <ListItemDecorator>{(labsEnhanceCodeLiveFile && liveFileSupported) && <CheckRoundedIcon />}</ListItemDecorator>
