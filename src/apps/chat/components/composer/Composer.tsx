@@ -188,7 +188,7 @@ export function Composer(props: {
   const tokensHistory = _historyTokenCount;
   const tokensReponseMax = (props.chatLLM?.options as DOpenAILLMOptions /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
-  const tokenPricing = props.chatLLM?.pricing;
+  const tokenPricing = props.chatLLM?.pricing?.chat;
 
 
   // Effect: load initial text if queued up (e.g. by /link/share_targe)

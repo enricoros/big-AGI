@@ -413,6 +413,39 @@ export namespace AixWire_API_ChatGenerate {
 
 }
 
+export namespace AixWire_API_ListModels {
+
+  /* Note: at this stage, this should probably be an output, as we're only outputting? */
+  /* TODO: move ListModels (Reqeust and Response) code from the older location to here */
+
+  const PricePerMToken_schema = z.number().or(z.literal('free'));
+
+  const PriceUpTo_schema = z.object({
+    upTo: z.number().nullable(),
+    price: PricePerMToken_schema,
+  });
+
+  const TieredPrice_schema = z.union([
+    PricePerMToken_schema,
+    z.array(PriceUpTo_schema),
+  ]);
+
+  /**
+   * All Costs are in USD per 1M tokens, unless noted otherwise
+   */
+  export const PriceChatGenerate_schema = z.object({
+    input: TieredPrice_schema.optional(),
+    output: TieredPrice_schema.optional(),
+    cache: z.object({
+      cType: z.literal('ant-bp'),
+      read: TieredPrice_schema,
+      write: TieredPrice_schema,
+      duration: z.number(),
+    }).optional(),
+  });
+
+}
+
 
 ///  Output Types from AIX
 

@@ -42,11 +42,7 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
   //   }
   // };
   benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
-  pricing?: DModelPricingV1;
-
-  // derived properties
-  tmpIsFree?: boolean; // model is free to use [temporary, for now], this is a derived property from the pricing
-  tmpIsVision?: boolean; // model can take image inputs
+  pricing?: DModelPrice;
 
   // references
   sId: DModelsServiceId;
@@ -59,16 +55,15 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
 
 /// Interfaces ///
 
-
-export type DModelInterfaceV1 =
 // do not change anything below! those will be persisted in data
+export type DModelInterfaceV1 =
   | 'oai-chat'
   | 'oai-chat-json'
   | 'oai-chat-vision'
   | 'oai-chat-fn'
-  | 'oai-complete'
-// only append below this line
+  | 'oai-complete' // only append below this line
   ;
+
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 export const LLM_IF_OAI_Chat: DModelInterfaceV1 = 'oai-chat';
 export const LLM_IF_OAI_Json: DModelInterfaceV1 = 'oai-chat-json';
@@ -91,28 +86,31 @@ export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 // modelcaps: DModelCapability[];
 
 
-/// Pricing ///
+/// Pricing per MegaToken ///
 
-export type ModelPricePerToken = number | 'free';
-
-export type ModelPriceOrBreakpoints = ModelPricePerToken | { iTo: number | null, p: ModelPricePerToken }[];
-
-/**
- * Prices by function, with breakpoints.
- */
-export type DModelPricingV1 = {
-  chat: {
-    // unit: 'USD_Mtok',
-    input?: ModelPriceOrBreakpoints;
-    output?: ModelPriceOrBreakpoints;
-    cache?: {
-      cType: 'input-breakpoint';
-      read: ModelPriceOrBreakpoints;
-      write: ModelPriceOrBreakpoints;
-      duration: number; // seconds
-    };
-  }
-  // version=2 pricing
-  // chatIn?: number
-  // chatOut?: number,
+export type DModelPrice = {
+  chat?: DPriceChatGenerate,
 }
+
+export type DPriceChatGenerate = {
+  // unit: 'USD_Mtok',
+  input?: DTieredPrice;
+  output?: DTieredPrice;
+  cache?: {
+    cType: 'ant-bp';
+    read: DTieredPrice;
+    write: DTieredPrice;
+    duration: number; // seconds
+  };
+  // NOT in AixWire_API_ListModels.PriceChatGenerate_schema
+  _isFree?: boolean; // precomputed, so we avoid recalculating it
+}
+
+export type DTieredPrice = DPricePerMToken | DPriceUpTo[];
+
+export type DPriceUpTo = {
+  upTo: number | null,
+  price: DPricePerMToken
+};
+
+export type DPricePerMToken = number | 'free';

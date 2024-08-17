@@ -7,7 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import type { DLLMId, DModelPricingV1, ModelPriceOrBreakpoints, ModelPricePerToken } from '~/common/stores/llms/dllm.types';
+import type { DLLMId, DPriceChatGenerate, DPricePerMToken, DTieredPrice } from '~/common/stores/llms/dllm.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
@@ -30,16 +30,15 @@ function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
 }
 
 
-function prettyPricingComponent(chatPricing: DModelPricingV1['chat']): React.ReactNode {
+function prettyPricingComponent(chatPricing: DPriceChatGenerate): React.ReactNode {
   if (!chatPricing) return 'Pricing not available';
 
-  const formatPrice = (price: ModelPricePerToken | ModelPriceOrBreakpoints | undefined): string => {
+  const formatPrice = (price: DPricePerMToken | DTieredPrice | undefined): string => {
     if (!price) return 'N/A';
     if (price === 'free') return 'Free';
     if (typeof price === 'number') return `$${price.toFixed(4)}`;
-    if (Array.isArray(price)) {
-      return price.map(bp => `${bp.iTo === null ? '>' : '<='} ${bp.iTo} tokens: ${formatPrice(bp.p)}`).join(', ');
-    }
+    if (Array.isArray(price))
+      return price.map(bp => `${bp.upTo === null ? '>' : '<='} ${bp.upTo} tokens: ${formatPrice(bp.price)}`).join(', ');
     return 'Unknown';
   };
 
@@ -160,7 +159,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
           {!!llm.description && <Typography level='body-sm'>
             {llm.description}
           </Typography>}
-          {!!llm.tmpIsFree && <Typography level='body-xs'>
+          {!!llm.pricing?.chat?._isFree && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
           <Typography level='body-xs'>

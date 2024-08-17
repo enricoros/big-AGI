@@ -5,8 +5,9 @@ import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
-import { DLLM, DLLMId, DModelPricingV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/dllm.types';
+import { DLLM, DLLMId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/dllm.types';
 import { findLLMOrThrow, useModelsStore } from '~/common/stores/llms/store-llms';
+import { isModelPriceFree } from '~/common/stores/llms/llms.pricing';
 
 import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
 import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
@@ -54,7 +55,7 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
 
   // update the global models store
   useModelsStore.getState().setLLMs(
-    data.models.map(model => createDLLMFromModelDescription(model, service)),
+    data.models.map(model => _createDLLMFromModelDescription(model, service)),
     service.id,
     true,
     keepUserEdits,
@@ -73,7 +74,7 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   return data;
 }
 
-function createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DModelsService): DLLM<DOpenAILLMOptions> {
+function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DModelsService): DLLM<DOpenAILLMOptions> {
 
   // null means unknown contenxt/output tokens
   const contextTokens = d.contextWindow || null;
@@ -100,14 +101,13 @@ function createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMod
     interfaces: d.interfaces?.length ? d.interfaces : [LLM_IF_OAI_Chat],
     // inputTypes: ...
     benchmark: d.benchmark,
+    // pricing: undefined,
 
-    // derived properties
-    tmpIsFree: d.pricing?.chatIn === 0 && d.pricing?.chatOut === 0,
-    tmpIsVision: d.interfaces?.includes(LLM_IF_OAI_Chat) === true,
-
+    // references
     sId: service.id,
     vId: service.vId,
 
+    // llm-specific
     options: {
       llmRef: d.id,
       // @ts-ignore FIXME: large assumption that this is LLMOptionsOpenAI object
@@ -116,24 +116,15 @@ function createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMod
     },
   };
 
-  // Adapt pricing to the new format
-  const dp = d.pricing;
-  if (dp) {
-    const chatPricing: DModelPricingV1['chat'] = {};
-    if (dp.chatIn)
-      chatPricing.input = dp.chatIn;
-    if (dp.chatOut)
-      chatPricing.output = dp.chatOut;
-    // FIXME: remove the assumption that this is from Anthropic, and adapt all the ModelDescriptionSchemas to the new format instead
-    if (dp.chatInCacheRead || dp.chatInCacheWrite) {
-      chatPricing.cache = {
-        cType: 'input-breakpoint',
-        read: dp.chatInCacheRead || 0,
-        write: dp.chatInCacheWrite || 0,
-        duration: 60 * 5,
-      };
-    }
-    dllm.pricing = { chat: chatPricing };
+  // set the pricing
+  if (d.chatPrice && typeof d.chatPrice === 'object') {
+    dllm.pricing = {
+      chat: {
+        ...d.chatPrice,
+        // compute the free status
+        _isFree: isModelPriceFree(d.chatPrice),
+      },
+    };
   }
 
   return dllm;

@@ -1,21 +1,11 @@
 import { z } from 'zod';
 
+import { AixWire_API_ListModels } from '~/modules/aix/server/api/aix.wiretypes';
+
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/dllm.types';
 
 
 // Model Description: a superset of LLM model descriptors
-
-/**
- * All Costs are in USD per 1M tokens, unless noted otherwise
- */
-const pricingSchema = z.object({
-  // Fresh Input, Input written to cache, Input read from cache
-  chatIn: z.number().optional(),
-  chatInCacheRead: z.number().optional(),
-  chatInCacheWrite: z.number().optional(),
-  // Output tokens (don't support non-linear pricing yet)
-  chatOut: z.number().optional(),
-});
 
 const benchmarkSchema = z.object({
   cbaElo: z.number().optional(),
@@ -38,12 +28,12 @@ const modelDescriptionSchema = z.object({
   updated: z.number().optional(),
   description: z.string(),
   contextWindow: z.number().nullable(),
+  interfaces: z.array(interfaceSchema),
   maxCompletionTokens: z.number().optional(),
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
-  interfaces: z.array(interfaceSchema),
   benchmark: benchmarkSchema.optional(),
-  pricing: pricingSchema.optional(),
+  chatPrice: AixWire_API_ListModels.PriceChatGenerate_schema.optional(),
   hidden: z.boolean().optional(),
   // TODO: add inputTypes/Kinds..
 });

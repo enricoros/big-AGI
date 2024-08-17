@@ -10,6 +10,7 @@ import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from './dllm.types';
 import type { DModelsService, DModelsServiceId } from './dmodelsservice.types';
+import { portModelPricingV2toV3 } from './llms.pricing';
 
 
 /// ModelsStore - a store for configured LLMs and configured services
@@ -183,7 +184,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
      *  2: large changes on all LLMs, and reset chat/fast/func LLMs
      *  3: big-AGI v2
      */
-    version: 2,
+    version: 3,
     migrate: (_state: any, fromVersion: number): LlmsState => {
 
       if (!_state) return _state;
@@ -208,11 +209,8 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
       }
 
       // 2 -> 3: big-AGI v2: update all models for pricing info
-      if (fromVersion < 3) {
-        for (const llm of state.llms) {
-          delete llm.pricing;
-        }
-      }
+      if (fromVersion < 3)
+        state.llms.forEach(portModelPricingV2toV3);
 
       return state;
     },
