@@ -9,12 +9,13 @@ import { LLM_IF_OAI_Chat } from '~/common/stores/llms/dllm.types';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { AixWire_API_ListModels } from '~/modules/aix/server/api/aix.wiretypes';
 
-import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
+import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
+import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
+import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
 
 
 // Default hosts
@@ -192,7 +193,7 @@ export const llmOllamaRouter = createTRPCRouter({
   /* Ollama: List the Models available */
   listModels: publicProcedure
     .input(accessOnlySchema)
-    .output(llmsListModelsOutputSchema)
+    .output(AixWire_API_ListModels.Response_schema)
     .query(async ({ input }) => {
 
       // get the models
@@ -244,7 +245,7 @@ export const llmOllamaRouter = createTRPCRouter({
             description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
             contextWindow,
             interfaces: [LLM_IF_OAI_Chat],
-          } satisfies ModelDescriptionSchema;
+          };
         }),
       };
     }),
