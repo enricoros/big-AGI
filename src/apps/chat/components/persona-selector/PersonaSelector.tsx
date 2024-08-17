@@ -58,6 +58,7 @@ function Tile(props: {
         height: `${tileSize}rem`,
         fontWeight: 'md',
         lineHeight: 'xs',
+        paddingInline: 0.5,
         ...((props.isEditMode || !props.isActive) ? {
           boxShadow: `0 2px 8px -3px rgb(var(--joy-palette-${TILE_ACTIVE_COLOR}-darkChannel) / 30%)`,
           // boxShadow: props.isHighlighted
