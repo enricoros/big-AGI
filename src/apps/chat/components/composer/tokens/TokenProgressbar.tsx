@@ -15,15 +15,12 @@ import { tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 export const TokenProgressbarMemo = React.memo(TokenProgressbar);
 
 function TokenProgressbar(props: {
+  chatPricing?: DPriceChatGenerate,
+
   direct: number,
   history: number,
   responseMax: number,
   limit: number,
-
-  // FIXME: continue from here
-  tokenPricing?: DPriceChatGenerate,
-  tokenPriceIn?: number,
-  tokenPriceOut?: number,
 }) {
 
   // external state
@@ -53,7 +50,7 @@ function TokenProgressbar(props: {
   const overflowColor = theme.palette.danger.softColor;
 
   // tooltip message/color
-  const { message, color } = tokenCountsMathAndMessage(props.limit, props.direct, props.history, props.responseMax, props.tokenPriceIn, props.tokenPriceOut);
+  const { message, color } = tokenCountsMathAndMessage(props.limit, props.direct, props.history, props.responseMax, props.chatPricing);
 
   // sizes
   const containerHeight = 8;
