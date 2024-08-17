@@ -20,6 +20,7 @@ type UidScope =
   | 'persona-simple'
   | 'processing-queue-task'
   | 'server-storage-deletion-key'
+  | 'server-storage-id'
   | 'server-storage-owner'
   | 'snackbar-item'
   ;

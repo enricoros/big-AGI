@@ -113,6 +113,7 @@ export const storagePutProcedure =
           deletionKey: true,
         },
         data: {
+          id: agiUuid('server-storage-id'),
           ownerId: ownerId || agiUuid('server-storage-owner'),
           visibility: LinkStorageVisibility.UNLISTED,
           dataType,
