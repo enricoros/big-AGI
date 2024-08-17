@@ -35,8 +35,6 @@ export type AixAPI_ContextChatStream = z.infer<typeof AixWire_API.ContextChatStr
 export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
 export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatGenerate.Request_schema>;
 
-export type ModelDescriptionSchema = z.infer<typeof AixWire_API_ListModels.ModelDescription_schema>;
-
 
 /// Input Types to AIX
 
@@ -412,89 +410,6 @@ export namespace AixWire_API_ChatGenerate {
   //   issueId: z.enum(['dispatch-prepare', 'dispatch-fetch', 'dispatch-read', 'dispatch-parse']),
   //   issueText: z.string(),
   // });
-
-}
-
-export namespace AixWire_API_ListModels {
-
-  /* Note: at this stage, this should probably be an output, as we're only outputting? */
-  /* TODO: move ListModels (Reqeust and Response) code from the older location to here */
-  /* All costs are in USD per 1M tokens, unless noted otherwise */
-
-
-  /// Interfaces
-
-  // TODO: just remove this, and move to a capabilities array (I/O/...)
-  const Interface_enum = z.enum([
-    'oai-chat',         // OpenAI Chat
-    'oai-chat-json',    // JSON mode?
-    'oai-chat-vision',  // Vision mode?
-    'oai-chat-fn',      // Function calling
-    'oai-complete',     // Complete mode
-  ]);
-
-
-  /// Benchmark
-
-  const BenchmarksScores_schema = z.object({
-    cbaElo: z.number().optional(),
-    cbaMmlu: z.number().optional(),
-    // heCode: z.number().optional(), // HumanEval, code, 0-shot
-    // vqaMmmu: z.number().optional(), // Visual Question Answering, MMMU, 0-shot
-  });
-
-
-  /// Pricing
-
-  const PricePerMToken_schema = z.number().or(z.literal('free'));
-
-  const PriceUpTo_schema = z.object({
-    upTo: z.number().nullable(),
-    price: PricePerMToken_schema,
-  });
-
-  const TieredPrice_schema = z.union([
-    PricePerMToken_schema,
-    z.array(PriceUpTo_schema),
-  ]);
-
-  const PriceChatGenerate_schema = z.object({
-    input: TieredPrice_schema.optional(),
-    output: TieredPrice_schema.optional(),
-    cache: z.object({
-      cType: z.literal('ant-bp'),
-      read: TieredPrice_schema,
-      write: TieredPrice_schema,
-      duration: z.number(),
-    }).optional(),
-  });
-
-
-  /// Model Description (out)
-
-  export const ModelDescription_schema = z.object({
-    id: z.string(),
-    label: z.string(),
-    created: z.number().optional(),
-    updated: z.number().optional(),
-    description: z.string(),
-    contextWindow: z.number().nullable(),
-    interfaces: z.array(Interface_enum),
-    maxCompletionTokens: z.number().optional(),
-    // rateLimits: rateLimitsSchema.optional(),
-    trainingDataCutoff: z.string().optional(),
-    benchmark: BenchmarksScores_schema.optional(),
-    chatPrice: PriceChatGenerate_schema.optional(),
-    hidden: z.boolean().optional(),
-    // TODO: add inputTypes/Kinds..
-  });
-
-
-  /// ListModels Response
-
-  export const Response_schema = z.object({
-    models: z.array(ModelDescription_schema),
-  });
 
 }
 

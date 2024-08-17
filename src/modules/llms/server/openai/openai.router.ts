@@ -10,11 +10,10 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { AixWire_API_ListModels, ModelDescriptionSchema } from '~/modules/aix/server/api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
+import { ListModelsResponse_schema, llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, ModelDescriptionSchema } from '../llm.server.types';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
-import { llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
 
@@ -91,7 +90,7 @@ export const llmOpenAIRouter = createTRPCRouter({
   /* [OpenAI] List the Models available */
   listModels: publicProcedure
     .input(listModelsInputSchema)
-    .output(AixWire_API_ListModels.Response_schema)
+    .output(ListModelsResponse_schema)
     .query(async ({ input: { access } }): Promise<{ models: ModelDescriptionSchema[] }> => {
 
       let models: ModelDescriptionSchema[];

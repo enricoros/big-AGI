@@ -2,7 +2,6 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
-import type { ModelDescriptionSchema } from '~/modules/aix/server/api/aix.wiretypes';
 import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
@@ -11,7 +10,7 @@ import { findLLMOrThrow, useModelsStore } from '~/common/stores/llms/store-llms'
 import { isModelPriceFree } from '~/common/stores/llms/llms.pricing';
 
 import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
-import type { GenerateContextNameSchema, StreamingContextNameSchema } from './server/llm.server.types';
+import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
 import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
 import { DOpenAILLMOptions, FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { findServiceAccessOrThrow } from './vendors/vendor.helpers';

@@ -7,8 +7,7 @@ import type { BackendCapabilities } from '~/modules/backend/store-backend-capabi
 import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
 import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 
-import type { ModelDescriptionSchema } from '~/modules/aix/server/api/aix.wiretypes';
-
+import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 import type { StreamingClientUpdate } from './unifiedStreamingClient';
 import type { VChatContextRef, VChatFunctionIn, VChatGenerateContextName, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut, VChatStreamContextName } from '../llm.client';

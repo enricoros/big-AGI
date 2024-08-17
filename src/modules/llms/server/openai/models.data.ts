@@ -1,7 +1,8 @@
-import type { ModelDescriptionSchema } from '~/modules/aix/server/api/aix.wiretypes';
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/dllm.types';
+
+import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { wireGroqModelsListOutputSchema } from './groq.wiretypes';
 import { wireMistralModelsListOutputSchema } from './mistral.wiretypes';

@@ -9,10 +9,8 @@ import { LLM_IF_OAI_Chat } from '~/common/stores/llms/dllm.types';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { AixWire_API_ListModels } from '~/modules/aix/server/api/aix.wiretypes';
-
+import { ListModelsResponse_schema, llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
 import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
@@ -193,7 +191,7 @@ export const llmOllamaRouter = createTRPCRouter({
   /* Ollama: List the Models available */
   listModels: publicProcedure
     .input(accessOnlySchema)
-    .output(AixWire_API_ListModels.Response_schema)
+    .output(ListModelsResponse_schema)
     .query(async ({ input }) => {
 
       // get the models
