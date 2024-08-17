@@ -196,7 +196,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
 
       </Sheet>
     );
-  }, [isEnabled, liveFileId, status]);
+  }, [isEnabled, liveFileId, patchState.newContent, status, targetOverwriteWithPatch]);
 
   return {
     button,
