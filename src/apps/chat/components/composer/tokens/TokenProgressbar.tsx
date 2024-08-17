@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, useTheme } from '@mui/joy';
 
-import type { DModelPricingV1 } from '~/common/stores/llms/dllm.types';
+import type { DPriceChatGenerate } from '~/common/stores/llms/dllm.types';
 
 import { tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 
@@ -21,7 +21,7 @@ function TokenProgressbar(props: {
   limit: number,
 
   // FIXME: continue from here
-  tokenPricing?: DModelPricingV1,
+  tokenPricing?: DPriceChatGenerate,
   tokenPriceIn?: number,
   tokenPriceOut?: number,
 }) {

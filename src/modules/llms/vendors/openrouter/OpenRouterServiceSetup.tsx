@@ -51,11 +51,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     const { llms, removeLLM } = useModelsStore.getState();
     llms
       .filter(llm => llm.sId === props.serviceId)
-      .filter(llm => {
-        const chatPricing = llm.pricing?.chat || undefined;
-        if (!chatPricing) return true;
-        return chatPricing.input !== 'free' || chatPricing.output !== 'free';
-      })
+      .filter(llm => llm.pricing?.chat?._isFree === false)
       // .forEach(llm => updateLLM(llm.id, { hidden: true }));
       .forEach(llm => removeLLM(llm.id));
   };

@@ -61,7 +61,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   getRateLimitDelay: (llm) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
-    const wait = llm.tmpIsFree
+    const wait = llm.pricing?.chat?._isFree
       ? 5000 + 100 /* 5 seconds for free call, plus some safety margin */
       : 100;
 
