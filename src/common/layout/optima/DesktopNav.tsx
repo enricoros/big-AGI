@@ -6,7 +6,7 @@ import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Toolt
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';

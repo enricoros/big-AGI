@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FormControl, FormHelperText, Option, Select } from '@mui/joy';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -10,10 +11,9 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import type { DModelSourceId } from '../../store-llms';
 import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorGemini } from './gemini.vendor';
 
@@ -29,21 +29,22 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
 ];
 
 
-export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
+export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { source, sourceHasLLMs, sourceSetupValid, access, hasNoBackendCap: needsUserKey, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorGemini);
+  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
+    useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { geminiKey, minSafetyLevel } = access;
+  const { geminiKey, minSafetyLevel } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
-  const shallFetchSucceed = !needsUserKey || (!!geminiKey && sourceSetupValid);
-  const showKeyError = !!geminiKey && !sourceSetupValid;
+  const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
+  const showKeyError = !!geminiKey && !serviceSetupValid;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
   return <>
 
@@ -53,7 +54,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
         ? !geminiKey && <Link level='body-sm' href={GEMINI_API_KEY_LINK} target='_blank'>request Key</Link>
         : <AlreadySet />}
       </>}
-      value={geminiKey} onChange={value => updateSetup({ geminiKey: value.trim() })}
+      value={geminiKey} onChange={value => updateSettings({ geminiKey: value.trim() })}
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
@@ -63,7 +64,7 @@ export function GeminiSourceSetup(props: { sourceId: DModelSourceId }) {
                       description='Threshold' />
       <Select
         variant='outlined'
-        value={minSafetyLevel} onChange={(_event, value) => value && updateSetup({ minSafetyLevel: value })}
+        value={minSafetyLevel} onChange={(_event, value) => value && updateSettings({ minSafetyLevel: value })}
         startDecorator={<HealthAndSafetyIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
         // indicator={<KeyboardArrowDownIcon />}
         slotProps={{

@@ -1,4 +1,4 @@
-import { getChatLLMId } from '~/modules/llms/store-llms';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';

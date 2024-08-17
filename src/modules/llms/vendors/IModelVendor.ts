@@ -4,37 +4,39 @@ import type { SvgIconProps } from '@mui/joy';
 
 import type { BackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
-import type { DLLM, DLLMId, DModelSourceId } from '../store-llms';
+import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 import type { StreamingClientUpdate } from './unifiedStreamingClient';
 import type { VChatContextRef, VChatFunctionIn, VChatGenerateContextName, VChatMessageIn, VChatMessageOrFunctionCallOut, VChatMessageOut, VChatStreamContextName } from '../llm.client';
 
 
-export interface IModelVendor<TSourceSetup = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TSourceSetup, TLLMOptions>> {
+export interface IModelVendor<TServiceSettings = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TLLMOptions>> {
   readonly id: ModelVendorId;
   readonly name: string;
   readonly rank: number;
   readonly location: 'local' | 'cloud';
   readonly instanceLimit: number;
   readonly hasFreeModels?: boolean;
-  readonly hasBackendCapFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding sources
+  readonly hasBackendCapFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
   readonly hasBackendCapKey?: keyof BackendCapabilities;
 
   // components
   readonly Icon: React.FunctionComponent<SvgIconProps>;
-  readonly SourceSetupComponent: React.ComponentType<{ sourceId: DModelSourceId }>;
+  readonly ServiceSetupComponent: React.ComponentType<{ serviceId: DModelsServiceId }>;
   readonly LLMOptionsComponent: React.ComponentType<{ llm: TDLLM }>;
 
   /// abstraction interface ///
 
-  initializeSetup?(): TSourceSetup;
+  initializeSetup?(): TServiceSettings;
 
-  validateSetup?(setup: TSourceSetup): boolean; // client-side only, accessed via useSourceSetup
+  validateSetup?(setup: TServiceSettings): boolean; // client-side only, accessed via useServiceSetup
 
-  getTransportAccess(setup?: Partial<TSourceSetup>): TAccess;
+  getTransportAccess(setup?: Partial<TServiceSettings>): TAccess;
 
-  getRateLimitDelay?(llm: TDLLM, setup: Partial<TSourceSetup>): number;
+  getRateLimitDelay?(llm: TDLLM, setup: Partial<TServiceSettings>): number;
 
   rpcUpdateModelsOrThrow(
     access: TAccess,

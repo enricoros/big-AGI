@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { create } from 'zustand';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
-
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { isBrowser } from '~/common/util/pwaUtils';
 import { navItems } from '~/common/app.nav';

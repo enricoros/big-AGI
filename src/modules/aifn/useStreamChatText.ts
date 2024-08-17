@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
+
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 
 
 export function useStreamChatText() {

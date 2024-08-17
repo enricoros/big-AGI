@@ -3,18 +3,18 @@ import { OpenPipeIcon } from '~/common/components/icons/vendors/OpenPipeIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
-import { OpenPipeSourceSetup } from './OpenPipeSourceSetup';
+import { OpenPipeServiceSetup } from './OpenPipeServiceSetup';
 
 
-export interface SourceSetupOpenPipe {
+export interface DOpenPipeServiceSettings {
   openPipeKey: string;
   openPipeTags: string; // hack: this will travel as 'oaiOrg' in the access schema - then interpreted in the openAIAccess() function
 }
 
-export const ModelVendorOpenPipe: IModelVendor<SourceSetupOpenPipe, OpenAIAccessSchema, LLMOptionsOpenAI> = {
+export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'openpipe',
   name: 'OpenPipe',
   rank: 16,
@@ -24,7 +24,7 @@ export const ModelVendorOpenPipe: IModelVendor<SourceSetupOpenPipe, OpenAIAccess
 
   // components
   Icon: OpenPipeIcon,
-  SourceSetupComponent: OpenPipeSourceSetup,
+  ServiceSetupComponent: OpenPipeServiceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions

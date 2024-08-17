@@ -2,39 +2,40 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import { DModelSourceId } from '../../store-llms';
 import { ModelVendorPerplexity } from './perplexity.vendor';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 
 const PERPLEXITY_REG_LINK = 'https://www.perplexity.ai/settings/api';
 
 
-export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
+export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
   const {
-    source, sourceHasLLMs, access,
-    sourceSetupValid, hasNoBackendCap: needsUserKey, updateSetup,
-  } = useSourceSetup(props.sourceId, ModelVendorPerplexity);
+    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    serviceSetupValid, updateSettings,
+  } = useServiceSetup(props.serviceId, ModelVendorPerplexity);
 
   // derived state
-  const { oaiKey: perplexityKey } = access;
+  const { oaiKey: perplexityKey } = serviceAccess;
+  const needsUserKey = !serviceHasBackendCap;
 
   // key validation
-  const shallFetchSucceed = !needsUserKey || (!!perplexityKey && sourceSetupValid);
-  const showKeyError = !!perplexityKey && !sourceSetupValid;
+  const shallFetchSucceed = !needsUserKey || (!!perplexityKey && serviceSetupValid);
+  const showKeyError = !!perplexityKey && !serviceSetupValid;
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
 
   return <>
@@ -45,7 +46,7 @@ export function PerplexitySourceSetup(props: { sourceId: DModelSourceId }) {
         ? !perplexityKey && <Link level='body-sm' href={PERPLEXITY_REG_LINK} target='_blank'>API keys</Link>
         : <AlreadySet />}
       </>}
-      value={perplexityKey} onChange={value => updateSetup({ perplexityKey: value })}
+      value={perplexityKey} onChange={value => updateSettings({ perplexityKey: value })}
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />

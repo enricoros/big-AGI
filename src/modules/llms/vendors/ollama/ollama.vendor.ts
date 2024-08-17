@@ -6,19 +6,19 @@ import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 import type { VChatContextRef, VChatGenerateContextName, VChatMessageOut } from '../../llm.client';
 import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
-import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE, LLMOptionsOpenAI } from '../openai/openai.vendor';
+import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE, DOpenAILLMOptions } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
-import { OllamaSourceSetup } from './OllamaSourceSetup';
+import { OllamaServiceSetup } from './OllamaServiceSetup';
 
 
-export interface SourceSetupOllama {
+interface DOllamaServiceSettings {
   ollamaHost: string;
   ollamaJson: boolean;
 }
 
 
-export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSchema, LLMOptionsOpenAI> = {
+export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAccessSchema, DOpenAILLMOptions> = {
   id: 'ollama',
   name: 'Ollama',
   rank: 22,
@@ -28,7 +28,7 @@ export const ModelVendorOllama: IModelVendor<SourceSetupOllama, OllamaAccessSche
 
   // components
   Icon: OllamaIcon,
-  SourceSetupComponent: OllamaSourceSetup,
+  ServiceSetupComponent: OllamaServiceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions

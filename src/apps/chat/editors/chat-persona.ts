@@ -1,5 +1,3 @@
-import type { DLLMId } from '~/modules/llms/store-llms';
-
 import type { AixAPI_ContextChatStream, AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
 import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
@@ -7,6 +5,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';

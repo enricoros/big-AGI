@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Typography } from '@mui/joy';
 
-import { useModelsStore } from '~/modules/llms/store-llms';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';

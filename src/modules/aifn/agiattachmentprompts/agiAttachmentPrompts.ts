@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getChatLLMId } from '~/modules/llms/store-llms';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';

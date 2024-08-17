@@ -13,13 +13,13 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
-import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
+import { useChatLLM } from '~/common/stores/llms/llms.hooks';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';

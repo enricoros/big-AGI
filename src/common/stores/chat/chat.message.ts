@@ -1,8 +1,10 @@
 import { agiUuid } from '~/common/util/idUtils';
 import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { DLLMId, DModelSourceId } from '~/modules/llms/store-llms';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 
 
 // Message
@@ -43,7 +45,7 @@ export type DMessageGenerator = {
   mgt: 'aix';
   model: string;                      // model that handled the request
   vId: ModelVendorId;
-  sId: DModelSourceId;
+  sId: DModelsServiceId;
   mId: DLLMId;
 };
 

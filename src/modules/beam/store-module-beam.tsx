@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
-
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { agiUuid } from '~/common/util/idUtils';
 
 import type { FFactoryId } from './gather/instructions/beam.gather.factories';

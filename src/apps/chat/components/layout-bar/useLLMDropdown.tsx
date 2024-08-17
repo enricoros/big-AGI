@@ -5,13 +5,15 @@ import { Box, IconButton, ListItemButton, ListItemDecorator } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '~/modules/llms/store-llms';
-import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
+import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 
 
@@ -42,7 +44,7 @@ function LLMDropdown(props: {
 
   const llmDropdownItems: DropdownItems = React.useMemo(() => {
     const llmItems: DropdownItems = {};
-    let prevSourceId: DModelSourceId | null = null;
+    let prevServiceId: DModelsServiceId | null = null;
     let sepCount = 0;
 
     const lcFilterString = filterString?.toLowerCase();
@@ -59,16 +61,16 @@ function LLMDropdown(props: {
     });
 
     for (const llm of filteredLLMs) {
-      // add separators when changing sources
-      if (!prevSourceId || llm.sId !== prevSourceId) {
-        const llmVendor = findVendorById(llm._source?.vId ?? undefined);
-        const sourceName = llmVendor?.name || llm.sId;
+      // add separators when changing services
+      if (!prevServiceId || llm.sId !== prevServiceId) {
+        const vendor = findModelVendor(llm.vId);
+        const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || vendor?.name || llm.sId;
         llmItems[`sep-${llm.sId}`] = {
           type: 'separator',
-          title: sourceName,
-          icon: llmVendor?.Icon ? <llmVendor.Icon /> : undefined,
+          title: serviceLabel,
+          icon: vendor?.Icon ? <vendor.Icon /> : undefined,
         };
-        prevSourceId = llm.sId;
+        prevServiceId = llm.sId;
         sepCount++;
       }
 
@@ -185,10 +187,9 @@ export function useChatLLMDropdown() {
     setChatLLMId: state.setChatLLMId,
   })));
 
-  const chatLLMDropdown = React.useMemo(
-    () => <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />,
-    [llms, chatLLMId, setChatLLMId],
-  );
+  const chatLLMDropdown = React.useMemo(() => {
+    return <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />;
+  }, [llms, chatLLMId, setChatLLMId]);
 
   return { chatLLMId, chatLLMDropdown };
 }

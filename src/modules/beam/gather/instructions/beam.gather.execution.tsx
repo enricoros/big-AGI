@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Typography } from '@mui/joy';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
-
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { createDMessageEmpty, DMessage } from '~/common/stores/chat/chat.message';
 import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
 

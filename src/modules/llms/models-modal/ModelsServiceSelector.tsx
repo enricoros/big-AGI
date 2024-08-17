@@ -4,17 +4,18 @@ import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Se
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
-
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useModelsServices } from '~/common/stores/llms/llms.hooks';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
-import { DModelSourceId, useModelsStore } from '../store-llms';
-import { createModelSourceForVendor, findAllVendors, findVendorById, ModelVendorId } from '../vendors/vendors.registry';
-import { vendorHasBackendCap } from '../vendors/useSourceSetup';
+import { createModelsServiceForVendor, vendorHasBackendCap } from '../vendors/vendor.helpers';
+import { findAllModelVendors, findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
@@ -33,52 +34,60 @@ function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
 }
 
 
-export function ModelsSourceSelector(props: {
-  selectedSourceId: DModelSourceId | null, setSelectedSourceId: (sourceId: DModelSourceId | null) => void,
+export function ModelsServiceSelector(props: {
+  selectedServiceId: DModelsServiceId | null, setSelectedServiceId: (serviceId: DModelsServiceId | null) => void,
 }) {
 
   // state
+  const { showPromisedOverlay } = useOverlayComponents();
   const [vendorsMenuAnchor, setVendorsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [confirmDeletionSourceId, setConfirmDeletionSourceId] = React.useState<DModelSourceId | null>(null);
 
   // external state
   const isMobile = useIsMobile();
-  const modelSources = useModelsStore(state => state.sources);
-  const { addSource: addModelSource, removeSource: removeModelSource } = useModelsStore.getState();
+  const modelsServices = useModelsServices();
 
   const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);
 
   const closeVendorsMenu = () => setVendorsMenuAnchor(null);
 
-  const handleAddSourceFromVendor = React.useCallback((vendorId: ModelVendorId) => {
+
+  // handlers
+
+  const { setSelectedServiceId } = props;
+
+  const handleAddServiceForVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
-    const { sources: modelSources } = useModelsStore.getState();
-    const modelSource = createModelSourceForVendor(vendorId, modelSources);
-    if (modelSource) {
-      addModelSource(modelSource);
-      props.setSelectedSourceId(modelSource.id);
+    const { sources: modelsServices, addService } = llmsStoreState();
+    const modelsService = createModelsServiceForVendor(vendorId, modelsServices);
+    if (modelsService) {
+      addService(modelsService);
+      setSelectedServiceId(modelsService.id);
     }
-  }, [addModelSource, props]);
+  }, [setSelectedServiceId]);
 
+  const enableDeleteButton = !!props.selectedServiceId && modelsServices.length > 1;
 
-  const enableDeleteButton = !!props.selectedSourceId && modelSources.length > 1;
-
-  const handleDeleteSource = (id: DModelSourceId) => setConfirmDeletionSourceId(id);
-
-  const handleDeleteSourceConfirmed = React.useCallback(() => {
-    if (confirmDeletionSourceId) {
-      props.setSelectedSourceId(modelSources.find(source => source.id !== confirmDeletionSourceId)?.id ?? null);
-      removeModelSource(confirmDeletionSourceId);
-      setConfirmDeletionSourceId(null);
-    }
-  }, [confirmDeletionSourceId, modelSources, props, removeModelSource]);
+  const handleDeleteService = React.useCallback(async (serviceId: DModelsServiceId) => {
+    showPromisedOverlay('llms-service-remove', {}, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText='Are you sure you want to remove these models? The configuration data will be lost and you may have to enter it again.'
+        positiveActionText='Remove'
+      />,
+    ).then(() => {
+      // select the next service
+      setSelectedServiceId(modelsServices.find(s => s.id !== serviceId)?.id ?? null);
+      // remove the service
+      llmsStoreActions().removeService(serviceId);
+    }).catch(() => null /* ignore closure */);
+  }, [modelsServices, setSelectedServiceId, showPromisedOverlay]);
 
 
   // vendor list items
   const vendorComponents = React.useMemo(() => {
 
     // prepare the items
-    const vendorItems = findAllVendors()
+    const vendorItems = findAllModelVendors()
       .filter(v => !!v.instanceLimit)
       .sort((a, b) => {
         // sort first by 'cloud' on top (vs. 'local'), then by name
@@ -87,28 +96,27 @@ export function ModelsSourceSelector(props: {
         return a.name.localeCompare(b.name);
       })
       .map(vendor => {
-          const sourceInstanceCount = modelSources.filter(source => source.vId === vendor.id).length;
-          const enabled = vendor.instanceLimit > sourceInstanceCount;
-          const backendCaps = getBackendCapabilities();
+          const vendorInstancesCount = modelsServices.filter(s => s.vId === vendor.id).length;
+          const enabled = vendor.instanceLimit > vendorInstancesCount;
           return {
             vendor,
             enabled,
             component: (
-              <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddSourceFromVendor(vendor.id)}>
+              <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddServiceForVendor(vendor.id)}>
                 <ListItemDecorator>
-                  {vendorIcon(vendor, vendorHasBackendCap(vendor, backendCaps))}
+                  {vendorIcon(vendor, vendorHasBackendCap(vendor))}
                 </ListItemDecorator>
                 {vendor.name}
 
-                {/*{sourceInstanceCount > 0 && ` (added)`}*/}
+                {/*{vendorInstancesCount > 0 && ` (added)`}*/}
 
                 {/* Free indication */}
                 {/*{!!vendor.hasFreeModels && ` 🎁`}*/}
 
                 {/* Multiple instance hint */}
-                {vendor.instanceLimit > 1 && !!sourceInstanceCount && enabled && (
+                {vendor.instanceLimit > 1 && !!vendorInstancesCount && enabled && (
                   <Typography component='span' level='body-sm'>
-                    #{sourceInstanceCount + 1}
+                    #{vendorInstancesCount + 1}
                     {/*/{vendor.instanceLimit}*/}
                   </Typography>
                 )}
@@ -147,28 +155,27 @@ export function ModelsSourceSelector(props: {
     // return components;
 
     return vendorItems.map(item => item.component);
-  }, [handleAddSourceFromVendor, modelSources]);
+  }, [handleAddServiceForVendor, modelsServices]);
 
-  // source items
-  const sourceItems = React.useMemo(() => modelSources
-      .map(source => {
-        const icon = vendorIcon(findVendorById(source.vId), false);
+  // service items
+  const serviceItems: { service: DModelsService, icon: React.ReactNode, component: React.ReactNode }[] = React.useMemo(() =>
+      modelsServices.map(service => {
+        const icon = vendorIcon(findModelVendor(service.vId), false);
         return {
-          source,
+          service,
           icon,
           component: (
-            <Option key={source.id} value={source.id}>
+            <Option key={service.id} value={service.id}>
               {/*<ListItemDecorator>{icon}</ListItemDecorator>*/}
-              {source.label}
+              {service.label}
             </Option>
           ),
         };
-      })
-      .sort((a, b) => a.source.label.localeCompare(b.source.label))
-    , [modelSources]);
+      }).sort((a, b) => a.service.label.localeCompare(b.service.label))
+    , [modelsServices]);
 
-  const selectedSourceItem = sourceItems.find(item => item.source.id === props.selectedSourceId);
-  const noSources = !sourceItems.length;
+  const selectedServiceItem = serviceItems.find(item => item.service.id === props.selectedServiceId);
+  const noServices = !serviceItems.length;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
@@ -180,31 +187,31 @@ export function ModelsSourceSelector(props: {
 
       <Select
         variant='outlined'
-        value={props.selectedSourceId}
-        disabled={noSources}
-        onChange={(_event, value) => value && props.setSelectedSourceId(value)}
-        startDecorator={selectedSourceItem?.icon}
+        value={props.selectedServiceId}
+        disabled={noServices}
+        onChange={(_event, value) => value && props.setSelectedServiceId(value)}
+        startDecorator={selectedServiceItem?.icon}
         slotProps={{
           root: { sx: { minWidth: 190 } },
           indicator: { sx: { opacity: 0.5 } },
         }}
       >
-        {sourceItems.map(item => item.component)}
+        {serviceItems.map(item => item.component)}
       </Select>
 
       {isMobile ? (
-        <IconButton variant={noSources ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
+        <IconButton variant={noServices ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
           <AddIcon />
         </IconButton>
       ) : (
-        <Button variant={noSources ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
+        <Button variant={noServices ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
           Add
         </Button>
       )}
 
       <IconButton
         variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
-        onClick={() => props.selectedSourceId && handleDeleteSource(props.selectedSourceId)}
+        onClick={() => props.selectedServiceId && handleDeleteService(props.selectedServiceId)}
       >
         <DeleteOutlineIcon />
       </IconButton>
@@ -218,12 +225,6 @@ export function ModelsSourceSelector(props: {
       >
         {vendorComponents}
       </CloseableMenu>
-
-      {/* source delete confirmation */}
-      <ConfirmationModal
-        open={!!confirmDeletionSourceId} onClose={() => setConfirmDeletionSourceId(null)} onPositive={handleDeleteSourceConfirmed}
-        confirmationText={'Are you sure you want to remove these models? The configuration data will be lost and you may have to enter it again.'} positiveActionText={'Remove'}
-      />
 
     </Box>
   );

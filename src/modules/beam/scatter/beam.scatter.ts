@@ -2,9 +2,9 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import { streamAssistantMessageV1 } from '../../../apps/chat/editors/chat-stream-v1';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';

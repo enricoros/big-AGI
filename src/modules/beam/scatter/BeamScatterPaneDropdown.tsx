@@ -9,7 +9,7 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
 import { DEV_MODE_SETTINGS } from '../../../apps/settings-modal/UxLabsSettings';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
 import { useModuleBeamStore } from '../store-module-beam';

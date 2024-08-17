@@ -1,4 +1,3 @@
-import { DLLMId, useModelsStore } from '~/modules/llms/store-llms';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposes } from '../../data';
@@ -7,12 +6,14 @@ import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
+import { createDEphemeral } from './store-ephemeralsoverlay-slice';
 import { createPerChatVanillaStore } from './store-chat-overlay';
-import { createDEphemeral } from '~/common/chat-overlay/store-ephemeralsoverlay-slice';
 
 
 /**

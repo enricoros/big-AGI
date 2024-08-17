@@ -23,7 +23,7 @@ import { incrementalNewsVersion, useAppNewsStateStore } from '../../src/apps/new
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
 // stores access
-import { getLLMsDebugInfo } from '~/modules/llms/store-llms';
+import { getLLMsDebugInfo } from '~/common/stores/llms/store-llms';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/state/store-folders';

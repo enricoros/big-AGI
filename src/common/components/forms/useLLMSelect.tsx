@@ -5,10 +5,12 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { FormControl, ListDivider, ListItemDecorator, Option, Select, SvgIconProps } from '@mui/joy';
 
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
-import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
-import { findVendorById } from '~/modules/llms/vendors/vendors.registry';
+import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
-import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
+
+import { FormLabelStart } from './FormLabelStart';
 
 
 /*export function useLLMSelectGlobalState(): [DLLMId | null, (llmId: DLLMId | null) => void] {
@@ -66,7 +68,7 @@ export function useLLMSelect(
     let formerVendor: IModelVendor | null = null;
     return _filteredLLMs.reduce((acc, llm, _index) => {
 
-      const vendor = findVendorById(llm._source?.vId);
+      const vendor = findModelVendor(llm.vId);
       const vendorChanged = vendor !== formerVendor;
       if (vendorChanged)
         formerVendor = vendor;
@@ -141,7 +143,7 @@ export function useLLMSelect(
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
-    return findVendorById(chatLLM?._source?.vId)?.Icon;
+    return findModelVendor(chatLLM?.vId)?.Icon;
   }, [chatLLM]);
 
   return [chatLLM, llmSelectComponent, chatLLMVendorIconFC];

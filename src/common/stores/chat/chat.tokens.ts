@@ -1,10 +1,9 @@
-import type { DLLM } from '~/modules/llms/store-llms';
-
+import type { DLLM } from '~/common/stores/llms/dllm.types';
+import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
-import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from '~/common/stores/chat/chat.fragments';
-import { imageTokensForLLM } from '~/common/tokens/tokens.image';
+import type { DMessageRole } from './chat.message';
+import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from './chat.fragments';
 
 
 export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragments: DMessageFragment[], addTopGlue: boolean, debugFrom: string) {

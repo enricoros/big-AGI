@@ -6,6 +6,7 @@ import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
+import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
@@ -13,9 +14,8 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
-import { DModelSourceId } from '../../store-llms';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
-import { useSourceSetup } from '../useSourceSetup';
+import { useServiceSetup } from '../useServiceSetup';
 
 import { LocalAIAdmin } from './LocalAIAdmin';
 import { ModelVendorLocalAI } from './localai.vendor';
@@ -24,18 +24,18 @@ import { ModelVendorLocalAI } from './localai.vendor';
 const localAIHostSchema = z.string().url().startsWith('http');
 
 
-export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
+export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // state
   const [adminOpen, setAdminOpen] = React.useState(false);
 
   // external state
   const { hasLlmLocalAIHost: backendHasHost, hasLlmLocalAIKey: backendHasKey } = getBackendCapabilities();
-  const { source, sourceHasLLMs, access, updateSetup } =
-    useSourceSetup(props.sourceId, ModelVendorLocalAI);
+  const { service, serviceAccess, serviceHasLLMs, updateSettings } =
+    useServiceSetup(props.serviceId, ModelVendorLocalAI);
 
   // derived state
-  const { oaiHost: localAIHost, oaiKey: localAIKey } = access;
+  const { oaiHost: localAIHost, oaiKey: localAIKey } = serviceAccess;
 
   // host validation
   const userHostRequired = !backendHasHost;
@@ -45,7 +45,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
   // fetch models - the OpenAI way
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!sourceHasLLMs && shallFetchSucceed, source);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
   return <>
 
@@ -83,7 +83,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
       required={userHostRequired}
       isError={userHostError}
       rightLabel={backendHasHost ? <AlreadySet /> : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
-      value={localAIHost} onChange={value => updateSetup({ localAIHost: value })}
+      value={localAIHost} onChange={value => updateSettings({ localAIHost: value })}
     />
 
     <FormInputKey
@@ -91,7 +91,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
       placeholder='...'
       required={false}
       rightLabel={backendHasKey ? '✔️ already set in server' : undefined}
-      value={localAIKey} onChange={value => updateSetup({ localAIKey: value })}
+      value={localAIKey} onChange={value => updateSettings({ localAIKey: value })}
     />
 
     <SetupFormRefetchButton
@@ -105,7 +105,7 @@ export function LocalAISourceSetup(props: { sourceId: DModelSourceId }) {
 
     {isError && <InlineError error={error} />}
 
-    {adminOpen && <LocalAIAdmin access={access} onClose={() => setAdminOpen(false)} />}
+    {adminOpen && <LocalAIAdmin access={serviceAccess} onClose={() => setAdminOpen(false)} />}
 
   </>;
 }

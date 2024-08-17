@@ -1,10 +1,11 @@
 import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.streaming';
-import type { DLLMId } from '~/modules/llms/store-llms';
-import { findVendorForLlmOrThrow } from '~/modules/llms/vendors/vendors.registry';
+import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
@@ -33,7 +34,7 @@ export type StreamingClientUpdate = {
 };
 
 
-export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
+export async function aixStreamingChatGenerate<TServiceSettings extends object = {}, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
   llmId: DLLMId,
   aixChatGenerate: AixAPIChatGenerate_Request,
   aixContextName: AixAPI_ContextChatStream['name'],
@@ -45,9 +46,8 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
 ): Promise<StreamingClientUpdate> {
 
   // Aix Access
-  const { llm, vendor } = findVendorForLlmOrThrow<TSourceSetup, TAccess>(llmId);
-  const partialSourceSetup = llm._source.setup;
-  const aixAccess = vendor.getTransportAccess(partialSourceSetup);
+  const llm = findLLMOrThrow(llmId);
+  const { transportAccess: aixAccess, serviceSettings, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
   // Aix Model - FIXME: relax the forced cast
   // const llmOptions = llm.options;
@@ -57,7 +57,7 @@ export async function aixStreamingChatGenerate<TSourceSetup = unknown, TAccess e
   const aixContext = { method: 'chat-stream', name: aixContextName, ref: aixContextRef } as const;
 
   // Simple rate limiting (vendor-specific)
-  const delay = vendor.getRateLimitDelay?.(llm, partialSourceSetup) ?? 0;
+  const delay = vendor.getRateLimitDelay?.(llm, serviceSettings) ?? 0;
   if (delay > 0)
     await new Promise(resolve => setTimeout(resolve, delay));
 

@@ -4,7 +4,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SystemPurposeId } from '../../../data';
 
-import { DLLMId, findLLMOrThrow, getChatLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import { findLLMOrThrow, getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { agiUuid } from '~/common/util/idUtils';
 import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
