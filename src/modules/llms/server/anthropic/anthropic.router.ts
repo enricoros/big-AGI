@@ -7,11 +7,10 @@ import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { AixWire_API_ListModels } from '~/modules/aix/server/api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create } from '~/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes';
 
+import { ListModelsResponse_schema, llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 
 import { hardcodedAnthropicModels } from './anthropic.models';
 
@@ -184,7 +183,7 @@ export const llmAnthropicRouter = createTRPCRouter({
   /* [Anthropic] list models - https://docs.anthropic.com/claude/docs/models-overview */
   listModels: publicProcedure
     .input(listModelsInputSchema)
-    .output(AixWire_API_ListModels.Response_schema)
+    .output(ListModelsResponse_schema)
     .query(() => ({ models: hardcodedAnthropicModels })),
 
   /* [Anthropic] Message generation (non-streaming) */

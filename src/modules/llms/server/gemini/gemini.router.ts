@@ -7,14 +7,13 @@ import packageJson from '../../../../../package.json';
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { AixWire_API_ListModels } from '~/modules/aix/server/api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 import { fixupHost } from '~/common/util/urlUtils';
 
+import { ListModelsResponse_schema, llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema } from '../llm.server.types';
 
 
 // Default hosts
@@ -141,7 +140,7 @@ export const llmGeminiRouter = createTRPCRouter({
   /* [Gemini] models.list = /v1beta/models */
   listModels: publicProcedure
     .input(accessOnlySchema)
-    .output(AixWire_API_ListModels.Response_schema)
+    .output(ListModelsResponse_schema)
     .query(async ({ input }) => {
 
       // get the models

@@ -1,10 +1,9 @@
 import type { TRPCClientErrorBase } from '@trpc/client';
 import { useQuery } from '@tanstack/react-query';
 
-import type { ModelDescriptionSchema } from '~/modules/aix/server/api/aix.wiretypes';
-
 import type { DModelsService } from '~/common/stores/llms/dmodelsservice.types';
 
+import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { llmsUpdateModelsForServiceOrThrow } from './llm.client';
 
 
