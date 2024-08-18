@@ -51,6 +51,8 @@ export function EnhancedRenderCodeMenu(props: {
     getCodeCollapseManager().triggerCollapseAll(false);
   }, []);
 
+  const { onClose } = props;
+
   const handleSaveAs = React.useCallback(async () => {
     // guess the mimetype from the markdown title
     let mimeType = 'text/plain';
@@ -75,8 +77,9 @@ export function EnhancedRenderCodeMenu(props: {
       fileName: props.title || undefined,
       extensions: extension ? [`.${extension}`] : undefined,
       mimeTypes: mimeType ? [mimeType] : undefined,
-    }).catch(() => null);
-  }, [props.code, props.title]);
+    }).then(() => onClose())
+      .catch(() => null);
+  }, [onClose, props.code, props.title]);
 
   const toggleEnhanceCodeBlocks = React.useCallback(() => {
     // turn blocks on (may not even be called, ever)
