@@ -502,7 +502,8 @@ export function ChatMessage(props: {
 
 
   return (
-    <ListItem
+    <Box
+      component='li'
       role='chat-message'
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
       sx={listItemSx}
@@ -930,6 +931,6 @@ export function ChatMessage(props: {
         </CloseableMenu>
       )}
 
-    </ListItem>
+    </Box>
   );
 }
