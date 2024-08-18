@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, useTheme } from '@mui/joy';
 
-import type { DPriceChatGenerate } from '~/common/stores/llms/dllm.types';
+import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
 
 import { tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 
@@ -15,7 +15,7 @@ import { tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 export const TokenProgressbarMemo = React.memo(TokenProgressbar);
 
 function TokenProgressbar(props: {
-  chatPricing?: DPriceChatGenerate,
+  chatPricing?: DChatGeneratePricing,
 
   direct: number,
   history: number,

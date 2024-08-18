@@ -3,13 +3,12 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
-import type { DPriceChatGenerate } from '~/common/stores/llms/dllm.types';
+import { DChatGeneratePricing, getPriceForTokens } from '~/common/stores/llms/llms.pricing';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
-import { getPriceForTokens } from '~/common/stores/llms/llms.pricing';
 import { useUIContentScaling } from '~/common/state/store-ui';
 
 
-export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, chatPricing?: DPriceChatGenerate): {
+export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, chatPricing?: DChatGeneratePricing): {
   color: ColorPaletteProp,
   message: string,
   remainingTokens: number,

@@ -236,7 +236,7 @@ async function _aix_LL_ChatGenerateContent(
 
   // add aggregate metrics
   const metrics = messageAccumulator.metrics;
-  metrics.TAll = (metrics.TIn || 0) + (metrics.TOut || 0) + (metrics.TCacheRead || 0) + (metrics.TCacheWrite || 0);
+  metrics.T = (metrics.TIn || 0) + (metrics.TOut || 0) + (metrics.TCacheRead || 0) + (metrics.TCacheWrite || 0);
   if (metrics.TOut !== undefined && metrics.dtAll !== undefined && metrics.dtAll > 0)
     metrics.vTOutAll = Math.round(100 * metrics.TOut / (metrics.dtAll / 1000)) / 100;
 

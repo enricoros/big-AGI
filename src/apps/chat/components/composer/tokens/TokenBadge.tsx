@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Badge } from '@mui/joy';
 
-import type { DPriceChatGenerate } from '~/common/stores/llms/dllm.types';
+import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
 
 import { formatTokenCost, tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 
@@ -13,7 +13,7 @@ import { formatTokenCost, tokenCountsMathAndMessage, TokenTooltip } from './Toke
 export const TokenBadgeMemo = React.memo(TokenBadge);
 
 function TokenBadge(props: {
-  chatPricing?: DPriceChatGenerate,
+  chatPricing?: DChatGeneratePricing,
 
   direct: number,
   history?: number,

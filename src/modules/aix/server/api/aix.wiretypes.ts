@@ -476,7 +476,7 @@ export namespace AixWire_Particles {
    * start to need backwards-incompatible Particle->Reassembler flexibility,
    * which can't be just extended in the D-stored-type.
    */
-  export type ChatGenerateMetrics = Omit<DChatGenerateMetrics, 'TAll' | 'vTOutAll'>;
+  export type ChatGenerateMetrics = Omit<DChatGenerateMetrics, 'T' | 'vTOutAll'>;
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts
 
