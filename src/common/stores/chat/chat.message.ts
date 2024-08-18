@@ -71,7 +71,9 @@ export interface DMetaReferenceItem {
 // User Flags
 
 export type DMessageUserFlag =
-  | 'starred'; // user starred this
+  | 'starred';
+
+export const MESSAGE_FLAG_STARRED: DMessageUserFlag = 'starred';
 
 
 // helpers - creation

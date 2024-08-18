@@ -1,7 +1,7 @@
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DFolder } from '~/common/state/store-folders';
-import { DMessage, DMessageUserFlag, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
@@ -123,7 +123,7 @@ export function useChatDrawerRenderItems(
 
       // transform (the conversations into ChatNavigationItemData) + filter2 (if searching)
       const chatNavItems = selectedConversations
-        .filter(_c => !filterHasStars || _c.messages.some(m => messageHasUserFlag(m, 'starred')))
+        .filter(_c => !filterHasStars || _c.messages.some(m => messageHasUserFlag(m, MESSAGE_FLAG_STARRED)))
         .filter(_c => !filterHasImageAssets || _c.messages.some(messageHasImageFragments))
         .filter(_c => !filterHasDocFragments || _c.messages.some(messageHasDocAttachmentFragments))
         .map((_c): ChatNavigationItemData => {
