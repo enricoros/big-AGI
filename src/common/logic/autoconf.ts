@@ -6,7 +6,7 @@ import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
 
-import type { DModelsService } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 
