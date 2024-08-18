@@ -88,7 +88,7 @@ export function ModelsServiceSelector(props: {
 
     // prepare the items
     const vendorItems = findAllModelVendors()
-      .filter(v => !!v.instanceLimit)
+      .filter(v => v.instanceLimit !== 0)
       .sort((a, b) => {
         // sort first by 'cloud' on top (vs. 'local'), then by name
         // if (a.location !== b.location)
@@ -97,7 +97,7 @@ export function ModelsServiceSelector(props: {
       })
       .map(vendor => {
           const vendorInstancesCount = modelsServices.filter(s => s.vId === vendor.id).length;
-          const enabled = vendor.instanceLimit > vendorInstancesCount;
+          const enabled = (vendor.instanceLimit ?? 1) > vendorInstancesCount;
           return {
             vendor,
             enabled,
@@ -114,10 +114,10 @@ export function ModelsServiceSelector(props: {
                 {/*{!!vendor.hasFreeModels && ` 🎁`}*/}
 
                 {/* Multiple instance hint */}
-                {vendor.instanceLimit > 1 && !!vendorInstancesCount && enabled && (
+                {(vendor.instanceLimit ?? 1) > 1 && !!vendorInstancesCount && enabled && (
                   <Typography component='span' level='body-sm'>
                     #{vendorInstancesCount + 1}
-                    {/*/{vendor.instanceLimit}*/}
+                    {/*/{vendor.instanceLimit ?? 1}*/}
                   </Typography>
                 )}
 

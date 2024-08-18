@@ -18,7 +18,8 @@ export interface IModelVendor<TServiceSettings = unknown, TAccess = unknown, TLL
   readonly name: string;
   readonly rank: number;
   readonly location: 'local' | 'cloud';
-  readonly instanceLimit: number;
+  readonly brandColor?: string;
+  readonly instanceLimit?: number;
   readonly hasFreeModels?: boolean;
   readonly hasBackendCapFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
   readonly hasBackendCapKey?: keyof BackendCapabilities;
