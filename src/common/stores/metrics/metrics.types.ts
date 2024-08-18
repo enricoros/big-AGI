@@ -21,3 +21,36 @@ export type DChatGenerateMetrics = {
   dtInner?: number,
   dtAll?: number,
 };
+
+
+/**
+ * @see DModelPricing
+ * @see DChatGeneratePricing
+ * @see ModelDescription_schema.ChatGeneratePricing_schema
+ */
+// type DPricingDeclaration = DModelPricing;
+//
+// export type DChatGenerateCost = {
+//   // $ = USD
+//   $?: number,
+//   $In?: number,
+//   $CacheRead?: number,
+//   $CacheWrite?: number,
+//   $Out?: number,
+// };
+
+
+//
+// export const costService = {
+//   addCostEntry: async (entry: Omit<CostEntry, 'id' | 'createdAt'>) => {
+//     useCostStore.getState().addCostEntry(entry)
+//   },
+//
+//   getCostEntriesForConversation: async (conversationId: string) => {
+//     return useCostStore.getState().getCostEntriesForConversation(conversationId)
+//   },
+//
+//   getTotalCostForConversation: async (conversationId: string) => {
+//     return useCostStore.getState().getTotalCostForConversation(conversationId)
+//   }
+// }
