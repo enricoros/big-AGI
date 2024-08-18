@@ -1,4 +1,4 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
@@ -15,8 +15,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   //   contextWindow: 200000 ?, // Characters
   //   maxCompletionTokens: 4096 ?,
   //   trainingDataCutoff: ?,
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-  //   pricing: { chatIn: 15, chatOut: 75 },
+  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
+  //   pricing: { chatIn: 15, chatOut: 75, cache: { ... } },
   //   benchmark: {
   //     cbaElo: 1256, // Placeholder
   //     cbaMmlu: 86.8, // Placeholder
@@ -30,7 +30,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000, // Characters
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
     benchmark: { cbaElo: 1271, cbaMmlu: 88.7 },
   },
@@ -42,8 +42,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   //   contextWindow: 200000 ?, // Characters
   //   maxCompletionTokens: 4096 ?,
   //   trainingDataCutoff: ?,
-  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-  //   pricing: { chatIn: 0.25, chatOut: 1.25 },
+  //   interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
+  //   pricing: { chatIn: 0.25, chatOut: 1.25, cache: { ... } },
   //   benchmark: {
   //     cbaElo: 1181, // Placeholder
   //     cbaMmlu: 75.2, // Placeholder
@@ -60,7 +60,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Aug 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1248, cbaMmlu: 86.8 },
   },
@@ -85,7 +85,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Aug 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 0.25, output: 1.25, cache: { cType: 'ant-bp', read: 0.03, write: 0.30, duration: 300 } },
     benchmark: { cbaElo: 1178, cbaMmlu: 75.2 },
   },
