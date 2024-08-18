@@ -98,11 +98,46 @@ const GuessedMimeLookupTable: Record<string, GuessedMimeInfo> = {
   'application/x-bzip2': { ext: ['bz2'], dt: 'other' },
 };
 
+const MdTitleToMimeLookupTable: Record<string, GuessedMimeType> = {
+  'typescript': 'text/x-typescript',
+  'ts': 'text/x-typescript',
+  'tsx': 'text/x-typescript',
+  'javascript': 'text/javascript',
+  'js': 'text/javascript',
+  'jsx': 'text/javascript',
+  'python': 'text/x-python',
+  'py': 'text/x-python',
+  'json': 'application/json',
+  'html': 'text/html',
+  'htm': 'text/html',
+  'css': 'text/css',
+  'md': 'text/markdown',
+  'markdown': 'text/markdown',
+  'csv': 'text/csv',
+  'tsv': 'text/csv',
+  'xml': 'text/xml',
+  'pdf': 'application/pdf',
+  'doc': 'application/msword',
+  'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'xls': 'application/vnd.ms-excel',
+  'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'ppt': 'application/vnd.ms-powerpoint',
+  'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+};
 
 export function reverseLookupMimeType(fileExtension: string): GuessedMimeType | null {
   for (const [mimeType, { ext }] of Object.entries(GuessedMimeLookupTable)) {
     if (ext && ext.includes(fileExtension))
       return mimeType;
+  }
+  return null;
+}
+
+export function reverseLookupMdTitle(mdTitle: string): { mimeType: GuessedMimeType, extension: string | null } | null {
+  const guessedMimeType = MdTitleToMimeLookupTable[mdTitle] || null;
+  if (guessedMimeType) {
+    const { ext } = GuessedMimeLookupTable[guessedMimeType];
+    return { mimeType: guessedMimeType, extension: (ext ? ext[0] : null) || null };
   }
   return null;
 }

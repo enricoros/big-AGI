@@ -1,14 +1,17 @@
 import * as React from 'react';
+import { fileSave } from 'browser-fs-access';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SaveAsIcon from '@mui/icons-material/SaveAs';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { isLiveFileSupported } from '~/common/livefile/store-live-file';
+import { reverseLookupMdTitle, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
 import { useLabsDevMode, useUXLabsStore } from '~/common/state/store-ux-labs';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -20,6 +23,8 @@ import { getCodeCollapseManager } from './codeCollapseManager';
  */
 export function EnhancedRenderCodeMenu(props: {
   anchor: HTMLElement,
+  title: string,
+  code: string,
   onClose: () => void,
   isCollapsed: boolean,
   onToggleCollapse: () => void,
@@ -46,6 +51,33 @@ export function EnhancedRenderCodeMenu(props: {
     getCodeCollapseManager().triggerCollapseAll(false);
   }, []);
 
+  const handleSaveAs = React.useCallback(async () => {
+    // guess the mimetype from the markdown title
+    let mimeType = 'text/plain';
+    let extension = '';
+    const hasExtension = props.title.includes('.');
+    if (hasExtension) {
+      extension = props.title.split('.').pop()!;
+      mimeType = reverseLookupMimeType(extension) || 'text/plain';
+    } else {
+      const data = reverseLookupMdTitle(props.title);
+      if (data?.extension)
+        extension = data.extension;
+      if (data?.mimeType)
+        mimeType = data.mimeType;
+    }
+
+    // content to be saved
+    const blob = new Blob([props.code], { type: mimeType });
+
+    // save content
+    await fileSave(blob, {
+      fileName: props.title || undefined,
+      extensions: extension ? [`.${extension}`] : undefined,
+      mimeTypes: mimeType ? [mimeType] : undefined,
+    }).catch(() => null);
+  }, [props.code, props.title]);
+
   const toggleEnhanceCodeBlocks = React.useCallback(() => {
     // turn blocks on (may not even be called, ever)
     if (!labsEnhanceCodeBlocks) {
@@ -69,6 +101,7 @@ export function EnhancedRenderCodeMenu(props: {
 
   const liveFileSupported = isLiveFileSupported();
 
+
   return (
     <CloseableMenu
       open={true} dense
@@ -89,7 +122,10 @@ export function EnhancedRenderCodeMenu(props: {
 
       <ListDivider />
 
-      {/* TODO: add Download here */}
+      <MenuItem onClick={handleSaveAs}>
+        <ListItemDecorator><SaveAsIcon /></ListItemDecorator>
+        Save As ...
+      </MenuItem>
 
       <MenuItem onClick={toggleEnhanceCodeLiveFile} disabled={!liveFileSupported}>
         <ListItemDecorator>{(labsEnhanceCodeLiveFile && liveFileSupported) && <CheckRoundedIcon />}</ListItemDecorator>

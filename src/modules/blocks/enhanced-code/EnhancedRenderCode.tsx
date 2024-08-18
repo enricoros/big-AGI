@@ -198,6 +198,7 @@ export function EnhancedRenderCode(props: {
       {contextMenuAnchor && (
         <EnhancedRenderCodeMenu
           anchor={contextMenuAnchor}
+          code={props.code} title={props.title}
           onClose={handleCloseContextMenu}
           isCollapsed={isCodeCollapsed}
           onToggleCollapse={handleToggleCodeCollapse}

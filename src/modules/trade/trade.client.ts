@@ -135,7 +135,7 @@ export async function downloadAllJsonV1B() {
     fileName: `backup_chats_${window?.location?.hostname || 'all'}_${payload.conversations.length}_${prettyTimestampForFilenames(false)}.agi.json`,
     // mimeTypes: ['application/json', 'application/big-agi'],
     extensions: ['.json'],
-  });
+  }).catch(() => null);
 }
 
 /**
@@ -172,7 +172,7 @@ export async function downloadSingleChat(conversation: DConversation, format: 'j
   await fileSave(blob, {
     fileName: `conversation_${fileTitle}_${prettyTimestampForFilenames(false)}.agi${extension}`,
     extensions: [extension],
-  });
+  }).catch(() => null);
 }
 
 /**
