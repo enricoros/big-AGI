@@ -19,6 +19,7 @@ import type { DConversation, DConversationId } from '~/common/stores/chat/chat.c
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
+import { LLM_IF_ANT_PromptCaching } from '~/common/stores/llms/llms.types';
 import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -548,6 +549,7 @@ export function AppChat() {
                   conversationId={_paneConversationId}
                   conversationHandler={_paneChatHandler}
                   capabilityHasT2I={capabilityHasT2I}
+                  chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
                   chatLLMContextTokens={chatLLM?.contextTokens ?? null}
                   fitScreen={isMobile || isMultiPane}
                   isMobile={isMobile}

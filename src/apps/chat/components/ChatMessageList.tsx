@@ -35,6 +35,7 @@ export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   conversationHandler: ConversationHandler | null,
   capabilityHasT2I: boolean,
+  chatLLMAntPromptCaching: boolean,
   chatLLMContextTokens: number | null,
   fitScreen: boolean,
   isMobile: boolean,
@@ -150,10 +151,15 @@ export function ChatMessageList(props: {
     props.conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, false);
   }, [props.conversationHandler]);
 
-  const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag) => {
+  const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
     props.conversationHandler?.messageEdit(messageId, (message) => ({
       userFlags: messageToggleUserFlag(message, userFlag),
     }), false, false);
+
+    // Note: we don't support 'maxPerConversation' yet, which is supposed to turn off the flag from the beginning if it's too numerous
+    // if (_maxPerConversation) {
+    //   ...
+    // }
   }, [props.conversationHandler]);
 
   const handleAddInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
@@ -304,6 +310,7 @@ export function ChatMessageList(props: {
               isBottom={idx === filteredMessages.length - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
+              showAntPromptCaching={props.chatLLMAntPromptCaching}
               showUnsafeHtml={danger_experimentalHtmlWebUi}
               onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
               onMessageAssistantFrom={handleMessageAssistantFrom}
