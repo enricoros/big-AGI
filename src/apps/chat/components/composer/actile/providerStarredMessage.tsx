@@ -1,5 +1,5 @@
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ActileItem, ActileProvider } from './ActileProvider';
@@ -23,7 +23,7 @@ export function providerStarredMessage(onMessageSeelect: (item: StarredMessageIt
       const starredMessages: StarredMessageItem[] = [];
       conversations.forEach((conversation) => {
         conversation.messages.forEach((message) => {
-          messageHasUserFlag(message, 'starred') && starredMessages.push({
+          messageHasUserFlag(message, MESSAGE_FLAG_STARRED) && starredMessages.push({
             // data
             conversationId: conversation.id,
             messageId: message.id,

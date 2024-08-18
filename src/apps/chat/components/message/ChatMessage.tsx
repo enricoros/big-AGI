@@ -26,7 +26,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
@@ -170,7 +170,7 @@ export function ChatMessage(props: {
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
-  const isUserStarred = messageHasUserFlag(props.message, 'starred');
+  const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
 
   const {
     imageAttachments,     // Stamp-sized Images
@@ -263,7 +263,7 @@ export function ChatMessage(props: {
   }, [handleCloseOpsMenu, handleEditsBegin, handleEditsCancel, isEditingText, messagePendingIncomplete]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
-    onMessageToggleUserFlag?.(messageId, 'starred');
+    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_STARRED);
   }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
