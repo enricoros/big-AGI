@@ -209,6 +209,10 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
                 chatMessages.push({ role: 'user', content: [imageContentPart] });
               break;
 
+            case 'meta_cache_control':
+              // ignore this hint - openai doesn't support this yet
+              break;
+
             case 'meta_in_reference_to':
               chatMessages.push({ role: 'system', content: _toOpenAIInReferenceToText(part) });
               break;
@@ -275,6 +279,10 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
                   currentMessage.tool_calls.push(toolCallPart);
               } else
                 chatMessages.push({ role: 'assistant', content: null, tool_calls: [toolCallPart] });
+              break;
+
+            case 'meta_cache_control':
+              // ignore this hint - openai doesn't support this yet
               break;
 
             default:

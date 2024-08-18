@@ -185,7 +185,7 @@ export function ChatMessage(props: {
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
 
-  const isUserAntPromptCacheBreak = messageHasUserFlag(props.message, MESSAGE_FLAG_ANT_CACHE_PROMPT);
+  const isUserAntPromptCacheBreak = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_ANT_CACHE_PROMPT);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
 
   const {
@@ -505,7 +505,9 @@ export function ChatMessage(props: {
 
     // style: when has a breakpoint
     ...(isUserAntPromptCacheBreak && {
-      // borderInlineStart: `0.5rem solid ${ModelVendorAnthropic.brandColor}`,
+      // borderInlineStart: `0.375rem solid ${ModelVendorAnthropic.brandColor}`,
+      // borderTopLeftRadius: '0.375rem',
+      // borderBottomLeftRadius: '0.375rem',
       position: 'relative',
       '&::before': {
         content: '""',
@@ -513,8 +515,8 @@ export function ChatMessage(props: {
         left: 0,
         top: 0,
         bottom: 0,
-        width: '0.375rem',
-        background: `repeating-linear-gradient( -45deg, transparent, transparent 3px, ${ModelVendorAnthropic.brandColor} 3px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
+        width: props.isMobile ? '0.25rem' : '0.375rem',
+        background: `repeating-linear-gradient( -45deg, transparent, transparent 4px, ${ModelVendorAnthropic.brandColor} 4px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
       },
     }),
 
@@ -525,7 +527,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isUserAntPromptCacheBreak, isUserStarred, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, isUserAntPromptCacheBreak, isUserStarred, props.isMobile, props.sx, uiComplexityMode]);
 
 
   // avatar
@@ -777,8 +779,8 @@ export function ChatMessage(props: {
             )}
           </Box>
           {/* Anthropic Breakpoing Toggle */}
-          {props.showAntPromptCaching && <ListDivider />}
-          {props.showAntPromptCaching && (
+          {!!props.showAntPromptCaching && <ListDivider />}
+          {!!props.showAntPromptCaching && (
             <MenuItem onClick={handleOpsToggleAntPromptCacheBreak}>
               <ListItemDecorator><AnthropicIcon sx={isUserAntPromptCacheBreak ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
               {isUserAntPromptCacheBreak ? 'Remove cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}

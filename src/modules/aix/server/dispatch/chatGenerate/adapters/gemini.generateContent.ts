@@ -92,6 +92,10 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(_toApproximateGeminiDocPart(part));
           break;
 
+        case 'meta_cache_control':
+          // ignore - we implement caching in the Anthropic way for now
+          break;
+
         case 'meta_in_reference_to':
           const irtXMLString = inReferenceTo_To_XMLString(part);
           if (irtXMLString)
@@ -154,12 +158,12 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
               parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));
               break;
             default:
-              throw new Error(`Unsupported part type in message: ${(part as any).pt}`);
+              throw new Error(`Unsupported tool response type in message: ${(part as any).response.type}`);
           }
           break;
 
         default:
-          throw new Error(`Unsupported part type in message: ${(part as any).pt}`);
+          throw new Error(`Unsupported part type in Chat message: ${(part as any).pt}`);
       }
     }
 
