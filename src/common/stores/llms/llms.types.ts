@@ -33,16 +33,6 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
   maxOutputTokens: number | null;   // null: must assume it's unknown
   trainingDataCutoff?: string;      // 'Apr 2029'
   interfaces: DModelInterfaceV1[];  // if set, meaning this is the known and comprehensive set of interfaces
-  // inputTypes: {                     // future? the supported input formats
-  //   [key in DModelPartKind]?: {
-  //     // maxItemsPerInput?: number;
-  //     // maxFileSize?: number; // in bytes
-  //     // maxDurationPerInput?: number; // in seconds, for audio and video
-  //     // maxPagesPerInput?: number; // for PDF
-  //     // encodings?: ('base64' | 'utf-8')[];
-  //     mimeTypes?: string[];
-  //   }
-  // };
   benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
   pricing?: DModelPricing;
 
@@ -86,3 +76,13 @@ export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 //   | 'if-fast-chat'
 //   ;
 // modelcaps: DModelCapability[];
+// inputTypes: {                     // future? the supported input formats
+//   [key in DModelPartKind]?: {
+//     // maxItemsPerInput?: number;
+//     // maxFileSize?: number; // in bytes
+//     // maxDurationPerInput?: number; // in seconds, for audio and video
+//     // maxPagesPerInput?: number; // for PDF
+//     // encodings?: ('base64' | 'utf-8')[];
+//     mimeTypes?: string[];
+//   }
+// };

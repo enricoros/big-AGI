@@ -57,6 +57,9 @@ export interface DMessageMetadata {
   ranOutOfTokens?: true;                // if the message was cut off due to token limit
 }
 
+/**
+ * A textual reference to a text snipped, by a certain role.
+ */
 export interface DMetaReferenceItem {
   mrt: 'dmsg';                          // for future type discrimination
   mText: string;
