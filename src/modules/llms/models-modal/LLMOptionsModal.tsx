@@ -7,7 +7,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import type { DLLMId, DPriceChatGenerate, DPricePerMToken, DTieredPrice } from '~/common/stores/llms/dllm.types';
+import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
+import type { DLLMId } from '~/common/stores/llms/dllm.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
@@ -30,10 +31,10 @@ function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
 }
 
 
-function prettyPricingComponent(chatPricing: DPriceChatGenerate): React.ReactNode {
+function prettyPricingComponent(chatPricing: DChatGeneratePricing): React.ReactNode {
   if (!chatPricing) return 'Pricing not available';
 
-  const formatPrice = (price: DPricePerMToken | DTieredPrice | undefined): string => {
+  const formatPrice = (price: DChatGeneratePricing['input']): string => {
     if (!price) return 'N/A';
     if (price === 'free') return 'Free';
     if (typeof price === 'number') return `$${price.toFixed(4)}`;

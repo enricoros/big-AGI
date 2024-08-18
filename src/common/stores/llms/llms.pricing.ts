@@ -1,13 +1,42 @@
-import type { DLLM, DPriceChatGenerate, DPricePerMToken, DTieredPrice } from './dllm.types';
+import type { DLLM } from './dllm.types';
+
+
+/// Pricing per MegaToken ///
+
+export type DModelPricing = {
+  chat?: DChatGeneratePricing,
+}
+
+export type DChatGeneratePricing = {
+  // unit: 'USD_Mtok',
+  input?: DTieredPrice;
+  output?: DTieredPrice;
+  cache?: {
+    cType: 'ant-bp';
+    read: DTieredPrice;
+    write: DTieredPrice;
+    duration: number; // seconds
+  };
+  // NOT in AixWire_API_ListModels.PriceChatGenerate_schema
+  _isFree?: boolean; // precomputed, so we avoid recalculating it
+}
+
+type DTieredPrice = DPricePerMToken | DPriceUpTo[];
+
+type DPriceUpTo = {
+  upTo: number | null,
+  price: DPricePerMToken
+};
+
+type DPricePerMToken = number | 'free';
 
 
 /// detect Free Pricing
 
-export function isModelPriceFree(priceChatGenerate: DPriceChatGenerate): boolean {
+export function isModelPriceFree(priceChatGenerate: DChatGeneratePricing): boolean {
   if (!priceChatGenerate) return true;
   return _isPriceFree(priceChatGenerate.input) && _isPriceFree(priceChatGenerate.output);
 }
-
 
 function _isPriceFree(price: DTieredPrice | undefined): boolean {
   if (price === 'free') return true;
@@ -56,7 +85,7 @@ export function portModelPricingV2toV3(llm: DLLM): void {
 
   const pretendIsV2 = llm.pricing as Was_DModelPricingV2;
   if (pretendIsV2.chatIn || pretendIsV2.chatOut) {
-    const V3: DPriceChatGenerate = {};
+    const V3: DChatGeneratePricing = {};
     if (pretendIsV2.chatIn)
       V3.input = pretendIsV2.chatIn;
     if (pretendIsV2.chatOut)

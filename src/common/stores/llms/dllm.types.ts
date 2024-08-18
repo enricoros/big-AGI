@@ -2,8 +2,10 @@
 // WARNING: Everything here is data at rest. Know what you're doing.
 //
 
-import type { DModelsServiceId } from './dmodelsservice.types';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+
+import type { DModelPricing } from './llms.pricing';
+import type { DModelsServiceId } from './dmodelsservice.types';
 
 
 /**
@@ -42,7 +44,7 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
   //   }
   // };
   benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
-  pricing?: DModelPrice;
+  pricing?: DModelPricing;
 
   // references
   sId: DModelsServiceId;
@@ -84,33 +86,3 @@ export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 //   | 'if-fast-chat'
 //   ;
 // modelcaps: DModelCapability[];
-
-
-/// Pricing per MegaToken ///
-
-export type DModelPrice = {
-  chat?: DPriceChatGenerate,
-}
-
-export type DPriceChatGenerate = {
-  // unit: 'USD_Mtok',
-  input?: DTieredPrice;
-  output?: DTieredPrice;
-  cache?: {
-    cType: 'ant-bp';
-    read: DTieredPrice;
-    write: DTieredPrice;
-    duration: number; // seconds
-  };
-  // NOT in AixWire_API_ListModels.PriceChatGenerate_schema
-  _isFree?: boolean; // precomputed, so we avoid recalculating it
-}
-
-export type DTieredPrice = DPricePerMToken | DPriceUpTo[];
-
-export type DPriceUpTo = {
-  upTo: number | null,
-  price: DPricePerMToken
-};
-
-export type DPricePerMToken = number | 'free';

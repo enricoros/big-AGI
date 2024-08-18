@@ -48,7 +48,7 @@ const TieredPrice_schema = z.union([
   z.array(PriceUpTo_schema),
 ]);
 
-const PriceChatGenerate_schema = z.object({
+const ChatGeneratePricing_schema = z.object({
   input: TieredPrice_schema.optional(),
   output: TieredPrice_schema.optional(),
   cache: z.object({
@@ -57,6 +57,8 @@ const PriceChatGenerate_schema = z.object({
     write: TieredPrice_schema,
     duration: z.number(),
   }).optional(),
+  // Not for the server-side, computed on the client only
+  // _isFree: z.boolean().optional(),
 });
 
 
@@ -74,7 +76,7 @@ export const ModelDescription_schema = z.object({
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
   benchmark: BenchmarksScores_schema.optional(),
-  chatPrice: PriceChatGenerate_schema.optional(),
+  chatPrice: ChatGeneratePricing_schema.optional(),
   hidden: z.boolean().optional(),
   // TODO: add inputTypes/Kinds..
 });
