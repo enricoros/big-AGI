@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { Alert } from '@mui/joy';
+import { Alert, FormControl, Typography } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
@@ -60,9 +61,20 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
+    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart
+        title='Prompt Caching'
+        description='Toggle per-Message'
+        tooltip='You can turn on/off caching on the fly for each message. Caching makes new input a bit more expensive, and reusing the cached input much cheaper. See Anthropic docs for details and pricing.'
+      />
+      <Typography level='title-sm'>
+        {anthropicAutoCache ? 'User & Auto' : 'User-driven'}
+      </Typography>
+    </FormControl>
+
     <FormSwitchControl
-      title='Prompt Auto-Caching' on='Enabled' off='Disabled'
-      tooltip='Caching makes new input a bit more expensive, and reusing the input much cheaper. Auto-breakpoints: always set on the last 2 user messages. See Anthropic docs for details and pricing.'
+      title='Auto-Caching' on='Enabled' off='Disabled'
+      tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
       description={anthropicAutoCache ? <>Auto-breakpoints</> : 'Disabled'}
       checked={anthropicAutoCache}
       onChange={on => updateSettings({ anthropicAutoCache: on })}

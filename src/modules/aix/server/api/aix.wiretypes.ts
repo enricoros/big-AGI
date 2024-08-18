@@ -21,6 +21,7 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 // Export types
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
+export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
 export type AixParts_MetaInReferenceToPart = z.infer<typeof AixWire_Parts.MetaInReferenceToPart_schema>;
 
 export type AixMessages_SystemMessage = z.infer<typeof AixWire_Content.SystemInstruction_schema>;
@@ -198,6 +199,11 @@ export namespace AixWire_Parts {
 
   // Metas
 
+  export const MetaCacheControl_schema = z.object({
+    pt: z.literal('meta_cache_control'),
+    control: z.literal('anthropic-ephemeral'),
+  });
+
   export const MetaInReferenceToPart_schema = z.object({
     pt: z.literal('meta_in_reference_to'),
     referTo: z.array(z.object({
@@ -225,6 +231,7 @@ export namespace AixWire_Content {
       AixWire_Parts.TextPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.DocPart_schema,
+      AixWire_Parts.MetaCacheControl_schema,
       AixWire_Parts.MetaInReferenceToPart_schema,
     ])),
   });
@@ -235,6 +242,7 @@ export namespace AixWire_Content {
       AixWire_Parts.TextPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.ToolInvocationPart_schema,
+      AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
 

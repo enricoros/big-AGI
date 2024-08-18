@@ -24,7 +24,17 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   const chatMessages: TRequest['messages'] = [];
   let currentMessage: TRequest['messages'][number] | null = null;
   for (const aixMessage of chatGenerate.chatSequence) {
-    for (const { role, content } of _generateAnthropicMessagesContentBlocks(aixMessage)) {
+    for (const antPart of _generateAnthropicMessagesContentBlocks(aixMessage)) {
+      // apply cache_control to the last content block of the current message
+      if ('cache_control' in antPart) {
+        if (currentMessage && currentMessage.content.length)
+          currentMessage.content[currentMessage.content.length - 1].cache_control = { type: 'ephemeral' };
+        else
+          console.warn('Anthropic: cache_control without a message to attach to');
+        continue;
+      }
+      // create a new message if the role changes, otherwise append as a new content block
+      const { role, content } = antPart;
       if (!currentMessage || currentMessage.role !== role) {
         if (currentMessage)
           chatMessages.push(currentMessage);
@@ -48,8 +58,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     // Add cache_control to the system message
     // NOTE: 2024-08-16: disabled because the system message is most often too short and user attachments are in the first user message
     // will enable again once Anthropic sorts things out
-    // if (systemMessage?.length)
-    //   AnthropicWire_Blocks.blockSetCacheControl(systemMessage[0], 'ephemeral');
+    if (systemMessage?.length)
+      AnthropicWire_Blocks.blockSetCacheControl(systemMessage[0], 'ephemeral');
 
     // Add cache_control to the end of the last two user messages
     let breakpointsRemaining = 2;
@@ -91,6 +101,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
 function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_ChatMessage): Generator<{
   role: 'user' | 'assistant',
   content: TRequest['messages'][number]['content'][number]
+} | {
+  cache_control: 'anthropic-ephemeral'
 }> {
   if (parts.length < 1) return; // skip empty messages
 
@@ -124,6 +136,10 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             const irtXMLString = inReferenceTo_To_XMLString(part);
             if (irtXMLString)
               yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(irtXMLString) };
+            break;
+
+          case 'meta_cache_control':
+            yield { cache_control: part.control };
             break;
 
           default:
@@ -161,6 +177,10 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
                 throw new Error(`Unsupported tool call type in Model message: ${(part.invocation as any).type}`);
             }
             yield { role: 'assistant', content: toolUseBlock };
+            break;
+
+          case 'meta_cache_control':
+            yield { cache_control: part.control };
             break;
 
           default:
