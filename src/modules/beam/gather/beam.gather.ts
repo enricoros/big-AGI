@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { StateCreator } from 'zustand/vanilla';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { agiUuid } from '~/common/util/idUtils';
 

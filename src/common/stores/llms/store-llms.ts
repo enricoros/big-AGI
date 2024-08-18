@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DLLM, DLLMId } from './dllm.types';
+import type { DLLM, DLLMId } from './llms.types';
 import type { DModelsService, DModelsServiceId } from './dmodelsservice.types';
 import { portModelPricingV2toV3 } from './llms.pricing';
 

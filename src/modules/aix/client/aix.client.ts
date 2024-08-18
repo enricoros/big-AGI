@@ -2,7 +2,7 @@ import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { DChatGenerateMetrics } from '~/common/stores/metrics/metrics.types';
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';

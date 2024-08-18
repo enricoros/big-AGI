@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
-import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import { TokenBadgeMemo } from '../../../apps/chat/components/composer/tokens/TokenBadge';

@@ -20,7 +20,7 @@ import type { DOpenAILLMOptions } from '~/modules/llms/vendors/openai/openai.ven
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
-import type { DLLM } from '~/common/stores/llms/dllm.types';
+import type { DLLM } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';

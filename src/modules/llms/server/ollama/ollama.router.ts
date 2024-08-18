@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat } from '~/common/stores/llms/dllm.types';
+import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 

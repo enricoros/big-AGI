@@ -1,4 +1,4 @@
-import type { DLLM } from './dllm.types';
+import type { DLLM } from './llms.types';
 
 
 /// Pricing per MegaToken ///
