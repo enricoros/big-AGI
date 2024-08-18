@@ -1,7 +1,8 @@
 import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
 
-import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 import { agiUuid } from '~/common/util/idUtils';
+
+import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
 
 
 /// Conversation
@@ -14,7 +15,7 @@ export interface DConversation {
   // editable
   userTitle?: string;
   autoTitle?: string;
-  userSymbol?: string;                // there may be a mapping elsewhere, but this is small enough and will do for now
+  userSymbol?: string;                // TODO: let the user customize this - there may be a mapping elsewhere, but this is small enough and will do for now
 
   // TODO: [x Head] - this should be the system purpose of current head of the conversation
   // there should be the concept of the audience of the current head
