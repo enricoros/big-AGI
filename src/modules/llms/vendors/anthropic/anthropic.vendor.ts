@@ -27,6 +27,7 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
   name: 'Anthropic',
   rank: 13,
   location: 'cloud',
+  brandColor: '#cc785c',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmAnthropic',
 

@@ -45,7 +45,7 @@ export interface DMessageMetadata {
 
 /** A textual reference to a text snipped, by a certain role. */
 export interface DMetaReferenceItem {
-  mrt: 'dmsg';                          // for future type discrimination
+  mrt: 'dmsg';                        // for future type discrimination
   mText: string;
   mRole: DMessageRole;
   // messageId?: string;
@@ -54,10 +54,13 @@ export interface DMetaReferenceItem {
 
 // Message > User Flags
 
-export type DMessageUserFlag = 'starred';
+export type DMessageUserFlag =
+  | 'ant-cache-prompt'                // user has marked this message as a [Anthropic] cache breakpoint (only 1 per conversation)
+  | 'starred'                         // user has starred this message
+  ;
 
+export const MESSAGE_FLAG_ANT_CACHE_PROMPT: DMessageUserFlag = 'ant-cache-prompt';
 export const MESSAGE_FLAG_STARRED: DMessageUserFlag = 'starred';
-//export const MESSAGE_FLAG_CACHE_BREAKPOINT: DMessageUserFlag = 'cache-breakpoint';
 
 
 // export type DMessageGenerator = {
@@ -149,10 +152,11 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
 
 const flag2EmojiMap: Record<DMessageUserFlag, string> = {
   starred: '⭐️',
+  'ant-cache-prompt': '',
 };
 
 export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
-  return flag2EmojiMap[flag] || '❓';
+  return flag2EmojiMap[flag] ?? '❓';
 }
 
 export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {

@@ -24,9 +24,12 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
+import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
+
+import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_ANT_CACHE_PROMPT, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
@@ -88,6 +91,16 @@ const fragmentsListSx: SxProps = {
   gap: 1.5,     // we give a bit more space between the 'classes' of fragments (in-reply-to, images, content, attachments, etc.)
 };
 
+const antCachePromptOffSx: SxProps = {
+  transition: 'color 0.16s, transform 0.16s',
+};
+
+const antCachePromptOnSx: SxProps = {
+  ...antCachePromptOffSx,
+  color: ModelVendorAnthropic.brandColor,
+  transform: 'rotate(90deg)',
+};
+
 
 export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: string };
 
@@ -111,6 +124,7 @@ export function ChatMessage(props: {
   isImagining?: boolean,
   isSpeaking?: boolean,
   hideAvatar?: boolean,
+  showAntPromptCaching?: boolean,
   showBlocksDate?: boolean,
   showUnsafeHtml?: boolean,
   adjustContentScaling?: number,
@@ -124,7 +138,7 @@ export function ChatMessage(props: {
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
-  onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag) => void,
+  onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag, maxPerConversation?: number) => void,
   onMessageTruncate?: (messageId: string) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>,
   onTextImagine?: (text: string) => Promise<void>,
@@ -170,6 +184,8 @@ export function ChatMessage(props: {
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
+
+  const isUserAntPromptCacheBreak = messageHasUserFlag(props.message, MESSAGE_FLAG_ANT_CACHE_PROMPT);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
 
   const {
@@ -261,6 +277,10 @@ export function ChatMessage(props: {
     e.preventDefault();
     handleCloseOpsMenu();
   }, [handleCloseOpsMenu, handleEditsBegin, handleEditsCancel, isEditingText, messagePendingIncomplete]);
+
+  const handleOpsToggleAntPromptCacheBreak = React.useCallback(() => {
+    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_ANT_CACHE_PROMPT, 2);
+  }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_STARRED);
@@ -483,6 +503,21 @@ export function ChatMessage(props: {
       zIndex: 1,
     }),
 
+    // style: when has a breakpoint
+    ...(isUserAntPromptCacheBreak && {
+      // borderInlineStart: `0.5rem solid ${ModelVendorAnthropic.brandColor}`,
+      position: 'relative',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '0.375rem',
+        background: `repeating-linear-gradient( -45deg, transparent, transparent 3px, ${ModelVendorAnthropic.brandColor} 3px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
+      },
+    }),
+
     // for: ENABLE_COPY_MESSAGE_OVERLAY
     // '&:hover > button': { opacity: 1 },
 
@@ -490,7 +525,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isUserStarred, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, isUserAntPromptCacheBreak, isUserStarred, props.sx, uiComplexityMode]);
 
 
   // avatar
@@ -741,6 +776,14 @@ export function ChatMessage(props: {
               </MenuItem>
             )}
           </Box>
+          {/* Anthropic Breakpoing Toggle */}
+          {props.showAntPromptCaching && <ListDivider />}
+          {props.showAntPromptCaching && (
+            <MenuItem onClick={handleOpsToggleAntPromptCacheBreak}>
+              <ListItemDecorator><AnthropicIcon sx={isUserAntPromptCacheBreak ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
+              {isUserAntPromptCacheBreak ? 'Remove cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
+            </MenuItem>
+          )}
           {/* Delete / Branch / Truncate */}
           {!!props.onMessageBranch && <ListDivider />}
           {!!props.onMessageBranch && (
