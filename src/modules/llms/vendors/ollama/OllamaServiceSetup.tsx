@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Button } from '@mui/joy';
 
-import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';

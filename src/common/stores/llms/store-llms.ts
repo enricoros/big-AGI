@@ -9,7 +9,7 @@ import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrout
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from './llms.types';
-import type { DModelsService, DModelsServiceId } from './dmodelsservice.types';
+import type { DModelsService, DModelsServiceId } from './modelsservice.types';
 import { portModelPricingV2toV3 } from './llms.pricing';
 
 

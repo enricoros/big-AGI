@@ -4,7 +4,7 @@ import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
 import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow, useModelsStore } from '~/common/stores/llms/store-llms';
 import { isModelPriceFree } from '~/common/stores/llms/llms.pricing';

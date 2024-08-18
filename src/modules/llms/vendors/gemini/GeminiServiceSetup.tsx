@@ -3,7 +3,7 @@ import * as React from 'react';
 import { FormControl, FormHelperText, Option, Select } from '@mui/joy';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 
-import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';

@@ -4,7 +4,7 @@ import type { DFolder } from '~/common/state/store-folders';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
-import type { DModelsService } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage } from './chat.message';

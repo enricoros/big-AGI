@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Checkbox, Divider } from '@mui/joy';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { GoodModal } from '~/common/components/GoodModal';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';

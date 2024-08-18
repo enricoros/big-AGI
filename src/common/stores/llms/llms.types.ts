@@ -5,7 +5,7 @@
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelPricing } from './llms.pricing';
-import type { DModelsServiceId } from './dmodelsservice.types';
+import type { DModelsServiceId } from './modelsservice.types';
 
 
 /**

@@ -6,7 +6,7 @@ import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
-import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';

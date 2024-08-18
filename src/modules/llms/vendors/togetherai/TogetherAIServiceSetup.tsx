@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Alert, Typography } from '@mui/joy';
 
-import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';

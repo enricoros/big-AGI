@@ -1,6 +1,6 @@
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 
 import type { IModelVendor } from './IModelVendor';

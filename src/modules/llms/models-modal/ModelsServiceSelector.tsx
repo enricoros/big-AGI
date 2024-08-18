@@ -4,7 +4,7 @@ import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Se
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
