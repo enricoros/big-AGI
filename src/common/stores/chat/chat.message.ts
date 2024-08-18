@@ -1,10 +1,6 @@
 import { agiUuid } from '~/common/util/idUtils';
-import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
-
-import type { DLLMId } from '~/common/stores/llms/llms.types';
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
 
 
 // Message
@@ -36,30 +32,18 @@ export interface DMessage {
 }
 
 export type DMessageId = string;
+
 export type DMessageRole = 'user' | 'assistant' | 'system';
 
-export type DMessageGenerator = {
-  mgt: 'name';
-  name: string;
-} | {
-  mgt: 'aix';
-  model: string;                      // model that handled the request
-  vId: ModelVendorId;
-  sId: DModelsServiceId;
-  mId: DLLMId;
-};
 
-
-// Metadata
+// Message > Metadata
 
 export interface DMessageMetadata {
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
   ranOutOfTokens?: true;                // if the message was cut off due to token limit
 }
 
-/**
- * A textual reference to a text snipped, by a certain role.
- */
+/** A textual reference to a text snipped, by a certain role. */
 export interface DMetaReferenceItem {
   mrt: 'dmsg';                          // for future type discrimination
   mText: string;
@@ -68,12 +52,26 @@ export interface DMetaReferenceItem {
 }
 
 
-// User Flags
+// Message > User Flags
 
-export type DMessageUserFlag =
-  | 'starred';
+export type DMessageUserFlag = 'starred';
 
 export const MESSAGE_FLAG_STARRED: DMessageUserFlag = 'starred';
+//export const MESSAGE_FLAG_CACHE_BREAKPOINT: DMessageUserFlag = 'cache-breakpoint';
+
+
+// export type DMessageGenerator = {
+//   mgt: 'name';
+//   name: string;
+// } | {
+//   mgt: 'aix';
+//   model: string;                      // model that handled the request
+//   vId: ModelVendorId;
+//   sId: DModelsServiceId;
+//   mId: DLLMId;
+// } | {
+//   mgt: 'user' // not sure, added on 2024-08-17
+// };
 
 
 // helpers - creation
