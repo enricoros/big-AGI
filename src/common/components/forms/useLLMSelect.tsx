@@ -7,7 +7,7 @@ import { FormControl, ListDivider, ListItemDecorator, Option, Select, SvgIconPro
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import { FormLabelStart } from './FormLabelStart';

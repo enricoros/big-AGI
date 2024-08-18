@@ -3,7 +3,7 @@ import { createPlaceholderMetaFragment, createTextContentFragment, DMessageConte
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 
 

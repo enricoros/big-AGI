@@ -1,4 +1,4 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/dllm.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 

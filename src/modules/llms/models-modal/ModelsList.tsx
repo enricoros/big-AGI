@@ -8,7 +8,7 @@ import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
-import type { DLLM, DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/dmodelsservice.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';

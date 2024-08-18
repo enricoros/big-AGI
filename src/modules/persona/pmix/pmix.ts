@@ -1,6 +1,6 @@
 import { suggestUIMixin } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { browserLangOrUS } from '~/common/util/pwaUtils';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 

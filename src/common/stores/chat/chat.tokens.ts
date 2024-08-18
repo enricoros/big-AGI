@@ -1,4 +1,4 @@
-import type { DLLM } from '~/common/stores/llms/dllm.types';
+import type { DLLM } from '~/common/stores/llms/llms.types';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 

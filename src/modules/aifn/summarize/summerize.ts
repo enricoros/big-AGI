@@ -1,6 +1,6 @@
 import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 

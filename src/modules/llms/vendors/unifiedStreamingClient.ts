@@ -1,4 +1,4 @@
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { apiAsync } from '~/common/util/trpc.client';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { IconButton, Tooltip } from '@mui/joy';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
-import type { DLLM } from '~/common/stores/llms/dllm.types';
+import type { DLLM } from '~/common/stores/llms/llms.types';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { InlineError } from '~/common/components/InlineError';
 

@@ -12,7 +12,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';

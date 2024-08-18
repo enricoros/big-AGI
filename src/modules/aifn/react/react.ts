@@ -7,7 +7,7 @@ import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
 

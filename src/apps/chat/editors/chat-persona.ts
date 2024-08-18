@@ -5,7 +5,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';

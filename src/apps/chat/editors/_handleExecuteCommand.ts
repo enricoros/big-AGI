@@ -1,4 +1,4 @@
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createTextContentFragment, DMessageFragment, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';

@@ -1,4 +1,4 @@
-import type { DLLM } from '~/common/stores/llms/dllm.types';
+import type { DLLM } from '~/common/stores/llms/llms.types';
 
 
 export function imageTokensForLLM(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM) {

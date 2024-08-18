@@ -4,7 +4,7 @@ import { streamAssistantMessageV1 } from '../../../apps/chat/editors/chat-stream
 
 import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
-import type { DLLMId } from '~/common/stores/llms/dllm.types';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
