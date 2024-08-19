@@ -10,8 +10,8 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 
 function initTestConversation(): DConversation {
@@ -22,7 +22,7 @@ function initTestConversation(): DConversation {
 }
 
 function initTestBeamStore(messages: DMessage[], beamStore: BeamStoreApi = createBeamVanillaStore()): BeamStoreApi {
-  beamStore.getState().open(messages, useModelsStore.getState().chatLLMId, (content) => alert(content));
+  beamStore.getState().open(messages, getChatLLMId(), (content) => alert(content));
   return beamStore;
 }
 

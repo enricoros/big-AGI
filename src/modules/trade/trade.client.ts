@@ -6,12 +6,12 @@ import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
+import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyBaseModel } from '~/common/util/modelUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/state/store-folders';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { ImportedOutcome } from './ImportOutcomeModal';
 
@@ -124,7 +124,7 @@ export async function downloadAllJsonV1B() {
   const { folders, enableFolders } = useFolderStore.getState();
   const payload = DataAtRestV1.formatAllToJsonV1B(
     useChatStore.getState().conversations,
-    useModelsStore.getState().sources,
+    llmsStoreState().sources,
     folders, enableFolders,
   );
   const json = JSON.stringify(payload);

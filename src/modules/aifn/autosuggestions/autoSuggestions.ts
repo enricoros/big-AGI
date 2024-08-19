@@ -4,7 +4,7 @@ import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager
 import { DLLMId, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { findLLMOrThrow, useModelsStore } from '~/common/stores/llms/store-llms';
+import { findLLMOrThrow, getFuncLLMId } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -156,7 +156,7 @@ function validateFunctionLLMId(funcLLMId: DLLMId | null): DLLMId | null {
   }
 
   // if not provided, or provided but not a function llm, then use the default
-  return useModelsStore.getState().funcLLMId;
+  return getFuncLLMId();
 }
 
 

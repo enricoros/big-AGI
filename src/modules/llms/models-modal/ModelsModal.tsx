@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Checkbox, Divider } from '@mui/joy';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { GoodModal } from '~/common/components/GoodModal';
-import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';
 import { runWhenIdle } from '~/common/util/pwaUtils';
+import { useLLMsCount, useModelsServices } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
@@ -32,10 +32,8 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
   const { showModels, showModelOptions } = useOptimaModelsModalsState();
-  const { modelsServices, llmCount } = useModelsStore(useShallow(state => ({
-    modelsServices: state.sources,
-    llmCount: state.llms.length,
-  })));
+  const modelsServices = useModelsServices();
+  const llmCount = useLLMsCount();
 
   // auto-select the first service - note: we could use a useEffect() here, but this is more efficient
   // also note that state-persistence is unneeded

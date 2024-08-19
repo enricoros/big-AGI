@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { FormControl, ListDivider, ListItemDecorator, Option, Select, SvgIconProps } from '@mui/joy';
@@ -8,18 +7,19 @@ import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { useNonHiddenLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
 
 
 /*export function useLLMSelectGlobalState(): [DLLMId | null, (llmId: DLLMId | null) => void] {
-  return useModelsStore(useShallow(state => [state.chatLLMId, state.setChatLLMId]));
+  return ...(useShallow(state => [state.chatLLMId, state.setChatLLMId]));
 }*/
 
 export function useLLMSelectLocalState(initFromGlobal: boolean): [DLLMId | null, (llmId: DLLMId | null) => void] {
   return React.useState<DLLMId | null>(initFromGlobal ? () => {
-    return useModelsStore.getState().chatLLMId;
+    return getChatLLMId();
   } : null);
 }
 
@@ -51,9 +51,7 @@ export function useLLMSelect(
 ): [DLLM | null, React.JSX.Element | null, React.FunctionComponent<SvgIconProps> | undefined] {
 
   // external state
-  const _filteredLLMs = useModelsStore(useShallow(state =>
-    state.llms.filter(llm => !llm.hidden || (chatLLMId && llm.id === chatLLMId)),
-  ));
+  const _filteredLLMs = useNonHiddenLLMs();
 
   // derived state
   const noIcons = false; //smaller;

@@ -6,7 +6,7 @@ import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/o
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
-import { findLLMOrThrow, useModelsStore } from '~/common/stores/llms/store-llms';
+import { findLLMOrThrow, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { isModelPriceFree } from '~/common/stores/llms/llms.pricing';
 
 import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
@@ -54,7 +54,7 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   const data = await vendor.rpcUpdateModelsOrThrow(transportAccess);
 
   // update the global models store
-  useModelsStore.getState().setLLMs(
+  llmsStoreActions().setLLMs(
     data.models.map(model => _createDLLMFromModelDescription(model, service)),
     service.id,
     true,

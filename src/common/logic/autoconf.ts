@@ -7,7 +7,7 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
 
 import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
 interface AutoConfStore {
@@ -56,14 +56,15 @@ const autoConfVanillaStore = createVanillaStore<AutoConfStore>()(persist((_set, 
         .then(async () => {
 
           // find the first service for this vendor
-          const { sources: modelsServices, addService } = useModelsStore.getState();
+          const { sources: modelsServices, addService } = llmsStoreState();
           let service: DModelsService;
           const firstServiceForVendor = modelsServices.find(s => s.vId === vendor.id);
           if (!firstServiceForVendor) {
             // create and append the model service, assuming the backend configuration will be successful
             service = createModelsServiceForVendor(vendor.id, modelsServices);
             addService(service);
-            service = useModelsStore.getState().sources.find(_s => _s.id === service.id)!;
+            // re-find it now what's added
+            service = llmsStoreState().sources.find(_s => _s.id === service.id)!;
           } else
             service = firstServiceForVendor;
 

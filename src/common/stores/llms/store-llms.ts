@@ -43,7 +43,7 @@ interface LlmsActions {
   setFuncLLMId: (id: DLLMId | null) => void;
 
   // special
-  setOpenRoutersKey: (key: string) => void;
+  setOpenRouterKey: (key: string) => void;
 
 }
 
@@ -163,7 +163,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         ),
       })),
 
-    setOpenRoutersKey: (key: string) =>
+    setOpenRouterKey: (key: string) =>
       set(state => {
         const firstOpenRouterService = state.sources.find(s => s.vId === 'openrouter');
         return !firstOpenRouterService ? state : {
@@ -270,6 +270,10 @@ export function getFastLLMId(): DLLMId | null {
   return llmsStoreState().fastLLMId;
 }
 
+export function getFuncLLMId(): DLLMId | null {
+  return llmsStoreState().funcLLMId;
+}
+
 export function llmsStoreState(): LlmsState & LlmsActions {
   return useModelsStore.getState();
 }
@@ -321,7 +325,7 @@ export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallback
 }
 
 export function getLLMsDebugInfo() {
-  const { llms, sources, chatLLMId, fastLLMId, funcLLMId } = useModelsStore.getState();
+  const { llms, sources, chatLLMId, fastLLMId, funcLLMId } = llmsStoreState();
   return { services: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId, funcId: funcLLMId };
 }
 
