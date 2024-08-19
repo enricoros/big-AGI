@@ -9,6 +9,7 @@ export function RenderCodeSyntax(props: {
   return (
     <Box
       component='div'
+      aria-label='Code block'
       className='code-container'
       dangerouslySetInnerHTML={{ __html: props.highlightedSyntaxAsHtml ?? '' }}
     />
