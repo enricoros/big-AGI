@@ -55,11 +55,13 @@ export interface DMetaReferenceItem {
 // Message > User Flags
 
 export type DMessageUserFlag =
-  | 'ant-cache-prompt'                // user has marked this message as a [Anthropic] cache breakpoint (only 1 per conversation)
   | 'starred'                         // user has starred this message
+  | 'vnd.ant.cache.auto'              // [Anthropic] user requested breakpoints to be added automatically (per conversation)
+  | 'vnd.ant.cache.user'              // [Anthropic] user requestd for a breakpoint to be added here specifically
   ;
 
-export const MESSAGE_FLAG_ANT_CACHE_PROMPT: DMessageUserFlag = 'ant-cache-prompt';
+export const MESSAGE_FLAG_VND_ANT_CACHE_USER: DMessageUserFlag = 'vnd.ant.cache.user';
+export const MESSAGE_FLAG_VND_ANT_CACHE_AUTO: DMessageUserFlag = 'vnd.ant.cache.auto';
 export const MESSAGE_FLAG_STARRED: DMessageUserFlag = 'starred';
 
 
@@ -152,18 +154,26 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
 
 const flag2EmojiMap: Record<DMessageUserFlag, string> = {
   starred: '⭐️',
-  'ant-cache-prompt': '',
+  [MESSAGE_FLAG_VND_ANT_CACHE_AUTO]: '',
+  [MESSAGE_FLAG_VND_ANT_CACHE_USER]: '',
 };
 
 export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
   return flag2EmojiMap[flag] ?? '❓';
 }
 
-export function messageHasUserFlag(message: DMessage, flag: DMessageUserFlag): boolean {
+export function messageHasUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag): boolean {
   return message.userFlags?.includes(flag) ?? false;
 }
 
-export function messageToggleUserFlag(message: DMessage, flag: DMessageUserFlag): DMessageUserFlag[] {
+export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag, on: boolean): DMessageUserFlag[] {
+  if (on)
+    return [...(message.userFlags || []), flag];
+  else
+    return (message.userFlags || []).filter(_f => _f !== flag);
+}
+
+export function messageToggleUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag): DMessageUserFlag[] {
   if (message.userFlags?.includes(flag))
     return message.userFlags.filter(_f => _f !== flag);
   else

@@ -30,6 +30,9 @@ interface AppChatStore {
   autoTitleChat: boolean;
   setAutoTitleChat: (autoTitleChat: boolean) => void;
 
+  autoVndAntBreakpoints: boolean;
+  setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => void;
+
   // chat UI
 
   clearFilters: () => void;
@@ -81,6 +84,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoTitleChat: true,
     setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
+
+    autoVndAntBreakpoints: false,
+    setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => _set({ autoVndAntBreakpoints }),
 
     clearFilters: () => _set({ filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
 
@@ -136,12 +142,14 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoSuggestHTMLUI: state.autoSuggestHTMLUI,
   autoSuggestQuestions: state.autoSuggestQuestions,
   autoTitleChat: state.autoTitleChat,
+  autoVndAntBreakpoints: state.autoVndAntBreakpoints,
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestAttachmentPrompts: state.setAutoSuggestAttachmentPrompts,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
   setAutoSuggestHTMLUI: state.setAutoSuggestHTMLUI,
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
   setAutoTitleChat: state.setAutoTitleChat,
+  setAutoVndAntBreakpoints: state.setAutoVndAntBreakpoints,
 })));
 
 export const getChatAutoAI = (): {
@@ -151,6 +159,7 @@ export const getChatAutoAI = (): {
   autoSuggestHTMLUI: boolean,
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
+  autoVndAntBreakpoints: boolean,
 } => useAppChatStore.getState();
 
 export const useChatAutoSuggestHTMLUI = (): boolean =>

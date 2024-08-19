@@ -2,6 +2,7 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createTextContentFragment, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
@@ -33,7 +34,10 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   //       1. all the callers need to pass a new array
   //       2. all the exit points need to call setMessages
   const _inplaceEditableHistory = [...initialHistory];
-  cHandler.inlineUpdatePurposeInHistory(_inplaceEditableHistory, chatLLMId || undefined);
+  ConversationHandler.inlineUpdatePurposeInHistory(conversationId, _inplaceEditableHistory, chatLLMId || undefined);
+
+  // Support for Prompt Caching - it's here rather than upstream to apply to user-initiated workflows
+  ConversationHandler.inlineUpdateAutoPromptCaching(_inplaceEditableHistory);
 
   // Set the history - note that 'history' objects become invalid after this, and you'd have to
   // re-read it from the store, such as with `cHandler.historyView()`

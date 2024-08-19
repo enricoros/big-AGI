@@ -14,9 +14,20 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
   // Note: the streaming setting is ignored as it only belongs in the path
 
   // System Instructions
-  const systemInstruction: TRequest['systemInstruction'] = chatGenerate.systemMessage?.parts.length
-    ? { parts: chatGenerate.systemMessage.parts.map(part => GeminiWire_ContentParts.TextPart(part.text)) }
-    : undefined;
+  let systemInstruction: TRequest['systemInstruction'] = undefined;
+  if (chatGenerate.systemMessage?.parts.length) {
+    systemInstruction = chatGenerate.systemMessage.parts.reduce((acc, part) => {
+      switch (part.pt) {
+        case 'meta_cache_control':
+          // ignore - we implement caching in the Anthropic way for now
+          break;
+        case 'text':
+          acc.parts.push(GeminiWire_ContentParts.TextPart(part.text));
+          break;
+      }
+      return acc;
+    }, { parts: [] } as Exclude<TRequest['systemInstruction'], undefined>);
+  }
 
   // Chat Messages
   const contents: TRequest['contents'] = _toGeminiContents(chatGenerate.chatSequence);

@@ -1,6 +1,6 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
-import { DMessage, DMetaReferenceItem, MESSAGE_FLAG_ANT_CACHE_PROMPT } from '~/common/stores/chat/chat.message';
+import { DMessage, DMetaReferenceItem, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -41,6 +41,9 @@ export async function aixChatGenerateRequestFromDMessages(
           console.warn('conversationMessagesToAixGenerateRequest: unexpected system fragment', systemFragment);
         }
       }
+      // (on System message) handle the ant-cache-prompt user/auto flags
+      if (messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER))
+        acc.systemMessage.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
       return acc;
     }
 
@@ -88,8 +91,8 @@ export async function aixChatGenerateRequestFromDMessages(
         aixChatMessageUser.parts.splice(lastTextPartIndex + 1, 0, _clientCreateAixMetaInReferenceToPart(m.metadata.inReferenceTo));
       }
 
-      // handle the ant-cache-prompt user flag
-      if (m.userFlags?.includes(MESSAGE_FLAG_ANT_CACHE_PROMPT))
+      // (on User messages) handle the ant-cache-prompt user/auto flags
+      if (messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER))
         aixChatMessageUser.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
 
       acc.chatSequence.push(aixChatMessageUser);
@@ -138,8 +141,8 @@ export async function aixChatGenerateRequestFromDMessages(
         return mMsg;
       }, Promise.resolve({ role: 'model', parts: [] } as AixMessages_ModelMessage));
 
-      // handle the ant-cache-prompt user flag
-      if (m.userFlags?.includes(MESSAGE_FLAG_ANT_CACHE_PROMPT))
+      // (on Assistant messages) handle the ant-cache-prompt user/auto flags
+      if (messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER))
         aixChatMessageModel.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
 
       acc.chatSequence.push(aixChatMessageModel);

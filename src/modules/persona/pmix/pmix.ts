@@ -48,7 +48,7 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   let mixed = _template;
 
   // If Auto-Follow-Ups are enabled, forcefully add text
-  const { autoSuggestHTMLUI, autoSuggestDiagrams } = getChatAutoAI();
+  const { autoSuggestHTMLUI, autoSuggestDiagrams, autoVndAntBreakpoints } = getChatAutoAI();
   if (autoSuggestHTMLUI)
     mixed += (mixed.endsWith('\n') ? '' : '\n') + '{{AutoSuggestHTMLUI}}';
   // if (autoSuggestDiagrams)
@@ -69,7 +69,8 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
       month: 'short', // Full name of the month
       day: 'numeric', // Numeric day of the month
       hour: '2-digit', // 2-digit hour
-      minute: '2-digit', // 2-digit minute
+      // NOTE: disable the minutes if we are using auto-breakpoints, as this will invalidate all every minute...
+      minute: autoVndAntBreakpoints ? undefined : '2-digit', // 2-digit minute
       timeZoneName: 'short', // Short timezone name (e.g., GMT, CST)
       hour12: true, // Use 12-hour time format; set to false for 24-hour format if preferred
     });

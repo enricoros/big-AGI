@@ -163,8 +163,11 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
   const chatMessages: TRequestMessages = [];
 
   // Convert the system message
-  systemMessage?.parts.forEach(({ text }) => {
-    chatMessages.push({ role: 'system', content: text /*, name: _optionalParticipantName */ });
+  systemMessage?.parts.forEach((part) => {
+    if (part.pt === 'meta_cache_control') {
+      // ignore this hint - openai doesn't support thiss yet
+    } else
+      chatMessages.push({ role: 'system', content: part.text /*, name: _optionalParticipantName */ });
   });
 
   // Convert the messages
