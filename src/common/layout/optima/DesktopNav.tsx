@@ -6,11 +6,10 @@ import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Toolt
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-import { useModelsStore } from '~/common/stores/llms/store-llms';
-
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
+import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { BringTheLove } from './components/BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
@@ -38,7 +37,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
   const { showModels, showPreferences } = useOptimaModelsModalsState();
-  const noLLMs = useModelsStore(state => !state.llms.length);
+  const noLLMs = !useHasLLMs();
 
 
   // show/hide the pane when clicking on the logo

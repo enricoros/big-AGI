@@ -1,6 +1,5 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
-import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -11,14 +10,15 @@ import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/GoodModal';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useDefaultLLMIDs, useLLM } from '~/common/stores/llms/llms.hooks';
 
 import { findModelVendor } from '../vendors/vendors.registry';
 
 
 function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
   // get LLM (warning: this will refresh all children components on every change of any LLM field)
-  const llm = useModelsStore(state => state.llms.find(llm => llm.id === props.llmId));
+  const llm = useLLM(props.llmId);
   if (!llm)
     return 'Options issue: LLM not found for id ' + props.llmId;
 
@@ -69,27 +69,16 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const [showDetails, setShowDetails] = React.useState(false);
 
   // external state
-  const {
-    llm,
-    removeLLM, updateLLM,
-    isChatLLM, setChatLLMId,
-    isFastLLM, setFastLLMId,
-    isFuncLLM, setFuncLLMId,
-  } = useModelsStore(useShallow(state => ({
-    llm: state.llms.find(llm => llm.id === props.id),
-    removeLLM: state.removeLLM,
-    updateLLM: state.updateLLM,
-    isChatLLM: state.chatLLMId === props.id,
-    isFastLLM: state.fastLLMId === props.id,
-    isFuncLLM: state.funcLLMId === props.id,
-    setChatLLMId: state.setChatLLMId,
-    setFastLLMId: state.setFastLLMId,
-    setFuncLLMId: state.setFuncLLMId,
-  })));
+  const llm = useLLM(props.id);
+  const { chatLLMId, fastLLMId, funcLLMId } = useDefaultLLMIDs();
+  const { removeLLM, updateLLM, setChatLLMId, setFastLLMId, setFuncLLMId } = llmsStoreActions();
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
 
+  const isChatLLM = chatLLMId === props.id;
+  const isFastLLM = fastLLMId === props.id;
+  const isFuncLLM = funcLLMId === props.id;
 
   const handleLlmLabelSet = (event: React.ChangeEvent<HTMLInputElement>) => updateLLM(llm.id, { label: event.target.value || '' });
 

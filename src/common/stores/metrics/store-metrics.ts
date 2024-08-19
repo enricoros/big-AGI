@@ -14,7 +14,7 @@
 // interface MetricsActions {
 // }
 //
-// export const useModelsStore = create<MetricsState & MetricsActions>()(persist(
+// export const useMetricsStore = create<MetricsState & MetricsActions>()(persist(
 //   (set) => ({
 //
 //     // initial state

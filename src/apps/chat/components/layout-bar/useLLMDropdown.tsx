@@ -8,12 +8,12 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
- import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
-import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';
+import { findModelsServiceOrNull, llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 
 
@@ -181,15 +181,14 @@ function LLMDropdown(props: {
 
 export function useChatLLMDropdown() {
   // external state
-  const { llms, chatLLMId, setChatLLMId } = useModelsStore(useShallow(state => ({
+  const { llms, chatLLMId } = useModelsStore(useShallow(state => ({
     llms: state.llms, // NOTE: we don't need a deep comparison as we reference the same array
     chatLLMId: state.chatLLMId,
-    setChatLLMId: state.setChatLLMId,
   })));
 
   const chatLLMDropdown = React.useMemo(() => {
-    return <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />;
-  }, [llms, chatLLMId, setChatLLMId]);
+    return <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={llmsStoreActions().setChatLLMId} />;
+  }, [llms, chatLLMId]);
 
   return { chatLLMId, chatLLMDropdown };
 }

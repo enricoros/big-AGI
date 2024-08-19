@@ -7,7 +7,7 @@ import type { DLLM } from '~/common/stores/llms/llms.types';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { InlineError } from '~/common/components/InlineError';
 
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
 import { DOpenAILLMOptions, FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from './openai.vendor';
 
@@ -27,7 +27,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<DOpenAILLMOptions> }) {
   // derived state
   const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
-  const { updateLLMOptions } = useModelsStore.getState();
+  const { updateLLMOptions } = llmsStoreActions();
 
   // state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(llmTemperature > 1);

@@ -11,7 +11,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreState } from '~/common/stores/llms/store-llms';
 
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -48,7 +48,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   const handleRemoveNonFreeLLMs = () => {
     // A bit of a hack
-    const { llms, removeLLM } = useModelsStore.getState();
+    const { llms, removeLLM } = llmsStoreState();
     llms
       .filter(llm => llm.sId === props.serviceId)
       .filter(llm => llm.pricing?.chat?._isFree === false)
@@ -57,7 +57,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
   };
 
   const handleSetVisibilityAll = React.useCallback((visible: boolean) => {
-    const { llms, updateLLM } = useModelsStore.getState();
+    const { llms, updateLLM } = llmsStoreState();
     llms
       .filter(llm => llm.sId === props.serviceId)
       .forEach(llm => updateLLM(llm.id, { hidden: !visible }));

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
@@ -11,7 +10,8 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { findModelsServiceOrNull, useModelsStore } from '~/common/stores/llms/store-llms';
+import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useDefaultLLMIDs, useFilteredLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { IModelVendor } from '../vendors/IModelVendor';
 import { findModelVendor } from '../vendors/vendors.registry';
@@ -150,16 +150,9 @@ export function ModelsList(props: {
 }) {
 
   // external state
-  const { chatLLMId, fastLLMId, funcLLMId, updateLLM } = useModelsStore(useShallow(state => ({
-    chatLLMId: state.chatLLMId,
-    fastLLMId: state.fastLLMId,
-    funcLLMId: state.funcLLMId,
-    updateLLM: state.updateLLM,
-  })));
-  const llms = useModelsStore(useShallow(state =>
-    // note: we don't put this together with the former, to avoid going 1-level too deep in the shallow comparison
-    state.llms.filter(llm => !props.filterServiceId || llm.sId === props.filterServiceId),
-  ));
+  const { updateLLM } = llmsStoreActions();
+  const { chatLLMId, fastLLMId, funcLLMId } = useDefaultLLMIDs();
+  const llms = useFilteredLLMs(props.filterServiceId === null ? false : props.filterServiceId);
 
   const { onOpenLLMOptions } = props;
 

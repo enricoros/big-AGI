@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Typography } from '@mui/joy';
 
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
@@ -30,7 +30,7 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
       return;
 
     // 1. Save the key as the client key
-    useModelsStore.getState().setOpenRoutersKey(openRouterKey);
+    llmsStoreActions().setOpenRouterKey(openRouterKey);
 
     // 2. Navigate to the chat app
     void navigateToIndex(true); //.then(openModelsSetup);

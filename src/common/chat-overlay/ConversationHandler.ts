@@ -10,7 +10,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { createDEphemeral } from './store-ephemeralsoverlay-slice';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -176,8 +176,8 @@ export class ConversationHandler {
       terminateKeepingSettings();
     };
 
-    beamOpen(viewHistory, useModelsStore.getState().chatLLMId, onBeamSuccess);
-    importMessages.length && beamImportRays(importMessages, useModelsStore.getState().chatLLMId);
+    beamOpen(viewHistory, getChatLLMId(), onBeamSuccess);
+    importMessages.length && beamImportRays(importMessages, getChatLLMId());
   }
 
 

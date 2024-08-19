@@ -11,7 +11,7 @@ import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
-import { useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
@@ -81,7 +81,7 @@ export function getActiveTextToImageProviderOrThrow() {
     throw new Error('No TextToImage Provider selected');
 
   // [immediate] get all providers
-  const { llms, sources: modelsServices } = useModelsStore.getState();
+  const { llms, sources: modelsServices } = llmsStoreState();
   const openAIModelsServiceIDs = getLlmsModelServices(llms, modelsServices);
   const providers = getTextToImageProviders(openAIModelsServiceIDs, !!useProdiaStore.getState().prodiaModelId);
 
