@@ -8,9 +8,11 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
+
+import { getChatAutoAI } from '../../apps/chat/store-app-chat';
 
 import { createDEphemeral } from './store-ephemeralsoverlay-slice';
 import { createPerChatVanillaStore } from './store-chat-overlay';
@@ -37,8 +39,8 @@ export class ConversationHandler {
 
   // Conversation Management
 
-  inlineUpdatePurposeInHistory(history: DMessage[], assistantLlmId: DLLMId | undefined): DMessage[] {
-    const purposeId = getConversationSystemPurposeId(this.conversationId);
+  static inlineUpdatePurposeInHistory(conversationId: DConversationId, history: DMessage[], assistantLlmId: DLLMId | undefined): void {
+    const purposeId = getConversationSystemPurposeId(conversationId);
     // TODO: HACK: find the persona identiy separately from the "first system message"
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
 
@@ -62,9 +64,34 @@ export class ConversationHandler {
     }
 
     history.unshift(systemMessage);
-    // NOTE: disabled on 2024-03-13; we are only manipulating the history in-place, an we'll set it later in every code branch
-    // this.chatActions.setMessages(this.conversationId, history);
-    return history;
+  }
+
+  static inlineUpdateAutoPromptCaching(history: DMessage[]): void {
+    const setAuto = getChatAutoAI().autoVndAntBreakpoints;
+
+    // update the auto flag on the last two user messages, or remove it if disabled
+    let breakpointsRemaining = 2;
+    for (let i = history.length - 1; i >= 0; i--) {
+
+      // when disabled: remove prior auto flags if set
+      if (!setAuto) {
+        if (messageHasUserFlag(history[i], MESSAGE_FLAG_VND_ANT_CACHE_AUTO))
+          history[i] = { ...history[i], userFlags: messageSetUserFlag(history[i], MESSAGE_FLAG_VND_ANT_CACHE_AUTO, false) };
+        continue;
+      }
+
+      // when enabled: set the auto flag on the last two user messages
+      const isSystemInstruction = history[i].role === 'system' && i === 0;
+      if (!isSystemInstruction && history[i].role !== 'user')
+        continue;
+
+      // set the auto flag on the last two user messages, unless the user flag is set on any, and reset the flag on the others
+      let autoState = --breakpointsRemaining >= 0 || isSystemInstruction;
+      if (autoState && messageHasUserFlag(history[i], MESSAGE_FLAG_VND_ANT_CACHE_USER))
+        autoState = false;
+      if (autoState !== messageHasUserFlag(history[i], MESSAGE_FLAG_VND_ANT_CACHE_AUTO))
+        history[i] = { ...history[i], userFlags: messageSetUserFlag(history[i], MESSAGE_FLAG_VND_ANT_CACHE_AUTO, autoState) };
+    }
   }
 
   setAbortController(abortController: AbortController | null): void {

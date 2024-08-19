@@ -158,7 +158,6 @@ export const anthropicAccessSchema = z.object({
   dialect: z.literal('anthropic'),
   anthropicKey: z.string().trim(),
   anthropicHost: z.string().trim().nullable(),
-  anthropicAutoCache: z.boolean(),
   heliconeKey: z.string().trim().nullable(),
 });
 export type AnthropicAccessSchema = z.infer<typeof anthropicAccessSchema>;

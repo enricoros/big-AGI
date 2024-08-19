@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Alert, FormControl, Typography } from '@mui/joy';
 
+import { useChatAutoAI } from '../../../../apps/chat/store-app-chat';
+
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalLink } from '~/common/components/ExternalLink';
@@ -29,8 +31,10 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorAnthropic);
 
+  const { autoVndAntBreakpoints, setAutoVndAntBreakpoints } = useChatAutoAI();
+
   // derived state
-  const { anthropicKey, anthropicHost, anthropicAutoCache, heliconeKey } = serviceAccess;
+  const { anthropicKey, anthropicHost, heliconeKey } = serviceAccess;
   const needsUserKey = !serviceHasBackendCap;
 
   const keyValid = isValidAnthropicApiKey(anthropicKey);
@@ -68,16 +72,16 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
         tooltip='You can turn on/off caching on the fly for each message. Caching makes new input a bit more expensive, and reusing the cached input much cheaper. See Anthropic docs for details and pricing.'
       />
       <Typography level='title-sm'>
-        {anthropicAutoCache ? 'User & Auto' : 'User-driven'}
+        {autoVndAntBreakpoints ? 'User & Auto' : 'User-driven'}
       </Typography>
     </FormControl>
 
     <FormSwitchControl
       title='Auto-Caching' on='Enabled' off='Disabled'
       tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
-      description={anthropicAutoCache ? <>Auto-breakpoints</> : 'Disabled'}
-      checked={anthropicAutoCache}
-      onChange={on => updateSettings({ anthropicAutoCache: on })}
+      description={autoVndAntBreakpoints ? <>Auto-breakpoints</> : 'Disabled'}
+      checked={autoVndAntBreakpoints}
+      onChange={setAutoVndAntBreakpoints}
     />
 
     {advanced.on && <FormTextField

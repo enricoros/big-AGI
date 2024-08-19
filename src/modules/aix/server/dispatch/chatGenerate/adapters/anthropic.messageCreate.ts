@@ -13,22 +13,38 @@ const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropi
 
 type TRequest = AnthropicWire_API_Message_Create.Request;
 
-export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, anthropicAutoCache: boolean): TRequest {
+export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
 
   // Convert the system message
-  const systemMessage: TRequest['system'] =
-    !chatGenerate.systemMessage?.parts.length ? undefined
-      : chatGenerate.systemMessage.parts.map((part) => AnthropicWire_Blocks.TextBlock(part.text));
+  let systemMessage: TRequest['system'] = undefined;
+  if (chatGenerate.systemMessage?.parts.length) {
+    systemMessage = chatGenerate.systemMessage.parts.reduce((acc, part) => {
+      switch (part.pt) {
+        case 'meta_cache_control':
+          if (!acc.length)
+            console.warn('Anthropic: cache_control without a message to attach to');
+          else if (part.control !== 'anthropic-ephemeral')
+            console.warn('Anthropic: cache_control with an unsupported value:', part.control);
+          else
+            AnthropicWire_Blocks.blockSetCacheControl(acc[acc.length - 1], 'ephemeral');
+          break;
+        case 'text':
+          acc.push(AnthropicWire_Blocks.TextBlock(part.text));
+          break;
+      }
+      return acc;
+    }, [] as Exclude<TRequest['system'], undefined>);
+  }
 
   // Transform the chat messages into Anthropic's format
   const chatMessages: TRequest['messages'] = [];
   let currentMessage: TRequest['messages'][number] | null = null;
   for (const aixMessage of chatGenerate.chatSequence) {
     for (const antPart of _generateAnthropicMessagesContentBlocks(aixMessage)) {
-      // apply cache_control to the last content block of the current message
-      if ('cache_control' in antPart) {
+      // apply cache_control to the current head block of the current message
+      if ('set_cache_control' in antPart) {
         if (currentMessage && currentMessage.content.length)
-          currentMessage.content[currentMessage.content.length - 1].cache_control = { type: 'ephemeral' };
+          AnthropicWire_Blocks.blockSetCacheControl(currentMessage.content[currentMessage.content.length - 1], 'ephemeral');
         else
           console.warn('Anthropic: cache_control without a message to attach to');
         continue;
@@ -51,26 +67,6 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     const hackSystemMessageFirstLine = (systemMessage[0]?.text || '').split('\n')[0];
     chatMessages.unshift({ role: 'user', content: [AnthropicWire_Blocks.TextBlock(hackSystemMessageFirstLine)] });
     console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
-  }
-
-  // If auto-caching is enabled, we will add the cache hints (AnthropicWire_Blocks.blockSetCacheControl(true)) to the last two messages with an user role, in-place
-  if (anthropicAutoCache && chatMessages.length) {
-    // Add cache_control to the system message
-    // NOTE: 2024-08-16: disabled because the system message is most often too short and user attachments are in the first user message
-    // will enable again once Anthropic sorts things out
-    if (systemMessage?.length)
-      AnthropicWire_Blocks.blockSetCacheControl(systemMessage[0], 'ephemeral');
-
-    // Add cache_control to the end of the last two user messages
-    let breakpointsRemaining = 2;
-    for (let i = chatMessages.length - 1; i >= 0; i--) {
-      if (chatMessages[i].role === 'user' && chatMessages[i].content.length) {
-        const lastBlock = chatMessages[i].content[chatMessages[i].content.length - 1];
-        AnthropicWire_Blocks.blockSetCacheControl(lastBlock, 'ephemeral');
-        if (--breakpointsRemaining <= 0)
-          break;
-      }
-    }
   }
 
   // Construct the request payload
@@ -102,7 +98,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
   role: 'user' | 'assistant',
   content: TRequest['messages'][number]['content'][number]
 } | {
-  cache_control: 'anthropic-ephemeral'
+  set_cache_control: 'anthropic-ephemeral'
 }> {
   if (parts.length < 1) return; // skip empty messages
 
@@ -139,7 +135,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           case 'meta_cache_control':
-            yield { cache_control: part.control };
+            yield { set_cache_control: part.control };
             break;
 
           default:
@@ -180,7 +176,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           case 'meta_cache_control':
-            yield { cache_control: part.control };
+            yield { set_cache_control: part.control };
             break;
 
           default:

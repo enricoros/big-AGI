@@ -220,7 +220,10 @@ export namespace AixWire_Content {
   /// System Message
 
   export const SystemInstruction_schema = z.object({
-    parts: z.array(AixWire_Parts.TextPart_schema),
+    parts: z.array(z.discriminatedUnion('pt', [
+      AixWire_Parts.TextPart_schema,
+      AixWire_Parts.MetaCacheControl_schema,
+    ])),
   });
 
   /// Chat Message
