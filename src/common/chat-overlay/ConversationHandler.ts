@@ -67,7 +67,19 @@ export class ConversationHandler {
   }
 
   static inlineUpdateAutoPromptCaching(history: DMessage[]): void {
-    const setAuto = getChatAutoAI().autoVndAntBreakpoints;
+    let setAuto = getChatAutoAI().autoVndAntBreakpoints;
+
+    // [Anthropic] we need at least 1024 tokens for auto-caching, here we begin from 1000 to even request it
+    // NOTE: this is gonna change once we have a view over the "conv (head?) x llm" tokens
+    if (setAuto && history.length > 0) {
+      const { gt1000 } = history.reduce((acc, message) => {
+        if (acc.gt1000) return acc;
+        acc.tokens += message.tokenCount || 0;
+        acc.gt1000 = acc.tokens > 1000;
+        return acc;
+      }, { tokens: 0, gt1000: false });
+      setAuto = gt1000;
+    }
 
     // update the auto flag on the last two user messages, or remove it if disabled
     let breakpointsRemaining = 2;
