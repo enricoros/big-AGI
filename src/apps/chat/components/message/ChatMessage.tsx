@@ -22,6 +22,7 @@ import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import TextureIcon from '@mui/icons-material/Texture';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
@@ -787,6 +788,12 @@ export function ChatMessage(props: {
             <MenuItem onClick={handleOpsToggleAntCacheUser}>
               <ListItemDecorator><AnthropicIcon sx={isVndAndCacheUser ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
               {isVndAndCacheUser ? 'Remove cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
+            </MenuItem>
+          )}
+          {!!props.showAntPromptCaching && isVndAndCacheAuto && (
+            <MenuItem disabled>
+              <ListItemDecorator><TextureIcon sx={{ color: ModelVendorAnthropic.brandColor }} /></ListItemDecorator>
+              Auto-Cached
             </MenuItem>
           )}
           {/* Delete / Branch / Truncate */}

@@ -79,7 +79,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormSwitchControl
       title='Auto-Caching' on='Enabled' off='Disabled'
       tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
-      description={autoVndAntBreakpoints ? <>Auto-breakpoints</> : 'Disabled'}
+      description={autoVndAntBreakpoints ? <>Last 2 user messages</> : 'Disabled'}
       checked={autoVndAntBreakpoints}
       onChange={setAutoVndAntBreakpoints}
     />
