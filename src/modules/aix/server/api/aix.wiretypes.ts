@@ -36,7 +36,7 @@ export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_sc
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
 export type AixAPI_ContextChatStream = z.infer<typeof AixWire_API.ContextChatStream_schema>;
 export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
-export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatGenerate.Request_schema>;
+export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatContentGenerate.Request_schema>;
 
 
 /// Input Types to AIX
@@ -397,7 +397,7 @@ export namespace AixWire_API {
 
 }
 
-export namespace AixWire_API_ChatGenerate {
+export namespace AixWire_API_ChatContentGenerate {
 
   /// Request
 

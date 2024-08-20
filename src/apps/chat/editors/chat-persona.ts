@@ -1,6 +1,6 @@
-import type { AixAPI_ContextChatStream, AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
+import type { AixAPI_ContextChatStream } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
-import { aixStreamingChatGenerate, StreamingClientUpdate } from '~/modules/aix/client/aix.client';
+import { aixCreateContext, aixLLMChatGenerateContent, GenerateContentInterim } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
@@ -53,10 +53,9 @@ export async function runPersonaOnConversationHead(
 
 
   // stream the assistant's messages directly to the state store
-  const aixChatContentGenerateRequest = await aixChatGenerateRequestFromDMessages(history);
-  const messageStatus = await llmGenerateContentStream(
+  const messageStatus = await llmDMessagesChatGenerateContent(
     assistantLlmId,
-    aixChatContentGenerateRequest,
+    history,
     'conversation',
     conversationId,
     parallelViewCount,
@@ -97,13 +96,16 @@ type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
 export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete' | 'metadata'>;
 
-export async function llmGenerateContentStream(
+export async function llmDMessagesChatGenerateContent(
+  // match the caller data
   llmId: DLLMId,
-  aixChatGenerate: AixAPIChatGenerate_Request,
+  history: Readonly<DMessage[]>,
+  // aix
   aixContextName: AixAPI_ContextChatStream['name'],
   aixContextRef: AixAPI_ContextChatStream['ref'],
   parallelViewCount: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   abortSignal: AbortSignal,
+  // streaming updates
   onMessageUpdated: (messageOverwrite: StreamMessageUpdate, messageComplete: boolean) => void,
 ): Promise<StreamMessageStatus> {
 
@@ -116,10 +118,12 @@ export async function llmGenerateContentStream(
     fragments: [],
   };
 
+  const aixChatContentGenerateRequest = await aixChatGenerateRequestFromDMessages(history);
+
   try {
 
-    await aixStreamingChatGenerate(llmId, aixChatGenerate, aixContextName, aixContextRef, true, abortSignal,
-      (update: StreamingClientUpdate, done: boolean) => {
+    await aixLLMChatGenerateContent(llmId, aixChatContentGenerateRequest, aixCreateContext(aixContextName, aixContextRef), true, abortSignal,
+      (update: GenerateContentInterim, done: boolean) => {
 
         // convert the StreamingClientUpdate to the StreamMessageUpdate
         const { typing, metrics, fragments, modelName, metadata } = update;
@@ -138,14 +142,12 @@ export async function llmGenerateContentStream(
     );
 
   } catch (error: any) {
-    // if (error?.name !== 'AbortError') {
-      console.error('Fetch request error:', error);
-      const errorFragment = createErrorContentFragment(`Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}`);
-      messageOverwrite.fragments.push(errorFragment);
-      returnStatus.outcome = 'errored';
-      returnStatus.errorMessage = error.message;
-    // } else
-    //   returnStatus.outcome = 'aborted';
+    // this can only be a large, user-visible error, such as LLM not foing
+    console.error('Fetch request error:', error);
+    const errorFragment = createErrorContentFragment(`Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}`);
+    messageOverwrite.fragments.push(errorFragment);
+    returnStatus.outcome = 'errored';
+    returnStatus.errorMessage = error.message;
   }
 
   // Ensure the last content is flushed out, and mark as complete

@@ -8,6 +8,7 @@ import type { DMessageMetadata } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
+import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
@@ -16,7 +17,7 @@ import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatG
 import { PartReassembler } from './PartReassembler';
 
 
-export type StreamingClientUpdate = {
+export type GenerateContentInterim = {
   // interpreted
   typing: boolean;
   metrics: DChatGenerateMetrics;
@@ -29,27 +30,29 @@ export type StreamingClientUpdate = {
   metadata?: DMessageMetadata;
 };
 
+export type GenerateContentFinal = GenerateContentInterim & {
+  typing: false;
+};
 
-export async function aixStreamingChatGenerate<TServiceSettings extends object = {}, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
+
+export function aixCreateContext(name: AixAPI_ContextChatStream['name'], ref: AixAPI_ContextChatStream['ref']): AixAPI_ContextChatStream {
+  return { method: 'chat-stream', name, ref };
+}
+
+
+export async function aixLLMChatGenerateContent<TServiceSettings extends object = {}, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
   llmId: DLLMId,
   aixChatGenerate: AixAPIChatGenerate_Request,
-  aixContextName: AixAPI_ContextChatStream['name'],
-  aixContextRef: string, // AixAPI_ContextChatStream['ref'],
+  aixContext: AixAPI_ContextChatStream,
   // other
   streaming: boolean,
-  abortSignal: AbortSignal,
-  onUpdate?: (update: StreamingClientUpdate, done: boolean) => void,
-): Promise<StreamingClientUpdate> {
+  aixAbortSignal: AbortSignal,
+  onStreamingUpdate?: (update: GenerateContentInterim, done: boolean) => void,
+): Promise<GenerateContentFinal> {
 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
   const { transportAccess: aixAccess, serviceSettings, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
-
-  // Aix Model
-  const aixModel = _aixModelFromLLMOptions(llm.options, llmId);
-
-  // Aix Context
-  const aixContext = { method: 'chat-stream', name: aixContextName, ref: aixContextRef } as const;
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
   // if (aixAccess.dialect === 'openai' && aixAccess.moderationCheck) {
@@ -61,12 +64,14 @@ export async function aixStreamingChatGenerate<TServiceSettings extends object =
   // apply any vendor-specific rate limit
   await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
 
-  // Aix Low-Level Chat Generation
-  const value = await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, abortSignal, onUpdate);
+  // Aix Model
+  const aixModel = _aixModelFromLLMOptions(llm.options, llmId);
 
-  //
-  //
-  console.log(value.metrics);
+  // Aix Low-Level Chat Generation
+  const value = await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, aixAbortSignal, onStreamingUpdate);
+
+  // TODO: compute costs here, from the metrics (value.metrics: DChatGenerateMetrics) and the pricing (llm.pricing: DModelPricing)
+  metricsStoreAddChatGenerate(value.metrics, llm.pricing?.chat);
 
   return value;
 }
@@ -109,63 +114,15 @@ async function _aix_LL_ChatGenerateContent(
   aixModel: AixAPI_Model,
   aixChatGenerate: AixAPIChatGenerate_Request,
   aixContext: AixAPI_ContextChatStream,
+  aixStreaming: boolean,
   // others
-  streaming: boolean,
   abortSignal: AbortSignal,
-  // TODO: improve onUpdate to have a better signature
-  onUpdate?: (update: StreamingClientUpdate, done: boolean) => void,
-): Promise<StreamingClientUpdate> {
-
-  // const sampleFC: boolean = false; // aixModel.id.indexOf('models/gemini') === -1;
-  const sampleCE: boolean = false; // aixModel.id.indexOf('models/gemini') !== -1;
-
-  // if (sampleFC) {
-  //   aixChatGenerate.tools = [
-  //     {
-  //       type: 'function_call',
-  //       function_call: {
-  //         name: 'get_capybara_info_given_name_and_color',
-  //         description: 'Get the info about capybaras. Call one each per name.',
-  //         input_schema: {
-  //           properties: {
-  //             'name': {
-  //               type: 'string',
-  //               description: 'The name of the capybara',
-  //               enum: ['enrico', 'coolio'],
-  //             },
-  //             'color': {
-  //               type: 'string',
-  //               description: 'The color of the capybara. Mandatory!!',
-  //             },
-  //             // 'story': {
-  //             //   type: 'string',
-  //             //   description: 'A fantastic story about the capybara. Please 10 characters maximum.',
-  //             // },
-  //           },
-  //           required: ['name'],
-  //         },
-  //       },
-  //     },
-  //   ];
-  // }
-  if (sampleCE) {
-    aixChatGenerate.tools = [
-      {
-        type: 'code_execution',
-        variant: 'gemini_auto_inline',
-      },
-    ];
-  }
-
-  if (getLabsDevNoStreaming())
-    streaming = false;
-  const operation = await apiStream.aix.chatGenerateContent.mutate(
-    { access: aixAccess, model: aixModel, chatGenerate: aixChatGenerate, context: aixContext, streaming, connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined },
-    { signal: abortSignal },
-  );
+  // optional streaming callback
+  onStreamingUpdate?: (update: GenerateContentInterim, done: boolean) => void,
+): Promise<GenerateContentFinal> {
 
 
-  let messageAccumulator: StreamingClientUpdate = {
+  let messageAccumulator: GenerateContentInterim = {
     fragments: [],
     metrics: {},
     modelName: aixModel.id,
@@ -175,23 +132,34 @@ async function _aix_LL_ChatGenerateContent(
 
   const partReassembler = new PartReassembler();
 
+  const particles = await apiStream.aix.chatGenerateContent.mutate({
+    access: aixAccess,
+    model: aixModel,
+    chatGenerate: aixChatGenerate,
+    context: aixContext,
+    streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
+    connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined,
+  }, {
+    signal: abortSignal,
+  });
+
   try {
-    for await (const update of operation) {
-      console.log('update', update);
+    for await (const particle of particles) {
+      console.log('update', particle);
 
       // reassemble the particles to fragments[]
-      partReassembler.reassembleParticle(update);
+      partReassembler.reassembleParticle(particle);
       messageAccumulator = {
         ...messageAccumulator,
         fragments: [...partReassembler.reassembedFragments],
       };
 
-      if ('cg' in update) {
-        switch (update.cg) {
+      if ('cg' in particle) {
+        switch (particle.cg) {
           case 'end':
-            // NOTE: do something with update.reason?
+            // NOTE: do something with particle.reason?
             // handle the stop reason
-            switch (update.tokenStopReason) {
+            switch (particle.tokenStopReason) {
               case 'out-of-tokens':
                 messageAccumulator.metadata = {
                   ...messageAccumulator.metadata,
@@ -207,16 +175,16 @@ async function _aix_LL_ChatGenerateContent(
             }
             break;
           case 'set-metrics':
-            messageAccumulator.metrics = update.metrics;
+            messageAccumulator.metrics = particle.metrics;
             break;
           case 'set-model':
-            messageAccumulator.modelName = update.name;
+            messageAccumulator.modelName = particle.name;
             break;
         }
       }
 
-      // send the streaming update
-      onUpdate?.(messageAccumulator, false);
+      // send the streaming particle
+      onStreamingUpdate?.(messageAccumulator, false);
     }
   } catch (error: any) {
     // something else broke, likely a User Abort, or an Aix server error (e.g. tRPC)
@@ -241,16 +209,57 @@ async function _aix_LL_ChatGenerateContent(
     metrics.vTOutAll = Math.round(100 * metrics.TOut / (metrics.dtAll / 1000)) / 100;
 
   // and we're done
-  messageAccumulator = {
+  const finalMessage: GenerateContentFinal = {
     ...messageAccumulator,
     fragments: [...partReassembler.reassembedFragments],
     typing: false,
   };
 
   // streaming update
-  onUpdate?.(messageAccumulator, true);
+  onStreamingUpdate?.(finalMessage, true);
 
   // return the final accumulated message
-  return messageAccumulator;
+  return finalMessage;
 }
 
+// Future Testing Code
+//
+// const sampleFC: boolean = false; // aixModel.id.indexOf('models/gemini') === -1;
+// const sampleCE: boolean = false; // aixModel.id.indexOf('models/gemini') !== -1;
+// if (sampleFC) {
+//   aixChatGenerate.tools = [
+//     {
+//       type: 'function_call',
+//       function_call: {
+//         name: 'get_capybara_info_given_name_and_color',
+//         description: 'Get the info about capybaras. Call one each per name.',
+//         input_schema: {
+//           properties: {
+//             'name': {
+//               type: 'string',
+//               description: 'The name of the capybara',
+//               enum: ['enrico', 'coolio'],
+//             },
+//             'color': {
+//               type: 'string',
+//               description: 'The color of the capybara. Mandatory!!',
+//             },
+//             // 'story': {
+//             //   type: 'string',
+//             //   description: 'A fantastic story about the capybara. Please 10 characters maximum.',
+//             // },
+//           },
+//           required: ['name'],
+//         },
+//       },
+//     },
+//   ];
+// }
+// if (sampleCE) {
+//   aixChatGenerate.tools = [
+//     {
+//       type: 'code_execution',
+//       variant: 'gemini_auto_inline',
+//     },
+//   ];
+// }
