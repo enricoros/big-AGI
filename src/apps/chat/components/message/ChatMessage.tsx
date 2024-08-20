@@ -507,11 +507,11 @@ export function ChatMessage(props: {
 
     // style: when has a user/automatic breakpoint
     ...(isVndAndCacheUser && {
-      borderInlineStart: `${props.isMobile ? '0.25rem' : '0.375rem'} solid ${ModelVendorAnthropic.brandColor}`,
+      borderInlineStart: `0.125rem solid ${ModelVendorAnthropic.brandColor}`,
       // borderTopLeftRadius: '0.375rem',
       // borderBottomLeftRadius: '0.375rem',
     }),
-    ...(isVndAndCacheAuto && {
+    ...(isVndAndCacheAuto && !isVndAndCacheUser && {
       position: 'relative',
       '&::before': {
         content: '""',
@@ -519,8 +519,8 @@ export function ChatMessage(props: {
         left: 0,
         top: 0,
         bottom: 0,
-        width: '0.375rem',
-        background: `repeating-linear-gradient( -45deg, transparent, transparent 4px, ${ModelVendorAnthropic.brandColor} 4px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
+        width: '0.125rem',
+        background: `repeating-linear-gradient( -45deg, transparent, transparent 2px, ${ModelVendorAnthropic.brandColor} 2px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
       },
     }),
 
@@ -787,13 +787,13 @@ export function ChatMessage(props: {
           {!!props.showAntPromptCaching && (
             <MenuItem onClick={handleOpsToggleAntCacheUser}>
               <ListItemDecorator><AnthropicIcon sx={isVndAndCacheUser ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
-              {isVndAndCacheUser ? 'Remove cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
+              {isVndAndCacheUser ? 'Do not cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
             </MenuItem>
           )}
-          {!!props.showAntPromptCaching && isVndAndCacheAuto && (
+          {!!props.showAntPromptCaching && isVndAndCacheAuto && !isVndAndCacheUser && (
             <MenuItem disabled>
               <ListItemDecorator><TextureIcon sx={{ color: ModelVendorAnthropic.brandColor }} /></ListItemDecorator>
-              Auto-Cached
+              Auto-Cached <span style={{ opacity: 0.5 }}>for 5 min</span>
             </MenuItem>
           )}
           {/* Delete / Branch / Truncate */}
