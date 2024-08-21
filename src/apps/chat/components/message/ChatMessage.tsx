@@ -24,13 +24,15 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import TextureIcon from '@mui/icons-material/Texture';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
@@ -186,6 +188,7 @@ export function ChatMessage(props: {
   const fromUser = messageRole === 'user';
   const wasEdited = !!messageUpdated;
 
+  const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
   const isVndAndCacheAuto = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_AUTO);
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
@@ -282,6 +285,10 @@ export function ChatMessage(props: {
 
   const handleOpsToggleAntCacheUser = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_VND_ANT_CACHE_USER, 2);
+  }, [messageId, onMessageToggleUserFlag]);
+
+  const handleOpsToggleSkipMessage = React.useCallback(() => {
+    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_AIX_SKIP);
   }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsToggleStarred = React.useCallback(() => {
@@ -523,6 +530,13 @@ export function ChatMessage(props: {
         background: `repeating-linear-gradient( -45deg, transparent, transparent 2px, ${ModelVendorAnthropic.brandColor} 2px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
       },
     }),
+    ...(isUserMessageSkipped && {
+      // show a nice ghostly border (dashed?)
+      border: '1px dashed',
+      borderColor: 'neutral.solidBg',
+      // make it look good
+      filter: 'grayscale(1)',
+    }),
 
     // for: ENABLE_COPY_MESSAGE_OVERLAY
     // '&:hover > button': { opacity: 1 },
@@ -531,14 +545,14 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.isMobile, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
 
 
   // avatar
   const showAvatarIcon = !props.hideAvatar && !zenMode;
   const avatarIconEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatarIcon ? makeMessageAvatarIcon(uiComplexityMode, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, true) : null,
-    [messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
+    () => showAvatarIcon ? makeMessageAvatarIcon(uiComplexityMode, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, true) : null,
+    [isUserMessageSkipped, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
   );
 
 
@@ -782,27 +796,35 @@ export function ChatMessage(props: {
               </MenuItem>
             )}
           </Box>
+
+          <ListDivider />
+
           {/* Anthropic Breakpoing Toggle */}
-          {!!props.showAntPromptCaching && <ListDivider />}
-          {!!props.showAntPromptCaching && (
+          {!isUserMessageSkipped && !!props.showAntPromptCaching && (
             <MenuItem onClick={handleOpsToggleAntCacheUser}>
               <ListItemDecorator><AnthropicIcon sx={isVndAndCacheUser ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
               {isVndAndCacheUser ? 'Do not cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
             </MenuItem>
           )}
-          {!!props.showAntPromptCaching && isVndAndCacheAuto && !isVndAndCacheUser && (
+          {!isUserMessageSkipped && !!props.showAntPromptCaching && isVndAndCacheAuto && !isVndAndCacheUser && (
             <MenuItem disabled>
               <ListItemDecorator><TextureIcon sx={{ color: ModelVendorAnthropic.brandColor }} /></ListItemDecorator>
               Auto-Cached <span style={{ opacity: 0.5 }}>for 5 min</span>
             </MenuItem>
           )}
+          {/* Aix Skip Message */}
+          <MenuItem onClick={handleOpsToggleSkipMessage}>
+            <ListItemDecorator>{isUserMessageSkipped ? <VisibilityOffIcon sx={{ color: 'danger.plainColor' }} /> : <VisibilityIcon />}</ListItemDecorator>
+            {isUserMessageSkipped ? 'Unskip (Process with AI)' : 'Skip AI processing'}
+          </MenuItem>
+
           {/* Delete / Branch / Truncate */}
           {!!props.onMessageBranch && <ListDivider />}
           {!!props.onMessageBranch && (
             <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
               <ListItemDecorator>
                 <ForkRightIcon />
-              </ListItemDecorator>
+              </ListItemDecorator>s
               Branch
               {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
             </MenuItem>

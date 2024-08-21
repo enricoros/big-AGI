@@ -5,7 +5,7 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
-import { aixLLMChatGenerateContent, aixCreateContext } from '~/modules/aix/client/aix.client';
+import { aixCreateContext, aixLLMChatGenerateContent } from '~/modules/aix/client/aix.client';
 
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
 

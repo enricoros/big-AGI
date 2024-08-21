@@ -118,7 +118,7 @@ export async function llmDMessagesChatGenerateContent(
     fragments: [],
   };
 
-  const aixChatContentGenerateRequest = await aixChatGenerateRequestFromDMessages(history);
+  const aixChatContentGenerateRequest = await aixChatGenerateRequestFromDMessages(history, 'complete');
 
   try {
 

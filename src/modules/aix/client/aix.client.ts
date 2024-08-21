@@ -44,9 +44,8 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   llmId: DLLMId,
   aixChatGenerate: AixAPIChatGenerate_Request,
   aixContext: AixAPI_ContextChatStream,
-  // other
-  streaming: boolean,
-  aixAbortSignal: AbortSignal,
+  aixStreaming: boolean,
+  abortSignal: AbortSignal,
   onStreamingUpdate?: (update: GenerateContentInterim, done: boolean) => void,
 ): Promise<GenerateContentFinal> {
 
@@ -68,7 +67,7 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   const aixModel = _aixModelFromLLMOptions(llm.options, llmId);
 
   // Aix Low-Level Chat Generation
-  const value = await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, streaming, aixAbortSignal, onStreamingUpdate);
+  const value = await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal, onStreamingUpdate);
 
   // TODO: compute costs here, from the metrics (value.metrics: DChatGenerateMetrics) and the pricing (llm.pricing: DModelPricing)
   metricsStoreAddChatGenerate(value.metrics, llm.pricing?.chat);

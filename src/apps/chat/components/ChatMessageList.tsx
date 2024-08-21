@@ -11,7 +11,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { InlineError } from '~/common/components/InlineError';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, messageToggleUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP } from '~/common/stores/chat/chat.message';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
@@ -152,10 +152,7 @@ export function ChatMessageList(props: {
   }, [props.conversationHandler]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
-    props.conversationHandler?.messageEdit(messageId, (message) => ({
-      userFlags: messageToggleUserFlag(message, userFlag),
-    }), false, false);
-
+    props.conversationHandler?.messageToggleUserFlag(messageId, userFlag, true /* touch */);
     // Note: we don't support 'maxPerConversation' yet, which is supposed to turn off the flag from the beginning if it's too numerous
     // if (_maxPerConversation) {
     //   ...
@@ -210,6 +207,11 @@ export function ChatMessageList(props: {
     setSelectedMessages(new Set());
   }, [props.conversationHandler, selectedMessages]);
 
+  const handleSelectionHide = React.useCallback(() => {
+    for (let selectedMessage of Array.from(selectedMessages))
+      props.conversationHandler?.messageSetUserFlag(selectedMessage, MESSAGE_FLAG_AIX_SKIP, true, true);
+    setSelectedMessages(new Set());
+  }, [props.conversationHandler, selectedMessages]);
 
   const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
 
@@ -281,6 +283,7 @@ export function ChatMessageList(props: {
           onClose={() => props.setIsMessageSelectionMode(false)}
           onSelectAll={handleSelectAll}
           onDeleteMessages={handleSelectionDelete}
+          onHideMessages={handleSelectionHide}
         />
       )}
 

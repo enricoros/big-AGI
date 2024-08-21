@@ -13,7 +13,7 @@ import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
 import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
-import type { DMessage, DMessageId, DMessageMetadata } from './chat.message';
+import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
@@ -441,6 +441,12 @@ function updateMessagesTokenCounts(messages: DMessage[], forceUpdate: boolean, d
 // Convenience function to count the tokens in a DMessage object
 function updateMessageTokenCount(message: DMessage, llmId: DLLMId | null, forceUpdate: boolean, debugFrom: string): number {
   if (forceUpdate || !message.tokenCount) {
+    // if flagged as skip, do not include this message in the count
+    if (messageHasUserFlag(message, MESSAGE_FLAG_AIX_SKIP)) {
+      message.tokenCount = 0;
+      return 0;
+    }
+
     // if there's no LLM, we can't count tokens
     if (!llmId) {
       message.tokenCount = 0;
