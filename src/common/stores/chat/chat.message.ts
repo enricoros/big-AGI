@@ -55,14 +55,16 @@ export interface DMetaReferenceItem {
 // Message > User Flags
 
 export type DMessageUserFlag =
+  | 'aix.skip'                   // mark this message as skipped during generation (won't be sent to the LLM)
   | 'starred'                         // user has starred this message
   | 'vnd.ant.cache.auto'              // [Anthropic] user requested breakpoints to be added automatically (per conversation)
   | 'vnd.ant.cache.user'              // [Anthropic] user requestd for a breakpoint to be added here specifically
   ;
 
-export const MESSAGE_FLAG_VND_ANT_CACHE_USER: DMessageUserFlag = 'vnd.ant.cache.user';
-export const MESSAGE_FLAG_VND_ANT_CACHE_AUTO: DMessageUserFlag = 'vnd.ant.cache.auto';
+export const MESSAGE_FLAG_AIX_SKIP: DMessageUserFlag = 'aix.skip';
 export const MESSAGE_FLAG_STARRED: DMessageUserFlag = 'starred';
+export const MESSAGE_FLAG_VND_ANT_CACHE_AUTO: DMessageUserFlag = 'vnd.ant.cache.auto';
+export const MESSAGE_FLAG_VND_ANT_CACHE_USER: DMessageUserFlag = 'vnd.ant.cache.user';
 
 
 // export type DMessageGenerator = {
@@ -153,7 +155,8 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
 // helpers - user flags
 
 const flag2EmojiMap: Record<DMessageUserFlag, string> = {
-  starred: '⭐️',
+  [MESSAGE_FLAG_AIX_SKIP]: '',
+  [MESSAGE_FLAG_STARRED]: '⭐️',
   [MESSAGE_FLAG_VND_ANT_CACHE_AUTO]: '',
   [MESSAGE_FLAG_VND_ANT_CACHE_USER]: '',
 };
@@ -171,13 +174,6 @@ export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
     return [...(message.userFlags || []), flag];
   else
     return (message.userFlags || []).filter(_f => _f !== flag);
-}
-
-export function messageToggleUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag): DMessageUserFlag[] {
-  if (message.userFlags?.includes(flag))
-    return message.userFlags.filter(_f => _f !== flag);
-  else
-    return [...(message.userFlags || []), flag];
 }
 
 

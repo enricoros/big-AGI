@@ -6,6 +6,7 @@ import Face6Icon from '@mui/icons-material/Face6';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
@@ -51,6 +52,18 @@ export const messageZenAsideColumnSx: SxProps = {
   mx: -1,
 };
 
+export const aixSkipBoxSx = {
+  height: 36,
+  width: 36,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+export const aixSkipIconSx = {
+  color: 'neutral.solidBg',
+};
+
 export const avatarIconSx = {
   borderRadius: 'sm',
   height: 36,
@@ -58,7 +71,7 @@ export const avatarIconSx = {
 } as const;
 
 const largerAvatarIconsSx = {
-  ...avatarIconSx,
+  borderRadius: 'sm',
   width: 48,
   height: 48,
 };
@@ -70,13 +83,18 @@ export function makeMessageAvatarIcon(
   messageOriginLLM: string | undefined,
   messagePurposeId: SystemPurposeId | string | undefined,
   messageIncomplete: boolean,
-  larger?: boolean,
+  messageFlagAixSkip: boolean,
+  larger: boolean,
 ): React.JSX.Element {
 
   const nameOfRole =
     messageRole === 'user' ? 'You'
       : messageRole === 'assistant' ? 'Assistant'
         : 'System';
+
+  // if skipped, just return the skip symbol
+  if (messageFlagAixSkip)
+    return <Box sx={aixSkipBoxSx}><VisibilityOffOutlinedIcon sx={aixSkipIconSx} /></Box>;
 
   switch (messageRole) {
     case 'system':

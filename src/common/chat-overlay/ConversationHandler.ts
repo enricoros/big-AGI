@@ -8,7 +8,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
@@ -155,6 +155,18 @@ export class ConversationHandler {
 
   messageFragmentReplace(messageId: string, fragmentId: string, newFragment: DMessageFragment, messageComplete: boolean) {
     this.chatActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
+  }
+
+  messageSetUserFlag(messageId: DMessageId, userFlag: DMessageUserFlag, on: boolean, touch: boolean): void {
+    this.messageEdit(messageId, (message) => ({
+      userFlags: messageSetUserFlag(message, userFlag, on),
+    }), false, touch);
+  }
+
+  messageToggleUserFlag(messageId: DMessageId, userFlag: DMessageUserFlag, touch: boolean): void {
+    this.messageEdit(messageId, (message) => ({
+      userFlags: messageSetUserFlag(message, userFlag, !messageHasUserFlag(message, userFlag)),
+    }), false, touch);
   }
 
   historyClear(): void {

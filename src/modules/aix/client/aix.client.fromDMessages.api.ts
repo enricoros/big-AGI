@@ -1,6 +1,6 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
-import { DMessage, DMetaReferenceItem, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -21,9 +21,14 @@ export const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 
 export async function aixChatGenerateRequestFromDMessages(
   messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
+  _assemblyMode: 'complete' = 'complete',
 ): Promise<AixAPIChatGenerate_Request> {
+
+  // if the user has marked messages for exclusion, we skip them
+  messageSequence = messageSequence.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
+
   // reduce history
-  return await messageSequence.reduce(async (accPromise, m, index) => {
+  return await messageSequence.reduce(async (accPromise, m, index): Promise<AixAPIChatGenerate_Request> => {
     const acc = await accPromise;
 
     // extract system
