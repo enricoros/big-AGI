@@ -34,7 +34,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
 
   const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
     `Give me ${t2iProvider.vendor === 'openai' ? 'a minute' : 'a few seconds'} while I draw ${imageText?.length > 20 ? 'that' : '"' + imageText + '"'} with ${t2iProvider.painter}...`,
-    { originLLM: t2iProvider.painter },
+    { generator: { mgt: 'named', name: t2iProvider.painter } },
   );
 
   try {

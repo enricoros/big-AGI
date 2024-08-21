@@ -147,7 +147,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     const diagramMessage = createDMessageTextContent('assistant', diagramCode); // [chat] append assistant:diagram
     // diagramMessage.purposeId = conversation.systemPurposeId;
-    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '');
+    diagramMessage.generator = { mgt: 'named', name: DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '') };
 
     useChatStore.getState().appendMessage(conversationId, diagramMessage);
     props.onClose();

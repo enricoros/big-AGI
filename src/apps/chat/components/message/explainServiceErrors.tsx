@@ -7,7 +7,7 @@ export function isErrorChatMessage(text: string) {
   return ['**[Service Issue] ', '[Issue] ', '[OpenAI Issue] '].some(prefix => text.startsWith(prefix));
 }
 
-export function explainServiceErrors(text: string, isAssistant: boolean, modelId?: string) {
+export function explainServiceErrors(text: string, isAssistant: boolean) {
   const isAssistantError = isAssistant && isErrorChatMessage(text);
   if (!isAssistantError)
     return null;
@@ -39,7 +39,7 @@ export function explainServiceErrors(text: string, isAssistant: boolean, modelId
 
     case text.includes('"model_not_found"'):
       return <>
-        The API key appears to be unauthorized for {modelId || 'this model'}. You can change to <b>GPT-3.5
+        The API key appears to be unauthorized for this model. You can change to <b>GPT-3.5
         Turbo</b> and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
         access</Link> to the desired model.
       </>;
@@ -49,7 +49,7 @@ export function explainServiceErrors(text: string, isAssistant: boolean, modelId
       const match = pattern.exec(text);
       const usedText = match ? <b>{parseInt(match[2] || '0').toLocaleString()} tokens &gt; {parseInt(match[1] || '0').toLocaleString()}</b> : '';
       return <>
-        This thread <b>surpasses the maximum size</b> allowed for {modelId || 'this model'}. {usedText}.
+        This thread <b>surpasses the maximum size</b> allowed for this model. {usedText}.
         Please consider removing some earlier messages from the conversation, start a new conversation,
         choose a model with larger context, or submit a shorter new message.
         {!usedText && ` -- ${text}`}

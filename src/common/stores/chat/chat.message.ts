@@ -2,6 +2,8 @@ import { agiUuid } from '~/common/util/idUtils';
 
 import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
 
+import type { DChatGenerateMetrics } from './chat.metrics';
+
 
 // Message
 
@@ -16,9 +18,9 @@ export interface DMessage {
 
   // TODO: @deprecated - move to a Persona ID of the persona who wrote it, and still, could be teamwork...
   purposeId?: string;                 // only assistant/system
-  originLLM?: string;                 // only assistant - model that generated this message, goes beyond known models
 
   metadata?: DMessageMetadata;        // metadata, mainly at creation and for UI
+  generator?: DMessageGenerator;      // assistant message generator
   userFlags?: DMessageUserFlag[];     // (UI) user-set per-message flags
 
   // TODO: @deprecated remove this, it's really view-dependent
@@ -40,7 +42,6 @@ export type DMessageRole = 'user' | 'assistant' | 'system';
 
 export interface DMessageMetadata {
   inReferenceTo?: DMetaReferenceItem[]; // text this was in reply to
-  ranOutOfTokens?: true;                // if the message was cut off due to token limit
 }
 
 /** A textual reference to a text snipped, by a certain role. */
@@ -55,7 +56,7 @@ export interface DMetaReferenceItem {
 // Message > User Flags
 
 export type DMessageUserFlag =
-  | 'aix.skip'                   // mark this message as skipped during generation (won't be sent to the LLM)
+  | 'aix.skip'                        // mark this message as skipped during generation (won't be sent to the LLM)
   | 'starred'                         // user has starred this message
   | 'vnd.ant.cache.auto'              // [Anthropic] user requested breakpoints to be added automatically (per conversation)
   | 'vnd.ant.cache.user'              // [Anthropic] user requestd for a breakpoint to be added here specifically
@@ -67,18 +68,27 @@ export const MESSAGE_FLAG_VND_ANT_CACHE_AUTO: DMessageUserFlag = 'vnd.ant.cache.
 export const MESSAGE_FLAG_VND_ANT_CACHE_USER: DMessageUserFlag = 'vnd.ant.cache.user';
 
 
-// export type DMessageGenerator = {
-//   mgt: 'name';
-//   name: string;
-// } | {
-//   mgt: 'aix';
-//   model: string;                      // model that handled the request
-//   vId: ModelVendorId;
-//   sId: DModelsServiceId;
-//   mId: DLLMId;
-// } | {
-//   mgt: 'user' // not sure, added on 2024-08-17
-// };
+// Message > Generator
+
+export type DMessageGenerator = ({
+  mgt: 'named';
+  name: 'web' | 'issue' | 'help' | string;
+} | {
+  mgt: 'aix',
+  name: string;                       // model that handled the request
+  aix: {
+    vId: string;                      // Models Vendor Id (note we deleted sId, was too much, but can add it later)
+    // sId: string;                      // Models Id
+    mId: string;                      // Models Id
+  },
+}) & {
+  metrics?: DChatGenerateMetrics;     // metrics from the generation
+  tokenStopReason?:
+    | 'client-abort'                  // if the generator stopped due to a client abort signal
+    | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter
+    | 'issue'                         // (error fragment follows) if the generator stopped due to an issue
+    | 'out-of-tokens'                 // if the generator stopped due to running out of tokens
+};
 
 
 // helpers - creation
@@ -109,9 +119,9 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
     // pendingIncomplete: false,  // we leave it undefined, same as false
 
     // absent
-    // purposeId: undefined,
-    // originLLM: undefined,
+    // purposeId: undefined, // @deprecated
     // metadata: undefined,
+    // generator: undefined,
     // userFlags: undefined,
 
     // @deprecated
@@ -135,8 +145,9 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
 
     purposeId: message.purposeId,
-    originLLM: message.originLLM,
+
     metadata: message.metadata ? duplicateDMessageMetadata(message.metadata) : undefined,
+    generator: message.generator ? duplicateDMessageGenerator(message.generator) : undefined,
     userFlags: message.userFlags ? [...message.userFlags] : undefined,
 
     tokenCount: message.tokenCount,
@@ -149,6 +160,26 @@ export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
 export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
   // TODO: deep copy this?
   return { ...metadata };
+}
+
+export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator>): DMessageGenerator {
+  switch (generator.mgt) {
+    case 'named':
+      return {
+        mgt: 'named',
+        name: generator.name,
+        ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
+        ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
+      };
+    case 'aix':
+      return {
+        mgt: 'aix',
+        name: generator.name,
+        aix: { ...generator.aix },
+        ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
+        ...(generator.tokenStopReason ? { tokenStopReason: generator.tokenStopReason } : {}),
+      };
+  }
 }
 
 

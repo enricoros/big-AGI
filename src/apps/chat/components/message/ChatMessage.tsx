@@ -176,12 +176,14 @@ export function ChatMessage(props: {
     fragments: messageFragments,
     pendingIncomplete: messagePendingIncomplete,
     purposeId: messagePurposeId,
-    originLLM: messageOriginLLM,
+    generator: messageGenerator,
     metadata: messageMetadata,
     created: messageCreated,
     updated: messageUpdated,
   } = props.message;
   const zenMode = uiComplexityMode === 'minimal';
+
+  const messageGeneratorName = messageGenerator?.name;
 
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
@@ -551,8 +553,8 @@ export function ChatMessage(props: {
   // avatar
   const showAvatarIcon = !props.hideAvatar && !zenMode;
   const avatarIconEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatarIcon ? makeMessageAvatarIcon(uiComplexityMode, messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, true) : null,
-    [isUserMessageSkipped, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
+    () => showAvatarIcon ? makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, true) : null,
+    [isUserMessageSkipped, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
   );
 
 
@@ -607,12 +609,12 @@ export function ChatMessage(props: {
 
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
-              <Tooltip arrow title={messagePendingIncomplete ? null : (messageOriginLLM || 'unk-model')} variant='solid'>
+              <Tooltip arrow title={messagePendingIncomplete ? null : (messageGeneratorName || 'unk-model')} variant='solid'>
                 <Typography level='body-xs' sx={{
                   overflowWrap: 'anywhere',
                   ...(messagePendingIncomplete ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
                 }}>
-                  {prettyBaseModel(messageOriginLLM)}
+                  {prettyBaseModel(messageGeneratorName)}
                 </Typography>
               </Tooltip>
             )}
@@ -675,7 +677,6 @@ export function ChatMessage(props: {
             contentScaling={adjContentScaling}
             fitScreen={props.fitScreen}
             isMobile={props.isMobile}
-            messageOriginLLM={messageOriginLLM}
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
@@ -710,7 +711,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Continue... */}
-          {props.isBottom && !!messageMetadata?.ranOutOfTokens && !!props.onMessageContinue && (
+          {props.isBottom && messageGenerator?.tokenStopReason === 'out-of-tokens' && !!props.onMessageContinue && (
             <ContinueFragment
               contentScaling={adjContentScaling}
               messageId={messageId}
@@ -824,7 +825,7 @@ export function ChatMessage(props: {
             <MenuItem onClick={handleOpsBranch} disabled={fromSystem}>
               <ListItemDecorator>
                 <ForkRightIcon />
-              </ListItemDecorator>s
+              </ListItemDecorator>
               Branch
               {!props.isBottom && <span style={{ opacity: 0.5 }}>from here</span>}
             </MenuItem>

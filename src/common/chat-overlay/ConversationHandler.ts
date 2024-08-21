@@ -8,7 +8,7 @@ import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
@@ -115,11 +115,11 @@ export class ConversationHandler {
 
   /**
    * @param text assistant text
-   * @param llmLabel LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
+   * @param generatorName LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
    */
-  messageAppendAssistantText(text: string, llmLabel: DLLMId | string) {
+  messageAppendAssistantText(text: string, generatorName: Extract<DMessageGenerator, { mgt: 'named' }>['name']): void {
     const message = createDMessageTextContent('assistant', text);
-    message.originLLM = llmLabel;
+    message.generator = { mgt: 'named', name: generatorName };
     this.messageAppend(message);
   }
 
@@ -210,15 +210,17 @@ export class ConversationHandler {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
     const onBeamSuccess = (fragments: DMessageFragment[], llmId: DLLMId) => {
+      const generator: DMessageGenerator = { mgt: 'named', name: llmId as any };
+
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { fragments, originLLM: llmId }, true, true); // [chat] replace assistant:Beam contentParts
+        this.messageEdit(destReplaceMessageId, { fragments, generator }, true, true); // [chat] replace assistant:Beam contentParts
       } else {
         // replace (may truncate) the conversation history and append a message
         const newMessage = createDMessageFromFragments('assistant', fragments); // [chat] append Beam message
-        newMessage.originLLM = llmId;
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
+        newMessage.generator = generator;
         // TODO: put the other rays in the metadata?! (reqby @Techfren)
         this.messageAppend(newMessage);
       }

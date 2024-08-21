@@ -22,7 +22,7 @@ import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
-import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/PartReassembler';
+import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
 
 
 export function ChatPageMenuItems(props: {

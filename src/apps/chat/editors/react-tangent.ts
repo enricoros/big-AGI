@@ -22,7 +22,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
   const assistantModelLabel = 'react-' + assistantLlmId; //.slice(4, 7); // HACK: this is used to change the Avatar animation
   const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
     '...',
-    { originLLM: assistantModelLabel },
+    { generator: { mgt: 'named', name: assistantModelLabel } },
   );
   const { enableReactTool: enableBrowse } = useBrowseStore.getState();
 

@@ -192,7 +192,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;
-        senderName = `${purpose || 'Assistant'} · *${prettyBaseModel(message.originLLM || '')}*`.trim();
+        senderName = `${purpose || 'Assistant'} · *${prettyBaseModel(message.generator?.name || '')}*`.trim();
         if (purpose && purpose in SystemPurposes)
           senderName = `${SystemPurposes[purpose as SystemPurposeId]?.symbol || ''} ${senderName}`.trim();
         break;

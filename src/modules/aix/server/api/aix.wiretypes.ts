@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 // We return for now the same object that ends up stored
-import type { DChatGenerateMetrics } from '~/common/stores/metrics/metrics.types';
-// Used to align Partlces to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
+import type { DChatGenerateMetrics } from '~/common/stores/chat/chat.metrics';
+
+// Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
 import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.router';

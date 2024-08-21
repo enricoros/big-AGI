@@ -14,7 +14,7 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
   const shortUrl = url.replace('https://www.', '').replace('https://', '').replace('http://', '').replace('www.', '');
   const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
     `Loading page at ${shortUrl}...`,
-    { originLLM: 'web' },
+    { generator: { mgt: 'named', name: 'web' } },
   );
 
   try {

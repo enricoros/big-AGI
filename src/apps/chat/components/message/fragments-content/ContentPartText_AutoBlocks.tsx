@@ -18,7 +18,6 @@ export function ContentPartText_AutoBlocks(props: {
   textPartText: string,
 
   messageRole: DMessageRole,
-  messageOriginLLM?: string,
 
   contentScaling: ContentScaling,
   isMobile: boolean,
@@ -40,8 +39,8 @@ export function ContentPartText_AutoBlocks(props: {
   const fromAssistant = props.messageRole === 'assistant';
 
   const errorNode = React.useMemo(
-    () => explainServiceErrors(messageText, fromAssistant, props.messageOriginLLM),
-    [fromAssistant, messageText, props.messageOriginLLM],
+    () => explainServiceErrors(messageText, fromAssistant),
+    [fromAssistant, messageText],
   );
 
   // if errored, render an Auto-Error message

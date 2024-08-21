@@ -28,7 +28,7 @@ export async function runAssistantUpdatingStateV1(
   // assistant placeholder
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     '...',
-    { originLLM: assistantLlmId, purposeId: history[0].purposeId },
+    { generator: { mgt: 'named', name: assistantLlmId }, purposeId: history[0].purposeId },
   );
 
   // when an abort controller is set, the UI switches to the "stop" mode
@@ -75,7 +75,7 @@ export async function runAssistantUpdatingStateV1(
 
 type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
 type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
-type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete'>;
+type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'>;
 
 export async function streamAssistantMessageV1(
   llmId: DLLMId,
@@ -121,7 +121,7 @@ export async function streamAssistantMessageV1(
 
       // grow the incremental message
       if (textSoFar) incrementalAnswer.fragments = messageFragmentsReplaceLastContentText(incrementalAnswer.fragments, textSoFar);
-      if (update.originLLM) incrementalAnswer.originLLM = update.originLLM;
+      if (update.originLLM) incrementalAnswer.generator = { mgt: 'named', name: update.originLLM };
       if (update.typing !== undefined)
         incrementalAnswer.pendingIncomplete = update.typing ? true : undefined;
 

@@ -239,7 +239,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     const importedRays = messages.map((message) => {
 
       // In this case, we just use the active LLM in all the imported...
-      // FIXME: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
+      // TODO: message.generator.aix.mId is the correct one; if present we should match it with the llmId
       const emptyRay = createBRayEmpty(raysLlmId);
 
       // pre-fill the ray with the imported message

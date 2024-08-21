@@ -80,7 +80,7 @@ const largerAvatarIconsSx = {
 export function makeMessageAvatarIcon(
   uiComplexityMode: UIComplexityMode,
   messageRole: DMessageRole | string,
-  messageOriginLLM: string | undefined,
+  messageGeneratorName: string | undefined,
   messagePurposeId: SystemPurposeId | string | undefined,
   messageIncomplete: boolean,
   messageFlagAixSkip: boolean,
@@ -104,9 +104,9 @@ export function makeMessageAvatarIcon(
       return <Face6Icon sx={avatarIconSx} />;            // https://www.svgrepo.com/show/306500/openai.svg
 
     case 'assistant':
-      const isDownload = messageOriginLLM === 'web';
-      const isTextToImage = messageOriginLLM === 'DALL·E' || messageOriginLLM === 'Prodia';
-      const isReact = messageOriginLLM?.startsWith('react-');
+      const isDownload = messageGeneratorName === 'web';
+      const isTextToImage = messageGeneratorName === 'DALL·E' || messageGeneratorName === 'Prodia';
+      const isReact = messageGeneratorName?.startsWith('react-');
 
       // Extra appearance
       if (uiComplexityMode === 'extra') {
