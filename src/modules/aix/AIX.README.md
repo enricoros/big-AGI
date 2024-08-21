@@ -68,7 +68,7 @@ The subsystem comprises three main components:
 2. Dispatch Preparation: AIX Server prepares for upstream communication
 3. AI Provider Interaction: AIX Server communicates with AI Provider (streaming or non-streaming)
 4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client
-5. Client-side Processing: Client's PartReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
+5. Client-side Processing: Client's ContentReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
 6. Completion: AIX Server sends 'done' control message, AIX Client finalizes data update
 7. Error Handling: AIX Server sends specific error messages when necessary
 
@@ -105,7 +105,7 @@ sequenceDiagram
     participant AIX Server
     participant PartTransmitter
     participant AI Provider
-    AIX Client ->> AIX Client: Initialize PartReassembler
+    AIX Client ->> AIX Client: Initialize ContentReassembler
     AIX Client ->> AIX Client: Convert DMessage*Part to AixWire_Parts
     AIX Client ->> AIX Server: Send messages (arrays of AixWire_Parts)
     AIX Server ->> AIX Server: Prepare Dispatch (Upstream request, demux, parsing)
@@ -144,7 +144,7 @@ sequenceDiagram
         end
         AIX Server ->> AIX Client: Send 'done' control message
         loop For each received batch of particles
-            AIX Client ->> AIX Client: PartReassembler processes particles into DMessage*Part
+            AIX Client ->> AIX Client: ContentReassembler processes particles into DMessage*Part
             alt DMessageTextPart
                 AIX Client ->> AIX Client: Update UI with text content
             else DMessageImageRefPart

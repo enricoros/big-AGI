@@ -85,6 +85,12 @@ export namespace V4ToHeadConverters {
         mrt: 'dmsg', mText: replyToText, mRole: 'assistant',
       }];
     }
+
+    // uplevel generator (REMOVE FOR 2.0.0)
+    if ('originLLM' in m && !m.generator) {
+      m.generator = { 'mgt': 'named', name: m.originLLM as string };
+      delete m.originLLM;
+    }
   }
 
 }
@@ -249,7 +255,7 @@ export namespace V3StoreDataToHead {
       cm = createDMessageTextContent(role, text);
       if (id) cm.id = id;
       if (purposeId) cm.purposeId = purposeId;
-      if (originLLM) cm.originLLM = originLLM;
+      if (originLLM) cm.generator = { 'mgt': 'named', name: originLLM };
       if (metadata?.inReplyToText) {
         if (!cm.metadata) cm.metadata = {};
         cm.metadata.inReferenceTo = [{ mrt: 'dmsg', mText: metadata.inReplyToText, mRole: 'assistant' }];

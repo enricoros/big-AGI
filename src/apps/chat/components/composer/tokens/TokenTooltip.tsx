@@ -5,6 +5,7 @@ import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
 import { DChatGeneratePricing, getPriceForTokens } from '~/common/stores/llms/llms.pricing';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
+import { formatTokenCost, hack_lastMessageCosts } from '~/common/stores/metrics/store-metrics';
 import { useUIContentScaling } from '~/common/state/store-ui';
 
 
@@ -78,6 +79,10 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
             ` < Max message cost: <span>${formatTokenCost(costMax).padStart(8)}</span>\n` +
             '   (depends on assistant response)';
         }
+
+        if (hack_lastMessageCosts)
+          message += '\n\n  ' +
+            `Last message cost: ${hack_lastMessageCosts}\n`;
       }
     }
   }
@@ -102,12 +107,6 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
 function _alignRight(value: number, columnSize: number = 8) {
   const str = value.toLocaleString();
   return str.padStart(columnSize);
-}
-
-export function formatTokenCost(cost: number) {
-  return cost < 1
-    ? (cost * 100).toFixed(cost < 0.010 ? 2 : 2) + ' ¢'
-    : '$ ' + cost.toFixed(2);
 }
 
 const tooltipMessageSx: SxProps = {

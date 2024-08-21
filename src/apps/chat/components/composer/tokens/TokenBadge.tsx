@@ -3,8 +3,9 @@ import * as React from 'react';
 import { Badge } from '@mui/joy';
 
 import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
+import { formatTokenCost } from '~/common/stores/metrics/store-metrics';
 
-import { formatTokenCost, tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
+import { tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 
 
 /**

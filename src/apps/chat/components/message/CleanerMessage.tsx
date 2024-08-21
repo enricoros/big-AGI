@@ -56,7 +56,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
     pendingIncomplete: messagePendingIncomplete,
     role: messageRole,
     purposeId: messagePurposeId,
-    originLLM: messageOriginLLM,
+    generator: messageGenerator,
     tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
@@ -65,6 +65,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
 
   const fromAssistant = messageRole === 'assistant';
 
+  const messageGeneratorName = messageGenerator?.name;
+
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
 
   const isAssistantError = fromAssistant && isErrorChatMessage(messageText);
@@ -72,8 +74,8 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
-    return makeMessageAvatarIcon('pro', messageRole, messageOriginLLM, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false);
-  }, [isUserMessageSkipped, messageOriginLLM, messagePendingIncomplete, messagePurposeId, messageRole]);
+    return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false);
+  }, [isUserMessageSkipped, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole]);
 
   const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) =>
     props.onToggleSelected && props.onToggleSelected(messageId, event.target.checked);

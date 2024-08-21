@@ -1,8 +1,10 @@
 import type { DLLM } from './llms.types';
 
 
-/// Pricing per MegaToken ///
-
+/**
+ * Stored in the LLMS DB - IMPORTANT: do not break.
+ * Pricing is denominated in $/MegaTokens.
+ */
 export type DModelPricing = {
   chat?: DChatGeneratePricing,
 }

@@ -1,6 +1,4 @@
-import type { AixAPI_ContextChatStream } from '~/modules/aix/server/api/aix.wiretypes';
-import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
-import { aixCreateContext, aixLLMChatGenerateContent, GenerateContentInterim } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContentStreaming, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
@@ -13,11 +11,10 @@ import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
-import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export interface PersonaProcessorInterface {
-  handleMessage(accumulatedMessage: Partial<StreamMessageUpdate>, messageComplete: boolean): void;
+  handleMessage(accumulatedMessage: AixChatGenerateDMessageUpdate, messageComplete: boolean): void;
 }
 
 
@@ -41,7 +38,10 @@ export async function runPersonaOnConversationHead(
   // assistant placeholder
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     '...',
-    { originLLM: assistantLlmId, purposeId: history[0].purposeId },
+    {
+      purposeId: history[0].purposeId,
+      generator: { mgt: 'named', name: assistantLlmId },
+    },
   );
 
   // AutoSpeak
@@ -51,25 +51,25 @@ export async function runPersonaOnConversationHead(
   const abortController = new AbortController();
   cHandler.setAbortController(abortController);
 
-
   // stream the assistant's messages directly to the state store
-  const messageStatus = await llmDMessagesChatGenerateContent(
+  const messageStatus = await aixChatGenerateContentStreaming(
     assistantLlmId,
     history,
     'conversation',
     conversationId,
     parallelViewCount,
     abortController.signal,
-    (messageOverwrite: StreamMessageUpdate, messageComplete: boolean) => {
-      if (abortController.signal.aborted) return;
+    (messageOverwrite: AixChatGenerateDMessageUpdate, messageComplete: boolean) => {
+      // Note: there was an abort check here, but it removed the last packet, which contained the cause and final text.
 
-      // typing sound
+      // deep copy the object to avoid partial updates
+      cHandler.messageEdit(assistantMessageId, structuredClone(messageOverwrite), messageComplete, false);
+
+      // if requested, speak the message
+      autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
+
       // if (messageComplete)
       //   AudioGenerator.basicAstralChimes({ volume: 0.4 }, 0, 2, 250);
-
-      cHandler.messageEdit(assistantMessageId, messageOverwrite, messageComplete, false);
-
-      autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
     },
   );
 
@@ -89,96 +89,4 @@ export async function runPersonaOnConversationHead(
     autoSuggestions(null, conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   return messageStatus.outcome === 'success';
-}
-
-
-type StreamMessageOutcome = 'success' | 'aborted' | 'errored';
-type StreamMessageStatus = { outcome: StreamMessageOutcome, errorMessage?: string };
-export type StreamMessageUpdate = Pick<DMessage, 'fragments' | 'originLLM' | 'pendingIncomplete' | 'metadata'>;
-
-export async function llmDMessagesChatGenerateContent(
-  // match the caller data
-  llmId: DLLMId,
-  history: Readonly<DMessage[]>,
-  // aix
-  aixContextName: AixAPI_ContextChatStream['name'],
-  aixContextRef: AixAPI_ContextChatStream['ref'],
-  parallelViewCount: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
-  abortSignal: AbortSignal,
-  // streaming updates
-  onMessageUpdated: (messageOverwrite: StreamMessageUpdate, messageComplete: boolean) => void,
-): Promise<StreamMessageStatus> {
-
-  const returnStatus: StreamMessageStatus = { outcome: 'success', errorMessage: undefined };
-
-  const throttler = new ThrottleFunctionCall(parallelViewCount);
-
-  // TODO: should clean this up once we have multi-fragment streaming/recombination
-  const messageOverwrite: StreamMessageUpdate = {
-    fragments: [],
-  };
-
-  const aixChatContentGenerateRequest = await aixChatGenerateRequestFromDMessages(history, 'complete');
-
-  try {
-
-    await aixLLMChatGenerateContent(llmId, aixChatContentGenerateRequest, aixCreateContext(aixContextName, aixContextRef), true, abortSignal,
-      (update: GenerateContentInterim, done: boolean) => {
-
-        // convert the StreamingClientUpdate to the StreamMessageUpdate
-        const { typing, metrics, fragments, modelName, metadata } = update;
-        messageOverwrite.pendingIncomplete = typing ? true : undefined;
-        messageOverwrite.fragments = fragments;
-        messageOverwrite.originLLM = modelName;
-        if (metadata)
-          messageOverwrite.metadata = metadata;
-
-        console.log('overwrite', messageOverwrite, metrics);
-
-        // throttle the update - and skip the last done message
-        if (!done)
-          throttler.decimate(() => onMessageUpdated(messageOverwrite, done));
-      },
-    );
-
-  } catch (error: any) {
-    // this can only be a large, user-visible error, such as LLM not foing
-    console.error('Fetch request error:', error);
-    const errorFragment = createErrorContentFragment(`Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}`);
-    messageOverwrite.fragments.push(errorFragment);
-    returnStatus.outcome = 'errored';
-    returnStatus.errorMessage = error.message;
-  }
-
-  // Ensure the last content is flushed out, and mark as complete
-  throttler.finalize(() => onMessageUpdated(messageOverwrite, true));
-
-  return returnStatus;
-}
-
-
-export class ThrottleFunctionCall {
-  private readonly throttleDelay: number;
-  private lastCallTime: number = 0;
-
-  constructor(throttleUnits: number) {
-    // 12 messages per second works well for 60Hz displays (single chat, and 24 in 4 chats, see the square root below)
-    const baseDelayMs = 1000 / 12;
-    this.throttleDelay = throttleUnits === 0 ? 0
-      : throttleUnits > 1 ? Math.round(baseDelayMs * Math.sqrt(throttleUnits))
-        : baseDelayMs;
-  }
-
-  decimate(fn: () => void): void {
-    const now = Date.now();
-    if (this.throttleDelay === 0 || this.lastCallTime === 0 || now - this.lastCallTime >= this.throttleDelay) {
-      fn();
-      this.lastCallTime = now;
-    }
-  }
-
-  finalize(fn: () => void): void {
-    fn(); // Always execute the final update
-    this.lastCallTime = 0; // Reset the throttle
-  }
 }
