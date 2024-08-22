@@ -71,6 +71,12 @@ export const aixRouter = createTRPCRouter({
         });
 
       } catch (error: any) {
+        // Handle expected dispatch abortion while the first fetch hasn't even completed
+        if (error && error?.name === 'TRPCError' && intakeAbortSignal.aborted) {
+          chatGenerateTx.setEnded('done-dispatch-aborted');
+          yield* chatGenerateTx.flushParticles();
+          return; // exit
+        }
 
         // Handle AI Service connection error
         const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
