@@ -11,7 +11,7 @@ export type DChatGenerateMetricsLg =
   ChatGenerateCostMetricsMd;
 
 export type DChatGenerateMetricsMd =
-  Exclude<ChatGenerateTokenMetrics, 'T'> &
+  Omit<ChatGenerateTokenMetrics, 'T'> &
   ChatGenerateCostMetricsMd;
 
 
@@ -107,14 +107,13 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
 
 
   // partial pricing
-  if (metrics.TsR === 'pending' || metrics.TsR === 'aborted')
-    return { $code: 'partial-price' };
+  const isPartialMessage = metrics.TsR === 'pending' || metrics.TsR === 'aborted';
 
   // Calculate costs
   const $in = getLlmPriceForTokens(inputTokens, inputTokens, pricing.input);
   const $out = getLlmPriceForTokens(inputTokens, outputTokens, pricing.output);
   if ($in === undefined || $out === undefined)
-    return { $code: 'partial-msg' };
+    return { $code: 'partial-price' };
 
   // handle price with cache
   if (cacheReadTokens || cacheWriteTokens) {
@@ -129,13 +128,14 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
     const $cacheRead = getLlmPriceForTokens(inputNoCache, cacheReadTokens, pricing.cache?.read);
     const $cacheWrite = getLlmPriceForTokens(inputNoCache, cacheWriteTokens, pricing.cache?.write);
     if ($cacheRead === undefined || $cacheWrite === undefined)
-      return { $code: 'partial-msg' };
+      return { $code: 'partial-price' };
 
     // compute the advantage from caching
     const $inNoCache = getLlmPriceForTokens(inputNoCache, inputNoCache, pricing.input)!;
     return {
       $c: Math.round(($in + $out + $cacheRead + $cacheWrite) * USD_TO_CENTS * 10000) / 10000,
       $cdCache: Math.round(($inNoCache - $in - $cacheRead - $cacheWrite) * USD_TO_CENTS * 10000) / 10000,
+      ...isPartialMessage ? { $code: 'partial-msg' } : {},
     };
 
   }
@@ -143,6 +143,7 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
   // price without cache
   return {
     $c: Math.round(($in + $out) * USD_TO_CENTS * 10000) / 10000,
+    ...isPartialMessage ? { $code: 'partial-msg' } : {},
   };
 }
 

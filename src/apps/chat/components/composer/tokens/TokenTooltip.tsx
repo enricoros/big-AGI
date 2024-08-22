@@ -5,7 +5,7 @@ import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
 import { DChatGeneratePricing, getLlmPriceForTokens } from '~/common/stores/llms/llms.pricing';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
-import { formatTokenCost, hack_lastMessageCosts } from '~/common/stores/metrics/store-metrics';
+import { formatModelsCost } from '~/common/util/costUtils';
 import { useUIContentScaling } from '~/common/state/store-ui';
 
 
@@ -70,19 +70,19 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
 
         if (costMin !== undefined) {
           message += '\n' +
-            ` > Min message cost: <span class="highlight-cost yellow">${formatTokenCost(costMin).padStart(8)}</span>`;
+            ` > Min message cost: <span class="highlight-cost yellow">${formatModelsCost(costMin).padStart(8)}</span>`;
         }
 
         costMax = (costMin !== undefined && costOutMax !== undefined) ? costMin + costOutMax : undefined;
         if (costMax !== undefined) {
           message += '\n' +
-            ` < Max message cost: <span>${formatTokenCost(costMax).padStart(8)}</span>\n` +
+            ` < Max message cost: <span>${formatModelsCost(costMax).padStart(8)}</span>\n` +
             '   (depends on assistant response)';
         }
 
-        if (hack_lastMessageCosts)
-          message += '\n\n  ' +
-            `Last message cost: ${hack_lastMessageCosts}\n`;
+        // if (hack_lastMessageCosts)
+        //   message += '\n\n  ' +
+        //     `Last message cost: ${hack_lastMessageCosts}\n`;
       }
     }
   }

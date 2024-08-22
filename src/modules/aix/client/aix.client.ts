@@ -189,8 +189,10 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
           Object.assign(dMessage.generator.metrics, costs);
 
         // notify the store that tracks costs
-        if (costs)
-          metricsStoreAddChatGenerate(costs, llm);
+        if (costs) {
+          const m = dMessage.generator.metrics;
+          metricsStoreAddChatGenerate(costs, llm, (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0), (m?.TOut || 0));
+        }
       }
 
       // streaming update
