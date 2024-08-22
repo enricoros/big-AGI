@@ -154,7 +154,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
 
     // -> Stats
     if (generationChunk.usageMetadata) {
-      const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
         TIn: generationChunk.usageMetadata.promptTokenCount,
         TOut: generationChunk.usageMetadata.candidatesTokenCount,
       };

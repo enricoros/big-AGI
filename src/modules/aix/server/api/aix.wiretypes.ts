@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-// We return for now the same object that ends up stored
-import type { DChatGenerateMetrics } from '~/common/stores/chat/chat.metrics';
-
 // Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
@@ -453,7 +450,7 @@ export namespace AixWire_Particles {
   // | { cg: 'start' } // not really used for now
     | { cg: 'end', reason: CGEndReason, tokenStopReason: GCTokenStopReason }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
-    | { cg: 'set-metrics', metrics: ChatGenerateMetrics }
+    | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
     | { cg: '_debugRequest', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
 
@@ -487,8 +484,24 @@ export namespace AixWire_Particles {
    * NOTE: break compatbility with this D-stored-type only when we'll
    * start to need backwards-incompatible Particle->Reassembler flexibility,
    * which can't be just extended in the D-stored-type.
+   *
+   * We are now duplicating this, to force the type checker to reveal any discrepancies.
    */
-  export type ChatGenerateMetrics = Omit<DChatGenerateMetrics, 'T' | 'vTOutAll'>;
+  export type CGSelectMetrics = {
+    // T = milliseconds
+    TIn?: number,
+    TCacheRead?: number,
+    TCacheWrite?: number,
+    TOut?: number,
+
+    // v = Tokens/s
+    vTOutInner?: number,  // TOut / dtInner
+
+    // dt = milliseconds
+    dtStart?: number,
+    dtInner?: number,
+    dtAll?: number,
+  };
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts
 

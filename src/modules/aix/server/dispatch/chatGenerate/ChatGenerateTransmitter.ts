@@ -46,7 +46,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
 
   // Metrics
-  private accMetrics: AixWire_Particles.ChatGenerateMetrics | undefined = undefined;
+  private accMetrics: AixWire_Particles.CGSelectMetrics | undefined = undefined;
   private sentMetrics: boolean = false;
   private freshMetrics: boolean = false;
 
@@ -272,7 +272,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
-  updateMetrics(update: Partial<AixWire_Particles.ChatGenerateMetrics>) {
+  updateMetrics(update: Partial<AixWire_Particles.CGSelectMetrics>) {
     if (!this.accMetrics)
       this.accMetrics = {};
 
