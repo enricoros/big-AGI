@@ -48,6 +48,6 @@ export interface IParticleTransmitter {
   setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
 
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */
-  updateMetrics(update: Partial<AixWire_Particles.ChatGenerateMetrics>): void;
+  updateMetrics(update: Partial<AixWire_Particles.CGSelectMetrics>): void;
 
 }

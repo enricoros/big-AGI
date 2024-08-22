@@ -79,7 +79,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           pt.setModelName(responseMessage.model);
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
-          const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+          const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
             TIn: chatInTokens,
             TOut: responseMessage.usage.output_tokens,
             dtStart: timeToFirstEvent,
@@ -254,7 +254,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const elapsedTimeMilliseconds = Date.now() - parserCreationTimestamp;
       // const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
       // const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-      const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
         TIn: usage.input_tokens,
         TOut: usage.output_tokens,
         // vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places

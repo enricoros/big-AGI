@@ -89,7 +89,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     // -> Stats
     if (json.usage) {
       if (json.usage.completion_tokens !== undefined) {
-        const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+        const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
           TIn: json.usage.prompt_tokens || -1,
           TOut: json.usage.completion_tokens,
           // dtInner: openAI is not reporting the time as seen by the servers
@@ -110,7 +110,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       timeToFirstEvent = undefined;
     if (json.x_groq?.usage) {
       const { prompt_tokens, completion_tokens, completion_time } = json.x_groq.usage;
-      const metricsUpdate: AixWire_Particles.ChatGenerateMetrics = {
+      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
         TIn: prompt_tokens,
         TOut: completion_tokens,
         vTOutInner: (completion_tokens && completion_time) ? Math.round((completion_tokens / completion_time) * 100) / 100 : undefined,
