@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 
-import { DChatGeneratePricing, getPriceForTokens } from '~/common/stores/llms/llms.pricing';
+import { DChatGeneratePricing, getLlmPriceForTokens } from '~/common/stores/llms/llms.pricing';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { formatTokenCost, hack_lastMessageCosts } from '~/common/stores/metrics/store-metrics';
 import { useUIContentScaling } from '~/common/state/store-ui';
@@ -43,8 +43,8 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
 
     // add the price, if available
     if (chatPricing) {
-      const inputPrice = getPriceForTokens(usedInputTokens, usedInputTokens, chatPricing.input);
-      const outputPrice = getPriceForTokens(usedInputTokens, responseMaxTokens || 0, chatPricing.output);
+      const inputPrice = getLlmPriceForTokens(usedInputTokens, usedInputTokens, chatPricing.input);
+      const outputPrice = getLlmPriceForTokens(usedInputTokens, responseMaxTokens || 0, chatPricing.output);
 
       costMin = inputPrice;
       const costOutMax = outputPrice;

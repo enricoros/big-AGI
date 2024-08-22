@@ -1,8 +1,9 @@
+import { finishChatGenerateTokenMetrics, pendChatGenerateTokenMetrics } from '~/common/stores/metrics/metrics.chatgenerate';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createTextContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
-import type { Aix_LL_GenerateContentAccumulator } from './aix.client';
+import { Aix_LL_GenerateContentAccumulator, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
@@ -31,6 +32,8 @@ export class ContentReassembler {
   // }
 
   reassembleParticle(op: AixWire_Particles.ChatGenerateOp): void {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p:', op);
     let isDebug = false;
     switch (true) {
 
@@ -93,29 +96,23 @@ export class ContentReassembler {
   }
 
   reassembleExceptError(errorAsText: string): void {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p: issue:', errorAsText);
     this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
     this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
   }
 
   reassembleExceptUserAbort(): void {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p: abort-client');
     this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
   }
 
   reassembleFinalize(): void {
 
     // Perform all the latest operations
-    // ...
-
-    // add aggregate metrics
-    const metrics = this.accumulator.genMetrics;
-    if (metrics) {
-      // sum up the Tokens
-      metrics.T = (metrics.TIn || 0) + (metrics.TOut || 0) + (metrics.TCacheRead || 0) + (metrics.TCacheWrite || 0);
-
-      // calculate the outer Token velocity
-      if (metrics.TOut !== undefined && metrics.dtAll !== undefined && metrics.dtAll > 0)
-        metrics.vTOutAll = Math.round(100 * metrics.TOut / (metrics.dtAll / 1000)) / 100;
-    }
+    const hasAborted = !!this.accumulator.genTokenStopReason;
+    finishChatGenerateTokenMetrics(this.accumulator.genMetricsLg, hasAborted);
 
   }
 
@@ -235,7 +232,8 @@ export class ContentReassembler {
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {
-    this.accumulator.genMetrics = metrics;
+    this.accumulator.genMetricsLg = metrics;
+    pendChatGenerateTokenMetrics(this.accumulator.genMetricsLg);
   }
 
   private onModelName({ name }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-model' }>): void {
