@@ -84,10 +84,12 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             TOut: responseMessage.usage.output_tokens,
             dtStart: timeToFirstEvent,
           };
-          if (responseMessage.usage.cache_read_input_tokens !== undefined)
-            metricsUpdate.TCacheRead = responseMessage.usage.cache_read_input_tokens;
-          if (responseMessage.usage.cache_creation_input_tokens !== undefined)
-            metricsUpdate.TCacheWrite = responseMessage.usage.cache_creation_input_tokens;
+          if (responseMessage.usage.cache_read_input_tokens || responseMessage.usage.cache_creation_input_tokens) {
+            if (responseMessage.usage.cache_read_input_tokens !== undefined)
+              metricsUpdate.TCacheRead = responseMessage.usage.cache_read_input_tokens;
+            if (responseMessage.usage.cache_creation_input_tokens !== undefined)
+              metricsUpdate.TCacheWrite = responseMessage.usage.cache_creation_input_tokens;
+          }
           pt.updateMetrics(metricsUpdate);
         }
         break;
@@ -262,10 +264,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         // dtInner: // we don't know
         dtAll: elapsedTimeMilliseconds,
       };
-      if (usage.cache_read_input_tokens !== undefined)
-        metricsUpdate.TCacheRead = usage.cache_read_input_tokens;
-      if (usage.cache_creation_input_tokens !== undefined)
-        metricsUpdate.TCacheWrite = usage.cache_creation_input_tokens;
+      if (usage.cache_read_input_tokens || usage.cache_creation_input_tokens) {
+        if (usage.cache_read_input_tokens !== undefined)
+          metricsUpdate.TCacheRead = usage.cache_read_input_tokens;
+        if (usage.cache_creation_input_tokens !== undefined)
+          metricsUpdate.TCacheWrite = usage.cache_creation_input_tokens;
+      }
       pt.updateMetrics(metricsUpdate);
     }
   };
