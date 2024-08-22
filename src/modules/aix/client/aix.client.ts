@@ -275,10 +275,11 @@ async function _aix_LL_ChatGenerateContent(
       const showAsBold = !!llAccumulator.fragments.length;
       contentReassembler.reassembleExceptError(presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
     } else {
-      if (isUserAbort1 !== isUserAbort2) // never seen this happening, but just in case
-        contentReassembler.reassembleExceptError(`AbortError mismatch: ${isUserAbort1} !== ${isUserAbort2}`);
-      else
-        contentReassembler.reassembleExceptUserAbort();
+      // Note: saw this once, with isUserAbort1 = true, and isUserAbort2 = false; not very informative, hence disabling
+      // if (isUserAbort1 !== isUserAbort2) // never seen this happening, but just in case
+      //   contentReassembler.reassembleExceptError(`AbortError mismatch: ${isUserAbort1} !== ${isUserAbort2}`);
+      // else
+      contentReassembler.reassembleExceptUserAbort();
     }
   }
 
