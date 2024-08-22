@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Badge } from '@mui/joy';
 
 import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
-import { formatTokenCost } from '~/common/stores/metrics/store-metrics';
+import { formatModelsCost } from '~/common/util/costUtils';
 
 import { tokenCountsMathAndMessage, TokenTooltip } from './TokenTooltip';
 
@@ -47,8 +47,8 @@ function TokenBadge(props: {
   if (showAltCosts) {
     // Note: switched to 'min cost (>= ...)' on mobile as well, to restore the former behavior, just uncomment the !props.enableHover (a proxy for isMobile)
     badgeValue = (/*!props.enableHover ||*/ isHovering)
-      ? '< ' + formatTokenCost(costMax)
-      : '> ' + formatTokenCost(costMin);
+      ? '< ' + formatModelsCost(costMax)
+      : '> ' + formatModelsCost(costMin);
   } else {
 
     // show the direct tokens, unless we exceed the limit and 'showExcess' is enabled
