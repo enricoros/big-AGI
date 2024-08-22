@@ -2,7 +2,7 @@ import { agiUuid } from '~/common/util/idUtils';
 
 import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
 
-import type { DChatGenerateMetrics } from './chat.metrics';
+import type { DChatGenerateMetricsMd } from '../metrics/metrics.chatgenerate';
 
 
 // Message
@@ -19,8 +19,10 @@ export interface DMessage {
   // TODO: @deprecated - move to a Persona ID of the persona who wrote it, and still, could be teamwork...
   purposeId?: string;                 // only assistant/system
 
-  metadata?: DMessageMetadata;        // metadata, mainly at creation and for UI
-  generator?: DMessageGenerator;      // assistant message generator
+  metadata?: DMessageMetadata;        // Semantic augmentation, mainly at creation
+
+  generator?: DMessageGenerator;      // Assistant generator info, and metrics
+
   userFlags?: DMessageUserFlag[];     // (UI) user-set per-message flags
 
   // TODO: @deprecated remove this, it's really view-dependent
@@ -78,11 +80,10 @@ export type DMessageGenerator = ({
   name: string;                       // model that handled the request
   aix: {
     vId: string;                      // Models Vendor Id (note we deleted sId, was too much, but can add it later)
-    // sId: string;                      // Models Id
     mId: string;                      // Models Id
   },
 }) & {
-  metrics?: DChatGenerateMetrics;     // metrics from the generation
+  metrics?: DChatGenerateMetricsMd;   // medium-sized metrics stored in the message
   tokenStopReason?:
     | 'client-abort'                  // if the generator stopped due to a client abort signal
     | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter
