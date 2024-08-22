@@ -36,7 +36,8 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   const { autoVndAntBreakpoints, setAutoVndAntBreakpoints } = useChatAutoAI();
 
-  const { totalCosts, totalSavings, firstUsageDate } = useCostMetricsForLLMService(service?.id);
+  const { totalCosts, totalSavings, totalInputTokens, totalOutputTokens, firstUsageDate, usageCount } =
+    useCostMetricsForLLMService(service?.id);
 
   // derived state
   const { anthropicKey, anthropicHost, heliconeKey } = serviceAccess;
@@ -59,7 +60,8 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
         <Box>
           Approximate costs: <b>{formatModelsCost(totalCosts)}</b> · <span style={{ opacity: 0.75 }}>Costs are partial,
           and may not reflect the latest pricing.
-          Costs measurements for this service began <TimeAgo date={firstUsageDate} />.</span>
+          Costs measurements for this service began <TimeAgo date={firstUsageDate} /> and processed {usageCount} requests
+          and {(totalInputTokens + totalOutputTokens).toLocaleString()} tokens.</span>
           {/*<ExternalLink href='https://console.anthropic.com/settings/usage'>Anthropic usage</ExternalLink>*/}
         </Box>
         {hasSaved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
