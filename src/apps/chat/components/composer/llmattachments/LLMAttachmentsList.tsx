@@ -178,7 +178,7 @@ export function LLMAttachmentsList(props: {
         {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
         <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
           <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
-          What to do?
+          What can I do?
         </MenuItem>
 
         <ListDivider />
