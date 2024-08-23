@@ -25,6 +25,18 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
   },
   {
+    idPrefix: 'chatgpt-4o-latest',
+    label: 'chatgpt-4o-latest-one',
+    description: 'Advanced, multimodal flagship model that’s cheaper and faster than GPT-4 Turbo.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 5, chatOut: 15 },
+    benchmark: { cbaElo: 1286 },
+    hidden: true,
+  },
+  {
     idPrefix: 'gpt-4o-mini',
     label: 'GPT-4o mini',
     description: 'Currently points to gpt-4o-mini-2024-07-18.',
