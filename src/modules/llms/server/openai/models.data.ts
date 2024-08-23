@@ -67,7 +67,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1286 + 1 },
   },
   {
-    idPrefix: 'chatgpt-4o-latest',
+    idPrefix: 'chatgpt-4o-latest2',
     label: 'chatgpt-4o-latest-one',
     description: 'Advanced, multimodal flagship model that’s cheaper and faster than GPT-4 Turbo.',
     contextWindow: 128000,
