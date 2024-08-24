@@ -6,14 +6,11 @@ import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createTextContentFragment, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
-import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
-import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
 import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
-import { runAssistantUpdatingStateV1 } from './chat-stream-v1';
 import { runImageGenerationUpdatingState } from './image-generate';
 import { runPersonaOnConversationHead } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
@@ -73,9 +70,6 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   switch (chatExecuteMode) {
     case 'generate-content':
       return await runPersonaOnConversationHead(chatLLMId, conversationId);
-
-    case 'generate-text-v1':
-      return await runAssistantUpdatingStateV1(conversationId, cHandler.historyViewHead('generate-text-v1'), chatLLMId, getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount());
 
     case 'beam-content':
       cHandler.beamInvoke(cHandler.historyViewHead('beam-content'), [], null);

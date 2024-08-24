@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
+import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
@@ -22,7 +22,7 @@ export interface LLMChainStep {
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess: (output: string, input: string) => void, contextName: VChatStreamContextName, contextRef: VChatContextRef) {
+export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess: (output: string, input: string) => void, contextName: string, contextRef: string) {
 
   // state
   const [chain, setChain] = React.useState<ChainState | null>(null);

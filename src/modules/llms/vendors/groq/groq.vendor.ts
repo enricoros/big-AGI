@@ -44,6 +44,5 @@ export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSch
 
   // OpenAI transport ('Groq' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

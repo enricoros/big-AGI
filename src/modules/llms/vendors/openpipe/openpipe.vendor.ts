@@ -46,6 +46,5 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
 
   // OpenAI transport ('openpipe' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

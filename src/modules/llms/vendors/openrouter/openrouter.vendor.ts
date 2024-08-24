@@ -77,8 +77,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
 
   // OpenAI transport ('openrouter' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };
 
 // rate limit timestamp

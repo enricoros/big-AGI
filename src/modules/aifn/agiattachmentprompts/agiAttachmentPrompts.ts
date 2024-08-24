@@ -5,7 +5,7 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
 import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
-import { aixCreateContext, aixLLMChatGenerateContent } from '~/modules/aix/client/aix.client';
+import { aixCreateChatGenerateStreamContext, aixLLMChatGenerateContent } from '~/modules/aix/client/aix.client';
 
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
 
@@ -71,7 +71,7 @@ Analyze the provided content to determine its nature, identify any relationships
     toolsPolicy: { type: 'any' },
   } as const;
 
-  const { fragments } = await aixLLMChatGenerateContent(llmId, aixChatGenerate, aixCreateContext('DEV', 'DEV'), false, abortSignal, undefined);
+  const { fragments } = await aixLLMChatGenerateContent(llmId, aixChatGenerate, aixCreateChatGenerateStreamContext('DEV', 'DEV'), false, abortSignal, undefined);
 
   // validate
   if (!Array.isArray(fragments) || fragments.length !== 1)

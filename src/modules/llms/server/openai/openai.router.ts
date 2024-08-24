@@ -10,9 +10,9 @@ import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i
 import { Brand } from '~/common/app.config';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenAIWire_API_Chat_Completions, OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create, OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
+import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { ListModelsResponse_schema, llmsChatGenerateWithFunctionsOutputSchema, llmsGenerateContextSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, mistralModelsSort, mistralModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models.data';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
@@ -54,15 +54,6 @@ export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
 
 const listModelsInputSchema = z.object({
   access: openAIAccessSchema,
-});
-
-const chatGenerateWithFunctionsInputSchema = z.object({
-  access: openAIAccessSchema,
-  model: openAIModelSchema,
-  history: openAIHistorySchema,
-  functions: z.array(OpenAIWire_Tools.FunctionDefinition_schema).optional(),
-  forceFunctionName: z.string().optional(),
-  context: llmsGenerateContextSchema.optional(),
 });
 
 const createImagesInputSchema = z.object({
@@ -256,40 +247,6 @@ export const llmOpenAIRouter = createTRPCRouter({
       return { models };
     }),
 
-  /* [OpenAI] (non streaming) chat generation */
-  chatGenerateWithFunctions: publicProcedure
-    .input(chatGenerateWithFunctionsInputSchema)
-    .output(llmsChatGenerateWithFunctionsOutputSchema)
-    .mutation(async ({ input }) => {
-
-      const { access, model, history, functions, forceFunctionName, context } = input;
-      const isFunctionsCall = !!functions && functions.length > 0;
-
-      const completionsBody = openAIChatCompletionPayload(access.dialect, model, history, isFunctionsCall ? functions : null, forceFunctionName ?? null, 1, false);
-      const wireCompletions = await openaiPOSTOrThrow<OpenAIWire_API_Chat_Completions.Response, OpenAIWire_API_Chat_Completions.Request>(
-        access, model.id, completionsBody, '/v1/chat/completions',
-      );
-
-      // expect a single output
-      if (wireCompletions?.choices?.length !== 1) {
-        console.error(`[POST] llmOpenAI.chatGenerateWithFunctions: ${access.dialect}: ${context?.name || 'no context'}: unexpected output${forceFunctionName ? ` (fn: ${forceFunctionName})` : ''}:`, model.id, wireCompletions?.choices);
-        throw new TRPCError({
-          code: 'UNPROCESSABLE_CONTENT',
-          message: `[OpenAI Issue] Expected 1 completion, got ${wireCompletions?.choices?.length}`,
-        });
-      }
-      let { message, finish_reason } = wireCompletions.choices[0];
-
-      // LocalAI hack/workaround, until https://github.com/go-skynet/LocalAI/issues/788 is fixed
-      if (finish_reason === undefined)
-        finish_reason = 'stop';
-
-      // check for a function output
-      // NOTE: this includes a workaround for when we requested a function but the model could not deliver
-      return (finish_reason === 'tool_calls' || 'tool_calls' in message)
-        ? parseChatGenerateSingleToolFunctionOutput(isFunctionsCall, message)
-        : parseChatGenerateOutput(message, finish_reason);
-    }),
 
   /* [OpenAI/LocalAI] images/generations */
   createImages: publicProcedure
@@ -625,69 +582,6 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 }
 
 
-export function openAIChatCompletionPayload(dialect: OpenAIDialects, model: OpenAIModelSchema, history: OpenAIHistorySchema, functions: OpenAIWire_Tools.FunctionDefinition[] | null, forceFunctionName: string | null, n: number, stream: boolean): OpenAIWire_API_Chat_Completions.Request {
-
-  // Hotfixes to comply with API restrictions
-  const hotfixAlternateUARoles = dialect === 'perplexity';
-  const hotfixSkipEmptyMessages = dialect === 'perplexity';
-  const performFixes = hotfixAlternateUARoles || hotfixSkipEmptyMessages;
-
-  // recreate history for hotfixes
-  // NOTE: we do not like that we have to introduce aberrations by altering history, but it's a necessary evil
-  if (performFixes) {
-    history = history.reduce((acc, historyItem) => {
-
-      // skip empty messages
-      if (hotfixSkipEmptyMessages && !historyItem.content.trim()) return acc;
-
-      // if the current item has the same role as the last item, concatenate their content
-      if (hotfixAlternateUARoles && acc.length > 0) {
-        const lastItem = acc[acc.length - 1];
-        if (lastItem.role === historyItem.role) {
-          // replace the last item with the new concatenatedItem
-          acc[acc.length - 1] = {
-            ...lastItem,
-            content: lastItem.content + ABERRATION_FIXUP_SQUASH + historyItem.content,
-          };
-          return acc;
-        }
-      }
-
-      // if it's not a case for concatenation, just push the current item to the accumulator
-      acc.push(historyItem);
-      return acc;
-    }, [] as OpenAIHistorySchema);
-  }
-
-  const chatCompletionRequest: OpenAIWire_API_Chat_Completions.Request = {
-    model: model.id,
-    messages: history,
-  };
-  if (stream) {
-    chatCompletionRequest.stream = true;
-    chatCompletionRequest.stream_options = { include_usage: true };
-  }
-  if (model.temperature !== undefined)
-    chatCompletionRequest.temperature = model.temperature;
-  if (model.maxTokens)
-    chatCompletionRequest.max_tokens = model.maxTokens;
-  if (functions?.length)
-    chatCompletionRequest.tools = functions.map(fun => ({
-      type: 'function',
-      function: fun,
-    }));
-  if (forceFunctionName)
-    chatCompletionRequest.tool_choice = {
-      type: 'function',
-      function: { name: forceFunctionName },
-    };
-  if (n > 1) {
-    chatCompletionRequest.n = n;
-    throw new Error('OpenAI-derived API do not support n > 1 for chat completions, so we will not do it either');
-  }
-  return chatCompletionRequest;
-}
-
 async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, null, apiPath);
   return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: `OpenAI/${access.dialect}` });
@@ -696,60 +590,4 @@ async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema,
 async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, modelRefId, apiPath);
   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${access.dialect}` });
-}
-
-function parseChatGenerateSingleToolFunctionOutput(isFunctionsCall: boolean, message: OpenAIWire_API_Chat_Completions.Response['choices'][number]['message']) {
-  // NOTE: Defensive: we run extensive validation because the API is not well tested and documented at the moment
-  if (!isFunctionsCall)
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `[OpenAI Issue] Received a function call without a function call request`,
-    });
-
-  // validate a single function call
-  if (!message.tool_calls || message.tool_calls.length !== 1 || message.tool_calls[0].type !== 'function' || message.content)
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `[OpenAI Issue] Expected a function call, got a message`,
-    });
-
-  // got a function call, so parse it
-  const fc = message.tool_calls[0].function;
-  if (!fc.name || !fc.arguments)
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `[OpenAI Issue] Issue with the function call, missing name or arguments`,
-    });
-
-  // decode the function call
-  const fcName = fc.name;
-  let fcArgs: object;
-  try {
-    fcArgs = JSON.parse(fc.arguments);
-  } catch (error: any) {
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `[OpenAI Issue] Issue with the function call, arguments are not valid JSON`,
-    });
-  }
-
-  return {
-    function_name: fcName,
-    function_arguments: fcArgs,
-  };
-}
-
-function parseChatGenerateOutput(message: OpenAIWire_API_Chat_Completions.Response['choices'][number]['message'], finish_reason: OpenAIWire_API_Chat_Completions.Response['choices'][number]['finish_reason']) {
-  // validate the message
-  if (message.content === undefined)
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `[OpenAI Issue] Expected a message, got a null message`,
-    });
-
-  return {
-    role: message.role,
-    content: message.content,
-    finish_reason: finish_reason === 'stop' ? 'stop' as const : finish_reason === 'length' ? 'length' as const : null,
-  };
 }

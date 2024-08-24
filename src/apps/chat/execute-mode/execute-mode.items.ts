@@ -28,13 +28,6 @@ export const ExecuteModeItems: { [key in ChatExecuteMode]: ModeDescription } = {
     sendColor: 'primary',
     sendText: 'Chat · DEV',
   },
-  'generate-text-v1': {
-    label: 'Chat (Stable)',
-    description: 'Model replies (stable)',
-    canAttach: true,
-    sendColor: 'primary',
-    sendText: 'Chat · Stable',
-  },
   'beam-content': {
     label: 'Beam', // Best of, Auto-Prime, Top Pick, Select Best
     description: 'Combine multiple models', // Smarter: combine...

@@ -44,6 +44,5 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
 
   // OpenAI transport ('perplexity' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

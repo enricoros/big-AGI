@@ -142,7 +142,7 @@ export function Composer(props: {
     : null;
 
   // composer-overlay: for the in-reference-to state, comes from the conversation overlay
-  const allowInReferenceTo = chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1';
+  const allowInReferenceTo = chatExecuteMode === 'generate-content';
   const inReferenceTo = useChatComposerOverlayStore(conversationOverlayStore, store => allowInReferenceTo ? store.inReferenceTo : null);
 
   // don't load URLs if the user is typing a command or there's no capability
@@ -518,7 +518,7 @@ export function Composer(props: {
 
   // ...
 
-  const isText = chatExecuteMode === 'generate-content' || chatExecuteMode === 'generate-text-v1';
+  const isText = chatExecuteMode === 'generate-content';
   const isTextBeam = chatExecuteMode === 'beam-content';
   const isAppend = chatExecuteMode === 'append-user';
   const isReAct = chatExecuteMode === 'react-content';
