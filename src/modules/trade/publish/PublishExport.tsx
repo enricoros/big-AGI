@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Button } from '@mui/joy';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 
 import { getChatShowSystemMessages } from '../../../apps/chat/store-app-chat';
 
@@ -84,7 +84,7 @@ export function PublishExport(props: {
       variant='soft' disabled={!hasConversation || publishUploading}
       loading={publishUploading}
       color={publishResponse ? 'success' : 'primary'}
-      endDecorator={<ExitToAppIcon />}
+      endDecorator={<ShareOutlinedIcon />}
       sx={{ minWidth: 240, justifyContent: 'space-between' }}
       onClick={handlePublishConversation}
     >

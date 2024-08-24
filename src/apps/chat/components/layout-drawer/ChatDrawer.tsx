@@ -365,7 +365,7 @@ function ChatDrawer(props: {
       <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         <ListItemButton onClick={props.onConversationsImportDialog} sx={{ flex: 1 }}>
           <ListItemDecorator>
-            <FileUploadOutlinedIcon />
+            <FileDownloadOutlinedIcon />
           </ListItemDecorator>
           Import
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
@@ -373,7 +373,7 @@ function ChatDrawer(props: {
 
         <ListItemButton disabled={filteredChatsAreEmpty} onClick={handleConversationsExport} sx={{ flex: 1 }}>
           <ListItemDecorator>
-            <FileDownloadOutlinedIcon />
+            <FileUploadOutlinedIcon />
           </ListItemDecorator>
           Export
         </ListItemButton>
