@@ -153,7 +153,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
 
     const statusColor: ColorPaletteProp =
       isError ? 'warning'
-        : status?.mtype === 'success' ? 'success'
+        : status?.mtype === 'success' ? 'neutral'
           : 'neutral';
 
     return (
@@ -184,17 +184,6 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
         {status.mtype === 'success' && patchState.newContent && (
           <Box sx={{ display: 'flex', gap: 1 }}>
 
-            <TooltipOutlined title='Not yet available'>
-              <Button
-                disabled
-                color='neutral'
-                variant='soft'
-                size='sm'
-              >
-                Patch File
-              </Button>
-            </TooltipOutlined>
-
             <Button
               color='success'
               size='sm'
@@ -207,6 +196,17 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
             >
               Overwrite File
             </Button>
+
+            <TooltipOutlined title='Not yet available'>
+              <Button
+                disabled
+                color='neutral'
+                variant='soft'
+                size='sm'
+              >
+                Patch File
+              </Button>
+            </TooltipOutlined>
 
             {/*<Button onClick={() => processLiveFile(liveFileId)} color='neutral' size='sm'>*/}
             {/*  Regenerate Patch*/}
