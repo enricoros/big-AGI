@@ -209,18 +209,17 @@ export class ConversationHandler {
   beamInvoke(viewHistory: Readonly<DMessage[]>, importMessages: DMessage[], destReplaceMessageId: DMessage['id'] | null): void {
     const { open: beamOpen, importRays: beamImportRays, terminateKeepingSettings } = this.beamStore.getState();
 
-    const onBeamSuccess = (fragments: DMessageFragment[], llmId: DLLMId) => {
-      const generator: DMessageGenerator = { mgt: 'named', name: llmId as any };
+    const onBeamSuccess = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => {
 
       // set output when going back to the chat
       if (destReplaceMessageId) {
         // replace a single message in the conversation history
-        this.messageEdit(destReplaceMessageId, { fragments, generator }, true, true); // [chat] replace assistant:Beam contentParts
+        this.messageEdit(destReplaceMessageId, messageUpdate, true, true); // [chat] replace assistant:Beam contentParts
       } else {
         // replace (may truncate) the conversation history and append a message
-        const newMessage = createDMessageFromFragments('assistant', fragments); // [chat] append Beam message
+        const newMessage = createDMessageFromFragments('assistant', messageUpdate.fragments); // [chat] append Beam message
         newMessage.purposeId = getConversationSystemPurposeId(this.conversationId) ?? undefined;
-        newMessage.generator = generator;
+        newMessage.generator = messageUpdate.generator;
         // TODO: put the other rays in the metadata?! (reqby @Techfren)
         this.messageAppend(newMessage);
       }
