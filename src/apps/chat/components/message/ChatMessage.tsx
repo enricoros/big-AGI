@@ -13,6 +13,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DifferenceIcon from '@mui/icons-material/Difference';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
@@ -960,16 +961,25 @@ export function ChatMessage(props: {
               {(!!props.onTextDiagram || !!props.onTextImagine || !!props.onTextSpeak) && <Divider />}
 
               {/* Highlight (edits fragment, only for assistant messages) */}
+              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Bold'>
+                <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
+                  handleHighlightSelText('strong');
+                  closeBubble();
+                }}>
+                  <FormatBoldIcon />
+                </IconButton>
+              </Tooltip>}
               {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Highlighter'>
                 <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
-                  handleHighlightSelText();
+                  handleHighlightSelText('highlight');
                   closeBubble();
                 }}>
                   <MarkHighlightIcon hcolor={handleHighlightSelText ? 'yellow' : undefined} />
                 </IconButton>
               </Tooltip>}
+              {fromAssistant && <Divider />}
 
-              {/* Bubble Copy */}
+                {/* Bubble Copy */}
               <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
                 <IconButton onClick={handleOpsCopy}>
                   <ContentCopyIcon />

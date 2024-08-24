@@ -20,7 +20,9 @@ import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
  * </mark>
  */
 const APPLY_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
+const APPLY_STRONG = (text: string) => `**${text}**`;
 
+type HighlightTool = 'highlight' | 'strong';
 
 export function useSelHighlighterMemo(
   messageId: DMessageId,
@@ -28,7 +30,7 @@ export function useSelHighlighterMemo(
   contentFragments: DMessageContentFragment[],
   fromAssistant: boolean,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
-): (() => void) | null {
+): ((tool: HighlightTool) => void) | null {
   return React.useMemo(() => {
 
     // Existence check
@@ -36,7 +38,7 @@ export function useSelHighlighterMemo(
       return null;
 
     // Create the highlighter function, if there's 1 and only 1 occurrence of the selection
-    const highlightFunction = contentFragments.reduce((acc: false /* not found */ | (() => void) | true /* more than one */, fragment) => {
+    const highlightFunction = contentFragments.reduce((acc: false /* not found */ | ((tool: HighlightTool) => void) | true /* more than one */, fragment) => {
       if (!acc && isTextPart(fragment.part)) {
         const fragmentText = fragment.part.text;
         let index = fragmentText.indexOf(selText);
@@ -49,8 +51,8 @@ export function useSelHighlighterMemo(
           index = fragmentText.indexOf(selText, index + 1);
 
           // make the highlighter function
-          acc = () => {
-            const highlighted = APPLY_HIGHLIGHT(selText);
+          acc = (tool: HighlightTool) => {
+            const highlighted = tool === 'highlight' ? APPLY_HIGHLIGHT(selText) : APPLY_STRONG(selText);
             const newFragmentText =
               fragmentText.includes(highlighted) ? fragmentText.replace(highlighted, selText) // toggles selection
                 : fragmentText.replace(selText, highlighted);
