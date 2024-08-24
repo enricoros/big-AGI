@@ -85,7 +85,7 @@ const useAppChatStore = create<AppChatStore>()(persist(
     autoTitleChat: true,
     setAutoTitleChat: (autoTitleChat: boolean) => _set({ autoTitleChat }),
 
-    autoVndAntBreakpoints: false,
+    autoVndAntBreakpoints: true, // 2024-08-24: on as it saves user's money
     setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => _set({ autoVndAntBreakpoints }),
 
     clearFilters: () => _set({ filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
