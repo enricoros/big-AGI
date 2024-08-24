@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
-import { Box, Button, Chip, ColorPaletteProp, Sheet } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Sheet } from '@mui/joy';
 
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -14,6 +14,7 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { isLiveFileSupported, liveFileCreateOrThrow } from '~/common/livefile/store-live-file';
 import { liveFileSheetSx } from '~/common/livefile/livefile.theme';
 import { usePatchingWorkflow } from '~/modules/blocks/enhanced-code/livefile-patch/usePatchingWorkflow';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 
 export function useLiveFilePatch(title: string, code: string, isPartial: boolean, isMobile: boolean) {
@@ -160,30 +161,50 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
 
         {status.message}
 
-        <Chip variant='soft' color='primary'>
-          loaded
-        </Chip>
+        {/*<Chip variant='soft' color='primary'>*/}
+        {/*  loaded*/}
+        {/*</Chip>*/}
 
-        <Chip variant='solid' color='primary'>
-          applying ...
-        </Chip>
+        {/*<Chip variant='solid' color='primary'>*/}
+        {/*  applying ...*/}
+        {/*</Chip>*/}
 
-        <Button
-          variant='soft'
-          color='primary'
-          size='sm'
-          // disabled={isLoadingFile /* commented to not make this flash */}
-          // onClick={handleLoadFromDisk}
-          // aria-label='Load content from disk'
-        >
-          loaded
-        </Button>
+        {/*<Button*/}
+        {/*  variant='soft'*/}
+        {/*  color='primary'*/}
+        {/*  size='sm'*/}
+        {/*  // disabled={isLoadingFile /* commented to not make this flash *!/*/}
+        {/*  // onClick={handleLoadFromDisk}*/}
+        {/*  // aria-label='Load content from disk'*/}
+        {/*>*/}
+        {/*  loaded*/}
+        {/*</Button>*/}
 
 
         {status.mtype === 'success' && patchState.newContent && (
-          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
 
-            <Button onClick={targetOverwriteWithPatch} variant='outlined' color='success' size='sm'>
+            <TooltipOutlined title='Not yet available'>
+              <Button
+                disabled
+                color='neutral'
+                variant='soft'
+                size='sm'
+              >
+                Patch File
+              </Button>
+            </TooltipOutlined>
+
+            <Button
+              color='success'
+              size='sm'
+              variant='outlined'
+              onClick={targetOverwriteWithPatch}
+              sx={{
+                // backgroundColor: 'red', // doesn't show?
+                boxShadow: 'xs',
+              }}
+            >
               Overwrite File
             </Button>
 
