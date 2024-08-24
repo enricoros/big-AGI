@@ -6,7 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
@@ -32,7 +32,7 @@ import { CHAT_NOVEL_TITLE } from '../../AppChat';
 
 export const FadeInButton = styled(IconButton)({
   opacity: 0.5,
-  transition: 'opacity 0.2s',
+  transition: 'opacity 0.16s',
   '&:hover': { opacity: 1 },
 });
 
@@ -373,7 +373,7 @@ function ChatDrawerItem(props: {
 
                 <Tooltip disableInteractive title='Export Chat'>
                   <FadeInButton size='sm' onClick={handleConversationExport}>
-                    <FileDownloadOutlinedIcon />
+                    <FileUploadOutlinedIcon />
                   </FadeInButton>
                 </Tooltip>
               </>}

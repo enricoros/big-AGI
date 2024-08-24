@@ -124,7 +124,7 @@ export function WorkspaceLiveFilePicker(props: {
             color='neutral'
             size='sm'
             onClick={handleToggleMenu}
-            endDecorator={<LiveFileChooseIcon />}
+            startDecorator={<LiveFileChooseIcon />}
             // endDecorator={<LiveFilePatchIcon color='success' />}
           >
             {props.labelButton}

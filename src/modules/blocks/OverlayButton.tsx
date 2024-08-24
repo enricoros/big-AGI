@@ -26,7 +26,10 @@ export const overlayButtonsTopRightSx: SxProps = {
   // faded-out defaults
   opacity: 'var(--AGI-overlay-start-opacity, 0)',
   pointerEvents: 'none',
-  transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
+
+  // 2024-08-24: disabled the fading in/out, it's slow
+  // transition: 'opacity 0.1s cubic-bezier(.17,.84,.44,1)',
+
   // buttongroup: background
   // '& > div > button': {
   //   backgroundColor: 'background.surface',
@@ -46,7 +49,8 @@ export const StyledOverlayButton = styled(IconButton)(({ theme, variant }) => ({
 })) as typeof IconButton;
 
 export const overlayButtonShadowSx: SxProps = {
-  boxShadow: '0px 1px 4px -2px var(--joy-palette-background-backdrop)',
+  boxShadow: '0px 1px 3px -2px var(--joy-palette-background-backdrop)',
+  // boxShadow:'sm',
 };
 
 export const overlayGroupWithShadowSx: SxProps = {

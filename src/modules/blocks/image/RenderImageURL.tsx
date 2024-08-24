@@ -194,7 +194,7 @@ export const RenderImageURL = (props: {
               // backgroundColor: `rgba(${theme.vars.palette.neutral.darkChannel} / 0.85)`,
               p: { xs: 1, md: 2 },
               opacity: infoOpen ? 1 : 0,
-              transition: 'opacity 0.2s cubic-bezier(.17,.84,.44,1)',
+              transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',
             }}>
               {props.overlayText}
             </Box>

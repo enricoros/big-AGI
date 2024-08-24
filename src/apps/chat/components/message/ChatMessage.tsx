@@ -748,7 +748,7 @@ export function ChatMessage(props: {
             variant='outlined' onClick={handleOpsCopy}
             sx={{
               position: 'absolute', ...(fromAssistant ? { right: { xs: 12, md: 28 } } : { left: { xs: 12, md: 28 } }), zIndex: 10,
-              opacity: 0, transition: 'opacity 0.3s',
+              opacity: 0, transition: 'opacity 0.16s cubic-bezier(.17,.84,.44,1)',
             }}>
             <ContentCopyIcon />
           </IconButton>

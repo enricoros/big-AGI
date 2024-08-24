@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Button } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
@@ -120,7 +120,7 @@ export function ChatLinkExport(props: {
       variant='soft' disabled={!hasConversation || isUploading}
       loading={isUploading}
       color={linkPutResult ? 'success' : 'primary'}
-      endDecorator={linkPutResult ? <DoneIcon /> : <ExitToAppIcon />}
+      endDecorator={linkPutResult ? <DoneIcon /> : <ShareOutlinedIcon />}
       sx={{ minWidth: 240, justifyContent: 'space-between' }}
       onClick={handleConfirm}
     >
