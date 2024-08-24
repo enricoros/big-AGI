@@ -80,7 +80,7 @@ export function Fusion(props: {
     const { fusions, onSuccessCallback } = props.beamStore.getState();
     const fusion = fusions.find(fusion => fusion.fusionId === props.fusionId);
     if (fusion?.outputDMessage?.fragments.length && onSuccessCallback)
-      onSuccessCallback(fusion.outputDMessage.fragments, fusion.llmId || '');
+      onSuccessCallback(fusion.outputDMessage);
   }, [props.beamStore, props.fusionId]);
 
 

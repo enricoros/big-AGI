@@ -27,7 +27,7 @@ export const createBeamVanillaStore = () => createVanillaStore<BeamStore>()((...
 
 /// Common Store Slice ///
 
-type BeamSuccessCallback = (fragments: DMessageFragment[], llmId: DLLMId) => void;
+type BeamSuccessCallback = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => void;
 
 interface RootStateSlice {
 
