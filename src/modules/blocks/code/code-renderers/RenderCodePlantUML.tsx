@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box } from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
 import { patchSvgString } from './RenderCodeSVG';
+import * as React from 'react';
 
 
 export function heuristicIsCodePlantUML(code: string) {
@@ -80,7 +81,7 @@ async function _fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
 
   // check for syntax errors
   if (svg.includes('>Syntax Error?</text>'))
-    throw new Error('llm syntax issue (it happens!). Please regenerate or change the language model.');
+    throw new Error('Syntax issue (it happens).\nPlease regenerate the message using a different language model.');
 
   return svg;
 }
@@ -91,6 +92,14 @@ export function RenderCodePlantUML(props: {
   error: Error | null;
   fitScreen: boolean;
 }) {
+
+  if (props.error && !props.svgCode)
+    return (
+      <Typography level='body-sm' color='danger' variant='plain' sx={{ mb: 2, borderRadius: 'xs' }}>
+        <div>{`Unable to display diagram: ${props.error?.message || props.error?.toString() || 'Unknown error'}`}</div>
+      </Typography>
+    );
+
   return (
     <Box
       component='div'
@@ -98,7 +107,7 @@ export function RenderCodePlantUML(props: {
       dangerouslySetInnerHTML={{
         __html: patchSvgString(props.fitScreen, props.svgCode) || (props.error ? `PlantUML Error: ${props.error.message}` : 'No PlantUML code'),
       }}
-      sx={diagramSx}
+      sx={(!props.svgCode && props.error) ? undefined : diagramSx}
     />
   );
 }

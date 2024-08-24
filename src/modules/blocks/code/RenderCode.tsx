@@ -241,7 +241,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
           : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
             : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
-              : (renderPlantUML && plantUmlSvgData) ? <RenderCodePlantUML svgCode={plantUmlSvgData} error={plantUmlError} fitScreen={fitScreen} />
+              : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
                 : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
 
