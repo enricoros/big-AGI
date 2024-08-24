@@ -149,7 +149,7 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
   return (
     <Box component='div'>
       {hasSvgError && (
-        <Typography level='body-sm' color='danger' variant='soft' sx={{ mb: 2, borderRadius: 'xs' }}>
+        <Typography level='body-sm' color='danger' variant='plain' sx={{ mb: 2, borderRadius: 'xs' }}>
           Unable to display diagram. Issue with the generated Mermaid code.
         </Typography>
       )}
