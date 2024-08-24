@@ -5,13 +5,11 @@ import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
-import { DLLM, DLLMId, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
-import { findLLMOrThrow, llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { DLLM, DLLMId, LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { isModelPriceFree } from '~/common/stores/llms/llms.pricing';
 
-import type { ChatStreamingInputSchema } from './server/llm.server.streaming';
-import type { GenerateContextNameSchema, ModelDescriptionSchema, StreamingContextNameSchema } from './server/llm.server.types';
-import type { StreamingClientUpdate } from './vendors/unifiedStreamingClient';
+import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { DOpenAILLMOptions, FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { findServiceAccessOrThrow } from './vendors/vendor.helpers';
 
@@ -26,10 +24,6 @@ export interface VChatMessageIn {
 }
 
 export type VChatFunctionIn = OpenAIWire_Tools.FunctionDefinition;
-
-export type VChatStreamContextName = StreamingContextNameSchema;
-export type VChatGenerateContextName = GenerateContextNameSchema;
-export type VChatContextRef = string;
 
 export interface VChatMessageOut {
   role: 'assistant' | 'system' | 'user';
@@ -134,58 +128,28 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
 export async function llmChatGenerateOrThrow<TServiceSettings extends object = {}, TAccess = unknown, TLLMOptions = unknown>(
   llmId: DLLMId,
   messages: VChatMessageIn[],
-  contextName: VChatGenerateContextName,
-  contextRef: VChatContextRef | null,
+  contextName: string,
+  contextRef: string | null,
   functions: VChatFunctionIn[] | null,
   forceFunctionName: string | null,
   maxTokens?: number,
 ): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut> {
-
-  // id to DLLM and vendor
-  const llm = findLLMOrThrow<TLLMOptions>(llmId);
-  const llmOptions = llm.options;
-
-  // if the model does not support function calling and we're trying to force a function, throw
-  if (forceFunctionName && !llm.interfaces.includes(LLM_IF_OAI_Fn))
-    throw new Error(`Model ${llmId} does not support function calling`);
-
-  // get the access
-  const { serviceSettings, transportAccess, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
-
-  // apply any vendor-specific rate limit
-  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
-
-  // execute via the vendor
-  return await vendor.rpcChatGenerateOrThrow(transportAccess, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, maxTokens);
+  throw new Error('llmStreamingChatGenerate: Unsupported - migrated to AIX');
 }
-
 
 export async function llmStreamingChatGenerate<
   TServiceSettings extends object = {},
-  TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access'],
+  TAccess = undefined,
   TLLMOptions = unknown
 >(
   llmId: DLLMId,
   messages: VChatMessageIn[],
-  contextName: VChatStreamContextName,
-  contextRef: VChatContextRef,
+  contextName: string,
+  contextRef: string | null,
   functions: VChatFunctionIn[] | null,
   forceFunctionName: string | null,
   abortSignal: AbortSignal,
-  onUpdate: (update: StreamingClientUpdate, done: boolean) => void,
+  onUpdate: (update: any, done: boolean) => void,
 ): Promise<void> {
-
-  // id to DLLM and vendor
-  const llm = findLLMOrThrow<TLLMOptions>(llmId);
-  const llmOptions = llm.options;
-
-  // get the access
-  const { serviceSettings, transportAccess, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
-
-  // apply any vendor-specific rate limit
-  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
-
-  // execute via the vendor
-  // return await unifiedStreamingClient(access, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
-  return await vendor.streamingChatGenerateOrThrow(transportAccess, llmId, llmOptions, messages, contextName, contextRef, functions, forceFunctionName, abortSignal, onUpdate);
+  throw new Error('llmStreamingChatGenerate: Unsupported - migrated to AIX');
 }

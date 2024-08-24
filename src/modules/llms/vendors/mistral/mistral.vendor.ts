@@ -3,7 +3,7 @@ import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAIServiceSettings, DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { DOpenAILLMOptions, DOpenAIServiceSettings, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { MistralServiceSetup } from './MistralServiceSetup';
@@ -48,6 +48,5 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
 
   // OpenAI transport ('mistral' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

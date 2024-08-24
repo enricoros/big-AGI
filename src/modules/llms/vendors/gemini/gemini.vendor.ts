@@ -4,10 +4,6 @@ import { apiAsync } from '~/common/util/trpc.client';
 import type { GeminiAccessSchema } from '../../server/gemini/gemini.router';
 import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatContextRef, VChatGenerateContextName, VChatMessageOut } from '../../llm.client';
-import { unifiedStreamingClient } from '../unifiedStreamingClient';
-
-import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { GeminiServiceSetup } from './GeminiServiceSetup';
@@ -58,36 +54,5 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
 
   // List Models
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmGemini.listModels.query({ access }),
-
-  // Chat Generate (non-streaming) with Functions
-  rpcChatGenerateOrThrow: async (access, llmOptions, messages, contextName: VChatGenerateContextName, contextRef: VChatContextRef | null, functions, forceFunctionName, maxTokens) => {
-    if (functions?.length || forceFunctionName)
-      throw new Error('Gemini does not support functions');
-
-    const { llmRef, temperature, maxOutputTokens } = llmOptions;
-    try {
-      return await apiAsync.llmGemini.chatGenerate.mutate({
-        access,
-        model: {
-          id: llmRef,
-          temperature: temperature ?? FALLBACK_LLM_TEMPERATURE,
-          maxTokens: maxTokens || maxOutputTokens || FALLBACK_LLM_RESPONSE_TOKENS,
-        },
-        history: messages,
-        context: contextRef ? {
-          method: 'chat-generate',
-          name: contextName,
-          ref: contextRef,
-        } : undefined,
-      }) as VChatMessageOut;
-    } catch (error: any) {
-      const errorMessage = error?.message || error?.toString() || 'Gemini Chat Generate Error';
-      console.error(`gemini.rpcChatGenerateOrThrow: ${errorMessage}`);
-      throw new Error(errorMessage);
-    }
-  },
-
-  // Chat Generate (streaming) with Functions
-  streamingChatGenerateOrThrow: unifiedStreamingClient,
 
 };

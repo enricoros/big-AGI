@@ -58,6 +58,5 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
 
   // OpenAI transport ('azure' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

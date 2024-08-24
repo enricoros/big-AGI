@@ -7,6 +7,5 @@ export type ChatExecuteMode =
   | 'beam-content'
   | 'generate-content'
   | 'generate-image'
-  | 'generate-text-v1'
   | 'react-content'
   ;

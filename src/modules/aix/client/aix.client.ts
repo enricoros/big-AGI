@@ -1,4 +1,3 @@
-import type { ChatStreamingInputSchema } from '~/modules/llms/server/llm.server.streaming';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -12,7 +11,7 @@ import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metri
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_ContextChatStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixAPI_Context_ChatGenerateStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
@@ -23,7 +22,11 @@ import { aixChatGenerateRequestFromDMessages } from './aix.client.fromDMessages.
 export const DEBUG_PARTICLES = false;
 
 
-export function aixCreateContext(name: AixAPI_ContextChatStream['name'], ref: AixAPI_ContextChatStream['ref']): AixAPI_ContextChatStream {
+export function aixCreateChatGenerateNSContext(name: AixAPI_Context_ChatGenerateNS['name'], ref: string): AixAPI_Context_ChatGenerateNS {
+  return { method: 'chat-generate', name, ref };
+}
+
+export function aixCreateChatGenerateStreamContext(name: AixAPI_Context_ChatGenerateStream['name'], ref: string): AixAPI_Context_ChatGenerateStream {
   return { method: 'chat-stream', name, ref };
 }
 
@@ -59,8 +62,8 @@ export async function aixChatGenerateContentStreaming(
   llmId: DLLMId,
   chatHistory: Readonly<DMessage[]>,
   // aix inputs
-  aixContextName: AixAPI_ContextChatStream['name'],
-  aixContextRef: AixAPI_ContextChatStream['ref'],
+  aixContextName: AixAPI_Context_ChatGenerateStream['name'],
+  aixContextRef: AixAPI_Context['ref'],
   // others
   throttleParallelThreads: number, // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   abortSignal: AbortSignal,
@@ -81,7 +84,7 @@ export async function aixChatGenerateContentStreaming(
 
   try {
 
-    await aixLLMChatGenerateContent(llmId, aixChatContentGenerateRequest, aixCreateContext(aixContextName, aixContextRef), true, abortSignal,
+    await aixLLMChatGenerateContent(llmId, aixChatContentGenerateRequest, aixCreateChatGenerateStreamContext(aixContextName, aixContextRef), true, abortSignal,
       (update: AixLLMGenerateContentAccumulator, isDone: boolean) => {
 
         // typesafe overwrite on all fields (Object.assign, but typesafe)
@@ -110,6 +113,9 @@ export async function aixChatGenerateContentStreaming(
   chatDMessageUpdate.pendingIncomplete = false;
   throttler.finalize(() => onStreamingUpdate(chatDMessageUpdate, true));
 
+  // TODO: check something beyond this return status (as exceptions almost never happen here)
+  // - e.g. the generator.aix may have error/token stop codes
+
   return returnStatus;
 }
 
@@ -129,12 +135,12 @@ export interface AixLLMGenerateContentAccumulator extends Pick<DMessage, 'fragme
  * Inputs: llmId, and a well formatted chatGenerate request.
  * @throws Error if the LLM is not found or other misconfigurations, but handles most other errors internally.
  */
-export async function aixLLMChatGenerateContent<TServiceSettings extends object = {}, TAccess extends ChatStreamingInputSchema['access'] = ChatStreamingInputSchema['access']>(
+export async function aixLLMChatGenerateContent<TServiceSettings extends object = {}, TAccess extends AixAPI_Access = AixAPI_Access>(
   // llm Id input -> access & model
   llmId: DLLMId,
   // aix inputs
   aixChatGenerate: AixAPIChatGenerate_Request,
-  aixContext: AixAPI_ContextChatStream,
+  aixContext: AixAPI_Context,
   aixStreaming: boolean,
   // others
   abortSignal: AbortSignal,
@@ -152,12 +158,6 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   //     return onUpdate({ textSoFar: moderationUpdate, typing: false }, true);
   // }
 
-  // apply any vendor-specific rate limit
-  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
-
-  // Aix Model
-  const aixModel = aixCreateModelFromLLMOptions(llm.options, llmId);
-
   // Aix Low-Level Chat Generation
   const dMessage: AixLLMGenerateContentAccumulator = {
     fragments: [],
@@ -171,6 +171,16 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
     },
   };
 
+  // streaming initial notification, to record
+  onStreamingUpdate?.(dMessage, false);
+
+  // apply any vendor-specific rate limit
+  await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
+
+  // Aix Model
+  const aixModel = aixCreateModelFromLLMOptions(llm.options, llmId);
+
+  // Aix Low-Level Chat Generation
   await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal,
     (ll: Aix_LL_GenerateContentAccumulator, isDone: boolean) => {
 
@@ -233,7 +243,7 @@ async function _aix_LL_ChatGenerateContent(
   aixAccess: AixAPI_Access,
   aixModel: AixAPI_Model,
   aixChatGenerate: AixAPIChatGenerate_Request,
-  aixContext: AixAPI_ContextChatStream,
+  aixContext: AixAPI_Context,
   aixStreaming: boolean,
   // others
   abortSignal: AbortSignal,
@@ -335,3 +345,44 @@ async function _aix_LL_ChatGenerateContent(
 //     },
 //   ];
 // }
+
+/**
+ * OpenAI-specific moderation check. This is a separate function, as it's not part of the
+ * streaming chat generation, but it's a pre-check before we even start the streaming.
+ *
+ * @returns null if the message is safe, or a string with the user message if it's not safe
+ */
+/* NOTE: NOT PORTED TO AIX YET, this was the former "LLMS" implementation
+async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: VChatMessageIn | null): Promise<string | null> {
+  if (!lastMessage || lastMessage.role !== 'user')
+    return null;
+
+  try {
+    const moderationResult = await apiAsync.llmOpenAI.moderation.mutate({
+      access, text: lastMessage.content,
+    });
+    const issues = moderationResult.results.reduce((acc, result) => {
+      if (result.flagged) {
+        Object
+          .entries(result.categories)
+          .filter(([_, value]) => value)
+          .forEach(([key, _]) => acc.add(key));
+      }
+      return acc;
+    }, new Set<string>());
+
+    // if there's any perceived violation, we stop here
+    if (issues.size) {
+      const categoriesText = [...issues].map(c => `\`${c}\``).join(', ');
+      // do not proceed with the streaming request
+      return `[Moderation] I an unable to provide a response to your query as it violated the following categories of the OpenAI usage policies: ${categoriesText}.\nFor further explanation please visit https://platform.openai.com/docs/guides/moderation/moderation`;
+    }
+  } catch (error: any) {
+    // as the moderation check was requested, we cannot proceed in case of error
+    return '[Issue] There was an error while checking for harmful content. ' + error?.toString();
+  }
+
+  // moderation check was successful
+  return null;
+}
+*/

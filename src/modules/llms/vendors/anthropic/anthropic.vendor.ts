@@ -3,10 +3,8 @@ import { apiAsync } from '~/common/util/trpc.client';
 
 import type { AnthropicAccessSchema } from '../../server/anthropic/anthropic.router';
 import type { IModelVendor } from '../IModelVendor';
-import type { VChatContextRef, VChatGenerateContextName, VChatMessageOut } from '../../llm.client';
-import { unifiedStreamingClient } from '../unifiedStreamingClient';
 
-import { DOpenAILLMOptions, FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from '../openai/openai.vendor';
+import type { DOpenAILLMOptions } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
 import { AnthropicServiceSetup } from './AnthropicServiceSetup';
@@ -46,36 +44,5 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
 
   // List Models
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmAnthropic.listModels.query({ access }),
-
-  // Chat Generate (non-streaming) with Functions
-  rpcChatGenerateOrThrow: async (access, llmOptions, messages, contextName: VChatGenerateContextName, contextRef: VChatContextRef | null, functions, forceFunctionName, maxTokens) => {
-    if (functions?.length || forceFunctionName)
-      throw new Error('Anthropic does not support functions');
-
-    const { llmRef, llmTemperature, llmResponseTokens } = llmOptions;
-    try {
-      return await apiAsync.llmAnthropic.chatGenerateMessage.mutate({
-        access,
-        model: {
-          id: llmRef,
-          temperature: llmTemperature ?? FALLBACK_LLM_TEMPERATURE,
-          maxTokens: maxTokens || llmResponseTokens || FALLBACK_LLM_RESPONSE_TOKENS,
-        },
-        history: messages,
-        context: contextRef ? {
-          method: 'chat-generate',
-          name: contextName,
-          ref: contextRef,
-        } : undefined,
-      }) as VChatMessageOut;
-    } catch (error: any) {
-      const errorMessage = error?.message || error?.toString() || 'Anthropic Chat Generate Error';
-      console.error(`anthropic.rpcChatGenerateOrThrow: ${errorMessage}`);
-      throw new Error(errorMessage);
-    }
-  },
-
-  // Chat Generate (streaming) with Functions
-  streamingChatGenerateOrThrow: unifiedStreamingClient,
 
 };

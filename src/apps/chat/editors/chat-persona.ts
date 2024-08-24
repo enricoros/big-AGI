@@ -88,5 +88,6 @@ export async function runPersonaOnConversationHead(
   if (!hasBeenAborted && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
     autoSuggestions(null, conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
+  // return true if this succeeded
   return messageStatus.outcome === 'success';
 }

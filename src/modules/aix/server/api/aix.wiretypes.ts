@@ -32,7 +32,9 @@ export type AixTools_FunctionCallDefinition = Extract<z.infer<typeof AixWire_Too
 export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_schema>;
 
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
-export type AixAPI_ContextChatStream = z.infer<typeof AixWire_API.ContextChatStream_schema>;
+export type AixAPI_Context = z.infer<typeof AixWire_API.Context_schema>;
+export type AixAPI_Context_ChatGenerateNS = z.infer<typeof AixWire_API.ContextChatGenerateNS_schema>;
+export type AixAPI_Context_ChatGenerateStream = z.infer<typeof AixWire_API.ContextChatGenerateStream_schema>;
 export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
 export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatContentGenerate.Request_schema>;
 
@@ -374,14 +376,21 @@ export namespace AixWire_API {
 
   /// Context
 
-  export const ContextChatStream_schema = z.object({
+  export const ContextChatGenerateNS_schema = z.object({
+    method: z.literal('chat-generate'),
+    name: z.enum(['chat-ai-title', 'chat-ai-summarize', 'chat-followup-diagram', 'chat-followup-htmlui', 'chat-react-turn', 'draw-expand-prompt']),
+    ref: z.string(),
+  });
+
+  export const ContextChatGenerateStream_schema = z.object({
     method: z.literal('chat-stream'),
     name: z.enum(['DEV', 'conversation', 'ai-diagram', 'ai-flattener', 'call', 'beam-scatter', 'beam-gather', 'persona-extract']),
     ref: z.string(),
   });
 
   export const Context_schema = z.discriminatedUnion('method', [
-    ContextChatStream_schema,
+    ContextChatGenerateNS_schema,
+    ContextChatGenerateStream_schema,
   ]);
 
   /// Connection options
