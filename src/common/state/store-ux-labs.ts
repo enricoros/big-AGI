@@ -61,7 +61,7 @@ export const useUXLabsStore = create<UXLabsStore>()(
       labsEnhanceCodeBlocks: true,
       setLabsEnhanceCodeBlocks: (labsEnhanceCodeBlocks: boolean) => set({ labsEnhanceCodeBlocks }),
 
-      labsEnhanceCodeLiveFile: true,
+      labsEnhanceCodeLiveFile: false,
       setLabsEnhanceCodeLiveFile: (labsEnhanceCodeLiveFile: boolean) => set({ labsEnhanceCodeLiveFile }),
 
       labsHighPerformance: false,
