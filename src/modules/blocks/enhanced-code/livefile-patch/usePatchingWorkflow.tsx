@@ -87,7 +87,8 @@ export function usePatchingWorkflow(targetLiveFileId: LiveFileId | null, textBuf
     setStatus({ message: 'Verifying patch...', mtype: 'info' });
     const newContent = applyPatch(srcContent, patchContent);
     setPatchState(prev => ({ ...prev, newContent }));
-    setStatus({ message: 'Verification successful. Ready to apply.', mtype: 'success' });
+    setStatus({ message: 'Ready.', mtype: 'success' });
+    // setStatus({ message: 'Verification successful. Ready to apply.', mtype: 'success' });
   }, [canVerify]);
 
   // [effect] apply patch once generated
