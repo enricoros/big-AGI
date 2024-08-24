@@ -4,16 +4,16 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import SaveAsIcon from '@mui/icons-material/SaveAs';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import SaveAsOutlinedIcon from '@mui/icons-material/SaveAsOutlined';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { reverseLookupMdTitle, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
-import { useLabsDevMode, useUXLabsStore } from '~/common/state/store-ux-labs';
-import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
+import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { getCodeCollapseManager } from './codeCollapseManager';
 
@@ -31,12 +31,12 @@ export function EnhancedRenderCodeMenu(props: {
 }) {
 
   // state
-  const { showPromisedOverlay } = useOverlayComponents();
-  const labsDevMode = useLabsDevMode();
-  const { labsEnhanceCodeBlocks, labsEnhanceCodeLiveFile, setLabsEnhanceCodeBlocks, setLabsEnhanceCodeLiveFile } = useUXLabsStore(useShallow(state => ({
-    labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
+  // const { showPromisedOverlay } = useOverlayComponents();
+  // const labsDevMode = useLabsDevMode();
+  const { labsEnhanceCodeLiveFile, setLabsEnhanceCodeLiveFile } = useUXLabsStore(useShallow(state => ({
+    // labsEnhanceCodeBlocks: state.labsEnhanceCodeBlocks,
+    // setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
     labsEnhanceCodeLiveFile: state.labsEnhanceCodeLiveFile,
-    setLabsEnhanceCodeBlocks: state.setLabsEnhanceCodeBlocks,
     setLabsEnhanceCodeLiveFile: state.setLabsEnhanceCodeLiveFile,
   })));
 
@@ -52,6 +52,10 @@ export function EnhancedRenderCodeMenu(props: {
   }, []);
 
   const { onClose } = props;
+
+  const handleCopyToClipboard = React.useCallback(() => {
+    copyToClipboard(props.code, 'Code');
+  }, [props.code]);
 
   const handleSaveAs = React.useCallback(async () => {
     // guess the mimetype from the markdown title
@@ -81,22 +85,22 @@ export function EnhancedRenderCodeMenu(props: {
       .catch(() => null);
   }, [onClose, props.code, props.title]);
 
-  const toggleEnhanceCodeBlocks = React.useCallback(() => {
-    // turn blocks on (may not even be called, ever)
-    if (!labsEnhanceCodeBlocks) {
-      setLabsEnhanceCodeBlocks(true);
-      return;
-    }
-    // ask to turn the blocks off
-    showPromisedOverlay('blocks-off-enhance-code', {}, ({ onResolve, onUserReject }) =>
-      <ConfirmationModal
-        open onClose={onUserReject} onPositive={() => onResolve(true)}
-        title='Turn off enhanced code blocks?'
-        confirmationText='This will disable LiveFile functionality. You can turn it back on anytime by going to Settings > Labs > Enhance Legacy Code.'
-        positiveActionText='Turn Off'
-      />,
-    ).then(() => setLabsEnhanceCodeBlocks(false)).catch(() => null /* ignore closure */);
-  }, [labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks, showPromisedOverlay]);
+  // const toggleEnhanceCodeBlocks = React.useCallback(() => {
+  //   // turn blocks on (may not even be called, ever)
+  //   if (!labsEnhanceCodeBlocks) {
+  //     setLabsEnhanceCodeBlocks(true);
+  //     return;
+  //   }
+  //   // ask to turn the blocks off
+  //   showPromisedOverlay('blocks-off-enhance-code', {}, ({ onResolve, onUserReject }) =>
+  //     <ConfirmationModal
+  //       open onClose={onUserReject} onPositive={() => onResolve(true)}
+  //       title='Turn off enhanced code blocks?'
+  //       confirmationText='This will disable LiveFile functionality. You can turn it back on anytime by going to Settings > Labs > Enhance Legacy Code.'
+  //       positiveActionText='Turn Off'
+  //     />,
+  //   ).then(() => setLabsEnhanceCodeBlocks(false)).catch(() => null /* ignore closure */);
+  // }, [labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks, showPromisedOverlay]);
 
   const toggleEnhanceCodeLiveFile = React.useCallback(() => {
     setLabsEnhanceCodeLiveFile(!labsEnhanceCodeLiveFile);
@@ -114,34 +118,42 @@ export function EnhancedRenderCodeMenu(props: {
     >
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <MenuItem onClick={props.onToggleCollapse} sx={{ flex: 2 }}>
-          <ListItemDecorator>{props.isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}</ListItemDecorator>
+        <MenuItem onClick={props.onToggleCollapse} sx={{ flex: 0.6 }}>
+          <ListItemDecorator>{props.isCollapsed ? <UnfoldMoreIcon /> : <UnfoldLessIcon />}</ListItemDecorator>
           {props.isCollapsed ? 'Expand' : 'Collapse'}
         </MenuItem>
-        <MenuItem onClick={props.isCollapsed ? handleExpandAllCodeBlocks : handleCollapseAllCodeBlocks} sx={{ justifyContent: 'center', flex: 1 }}>
+        <MenuItem onClick={props.isCollapsed ? handleExpandAllCodeBlocks : handleCollapseAllCodeBlocks} sx={{ justifyContent: 'center', flex: 0.4 }}>
+          <ListItemDecorator>{props.isCollapsed ? <UnfoldMoreIcon /> : <UnfoldLessIcon />}</ListItemDecorator>
           All
         </MenuItem>
       </Box>
 
       <ListDivider />
 
+      <MenuItem onClick={handleCopyToClipboard}>
+        <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+        Copy
+      </MenuItem>
+
       <MenuItem onClick={handleSaveAs}>
-        <ListItemDecorator><SaveAsIcon /></ListItemDecorator>
+        <ListItemDecorator><SaveAsOutlinedIcon /></ListItemDecorator>
         Save As ...
       </MenuItem>
 
+      <ListDivider />
+
       <MenuItem onClick={toggleEnhanceCodeLiveFile} disabled={!liveFileSupported}>
         <ListItemDecorator>{(labsEnhanceCodeLiveFile && liveFileSupported) && <CheckRoundedIcon />}</ListItemDecorator>
-        {liveFileSupported ? 'Enable LiveFile' : 'LiveFile - No Browser Support'}
+        {liveFileSupported ? 'LiveFile Patch' : 'LiveFile - No Browser Support'}
       </MenuItem>
 
-      {labsDevMode && (
-        // A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems
-        <MenuItem onClick={toggleEnhanceCodeBlocks}>
-          <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>
-          [DEV] Enhanced Blocks
-        </MenuItem>
-      )}
+      {/*{labsDevMode && (*/}
+      {/*  // A mix in between UxLabsSettings (labsEnhanceCodeBlocks) and the ChatDrawer MenuItems*/}
+      {/*  <MenuItem onClick={toggleEnhanceCodeBlocks}>*/}
+      {/*    <ListItemDecorator>{labsEnhanceCodeBlocks && <CheckRoundedIcon />}</ListItemDecorator>*/}
+      {/*    [DEV] Enhanced Code Blocks*/}
+      {/*  </MenuItem>*/}
+      {/*)}*/}
 
     </CloseableMenu>
   );
