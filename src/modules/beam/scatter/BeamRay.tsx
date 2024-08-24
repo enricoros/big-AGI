@@ -158,8 +158,8 @@ export function BeamRay(props: {
     const { rays, onSuccessCallback } = props.beamStore.getState();
     const ray = rays.find(ray => ray.rayId === props.rayId);
     if (ray && ray.message.fragments.length && onSuccessCallback)
-      onSuccessCallback(ray.message.fragments, llmId || '');
-  }, [llmId, props.beamStore, props.rayId]);
+      onSuccessCallback(ray.message);
+  }, [props.beamStore, props.rayId]);
 
   const handleRayRemove = React.useCallback(() => {
     removeRay(props.rayId);
