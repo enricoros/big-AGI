@@ -159,7 +159,7 @@ export function BeamScatterDropdown(props: {
 
         <MenuItem onClick={toggleCardAdd}>
           <ListItemDecorator>{cardAdd && <CheckRoundedIcon />}</ListItemDecorator>
-          Large Add
+          Add Button
         </MenuItem>
 
         <MenuItem onClick={toggleCardScrolling}>

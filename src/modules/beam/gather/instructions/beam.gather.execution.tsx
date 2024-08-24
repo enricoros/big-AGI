@@ -6,9 +6,9 @@ import { createDMessageEmpty, DMessage } from '~/common/stores/chat/chat.message
 import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
-import { ChatGenerateInstruction, executeChatGenerate } from './ChatGenerateInstruction';
+import { executeGatherInstruction, GatherInstruction } from './GatherInstruction';
 import { GATHER_PLACEHOLDER } from '../../beam.config';
-import { executeUserInputChecklist, UserInputChecklistInstruction } from './UserInputChecklistInstruction';
+import { executeUserInputChecklistInstruction, UserInputChecklistInstruction } from './UserInputChecklistInstruction';
 
 
 /// [Asynchronous Instruction Framework] ///
@@ -32,7 +32,7 @@ export interface ExecutionInputState {
   readonly intermediateDMessage: DMessage;
 }
 
-export type Instruction = ChatGenerateInstruction | UserInputChecklistInstruction;
+export type Instruction = GatherInstruction | UserInputChecklistInstruction;
 
 
 export function gatherStartFusion(
@@ -93,10 +93,11 @@ export function gatherStartFusion(
 
 
   // Execute the instructions in sequence
-  const chainedInitialValue: string = '';
-  let promiseChain = Promise.resolve(chainedInitialValue);
+  type PipedValueType = string;
+  const chainedInitialValue: PipedValueType = '';
+  let promiseChain: Promise<PipedValueType> = Promise.resolve(chainedInitialValue);
   for (const instruction of instructions) {
-    promiseChain = promiseChain.then((chainedValue: typeof chainedInitialValue) => {
+    promiseChain = promiseChain.then((precedingValue: PipedValueType) => {
       // You can use chainedValue here, if needed
       inputState.updateProgressComponent(
         <Typography
@@ -115,10 +116,10 @@ export function gatherStartFusion(
 
       // return the promise from the instruction
       switch (instruction.type) {
-        case 'chat-generate':
-          return executeChatGenerate(instruction, inputState, chainedValue);
+        case 'gather':
+          return executeGatherInstruction(instruction, inputState, precedingValue);
         case 'user-input-checklist':
-          return executeUserInputChecklist(instruction, inputState, chainedValue);
+          return executeUserInputChecklistInstruction(instruction, inputState, precedingValue);
         default:
           return Promise.reject(new Error('Unsupported Merge instruction'));
       }

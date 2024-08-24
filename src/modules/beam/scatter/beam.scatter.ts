@@ -1,12 +1,10 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { streamAssistantMessageV1 } from '../../../apps/chat/editors/chat-stream-v1';
-
-import type { VChatMessageIn } from '~/modules/llms/llm.client';
+import { aixChatGenerateContentStreaming, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
-import { createDMessageEmpty, DMessage, duplicateDMessage, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, DMessage, duplicateDMessage } from '~/common/stores/chat/chat.message';
 import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -56,23 +54,28 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const abortController = new AbortController();
 
-  const onMessageUpdated = (incrementalMessage: Partial<DMessage>, completed: boolean) => {
+  const onMessageUpdated = (incrementalMessage: AixChatGenerateDMessageUpdate, completed: boolean) => {
+    const { fragments: incrementalFragments, ...incrementalRest } = incrementalMessage;
     _rayUpdate(ray.rayId, (ray) => ({
       message: {
         ...ray.message,
-        ...incrementalMessage,
-        ...(incrementalMessage.fragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
+        ...(incrementalFragments?.length ? { fragments: incrementalFragments } : {}),
+        ...incrementalRest,
         ...(completed ? { pendingIncomplete: undefined } : {}), // clear the pending flag once the message is complete
+        ...(incrementalFragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
       },
     }));
   };
 
-  // stream the assistant's messages
-  const messagesHistory: VChatMessageIn[] = inputHistory.map((message) => ({
-    role: message.role,
-    content: messageSingleTextOrThrow(message),
-  }));
-  streamAssistantMessageV1(llmId, messagesHistory, 'beam-scatter', ray.rayId, getUXLabsHighPerformance() ? 0 : rays.length, 'off', onMessageUpdated, abortController.signal)
+  // stream the ray's messages directly to the state store
+  aixChatGenerateContentStreaming(
+    llmId,
+    inputHistory,
+    'beam-scatter', ray.rayId,
+    getUXLabsHighPerformance() ? 0 : rays.length,
+    abortController.signal,
+    onMessageUpdated,
+  )
     .then((status) => {
       _rayUpdate(ray.rayId, {
         status: (status.outcome === 'success') ? 'success'
