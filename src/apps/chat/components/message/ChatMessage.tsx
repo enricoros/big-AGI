@@ -961,7 +961,7 @@ export function ChatMessage(props: {
               {(!!props.onTextDiagram || !!props.onTextImagine || !!props.onTextSpeak) && <Divider />}
 
               {/* Highlight (edits fragment, only for assistant messages) */}
-              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Bold'>
+              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Toggle Bold'>
                 <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
                   handleHighlightSelText('strong');
                   closeBubble();
@@ -969,7 +969,7 @@ export function ChatMessage(props: {
                   <FormatBoldIcon />
                 </IconButton>
               </Tooltip>}
-              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Highlighter'>
+              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Highlight Text'>
                 <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
                   handleHighlightSelText('highlight');
                   closeBubble();
