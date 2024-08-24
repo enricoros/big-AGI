@@ -36,11 +36,10 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
-import { animationColorRainbow } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-import { prettyBaseModel } from '~/common/util/modelUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -49,7 +48,7 @@ import { ContinueFragment } from './ContinueFragment';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
-import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageBackground, messageZenAsideColumnSx } from './messageUtils';
+import { avatarIconSx, makeMessageAvatarIcon, messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageBackground, messageZenAsideColumnSx, useMessageAvatarLabel } from './messageUtils';
 import { useChatShowTextDiff } from '../../store-app-chat';
 import { useFragmentBuckets } from './useFragmentBuckets';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
@@ -185,6 +184,7 @@ export function ChatMessage(props: {
   const zenMode = uiComplexityMode === 'minimal';
 
   const messageGeneratorName = messageGenerator?.name;
+  const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
 
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
@@ -610,14 +610,11 @@ export function ChatMessage(props: {
 
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
-              <Tooltip arrow title={messagePendingIncomplete ? null : (messageGeneratorName || 'unk-model')} variant='solid'>
-                <Typography level='body-xs' sx={{
-                  overflowWrap: 'anywhere',
-                  ...(messagePendingIncomplete ? { animation: `${animationColorRainbow} 5s linear infinite` } : {}),
-                }}>
-                  {prettyBaseModel(messageGeneratorName)}
+              <TooltipOutlined asLargePane title={messageAvatarTooltip} placement='bottom'>
+                <Typography level='body-xs' sx={messagePendingIncomplete ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
+                  {messageAvatarLabel}
                 </Typography>
-              </Tooltip>
+              </TooltipOutlined>
             )}
 
           </Box>
@@ -979,7 +976,7 @@ export function ChatMessage(props: {
               </Tooltip>}
               {fromAssistant && <Divider />}
 
-                {/* Bubble Copy */}
+              {/* Bubble Copy */}
               <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
                 <IconButton onClick={handleOpsCopy}>
                   <ContentCopyIcon />

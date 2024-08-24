@@ -2,7 +2,10 @@ import { agiUuid } from '~/common/util/idUtils';
 
 import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
 
-import type { DChatGenerateMetricsMd } from '../metrics/metrics.chatgenerate';
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+
+import type { DChatGenerateMetricsMd } from '~/common/stores/metrics/metrics.chatgenerate';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 
 
 // Message
@@ -79,8 +82,8 @@ export type DMessageGenerator = ({
   mgt: 'aix',
   name: string;                       // model that handled the request
   aix: {
-    vId: string;                      // Models Vendor Id (note we deleted sId, was too much, but can add it later)
-    mId: string;                      // Models Id
+    vId: ModelVendorId;               // Models Vendor Id (note we deleted sId, was too much, but can add it later)
+    mId: DLLMId;                      // Models Id
   },
 }) & {
   metrics?: DChatGenerateMetricsMd;   // medium-sized metrics stored in the message

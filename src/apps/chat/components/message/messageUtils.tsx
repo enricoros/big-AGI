@@ -10,9 +10,13 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
-import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+
+import type { ChatGenerateCostMetricsMd } from '~/common/stores/metrics/metrics.chatgenerate';
+import type { DMessage, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { UIComplexityMode } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
-import { UIComplexityMode } from '~/common/app.theme';
+import { formatModelsCost } from '~/common/util/costUtils';
 
 
 // Animations
@@ -38,6 +42,7 @@ export const messageAsideColumnSx: SxProps = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  gap: 0.25, // 2024-08-24: added, space the avatar icon from the label
 
   // when with the 'edit-button' class
   '&.msg-edit-button': {
@@ -50,6 +55,14 @@ export const messageZenAsideColumnSx: SxProps = {
   minWidth: undefined,
   maxWidth: undefined,
   mx: -1,
+};
+
+export const messageAvatarLabelSx: SxProps = {
+  overflowWrap: 'anywhere',
+};
+
+export const messageAvatarLabelAnimatedSx: SxProps = {
+  animation: `${animationColorRainbow} 5s linear infinite`,
 };
 
 export const aixSkipBoxSx = {
@@ -176,4 +189,181 @@ export function messageBackground(messageRole: DMessageRole | string, wasEdited:
     default:
       return '#ff0000';
   }
+}
+
+
+/// Avatar Label & Label Tooltip
+
+const avatarLabelTooltipSx: SxProps = {
+  fontSize: 'sm',
+  p: 1,
+  display: 'grid',
+  gap: 1,
+};
+
+const avatarLabelTooltipIconContainerSx: SxProps = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1,
+};
+
+export function useMessageAvatarLabel({ generator, pendingIncomplete }: Pick<DMessage, 'generator' | 'pendingIncomplete'>, complexity: UIComplexityMode): { label: React.ReactNode, tooltip: React.ReactNode } {
+  return React.useMemo(() => {
+    if (!generator) {
+      return {
+        label: 'unk-model',
+        tooltip: null,
+      };
+    }
+
+    // incomplete: just the name
+    const prettyName = prettyBaseModel(generator.name);
+    if (pendingIncomplete)
+      return {
+        label: prettyName,
+        tooltip: null,
+      };
+
+    // named generator: nothing else to do there
+    if (generator.mgt === 'named')
+      return {
+        label: prettyName,
+        tooltip: prettyName !== generator.name ? generator.name : null,
+      };
+
+    // aix generator: details galore
+    const modelId = generator.aix?.mId ?? null;
+    const vendorId = generator.aix?.vId ?? null;
+    const VendorIcon = (vendorId && complexity !== 'minimal') ? findModelVendor(vendorId)?.Icon : null;
+    const metrics = generator.metrics ? _prettyMetrics(generator.metrics) : null;
+    const stopReason = generator.tokenStopReason ? _prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
+
+    // aix tooltip: more details
+    return {
+      label: (stopReason && complexity !== 'minimal') ? <>{prettyName} <small>({stopReason})</small></> : prettyName,
+      tooltip: (
+        <Box sx={avatarLabelTooltipSx}>
+          {VendorIcon ? <Box sx={avatarLabelTooltipIconContainerSx}><VendorIcon />{generator.name}</Box> : <div>{generator.name}</div>}
+          {(modelId && complexity === 'extra') && <div>{modelId}</div>}
+          {metrics && <div>{metrics}</div>}
+          {stopReason && <div>{stopReason}</div>}
+        </Box>
+      ),
+    };
+  }, [complexity, generator, pendingIncomplete]);
+}
+
+const metricsGridSx: SxProps = {
+  // grid of 2 columns, the first fits the labels, the other expends with the values
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  gap: 0.5,
+};
+
+function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode {
+  if (!metrics) return null;
+  const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
+  return <Box sx={metricsGridSx}>
+    {metrics?.TIn !== undefined && <div>Tokens:</div>}
+    {metrics?.TIn !== undefined && <div>
+      {' '}<b>{metrics.TIn?.toLocaleString() || ''}</b> in
+      {metrics.TCacheRead !== undefined && <>{', '}<b>{metrics.TCacheRead?.toLocaleString() || ''}</b> read</>}
+      {metrics.TCacheWrite !== undefined && <>{', '}<b>{metrics.TCacheWrite?.toLocaleString() || ''}</b> wrote</>}
+      {', '}<b>{metrics.TOut?.toLocaleString() || ''}</b> out
+    </div>}
+    {metrics?.$c !== undefined && <div>Costs:</div>}
+    {metrics?.$c !== undefined && <div>
+      <b>{formatModelsCost(metrics.$c / 100)}</b>
+      {metrics.$cdCache !== undefined && <>
+        {' '}<small>(
+        {metrics.$cdCache > 0
+          ? <>cache savings: <b>{formatModelsCost(metrics.$cdCache / 100)}</b></>
+          : <>cache costs: <b>{formatModelsCost(-metrics.$cdCache / 100)}</b></>
+        })</small>
+      </>}
+    </div>}
+    {costCode && <div />}
+    {costCode && <div><em>{costCode}</em></div>}
+  </Box>;
+}
+
+function _prettyCostCode(code: ChatGenerateCostMetricsMd['$code']): string | null {
+  if (!code) return null;
+  switch (code) {
+    case 'free':
+      return 'Free';
+    case 'no-tokens':
+      return 'Missing tokens for pricing';
+    case 'no-pricing':
+      return 'Model pricing not available';
+    case 'partial-msg':
+      return 'Incomplete Message - Partial Cost';
+    case 'partial-price':
+      return 'Model pricing is incomplete';
+  }
+}
+
+function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], complexity: UIComplexityMode): string | null {
+  if (!reason) return null;
+  switch (reason) {
+    case 'client-abort':
+      return complexity === 'extra' ? 'Stopped' : '';
+    case 'filter':
+      return 'Filtered';
+    case 'issue':
+      return complexity === 'extra' ? 'Error' : '';
+    case 'out-of-tokens':
+      return 'Out of Tokens';
+  }
+}
+
+
+/// Base Model pretty name from the model ID - VERY HARDCODED - shall use the Avatar Label-style code instead
+
+export function prettyBaseModel(model: string | undefined): string {
+  if (!model) return '';
+  // [OpenAI]
+  if (model.includes('gpt-4-vision-preview')) return 'GPT-4 Vision';
+  if (model.includes('gpt-4-1106-preview')) return 'GPT-4 Turbo';
+  if (model.includes('gpt-4-32k')) return 'GPT-4-32k';
+  if (model.includes('gpt-4o-mini')) return 'GPT-4o Mini';
+  if (model.includes('gpt-4o')) return 'GPT-4o';
+  if (model.includes('gpt-4-turbo')) return 'GPT-4 Turbo';
+  if (model.includes('gpt-4')) return 'GPT-4';
+  if (model.includes('gpt-3.5-turbo-instruct')) return '3.5 Turbo Instruct';
+  if (model.includes('gpt-3.5-turbo-1106')) return '3.5 Turbo 16k';
+  if (model.includes('gpt-3.5-turbo-16k')) return '3.5 Turbo 16k';
+  if (model.includes('gpt-3.5-turbo')) return '3.5 Turbo';
+  // [LocalAI?]
+  if (model.endsWith('.bin')) return model.slice(0, -4);
+  // [Anthropic]
+  const prettyAnthropic = _prettyAnthropicModelName(model);
+  if (prettyAnthropic) return prettyAnthropic;
+  // [LM Studio]
+  if (model.startsWith('C:\\') || model.startsWith('D:\\'))
+    return _prettyLMStudioFileModelName(model).replace('.gguf', '');
+  // [Ollama]
+  if (model.includes(':'))
+    return model.replace(':latest', '').replaceAll(':', ' ');
+  return model;
+}
+
+function _prettyAnthropicModelName(modelId: string): string | null {
+  const claudeIndex = modelId.indexOf('claude-3');
+  if (claudeIndex === -1) return null;
+
+  const subStr = modelId.slice(claudeIndex);
+  const is35 = subStr.includes('-3-5-');
+  const version = is35 ? '3.5' : '3';
+
+  if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
+  if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;
+  if (subStr.includes(`-haiku`)) return `Claude ${version} Haiku`;
+
+  return `Claude ${version}`;
+}
+
+function _prettyLMStudioFileModelName(filePath: string): string {
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  return normalizedPath.split('/').pop() || '';
 }
