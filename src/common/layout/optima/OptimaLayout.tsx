@@ -8,9 +8,9 @@ import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShort
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { DesktopDrawer } from './DesktopDrawer';
-import { DesktopNav } from './DesktopNav';
-import { MobileDrawer } from './MobileDrawer';
+import { DesktopDrawer } from './drawer/DesktopDrawer';
+import { DesktopNav } from './nav/DesktopNav';
+import { MobileDrawer } from './drawer/MobileDrawer';
 import { Modals } from './Modals';
 import { PageWrapper } from './PageWrapper';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from './useOptima';

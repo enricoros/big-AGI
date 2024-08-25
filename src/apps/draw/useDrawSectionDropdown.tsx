@@ -4,14 +4,14 @@ import { Box, Button } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
-import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
+import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
 
 export type DrawSection = 'create' | 'browse' | 'media';
 
-const drawDropdownItems: DropdownItems = {
+const drawDropdownItems: OptimaDropdownItems = {
   create: {
     title: 'Create Images',
   },
@@ -36,7 +36,7 @@ function DrawSectionDropdown(props: {
   }, [setDrawSection]);
 
   return (
-    <PageBarDropdownMemo
+    <OptimaBarDropdownMemo
       items={drawDropdownItems}
       value={props.drawSection}
       onChange={handleSystemPurposeChange}

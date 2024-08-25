@@ -13,7 +13,7 @@ export const PageDrawerTallItemSx: SxProps = {
 /**
  * Used by pluggable layouts to have a standardized list appearance
  */
-export function PageDrawerList(props: {
+export function OptimaDrawerList(props: {
   variant?: VariantProp,
   color?: ColorPaletteProp,
   onClick?: () => void,

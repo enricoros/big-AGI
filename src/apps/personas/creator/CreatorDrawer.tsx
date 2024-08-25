@@ -7,8 +7,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Diversity2Icon from '@mui/icons-material/Diversity2';
 import DoneIcon from '@mui/icons-material/Done';
 
-import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
-import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
+import { OptimaDrawerHeader } from '~/common/layout/optima/drawer/OptimaDrawerHeader';
+import { OptimaDrawerList } from '~/common/layout/optima/drawer/OptimaDrawerList';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 
 import { CreatorDrawerItem } from './CreatorDrawerItem';
@@ -86,7 +86,7 @@ export function CreatorDrawer(props: {
   return <>
 
     {/* Drawer Header */}
-    <PageDrawerHeader
+    <OptimaDrawerHeader
       title={selectMode ? 'Selection Mode' : 'Recent'}
       onClose={selectMode ? handleSelectionClose : optimaCloseDrawer}
     >
@@ -97,9 +97,9 @@ export function CreatorDrawer(props: {
           </IconButton>
         </Tooltip>
       )}
-    </PageDrawerHeader>
+    </OptimaDrawerHeader>
 
-    <PageDrawerList
+    <OptimaDrawerList
       variant='plain'
       noTopPadding noBottomPadding tallRows
       onClick={handleSimplePersonaUnselect}
@@ -180,7 +180,7 @@ export function CreatorDrawer(props: {
         )}
       </Box>
 
-    </PageDrawerList>
+    </OptimaDrawerList>
 
   </>;
 }

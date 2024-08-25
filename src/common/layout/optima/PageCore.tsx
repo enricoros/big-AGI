@@ -7,7 +7,7 @@ import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import type { NavItemApp } from '~/common/app.nav';
 
 // import { MobileNav } from './MobileNav';
-import { PageBar } from './PageBar';
+import { PageBar } from '~/common/layout/optima/bar/PageBar';
 
 
 const pageCoreSx: SxProps = {

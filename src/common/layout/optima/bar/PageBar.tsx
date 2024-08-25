@@ -16,11 +16,11 @@ import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
 
-import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
-import { MobileNavListItem } from './MobileNavListItem';
-import { optimaCloseAppMenu, optimaOpenAppMenu, optimaOpenDrawer, optimaOpenPreferences, useOptimaAppMenu, useOptimaAppMenuOpen } from './useOptima';
-import { useOptimaPortalHasInputs } from './portals/useOptimaPortalHasInputs';
-import { useOptimaPortalOutRef } from './portals/useOptimaPortalOutRef';
+import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
+import { MobileNavListItem } from '../nav/MobileNavListItem';
+import { optimaCloseAppMenu, optimaOpenAppMenu, optimaOpenDrawer, optimaOpenPreferences, useOptimaAppMenu, useOptimaAppMenuOpen } from '../useOptima';
+import { useOptimaPortalHasInputs } from '../portals/useOptimaPortalHasInputs';
+import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
 
 const PageBarItemsFallback = (props: { currentApp?: NavItemApp }) =>

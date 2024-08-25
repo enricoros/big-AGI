@@ -5,7 +5,7 @@ import { Button, ButtonGroup, Divider, ListItem, Tooltip, VariantProp } from '@m
 
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 
-import { BringTheLove } from './components/BringTheLove';
+import { BringTheLove } from './BringTheLove';
 
 
 /**

@@ -5,8 +5,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 
-import { InvertedBar } from './components/InvertedBar';
-import { MobileNavGroupBox, MobileNavIcon, mobileNavItemClasses } from './components/MobileNavIcon';
+import { InvertedBar } from '../InvertedBar';
+import { MobileNavGroupBox, MobileNavIcon, mobileNavItemClasses } from './MobileNavIcon';
 
 
 export function MobileNav(props: {
