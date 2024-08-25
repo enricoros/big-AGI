@@ -1,24 +1,19 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Typography, useColorScheme } from '@mui/joy';
+import { Box, IconButton, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SettingsIcon from '@mui/icons-material/Settings';
 
-import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
+import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
-import { MobileNavListItem } from '../nav/MobileNavListItem';
-import { optimaCloseAppMenu, optimaOpenAppMenu, optimaOpenDrawer, optimaOpenPreferences, useOptimaAppMenu, useOptimaAppMenuOpen } from '../useOptima';
+import { optimaOpenDrawer, optimaTogglePanel } from '../useOptima';
 import { useOptimaPortalHasInputs } from '../portals/useOptimaPortalHasInputs';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
@@ -66,49 +61,49 @@ function CenterItemsPortal(props: {
 }
 
 
-function CommonAppMenuItems(props: { onClose: () => void }) {
-
-  // external state
-  const { mode: colorMode, setMode: setColorMode } = useColorScheme();
-
-  const { onClose } = props;
-  const handleShowSettings = React.useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    optimaOpenPreferences();
-    onClose();
-  }, [onClose]);
-
-  const handleToggleDarkMode = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setColorMode(colorMode === 'dark' ? 'light' : 'dark');
-  };
-
-  return <>
-
-    {/*<MenuItem onClick={handleToggleDarkMode}>*/}
-    {/*  <ListItemDecorator><DarkModeIcon /></ListItemDecorator>*/}
-    {/*  Dark*/}
-    {/*  <Switch checked={colorMode === 'dark'} onChange={handleToggleDarkMode} sx={{ ml: 'auto' }} />*/}
-    {/*</MenuItem>*/}
-
-    {/* Preferences |...| Dark Mode Toggle */}
-    {/*<Tooltip title={<KeyStroke combo='Ctrl + ,' />}>*/}
-    <MenuItem onClick={handleShowSettings}>
-      <ListItemDecorator><SettingsIcon /></ListItemDecorator>
-      Preferences
-      <IconButton
-        size='sm'
-        variant='soft'
-        onClick={handleToggleDarkMode}
-        sx={{ ml: 'auto', /*mr: '2px',*/ my: '-0.25rem' /* absorb the menuItem padding */ }}
-      >
-        {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
-      </IconButton>
-    </MenuItem>
-    {/*</Tooltip>*/}
-
-  </>;
-}
+// function CommonAppMenuItems(props: { onClose: () => void }) {
+//
+//   // external state
+//   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
+//
+//   const { onClose } = props;
+//   const handleShowSettings = React.useCallback((event: React.MouseEvent) => {
+//     event.stopPropagation();
+//     optimaOpenPreferences();
+//     onClose();
+//   }, [onClose]);
+//
+//   const handleToggleDarkMode = (event: React.MouseEvent) => {
+//     event.stopPropagation();
+//     setColorMode(colorMode === 'dark' ? 'light' : 'dark');
+//   };
+//
+//   return <>
+//
+//     {/*<MenuItem onClick={handleToggleDarkMode}>*/}
+//     {/*  <ListItemDecorator><DarkModeIcon /></ListItemDecorator>*/}
+//     {/*  Dark*/}
+//     {/*  <Switch checked={colorMode === 'dark'} onChange={handleToggleDarkMode} sx={{ ml: 'auto' }} />*/}
+//     {/*</MenuItem>*/}
+//
+//     {/* Preferences |...| Dark Mode Toggle */}
+//     {/*<Tooltip title={<KeyStroke combo='Ctrl + ,' />}>*/}
+//     <MenuItem onClick={handleShowSettings}>
+//       <ListItemDecorator><SettingsIcon /></ListItemDecorator>
+//       Preferences
+//       <IconButton
+//         size='sm'
+//         variant='soft'
+//         onClick={handleToggleDarkMode}
+//         sx={{ ml: 'auto', /*mr: '2px',*/ my: '-0.25rem' /* absorb the menuItem padding */ }}
+//       >
+//         {colorMode !== 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
+//       </IconButton>
+//     </MenuItem>
+//     {/*</Tooltip>*/}
+//
+//   </>;
+// }
 
 
 // type ContainedAppType = 'chat' | 'data' | 'news';
@@ -117,20 +112,21 @@ function CommonAppMenuItems(props: { onClose: () => void }) {
 /**
  * The top bar of the application, with pluggable Left and Right menus, and Center component
  */
-export function OptimaBarWithAppMenu(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile: boolean, sx?: SxProps }) {
+export function OptimaBar(props: { component: React.ElementType, currentApp?: NavItemApp, isMobile: boolean, sx?: SxProps }) {
 
   // state
   // const [value, setValue] = React.useState<ContainedAppType>('chat');
-  const appMenuAnchor = React.useRef<HTMLButtonElement>(null);
+  // const appMenuAnchor = React.useRef<HTMLButtonElement>(null);
 
   // external state
   const hasDrawerContent = useOptimaPortalHasInputs('optima-portal-drawer');
-  const appMenuItems = useOptimaAppMenu();
-  const isAppMenuOpen = useOptimaAppMenuOpen();
+  // const hasPanelContent = useOptimaPortalHasInputs('optima-portal-panel');
+  // const appMenuItems = useOptimaAppMenu();
+  // const isAppMenuOpen = useOptimaAppMenuOpen();
 
-  const commonAppMenuItems = React.useMemo(() => {
-    return <CommonAppMenuItems onClose={optimaCloseAppMenu} />;
-  }, []);
+  // const commonAppMenuItems = React.useMemo(() => {
+  //   return <CommonAppMenuItems onClose={optimaCloseAppMenu} />;
+  // }, []);
 
   // [Desktop] hide the app bar if the current app doesn't use it
   const desktopHide = !!props.currentApp?.hideBar && !props.isMobile;
@@ -176,10 +172,10 @@ export function OptimaBarWithAppMenu(props: { component: React.ElementType, curr
       {/* Page Menu Anchor */}
       <InvertedBarCornerItem>
         <IconButton
-          ref={appMenuAnchor}
-          disabled={!appMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/}
-          onClick={optimaOpenAppMenu /* onPointerDown doesn't work well with a menu (the 'up' event would close it), so we're still with onClick */}
-          onContextMenu={optimaOpenAppMenu /* important to get the 'preventDefault' for the Right mouse click (to prevent the menu) */}
+          // ref={appMenuAnchor}
+          // disabled={!appMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/}
+          onClick={optimaTogglePanel /* onPointerDown doesn't work well with a menu (the 'up' event would close it), so we're still with onClick */}
+          onContextMenu={optimaTogglePanel /* important to get the 'preventDefault' for the Right mouse click (to prevent the menu) */}
         >
           <MoreVertIcon />
         </IconButton>
@@ -191,24 +187,24 @@ export function OptimaBarWithAppMenu(props: { component: React.ElementType, curr
 
 
     {/* App (fka. Page) Menu */}
-    <CloseableMenu
-      dense maxHeightGapPx={56 + 24} noBottomPadding={props.isMobile} placement='bottom-end'
-      open={isAppMenuOpen && !!appMenuAnchor.current} anchorEl={appMenuAnchor.current} onClose={optimaCloseAppMenu}
-      sx={{ minWidth: 280 }}
-    >
+    {/*<CloseableMenu*/}
+    {/*  dense maxHeightGapPx={56 + 24} noBottomPadding={props.isMobile} placement='bottom-end'*/}
+    {/*  open={isAppMenuOpen && !!appMenuAnchor.current} anchorEl={appMenuAnchor.current} onClose={optimaCloseAppMenu}*/}
+    {/*  sx={{ minWidth: 280 }}*/}
+    {/*>*/}
 
-      {/* Common (Preferences) */}
-      {commonAppMenuItems}
+    {/*  /!* Common (Preferences) *!/*/}
+    {/*  {commonAppMenuItems}*/}
 
-      {/* App Menu Items */}
-      {!!appMenuItems && <ListDivider />}
-      {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
+    {/*  /!* App Menu Items *!/*/}
+    {/*  {!!appMenuItems && <ListDivider />}*/}
+    {/*  {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}*/}
 
-      {/* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) */}
-      {props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}
-      {props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}
+    {/*  /!* [Mobile] Nav is implemented at the bottom of the Page Menu (for now) *!/*/}
+    {/*  {props.isMobile && !!appMenuItems && <ListDivider sx={{ mb: 0 }} />}*/}
+    {/*  {props.isMobile && <MobileNavListItem variant='solid' currentApp={props.currentApp} />}*/}
 
-    </CloseableMenu>
+    {/*</CloseableMenu>*/}
 
   </>;
 }

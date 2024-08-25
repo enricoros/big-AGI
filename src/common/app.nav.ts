@@ -60,6 +60,7 @@ export interface NavItemApp extends ItemBase {
     | (() => boolean),    // set to true to hide the icon, unless this is the active app
   hideBar?: boolean,      // set to true to hide the page bar
   hideDrawer?: boolean,   // set to true to hide the drawer
+  hidePanel?: boolean,    // set to true to hide the panel
   hideNav?: boolean
     | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
