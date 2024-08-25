@@ -4,7 +4,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
+import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { useFolderStore } from '~/common/state/store-folders';
 
 
@@ -19,7 +19,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
 
 
   // Prepare items for the dropdown
-  const folderItems: DropdownItems | null = React.useMemo(() => {
+  const folderItems: OptimaDropdownItems | null = React.useMemo(() => {
     if (!folders.length)
       return null;
 
@@ -30,7 +30,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
         icon: <FolderIcon sx={{ color: folder.color }} />,
       };
       return items;
-    }, {} as DropdownItems);
+    }, {} as OptimaDropdownItems);
 
     // add one item representing no folder
     items[SPECIAL_ID_CLEAR_FOLDER] = {
@@ -68,7 +68,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
       return null;
 
     return (
-      <PageBarDropdownMemo
+      <OptimaBarDropdownMemo
         items={folderItems}
         value={currentFolderId}
         onChange={handleFolderChange}

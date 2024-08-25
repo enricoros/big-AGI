@@ -7,8 +7,8 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { SharedChatLinkItem } from '~/modules/trade/link/store-link';
 
 import { Link } from '~/common/components/Link';
-import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
-import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
+import { OptimaDrawerHeader } from '~/common/layout/optima/drawer/OptimaDrawerHeader';
+import { OptimaDrawerList } from '~/common/layout/optima/drawer/OptimaDrawerList';
 import { getChatLinkRelativePath } from '~/common/app.routes';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 
@@ -43,12 +43,12 @@ export function LinkChatDrawer(props: {
 
   return <>
 
-    <PageDrawerHeader
+    <OptimaDrawerHeader
       title='Your Shared Links'
       onClose={optimaCloseDrawer}
     />
 
-    <PageDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
+    <OptimaDrawerList variant='plain' noTopPadding noBottomPadding tallRows>
 
       <ListItem>
         <Typography level='body-sm'>
@@ -101,7 +101,7 @@ export function LinkChatDrawer(props: {
         <Switch checked={showDeletionKeys} sx={{ ml: 'auto' }} />
       </ListItemButton>
 
-    </PageDrawerList>
+    </OptimaDrawerList>
 
   </>;
 

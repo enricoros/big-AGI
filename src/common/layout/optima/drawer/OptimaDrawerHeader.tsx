@@ -5,7 +5,7 @@ import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 
-export const PageDrawerHeader = (props: {
+export const OptimaDrawerHeader = (props: {
   title: string,
   onClose: () => void,
   sx?: SxProps,

@@ -73,7 +73,7 @@ const selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
 };
 
 
-export type DropdownItems = Record<string, {
+export type OptimaDropdownItems = Record<string, {
   title: string,
   symbol?: string,
   type?: 'separator'
@@ -81,14 +81,14 @@ export type DropdownItems = Record<string, {
 }>;
 
 
-export const PageBarDropdownMemo = React.memo(PageBarDropdown);
+export const OptimaBarDropdownMemo = React.memo(OptimaBarDropdown);
 
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
  */
-function PageBarDropdown<TValue extends string>(props: {
+function OptimaBarDropdown<TValue extends string>(props: {
   // required
-  items: DropdownItems,
+  items: OptimaDropdownItems,
   value: TValue | null,
   onChange: (value: TValue | null) => void,
   // optional

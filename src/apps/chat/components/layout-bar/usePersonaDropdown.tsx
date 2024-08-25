@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
+import { OptimaBarDropdownMemo } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUIComplexityIsMinimal } from '~/common/state/store-ui';
 
@@ -40,7 +40,7 @@ function PersonaDropdown(props: {
 
 
   return (
-    <PageBarDropdownMemo
+    <OptimaBarDropdownMemo
       items={visibleSystemPurposes}
       value={props.systemPurposeId}
       onChange={handleSystemPurposeChange}

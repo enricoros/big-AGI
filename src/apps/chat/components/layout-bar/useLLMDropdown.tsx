@@ -10,7 +10,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
-import { DropdownItems, PageBarDropdownMemo } from '~/common/layout/optima/components/PageBarDropdown';
+import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { findModelsServiceOrNull, llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
@@ -42,8 +42,8 @@ function LLMDropdown(props: {
   }, [chatLlmId]);
 
 
-  const llmDropdownItems: DropdownItems = React.useMemo(() => {
-    const llmItems: DropdownItems = {};
+  const llmDropdownItems: OptimaDropdownItems = React.useMemo(() => {
+    const llmItems: OptimaDropdownItems = {};
     let prevServiceId: DModelsServiceId | null = null;
     let sepCount = 0;
 
@@ -166,7 +166,7 @@ function LLMDropdown(props: {
 
 
   return (
-    <PageBarDropdownMemo
+    <OptimaBarDropdownMemo
       items={llmDropdownItems}
       value={chatLlmId}
       onChange={handleChatLLMChange}

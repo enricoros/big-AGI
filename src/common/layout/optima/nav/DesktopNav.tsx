@@ -11,10 +11,10 @@ import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 
-import { BringTheLove } from './components/BringTheLove';
-import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './components/DesktopNavIcon';
-import { InvertedBar, InvertedBarCornerItem } from './components/InvertedBar';
-import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModelsModalsState } from './useOptima';
+import { BringTheLove } from './BringTheLove';
+import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
+import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
+import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModelsModalsState } from '../useOptima';
 
 
 const desktopNavBarSx: SxProps = {
