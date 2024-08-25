@@ -86,7 +86,7 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
   // }, [isPanelOpen]);
 
   // Desktop-only?: close the drawer if the current app doesn't use it
-  const currentAppUsesPanel = !props.currentApp?.hidePanel;
+  const currentAppUsesPanel = !!props.currentApp?.appMenuToPanel;
   React.useEffect(() => {
     if (!currentAppUsesPanel)
       optimaClosePanel();

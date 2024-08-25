@@ -55,12 +55,12 @@ export interface NavItemApp extends ItemBase {
   route: string,
   landingRoute?: string,  // specify a different route than the nextjs page router route, to land to
   barTitle?: string,      // set to override the name as the bar title (unless custom bar content is used)
+  appMenuToPanel?: boolean, // set to true to open the app menu in a panel
   hideOnMobile?: boolean, // set to true to hide the icon on mobile, unless this is the active app
   hideIcon?: boolean
     | (() => boolean),    // set to true to hide the icon, unless this is the active app
   hideBar?: boolean,      // set to true to hide the page bar
   hideDrawer?: boolean,   // set to true to hide the drawer
-  hidePanel?: boolean,    // set to true to hide the panel
   hideNav?: boolean
     | (() => boolean),    // set to hide the Nav bar (note: must have a way to navigate back)
   fullWidth?: boolean,    // set to true to override the user preference
@@ -98,6 +98,7 @@ export const navItems: {
       iconActive: TextsmsIcon,
       type: 'app',
       route: '/',
+      appMenuToPanel: true,
     },
     {
       name: 'Call',
