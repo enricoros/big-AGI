@@ -153,7 +153,8 @@ export const lineHeightTextareaMd = 1.75;
 export const themeZIndexBeamView = 10;
 export const themeZIndexPageBar = 25;
 export const themeZIndexDesktopDrawer = 26;
-export const themeZIndexDesktopNav = 27;
+export const themeZIndexDesktopPanel = 27;
+export const themeZIndexDesktopNav = 30;
 export const themeZIndexOverMobileDrawer = 1301;
 
 

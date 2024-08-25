@@ -7,7 +7,7 @@ import { isPwa } from '~/common/util/pwaUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { PageCore } from './PageCore';
-import { useOptimaDrawerOpen } from './useOptima';
+import { useOptimaDrawerOpen, useOptimaPanelOpen } from './useOptima';
 
 
 /**
@@ -19,6 +19,7 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
 
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
+  const isPanelOpen = useOptimaPanelOpen();
   const amplitude = useUIPreferencesStore(state =>
     (isPwa() || props.isMobile || props.currentApp?.fullWidth) ? 'full' : state.centerMode,
   );
@@ -50,8 +51,11 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
         marginLeft: !isDrawerOpen
           ? 'calc(-1 * var(--AGI-Desktop-Drawer-width))'
           : 0,
-        transition: 'margin-left 0.42s cubic-bezier(.17,.84,.44,1)',
-        willChange: 'margin-left',
+        marginRight: !isPanelOpen
+          ? 'calc(-1 * var(--AGI-Desktop-Panel-width))'
+          : 0,
+        transition: 'margin-left 0.36s cubic-bezier(.17,.84,.44,1), margin-right 0.36s cubic-bezier(.17,.84,.44,1)',
+        willChange: 'margin-left, margin-right',
       }}
     >
 
