@@ -12,7 +12,7 @@ import { useChatShowSystemMessages } from '../chat/store-app-chat';
 /**
  * Menu Items are the settings for the chat.
  */
-export function LinkChatPageMenuItems(props: {
+export function LinkChatAppMenuItems(props: {
   activeLinkId: string | null,
   onDeleteLink: (linkId: string) => void,
 }) {

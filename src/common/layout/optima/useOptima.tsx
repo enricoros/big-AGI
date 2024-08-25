@@ -10,7 +10,12 @@ export const DEBUG_OPTIMA_PLUGGING = false;
 
 /// Perform UI Actions
 
-export function optimaActions(): Omit<OptimaActions, 'closeDrawer' | 'openDrawer' | 'toggleDrawer' | 'closePageMenu' | 'openPageMenu' | 'openModels' | 'openPreferences'> {
+export function optimaActions(): Omit<OptimaActions,
+  | 'closeAppMenu' | 'openAppMenu' | 'openModels'
+  | 'closeDrawer' | 'openDrawer' | 'toggleDrawer'
+  | 'closePanel' | 'openPanel' | 'togglePanel'
+  | 'openPreferences'
+> {
   return useOptimaStore.getState();
 }
 
@@ -29,12 +34,26 @@ export function optimaToggleDrawer(event?: React.MouseEvent) {
 }
 
 export function optimaCloseAppMenu() {
-  useOptimaStore.getState().closePageMenu();
+  useOptimaStore.getState().closeAppMenu();
 }
 
 export function optimaOpenAppMenu(event?: React.MouseEvent) {
   _eatMouseEvent(event);
-  useOptimaStore.getState().openPageMenu();
+  useOptimaStore.getState().openAppMenu();
+}
+
+export function optimaClosePanel() {
+  useOptimaStore.getState().closePanel();
+}
+
+export function optimaOpenPanel(event?: React.MouseEvent) {
+  _eatMouseEvent(event);
+  useOptimaStore.getState().openPanel();
+}
+
+export function optimaTogglePanel(event?: React.MouseEvent) {
+  _eatMouseEvent(event);
+  useOptimaStore.getState().togglePanel();
 }
 
 export function optimaOpenModels() {
@@ -60,7 +79,11 @@ export function useOptimaDrawerOpen() {
 }
 
 export function useOptimaAppMenuOpen() {
-  return useOptimaStore(({ menuIsOpen }) => menuIsOpen);
+  return useOptimaStore(({ appMenuIsOpen }) => appMenuIsOpen);
+}
+
+export function useOptimaPanelOpen() {
+  return useOptimaStore(({ panelIsOpen }) => panelIsOpen);
 }
 
 export function useOptimaModalsState() {

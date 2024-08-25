@@ -19,8 +19,9 @@ interface OptimaState {
   menuComponent: React.ReactNode;
 
   // panes
+  appMenuIsOpen: boolean;
   drawerIsOpen: boolean;
-  menuIsOpen: boolean;
+  panelIsOpen: boolean;
 
   // modals that can overlay anything
   showKeyboardShortcuts: boolean;
@@ -29,8 +30,9 @@ interface OptimaState {
   showPreferences: boolean;
   preferencesTab: PreferencesTabId;
 
-  // timing for drawer
+  // timing for panels
   lastDrawerOpenTime: number;
+  lastPanelOpenTime: number;
 }
 
 function initialDrawerOpen() {
@@ -52,8 +54,9 @@ const initialState: OptimaState = {
   menuComponent: null,
 
   // panes
+  appMenuIsOpen: false,
   drawerIsOpen: initialDrawerOpen(),
-  menuIsOpen: false,
+  panelIsOpen: false,
 
   // modals that can overlay anything
   showKeyboardShortcuts: false,
@@ -62,21 +65,26 @@ const initialState: OptimaState = {
   showPreferences: false,
   preferencesTab: 'chat',
 
-  // timing for drawer
+  // timings
   lastDrawerOpenTime: 0,
+  lastPanelOpenTime: 0,
 };
 
 export interface OptimaActions {
 
   // setIsFocusedMode: (isFocusedMode: boolean) => void;
 
+  closeAppMenu: () => void;
+  openAppMenu: () => void;
+  toggleAppMenu: () => void;
+
   closeDrawer: () => void;
   openDrawer: () => void;
   toggleDrawer: () => void;
 
-  closePageMenu: () => void;
-  openPageMenu: () => void;
-  togglePageMenu: () => void;
+  closePanel: () => void;
+  openPanel: () => void;
+  togglePanel: () => void;
 
   closeKeyboardShortcuts: () => void;
   openKeyboardShortcuts: () => void;
@@ -99,6 +107,10 @@ export const useOptimaStore = create<OptimaState & OptimaActions>((_set, _get) =
 
   // setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
 
+  closeAppMenu: () => _set({ appMenuIsOpen: false }),
+  openAppMenu: () => _set({ appMenuIsOpen: true }),
+  toggleAppMenu: () => _set((state) => ({ appMenuIsOpen: !state.appMenuIsOpen })),
+
   closeDrawer: () => {
     // close the drawer, but only if it's been open for 100ms
     if (Date.now() - _get().lastDrawerOpenTime >= 100)
@@ -107,9 +119,14 @@ export const useOptimaStore = create<OptimaState & OptimaActions>((_set, _get) =
   openDrawer: () => _set({ drawerIsOpen: true, lastDrawerOpenTime: Date.now() }),
   toggleDrawer: () => _get().drawerIsOpen ? _get().closeDrawer() : _get().openDrawer(),
 
-  closePageMenu: () => _set({ menuIsOpen: false }),
-  openPageMenu: () => _set({ menuIsOpen: true }),
-  togglePageMenu: () => _set((state) => ({ menuIsOpen: !state.menuIsOpen })),
+  closePanel: () => {
+    // NOTE: would this make sense?
+    // if (Date.now() - _get().lastPanelOpenTime >= 100)
+    //   _set({ panelIsOpen: false });
+    _set({ panelIsOpen: false });
+  },
+  openPanel: () => _set({ panelIsOpen: true, lastPanelOpenTime: Date.now() }),
+  togglePanel: () => _get().panelIsOpen ? _get().closePanel() : _get().openPanel(),
 
   closeKeyboardShortcuts: () => _set({ showKeyboardShortcuts: false }),
   openKeyboardShortcuts: () => _set({ showKeyboardShortcuts: true }),

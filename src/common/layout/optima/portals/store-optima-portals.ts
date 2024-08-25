@@ -7,6 +7,7 @@ const DEBUG_OPTIMA_PORTALS = false;
 
 export type OptimaPortalId =
   | 'optima-portal-drawer'
+  | 'optima-portal-panel'
   | 'optima-portal-toolbar';
 
 
@@ -34,6 +35,7 @@ export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActi
   // init state
   portals: {
     'optima-portal-drawer': { element: null, inputs: 0 },
+    'optima-portal-panel': { element: null, inputs: 0 },
     'optima-portal-toolbar': { element: null, inputs: 0 },
   },
 

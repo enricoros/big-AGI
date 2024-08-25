@@ -7,7 +7,7 @@ import { themeBgApp, themeZIndexPageBar } from '~/common/app.theme';
 import type { NavItemApp } from '~/common/app.nav';
 
 // import { MobileNav } from './MobileNav';
-import { PageBar } from '~/common/layout/optima/bar/PageBar';
+import { OptimaBarWithAppMenu } from '~/common/layout/optima/bar/OptimaBarWithAppMenu';
 
 
 const pageCoreSx: SxProps = {
@@ -38,7 +38,7 @@ export const PageCore = (props: {
   >
 
     {/* Responsive page bar (pluggable App Center Items and App Menu) */}
-    <PageBar
+    <OptimaBarWithAppMenu
       component='header'
       currentApp={props.currentApp}
       isMobile={props.isMobile}

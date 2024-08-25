@@ -38,13 +38,13 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 import { useRouterQuery } from '~/common/app.routes';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import { ChatAppMenuItems } from './components/layout-menu/ChatAppMenuItems';
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
 import { ChatBarDropdowns } from './components/layout-bar/ChatBarDropdowns';
 import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
-import { ChatPageMenuItems } from './components/layout-menu/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
 
@@ -462,7 +462,7 @@ export function AppChat() {
   );
 
   const focusedMenuItems = React.useMemo(() =>
-      <ChatPageMenuItems
+      <ChatAppMenuItems
         isMobile={isMobile}
         conversationId={focusedPaneConversationId}
         disableItems={!focusedPaneConversationId || isFocusedChatEmpty}
