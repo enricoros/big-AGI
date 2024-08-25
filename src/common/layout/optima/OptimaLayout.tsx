@@ -10,6 +10,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { DesktopDrawer } from './drawer/DesktopDrawer';
 import { DesktopNav } from './nav/DesktopNav';
+import { DesktopPanel } from './panel/DesktopPanel';
 import { MobileDrawer } from './drawer/MobileDrawer';
 import { MobilePanel } from './panel/MobilePanel';
 import { Modals } from './Modals';
@@ -81,7 +82,7 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
       </PageWrapper>
       {/*</Panel>*/}
 
-      {/*{!isMobile && <DesktopPanel key='optima-panel' component='aside' currentApp={currentApp} />}*/}
+      {!isMobile && <DesktopPanel key='optima-panel' component='aside' currentApp={currentApp} />}
 
 
       {/* Mobile - 2 panes overlay the Page */}

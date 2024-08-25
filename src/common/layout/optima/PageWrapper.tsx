@@ -54,7 +54,7 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
         marginRight: !isPanelOpen
           ? 'calc(-1 * var(--AGI-Desktop-Panel-width))'
           : 0,
-        transition: 'margin-left 0.36s cubic-bezier(.17,.84,.44,1), margin-right 0.36s cubic-bezier(.17,.84,.44,1)',
+        transition: 'margin-left 0.42s cubic-bezier(.17,.84,.44,1), margin-right 0.24s cubic-bezier(.17,.84,.44,1)',
         willChange: 'margin-left, margin-right',
       }}
     >
