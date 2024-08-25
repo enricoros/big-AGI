@@ -11,6 +11,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { DesktopDrawer } from './drawer/DesktopDrawer';
 import { DesktopNav } from './nav/DesktopNav';
 import { MobileDrawer } from './drawer/MobileDrawer';
+import { MobilePanel } from './panel/MobilePanel';
 import { Modals } from './Modals';
 import { PageWrapper } from './PageWrapper';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from './useOptima';
@@ -67,6 +68,9 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
     <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
 
+
+      {/* Desktop: 4 horizontal sections: Nav | Drawer | Page | Panel */}
+
       {!isMobile && checkVisibleNav(currentApp) && <DesktopNav component='nav' currentApp={currentApp} />}
 
       {!isMobile && <DesktopDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
@@ -77,7 +81,15 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
       </PageWrapper>
       {/*</Panel>*/}
 
+      {/*{!isMobile && <DesktopPanel key='optima-panel' component='aside' currentApp={currentApp} />}*/}
+
+
+      {/* Mobile - 2 panes overlay the Page */}
+
       {isMobile && <MobileDrawer key='optima-drawer' component='aside' currentApp={currentApp} />}
+
+      {isMobile && <MobilePanel key='optima-panel' component='aside' currentApp={currentApp} />}
+
 
     </PanelGroup>
 
