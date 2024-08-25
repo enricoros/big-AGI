@@ -9,6 +9,11 @@ export function OptimaDrawerIn(props: { children: React.ReactNode }) {
   return portalElement ? createPortal(props.children, portalElement) : null;
 }
 
+export function OptimaPanelIn(props: { children: React.ReactNode }) {
+  const portalElement = _useOptimaPortalTargetElement('optima-portal-panel');
+  return portalElement ? createPortal(props.children, portalElement) : null;
+}
+
 export function OptimaToolbarIn(props: { children: React.ReactNode }) {
   const portalElement = _useOptimaPortalTargetElement('optima-portal-toolbar');
   return portalElement ? createPortal(props.children, portalElement) : null;

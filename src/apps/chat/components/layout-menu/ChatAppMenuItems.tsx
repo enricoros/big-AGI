@@ -25,7 +25,7 @@ import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
 import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
 
 
-export function ChatPageMenuItems(props: {
+export function ChatAppMenuItems(props: {
   isMobile: boolean,
   conversationId: DConversationId | null,
   disableItems: boolean,

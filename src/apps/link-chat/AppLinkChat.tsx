@@ -22,8 +22,8 @@ import { navigateToChatLinkList } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 
+import { LinkChatAppMenuItems } from './LinkChatAppMenuItems';
 import { LinkChatDrawer } from './LinkChatDrawer';
-import { LinkChatPageMenuItems } from './LinkChatPageMenuItems';
 import { LinkChatViewer } from './LinkChatViewer';
 
 
@@ -192,12 +192,12 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
     onDeleteLink={handleConfirmDeletion}
   />, [handleConfirmDeletion, linkId, sharedChatLinkItems]);
 
-  const pageMenuItems = React.useMemo(() => <LinkChatPageMenuItems
+  const appMenuItems = React.useMemo(() => <LinkChatAppMenuItems
     activeLinkId={linkId}
     onDeleteLink={handleConfirmDeletion}
   />, [handleConfirmDeletion, linkId]);
 
-  useSetOptimaAppMenu(pageMenuItems, 'AppChatLink');
+  useSetOptimaAppMenu(appMenuItems, 'AppChatLink');
 
 
   return <>
