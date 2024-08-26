@@ -134,7 +134,7 @@ export async function llmChatGenerateOrThrow<TServiceSettings extends object = {
   forceFunctionName: string | null,
   maxTokens?: number,
 ): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut> {
-  throw new Error('llmStreamingChatGenerate: Unsupported - migrated to AIX');
+  throw new Error(`llmChatGenerateOrThrow: ${contextName} not migrated to AIX yet.`);
 }
 
 export async function llmStreamingChatGenerate<
@@ -151,5 +151,5 @@ export async function llmStreamingChatGenerate<
   abortSignal: AbortSignal,
   onUpdate: (update: any, done: boolean) => void,
 ): Promise<void> {
-  throw new Error('llmStreamingChatGenerate: Unsupported - migrated to AIX');
+  throw new Error(`llmStreamingChatGenerate: ${contextName} not migrated to AIX yet.`);
 }
