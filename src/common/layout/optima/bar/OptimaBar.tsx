@@ -10,6 +10,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import SettingsIcon from '@mui/icons-material/Settings';
 
+import { overlayButtonsActiveSx } from '~/modules/blocks/OverlayButton';
+
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
@@ -65,6 +67,30 @@ function CenterItemsPortal(props: {
     </Box>
   );
 }
+
+const panelSectionHeaderSx: SxProps = {
+  fontSize: 'sm',
+  fontWeight: 'lg',
+  borderBottom: '1px solid',
+  borderBottomColor: 'divider',
+};
+
+const panelSelectionHeaderRowSx: SxProps = {
+  flex: 1,
+  // layout
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: 1,
+  // show the button on hover
+  '&:hover > button': overlayButtonsActiveSx,
+};
+
+const panelSelectionHeaderButtonSx: SxProps = {
+  my: -0.5,
+  opacity: 0,
+  pointerEvents: 'none',
+};
 
 
 function CommonAppMenuItems(props: { onClose: () => void }) {
@@ -184,7 +210,7 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
           onContextMenu={menuToPanel ? optimaOpenPanel : optimaOpenAppMenu /* important to get the 'preventDefault' for the Right mouse click (to prevent the menu) */}
           // sx={!menuToPanel ? undefined : {
           //   transform: isPanelOpen ? 'rotate(180deg)' : 'none',
-          //   transition: 'transform 0.24s',
+          //   transition: 'transform 0.42s',
           // }}
         >
           {isPanelOpen ? <NavigateNextRoundedIcon /> : <MoreVertIcon />}
@@ -199,20 +225,33 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
     {menuToPanel ? (
 
       <OptimaPanelIn>
-        <MenuList variant='plain' sx={{ borderRadius: 0, border: 'none', background: 'transparent', py: 0 }}>
+        <MenuList variant='plain' sx={{ borderRadius: 0, border: 'none', background: 'transparent', py: 0, gap: 'var(--ListDivider-gap)' }}>
 
           {/* Common (Preferences) */}
-          <ListItem variant='soft' sx={{ fontSize: 'sm', fontWeight: 'md' }}>
-            App
+
+          <ListItem variant='soft' sx={panelSectionHeaderSx}>
+            <Box sx={panelSelectionHeaderRowSx}>
+              App
+              {/*<IconButton variant='soft' size='sm' sx={panelSelectionHeaderButtonSx}>*/}
+              {/*  {false ? <ExpandLessIcon /> : <ExpandMoreIcon />}*/}
+              {/*</IconButton>*/}
+            </Box>
           </ListItem>
-          <ListDivider sx={{ mt: 0 }} />
+
           {commonAppMenuItems}
 
+
           {/* App Menu Items */}
-          {!!appMenuItems && <ListItem variant='soft' sx={{ mt: 0.75, fontSize: 'sm', fontWeight: 'md' }}>
-            {props.currentApp?.name}
+
+          {!!appMenuItems && <ListItem variant='soft' sx={panelSectionHeaderSx}>
+            <Box sx={panelSelectionHeaderRowSx}>
+              {props.currentApp?.name || 'Menu'}
+              {/*<IconButton variant='soft' size='sm' sx={panelSelectionHeaderButtonSx}>*/}
+              {/*  {false ? <ExpandLessIcon /> : <ExpandMoreIcon />}*/}
+              {/*</IconButton>*/}
+            </Box>
           </ListItem>}
-          {!!appMenuItems && <ListDivider sx={{ mt: 0 }} />}
+
           {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
 
         </MenuList>
