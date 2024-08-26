@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, MenuList, Typography, useColorScheme } from '@mui/joy';
+import { Box, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, MenuList, Typography, useColorScheme } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded';
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
@@ -182,12 +182,13 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
           disabled={menuToPanel ? false : !appMenuAnchor /*|| (!appMenuItems && !props.isMobile)*/}
           onClick={menuToPanel ? optimaTogglePanel : optimaOpenAppMenu /* onPointerDown doesn't work well with a menu (the 'up' event would close it), so we're still with onClick */}
           onContextMenu={menuToPanel ? optimaOpenPanel : optimaOpenAppMenu /* important to get the 'preventDefault' for the Right mouse click (to prevent the menu) */}
-          sx={!menuToPanel ? undefined : {
-            transform: isPanelOpen ? 'rotate(180deg)' : 'none',
-            transition: 'transform 0.24s',
-          }}
+          // sx={!menuToPanel ? undefined : {
+          //   transform: isPanelOpen ? 'rotate(180deg)' : 'none',
+          //   transition: 'transform 0.24s',
+          // }}
         >
-          {menuToPanel ? <NavigateBeforeRoundedIcon /> : <MoreVertIcon />}
+          {isPanelOpen ? <NavigateNextRoundedIcon /> : <MoreVertIcon />}
+          {/*{menuToPanel ? <NavigateBeforeRoundedIcon /> : <MoreVertIcon />}*/}
         </IconButton>
       </InvertedBarCornerItem>
 
@@ -198,13 +199,20 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
     {menuToPanel ? (
 
       <OptimaPanelIn>
-        <MenuList variant='plain' sx={{ borderRadius: 0, border: 'none' }}>
+        <MenuList variant='plain' sx={{ borderRadius: 0, border: 'none', background: 'transparent', py: 0 }}>
 
           {/* Common (Preferences) */}
+          <ListItem variant='soft' sx={{ fontSize: 'sm', fontWeight: 'md' }}>
+            App
+          </ListItem>
+          <ListDivider sx={{ mt: 0 }} />
           {commonAppMenuItems}
 
           {/* App Menu Items */}
-          {!!appMenuItems && <ListDivider />}
+          {!!appMenuItems && <ListItem variant='soft' sx={{ mt: 0.75, fontSize: 'sm', fontWeight: 'md' }}>
+            {props.currentApp?.name}
+          </ListItem>}
+          {!!appMenuItems && <ListDivider sx={{ mt: 0 }} />}
           {!!appMenuItems && <Box sx={{ overflowY: 'auto' }}>{appMenuItems}</Box>}
 
         </MenuList>
