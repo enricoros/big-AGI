@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tooltip } from '@mui/joy';
+import { Box, Button, IconButton, ListDivider, ListItem, ListItemDecorator, MenuItem, Switch, Tooltip } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
@@ -14,6 +14,8 @@ import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutl
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
+import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
+
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
 import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
@@ -21,7 +23,11 @@ import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
-import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
+
+
+const listItemButtonSx = {
+  justifyContent: 'space-between',
+};
 
 
 export function ChatAppMenuItems(props: {
@@ -77,7 +83,7 @@ export function ChatAppMenuItems(props: {
     props.conversationId && props.onConversationBranch(props.conversationId, null);
   };
 
-  const handleConversationFlatten = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleConversationFlatten = (event: React.MouseEvent<HTMLElement>) => {
     closeMenu(event);
     props.conversationId && props.onConversationFlatten(props.conversationId);
   };
@@ -174,15 +180,44 @@ export function ChatAppMenuItems(props: {
 
     <ListDivider />
 
-    <MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode} sx={props.isMessageSelectionMode ? { fontWeight: 'lg' } : {}}>
-      <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>
-      Cleanup ...
-    </MenuItem>
+    {/*<MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode} sx={props.isMessageSelectionMode ? { fontWeight: 'lg' } : {}}>*/}
+    {/*  <ListItemDecorator>{props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}</ListItemDecorator>*/}
+    {/*  Cleanup ...*/}
+    {/*</MenuItem>*/}
 
-    <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
-      <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>
-      Compress ...
-    </MenuItem>
+    <ListItem>
+      <Button
+        fullWidth
+        size='md'
+        color={props.isMessageSelectionMode ? 'warning' : 'neutral'}
+        variant={props.isMessageSelectionMode ? 'solid' : 'plain'}
+        endDecorator={props.isMessageSelectionMode ? <CheckBoxOutlinedIcon /> : <CheckBoxOutlineBlankOutlinedIcon />}
+        onClick={handleToggleMessageSelectionMode}
+        sx={listItemButtonSx}
+      >
+        Cleanup
+      </Button>
+    </ListItem>
+
+    {/*<MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>*/}
+    {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
+    {/*  Compress ...*/}
+    {/*</MenuItem>*/}
+
+    <ListItem>
+      <Button
+        fullWidth
+        size='md'
+        color='neutral'
+        variant='plain'
+        endDecorator={<CompressIcon />}
+        onClick={handleConversationFlatten}
+        sx={listItemButtonSx}
+      >
+        Compress ...
+      </Button>
+    </ListItem>
+
 
     {labsDevMode && <ListDivider />}
 
