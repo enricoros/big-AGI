@@ -10,6 +10,7 @@ import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHas
 import { TokenBadgeMemo } from '../composer/tokens/TokenBadge';
 import { isErrorChatMessage } from './explainServiceErrors';
 import { makeMessageAvatarIcon, messageBackground } from './messageUtils';
+import { messageSkippedSx } from './ChatMessage';
 
 
 /**
@@ -89,6 +90,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
         backgroundColor,
         borderBottom: '1px solid',
         borderBottomColor: 'divider',
+        ...(isUserMessageSkipped && messageSkippedSx),
         // position: 'relative',
         '&:hover > button': { opacity: 1 },
       }}

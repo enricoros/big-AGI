@@ -74,6 +74,14 @@ const messageBodyReverseSx: SxProps = {
   flexDirection: 'row-reverse',
 };
 
+export const messageSkippedSx = {
+  // show a nice ghostly border (dashed?)
+  border: '1px dashed',
+  borderColor: 'neutral.solidBg',
+  // make it look good
+  filter: 'grayscale(1)',
+} as const;
+
 const personaAvatarOrMenuSx: SxProps = {
   display: 'flex',
 };
@@ -533,13 +541,7 @@ export function ChatMessage(props: {
         background: `repeating-linear-gradient( -45deg, transparent, transparent 2px, ${ModelVendorAnthropic.brandColor} 2px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
       },
     }),
-    ...(isUserMessageSkipped && {
-      // show a nice ghostly border (dashed?)
-      border: '1px dashed',
-      borderColor: 'neutral.solidBg',
-      // make it look good
-      filter: 'grayscale(1)',
-    }),
+    ...(isUserMessageSkipped && messageSkippedSx),
 
     // for: ENABLE_COPY_MESSAGE_OVERLAY
     // '&:hover > button': { opacity: 1 },

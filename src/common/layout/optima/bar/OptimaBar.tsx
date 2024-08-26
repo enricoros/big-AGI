@@ -68,11 +68,25 @@ function CenterItemsPortal(props: {
   );
 }
 
+const panelMenuListSx: SxProps = {
+  borderRadius: 0,
+  border: 'none',
+  background: 'transparent',
+  py: 0,
+  gap: 'var(--ListDivider-gap)',
+};
+
 const panelSectionHeaderSx: SxProps = {
   fontSize: 'sm',
   fontWeight: 'lg',
   borderBottom: '1px solid',
   borderBottomColor: 'divider',
+  // '--A': 'var(--joy-palette-background-level1)',
+  // '--B': 'var(--joy-palette-background-popup)',
+  // background: 'linear-gradient(45deg, var(--A) 25%, var(--B) 25%, var(--B) 50%, var(--A) 50%, var(--A) 75%, var(--B) 75%)',
+  // backgroundSize: '40px 40px',
+  // boxShadow: 'xs',
+  py: 1,
 };
 
 const panelSelectionHeaderRowSx: SxProps = {
@@ -225,7 +239,7 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
     {menuToPanel ? (
 
       <OptimaPanelIn>
-        <MenuList variant='plain' sx={{ borderRadius: 0, border: 'none', background: 'transparent', py: 0, gap: 'var(--ListDivider-gap)' }}>
+        <MenuList variant='plain' sx={panelMenuListSx}>
 
           {/* Common (Preferences) */}
 
