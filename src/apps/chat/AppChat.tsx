@@ -377,8 +377,9 @@ export function AppChat() {
     if (await showPromisedOverlay('chat-reset-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
       <ConfirmationModal
         open onClose={onUserReject} onPositive={() => onResolve(true)}
-        confirmationText='Are you sure you want to discard all messages?'
-        positiveActionText='Clear conversation'
+        confirmationText='This will clear all messages while keeping the current chat settings, model, and persona. Do you want to continue?'
+        positiveActionText='Restart Chat'
+        title='Restart Chat'
       />,
     )) {
       ConversationsManager.getHandler(conversationId).historyClear();

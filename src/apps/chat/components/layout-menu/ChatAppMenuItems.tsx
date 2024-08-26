@@ -4,19 +4,18 @@ import { Box, IconButton, ListDivider, ListItemDecorator, MenuItem, Switch, Tool
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlineBlankOutlinedIcon from '@mui/icons-material/CheckBoxOutlineBlankOutlined';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
-import ClearIcon from '@mui/icons-material/Clear';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import HorizontalSplitOutlinedIcon from '@mui/icons-material/HorizontalSplitOutlined';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/GoodModal';
-import { KeyStroke } from '~/common/components/KeyStroke';
 import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
@@ -68,7 +67,7 @@ export function ChatAppMenuItems(props: {
     optimaCloseAppMenu();
   }, []);
 
-  const handleConversationClear = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleConversationRestart = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
     props.conversationId && props.onConversationClear(props.conversationId);
   };
@@ -132,7 +131,7 @@ export function ChatAppMenuItems(props: {
 
     <MenuItem onClick={handleToggleSystemMessages}>
       <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
-      System messages
+      System Instructions
       <Switch checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
     </MenuItem>
 
@@ -165,6 +164,14 @@ export function ChatAppMenuItems(props: {
       Branch
     </MenuItem>
 
+    <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
+      <ListItemDecorator><RestartAltIcon /></ListItemDecorator>
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        Restart
+        {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
+      </Box>
+    </MenuItem>
+
     <ListDivider />
 
     <MenuItem disabled={props.disableItems} onClick={handleToggleMessageSelectionMode} sx={props.isMessageSelectionMode ? { fontWeight: 'lg' } : {}}>
@@ -185,16 +192,6 @@ export function ChatAppMenuItems(props: {
         AIX: Show Last Request...
       </MenuItem>
     )}
-
-    <ListDivider />
-
-    <MenuItem disabled={props.disableItems} onClick={handleConversationClear}>
-      <ListItemDecorator><ClearIcon /></ListItemDecorator>
-      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-        Reset Chat
-        {!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}
-      </Box>
-    </MenuItem>
 
     {/* [DEV MODE] Show any dialog, if present */}
     {devModeDialog}
