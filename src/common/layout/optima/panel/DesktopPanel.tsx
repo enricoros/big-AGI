@@ -29,11 +29,11 @@ const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   height: '100dvh',
 
   // sliding
-  transition: 'transform 0.24s cubic-bezier(.17,.84,.44,1)',
+  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
   zIndex: themeZIndexDesktopPanel,
 
   // styling
-  backgroundColor: 'transparent',
+  backgroundColor: 'var(--joy-palette-background-surface)',
   borderLeft: '1px solid',
   // the border left color is from: theme.palette.divider, which is this /0.2 (light) and /0.16 (dark)
   borderLeftColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
