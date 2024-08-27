@@ -3,20 +3,11 @@ import { z } from 'zod';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
-import { aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.fromDMessages.api';
-import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
+import { aixCGR_SystemMessage, aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixCreateChatGenerateStreamContext, aixLLMChatGenerateContent } from '~/modules/aix/client/aix.client';
+import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
-
-
-function aixTextPart(text: string) {
-  return { pt: 'text' as const, text };
-}
-
-function aixSystemMessage(text: string) {
-  return { parts: [aixTextPart(text)] };
-}
 
 
 export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
@@ -46,7 +37,7 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
   });
 
   const aixChatGenerate: AixAPIChatGenerate_Request = {
-    systemMessage: aixSystemMessage(
+    systemMessage: aixCGR_SystemMessage(
       `You are an AI assistant skilled in content analysis and task inference within a chat application. 
 Your function is to examine the attachments provided by the user, understand their nature and potential relationships, guess the user intention, and suggest the most likely and valuable actions the user intends to perform.
 Respond only by calling the propose_user_actions_for_attachments function.`),

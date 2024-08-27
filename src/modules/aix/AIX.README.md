@@ -79,7 +79,7 @@ AIX is organized into the following files and folders:
 1. Client-Side (`/client/`):
 
 - `aix.client.ts`: Main client-side entry point for AIX operations.
-- `aix.client.fromDMessages.api.ts`: Handles conversion of chat messages to AIX-compatible format (AixWire_Content, AixWire_Parts, etc.).
+- `aix.client.chatGenerateRequest.ts`: Handles conversion of chat messages to AIX-compatible format (AixWire_Content, AixWire_Parts, etc.).
 
 2. Server-Side (`/server/`):
 

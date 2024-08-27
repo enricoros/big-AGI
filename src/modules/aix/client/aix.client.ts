@@ -15,7 +15,7 @@ import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixA
 
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
-import { aixChatGenerateRequestFromDMessages } from './aix.client.fromDMessages.api';
+import { aixChatGenerateRequestFromDMessages } from './aix.client.chatGenerateRequest';
 
 
 // configuration
@@ -127,7 +127,7 @@ export async function aixChatGenerateContentStreaming(
 export interface AixLLMGenerateContentAccumulator extends Pick<DMessage, 'fragments' | 'generator'> {
   // overwriting in DMessage
   fragments: DMessageContentFragment[];
-  generator: DMessageGenerator;
+  generator: Extract<DMessageGenerator, { mgt: 'aix' }>;
 }
 
 /**
