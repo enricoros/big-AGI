@@ -591,6 +591,9 @@ export function Composer(props: {
                 {/* [mobile] Mic button */}
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
+                {/* Responsive Camera OCR button */}
+                {showLLMAttachments && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
+
                 {/* [mobile] [+] button */}
                 {showLLMAttachments && (
                   <Dropdown>
@@ -598,10 +601,6 @@ export function Composer(props: {
                       <AddCircleOutlineIcon />
                     </MenuButton>
                     <Menu>
-                      {/* Responsive Camera OCR button */}
-                      <MenuItem>
-                        <ButtonAttachCameraMemo onOpenCamera={openCamera} />
-                      </MenuItem>
 
                       {/* Responsive Open Files button */}
                       <MenuItem>
