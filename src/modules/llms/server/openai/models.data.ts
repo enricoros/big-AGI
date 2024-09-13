@@ -267,7 +267,6 @@ const _knownOpenAIChatModels: ManualMappings = [
     pricing: { chatIn: 30, chatOut: 60 },
     benchmark: { cbaElo: 1186 },
     hidden: true,
-    isLegacy: true,
   },
   {
     idPrefix: 'gpt-4',
