@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { Button, Card, CardContent, Grid, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
-import ThumbUpRoundedIcon from '@mui/icons-material/ThumbUpRounded';
 
 import { Link } from '~/common/components/Link';
 

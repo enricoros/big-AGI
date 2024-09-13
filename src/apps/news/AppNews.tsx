@@ -14,6 +14,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
+import { bigAgi2NewsCallout } from './bigAgi2.data';
 
 
 // number of news items to show by default, before the expander
@@ -109,6 +110,13 @@ export function AppNews() {
             // const firstCard = idx === 0;
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
+
+              {/* Inject the Big-AGI 2.0 item here*/}
+              {idx === 0 && (
+                <Box sx={{ mb: 3 }}>
+                  {bigAgi2NewsCallout}
+                </Box>
+              )}
 
               {/* Inject the Beam item here*/}
               {idx === 2 && (
