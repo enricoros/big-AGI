@@ -150,34 +150,6 @@ const _knownOpenAIChatModels: ManualMappings = [
     hidden: true,
   },
 
-  // GPT4 Vision Previews
-  {
-    idPrefix: 'gpt-4-vision-preview', // GPT-4 Turbo vision preview
-    label: 'GPT-4 Preview Vision',
-    description: 'GPT-4 model with the ability to understand images, in addition to all other GPT-4 Turbo capabilities. This is a preview model, we recommend developers to now use gpt-4-turbo which includes vision capabilities. Currently points to gpt-4-1106-vision-preview.',
-    symLink: 'gpt-4-1106-vision-preview',
-    // copied from symlinked
-    isPreview: true,
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Apr 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 10, chatOut: 30 },
-    hidden: true, // Deprecated in favor of gpt-4-turbo
-  },
-  {
-    idPrefix: 'gpt-4-1106-vision-preview',
-    label: 'GPT-4 Preview Vision (1106)',
-    description: 'GPT-4 model with the ability to understand images, in addition to all other GPT-4 Turbo capabilities. This is a preview model, we recommend developers to now use gpt-4-turbo which includes vision capabilities. Returns a maximum of 4,096 output tokens.',
-    isPreview: true,
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Apr 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    pricing: { chatIn: 10, chatOut: 30 },
-    hidden: true, // Deprecated in favor of gpt-4-turbo
-  },
-
 
   // GPT4-32k's
   {
