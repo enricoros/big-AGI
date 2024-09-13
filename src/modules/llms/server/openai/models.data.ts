@@ -12,34 +12,7 @@ import { wireTogetherAIListOutputSchema } from './togetherai.wiretypes';
 // https://platform.openai.com/docs/models
 const _knownOpenAIChatModels: ManualMappings = [
 
-  // GPT-4o mini
-  {
-    idPrefix: 'gpt-4o-mini-2024-07-18',
-    label: 'GPT-4o Mini (2024-07-18)',
-    description: 'Affordable model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 0.15, chatOut: 0.60 },
-    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
-  },
-  {
-    idPrefix: 'gpt-4o-mini',
-    label: 'GPT-4o mini',
-    description: 'Currently points to gpt-4o-mini-2024-07-18.',
-    symLink: 'gpt-4o-mini-2024-07-18',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 0.15, chatOut: 0.60 },
-    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
-  },
-
-  // GPT-4o -> 2024-05-13 (will be update to 2024-08-06 in the future (3 weeks notice))
+  // GPT-4o -> 2024-05-13 (Starting October 2nd, 2024, gpt-4o will point to the gpt-4o-2024-08-06 snapshot)
   {
     idPrefix: 'gpt-4o',
     label: 'GPT-4o',
@@ -78,6 +51,36 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1286 },
     hidden: true,
   },
+
+  // GPT-4o mini
+  {
+    idPrefix: 'gpt-4o-mini-2024-07-18',
+    label: 'GPT-4o Mini (2024-07-18)',
+    description: 'Affordable model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 0.15, chatOut: 0.60 },
+    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
+  },
+  {
+    idPrefix: 'gpt-4o-mini',
+    label: 'GPT-4o mini',
+    description: 'Currently points to gpt-4o-mini-2024-07-18.',
+    symLink: 'gpt-4o-mini-2024-07-18',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 0.15, chatOut: 0.60 },
+    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
+  },
+
+  // o1-preview and o1-mini (beta)
+  // ...
 
   // GPT4 Turbo with Vision -> 2024-04-09
   {
@@ -232,6 +235,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     pricing: { chatIn: 30, chatOut: 60 },
     benchmark: { cbaElo: 1186 },
     hidden: true,
+    isLegacy: true,
   },
   {
     idPrefix: 'gpt-4',
@@ -246,19 +250,6 @@ const _knownOpenAIChatModels: ManualMappings = [
     pricing: { chatIn: 30, chatOut: 60 },
     benchmark: { cbaElo: 1161 },
     isLegacy: true,
-  },
-
-
-  // 3.5-Turbo-Instruct (Not for Chat)
-  {
-    idPrefix: 'gpt-3.5-turbo-instruct',
-    label: '3.5-Turbo Instruct',
-    description: 'Similar capabilities as GPT-3 era models. Compatible with legacy Completions endpoint and not Chat Completions.',
-    contextWindow: 4097,
-    trainingDataCutoff: 'Sep 2021',
-    interfaces: [/* NO: LLM_IF_OAI_Chat,*/ LLM_IF_OAI_Complete],
-    pricing: { chatIn: 1.5, chatOut: 2 },
-    hidden: true,
   },
 
   // 3.5-Turbo's (16ks)
@@ -298,6 +289,18 @@ const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     pricing: { chatIn: 0.5, chatOut: 1.5 },
     benchmark: { cbaElo: 1105 },
+  },
+
+  // 3.5-Turbo-Instruct (Not for Chat)
+  {
+    idPrefix: 'gpt-3.5-turbo-instruct',
+    label: '3.5-Turbo Instruct',
+    description: 'Similar capabilities as GPT-3 era models. Compatible with legacy Completions endpoint and not Chat Completions.',
+    contextWindow: 4097,
+    trainingDataCutoff: 'Sep 2021',
+    interfaces: [/* NO: LLM_IF_OAI_Chat,*/ LLM_IF_OAI_Complete],
+    pricing: { chatIn: 1.5, chatOut: 2 },
+    hidden: true,
   },
 
 
