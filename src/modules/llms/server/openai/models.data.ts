@@ -111,7 +111,7 @@ const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT4 Turbo Previews
   {
-    idPrefix: 'gpt-4-turbo-preview', // GPT-4 Turbo preview model -> 0125
+    idPrefix: 'gpt-4-turbo-preview',
     label: 'GPT-4 Preview Turbo',
     description: 'GPT-4 Turbo preview model. Currently points to gpt-4-0125-preview.',
     symLink: 'gpt-4-0125-preview',
@@ -126,7 +126,7 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1245 },
   },
   {
-    idPrefix: 'gpt-4-0125-preview', // GPT-4 Turbo preview model
+    idPrefix: 'gpt-4-0125-preview',
     label: 'GPT-4 Turbo (0125)',
     description: 'GPT-4 Turbo preview model intended to reduce cases of "laziness" where the model doesn\'t complete a task.',
     contextWindow: 128000,
@@ -224,7 +224,8 @@ const _knownOpenAIChatModels: ManualMappings = [
     isLegacy: true,
   },
 
-  // 3.5-Turbo's (16ks)
+  // 3.5-Turbo
+  // As of July 2024, gpt-4o-mini should be used in place of gpt-3.5-turbo, as it is cheaper, more capable, multimodal, and just as fast.
   {
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (0125)',
