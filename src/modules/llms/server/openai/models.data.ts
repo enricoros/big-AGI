@@ -51,6 +51,16 @@ const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1286 },
     hidden: true,
   },
+  {
+    idPrefix: 'chatgpt-4o-latest',
+    label: 'ChatGPT-4o Latest',
+    description: 'Intended for research and evaluation. Dynamic model continuously updated to the current version of GPT-4o in ChatGPT.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 5, chatOut: 15 },
+  },
 
   // GPT-4o mini
   {
