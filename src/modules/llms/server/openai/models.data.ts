@@ -88,8 +88,59 @@ const _knownOpenAIChatModels: ManualMappings = [
     pricing: { chatIn: 0.15, chatOut: 0.60 },
   },
 
-  // o1-preview and o1-mini (beta)
-  // ...
+  // o1-preview
+  {
+    idPrefix: 'o1-preview',
+    label: 'o1-preview',
+    description: 'Points to the most recent snapshot of the o1 model: o1-preview-2024-09-12',
+    symLink: 'o1-preview-2024-09-12',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 32768,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    pricing: { chatIn: 15, chatOut: 60 },
+    isPreview: true,
+  },
+  {
+    idPrefix: 'o1-preview-2024-09-12',
+    label: 'o1-preview (2024-09-12)',
+    description: 'New reasoning model for complex tasks that require broad general knowledge.',
+    contextWindow: 128000,
+    maxCompletionTokens: 32768,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    pricing: { chatIn: 15, chatOut: 60 },
+    isPreview: true,
+  },
+
+  // o1-mini
+  {
+    idPrefix: 'o1-mini',
+    label: 'o1-mini',
+    description: 'Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
+    symLink: 'o1-mini-2024-09-12',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 65536,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    pricing: { chatIn: 3, chatOut: 12 },
+    isPreview: true,
+  },
+  {
+    idPrefix: 'o1-mini-2024-09-12',
+    label: 'o1-mini (2024-09-12)',
+    description: 'Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
+    contextWindow: 128000,
+    maxCompletionTokens: 65536,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    pricing: { chatIn: 3, chatOut: 12 },
+    isPreview: true,
+  },
 
   // GPT4 Turbo with Vision -> 2024-04-09
   {
