@@ -91,7 +91,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   // o1-preview
   {
     idPrefix: 'o1-preview',
-    label: 'o1-preview',
+    label: 'o1 Preview',
     description: 'Points to the most recent snapshot of the o1 model: o1-preview-2024-09-12',
     symLink: 'o1-preview-2024-09-12',
     hidden: true,
@@ -105,7 +105,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'o1-preview-2024-09-12',
-    label: 'o1-preview (2024-09-12)',
+    label: 'o1 Preview (2024-09-12)',
     description: 'New reasoning model for complex tasks that require broad general knowledge.',
     contextWindow: 128000,
     maxCompletionTokens: 32768,
@@ -118,7 +118,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   // o1-mini
   {
     idPrefix: 'o1-mini',
-    label: 'o1-mini',
+    label: 'o1 Mini',
     description: 'Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
     symLink: 'o1-mini-2024-09-12',
     hidden: true,
@@ -132,7 +132,7 @@ const _knownOpenAIChatModels: ManualMappings = [
   },
   {
     idPrefix: 'o1-mini-2024-09-12',
-    label: 'o1-mini (2024-09-12)',
+    label: 'o1 Mini (2024-09-12)',
     description: 'Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
     contextWindow: 128000,
     maxCompletionTokens: 65536,
