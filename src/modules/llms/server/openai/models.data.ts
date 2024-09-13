@@ -54,17 +54,6 @@ const _knownOpenAIChatModels: ManualMappings = [
 
   // GPT-4o mini
   {
-    idPrefix: 'gpt-4o-mini-2024-07-18',
-    label: 'GPT-4o Mini (2024-07-18)',
-    description: 'Affordable model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 0.15, chatOut: 0.60 },
-    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
-  },
-  {
     idPrefix: 'gpt-4o-mini',
     label: 'GPT-4o mini',
     description: 'Currently points to gpt-4o-mini-2024-07-18.',
@@ -77,6 +66,16 @@ const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     pricing: { chatIn: 0.15, chatOut: 0.60 },
     benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
+  },
+  {
+    idPrefix: 'gpt-4o-mini-2024-07-18',
+    label: 'GPT-4o Mini (2024-07-18)',
+    description: 'Affordable model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    pricing: { chatIn: 0.15, chatOut: 0.60 },
   },
 
   // o1-preview and o1-mini (beta)
