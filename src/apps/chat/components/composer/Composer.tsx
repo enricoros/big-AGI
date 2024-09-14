@@ -598,7 +598,7 @@ export function Composer(props: {
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} onClick={handleToggleMic} />}
 
                 {/* Responsive Camera OCR button */}
-                {showLLMAttachments && <ButtonAttachCameraMemo onOpenCamera={openCamera} />}
+                {showLLMAttachments && <ButtonAttachCameraMemo isMobile onOpenCamera={openCamera} />}
 
                 {/* [mobile] [+] button */}
                 {showLLMAttachments && (
