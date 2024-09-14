@@ -406,6 +406,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
+const DEFAULT_HELICONE_GROQ_HOST = 'groq.hconeai.com';
 const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
@@ -514,15 +515,26 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'groq':
       const groqKey = access.oaiKey || env.GROQ_API_KEY || '';
-      const groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
+      let groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
       if (!groqKey)
         throw new Error('Missing Groq API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+
+      let groq_heliKey = access.heliKey || env.HELICONE_API_KEY || false;
+      if (groq_heliKey) {
+        if (groqHost.includes(DEFAULT_GROQ_HOST)) {
+          groqHost = `https://${DEFAULT_HELICONE_GROQ_HOST}`;
+        } else if (!groqHost.includes(DEFAULT_HELICONE_GROQ_HOST)) {
+          // throw new Error(`The Helicone OpenAI Key has been provided, but the host is not set to https://${DEFAULT_HELICONE_OPENAI_HOST}. Please fix it in the Models Setup page.`);
+          groq_heliKey = false;
+        }
+      }
 
       return {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': `Bearer ${groqKey}`,
+          ...(groq_heliKey && {'Helicone-Auth': `Bearer ${groq_heliKey}`}),
         },
         url: groqHost + apiPath,
       };
