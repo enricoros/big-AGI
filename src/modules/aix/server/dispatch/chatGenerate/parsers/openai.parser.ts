@@ -95,6 +95,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
           // dtInner: openAI is not reporting the time as seen by the servers
           dtAll: Date.now() - parserCreationTimestamp,
         };
+        if (json.usage.completion_tokens_details?.reasoning_tokens !== undefined)
+          metricsUpdate.TOutR = json.usage.completion_tokens_details.reasoning_tokens;
         if (timeToFirstEvent !== undefined)
           metricsUpdate.dtStart = timeToFirstEvent;
         pt.updateMetrics(metricsUpdate);
@@ -232,15 +234,19 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       pt.setModelName(json.model);
 
     // -> Stats
-    if (json.usage)
-      pt.updateMetrics({
+    if (json.usage) {
+      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
         TIn: json.usage.prompt_tokens,
         TOut: json.usage.completion_tokens,
         // vTOutInner: ...   // we don't have the inner time to compute this
         // dtStart: ... // not meaningful for non-streaming
         // dtInner: ... // not measured/reportd by OpenAI
         dtAll: Date.now() - parserCreationTimestamp,
-      });
+      };
+      if (json.usage.completion_tokens_details?.reasoning_tokens !== undefined)
+        metricsUpdate.TOutR = json.usage.completion_tokens_details.reasoning_tokens;
+      pt.updateMetrics(metricsUpdate);
+    }
 
     // Assumption/validate: expect 1 completion, or stop
     if (json.choices.length !== 1)

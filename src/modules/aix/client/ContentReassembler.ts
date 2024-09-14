@@ -232,6 +232,7 @@ export class ContentReassembler {
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {
+    // type check point for AixWire_Particles.CGSelectMetrics -> DChatGenerateMetricsLg
     this.accumulator.genMetricsLg = metrics;
     pendChatGenerateTokenMetrics(this.accumulator.genMetricsLg);
   }

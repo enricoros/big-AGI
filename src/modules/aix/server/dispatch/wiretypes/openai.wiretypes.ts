@@ -266,6 +266,11 @@ export namespace OpenAIWire_API_Chat_Completions {
     prompt_tokens: z.number(),
     completion_tokens: z.number(),
     total_tokens: z.number(),
+
+    // [OpenAI, o1] breaks down the completion tokens into components; added Sept 12, 2024
+    completion_tokens_details: z.object({
+      reasoning_tokens: z.number(),
+    }).optional(), // not present in other APIs yet
   }).nullable();
 
   const Choice_NS_schema = z.object({
