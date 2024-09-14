@@ -21,7 +21,7 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
     }
   }, [loved]);
 
-  const icon = loved ? '❤️' : <props.icon /> ?? null; // '❤️' : '🤍';
+  const icon = loved ? '❤️' : props.icon ? <props.icon /> : null; // '❤️' : '🤍';
 
   return (
     <Tooltip followCursor title={props.text}>
