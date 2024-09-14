@@ -23,7 +23,7 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
-import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
+import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -427,33 +427,6 @@ export function Composer(props: {
 
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
-  useGlobalShortcuts('ChatComposer.Gen', React.useMemo(() => [
-    ...(assistantAbortible ? [{ key: ShortcutKey.Esc, action: handleStopClicked, description: 'Stop', level: 2 }] : []),
-  ], [assistantAbortible, handleStopClicked]));
-
-  useGlobalShortcuts('ChatComposer', React.useMemo(() => {
-    const composerShortcuts: ShortcutObject[] = [];
-    if (supportsClipboardRead)
-      composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
-    if (recognitionState.isActive) {
-      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 1 });
-      composerShortcuts.push({
-        key: ShortcutKey.Esc, action: () => {
-          setMicContinuation(false);
-          toggleRecognition(false);
-        }, description: 'Mic · Stop', level: 1,
-      });
-    } else if (browserSpeechRecognitionCapability().mayWork)
-      composerShortcuts.push({
-        key: 'm', ctrl: true, action: () => {
-          // steal focus from the textarea, in case it has - so that enter cannot work against us
-          (document.activeElement as HTMLElement)?.blur?.();
-          toggleRecognition(false);
-        }, description: 'Microphone',
-      });
-    return composerShortcuts;
-  }, [attachAppendClipboardItems, recognitionState.hasSpeech, recognitionState.isActive, toggleRecognition]));
-
   const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !recognitionState.errorMessage;
   const micColor: ColorPaletteProp = recognitionState.errorMessage ? 'danger' : recognitionState.isActive ? 'primary' : recognitionState.hasAudio ? 'primary' : 'neutral';
@@ -514,6 +487,39 @@ export function Composer(props: {
         break;
     }
   }, [attachmentsTakeFragmentsByType, setComposeText]);
+
+
+  // Keyboard Shortcuts
+
+  useGlobalShortcuts('ChatComposer.Gen', React.useMemo(() => [
+    ...(assistantAbortible ? [{ key: ShortcutKey.Esc, action: handleStopClicked, description: 'Stop', level: 2 }] : []),
+  ], [assistantAbortible, handleStopClicked]));
+
+  useGlobalShortcuts('ChatComposer', React.useMemo(() => {
+    const composerShortcuts: ShortcutObject[] = [];
+    if (showLLMAttachments) {
+      composerShortcuts.push({ key: 'f', ctrl: true, shift: true, action: () => openFileForAttaching(true, handleAttachFiles), description: 'Attach File' });
+      if (supportsClipboardRead)
+        composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
+    }
+    if (recognitionState.isActive) {
+      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 1 });
+      composerShortcuts.push({
+        key: ShortcutKey.Esc, action: () => {
+          setMicContinuation(false);
+          toggleRecognition(false);
+        }, description: 'Mic · Stop', level: 1,
+      });
+    } else if (browserSpeechRecognitionCapability().mayWork)
+      composerShortcuts.push({
+        key: 'm', ctrl: true, action: () => {
+          // steal focus from the textarea, in case it has - so that enter cannot work against us
+          (document.activeElement as HTMLElement)?.blur?.();
+          toggleRecognition(false);
+        }, description: 'Microphone',
+      });
+    return composerShortcuts;
+  }, [attachAppendClipboardItems, handleAttachFiles, recognitionState.hasSpeech, recognitionState.isActive, showLLMAttachments, toggleRecognition]));
 
 
   // ...
@@ -611,6 +617,7 @@ export function Composer(props: {
                       {supportsClipboardRead && <MenuItem>
                         <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
                       </MenuItem>}
+
                     </Menu>
                   </Dropdown>
                 )}
