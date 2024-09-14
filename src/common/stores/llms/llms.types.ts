@@ -54,7 +54,8 @@ export type DModelInterfaceV1 =
   | 'oai-chat-vision'
   | 'oai-chat-fn'
   | 'oai-complete'
-  | 'ant-prompt-caching' // only append below this line
+  | 'ant-prompt-caching'
+  | 'oai-o1-preview' // only append below this line
   ;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
@@ -64,6 +65,7 @@ export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
 export const LLM_IF_OAI_Fn: DModelInterfaceV1 = 'oai-chat-fn';
 export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
+export const LLM_IF_SPECIAL_OAI_O1Preview: DModelInterfaceV1 = 'oai-o1-preview';
 
 // Future changes?
 // export type DModelPartKind = 'text' | 'image' | 'audio' | 'video' | 'pdf';

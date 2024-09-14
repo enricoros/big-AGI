@@ -35,6 +35,12 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
   const hotFixThrowCannotFC = openAIDialect === 'deepseek' || openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
 
+  // Model incompatibilities -> Hotfixes
+
+  // [OpenAI] - o1 models
+  // - o1 models don't support system messages, we could hotfix this here once and for all, but we want to transfer the responsibility to the UI for better messaging to the user
+  // - o1 models also use the new 'max_completion_tokens' rather than 'max_tokens', breaking API compatibility, so we have to address it here
+  const hotFixOpenAIO1Preview = openAIDialect === 'openai' && model.id.startsWith('o1-'); // OpenAI o1 models don't support system messages
 
   // Throw if function support is needed but missing
   if (chatGenerate.tools?.length && hotFixThrowCannotFC)
@@ -72,6 +78,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     stop: undefined,
     user: undefined,
   };
+
+  if (hotFixOpenAIO1Preview)
+    payload = _fixRequestForOpenAIO1Preview(payload);
 
   if (hotFixRemoveStreamOptions)
     payload = _fixRemoveStreamOptions(payload);
@@ -123,6 +132,20 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
 
 function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessages {
   return chatMessages.filter(message => message.content !== null && message.content !== '');
+}
+
+function _fixRequestForOpenAIO1Preview(payload: TRequest): TRequest {
+
+  // Remove temperature and top_p controls
+  const { max_tokens, temperature: _removeTemperature, top_p: _removeTopP, ...rest } = payload;
+
+  // Change max_tokens to max_completion_tokens:
+  // - pre-o1: max_tokens is the output amount
+  // - o1: max_completion_tokens is the output amount + reasoning amount
+  if (max_tokens)
+    rest.max_completion_tokens = max_tokens;
+
+  return rest;
 }
 
 function _fixRemoveStreamOptions(payload: TRequest): TRequest {

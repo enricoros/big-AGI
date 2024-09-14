@@ -1,6 +1,6 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
 import { chatGenerateMetricsLgToMd, computeChatGenerationCosts, DChatGenerateMetricsLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -15,7 +15,7 @@ import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixA
 
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
-import { aixChatGenerateRequestFromDMessages } from './aix.client.chatGenerateRequest';
+import { aixChatGenerateRequestFromDMessages, clientHotFixSystemMessageForO1Preview } from './aix.client.chatGenerateRequest';
 
 
 // configuration
@@ -150,6 +150,14 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
   const { transportAccess: aixAccess, serviceSettings, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
+
+  // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
+  const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
+  if (isO1Preview && aixChatGenerate.systemMessage) {
+    console.warn('[DEV] Working around o1 models limitations.');
+    clientHotFixSystemMessageForO1Preview(aixChatGenerate);
+    aixStreaming = false;
+  }
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
   // if (aixAccess.dialect === 'openai' && aixAccess.moderationCheck) {
