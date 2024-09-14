@@ -22,6 +22,7 @@ type ChatGenerateTokenMetrics = {
   TCacheRead?: number,
   TCacheWrite?: number,
   TOut?: number,
+  TOutR?: number,       // TOut that was used for reasoning (e.g. not for output)
 
   // If set, indicates unreliability or stop reason
   TsR?:
@@ -151,10 +152,15 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
 // ChatGenerate extraction for DMessage's smaller metrics
 
 export function chatGenerateMetricsLgToMd(metrics: DChatGenerateMetricsLg): DChatGenerateMetricsMd {
-  const keys = ['$c', '$cdCache', '$code', 'TIn', 'TOut', 'TCacheRead', 'TCacheWrite', 'TsR'] as const;
+  const keys: (keyof DChatGenerateMetricsMd)[] = ['$c', '$cdCache', '$code', 'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'TsR'] as const;
   const extracted: DChatGenerateMetricsMd = {};
 
   for (const key of keys) {
+
+    // [OpenAI] we also ignore a TOutR of 0, as networks wirhout reasoning return it. keeping it would be misleading as 'didn't reason but I could have', while it's 'can't reason'
+    if (key === 'TOutR' && metrics.TOutR === 0)
+      continue;
+
     if (metrics[key] !== undefined) {
       extracted[key] = metrics[key] as any;
     }

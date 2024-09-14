@@ -502,6 +502,7 @@ export namespace AixWire_Particles {
     TCacheRead?: number,
     TCacheWrite?: number,
     TOut?: number,
+    TOutR?: number,
 
     // v = Tokens/s
     vTOutInner?: number,  // TOut / dtInner

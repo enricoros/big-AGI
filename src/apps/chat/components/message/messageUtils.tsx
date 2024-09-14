@@ -270,6 +270,7 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode 
       {metrics.TCacheRead !== undefined && <>{', '}<b>{metrics.TCacheRead?.toLocaleString() || ''}</b> read</>}
       {metrics.TCacheWrite !== undefined && <>{', '}<b>{metrics.TCacheWrite?.toLocaleString() || ''}</b> wrote</>}
       {', '}<b>{metrics.TOut?.toLocaleString() || ''}</b> out
+      {metrics.TOutR !== undefined && <> (<b>{metrics.TOutR?.toLocaleString() || ''}</b> for reasoning)</>}
     </div>}
     {metrics?.$c !== undefined && <div>Costs:</div>}
     {metrics?.$c !== undefined && <div>
