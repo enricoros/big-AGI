@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
@@ -96,26 +96,25 @@ const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'o1-preview',
     label: 'o1 Preview',
-    description: 'Supported in Big-AGI 2. Points to the most recent snapshot of the o1 model: o1-preview-2024-09-12',
+    description: 'Points to the most recent snapshot of the o1 model: o1-preview-2024-09-12',
     symLink: 'o1-preview-2024-09-12',
     hidden: true,
     // copied from symlinked
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview],
     chatPrice: { input: 15, output: 60 },
     isPreview: true,
   },
   {
-    hidden: true, // we can't support it in Big-AGI 1
     idPrefix: 'o1-preview-2024-09-12',
-    label: 'o1 Preview (2024-09-12)',
-    description: 'Supported in Big-AGI 2. New reasoning model for complex tasks that require broad general knowledge.',
+    label: 'o1 Preview (2024-09-12) ⏱️',
+    description: 'This model takes longer to run and does not support streaming.\n\nNew reasoning model for complex tasks that require broad general knowledge.',
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview],
     chatPrice: { input: 15, output: 60 },
     isPreview: true,
   },
@@ -124,26 +123,25 @@ const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'o1-mini',
     label: 'o1 Mini',
-    description: 'Supported in Big-AGI 2. Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
+    description: 'Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
     symLink: 'o1-mini-2024-09-12',
     hidden: true,
     // copied from symlinked
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
   },
   {
-    hidden: true, // we can't support it in Big-AGI 1
     idPrefix: 'o1-mini-2024-09-12',
-    label: 'o1 Mini (2024-09-12)',
-    description: 'Supported in Big-AGI 2. Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
+    label: 'o1 Mini (2024-09-12) ⏱️',
+    description: 'This model feels slow because it does not support streaming.\n\nFast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview],
     chatPrice: { input: 3, output: 12 },
     isPreview: true,
   },

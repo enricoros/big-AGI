@@ -238,3 +238,33 @@ function _clientCreateAixMetaCacheControlPart(control: AixParts_MetaCacheControl
 function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): AixParts_MetaInReferenceToPart {
   return { pt: 'meta_in_reference_to', referTo: items };
 }
+
+
+/// Client-side hotfixes
+
+/**
+ * Hot fix for handling system messages with OpenAI O1 Preview models.
+ * Converts System to User messages for compatibility.
+ */
+export function clientHotFixSystemMessageForO1Preview(aixChatGenerate: AixAPIChatGenerate_Request): void {
+
+  // Convert the main system message if it exists
+  if (aixChatGenerate.systemMessage) {
+
+    // Convert system message to user message
+    const systemAsUser: AixMessages_UserMessage = {
+      role: 'user',
+      parts: aixChatGenerate.systemMessage.parts,
+    };
+
+    // Insert the converted system message at the beginning of the chat sequence
+    aixChatGenerate.chatSequence.unshift(systemAsUser);
+
+    // Remove the original system message
+    delete aixChatGenerate.systemMessage;
+  }
+
+  // Note: other conversions that would translate to system inside the AIX Dispatch will be handled there, as we have a
+  // higher level representation here, where the roles are 'user', 'model', and 'tool'.
+
+}

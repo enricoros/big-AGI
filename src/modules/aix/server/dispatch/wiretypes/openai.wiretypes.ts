@@ -188,6 +188,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
   export type Request = z.infer<typeof Request_schema>;
   export const Request_schema = z.object({
+
     // basic input
     model: z.string(),
     messages: z.array(OpenAIWire_Messages.Message_schema),
@@ -199,6 +200,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // common model configuration
     max_tokens: z.number().optional(),
+    max_completion_tokens: z.number().int().positive().optional(), // [OpenAI, o1] introduced in Sept 12, 2024
     temperature: z.number().min(0).max(2).optional(),
     top_p: z.number().min(0).max(1).optional(),
 
