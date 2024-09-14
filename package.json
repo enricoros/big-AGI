@@ -66,11 +66,11 @@
     "sharp": "^0.33.4",
     "superjson": "^2.2.1",
     "tesseract.js": "^5.1.0",
-    "tiktoken": "^1.0.15",
+    "tiktoken": "^1.0.16",
     "turndown": "^7.2.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2",
-    "zustand": "^4.5.4"
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "0.0.11",
