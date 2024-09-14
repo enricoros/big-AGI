@@ -115,7 +115,7 @@ export function ContentFragments(props: {
             textPartText={isTextPart(fragment.part) ? fragment.part.text : fragment.part.error}
             fragmentId={fragment.fId}
             contentScaling={props.contentScaling}
-            enableRestart
+            enableRestart={!fromAssistant}
             editedText={props.textEditsState[fragment.fId]}
             setEditedText={props.setEditedText}
             onSubmit={props.onEditsApply}
