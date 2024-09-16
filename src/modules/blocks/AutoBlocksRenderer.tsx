@@ -40,7 +40,7 @@ export function AutoBlocksRenderer(props: {
 
   showAsDanger?: boolean;
   showAsItalic?: boolean;
-  showUnsafeHtml?: boolean;
+  showUnsafeHtmlCode?: boolean;
 
   renderAsCodeWithTitle?: string;
   renderSanityTextDiffs?: SanityTextDiff[];
@@ -123,7 +123,7 @@ export function AutoBlocksRenderer(props: {
                 contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
                 isMobile={props.isMobile}
-                initialShowHTML={props.showUnsafeHtml}
+                initialShowHTML={props.showUnsafeHtmlCode}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
                 codeSx={scaledCodeSx}
@@ -134,7 +134,7 @@ export function AutoBlocksRenderer(props: {
                 semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
                 fitScreen={props.fitScreen}
-                initialShowHTML={props.showUnsafeHtml}
+                initialShowHTML={props.showUnsafeHtmlCode /* && !bkInput.isPartial NOTE: with this, it would be only auto-rendered at the end, preventing broken renders */}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
                 sx={scaledCodeSx}

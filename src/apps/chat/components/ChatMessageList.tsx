@@ -314,7 +314,7 @@ export function ChatMessageList(props: {
               isImagining={isImagining}
               isSpeaking={isSpeaking}
               showAntPromptCaching={props.chatLLMAntPromptCaching}
-              showUnsafeHtml={danger_experimentalHtmlWebUi}
+              showUnsafeHtmlCode={danger_experimentalHtmlWebUi}
               onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
               onMessageAssistantFrom={handleMessageAssistantFrom}
               onMessageBeam={handleMessageBeam}
