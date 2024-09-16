@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, IconButton, Modal, ModalClose, Option, Select, Sheet, Typography } from '@mui/joy';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import CameraEnhanceIcon from '@mui/icons-material/CameraEnhance';
 import DownloadIcon from '@mui/icons-material/Download';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -20,10 +20,11 @@ const captureButtonContainerSx: SxProps = {
 };
 
 const captureButtonSx: SxProps = {
-  minWidth: 160,
+  minWidth: 150,
   borderRadius: '3rem',
   // boxShadow: 'md',
-  boxShadow: '0 8px 12px -4px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+  boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+  py: 1.5,
 };
 
 
@@ -116,7 +117,7 @@ export function CameraCaptureModal(props: {
                 {/*{device.label?.includes('Face') ? <CameraFrontIcon />*/}
                 {/*  : device.label?.includes('tual') ? <CameraRearIcon />*/}
                 {/*    : null}*/}
-                {device.label?.replace('camera2 ', 'Camera ')}
+                {device.label?.replace('camera2 ', 'Camera ').replace('front', 'Front').replace('back', 'Back')}
               </Option>
             ))}
           </Select>
@@ -147,7 +148,7 @@ export function CameraCaptureModal(props: {
         </Box>
 
         {/* Bottom controls (zoom, ocr, download) & progress */}
-        <Sheet variant='soft' sx={{ display: 'flex', flexDirection: 'column', p: 1 }}>
+        <Sheet variant='soft' sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
           {!!error && <InlineError error={error} />}
 
@@ -168,11 +169,10 @@ export function CameraCaptureModal(props: {
 
             {/* Capture */}
             <Button
-              variant='solid'
               color='neutral'
               size='lg'
               onClick={handleVideoSnapClicked}
-              endDecorator={<CameraAltIcon />}
+              endDecorator={<CameraEnhanceIcon />}
               sx={captureButtonSx}
             >
               Capture

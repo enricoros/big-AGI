@@ -102,7 +102,7 @@ const sliderContainerSx: SxProps = {
   display: 'flex',
   alignItems: 'center',
   mx: 0.75,
-  gap: 2,
+  gap: 3,
 };
 
 
@@ -158,7 +158,7 @@ async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefO
         <Slider
           variant='solid'
           color='neutral'
-          // size='lg'
+          size='lg'
           defaultValue={1}
           min={min} max={max} step={step}
           onChange={(_event, value) => track.applyConstraints({ advanced: [{ zoom: value as number }] } as any)}
