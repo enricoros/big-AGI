@@ -62,13 +62,14 @@
             rgba(var(--agi-color-mark-highlight-channel) / 1) 99.1%,
             rgba(var(--agi-color-mark-highlight-channel) / 0)
     );
+    padding-block: 2px;
 }
 
 [data-joy-color-scheme="dark"] .agi-highlight {
-    --agi-color-mark-highlight-channel: 0 0 184;
+    --agi-color-mark-highlight-channel: 118 108 0; /* 0 0 184; */
 }
 
-[data-joy-color-scheme="light"] .markdown-body {
+[data-joy-color-scheme="light"] .agi-highlight {
     --agi-color-mark-highlight-channel: 255 255 0;
 }
 
