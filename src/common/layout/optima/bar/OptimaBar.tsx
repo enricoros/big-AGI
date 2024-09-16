@@ -17,6 +17,7 @@ import { Brand } from '~/common/app.config';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
+import { WindowPaneRightOpen } from '~/common/components/icons/WindowPaneRightOpen';
 import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
@@ -227,7 +228,8 @@ export function OptimaBar(props: { component: React.ElementType, currentApp?: Na
           //   transition: 'transform 0.42s',
           // }}
         >
-          {isPanelOpen ? <NavigateNextRoundedIcon /> : <MoreVertIcon />}
+          {isPanelOpen ? <NavigateNextRoundedIcon /> : menuToPanel ? <WindowPaneRightOpen /> : <MoreVertIcon />}
+          {/*{isPanelOpen ? <NavigateNextRoundedIcon /> : <WindowPaneRightOpen />}*/}
           {/*{menuToPanel ? <NavigateBeforeRoundedIcon /> : <MoreVertIcon />}*/}
         </IconButton>
       </InvertedBarCornerItem>
