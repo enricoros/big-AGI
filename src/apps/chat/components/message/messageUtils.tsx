@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box } from '@mui/joy';
@@ -207,7 +208,12 @@ const avatarLabelTooltipIconContainerSx: SxProps = {
   gap: 1,
 };
 
-export function useMessageAvatarLabel({ generator, pendingIncomplete }: Pick<DMessage, 'generator' | 'pendingIncomplete'>, complexity: UIComplexityMode): { label: React.ReactNode, tooltip: React.ReactNode } {
+const avatarLabelCreated: SxProps = {
+  fontSize: 'xs',
+  color: 'text.tertiary',
+};
+
+export function useMessageAvatarLabel({ generator, pendingIncomplete, created, updated }: Pick<DMessage, 'generator' | 'pendingIncomplete' | 'created' | 'updated'>, complexity: UIComplexityMode): { label: React.ReactNode, tooltip: React.ReactNode } {
   return React.useMemo(() => {
     if (!generator) {
       return {
@@ -247,10 +253,11 @@ export function useMessageAvatarLabel({ generator, pendingIncomplete }: Pick<DMe
           {(modelId && complexity === 'extra') && <div>{modelId}</div>}
           {metrics && <div>{metrics}</div>}
           {stopReason && <div>{stopReason}</div>}
+          {complexity === 'extra' && !!created && <Box sx={avatarLabelCreated}>{updated ? 'Updated' : 'Created'} <TimeAgo date={updated || created} />.</Box>}
         </Box>
       ),
     };
-  }, [complexity, generator, pendingIncomplete]);
+  }, [complexity, created, generator, pendingIncomplete, updated]);
 }
 
 const metricsGridSx: SxProps = {

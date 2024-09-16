@@ -27,7 +27,7 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens
   }}>
     <Checkbox size='md' onChange={event => props.onSelectAll(event.target.checked)} sx={{ minWidth: 24, justifyContent: 'center' }} />
 
-    <Box>Select all ({props.sumTokens})</Box>
+    <Box>Select all ({props.sumTokens?.toLocaleString()})</Box>
 
     <Box sx={{ mx: 'auto', display: 'flex', gap: 1 }}>
       <Button variant='solid' disabled={!props.hasSelected} onClick={props.onDeleteMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<DeleteOutlineIcon />}>
