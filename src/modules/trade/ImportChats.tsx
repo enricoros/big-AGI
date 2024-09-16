@@ -130,7 +130,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         Select where to <strong>import from</strong>:
       </Typography>
 
-      <GoodTooltip title={<KeyStroke dark combo='Ctrl + O' />}>
+      <GoodTooltip title={<KeyStroke variant='solid' combo='Ctrl + O' />}>
         <Button
           variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
           onClick={handleImportFromFiles}

@@ -25,7 +25,7 @@ export function ExecuteModeMenu(props: {
   return (
     <CloseableMenu
       placement='top-end'
-      open anchorEl={props.anchorEl} onClose={props.onClose}
+      open={true} anchorEl={props.anchorEl} onClose={props.onClose}
       sx={{ minWidth: 320 }}
     >
 
@@ -47,7 +47,7 @@ export function ExecuteModeMenu(props: {
                 <Typography level='body-xs'>{data.description}{(data.requiresTTI && !props.hasCapabilityT2I) ? 'Unconfigured' : ''}</Typography>
               </Box>
               {(key === props.chatExecuteMode || !!data.shortcut) && (
-                <KeyStroke combo={platformAwareKeystrokes(
+                <KeyStroke variant='outlined' combo={platformAwareKeystrokes(
                   newLineShortcut(
                     (key === props.chatExecuteMode) ? 'ENTER'
                       : data.shortcut ? data.shortcut

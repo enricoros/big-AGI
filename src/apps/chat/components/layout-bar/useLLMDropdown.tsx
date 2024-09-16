@@ -98,7 +98,7 @@ function LLMDropdown(props: {
     <GoodTooltip title={
       <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
         Model Options
-        <KeyStroke combo='Ctrl + Shift + O' sx={{ my: 0.5 }} />
+        <KeyStroke variant='outlined' combo='Ctrl + Shift + O' sx={{ my: 0.5 }} />
       </Box>
     }>
       <IconButton
@@ -158,7 +158,7 @@ function LLMDropdown(props: {
       <ListItemDecorator><BuildCircleIcon color='success' /></ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
         Models
-        <KeyStroke combo='Ctrl + Shift + M' sx={{ ml: 2 }} />
+        <KeyStroke variant='outlined' combo='Ctrl + Shift + M' sx={{ ml: 2 }} />
       </Box>
     </ListItemButton>
 
