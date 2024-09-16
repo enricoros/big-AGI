@@ -37,7 +37,7 @@ import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLA
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { adjustContentScaling, themeScalingMap, themeZIndexPageBar } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -904,7 +904,7 @@ export function ChatMessage(props: {
       {/* Bubble Over Toolbar */}
       {ENABLE_BUBBLE && !!bubbleAnchor && (
         <Popper placement='top-start' open anchorEl={bubbleAnchor} slotProps={{
-          root: { style: { zIndex: themeZIndexPageBar + 1 } },
+          root: { style: { zIndex: themeZIndexChatBubble } },
         }}>
           <ClickAwayListener onClickAway={() => closeBubble()}>
             <ButtonGroup

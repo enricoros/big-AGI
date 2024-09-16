@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-import { Box, Slider, Typography } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, Slider } from '@mui/joy';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
 
 // we need to use local state to avoid race conditions with start/stops (triggred by react/strict mode)
@@ -16,6 +18,7 @@ let currMediaStream: MediaStream | null = null;
  * Be sure to set the video ref to the video element in your component.
  */
 export function useCameraCapture() {
+
   // state
   const [cameras, setCameras] = React.useState<MediaDeviceInfo[]>([]);
   const [cameraIdx, setCameraIdx] = React.useState<number>(-1);
@@ -70,7 +73,7 @@ export function useCameraCapture() {
     setError(null);
     setInfo(null);
     setZoomControl(null);
-    startVideo(selectedDevice, videoRef)
+    _startVideo(selectedDevice, videoRef)
       .then(({ info, zoomControl }) => {
         setInfo(info);
         setZoomControl(zoomControl);
@@ -94,11 +97,19 @@ export function useCameraCapture() {
 }
 
 
-async function startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefObject<HTMLVideoElement>) {
+const sliderContainerSx: SxProps = {
+  fontSize: 'sm',
+  display: 'flex',
+  alignItems: 'center',
+  mx: 0.75,
+  gap: 2,
+};
+
+
+async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefObject<HTMLVideoElement>) {
+
   if (!selectedDevice || !navigator.mediaDevices?.getUserMedia)
     throw new Error('Browser has no camera access');
-
-  console.log('startVideo', { selectedDevice });
 
   const searchConstrants: MediaStreamConstraints & { video: { zoom: boolean } } = {
     video: {
@@ -123,6 +134,7 @@ async function startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefOb
     // get the video track
     [track] = stream.getVideoTracks();
   } catch (error: any) {
+    console.log('useCameraCapture: startVideo error:', error);
     throw (error.name === 'NotAllowedError') ? new Error('Camera access denied') : error;
   }
 
@@ -141,14 +153,17 @@ async function startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefOb
   if (capabilities.zoom) {
     const { min, max, step } = capabilities.zoom;
     zoomControl =
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mx: 1 }}>
-        <Typography>Zoom:</Typography>
+      <Box sx={sliderContainerSx}>
+        <span>Zoom:</span>
         <Slider
-          color='neutral' size='lg'
-          min={min} max={max} step={step} defaultValue={1}
+          variant='solid'
+          color='neutral'
+          // size='lg'
+          defaultValue={1}
+          min={min} max={max} step={step}
           onChange={(_event, value) => track.applyConstraints({ advanced: [{ zoom: value as number }] } as any)}
-          sx={{ mx: 2 }}
         />
+        <ZoomInIcon opacity={0.5} />
       </Box>;
   }
 

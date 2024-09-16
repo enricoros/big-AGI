@@ -1,14 +1,30 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, IconButton, Modal, ModalClose, Option, Select, Sheet, Typography } from '@mui/joy';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import DownloadIcon from '@mui/icons-material/Download';
-import InfoIcon from '@mui/icons-material/Info';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { InlineError } from '~/common/components/InlineError';
 import { downloadVideoFrameAsPNG, renderVideoFrameAsPNGFile } from '~/common/util/videoUtils';
 import { useCameraCapture } from '~/common/components/useCameraCapture';
+
+
+const captureButtonContainerSx: SxProps = {
+  display: 'flex',
+  gap: 1,
+  justifyContent: 'space-between',
+  alignItems: 'center',
+};
+
+const captureButtonSx: SxProps = {
+  minWidth: 160,
+  borderRadius: '3rem',
+  // boxShadow: 'md',
+  boxShadow: '0 8px 12px -4px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+};
 
 
 export function CameraCaptureModal(props: {
@@ -87,7 +103,8 @@ export function CameraCaptureModal(props: {
         {/* Top bar */}
         <Sheet variant='solid' invertedColors sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
           <Select
-            variant='solid' color='neutral'
+            variant='soft'
+            color='neutral'
             value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
             indicator={<KeyboardArrowDownIcon />}
           >
@@ -96,7 +113,10 @@ export function CameraCaptureModal(props: {
             </Option>
             {cameras.map((device: MediaDeviceInfo, camIndex) => (
               <Option key={'video-dev-' + camIndex} value={camIndex}>
-                {device.label}
+                {/*{device.label?.includes('Face') ? <CameraFrontIcon />*/}
+                {/*  : device.label?.includes('tual') ? <CameraRearIcon />*/}
+                {/*    : null}*/}
+                {device.label?.replace('camera2 ', 'Camera ')}
               </Option>
             ))}
           </Select>
@@ -127,7 +147,7 @@ export function CameraCaptureModal(props: {
         </Box>
 
         {/* Bottom controls (zoom, ocr, download) & progress */}
-        <Sheet variant='soft' sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1 }}>
+        <Sheet variant='soft' sx={{ display: 'flex', flexDirection: 'column', p: 1 }}>
 
           {!!error && <InlineError error={error} />}
 
@@ -135,30 +155,34 @@ export function CameraCaptureModal(props: {
 
           {/*{ocrProgress !== null && <LinearProgress color='primary' determinate value={100 * ocrProgress} sx={{ px: 2 }} />}*/}
 
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+          <Box paddingBottom={zoomControl ? 1 : undefined} sx={captureButtonContainerSx}>
+
             {/* Info */}
-            <IconButton size='lg' disabled={!info} variant='soft' onClick={() => setShowInfo(info => !info)}>
-              <InfoIcon />
+            <IconButton disabled={!info} onClick={() => setShowInfo(info => !info)}>
+              <InfoOutlinedIcon />
             </IconButton>
+
             {/*<Button disabled={ocrProgress !== null} fullWidth variant='solid' size='lg' onClick={handleVideoOCRClicked} sx={{ flex: 1, maxWidth: 260 }}>*/}
             {/*  Extract Text*/}
             {/*</Button>*/}
 
             {/* Capture */}
             <Button
-              fullWidth
-              variant='solid' color='neutral'
+              variant='solid'
+              color='neutral'
+              size='lg'
               onClick={handleVideoSnapClicked}
               endDecorator={<CameraAltIcon />}
-              sx={{ flex: 1, maxWidth: 200, py: 2, borderRadius: '3rem' }}
+              sx={captureButtonSx}
             >
               Capture
             </Button>
 
             {/* Download */}
-            <IconButton size='lg' variant='soft' onClick={handleVideoDownloadClicked}>
+            <IconButton onClick={handleVideoDownloadClicked}>
               <DownloadIcon />
             </IconButton>
+
           </Box>
         </Sheet>
 
