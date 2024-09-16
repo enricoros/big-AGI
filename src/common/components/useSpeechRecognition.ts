@@ -204,13 +204,32 @@ export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, sof
       // recordingDonePromiseResolveRef.current = null;
     };
 
-    _api.onerror = event => {
+    _api.onerror = (event: any) => {
       if (event.error === 'no-speech') {
         speechResult.doneReason = 'api-no-speech';
       } else {
         speechResult.doneReason = 'api-error';
-        setErrorMessage('Error occurred during speech recognition.');
-        console.error('Error occurred during speech recognition:', event.error);
+        console.error('Speech recognition error:', event.error, event.message);
+        switch (event.error) {
+          case 'not-allowed':
+            setErrorMessage('Microphone access blocked. Enable it in your browser settings to use speech recognition.');
+            break;
+          case 'service-not-allowed':
+            setErrorMessage('Speech recognition permission denied. Check your browser/website settings.');
+            break;
+          case 'audio-capture':
+            setErrorMessage(`Audio capture failed (${event.message}). Please try again.`);
+            break;
+          case 'network':
+            setErrorMessage('Network communication required to complete the service, but failed.');
+            break;
+          case 'aborted':
+            setErrorMessage(`Speech recognition was interrupted ${event.message}.`);
+            break;
+          default:
+            setErrorMessage(`Browser speech recognition issue ${event.error}: ${event.message}`);
+            break;
+        }
       }
     };
     _api.onresult = (event: ISpeechRecognitionEvent) => {
