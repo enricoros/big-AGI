@@ -93,7 +93,7 @@ export function ChatBarAltBeam(props: {
           </GoodTooltip>
         )}
 
-        <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke combo='Esc' /></Box>}>
+        <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke variant='outlined' combo='Esc' /></Box>}>
           <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
             <CloseRoundedIcon />
           </IconButton>

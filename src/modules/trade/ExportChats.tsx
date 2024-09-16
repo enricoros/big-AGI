@@ -83,7 +83,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             </Typography>
           )}
 
-          <GoodTooltip title={<KeyStroke dark combo='Ctrl + S' />}>
+          <GoodTooltip title={<KeyStroke variant='solid' combo='Ctrl + S' />}>
             <Button
               variant='soft' disabled={!hasConversation}
               color={downloadedJSONState === 'ok' ? 'success' : downloadedJSONState === 'fail' ? 'warning' : 'primary'}
