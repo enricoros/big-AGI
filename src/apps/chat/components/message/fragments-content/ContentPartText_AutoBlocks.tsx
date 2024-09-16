@@ -26,7 +26,7 @@ export function ContentPartText_AutoBlocks(props: {
   enhanceCodeBlocks: boolean,
   renderTextDiff?: TextDiff[];
 
-  showUnsafeHtml?: boolean,
+  showUnsafeHtmlCode?: boolean,
   optiAllowSubBlocksMemo: boolean,
 
   onContextMenu?: (event: React.MouseEvent) => void;
@@ -59,7 +59,7 @@ export function ContentPartText_AutoBlocks(props: {
       contentScaling={props.contentScaling}
       fitScreen={props.fitScreen}
       isMobile={props.isMobile}
-      showUnsafeHtml={props.showUnsafeHtml}
+      showUnsafeHtmlCode={props.showUnsafeHtmlCode}
       renderSanityTextDiffs={props.renderTextDiff}
       codeRenderVariant={props.enhanceCodeBlocks ? 'enhanced' : 'outlined'}
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}

@@ -137,7 +137,7 @@ export function ChatMessage(props: {
   hideAvatar?: boolean,
   showAntPromptCaching?: boolean,
   showBlocksDate?: boolean,
-  showUnsafeHtml?: boolean,
+  showUnsafeHtmlCode?: boolean,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
   onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
@@ -680,7 +680,7 @@ export function ChatMessage(props: {
             messageRole={messageRole}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
-            showUnsafeHtml={props.showUnsafeHtml}
+            showUnsafeHtmlCode={props.showUnsafeHtmlCode}
             enhanceCodeBlocks={labsEnhanceCodeBlocks}
 
             textEditsState={textContentEditState}

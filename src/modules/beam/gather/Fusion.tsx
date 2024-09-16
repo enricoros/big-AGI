@@ -148,7 +148,7 @@ export function Fusion(props: {
               fitScreen={true}
               isMobile={props.isMobile}
               hideAvatar
-              showUnsafeHtml={true}
+              showUnsafeHtmlCode={true}
               adjustContentScaling={-1}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
             />

@@ -50,7 +50,7 @@ export function ContentFragments(props: {
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
   enhanceCodeBlocks: boolean,
-  showUnsafeHtml?: boolean,
+  showUnsafeHtmlCode?: boolean,
 
   textEditsState: ChatMessageTextPartEditState | null,
   setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
@@ -176,7 +176,7 @@ export function ContentFragments(props: {
               disableMarkdownText={props.disableMarkdownText}
               enhanceCodeBlocks={props.enhanceCodeBlocks}
               // renderTextDiff={textDiffs || undefined}
-              showUnsafeHtml={props.showUnsafeHtml}
+              showUnsafeHtmlCode={props.showUnsafeHtmlCode}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               onContextMenu={props.onContextMenu}
               onDoubleClick={props.onDoubleClick}
