@@ -215,7 +215,7 @@ export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, sof
             setErrorMessage('Microphone access blocked. Enable it in your browser settings to use speech recognition.');
             break;
           case 'service-not-allowed':
-            setErrorMessage('Speech recognition permission denied. Check your browser/website settings.');
+            setErrorMessage('Speech recognition permission denied. Check your browser and system settings.');
             break;
           case 'audio-capture':
             setErrorMessage(`Audio capture failed (${event.message}). Please try again.`);

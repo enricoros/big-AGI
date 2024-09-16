@@ -6,6 +6,7 @@
   "repository": "https://github.com/enricoros/big-agi",
   "scripts": {
     "dev": "next dev",
+    "dev-https": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
