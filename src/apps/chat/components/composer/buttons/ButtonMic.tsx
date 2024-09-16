@@ -17,7 +17,7 @@ const micLegend = (errorMessage: string | null) =>
       <Alert variant='soft' color='danger' sx={{ mt: 2, mb: 0.5, flexDirection: 'column', alignItems: 'flex-start' }}>
         {errorMessage}
         <ExternalDocsLink color='danger' level='body-sm' docPage='help-feature-microphone'>
-          Help & Support
+          How to fix...
         </ExternalDocsLink>
       </Alert>
     )}
