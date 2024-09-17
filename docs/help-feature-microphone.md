@@ -19,6 +19,8 @@ Ensuring microphone access is essential for using voice features in applications
 
 ### Safari (macOS)
 
+[https://vimeo.com/1010161384](https://vimeo.com/1010161384)
+
 1. Open the website in Safari.
 2. Click **"Safari"** in the top menu bar.
 3. Select **"Preferences"** or **"Settings**" (depending on your version).
