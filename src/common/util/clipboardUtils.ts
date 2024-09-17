@@ -1,5 +1,5 @@
 import { addSnackbar } from '../components/snackbar/useSnackbarsStore';
-import { isBrowser, isFirefox } from './pwaUtils';
+import { Is, isBrowser } from './pwaUtils';
 
 export function copyToClipboard(text: string, typeLabel: string) {
   if (!isBrowser)
@@ -26,7 +26,7 @@ export function copyToClipboard(text: string, typeLabel: string) {
 }
 
 // NOTE: this could be implemented in a platform-agnostic manner with !!.read, but we call it out here for clarity
-export const supportsClipboardRead = !isFirefox;
+export const supportsClipboardRead = !Is.Browser.Firefox;
 
 export async function getClipboardItems(): Promise<ClipboardItem[] | null> {
   if (!isBrowser || !window.navigator.clipboard?.read)

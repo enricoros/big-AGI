@@ -2,8 +2,8 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 import { PanelGroup } from 'react-resizable-panels';
 
+import { Is } from '~/common/util/pwaUtils';
 import { checkVisibleNav, navItems } from '~/common/app.nav';
-import { isMacUser } from '~/common/util/pwaUtils';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -61,7 +61,7 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
     { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
     // Shortcuts
-    { key: isMacUser ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
+    { key: Is.OS.MacOS ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
     { key: 'h', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
   ], []));
 
