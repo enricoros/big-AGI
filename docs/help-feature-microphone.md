@@ -19,16 +19,23 @@ Ensuring microphone access is essential for using voice features in applications
 
 ### Safari (macOS)
 
-[https://vimeo.com/1010161384](https://vimeo.com/1010161384)
+**[Watch the video tutorial: How to enable Speech Recognition in Safari](https://vimeo.com/1010161384)**
 
-1. Open the website in Safari.
-2. Click **"Safari"** in the top menu bar.
-3. Select **"Preferences"** or **"Settings**" (depending on your version).
-4. Go to the **"Websites"** tab.
-5. Select **"Microphone"** from the sidebar.
-6. Find the website in the list and set it to **"Allow"**.
-7. Close the Preferences window.
-8. **Refresh** the page.
+If you're seeing a "Speech Recognition permission denied" error, follow these steps:
+
+1. Open **System Settings**.
+   - Go to **Privacy & Security** > **Speech Recognition**.
+   - Enable Safari in the list of allowed applications.
+   - Quit & Open Safari.
+2. Click **Safari** in the top menu bar.
+   - Select **Settings**.
+   - Go to the **Websites** tab.
+   - Select **Microphone** from the sidebar.
+   - Find big-AGI (or localhost for developers) in the list and set it to **Allow**.
+   - Close the Settings window.
+3. **Refresh** the page.
+
+This quick and simple fix should get essential voice input working in big-AGI on your Mac.
 
 ### Microsoft Edge (Windows)
 
