@@ -26,14 +26,15 @@ const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
 );
 
 
+// DelRenderer adds a strikethrough to the text
+function DelRenderer({ children }: { children: React.ReactNode }) {
+  return <del className='agi-content-delete'>{children}</del>;
+}
+
 // Mark Renderer adds a yellow background to the text
 function MarkRenderer({ children }: { children: React.ReactNode }) {
   // Mark by default has a yellow background, but we want to set a custom class here, so we can style it
-  return (
-    <mark className='agi-highlight'>
-      {children}
-    </mark>
-  );
+  return <mark className='agi-highlight'>{children}</mark>;
 }
 
 
@@ -112,7 +113,8 @@ function _extractTableData(children: React.JSX.Element) {
 
 const reactMarkdownComponents = {
   a: LinkRenderer, // override the link renderer to add target="_blank"
-  mark: MarkRenderer, // renders the <mark> tag
+  del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
+  mark: MarkRenderer, // renders the <mark> tag (==highlight==)
   table: TableRenderer, // override the table renderer to show the download CSV links
   // math/inlineMath components are not needed, rehype-katex handles this automatically
 } as ReactMarkdownComponents;
@@ -139,7 +141,9 @@ const preprocessMarkdown = (markdownText: string) => markdownText
   .replace(/\s\\\((.*?)\\\)/gs, (_match, p1) => ` $$${p1}$$`) // Replace inline LaTeX delimiters \( and \) with $$
   .replace(/\s\\\[(.*?)\\]/gs, (_match, p1) => ` $$${p1}$$`) // Replace block LaTeX delimiters \[ and \] with $$
   // Replace <mark>...</mark> with ==...==, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
-  .replace(/<mark>(.+?)<\/mark>/g, (_match, p1) => ` ==${p1}==`);
+  .replace(/<mark>(.+?)<\/mark>/g, (_match, p1) => `==${p1}==`)
+  // Replace <del>...</del> with ~~...~~, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
+  .replace(/<del>(.+?)<\/del>/g, (_match, p1) => `~~${p1}~~`);
 
 
 export default function CustomMarkdownRenderer(props: { content: string }) {

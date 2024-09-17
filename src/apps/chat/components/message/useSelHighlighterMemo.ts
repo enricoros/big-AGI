@@ -20,9 +20,10 @@ import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
  * </mark>
  */
 const APPLY_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
+const APPLY_STRIKE = (text: string) => `<del>${text}</del>`;
 const APPLY_STRONG = (text: string) => `**${text}**`;
 
-type HighlightTool = 'highlight' | 'strong';
+type HighlightTool = 'highlight' | 'strike' | 'strong';
 
 export function useSelHighlighterMemo(
   messageId: DMessageId,
@@ -50,12 +51,19 @@ export function useSelHighlighterMemo(
 
           index = fragmentText.indexOf(selText, index + 1);
 
-          // make the highlighter function
+          // Tool application function
           acc = (tool: HighlightTool) => {
-            const highlighted = tool === 'highlight' ? APPLY_HIGHLIGHT(selText) : APPLY_STRONG(selText);
+            // Apply the tool
+            const highlighted =
+              tool === 'highlight' ? APPLY_HIGHLIGHT(selText)
+                : tool === 'strike' ? APPLY_STRIKE(selText)
+                  : tool === 'strong' ? APPLY_STRONG(selText)
+                    : selText;
+            // Toggle, if the tooled text is already present
             const newFragmentText =
               fragmentText.includes(highlighted) ? fragmentText.replace(highlighted, selText) // toggles selection
                 : fragmentText.replace(selText, highlighted);
+            // Replace the whole fragment within the message
             onMessageFragmentReplace(messageId, fragment.fId, createTextContentFragment(newFragmentText));
           };
         }
