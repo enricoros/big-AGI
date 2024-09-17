@@ -14,6 +14,7 @@ import '~/common/styles/NProgress.css';
 import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
 
+import { Is } from '~/common/util/pwaUtils';
 import { OverlaysInsert } from '~/common/layout/overlays/OverlaysInsert';
 import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendCapabilities';
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
@@ -21,7 +22,6 @@ import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
-import { isVercelFromFrontend } from '~/common/util/pwaUtils';
 
 
 const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
@@ -51,8 +51,8 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
       </ProviderSingleTab>
     </ProviderTheming>
 
-    {isVercelFromFrontend && <VercelAnalytics debug={false} />}
-    {isVercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
+    {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
+    {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}
 
   </>;

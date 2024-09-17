@@ -35,7 +35,6 @@ import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardU
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { isMacUser } from '~/common/util/pwaUtils';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -356,14 +355,14 @@ export function Composer(props: {
     if (e.key === 'Enter') {
 
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
-      if (e.altKey) {
+      if (e.altKey && !e.metaKey && !e.ctrlKey) {
         if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
           touchAltEnter();
         return e.preventDefault();
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
-      if ((isMacUser && e.metaKey && !e.ctrlKey) || (!isMacUser && e.ctrlKey && !e.metaKey)) {
+      if (e.ctrlKey && !e.metaKey && !e.altKey) {
         if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
           touchCtrlEnter();
         return e.preventDefault();

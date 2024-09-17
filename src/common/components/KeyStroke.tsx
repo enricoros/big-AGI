@@ -3,12 +3,12 @@ import * as React from 'react';
 import type { SxProps, VariantProp } from '@mui/joy/styles/types';
 import { Chip } from '@mui/joy';
 
+import { Is } from '~/common/util/pwaUtils';
 import { hideOnMobile } from '~/common/app.theme';
-import { isMacUser } from '~/common/util/pwaUtils';
 
 
 export function platformAwareKeystrokes(text: string) {
-  return isMacUser
+  return Is.OS.MacOS
     ? text
       .replaceAll('Ctrl', '⌃' /* Control */)
       .replaceAll('Alt', '⌥' /* Option */)

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { isBrowser, isChromeDesktop, isIPhoneUser } from '~/common/util/pwaUtils';
+import { Is, isBrowser } from '~/common/util/pwaUtils';
 
 import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
 import { useUIPreferencesStore } from '../state/store-ui';
@@ -18,7 +18,7 @@ export const browserSpeechRecognitionCapability = (): CapabilityBrowserSpeechRec
       mayWork: isApiAvailable && !isDeviceNotSupported,
       isApiAvailable,
       isDeviceNotSupported,
-      warnings: isIPhoneUser ? ['Not tested on this browser/device.'] : [],
+      warnings: Is.OS.iOS ? ['Not tested on this browser/device.'] : [],
     };
   }
   return cachedCapability;
@@ -134,7 +134,7 @@ export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, sof
 
     // configure the instance
     _api.lang = preferredLanguageRef.current;
-    _api.interimResults = isChromeDesktop && softStopTimeoutRef.current > 0;
+    _api.interimResults = Is.Desktop && softStopTimeoutRef.current > 0;
     _api.maxAlternatives = 1;
     _api.continuous = true;
 

@@ -1,6 +1,6 @@
 // noinspection JSUnresolvedReference
 
-import { isBrowser, isVercelFromBackendOrSSR } from './pwaUtils';
+import { Is, isBrowser } from './pwaUtils';
 
 /**
  * Return the base URL for the current environment.
@@ -10,7 +10,8 @@ import { isBrowser, isVercelFromBackendOrSSR } from './pwaUtils';
  */
 export function getBaseUrl(): string {
   if (isBrowser) return ''; // browser should use relative url
-  if (isVercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
+  if (Is.Deployment.VercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
+  // NOTE: untested with https://localhost:3000
   return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 }
 
@@ -20,7 +21,8 @@ export function getBaseUrl(): string {
  */
 export function getOriginUrl(): string {
   if (isBrowser) return window.location.origin;
-  if (isVercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`;
+  if (Is.Deployment.VercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`;
+  // NOTE: untested with https://localhost:3000
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
