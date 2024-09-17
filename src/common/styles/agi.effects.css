@@ -73,6 +73,14 @@
     --agi-color-mark-highlight-channel: 255 255 0;
 }
 
+/* Simple text content deletion */
+.agi-content-delete {
+    text-decoration: line-through;
+    text-decoration-color: var(--color-danger-fg);
+    /*text-decoration-thickness: 2px;*/
+    font-style: italic;
+}
+
 /*.agi-highlight-yellow {*/
 /*    background: linear-gradient(104deg, rgba(255,255,132,0) 0.9%, rgba(255,255,132,1) 2.4%, rgba(255,252,132,1) 50%, rgba(255,255,132,1) 97.6%, rgba(255,255,132,0) 99.1%);*/
 /*    color: red;*/
