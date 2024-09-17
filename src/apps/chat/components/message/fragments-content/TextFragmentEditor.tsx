@@ -9,7 +9,7 @@ import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/u
 
 const textAreaSlotPropsEnter = {
   textarea: {
-    enterKeyHint: 'enter',
+    enterKeyHint: 'enter' as const,
   },
   endDecorator: {
     sx: {
@@ -23,7 +23,7 @@ const textAreaSlotPropsEnter = {
 const textAreaSlotPropsDone = {
   ...textAreaSlotPropsEnter,
   textarea: {
-    enterKeyHint: 'done',
+    enterKeyHint: 'done' as const,
   },
 };
 
