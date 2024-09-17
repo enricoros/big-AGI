@@ -222,7 +222,7 @@ export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, sof
           break;
 
         case 'service-not-allowed':
-          setErrorMessage('Speech recognition permission denied. Check your browser and system settings.');
+          setErrorMessage('Speech Recognition permission denied. Check your System Settings.');
           break;
 
         case 'audio-capture':
