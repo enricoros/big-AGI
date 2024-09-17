@@ -453,6 +453,7 @@ export function lmStudioModelToModelDescription(modelId: string): ModelDescripti
     description: `Unknown LM Studio model. File: ${modelId}`,
     contextWindow: null, // 'not provided'
     interfaces: [LLM_IF_OAI_Chat], // assume..
+    chatPrice: { input: 'free', output: 'free' },
   });
 }
 
@@ -485,6 +486,7 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
     description: 'Unknown localAI model. Please update `models.data.ts` with this ID',
     contextWindow: null, // 'not provided'
     interfaces: [LLM_IF_OAI_Chat], // assume..
+    chatPrice: { input: 'free', output: 'free' },
   });
 }
 
