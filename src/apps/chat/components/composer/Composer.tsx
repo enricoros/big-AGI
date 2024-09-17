@@ -414,7 +414,9 @@ export function Composer(props: {
       void handleSendAction(chatExecuteMode, nextText); // fire/forget
     } else {
       if (!micContinuation && notUserStop)
-        void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3');
+        void AudioPlayer.playUrl('/sounds/mic-off-mid.mp3').catch(() => {
+          // This happens on Is.Browser.Safari, where the audio is not allowed to play without user interaction
+        });
       if (nextText) {
         composerTextAreaRef.current?.focus();
         setComposeText(nextText);
