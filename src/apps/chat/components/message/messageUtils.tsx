@@ -227,7 +227,11 @@ export function useMessageAvatarLabel({ generator, pendingIncomplete, created, u
     if (pendingIncomplete)
       return {
         label: prettyName,
-        tooltip: null,
+        tooltip: (!created || complexity === 'minimal') ? null : (
+          <Box sx={avatarLabelTooltipSx}>
+            <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
+          </Box>
+        )
       };
 
     // named generator: nothing else to do there
@@ -247,7 +251,7 @@ export function useMessageAvatarLabel({ generator, pendingIncomplete, created, u
     // aix tooltip: more details
     return {
       label: (stopReason && complexity !== 'minimal') ? <>{prettyName} <small>({stopReason})</small></> : prettyName,
-      tooltip: (
+      tooltip: complexity === 'minimal' ? null : (
         <Box sx={avatarLabelTooltipSx}>
           {VendorIcon ? <Box sx={avatarLabelTooltipIconContainerSx}><VendorIcon />{generator.name}</Box> : <div>{generator.name}</div>}
           {(modelId && complexity === 'extra') && <div>{modelId}</div>}
