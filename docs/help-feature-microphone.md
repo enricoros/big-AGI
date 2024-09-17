@@ -19,7 +19,7 @@ Ensuring microphone access is essential for using voice features in applications
 
 ### Safari (macOS)
 
-**[Watch the video tutorial: How to enable Speech Recognition in Safari](https://vimeo.com/1010161384)**
+**[Watch the video tutorial: How to enable Speech Recognition in Safari](https://vimeo.com/1010342201)**
 
 If you're seeing a "Speech Recognition permission denied" error, follow these steps:
 
