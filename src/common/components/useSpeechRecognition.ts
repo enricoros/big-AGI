@@ -134,7 +134,9 @@ export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, sof
 
     // configure the instance
     _api.lang = preferredLanguageRef.current;
-    _api.interimResults = Is.Desktop && softStopTimeoutRef.current > 0;
+    _api.interimResults =
+      Is.Desktop // verified on Chrome desktop, and Safari desktop
+      && softStopTimeoutRef.current > 0; // only if we perform the stopping on the client side
     _api.maxAlternatives = 1;
     _api.continuous = true;
 
