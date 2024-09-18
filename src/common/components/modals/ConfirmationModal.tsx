@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box, Button, Divider, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 
 
 /**

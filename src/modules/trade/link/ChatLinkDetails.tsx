@@ -11,8 +11,8 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import LinkIcon from '@mui/icons-material/Link';
 
 import { Brand } from '~/common/app.config';
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { GoodModal } from '~/common/components/GoodModal';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { Link } from '~/common/components/Link';

@@ -4,7 +4,7 @@ import { Alert, Box, Divider, IconButton, List, ListItem, Tooltip, Typography } 
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 

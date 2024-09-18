@@ -6,10 +6,10 @@ import ReplayIcon from '@mui/icons-material/Replay';
 
 import { useStreamChatText } from '~/modules/aifn/useStreamChatText';
 
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { getConversation } from '~/common/stores/chat/store-chats';

@@ -7,7 +7,7 @@ import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import { TokenBadgeMemo } from '../../../apps/chat/components/composer/tokens/TokenBadge';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { Section } from '~/common/components/Section';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { useDefaultLLMIDs, useNonHiddenLLMs } from '~/common/stores/llms/llms.hooks';

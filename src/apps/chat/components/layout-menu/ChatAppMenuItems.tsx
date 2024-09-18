@@ -17,7 +17,7 @@ import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined
 import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 

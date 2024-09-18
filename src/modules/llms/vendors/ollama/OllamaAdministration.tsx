@@ -5,7 +5,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import FormatListNumberedRtlIcon from '@mui/icons-material/FormatListNumberedRtl';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
