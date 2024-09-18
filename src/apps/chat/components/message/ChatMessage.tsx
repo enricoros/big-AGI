@@ -578,7 +578,7 @@ export function ChatMessage(props: {
       {/* Message Row: Aside, Fragment[][], Aside2 */}
       <Box
         role={undefined /* aside | message | ops */}
-        sx={fromAssistant ? messageBodySx : messageBodyReverseSx}
+        sx={(fromAssistant && !isEditingText) ? messageBodySx : messageBodyReverseSx}
       >
 
         {/* [start-Avatar] Avatar (Persona) */}
