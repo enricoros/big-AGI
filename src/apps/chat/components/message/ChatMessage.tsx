@@ -89,6 +89,7 @@ const personaAvatarOrMenuSx: SxProps = {
 
 const editButtonWrapSx: SxProps = {
   overflowWrap: 'anywhere',
+  mb: -0.5, // this is so that the 'eidt/cancel' labels won't push down the edit box when single lined
 };
 
 const fragmentsListSx: SxProps = {
@@ -589,7 +590,7 @@ export function ChatMessage(props: {
             <Box
               onClick={(event) => {
                 // [DEBUG][PROD] shift+click to dump the DMessage
-                event.shiftKey && console.log(props.message);
+                event.shiftKey && console.log('message', props.message);
                 handleOpsMenuToggle(event);
               }}
               onContextMenu={handleOpsMenuToggle}
