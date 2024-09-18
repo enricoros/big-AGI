@@ -61,7 +61,7 @@ export function LLMAttachmentsList(props: {
   const handleOverallMenuHide = React.useCallback(() => setOverallMenuAnchor(null), []);
 
   const handleOverallMenuToggle = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.shiftKey && console.log(llmAttachmentDrafts);
+    event.shiftKey && console.log('llmAttachmentDrafts', llmAttachmentDrafts);
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     setOverallMenuAnchor(anchor => anchor ? null : event.currentTarget);
   }, [llmAttachmentDrafts]);

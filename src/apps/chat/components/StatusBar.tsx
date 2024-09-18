@@ -151,7 +151,7 @@ export function StatusBar() {
   // handlers
   const handleHideShortcuts = React.useCallback((event: React.MouseEvent) => {
     if (event.shiftKey) {
-      console.log(useGlobalShortcutsStore.getState().shortcutGroups);
+      console.log('shortcutGroups', useGlobalShortcutsStore.getState().shortcutGroups);
       return;
     }
     showPromisedOverlay('shortcuts-confirm-close', {}, ({ onResolve, onUserReject }) =>
