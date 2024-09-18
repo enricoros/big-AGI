@@ -30,7 +30,7 @@ export const ANIM_BUSY_TYPING = 'https://i.giphy.com/media/jJxaUysjzO9ri/giphy.w
 export const messageAsideColumnSx: SxProps = {
   // make this stick to the top of the screen
   position: 'sticky',
-  top: 0,
+  top: '0.25rem',
 
   // style
   // filter: 'url(#agi-holographic)',
