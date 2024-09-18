@@ -246,10 +246,13 @@ function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): Aix
  * Hot fix for handling system messages with OpenAI O1 Preview models.
  * Converts System to User messages for compatibility.
  */
-export function clientHotFixSystemMessageForO1Preview(aixChatGenerate: AixAPIChatGenerate_Request): void {
+export function clientHotFixGenerateRequestForO1Preview(aixChatGenerate: AixAPIChatGenerate_Request): void {
+
+  let workaroundsCount = 0;
 
   // Convert the main system message if it exists
   if (aixChatGenerate.systemMessage) {
+    workaroundsCount++;
 
     // Convert system message to user message
     const systemAsUser: AixMessages_UserMessage = {
@@ -266,5 +269,22 @@ export function clientHotFixSystemMessageForO1Preview(aixChatGenerate: AixAPICha
 
   // Note: other conversions that would translate to system inside the AIX Dispatch will be handled there, as we have a
   // higher level representation here, where the roles are 'user', 'model', and 'tool'.
+
+  // Remove any inline images from the entire chat sequence
+  for (let i = 0; i < aixChatGenerate.chatSequence.length; i++) {
+    const message = aixChatGenerate.chatSequence[i];
+
+    // Iterate over message parts and remove inline images
+    for (let j = message.parts.length - 1; j >= 0; j--) {
+      if (message.parts[j].pt === 'inline_image') {
+        workaroundsCount++;
+        message.parts.splice(j, 1);
+      }
+    }
+  }
+
+  // Log the number of workarounds applied
+  if (workaroundsCount > 0)
+    console.warn(`[DEV] Working around o1 models limitations: applied ${workaroundsCount} client-side workarounds`);
 
 }
