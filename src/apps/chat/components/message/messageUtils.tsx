@@ -223,7 +223,7 @@ export function useMessageAvatarLabel({ generator, pendingIncomplete, created, u
     }
 
     // incomplete: just the name
-    const prettyName = prettyBaseModel(generator.name);
+    const prettyName = prettyShortChatModelName(generator.name);
     if (pendingIncomplete)
       return {
         label: prettyName,
@@ -231,7 +231,7 @@ export function useMessageAvatarLabel({ generator, pendingIncomplete, created, u
           <Box sx={avatarLabelTooltipSx}>
             <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
           </Box>
-        )
+        ),
       };
 
     // named generator: nothing else to do there
@@ -332,20 +332,33 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
 
 /// Base Model pretty name from the model ID - VERY HARDCODED - shall use the Avatar Label-style code instead
 
-export function prettyBaseModel(model: string | undefined): string {
+export function prettyShortChatModelName(model: string | undefined): string {
   if (!model) return '';
+
+  // TODO: fully reform this function to be using information from the DLLM, rather than this manual mapping
+
   // [OpenAI]
-  if (model.includes('gpt-4-vision-preview')) return 'GPT-4 Vision';
-  if (model.includes('gpt-4-1106-preview')) return 'GPT-4 Turbo';
-  if (model.includes('gpt-4-32k')) return 'GPT-4-32k';
-  if (model.includes('gpt-4o-mini')) return 'GPT-4o Mini';
-  if (model.includes('gpt-4o')) return 'GPT-4o';
-  if (model.includes('gpt-4-turbo')) return 'GPT-4 Turbo';
-  if (model.includes('gpt-4')) return 'GPT-4';
-  if (model.includes('gpt-3.5-turbo-instruct')) return '3.5 Turbo Instruct';
-  if (model.includes('gpt-3.5-turbo-1106')) return '3.5 Turbo 16k';
-  if (model.includes('gpt-3.5-turbo-16k')) return '3.5 Turbo 16k';
-  if (model.includes('gpt-3.5-turbo')) return '3.5 Turbo';
+  if (model.includes('o1-')) {
+    if (model.includes('o1-mini')) return 'o1 Mini';
+    if (model.includes('o1-preview')) return 'o1 Preview';
+    return 'o1';
+  }
+  if (model.includes('chatgpt-4o-latest')) return 'ChatGPT 4o';
+  if (model.includes('gpt-4')) {
+    if (model.includes('gpt-4o-mini')) return 'GPT-4o mini';
+    if (model.includes('gpt-4o')) return 'GPT-4o';
+    if (model.includes('gpt-4-0125-preview')
+      || model.includes('gpt-4-1106-preview')
+      || model.includes('gpt-4-turbo')
+    ) return 'GPT-4 Turbo';
+    if (model.includes('gpt-4-32k')) return 'GPT-4-32k';
+    return 'GPT-4';
+  }
+  if (model.includes('gpt-3')) {
+    if (model.includes('gpt-3.5-turbo-instruct')) return 'GPT-3.5 Turbo Instruct';
+    if (model.includes('gpt-3.5-turbo')) return 'GPT-3.5 Turbo';
+    if (model.includes('gpt-35-turbo')) return 'GPT-3.5 Turbo';
+  }
   // [LocalAI?]
   if (model.endsWith('.bin')) return model.slice(0, -4);
   // [Anthropic]

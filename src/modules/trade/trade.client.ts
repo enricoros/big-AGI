@@ -1,7 +1,7 @@
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
-import { prettyBaseModel } from '../../apps/chat/components/message/messageUtils';
+import { prettyShortChatModelName } from '../../apps/chat/components/message/messageUtils';
 
 import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
@@ -192,7 +192,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;
-        senderName = `${purpose || 'Assistant'} · *${prettyBaseModel(message.generator?.name || '')}*`.trim();
+        senderName = `${purpose || 'Assistant'} · *${prettyShortChatModelName(message.generator?.name || '')}*`.trim();
         if (purpose && purpose in SystemPurposes)
           senderName = `${SystemPurposes[purpose as SystemPurposeId]?.symbol || ''} ${senderName}`.trim();
         break;
