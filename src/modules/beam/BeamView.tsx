@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Alert, Box, CircularProgress } from '@mui/joy';
 
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useUICounter } from '~/common/state/store-ui';
 

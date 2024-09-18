@@ -12,7 +12,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { adjustContentScaling } from '~/common/app.theme';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/state/store-ui';

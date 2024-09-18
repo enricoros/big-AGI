@@ -4,7 +4,7 @@ import { Alert, Box, Button, Card, CircularProgress, IconButton, LinearProgress,
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { apiQuery } from '~/common/util/trpc.client';

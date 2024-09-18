@@ -7,7 +7,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { WindowFocusObserver } from '~/common/util/windowUtils';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
