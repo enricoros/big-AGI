@@ -60,9 +60,9 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
         <Box>
           Approximate costs: <b>{formatModelsCost(totalCosts)}</b> · <span style={{ opacity: 0.75 }}>Costs are partial,
           and may not reflect the latest pricing.
-          Costs measurements for this service began <TimeAgo date={firstUsageDate} /> and processed {usageCount} requests
-          {/*{partialMessageUsages ? ` (${partialMessageUsages} of which were interrupted)` : ''},*/}
-          and {(totalInputTokens + totalOutputTokens).toLocaleString()} tokens.</span>
+          Costs measurements for this service began <TimeAgo date={firstUsageDate} /> and processed {usageCount?.toLocaleString()} requests
+          {(partialMessageUsages > usageCount / 5) ? ` (${partialMessageUsages} of which were interrupted)` : ''},
+          {' '}and {(totalInputTokens + totalOutputTokens).toLocaleString()} tokens.</span>
           {/*<ExternalLink href='https://console.anthropic.com/settings/usage'>Anthropic usage</ExternalLink>*/}
         </Box>
         {hasSaved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
