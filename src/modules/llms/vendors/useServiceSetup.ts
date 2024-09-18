@@ -28,14 +28,14 @@ export function useServiceSetup<TServiceSettings extends object, TAccess, TLLMOp
 } {
 
   // invalidates only when the setup changes
-  const { updateServiceSettings, ...rest } = useModelsStore(useShallow(state => {
+  const { updateServiceSettings, ...rest } = useModelsStore(useShallow(({ llms, sources, updateServiceSettings }) => {
 
     // find the service | null
-    const service: DModelsService<TServiceSettings> | null = state.sources.find(s => s.id === serviceId) ?? null;
+    const service: DModelsService<TServiceSettings> | null = sources.find(s => s.id === serviceId) ?? null;
 
     // (safe) service-derived properties
     const serviceSetupValid = (service?.setup && vendor?.validateSetup) ? vendor.validateSetup(service.setup as TServiceSettings) : false;
-    const serviceLLms = service ? state.llms.filter(llm => llm.sId === serviceId) : stableNoLlms;
+    const serviceLLms = service ? llms.filter(llm => llm.sId === serviceId) : stableNoLlms;
     const serviceAccess = vendor.getTransportAccess(service?.setup);
 
     return {
@@ -48,7 +48,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess, TLLMOp
       serviceSetupValid: serviceSetupValid,
 
       partialSettings: service?.setup ?? null, // NOTE: do not use - prefer ACCESS; only used in 1 edge case now
-      updateServiceSettings: state.updateServiceSettings,
+      updateServiceSettings,
     };
   }));
 

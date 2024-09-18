@@ -39,8 +39,12 @@ function ModelItem(props: {
 
   const handleLLMConfigure = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
+    if (event.shiftKey) {
+      console.log('llm', llm);
+      return;
+    }
     onModelClicked(llm.id);
-  }, [llm.id, onModelClicked]);
+  }, [llm, onModelClicked]);
 
   const handleLLMHide = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
@@ -150,7 +154,6 @@ export function ModelsList(props: {
 }) {
 
   // external state
-  const { updateLLM } = llmsStoreActions();
   const { chatLLMId, fastLLMId, funcLLMId } = useDefaultLLMIDs();
   const llms = useFilteredLLMs(props.filterServiceId === null ? false : props.filterServiceId);
 
@@ -158,7 +161,7 @@ export function ModelsList(props: {
 
   const handleModelClicked = React.useCallback((llmId: DLLMId) => onOpenLLMOptions(llmId), [onOpenLLMOptions]);
 
-  const handleModelSetHidden = React.useCallback((llmId: DLLMId, hidden: boolean) => updateLLM(llmId, { hidden }), [updateLLM]);
+  const handleModelSetHidden = React.useCallback((llmId: DLLMId, hidden: boolean) => llmsStoreActions().updateLLM(llmId, { hidden }), []);
 
 
   // are we showing multiple services
