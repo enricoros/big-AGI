@@ -489,7 +489,8 @@ export function ChatMessage(props: {
   }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    doubleClickToEdit && props.onMessageFragmentReplace && handleOpsEditToggle(event);
+    if (doubleClickToEdit || event.shiftKey)
+      props.onMessageFragmentReplace && handleOpsEditToggle(event);
   }, [doubleClickToEdit, handleOpsEditToggle, props.onMessageFragmentReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
@@ -695,7 +696,7 @@ export function ChatMessage(props: {
             onFragmentReplace={handleFragmentReplace}
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
-            onDoubleClick={(props.onMessageFragmentReplace && doubleClickToEdit) ? handleBlocksDoubleClick : undefined}
+            onDoubleClick={(props.onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
           />
 
           {/* Document Fragments */}
