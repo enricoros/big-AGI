@@ -15,7 +15,7 @@ import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixA
 
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
-import { aixChatGenerateRequestFromDMessages, clientHotFixSystemMessageForO1Preview } from './aix.client.chatGenerateRequest';
+import { aixChatGenerateRequestFromDMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 
 
 // configuration
@@ -153,9 +153,8 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
 
   // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
-  if (isO1Preview && aixChatGenerate.systemMessage) {
-    console.warn('[DEV] Working around o1 models limitations.');
-    clientHotFixSystemMessageForO1Preview(aixChatGenerate);
+  if (isO1Preview) {
+    clientHotFixGenerateRequestForO1Preview(aixChatGenerate);
     aixStreaming = false;
   }
 
