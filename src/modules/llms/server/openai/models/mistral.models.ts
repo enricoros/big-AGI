@@ -19,11 +19,11 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Mistral NeMo is a state-of-the-art 12B model developed with NVIDIA.',
     contextWindow: 131072, // 128K tokens
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.15, output: 0.15 }, // $0.15 /1M tokens input and output
+    chatPrice: { input: 0.15, output: 0.15 },
   },
   {
     idPrefix: 'open-mistral-nemo',
-    label: 'Mistral NeMo (2407)',
+    label: 'Mistral NeMo',
     symLink: 'open-mistral-nemo-2407',
     hidden: true,
     // Copied details
@@ -40,11 +40,11 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Top-tier reasoning for high-complexity tasks, for your most sophisticated needs.',
     contextWindow: 131072, // 128K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 2, output: 6 }, // $2 /1M tokens input, $6 /1M tokens output
+    chatPrice: { input: 2, output: 6 },
   },
   {
     idPrefix: 'mistral-large-latest',
-    label: 'Mistral Large 2 (2407)',
+    label: 'Mistral Large 2 (latest)',
     symLink: 'mistral-large-2407',
     hidden: true,
     // Copied details
@@ -59,7 +59,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Top-tier reasoning for high-complexity tasks.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 4, output: 12 }, // $4 /1M tokens input, $12 /1M tokens output
+    chatPrice: { input: 4, output: 12 }, // ?: inaccessible as of 2024-09-18, former price
     isLegacy: true,
     hidden: true,
   },
@@ -69,20 +69,20 @@ const _knownMistralChatModels: ManualMappings = [
     idPrefix: 'mistral-small-2409',
     label: 'Mistral Small (24.09)',
     description: 'Cost-efficient, fast, and reliable option for use cases such as translation, summarization, and sentiment analysis.',
-    contextWindow: 131072, // 128K tokens
+    contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.6 }, // $0.2 /1M tokens input, $0.6 /1M tokens output
+    chatPrice: { input: 0.2, output: 0.6 },
   },
   {
     idPrefix: 'mistral-small-latest',
-    label: 'Mistral Small (24.09)',
-    symLink: 'mistral-small-2409',
+    label: 'Mistral Small (latest)',
+    // symLink: 'mistral-small-2409', // ?
     hidden: true,
     // Copied details
     description: 'Cost-efficient, fast, and reliable option for use cases such as translation, summarization, and sentiment analysis.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.6 },
+    // chatPrice: { input: 0.2, output: 0.6 },
   },
   {
     idPrefix: 'mistral-small-2402',
@@ -90,7 +90,7 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation).',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 1, output: 3 },
+    // chatPrice: { input: 1, output: 3 }, // ?
     isLegacy: true,
     hidden: true,
   },
@@ -100,20 +100,20 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Aka open-mixtral-8x7b. Suitable for simple tasks that one can do in bulk (Classification, Customer Support, or Text Generation).',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 1, output: 3 },
+    // chatPrice: { input: 1, output: 3 }, // ?
     isLegacy: true,
     hidden: true,
   },
   {
     idPrefix: 'mistral-small',
-    label: 'Mistral Small (24.09)',
+    label: 'Mistral Small',
     symLink: 'mistral-small-2409',
     hidden: true,
     // Copied details
     description: 'Cost-efficient, fast, and reliable option for use cases such as translation, summarization, and sentiment analysis.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.6 },
+    // chatPrice: { input: 0.2, output: 0.6 },
   },
 
   // Specialist models
@@ -129,7 +129,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'codestral-latest',
-    label: 'Codestral (2405)',
+    label: 'Codestral (latest)',
     symLink: 'codestral-2405',
     hidden: true,
     // Copied details
@@ -146,12 +146,10 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Our first Mamba 2 open-source model released July 2024.',
     contextWindow: 262144, // 256K tokens
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.5, output: 0.5 }, // Placeholder pricing
-    hidden: true, // Not listed in pricing table
   },
   {
     idPrefix: 'codestral-mamba-latest',
-    label: 'Codestral Mamba (2407)',
+    label: 'Codestral Mamba (latest)',
     symLink: 'codestral-mamba-2407',
     hidden: true,
     // Copied details
@@ -162,14 +160,13 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'open-codestral-mamba',
-    label: 'Codestral Mamba (2407)',
+    label: 'Codestral Mamba (open)',
     symLink: 'codestral-mamba-2407',
     hidden: true,
     // Copied details
     description: 'Our first Mamba 2 open-source model released July 2024.',
     contextWindow: 262144,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.5, output: 0.5 },
   },
 
   // Pixtral
@@ -179,11 +176,11 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Vision-capable model.',
     contextWindow: 131072, // 128K tokens
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.15, output: 0.15 }, // $0.15 /1M tokens input and output
+    chatPrice: { input: 0.15, output: 0.15 },
   },
   {
     idPrefix: 'pixtral-latest',
-    label: 'Pixtral 12B (24.09)',
+    label: 'Pixtral (latest)',
     symLink: 'pixtral-12b-2409',
     hidden: true,
     // Copied details
@@ -194,7 +191,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'pixtral-12b',
-    label: 'Pixtral 12B (24.09)',
+    label: 'Pixtral 12B',
     symLink: 'pixtral-12b-2409',
     hidden: true,
     // Copied details
@@ -205,7 +202,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'pixtral',
-    label: 'Pixtral 12B (24.09)',
+    label: 'Pixtral',
     symLink: 'pixtral-12b-2409',
     hidden: true,
     // Copied details
@@ -218,7 +215,7 @@ const _knownMistralChatModels: ManualMappings = [
   // Mistral Embed
   {
     idPrefix: 'mistral-embed',
-    label: 'Mistral Embed (23.12)',
+    label: 'Mistral Embed',
     description: 'State-of-the-art semantic model for extracting representations of text extracts.',
     contextWindow: 8192, // 8K tokens
     maxCompletionTokens: 8192,
@@ -242,7 +239,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'open-mixtral-8x22b',
-    label: 'Open Mixtral 8x22B (2404)',
+    label: 'Open Mixtral 8x22B',
     symLink: 'open-mixtral-8x22b-2404',
     hidden: true,
     // Copied details
@@ -254,7 +251,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'open-mixtral-8x7b',
-    label: 'Open Mixtral 8x7B (v0.1)',
+    label: 'Open Mixtral 8x7B',
     description: 'A 7B sparse Mixture-of-Experts (SMoE) model.',
     contextWindow: 32768, // 32K tokens
     interfaces: [LLM_IF_OAI_Chat],
@@ -270,7 +267,6 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Variant of Mistral-7B, optimized for solving advanced mathematics problems.',
     contextWindow: 32768, // 32K tokens
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.25, output: 0.25 }, // Placeholder pricing
     hidden: true, // Not listed in pricing table
   },
 
@@ -283,13 +279,13 @@ const _knownMistralChatModels: ManualMappings = [
     description: 'Our first commercial model.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 2.75, output: 8.1 }, // $2.75 /1M tokens input, $8.1 /1M tokens output
+    chatPrice: { input: 2.75, output: 8.1 },
     isLegacy: true,
     hidden: true,
   },
   {
     idPrefix: 'mistral-medium-latest',
-    label: 'Mistral Medium (2312)',
+    label: 'Mistral Medium (latest)',
     symLink: 'mistral-medium-2312',
     hidden: true,
     // Copied details
@@ -301,7 +297,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-medium',
-    label: 'Mistral Medium (2312)',
+    label: 'Mistral Medium',
     symLink: 'mistral-medium-2312',
     hidden: true,
     // Copied details
@@ -333,7 +329,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-tiny-latest',
-    label: 'Mistral Tiny (2407)',
+    label: 'Mistral Tiny (latest)',
     symLink: 'mistral-tiny-2407',
     hidden: true,
     // Copied details
@@ -344,7 +340,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-tiny',
-    label: 'Mistral Tiny (2312)',
+    label: 'Mistral Tiny',
     symLink: 'mistral-tiny-2312',
     hidden: true,
     // Copied details
@@ -357,7 +353,7 @@ const _knownMistralChatModels: ManualMappings = [
   // Mistral 7B
   {
     idPrefix: 'open-mistral-7b',
-    label: 'Mistral 7B (v0.3)',
+    label: 'Open Mistral 7B',
     description: 'A 7B transformer model, fast-deployed and easily customizable.',
     contextWindow: 32768, // 32K tokens
     interfaces: [LLM_IF_OAI_Chat],
