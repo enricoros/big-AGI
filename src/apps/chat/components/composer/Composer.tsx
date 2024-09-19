@@ -30,7 +30,7 @@ import { DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { browserSpeechRecognitionCapability, SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
+import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition, } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
@@ -749,25 +749,38 @@ export function Composer(props: {
                       border: '1px solid',
                       borderColor: 'primary.solidBg',
                       borderRadius: 'sm',
+                      boxShadow: 'inset 1px 1px 4px -3px var(--joy-palette-primary-solidHoverBg)',
                       zIndex: zIndexComposerOverlayMic,
                       pl: 1.5,
                       pr: { xs: 1.5, md: 5 },
                       py: 0.625,
                       overflow: 'auto',
+                      // '[data-joy-color-scheme="light"] &': {
+                      //   backgroundColor: 'primary.50',
+                      // },
                     }}>
                     <Typography sx={{
                       color: 'primary.softColor',
                       lineHeight: lineHeightTextareaMd,
-                      '& .interim': {
+                      '& > .preceding': {
+                        color: 'primary.softDisabledColor',
+                        // color: 'rgba(var(--joy-palette-primary-mainChannel) / 0.6)',
+                        overflowWrap: 'anywhere',
+                      },
+                      '& > .interim': {
                         textDecoration: 'underline',
                         textDecorationThickness: '0.25em',
                         textDecorationColor: 'rgba(var(--joy-palette-primary-mainChannel) / 0.1)',
                         textDecorationSkipInk: 'none',
                         textUnderlineOffset: '0.25em',
                       },
+                      '& > .placeholder': {
+                        fontStyle: 'italic',
+                      },
                     }}>
+                      {!!debouncedText && <span className='preceding'>{debouncedText} </span>}
                       {speechInterimResult.transcript}{' '}
-                      <span className={speechInterimResult.interimTranscript !== 'Listening...' ? 'interim' : undefined}>{speechInterimResult.interimTranscript}</span>
+                      <span className={speechInterimResult.interimTranscript === PLACEHOLDER_INTERIM_TRANSCRIPT ? 'placeholder' : 'interim'}>{speechInterimResult.interimTranscript}</span>
                     </Typography>
                   </Card>
                 )}
