@@ -1,7 +1,7 @@
 import { suggestUIMixin } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { BrowserLang } from '~/common/util/pwaUtils';
+import { BrowserLang, Is } from '~/common/util/pwaUtils';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
@@ -84,6 +84,7 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   // {{Render...}}
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled');
   mixed = mixed.replace('{{RenderPlantUML}}', 'PlantUML rendering: Enabled');
+  mixed = mixed.replace('{{RenderHTML}}', `HTML in markdown rendering: Sleek, ${Is.Desktop ? 'desktop' : 'mobile'} HTML5 (self-contained with CSS/JS, leverage top libraries, external links OK)`);
   mixed = mixed.replace('{{RenderSVG}}', 'SVG in markdown rendering: Enabled');
   // {{Input...}} / {{Tool...}} - TBA
   mixed = mixed.replace('{{InputImage0}}', 'Image input capabilities: Disabled');
