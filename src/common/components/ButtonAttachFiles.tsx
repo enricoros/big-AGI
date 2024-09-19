@@ -7,32 +7,32 @@ import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import { KeyStroke } from '~/common/components/KeyStroke';
 
 
-const attachFileLegend =
-  <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
-    <b>Attach files</b><br />
-    Drag & drop in chat for faster loads ⚡
-    <KeyStroke combo='Ctrl + Shift + F' sx={{ mt: 1, mb: 0.5 }} />
-  </Box>;
-
-
 export async function openFileForAttaching(
   multiple: boolean,
-  onAttachFiles: (files: FileWithHandle[]) => void,
-) {
+  onAttachFiles: (files: FileWithHandle[]) => void | Promise<void>,
+): Promise<void> {
   try {
     const selectedFiles = await fileOpen({ multiple });
     if (selectedFiles) {
       if (Array.isArray(selectedFiles)) {
         if (selectedFiles.length)
-          onAttachFiles(selectedFiles);
+          await onAttachFiles(selectedFiles);
       } else {
-        onAttachFiles([selectedFiles]);
+        await onAttachFiles([selectedFiles]);
       }
     }
   } catch (error) {
     // ignore...
   }
 }
+
+
+const attachFileLegend =
+  <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
+    <b>Attach files</b><br />
+    Drag & drop in chat for faster loads ⚡
+    <KeyStroke combo='Ctrl + Shift + F' sx={{ mt: 1, mb: 0.5 }} />
+  </Box>;
 
 
 export const ButtonAttachFilesMemo = React.memo(ButtonAttachFiles);
