@@ -4,15 +4,19 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, List } from '@mui/joy';
 
+import type { SystemPurposeExample } from '../../../data';
+
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { InlineError } from '~/common/components/InlineError';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP } from '~/common/stores/chat/chat.message';
+import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP } from '~/common/stores/chat/chat.message';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
@@ -79,10 +83,34 @@ export function ChatMessageList(props: {
 
   // text actions
 
-  const handleRunExample = React.useCallback(async (examplePrompt: string) => {
-    if (conversationId && conversationHandler) {
-      conversationHandler.messageAppend(createDMessageTextContent('user', examplePrompt)); // [chat] append user:persona question
+  const handleRunExample = React.useCallback(async (example: SystemPurposeExample) => {
+    if (!conversationId || !conversationHandler) return;
+
+    // Simple Example Prompt (User text message)
+    if (typeof example === 'string') {
+      conversationHandler.messageAppend(createDMessageTextContent('user', example)); // [chat] append user:persona question
       await onConversationExecuteHistory(conversationId);
+      return;
+    }
+
+    // User-Action Example Prompts (User text message + File attachments)
+    switch (example.action) {
+      case 'require-data-attachment':
+        await openFileForAttaching(true, async (filesWithHandle) => {
+
+          // Retrieve fully-fledged Attachment Fragments (converted/extracted, with sources, mimes, etc.) from the selected files
+          const attachmentFragments = await convertFilesToDAttachmentFragments('file-open', filesWithHandle);
+
+          // Create a User message with the prompt and the attachment fragments
+          if (attachmentFragments.length) {
+            conversationHandler.messageAppend(createDMessageFromFragments('user', [ // [chat] append user:persona question + attachment(s)
+              createTextContentFragment(example.prompt),
+              ...attachmentFragments,
+            ]));
+            await onConversationExecuteHistory(conversationId);
+          }
+        });
+        break;
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory]);
 
