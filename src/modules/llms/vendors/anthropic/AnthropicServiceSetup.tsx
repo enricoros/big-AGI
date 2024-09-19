@@ -65,7 +65,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
           {' '}and {(totalInputTokens + totalOutputTokens).toLocaleString()} tokens.</span>
           {/*<ExternalLink href='https://console.anthropic.com/settings/usage'>Anthropic usage</ExternalLink>*/}
         </Box>
-        {hasSaved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {!!hasSaved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <span style={{ opacity: 0.75 }}>Thanks to Prompt Caching, </span>Big-AGI saved you approximately <b>{formatModelsCost(totalSavings)}</b>.
           </div>
