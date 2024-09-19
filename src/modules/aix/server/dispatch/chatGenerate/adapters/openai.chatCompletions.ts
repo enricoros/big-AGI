@@ -47,7 +47,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     throw new Error('This service does not support function calls');
 
   // Convert the chat messages to the OpenAI 4-Messages format
-  let chatMessages = _toOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence);
+  let chatMessages = _toOpenAIMessages(chatGenerate.systemMessage, chatGenerate.chatSequence, hotFixOpenAIO1Preview);
 
   // Apply hotfixes
   if (hotFixSquashMultiPartText)
@@ -180,7 +180,7 @@ function _fixSquashMultiPartText(chatMessages: TRequestMessages): TRequestMessag
 }*/
 
 
-function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined, chatSequence: AixMessages_ChatMessage[]): TRequestMessages {
+function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined, chatSequence: AixMessages_ChatMessage[], hotFixOpenAIO1Preview: boolean): TRequestMessages {
 
   // Transform the chat messages into OpenAI's format (an array of 'system', 'user', 'assistant', and 'tool' messages)
   const chatMessages: TRequestMessages = [];
@@ -188,7 +188,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
   // Convert the system message
   systemMessage?.parts.forEach((part) => {
     if (part.pt === 'meta_cache_control') {
-      // ignore this hint - openai doesn't support thiss yet
+      // ignore this hint - openai doesn't support this yet
     } else
       chatMessages.push({ role: 'system', content: part.text /*, name: _optionalParticipantName */ });
   });
@@ -240,7 +240,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined,
               break;
 
             case 'meta_in_reference_to':
-              chatMessages.push({ role: 'system', content: _toOpenAIInReferenceToText(part) });
+              chatMessages.push({ role: hotFixOpenAIO1Preview ? 'user' : 'system', content: _toOpenAIInReferenceToText(part) });
               break;
 
             default:
@@ -404,7 +404,7 @@ function _toOpenAIInReferenceToText(irt: AixParts_MetaInReferenceToPart): string
     return `${index !== undefined ? `ITEM ${index + 1}:\n` : ''}---\n${text}\n---`;
   };
 
-  // Formely: `The user is referring to this in particular:\n{{ReplyToText}}`.replace('{{ReplyToText}}', part.replyTo);
+  // Formerly: `The user is referring to this in particular:\n{{ReplyToText}}`.replace('{{ReplyToText}}', part.replyTo);
   if (items.length === 1)
     return `CONTEXT: The user is referring to this in particular:\n${formatItem(items[0])}`;
 
