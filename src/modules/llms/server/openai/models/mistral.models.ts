@@ -23,7 +23,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'open-mistral-nemo',
-    label: '🔗 Mistral NeMo (latest) → open-mistral-nemo-2407',
+    label: 'Mistral NeMo (2407)',
     symLink: 'open-mistral-nemo-2407',
     hidden: true,
     // Copied details
@@ -44,7 +44,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-large-latest',
-    label: '🔗 Mistral Large (latest) → mistral-large-2407',
+    label: 'Mistral Large 2 (2407)',
     symLink: 'mistral-large-2407',
     hidden: true,
     // Copied details
@@ -75,7 +75,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-small-latest',
-    label: '🔗 Mistral Small (latest) → mistral-small-2409',
+    label: 'Mistral Small (24.09)',
     symLink: 'mistral-small-2409',
     hidden: true,
     // Copied details
@@ -106,7 +106,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-small',
-    label: '🔗 Mistral Small → mistral-small-2409',
+    label: 'Mistral Small (24.09)',
     symLink: 'mistral-small-2409',
     hidden: true,
     // Copied details
@@ -129,7 +129,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'codestral-latest',
-    label: '🔗 Codestral (latest) → codestral-2405',
+    label: 'Codestral (2405)',
     symLink: 'codestral-2405',
     hidden: true,
     // Copied details
@@ -151,7 +151,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'codestral-mamba-latest',
-    label: '🔗 Codestral Mamba (latest) → codestral-mamba-2407',
+    label: 'Codestral Mamba (2407)',
     symLink: 'codestral-mamba-2407',
     hidden: true,
     // Copied details
@@ -162,7 +162,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'open-codestral-mamba',
-    label: '🔗 Codestral Mamba → codestral-mamba-2407',
+    label: 'Codestral Mamba (2407)',
     symLink: 'codestral-mamba-2407',
     hidden: true,
     // Copied details
@@ -183,7 +183,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'pixtral-latest',
-    label: '🔗 Pixtral (latest) → pixtral-12b-2409',
+    label: 'Pixtral 12B (24.09)',
     symLink: 'pixtral-12b-2409',
     hidden: true,
     // Copied details
@@ -194,7 +194,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'pixtral-12b',
-    label: '🔗 Pixtral 12B → pixtral-12b-2409',
+    label: 'Pixtral 12B (24.09)',
     symLink: 'pixtral-12b-2409',
     hidden: true,
     // Copied details
@@ -205,7 +205,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'pixtral',
-    label: '🔗 Pixtral → pixtral-12b-2409',
+    label: 'Pixtral 12B (24.09)',
     symLink: 'pixtral-12b-2409',
     hidden: true,
     // Copied details
@@ -242,7 +242,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'open-mixtral-8x22b',
-    label: '🔗 Open Mixtral 8x22B → open-mixtral-8x22b-2404',
+    label: 'Open Mixtral 8x22B (2404)',
     symLink: 'open-mixtral-8x22b-2404',
     hidden: true,
     // Copied details
@@ -289,7 +289,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-medium-latest',
-    label: '🔗 Mistral Medium (latest) → mistral-medium-2312',
+    label: 'Mistral Medium (2312)',
     symLink: 'mistral-medium-2312',
     hidden: true,
     // Copied details
@@ -301,7 +301,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-medium',
-    label: '🔗 Mistral Medium → mistral-medium-2312',
+    label: 'Mistral Medium (2312)',
     symLink: 'mistral-medium-2312',
     hidden: true,
     // Copied details
@@ -333,7 +333,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-tiny-latest',
-    label: '🔗 Mistral Tiny (latest) → mistral-tiny-2407',
+    label: 'Mistral Tiny (2407)',
     symLink: 'mistral-tiny-2407',
     hidden: true,
     // Copied details
@@ -344,7 +344,7 @@ const _knownMistralChatModels: ManualMappings = [
   },
   {
     idPrefix: 'mistral-tiny',
-    label: '🔗 Mistral Tiny → mistral-tiny-2312',
+    label: 'Mistral Tiny (2312)',
     symLink: 'mistral-tiny-2312',
     hidden: true,
     // Copied details
