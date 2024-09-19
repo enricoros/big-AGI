@@ -700,13 +700,14 @@ export function ChatMessage(props: {
           />
 
           {/* Document Fragments */}
-          {nonImageAttachments.length >= 1 && !isEditingText && (
+          {nonImageAttachments.length >= 1 && (
             <DocumentAttachmentFragments
               attachmentFragments={nonImageAttachments}
               messageRole={messageRole}
               contentScaling={adjContentScaling}
               isMobile={props.isMobile}
               zenMode={zenMode}
+              allowSelection={!isEditingText}
               disableMarkdownText={disableMarkdown}
               onFragmentDelete={handleFragmentDelete}
               onFragmentReplace={handleFragmentReplace}

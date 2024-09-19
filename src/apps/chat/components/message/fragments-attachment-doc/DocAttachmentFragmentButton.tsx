@@ -57,6 +57,7 @@ export function DocAttachmentFragmentButton(props: {
   fragment: DMessageAttachmentFragment,
   contentScaling: ContentScaling,
   isSelected: boolean,
+  isSelectable: boolean,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
 }) {
 
@@ -111,6 +112,7 @@ export function DocAttachmentFragmentButton(props: {
       size={props.contentScaling === 'md' ? 'md' : 'sm'}
       variant={isSelected ? 'solid' : 'soft'}
       color={isSelected ? DocSelColor : DocUnselColor}
+      disabled={!props.isSelectable}
       onClick={handleSelectFragment}
       sx={buttonSx}
     >
