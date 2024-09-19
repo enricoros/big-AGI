@@ -115,7 +115,11 @@ function Tile(props: {
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: SystemPurposeExample) => void }) {
+export function PersonaSelector(props: {
+  conversationId: DConversationId,
+  isMobile: boolean,
+  runExample: (example: SystemPurposeExample) => void,
+}) {
 
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -124,8 +128,11 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
 
   // external state
-  const showFinder = useUIPreferencesStore(state => state.showPersonaFinder);
-  const [showExamples, showExamplescomponent] = useChipBoolean('Examples', false);
+  const { complexityMode, showPersonaFinder } = useUIPreferencesStore(useShallow(state => ({
+    complexityMode: state.complexityMode,
+    showPersonaFinder: state.showPersonaFinder,
+  })));
+  const [showExamples, showExamplescomponent] = useChipBoolean('Examples', complexityMode === 'extra' && !props.isMobile);
   const [showPrompt, showPromptComponent] = useChipBoolean('Prompt', false);
   const { systemPurposeId, setSystemPurposeId } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -156,7 +163,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, [systemPurposeId]);
 
 
-  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes) as SystemPurposeId[];
+  const unfilteredPurposeIDs = (filteredIDs && showPersonaFinder) ? filteredIDs : Object.keys(SystemPurposes) as SystemPurposeId[];
   const visiblePurposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
   const hidePersonaCreator = hiddenPurposeIDs.includes(PURPOSE_ID_PERSONA_CREATOR);
 
@@ -245,7 +252,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
       py: 2,
     }}>
 
-      {showFinder && <Box>
+      {showPersonaFinder && <Box>
         <Input
           fullWidth
           variant='outlined' color='neutral'

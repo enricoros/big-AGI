@@ -266,7 +266,7 @@ export function ChatMessageList(props: {
     return (
       <Box sx={{ ...props.sx }}>
         {conversationId
-          ? <PersonaSelector conversationId={conversationId} runExample={handleRunExample} />
+          ? <PersonaSelector conversationId={conversationId} isMobile={props.isMobile} runExample={handleRunExample} />
           : <InlineError severity='info' error='Select a conversation' sx={{ m: 2 }} />}
       </Box>
     );
