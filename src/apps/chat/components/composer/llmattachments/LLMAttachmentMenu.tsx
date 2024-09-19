@@ -1,13 +1,16 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Checkbox, CircularProgress, LinearProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import AttachmentIcon from '@mui/icons-material/Attachment';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
@@ -17,6 +20,7 @@ import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
@@ -27,6 +31,15 @@ import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
 // configuration
 const DEFAULT_DETAILS_OPEN = true;
 const SHOW_INLINING_OPERATIONS = false;
+
+
+const indicatorSx = {
+  fontSize: '1rem',
+} as const;
+
+const indicatorGapSx: SxProps = {
+  paddingLeft: '1.375rem',
+};
 
 
 export function LLMAttachmentMenu(props: {
@@ -41,6 +54,10 @@ export function LLMAttachmentMenu(props: {
 
   // state
   const [showDetails, setShowDetails] = React.useState(DEFAULT_DETAILS_OPEN);
+
+  // external state
+  const uiComplexityMode = useUIPreferencesStore(state => state.complexityMode);
+
 
   // derived state
 
@@ -94,6 +111,8 @@ export function LLMAttachmentMenu(props: {
   // }, [draftId, onAttachmentDraftSummarizeText]);
 
   const canHaveDetails = !!draftInput && !isConverting;
+
+  const showInputs = uiComplexityMode !== 'minimal';
 
   return (
     <CloseableMenu
@@ -185,19 +204,19 @@ export function LLMAttachmentMenu(props: {
           <Box sx={{ my: 0.5 }}>
 
             {/* <- inputs */}
-            {!!draftInput && (
-              <Typography level='body-sm'>
-                🡐 {draftInput.mimeType}{typeof draftInput.dataSize === 'number' ? ` · ${draftInput.dataSize.toLocaleString()} bytes` : ''}
+            {showInputs && !!draftInput && (
+              <Typography level='body-sm' textColor='text.primary' startDecorator={<AttachmentIcon sx={indicatorSx} />}>
+                {draftInput.mimeType}{typeof draftInput.dataSize === 'number' ? ` · ${draftInput.dataSize.toLocaleString()} bytes` : ''}
               </Typography>
             )}
-            {!!draftInput?.altMimeType && (
-              <Typography level='body-sm'>
-                <span style={{ color: 'transparent' }}>🡐</span> {draftInput.altMimeType} · {draftInput.altData?.length.toLocaleString()}
+            {showInputs && !!draftInput?.altMimeType && (
+              <Typography level='body-sm' sx={indicatorGapSx}>
+                {draftInput.altMimeType} · {draftInput.altData?.length.toLocaleString()}
               </Typography>
             )}
-            {!!draftInput?.urlImage && (
-              <Typography level='body-sm'>
-                <span style={{ color: 'transparent' }}>🡐</span> {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.imgDataUrl?.length.toLocaleString()}
+            {showInputs && !!draftInput?.urlImage && (
+              <Typography level='body-sm' sx={indicatorGapSx}>
+                {draftInput.urlImage.mimeType} · {draftInput.urlImage.width} x {draftInput.urlImage.height} · {draftInput.urlImage.imgDataUrl?.length.toLocaleString()}
                 {' · '}
                 <Link onClick={(event) => {
                   event.preventDefault();
@@ -216,58 +235,56 @@ export function LLMAttachmentMenu(props: {
             {/* -> Outputs */}
             <Box sx={{ mt: 1 }}>
               {isOutputMissing ? (
-                <Typography level='body-sm'>🡒 ...</Typography>
+                <Typography level='body-sm' startDecorator={<ReadMoreIcon sx={indicatorSx} />}>...</Typography>
               ) : (
                 draft.outputFragments.map(({ part }, index) => {
                   if (isImageRefPart(part)) {
                     const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'unknown resolution';
                     const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
                     return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
-                        🡒 {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? part.dataRef.bytesSize?.toLocaleString() : '(remote)'}
-                        {' · '}
-                        <Link onClick={(event) => {
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
+                        {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? part.dataRef.bytesSize?.toLocaleString() : '(remote)'} ·
+                        <Link endDecorator={<LaunchIcon sx={{ fontSize: 16 }} />} onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
                           void showImageDataRefInNewTab(part.dataRef);
                         }}>
-                          open <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
+                          &nbsp;open
                         </Link>
                       </Typography>
                     );
                   } else if (isDocPart(part)) {
                     return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
-                        🡒 {part.data.mimeType /* part.type: big-agi type, not source mime */}: {part.data.text.length.toLocaleString()} bytes
-                        {' · '}
-                        <Link onClick={(event) => {
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
+                        {part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·
+                        <Link endDecorator={<ContentCopyIcon sx={{ fontSize: 16 }} />} onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
                           copyToClipboard(part.data.text, 'Attachment Text');
                         }}>
-                          copy <ContentCopyIcon sx={{ mx: 0.5, fontSize: 16 }} />
+                          &nbsp;copy
                         </Link>
                       </Typography>
                     );
                   } else {
                     return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }}>
-                        🡒 {(part as DMessageAttachmentFragment['part']).pt}: (other)
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
+                        {(part as DMessageAttachmentFragment['part']).pt}: (other)
                       </Typography>
                     );
                   }
                 })
               )}
               {!!llmTokenCountApprox && (
-                <Typography level='body-sm' sx={{ color: 'text.primary' }}>
-                  <span style={{ marginLeft: 2 }}>=</span> {llmTokenCountApprox.toLocaleString()} tokens
+                <Typography level='body-xs' mt={0.5} sx={indicatorGapSx}>
+                  ~{llmTokenCountApprox.toLocaleString()} tokens
                 </Typography>
               )}
             </Box>
 
             {/* LiveFile notice */}
             {hasLiveFiles && !!draftInput && (
-              <Typography level='body-sm' sx={{ mt: 1 }} startDecorator={<LiveFileIcon sx={{ width: 16, height: 16 }} />}>
+              <Typography level='body-xs' color='success' mt={1} startDecorator={<LiveFileIcon sx={{ width: 16, height: 16 }} />}>
                 LiveFile is supported
               </Typography>
             )}
