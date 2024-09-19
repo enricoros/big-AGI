@@ -19,9 +19,18 @@ import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
  *   This is an important highlight.
  * </mark>
  */
-const APPLY_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
-const APPLY_STRIKE = (text: string) => `<del>${text}</del>`;
-const APPLY_STRONG = (text: string) => `**${text}**`;
+const APPLY_HTML_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
+const APPLY_HTML_STRIKE = (text: string) => `<del>${text}</del>`;
+const APPLY_MD_STRONG = (text: string) => {
+  const startMatch = text.match(/^\s*/);
+  const endMatch = text.match(/\s*$/);
+
+  const startSpaces = startMatch ? startMatch[0] : '';
+  const endSpaces = endMatch ? endMatch[0] : '';
+
+  const innerText = text.trim().replace(/([*_`~[\]()])/g, '\\$1'); // Escape special characters
+  return `${startSpaces}**${innerText}**${endSpaces}`;
+};
 
 type HighlightTool = 'highlight' | 'strike' | 'strong';
 
@@ -55,9 +64,9 @@ export function useSelHighlighterMemo(
           acc = (tool: HighlightTool) => {
             // Apply the tool
             const highlighted =
-              tool === 'highlight' ? APPLY_HIGHLIGHT(selText)
-                : tool === 'strike' ? APPLY_STRIKE(selText)
-                  : tool === 'strong' ? APPLY_STRONG(selText)
+              tool === 'highlight' ? APPLY_HTML_HIGHLIGHT(selText)
+                : tool === 'strike' ? APPLY_HTML_STRIKE(selText)
+                  : tool === 'strong' ? APPLY_MD_STRONG(selText)
                     : selText;
             // Toggle, if the tooled text is already present
             const newFragmentText =
