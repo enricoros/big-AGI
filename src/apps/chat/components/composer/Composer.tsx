@@ -28,6 +28,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -467,9 +468,12 @@ export function Composer(props: {
     void attachAppendFile('screencapture', file);
   }, [attachAppendFile]);
 
-  const handleAttachFiles = React.useCallback(async (files: FileWithHandle[]) => {
+  const handleAttachFiles = React.useCallback(async (files: FileWithHandle[], errorMessage: string | null) => {
+    if (errorMessage)
+      addSnackbar({ key: 'attach-files-open-fail', message: `Could not open files (${errorMessage})`, type: 'issue' });
     for (let file of files)
-      await attachAppendFile('file-open', file).catch(console.error);
+      await attachAppendFile('file-open', file)
+        .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Could not attach the file (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
   }, [attachAppendFile]);
 
 
