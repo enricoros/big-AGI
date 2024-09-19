@@ -6,6 +6,10 @@ import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
 import { useUIPreferencesStore } from '../state/store-ui';
 
 
+// Module configuration
+export const PLACEHOLDER_INTERIM_TRANSCRIPT = 'Listening...';
+
+
 /// Capability interface
 
 let cachedCapability: CapabilityBrowserSpeechRecognition | null = null;
@@ -181,7 +185,7 @@ export const useSpeechRecognition = (onResultCallback: SpeechResultCallback, sof
       setIsActive(true); // delayed
 
       speechResult.transcript = '';
-      speechResult.interimTranscript = 'Listening...';
+      speechResult.interimTranscript = PLACEHOLDER_INTERIM_TRANSCRIPT;
       speechResult.done = false;
       speechResult.doneReason = undefined;
       onResultCallbackRef.current(speechResult);
