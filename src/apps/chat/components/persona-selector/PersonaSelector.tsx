@@ -10,7 +10,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
+import { SystemPurposeData, SystemPurposeExample, SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
@@ -115,7 +115,7 @@ function Tile(props: {
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: string) => void }) {
+export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: SystemPurposeExample) => void }) {
 
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -371,7 +371,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                   >
                     <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between', borderRadius: 'md' }}>
                       <Typography level='body-sm'>
-                        {example}
+                        {/* Icon 📁 when the .action is 'require-data-attachment' */}
+                        {(typeof example === 'object' && example.action === 'require-data-attachment') ? '📁 ' : ''}
+                        {(typeof example === 'string') ? example : example.prompt}
                       </Typography>
                       <TelegramIcon color='primary' sx={{}} />
                     </ListItemButton>
