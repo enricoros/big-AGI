@@ -21,19 +21,28 @@ export function DocumentAttachmentFragments(props: {
   contentScaling: ContentScaling,
   isMobile: boolean,
   zenMode: boolean,
+  allowSelection: boolean,
   disableMarkdownText: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
 }) {
 
   // state
-  const [activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
+  const [_activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
   const [editState, setEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
+
+
+  // derived state
+  const isSelectable = props.allowSelection;
+  const activeFragmentId = !isSelectable ? null : _activeFragmentId;
 
 
   // selection
 
-  const handleToggleSelectedId = React.useCallback((fragmentId: DMessageFragmentId) => setActiveFragmentId(prevId => prevId === fragmentId ? null : fragmentId), []);
+  const handleToggleSelectedId = React.useCallback((fragmentId: DMessageFragmentId) => {
+    if (isSelectable)
+      setActiveFragmentId(prevId => prevId === fragmentId ? null : fragmentId);
+  }, [isSelectable]);
 
   const selectedFragment = props.attachmentFragments.find(fragment => fragment.fId === activeFragmentId);
 
@@ -86,6 +95,7 @@ export function DocumentAttachmentFragments(props: {
             fragment={attachmentFragment}
             contentScaling={props.contentScaling}
             isSelected={activeFragmentId === attachmentFragment.fId}
+            isSelectable={props.allowSelection}
             toggleSelected={handleToggleSelectedId}
           />,
         )}
