@@ -64,6 +64,8 @@ export const messageAvatarLabelSx: SxProps = {
 
 export const messageAvatarLabelAnimatedSx: SxProps = {
   animation: `${animationColorRainbow} 5s linear infinite`,
+  // Extra hinting... but looks weird
+  // fontStyle: 'italic',
 };
 
 export const aixSkipBoxSx = {
@@ -364,9 +366,14 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Anthropic]
   const prettyAnthropic = _prettyAnthropicModelName(model);
   if (prettyAnthropic) return prettyAnthropic;
+  // [Deepseek]
+  if (model.includes('deepseek-chat')) return 'Deepseek Chat';
+  if (model.includes('deepseek-coder')) return 'Deepseek Coder';
   // [LM Studio]
   if (model.startsWith('C:\\') || model.startsWith('D:\\'))
     return _prettyLMStudioFileModelName(model).replace('.gguf', '');
+  // [Mistral]
+  if (model.includes('mistral-large')) return 'Mistral Large';
   // [Ollama]
   if (model.includes(':'))
     return model.replace(':latest', '').replaceAll(':', ' ');
