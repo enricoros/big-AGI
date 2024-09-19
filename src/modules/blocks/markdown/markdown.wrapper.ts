@@ -9,7 +9,7 @@ export function wrapWithMarkdownSyntax(text: string, marker: '~~' | '**' | '==')
   // Trim the inner content and escape special characters
   const innerContent = text.trim();
   const escapedContent = innerContent.replace(/([\\`*_\[\]{}()#+\-.!])/g, '\\$1');
-console.log({escapedContent,innerContent,text});
+
   // Wrap the inner content with the specified markers
   return `${startSpaces}${marker}${escapedContent}${marker}${endSpaces}`;
 }
