@@ -283,7 +283,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
  * - in the EnhancedRenderCode component, we check the flag to let the user choose/pair the file or not.
  */
 export function isLiveFileSupported(): boolean {
-  return 'FileSystemFileHandle' in window && typeof FileSystemFileHandle === 'function' && !Is.OS.Android && !Is.OS.iOS;
+  return 'FileSystemFileHandle' in window && typeof FileSystemFileHandle === 'function' && !Is.OS.Android && !Is.OS.iOS && !Is.Browser.Safari;
 }
 
 export function liveFileCreateOrThrow(fileSystemFileHandle: FileSystemFileHandle): Promise<LiveFileId> {
