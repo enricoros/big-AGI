@@ -19,7 +19,7 @@ import { patchSvgString } from './RenderCodeSVG';
  * If you update this file, also make sure the interfaces/type definitions and initialization
  * options are updated accordingly.
  */
-const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
+const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js';
 const MERMAID_ERROR_PREFIX: string = '[Mermaid]';
 
 interface MermaidAPI {
