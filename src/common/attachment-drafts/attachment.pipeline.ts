@@ -1,3 +1,5 @@
+import type { FileWithHandle } from 'browser-fs-access';
+
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
@@ -9,7 +11,7 @@ import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, DVMimeType, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftInput, AttachmentDraftSource, DraftEgoFragmentsInputData, DraftWebInputData, DraftYouTubeInputData } from './attachment.types';
+import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftInput, AttachmentDraftSource, AttachmentDraftSourceOriginFile, DraftEgoFragmentsInputData, DraftWebInputData, DraftYouTubeInputData } from './attachment.types';
 import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
 import { attachmentGetLiveFileId, attachmentSourceSupportsLiveFile } from './attachment.livefile';
 import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
@@ -417,7 +419,7 @@ function _guessDocVDT(inputMimeType: string): DMessageDocPart['vdt'] {
  */
 export async function attachmentPerformConversion(
   attachment: Readonly<AttachmentDraft>,
-  edit: AttachmentsDraftsStore['_editAttachment'],
+  edit: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => void, /* AttachmentsDraftsStore['_editAttachment'] */
   replaceOutputFragments: AttachmentsDraftsStore['_replaceAttachmentOutputFragments'],
 ) {
 
@@ -448,7 +450,7 @@ export async function attachmentPerformConversion(
       // text as-is
       case 'text':
         const possibleLiveFileId = await attachmentGetLiveFileId(source);
-        const textualInlineData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
+        const textualInlineData = createDMessageDataInlineText(_inputDataToString(input.data), input.mimeType);
         newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, docMeta, possibleLiveFileId));
         break;
 
@@ -481,7 +483,7 @@ export async function attachmentPerformConversion(
           tableData = createDMessageDataInlineText(mdTable, 'text/markdown');
         } catch (error) {
           // fallback to text/plain
-          tableData = createDMessageDataInlineText(inputDataToString(input.data), input.mimeType);
+          tableData = createDMessageDataInlineText(_inputDataToString(input.data), input.mimeType);
         }
         newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? DVMimeType.TextPlain : DVMimeType.TextPlain, tableData, refString, docMeta));
         break;
@@ -723,11 +725,74 @@ export async function attachmentPerformConversion(
 }
 
 
-function inputDataToString(data: AttachmentDraftInput['data']): string {
+function _inputDataToString(data: AttachmentDraftInput['data']): string {
   if (typeof data === 'string')
     return data;
   if (data instanceof ArrayBuffer)
     return new TextDecoder('utf-8', { fatal: false }).decode(data);
-  console.log('attachment.inputDataToString: expected string or ArrayBuffer, got:', typeof data);
+  console.log('attachment._inputDataToString: expected string or ArrayBuffer, got:', typeof data);
   return '';
+}
+
+
+/**
+ * Special function to convert a list of files to Attachment Fragments, without passing through the attachments system
+ *
+ * Uses the default conversion whenever multiple are available, as we don't have the chance to ask
+ * for user input here, whereas we do in the Attachments UI.
+ *
+ * Only returns the fragments that were successfully converted.
+ */
+export async function convertFilesToDAttachmentFragments(origin: AttachmentDraftSourceOriginFile, files: FileWithHandle[]): Promise<DMessageAttachmentFragment[]> {
+  const validOutputFragmentsList: DMessageAttachmentFragment[][] = [];
+
+  for (const fileWithHandle of files) {
+
+    // This is the draft we'll edit and update
+    const _draft = attachmentCreate({
+      media: 'file', origin, fileWithHandle, refPath: fileWithHandle.name,
+    });
+
+    // Function to update the attachment draft
+    const updateDraft =
+      (changes: Partial<Omit<AttachmentDraft, 'outputFragments'>>) => Object.assign(_draft, changes);
+
+    try {
+      // 1. Load the input
+      await attachmentLoadInputAsync(_draft.source, updateDraft);
+      if (!_draft.input) {
+        console.warn('', `Failed to load input for file: ${fileWithHandle.name}`);
+        continue;
+      }
+
+      // 2. Define converters
+      attachmentDefineConverters(_draft.source, _draft.input, updateDraft);
+      if (!_draft.converters.length) {
+        console.warn(`No converters defined for file: ${fileWithHandle.name}`);
+        continue;
+      }
+
+      // 3. Select the first non-disabled converter or the first one
+      const converterIndex = _draft.converters.findIndex(c => !c.disabled) ?? 0;
+      _draft.converters[converterIndex].isActive = true;
+
+      // 4. Perform conversion
+      await attachmentPerformConversion(_draft,
+        (_, update) => updateDraft(update),
+        (_, fragments) => _draft.outputFragments = fragments,
+      );
+      if (!_draft.outputFragments.length) {
+        console.warn(`Failed to convert file: ${fileWithHandle.name}`);
+        continue;
+      }
+
+      validOutputFragmentsList.push(_draft.outputFragments);
+    } catch (error) {
+      console.warn(`Error processing file ${fileWithHandle.name}:`, error);
+      // allFragments.push([]);  // Add an empty array for failed conversions
+    }
+  }
+
+  // flatten the list of lists
+  return validOutputFragmentsList.flat();
 }
