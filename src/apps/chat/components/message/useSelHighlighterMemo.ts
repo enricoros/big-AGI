@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { wrapWithMarkdownSyntax } from '~/modules/blocks/markdown/markdown.wrapper';
 
 import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
 
@@ -21,16 +22,7 @@ import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
  */
 const APPLY_HTML_HIGHLIGHT = (text: string) => `<mark>${text}</mark>`;
 const APPLY_HTML_STRIKE = (text: string) => `<del>${text}</del>`;
-const APPLY_MD_STRONG = (text: string) => {
-  const startMatch = text.match(/^\s*/);
-  const endMatch = text.match(/\s*$/);
-
-  const startSpaces = startMatch ? startMatch[0] : '';
-  const endSpaces = endMatch ? endMatch[0] : '';
-
-  const innerText = text.trim().replace(/([*_`~[\]()])/g, '\\$1'); // Escape special characters
-  return `${startSpaces}**${innerText}**${endSpaces}`;
-};
+const APPLY_MD_STRONG = (text: string) => wrapWithMarkdownSyntax(text, '**');
 
 type HighlightTool = 'highlight' | 'strike' | 'strong';
 
