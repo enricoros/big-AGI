@@ -75,12 +75,14 @@ function _extractTableData(children: React.JSX.Element) {
 
   // Function to extract text from a React element or component
   function extractText(element: any): String {
+    if (element === null)
+      return '';
     // Base case: if the element is a string, return it
     if (typeof element === 'string') {
       return element;
     }
     // If the element has children, recursively extract text from them
-    if (element.props && element.props.children) {
+    if (element.props?.children) {
       if (Array.isArray(element.props.children)) {
         return element.props.children.map(extractText).join('');
       }
@@ -93,12 +95,12 @@ function _extractTableData(children: React.JSX.Element) {
   function traverseAndExtract(elements: React.JSX.Element, tableData: any[] = []) {
     React.Children.forEach(elements, (element) => {
       if (element.type === 'tr') {
-        const rowData = React.Children.map(element.props.children, (cell) => {
+        const rowData = React.Children.map(element.props?.children, (cell) => {
           // Extract and return the text content of each cell
           return extractText(cell);
         });
         tableData.push(rowData);
-      } else if (element.props && element.props.children) {
+      } else if (element.props?.children) {
         traverseAndExtract(element.props.children, tableData);
       }
     });

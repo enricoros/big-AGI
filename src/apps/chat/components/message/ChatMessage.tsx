@@ -89,7 +89,7 @@ const personaAvatarOrMenuSx: SxProps = {
 
 const editButtonWrapSx: SxProps = {
   overflowWrap: 'anywhere',
-  mb: -0.5, // this is so that the 'eidt/cancel' labels won't push down the edit box when single lined
+  mb: -0.5, // this is so that the 'edit/cancel' labels won't push down the edit box when single lined
 };
 
 const fragmentsListSx: SxProps = {
@@ -254,7 +254,7 @@ export function ChatMessage(props: {
       else
         handleFragmentDelete(fragmentId);
     }
-    // if the user pressd Ctrl, we begin a regeneration from here
+    // if the user pressed Ctrl, we begin a regeneration from here
     if (withControl && onMessageAssistantFrom)
       await onMessageAssistantFrom(messageId, 0);
   }, [handleFragmentDelete, handleFragmentReplace, messageId, onMessageAssistantFrom, textContentEditState]);
@@ -322,7 +322,7 @@ export function ChatMessage(props: {
 
   const handleOpsBranch = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // to try to not steal the focus from the banched conversation
+    e.stopPropagation(); // to try to not steal the focus from the branched conversation
     props.onMessageBranch?.(messageId);
     handleCloseOpsMenu();
   };
@@ -332,7 +332,7 @@ export function ChatMessage(props: {
   const handleOpsDiagram = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextDiagram) {
-      await props.onTextDiagram(messageId, textSubject);
+      await props.onTextDiagram(messageId, textSubject.trim());
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -342,7 +342,7 @@ export function ChatMessage(props: {
   const handleOpsImagine = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextImagine) {
-      await props.onTextImagine(textSubject);
+      await props.onTextImagine(textSubject.trim());
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -362,7 +362,7 @@ export function ChatMessage(props: {
   const handleOpsSpeak = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (props.onTextSpeak) {
-      await props.onTextSpeak(textSubject);
+      await props.onTextSpeak(textSubject.trim());
       handleCloseOpsMenu();
       closeContextMenu();
       closeBubble();
@@ -447,9 +447,9 @@ export function ChatMessage(props: {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount <= 0) return;
 
-    // check for enought selection
-    const selectionText = selection.toString().trim();
-    if (selectionText.length < BUBBLE_MIN_TEXT_LENGTH) return;
+    // check for enough selection
+    const selectionText = selection.toString();
+    if (selectionText.trim().length < BUBBLE_MIN_TEXT_LENGTH) return;
 
     // check for the selection being inside the blocks renderer (core of the message)
     const selectionRange = selection.getRangeAt(0);
@@ -573,7 +573,7 @@ export function ChatMessage(props: {
       // className={messagePendingIncomplete ? 'agi-border-4' /* CSS Effect while in progress */ : undefined}
     >
 
-      {/* (Optional) underlayed top decorator */}
+      {/* (Optional) top decorator */}
       {props.topDecorator}
 
 
@@ -804,7 +804,7 @@ export function ChatMessage(props: {
 
           <ListDivider />
 
-          {/* Anthropic Breakpoing Toggle */}
+          {/* Anthropic Breakpoint Toggle */}
           {!isUserMessageSkipped && !!props.showAntPromptCaching && (
             <MenuItem onClick={handleOpsToggleAntCacheUser}>
               <ListItemDecorator><AnthropicIcon sx={isVndAndCacheUser ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
