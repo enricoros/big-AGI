@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'Executive' | 'Generic' | 'Scientist' | 'YouTubeTranscriber';
+export type SystemPurposeId = 'Catalyst' | 'Custom' | 'DataAnalyst1' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'Executive' | 'Generic' | 'Scientist' | 'YouTubeTranscriber';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
@@ -11,11 +11,13 @@ export type SystemPurposeData = {
   systemMessageNotes?: string;
   symbol: string;
   imageUri?: string;
-  examples?: string[];
+  examples?: SystemPurposeExample[];
   highlighted?: boolean;
   call?: { starters?: string[] };
   voices?: { elevenLabs?: { voiceId: string } };
 };
+
+export type SystemPurposeExample = string | { prompt: string, action?: 'require-data-attachment' };
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Generic: {
@@ -73,6 +75,31 @@ Current date: {{LocaleNow}}
     call: { starters: ['Scientific mind at your service. What\'s the question?', 'Scientist here. What\'s the query?', 'Ready for science talk.', 'Yes?'] },
     voices: { elevenLabs: { voiceId: 'ErXwobaYiN019PkySvjV' } },
   },
+  DataAnalyst1: {
+    title: 'Analyst',
+    description: 'Answers questions, reveals insights',
+    systemMessage: `
+You are an AI data analyst assistant. Your task is to analyze data meticulously, revealing quantitative insights, identifying patterns, trends, outliers, and produceing hypotheses and original findings. 
+Adhere strictly to provided data, presenting factual, objective information. Utilize tables and visualizations to clarify complex information. Formulate testable hypotheses based solely on available information. Present findings using clear, concise language, supporting conclusions with statistical evidence. Clearly state any limitations or uncertainties in your analysis. Prioritize accuracy over comprehensiveness when data is limited.
+You have no external data access or real-time data access beyond what the user provides in the conversation. State your carefully planned reasoning before responding. 
+Current date: {{LocaleNow}}
+{{PreferTables}}
+{{RenderPlantUML}}
+{{RenderMermaid}}
+{{RenderSVG}}
+`.trim(),
+    symbol: '📊',
+    examples: [
+      { prompt: 'Analyze this dataset for trends and insights', action: 'require-data-attachment' },
+      { prompt: 'Identify outliers in this data', action: 'require-data-attachment' },
+      'Why is data important for business?',
+      'How to start a data strategy',
+      // 'Create a visualization of this data',
+      // 'Simple data visualization tips',
+    ],
+    call: { starters: ['Data topic?', 'What to know?', 'Curious about?', 'Let\'s discuss:'] },
+    voices: { elevenLabs: { voiceId: 'bIHbv24MWmeRgasZH58o' /* Will */ } },
+  },
   Catalyst: {
     title: 'Catalyst',
     description: 'Growth hacker with marketing superpowers 🚀',
@@ -105,14 +132,6 @@ When asked to design or draw something, please work step by step detailing the c
     call: { starters: ['Hey! What\'s the vision?', 'Designer on call. What\'s the project?', 'Ready for design talk.', 'Hey.'] },
     voices: { elevenLabs: { voiceId: 'MF3mGyEYCl7XYWbV9V6O' } },
   },
-  Custom: {
-    title: 'Custom',
-    description: 'Define the persona, or task:',
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
-    symbol: '⚡',
-    call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
-    voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
-  },
   YouTubeTranscriber: {
     title: 'YouTube Transcriber',
     description: 'Enter a YouTube URL to get the transcript and chat about the content.',
@@ -121,6 +140,14 @@ When asked to design or draw something, please work step by step detailing the c
     examples: ['Analyze the sentiment of this video', 'Summarize the key points of the lecture'],
     call: { starters: ['Enter a YouTube URL to begin.', 'Ready to transcribe YouTube content.', 'Paste the YouTube link here.'] },
     voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
+  },
+  Custom: {
+    title: 'Custom',
+    description: 'Define the persona, or task:',
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
+    symbol: '⚡',
+    call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
+    voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
   },
 
 };
