@@ -141,7 +141,8 @@ You can manually pair them with a local file.
 ## Technical Details
 
 LiveFile uses the [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) to 
-interact with your local files securely.
+interact with your local files securely. It leverages the [browser-fs-access](https://github.com/GoogleChromeLabs/browser-fs-access) library, 
+an open-source project by Google Chrome Labs, which provides an easy interface to the File System Access API with fallbacks for broader browser support.
 
 - **Security:**
   - Access to files requires explicit user permission.
