@@ -326,8 +326,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
 
         {/* [row -3] Description */}
-        <Box sx={{ gridColumn: '1 / -1', mt: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-
+        <Box sx={{ gridColumn: '1 / -1', mt: 3, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
 
           {/* Description*/}
           <Typography level='body-sm' sx={{ color: 'text.primary' }}>
@@ -335,11 +334,13 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               ? 'Cannot find the former persona' + (systemPurposeId ? ` "${systemPurposeId}"` : '')
               : selectedPurpose?.description || 'No description available'}
           </Typography>
-          {/* Examples Toggle */}
-          {/*<Box sx={{ display: 'flex', flexFlow: 'row wrap', flexShrink: 1 }}>*/}
-          {fourExamples && showExamplescomponent}
-          {!isCustomPurpose && showPromptComponent}
-          {/*</Box>*/}
+
+          {/* Examples/Prompt Toggles */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {fourExamples && showExamplescomponent}
+            {!isCustomPurpose && showPromptComponent}
+          </Box>
+
         </Box>
 
         {/* [row -3] Example incipits */}
