@@ -121,21 +121,8 @@ You can manually pair them with a local file.
 - **Monitor External Changes:**
   - Refresh content in big-AGI if the local file has been modified outside the application.
 
-- 
-
----
-
-## Limitations
-
-- **Session Persistence:**
-  - LiveFile connections are **not retained** after reloading or closing big-AGI.
-  - You need to re-pair files after reopening the application.
-
-- **Mobile Devices:**
-  - LiveFile is **not supported** on mobile browsers.
-
-- **File Overwrite:**
-  - Saving from big-AGI will **overwrite** the entire content of the paired file.
+- **Use a Version Control System:**
+  - For critical files, consider using Git or other version control systems to track and monitor changes, authorship, and history.
 
 ---
 
@@ -148,10 +135,6 @@ You can manually pair them with a local file.
 - **Permission Issues:**
   - Confirm that you granted big-AGI permission to access your files.
   - Check your browser's settings to ensure file access is allowed.
-
-- **Files Not Updating:**
-  - Use the **"Replace with File"** option to manually load changes from your local files.
-  - Verify that the file hasn't been moved or renamed.
 
 ---
 
