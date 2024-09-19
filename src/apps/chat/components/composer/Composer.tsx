@@ -111,6 +111,7 @@ export function Composer(props: {
     chatExecuteModeSendColor, chatExecuteModeSendLabel,
     chatExecuteMenuComponent, chatExecuteMenuShown, showChatExecuteMenu,
   } = useChatExecuteMode(props.capabilityHasT2I, props.isMobile);
+  const micCardRef = React.useRef<HTMLDivElement>(null);
 
   // external state
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
@@ -450,6 +451,15 @@ export function Composer(props: {
       toggleRecognition();
   }, [toggleRecognition, micContinuationTrigger]);
 
+  React.useEffect(() => {
+    // auto-scroll the mic card to the bottom
+    micCardRef.current?.scrollTo({
+      top: micCardRef.current.scrollHeight,
+      behavior: 'smooth'
+    });
+  }, [speechInterimResult]);
+
+
 
   // Attachment Up
 
@@ -742,6 +752,7 @@ export function Composer(props: {
                 {/* overlay: Mic */}
                 {micIsRunning && (
                   <Card
+                    ref={micCardRef}
                     color='primary' variant='soft'
                     sx={{
                       position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
@@ -765,7 +776,9 @@ export function Composer(props: {
                       '& > .preceding': {
                         color: 'primary.softDisabledColor',
                         // color: 'rgba(var(--joy-palette-primary-mainChannel) / 0.6)',
-                        overflowWrap: 'anywhere',
+                        overflowWrap: 'break-word',
+                        textWrap: 'wrap',
+                        whiteSpaceCollapse: 'preserve',
                       },
                       '& > .interim': {
                         textDecoration: 'underline',
@@ -778,8 +791,8 @@ export function Composer(props: {
                         fontStyle: 'italic',
                       },
                     }}>
-                      {!!debouncedText && <span className='preceding'>{debouncedText} </span>}
-                      {speechInterimResult.transcript}{' '}
+                      {!!debouncedText && <span className='preceding'>{debouncedText.endsWith(' ') ? debouncedText : debouncedText + ' '}</span>}
+                      {speechInterimResult.transcript}
                       <span className={speechInterimResult.interimTranscript === PLACEHOLDER_INTERIM_TRANSCRIPT ? 'placeholder' : 'interim'}>{speechInterimResult.interimTranscript}</span>
                     </Typography>
                   </Card>
