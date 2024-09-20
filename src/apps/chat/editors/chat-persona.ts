@@ -1,4 +1,4 @@
-import { aixChatGenerateDMessageFromHistory, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateDMessageFromHistory } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
@@ -18,7 +18,7 @@ export const CHATGENERATE_RESPONSE_PLACEHOLDER = '...'; // 💫 ..., 🖊️ ...
 
 
 export interface PersonaProcessorInterface {
-  handleMessage(accumulatedMessage: AixChatGenerateDMessageUpdate, messageComplete: boolean): void;
+  handleMessage(accumulatedMessage: AixChatGenerateContent_DMessage, messageComplete: boolean): void;
 }
 
 
@@ -63,7 +63,7 @@ export async function runPersonaOnConversationHead(
     conversationId,
     parallelViewCount,
     abortController.signal,
-    (messageOverwrite: AixChatGenerateDMessageUpdate, messageComplete: boolean) => {
+    (messageOverwrite: AixChatGenerateContent_DMessage, messageComplete: boolean) => {
       // Note: there was an abort check here, but it removed the last packet, which contained the cause and final text.
 
       // deep copy the object to avoid partial updates
