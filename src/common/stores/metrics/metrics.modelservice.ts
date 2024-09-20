@@ -1,6 +1,5 @@
 import type { StateCreator } from 'zustand';
 
-import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 
 import type { ChatGenerateCostMetricsMd } from './metrics.chatgenerate';
@@ -26,31 +25,38 @@ interface ServiceMetricsAggregate {
   partialPriceUsages: number;
 }
 
-export const initialServiceMetricsAggregate: ServiceMetricsAggregate = {
-  totalCosts: 0,
-  totalSavings: 0,
-  totalInputTokens: 0,
-  totalOutputTokens: 0,
-  usageCount: 0,
-  firstUsageDate: 0,
-  lastUsageDate: 0,
-  freeUsages: 0,
-  noPricingUsages: 0,
-  noTokenUsages: 0,
-  partialMessageUsages: 0,
-  partialPriceUsages: 0,
-};
+function createServiceMetricsAggregate(): ServiceMetricsAggregate {
+  return {
+    totalCosts: 0,
+    totalSavings: 0,
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
+    usageCount: 0,
+    firstUsageDate: 0,
+    lastUsageDate: 0,
+    freeUsages: 0,
+    noPricingUsages: 0,
+    noTokenUsages: 0,
+    partialMessageUsages: 0,
+    partialPriceUsages: 0,
+  };
+}
+
+export const fallbackEmptyServiceMetricsAggregate = createServiceMetricsAggregate();
 
 
 // Service Metrics Store Slice
 
 interface ServiceMetricsState {
+
+  // Service Metrics
   serviceMetrics: Record<DModelsServiceId, ServiceMetricsAggregate>;
+
 }
 
 interface ServiceMetricsActions {
-  addCostEntry: (llm: DLLM, costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number) => void;
-  getCostMetricsForService: (serviceId: DModelsServiceId) => ServiceMetricsAggregate;
+  addChatGenerateCostEntry: (costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, serviceId: DModelsServiceId | null) => void;
+  getAggregateMetricsForService: (serviceId: DModelsServiceId) => ServiceMetricsAggregate | undefined;
 }
 
 export type ServiceMetricsSlice = ServiceMetricsState & ServiceMetricsActions;
@@ -59,11 +65,10 @@ export const createServiceMetricsSlice: StateCreator<ServiceMetricsSlice, [], []
 
   serviceMetrics: {},
 
-  addCostEntry: (llm, costs, inputTokens, outputTokens) => set((state) => {
-    const serviceId = llm.sId;
+  addChatGenerateCostEntry: (costs, inputTokens, outputTokens, serviceId: DModelsServiceId | null) => set((state) => {
     if (!serviceId) return state;
 
-    const currentMetrics = state.serviceMetrics[serviceId] || initialServiceMetricsAggregate;
+    const currentMetrics = state.serviceMetrics[serviceId] || createServiceMetricsAggregate();
     const newMetrics = updateServiceMetrics(currentMetrics, costs, inputTokens, outputTokens, Date.now());
 
     return {
@@ -74,8 +79,8 @@ export const createServiceMetricsSlice: StateCreator<ServiceMetricsSlice, [], []
     };
   }),
 
-  getCostMetricsForService: (serviceId) => {
-    return get().serviceMetrics[serviceId] || initialServiceMetricsAggregate;
+  getAggregateMetricsForService: (serviceId): ServiceMetricsAggregate | undefined => {
+    return get().serviceMetrics[serviceId];
   },
 
 });
