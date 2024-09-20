@@ -88,6 +88,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'image-ocr': AbcIcon,
   'pdf-text': PictureAsPdfIcon,
   'pdf-images': PermMediaOutlinedIcon,
+  'pdf-text-and-images': PermMediaOutlinedIcon,
   'docx-to-html': DescriptionOutlinedIcon,
   'url-page-text': TextFieldsIcon, // was LanguageIcon
   'url-page-markdown': CodeIcon, // was LanguageIcon

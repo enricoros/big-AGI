@@ -23,6 +23,8 @@ export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = 'image/webp';
 export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
+const PDF_PREFER_TEXT_AND_IMAGES = false;
+
 
 // internal mimes, only used to route data within us (source -> input -> converters)
 const INT_MIME_VND_AGI_EGO_FRAGMENTS = 'application/vnd.agi.ego.fragments';
@@ -248,8 +250,9 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
 
     // PDF
     case mimeTypeIsPDF(input.mimeType):
-      converters.push({ id: 'pdf-text', name: 'PDF To Text (OCR)' });
+      converters.push({ id: 'pdf-text', name: 'PDF To Text', isActive: !PDF_PREFER_TEXT_AND_IMAGES || undefined });
       converters.push({ id: 'pdf-images', name: 'PDF To Images' });
+      converters.push({ id: 'pdf-text-and-images', name: 'PDF Text & Images (best)', isActive: PDF_PREFER_TEXT_AND_IMAGES || undefined });
       break;
 
     // DOCX
@@ -598,6 +601,37 @@ export async function attachmentPerformConversion(
         }
         break;
 
+      // pdf to text and images
+      case 'pdf-text-and-images':
+        if (!(input.data instanceof ArrayBuffer)) {
+          console.log('Expected ArrayBuffer for PDF text and images converter, got:', typeof input.data);
+          break;
+        }
+        try {
+          // duplicated from from 'pdf-images' (different progress update)
+          const imageFragments: DMessageAttachmentFragment[] = [];
+          const imageDataURLs = await pdfToImageDataURLs(new Uint8Array(input.data.slice(0)), DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+            edit(attachment.id, { outputsConversionProgress: progress / 2 }); // Update progress (0% to 50%)
+          });
+          for (const pdfPageImage of imageDataURLs) {
+            const pdfPageImageF = await imageDataToImageAttachmentFragmentViaDBlob(pdfPageImage.mimeType, pdfPageImage.base64Data, source, `${title} (pg. ${newFragments.length + 1})`, caption, false, false);
+            if (pdfPageImageF)
+              imageFragments.push(pdfPageImageF);
+          }
+
+          // duplicated from 'pdf-text'
+          const pdfText = await pdfToText(new Uint8Array(input.data.slice(0)), (progress: number) => {
+            edit(attachment.id, { outputsConversionProgress: 0.5 + progress / 2 }); // Update progress (50% to 100%)
+          });
+          const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' });
+
+          // Add the text fragment first, then the image fragments
+          newFragments.push(textFragment, ...imageFragments);
+        } catch (error) {
+          console.error('Error converting PDF to text and images:', error);
+        }
+        break;
+
 
       // docx to html
       case 'docx-to-html':
@@ -772,9 +806,13 @@ export async function convertFilesToDAttachmentFragments(origin: AttachmentDraft
         continue;
       }
 
-      // 3. Select the first non-disabled converter or the first one
-      const converterIndex = _draft.converters.findIndex(c => !c.disabled) ?? 0;
-      _draft.converters[converterIndex].isActive = true;
+      // 3. Select the already (pre-selected) active, or the first (non-disabled) Converter
+      if (!_draft.converters.findIndex(_c => _c.isActive)) {
+        let activateIndex = _draft.converters.findIndex(_c => !_c.disabled);
+        if (activateIndex === -1)
+          activateIndex = 0;
+        _draft.converters[activateIndex].isActive = true;
+      }
 
       // 4. Perform conversion
       await attachmentPerformConversion(_draft,
