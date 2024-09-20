@@ -4,7 +4,7 @@ import { Typography } from '@mui/joy';
 
 import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessage';
 
-import { AixChatGenerateContent_DMessage, aixChatGenerateDMessageFromHistory } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -105,12 +105,11 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
   };
 
   // stream the gathered message
-  return aixChatGenerateDMessageFromHistory(
+  return aixChatGenerateContent_DMessage_FromHistory(
     inputs.llmId,
     gatherHistory,
     'beam-gather', inputs.contextRef,
-    getUXLabsHighPerformance() ? 0 : 1,
-    inputs.chainAbortController.signal,
+    { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : 1 },
     onMessageUpdated,
   ).then((status) => {
 
