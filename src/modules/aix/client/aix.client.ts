@@ -57,7 +57,10 @@ type StreamMessageStatus = {
 };
 
 
-export async function aixChatGenerateContentStreaming(
+/**
+ * Level 3 Generation from an LLM Id + Chat History.
+ */
+export async function aixChatGenerateDMessageFromHistory(
   // chat-inputs -> Partial<DMessage> outputs
   llmId: DLLMId,
   chatHistory: Readonly<DMessage[]>,
@@ -78,14 +81,17 @@ export async function aixChatGenerateContentStreaming(
 
   const chatDMessageUpdate: AixChatGenerateDMessageUpdate = {
     fragments: [],
-    generator: { mgt: 'named', name: llmId as any },
+    generator: {
+      mgt: 'named',
+      name: llmId as any,
+    },
     pendingIncomplete: true,
   };
 
   try {
 
-    await aixLLMChatGenerateContent(llmId, aixChatContentGenerateRequest, aixCreateChatGenerateStreamContext(aixContextName, aixContextRef), true, abortSignal,
-      ({ fragments, generator }: AixLLMGenerateContentAccumulator, isDone: boolean) => {
+    await aixChatGenerateContent_DMessage(llmId, aixChatContentGenerateRequest, aixCreateChatGenerateStreamContext(aixContextName, aixContextRef), true, abortSignal,
+      ({ fragments, generator }: AixChatGenerateContent_DMessage, isDone: boolean) => {
 
         // typesafe overwrite on all fields (Object.assign, but typesafe)
         chatDMessageUpdate.fragments = fragments;
@@ -124,7 +130,7 @@ export async function aixChatGenerateContentStreaming(
  * Accumulator for ChatGenerate output data, as it is being streamed.
  * The object is modified in-place and passed to the callback for efficiency.
  */
-export interface AixLLMGenerateContentAccumulator extends Pick<DMessage, 'fragments' | 'generator'> {
+export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragments' | 'generator'> {
   // overwriting in DMessage
   fragments: DMessageContentFragment[];
   generator: Extract<DMessageGenerator, { mgt: 'aix' }>;
@@ -135,7 +141,7 @@ export interface AixLLMGenerateContentAccumulator extends Pick<DMessage, 'fragme
  *
  * @throws Error if the LLM is not found or other misconfigurations, but handles most other errors internally.
  */
-export async function aixLLMChatGenerateContent<TServiceSettings extends object = {}, TAccess extends AixAPI_Access = AixAPI_Access>(
+export async function aixChatGenerateContent_DMessage<TServiceSettings extends object = {}, TAccess extends AixAPI_Access = AixAPI_Access>(
   // llm Id input -> access & model
   llmId: DLLMId,
   // aix inputs
@@ -144,8 +150,8 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   aixStreaming: boolean,
   // others
   abortSignal: AbortSignal,
-  onStreamingUpdate?: (llmAccumulator: AixLLMGenerateContentAccumulator, isDone: boolean) => void,
-): Promise<AixLLMGenerateContentAccumulator> {
+  onStreamingUpdate?: (llmAccumulator: AixChatGenerateContent_DMessage, isDone: boolean) => void,
+): Promise<AixChatGenerateContent_DMessage> {
 
   // Aix Access
   const llm = findLLMOrThrow(llmId);
@@ -166,7 +172,7 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   // }
 
   // Aix Low-Level Chat Generation
-  const dMessage: AixLLMGenerateContentAccumulator = {
+  const dMessage: AixChatGenerateContent_DMessage = {
     fragments: [],
     generator: {
       mgt: 'aix',
@@ -188,8 +194,8 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
   const aixModel = aixCreateModelFromLLMOptions(llm.options, llmId);
 
   // Aix Low-Level Chat Generation
-  await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal,
-    (ll: Aix_LL_ChatGenerateContent_Accumulator, isDone: boolean) => {
+  await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal,
+    (ll: AixChatGenerateContent_LL, isDone: boolean) => {
 
       // copy the right information at the right place in the tree
       if (ll.fragments.length) dMessage.fragments = ll.fragments;
@@ -225,7 +231,7 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
  * Accumulator for Lower Level ChatGenerate output data, as it is being streamed.
  * The object is modified in-place and passed to the callback for efficiency.
  */
-export interface Aix_LL_ChatGenerateContent_Accumulator {
+export interface AixChatGenerateContent_LL {
   // source of truth for any caller
   // - empty array means no content yet, and no error
   fragments: DMessageContentFragment[];
@@ -269,7 +275,7 @@ export interface Aix_LL_ChatGenerateContent_Accumulator {
  * @returns the final accumulator object
  *
  */
-async function _aix_LL_ChatGenerateContent(
+async function _aixChatGenerateContent_LL(
   // aix inputs
   aixAccess: AixAPI_Access,
   aixModel: AixAPI_Model,
@@ -279,15 +285,15 @@ async function _aix_LL_ChatGenerateContent(
   // others
   abortSignal: AbortSignal,
   // optional streaming callback
-  onReassemblyUpdate?: (llAccumulator: Aix_LL_ChatGenerateContent_Accumulator, isDone: boolean) => void,
-): Promise<Aix_LL_ChatGenerateContent_Accumulator> {
+  onReassemblyUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => void,
+): Promise<AixChatGenerateContent_LL> {
 
   // Aix Low-Level Chat Generation Accumulator
-  const llAccumulator: Aix_LL_ChatGenerateContent_Accumulator = {
+  const accumulator_LL: AixChatGenerateContent_LL = {
     fragments: [],
     /* rest start as undefined (missing in reality) */
   };
-  const contentReassembler = new ContentReassembler(llAccumulator);
+  const contentReassembler = new ContentReassembler(accumulator_LL);
 
   try {
 
@@ -306,7 +312,7 @@ async function _aix_LL_ChatGenerateContent(
     // reassemble the particles
     for await (const particle of particles) {
       contentReassembler.reassembleParticle(particle);
-      onReassemblyUpdate?.(llAccumulator, false);
+      onReassemblyUpdate?.(accumulator_LL, false);
     }
 
   } catch (error: any) {
@@ -322,7 +328,7 @@ async function _aix_LL_ChatGenerateContent(
     } else {
       if (process.env.NODE_ENV === 'development')
         console.error('[DEV] Aix streaming Error:', error);
-      const showAsBold = !!llAccumulator.fragments.length;
+      const showAsBold = !!accumulator_LL.fragments.length;
       contentReassembler.reassembleClientException(presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
     }
 
@@ -332,8 +338,8 @@ async function _aix_LL_ChatGenerateContent(
   contentReassembler.reassembleFinalize();
 
   // streaming update
-  onReassemblyUpdate?.(llAccumulator, true /* Last message, done */);
+  onReassemblyUpdate?.(accumulator_LL, true /* Last message, done */);
 
   // return the final accumulated message
-  return llAccumulator;
+  return accumulator_LL;
 }

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { aixChatGenerateContentStreaming, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateDMessageFromHistory, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
@@ -69,7 +69,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   };
 
   // stream the ray's messages directly to the state store
-  aixChatGenerateContentStreaming(
+  aixChatGenerateDMessageFromHistory(
     llmId,
     inputHistory,
     'beam-scatter', ray.rayId,

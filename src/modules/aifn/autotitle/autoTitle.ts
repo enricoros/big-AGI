@@ -1,5 +1,5 @@
 import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { aixCreateChatGenerateNSContext, aixLLMChatGenerateContent } from '~/modules/aix/client/aix.client';
+import { aixCreateChatGenerateNSContext, aixChatGenerateContent_DMessage } from '~/modules/aix/client/aix.client';
 
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getFastLLMId } from '~/common/stores/llms/store-llms';
@@ -42,7 +42,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   try {
 
     // LLM chat-generate call
-    const { fragments, generator } = await aixLLMChatGenerateContent(
+    const { fragments, generator } = await aixChatGenerateContent_DMessage(
       fastLLMId,
       aixChatGenerateRequestSimple(
         'You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.',
