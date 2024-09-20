@@ -56,6 +56,7 @@ export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragmen
 
 type StreamMessageStatus = {
   outcome: 'success' | 'aborted' | 'errored',
+  lastDMessage: AixChatGenerateContent_DMessage,
   errorMessage?: string
 };
 
@@ -80,6 +81,8 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
   clientOptions: AixClientOptions,
   onStreamingUpdate: (update: AixChatGenerateContent_DMessage, isDone: boolean) => void,
 ): Promise<StreamMessageStatus> {
+
+  let errorMessage: string | undefined;
 
   let lastDMessage: AixChatGenerateContent_DMessage = {
     fragments: [],
@@ -112,25 +115,22 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
     // this can only be a large, user-visible error, such as LLM not found
     console.warn('[DEV] aixChatGenerateContentStreaming error:', { error });
 
-    lastDMessage.fragments.push(createErrorContentFragment(`Issue: ${error.message || (typeof error === 'string' ? error : 'Chat stopped.')}`));
+    errorMessage = error.message || (typeof error === 'string' ? error : 'Chat stopped.');
+    lastDMessage.fragments.push(createErrorContentFragment(`Issue: ${errorMessage}`));
     lastDMessage.generator = {
       ...lastDMessage.generator,
       tokenStopReason: 'issue',
     };
     lastDMessage.pendingIncomplete = false;
-
-    return {
-      outcome: 'errored',
-      errorMessage: error.message,
-    };
   }
 
   // TODO: check something beyond this return status (as exceptions almost never happen here)
   // - e.g. the generator.aix may have error/token stop codes
 
   return {
-    outcome: 'success',
-    errorMessage: undefined,
+    outcome: errorMessage ? 'errored' : lastDMessage.generator?.tokenStopReason === 'client-abort' ? 'aborted' : 'success',
+    lastDMessage: lastDMessage,
+    errorMessage: errorMessage || undefined,
   };
 }
 
