@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 
-// module configuration
+// configuration
 const DEBUG_OPTIMA_PORTALS = false;
 
 

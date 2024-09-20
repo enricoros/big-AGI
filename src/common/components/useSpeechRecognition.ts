@@ -6,7 +6,7 @@ import { CapabilityBrowserSpeechRecognition } from './useCapabilities';
 import { useUIPreferencesStore } from '../state/store-ui';
 
 
-// Module configuration
+// configuration
 export const PLACEHOLDER_INTERIM_TRANSCRIPT = 'Listening...';
 
 

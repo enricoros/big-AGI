@@ -13,6 +13,10 @@ import { getChatAutoAI } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
 
+// configuration
+export const CHATGENERATE_RESPONSE_PLACEHOLDER = '...'; // 💫 ..., 🖊️ ...
+
+
 export interface PersonaProcessorInterface {
   handleMessage(accumulatedMessage: AixChatGenerateDMessageUpdate, messageComplete: boolean): void;
 }
@@ -35,9 +39,9 @@ export async function runPersonaOnConversationHead(
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
-  // assistant placeholder
+  // assistant response placeholder
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
-    '...',
+    CHATGENERATE_RESPONSE_PLACEHOLDER,
     {
       purposeId: history[0].purposeId,
       generator: { mgt: 'named', name: assistantLlmId },
