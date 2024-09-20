@@ -1,6 +1,6 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import { DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
 import { chatGenerateMetricsLgToMd, computeChatGenerationCosts, DChatGenerateMetricsLg } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -136,6 +136,37 @@ export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragmen
   generator: Extract<DMessageGenerator, { mgt: 'aix' }>;
 }
 
+function llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateContent_DMessage) {
+  if (src.fragments.length)
+    dest.fragments = src.fragments; // Note: this gets replaced once, and then it's the same from that point on
+  if (src.genMetricsLg)
+    dest.generator.metrics = chatGenerateMetricsLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
+  if (src.genModelName)
+    dest.generator.name = src.genModelName;
+  if (src.genTokenStopReason)
+    dest.generator.tokenStopReason = src.genTokenStopReason;
+}
+
+function updateDMessageCosts(dest: AixChatGenerateContent_DMessage, llm: DLLM) {
+  // Compute costs
+  const costs = computeChatGenerationCosts(dest.generator.metrics, llm.pricing?.chat);
+  if (!costs) {
+    // FIXME: we shall warn that the costs are missing, as the only way to get pricings is through surfacing missing prices
+    return;
+  }
+
+  // Add the costs to the generator.metrics object
+  if (dest.generator.metrics)
+    Object.assign(dest.generator.metrics, costs);
+
+  // Run aggregations
+  const m = dest.generator.metrics;
+  const inputTokens = (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0);
+  const outputTokens = (m?.TOut || 0) + (m?.TOutR || 0);
+  metricsStoreAddChatGenerate(costs, inputTokens, outputTokens, llm);
+}
+
+
 /**
  * Generation from an LLM Id,
  *
@@ -156,6 +187,9 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   // Aix Access
   const llm = findLLMOrThrow(llmId);
   const { transportAccess: aixAccess, serviceSettings, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
+
+  // Aix Model
+  const aixModel = aixCreateModelFromLLMOptions(llm.options, llmId);
 
   // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
@@ -181,47 +215,31 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
         vId: llm.vId,
         mId: llm.id, // NOTE: using llm.id instead of aixModel.id (the ref) so we can re-select them in the UI (Beam)
       },
+      // metrics: undefined,
+      // tokenStopReason: undefined,
     },
   };
 
-  // streaming initial notification, to record
+  // streaming initial notification, for UI updates
   onStreamingUpdate?.(dMessage, false);
 
   // apply any vendor-specific rate limit
   await vendor.rateLimitChatGenerate?.(llm, serviceSettings);
 
-  // Aix Model
-  const aixModel = aixCreateModelFromLLMOptions(llm.options, llmId);
-
   // Aix Low-Level Chat Generation
-  await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal,
+  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal,
     (ll: AixChatGenerateContent_LL, isDone: boolean) => {
-
-      // copy the right information at the right place in the tree
-      if (ll.fragments.length) dMessage.fragments = ll.fragments;
-      // Note: we are willingly reducing the size of the object here, as it's ready for DMessage storage
-      if (ll.genMetricsLg) dMessage.generator.metrics = chatGenerateMetricsLgToMd(ll.genMetricsLg);
-      if (ll.genModelName) dMessage.generator.name = ll.genModelName;
-      if (ll.genTokenStopReason) dMessage.generator.tokenStopReason = ll.genTokenStopReason;
-
-      // if this is the last message, proceed with the finalization
-      if (isDone) {
-        // compute costs
-        const costs = computeChatGenerationCosts(dMessage.generator.metrics, llm.pricing?.chat);
-        if (costs && dMessage.generator.metrics)
-          Object.assign(dMessage.generator.metrics, costs);
-
-        // notify the store that tracks costs
-        if (costs) {
-          const m = dMessage.generator.metrics;
-          metricsStoreAddChatGenerate(costs, llm, (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0), (m?.TOut || 0));
-        }
-      }
-
-      // streaming update
-      onStreamingUpdate?.(dMessage, isDone);
+      llToDMessage(ll, dMessage);
+      if (!isDone) onStreamingUpdate?.(dMessage, false);
     },
   );
+
+  // LLM Cost computation & Aggregations
+  llToDMessage(llAccumulator, dMessage);
+  updateDMessageCosts(dMessage, llm);
+
+  // final update (could ingore and take the dMessage)
+  onStreamingUpdate?.(dMessage, true);
 
   return dMessage;
 }
@@ -337,7 +355,7 @@ async function _aixChatGenerateContent_LL(
   // and we're done
   contentReassembler.reassembleFinalize();
 
-  // streaming update
+  // final update (could ingore and take the final accumulator)
   onReassemblyUpdate?.(accumulator_LL, true /* Last message, done */);
 
   // return the final accumulated message
