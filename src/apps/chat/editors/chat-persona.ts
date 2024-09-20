@@ -1,4 +1,4 @@
-import { aixChatGenerateContentStreaming, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateDMessageFromHistory, AixChatGenerateDMessageUpdate } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
@@ -56,7 +56,7 @@ export async function runPersonaOnConversationHead(
   cHandler.setAbortController(abortController);
 
   // stream the assistant's messages directly to the state store
-  const messageStatus = await aixChatGenerateContentStreaming(
+  const messageStatus = await aixChatGenerateDMessageFromHistory(
     assistantLlmId,
     history,
     'conversation',

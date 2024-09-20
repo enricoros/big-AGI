@@ -3,7 +3,7 @@ import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionRes
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
-import { Aix_LL_ChatGenerateContent_Accumulator, DEBUG_PARTICLES } from './aix.client';
+import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
@@ -21,7 +21,7 @@ export class ContentReassembler {
 
   private currentTextFragmentIndex: number | null = null;
 
-  constructor(readonly accumulator: Aix_LL_ChatGenerateContent_Accumulator) {
+  constructor(readonly accumulator: AixChatGenerateContent_LL) {
     // [DEV} nullify the global
     devMode_AixLastDispatchRequest = null;
   }
