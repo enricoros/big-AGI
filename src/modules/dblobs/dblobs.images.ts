@@ -1,3 +1,4 @@
+import { Is } from '~/common/util/pwaUtils';
 import { createBlobURLFromData } from '~/common/util/urlUtils';
 import { resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -5,7 +6,9 @@ import { _addDBAsset, gcDBAssetsByScope, getDBAsset } from './dblobs.db';
 import { _createAssetObject, DBlobAssetId, DBlobAssetType, DBlobDBContextId, DBlobDBScopeId, DBlobImageAsset, DBlobMimeType } from './dblobs.types';
 
 
-// C
+// configuration
+const THUMBNAIL_ENCODING_MIMETYPE = !Is.Browser.Safari ? DBlobMimeType.IMG_WEBP : DBlobMimeType.IMG_JPEG;
+
 
 export async function addDBImageAsset(
   contextId: DBlobDBContextId,
@@ -34,7 +37,7 @@ async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: DBlobDBC
       imageAsset.data.mimeType,
       imageAsset.data.base64,
       'thumbnail-256',
-      DBlobMimeType.IMG_WEBP,
+      THUMBNAIL_ENCODING_MIMETYPE,
       0.9,
     ).catch((error: any) => console.error('addDBAsset: Error resizing image', error));
 
@@ -42,7 +45,7 @@ async function _addDBImageAsset(imageAsset: DBlobImageAsset, contextId: DBlobDBC
     if (resizedDataForCache) {
       imageAsset.cache.thumb256 = {
         base64: resizedDataForCache.base64,
-        mimeType: DBlobMimeType.IMG_WEBP,
+        mimeType: THUMBNAIL_ENCODING_MIMETYPE,
       };
     }
   }

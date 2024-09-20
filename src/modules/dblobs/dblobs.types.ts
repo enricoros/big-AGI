@@ -52,7 +52,7 @@ interface DBlobAssetImplV1<TAssetType extends DBlobAssetType, TMime extends DBlo
   metadata: TMeta; // Flexible metadata for specific .type(s)
   // cache: Record<string, DBlobData<DBlobMimeType>>; // Cached conversions as BlobData objects
   cache: {
-    thumb256?: DBlobAssetData<DBlobMimeType.IMG_WEBP>; // Cache for the thumbnail-256 conversion
+    thumb256?: DBlobAssetData<DBlobMimeType.IMG_WEBP | DBlobMimeType.IMG_JPEG>; // Cache for the thumbnail-256 conversion
   };
 }
 

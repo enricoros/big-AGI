@@ -4,6 +4,7 @@ import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
+import { Is } from '~/common/util/pwaUtils';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
@@ -19,7 +20,7 @@ import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs'
 
 
 // configuration
-export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = 'image/webp';
+export const DEFAULT_ADRAFT_IMAGE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
 export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
