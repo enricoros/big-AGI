@@ -12,7 +12,7 @@ import { getPlantUmlServerUrl } from '~/modules/blocks/code/code-renderers/Rende
 import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
-// app config
+// basics
 import { Brand } from '~/common/app.config';
 import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
 
