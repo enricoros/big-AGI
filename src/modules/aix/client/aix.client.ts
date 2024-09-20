@@ -189,7 +189,7 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
 
   // Aix Low-Level Chat Generation
   await _aix_LL_ChatGenerateContent(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, abortSignal,
-    (ll: Aix_LL_GenerateContentAccumulator, isDone: boolean) => {
+    (ll: Aix_LL_ChatGenerateContent_Accumulator, isDone: boolean) => {
 
       // copy the right information at the right place in the tree
       if (ll.fragments.length) dMessage.fragments = ll.fragments;
@@ -225,8 +225,9 @@ export async function aixLLMChatGenerateContent<TServiceSettings extends object 
  * Accumulator for Lower Level ChatGenerate output data, as it is being streamed.
  * The object is modified in-place and passed to the callback for efficiency.
  */
-export interface Aix_LL_GenerateContentAccumulator {
-  // overwriting in DMessage
+export interface Aix_LL_ChatGenerateContent_Accumulator {
+  // source of truth for any caller
+  // - empty array means no content yet, and no error
   fragments: DMessageContentFragment[];
 
   // pieces of generator
@@ -235,15 +236,38 @@ export interface Aix_LL_GenerateContentAccumulator {
   genTokenStopReason?: DMessageGenerator['tokenStopReason'];
 }
 
-
 /**
- * Client side chat generation, with streaming. This decodes the (text) streaming response from
- * our server streaming endpoint (plain text, not EventSource), and signals updates via a callback.
+ * Low-level client-side ChatGenerateContent, with optional streaming.
  *
- * Vendor-specific implementation is on our server backend (API) code. This function tries to be
- * as generic as possible.
+ * Contract:
+ * - empty fragments means no content yet, and no error
+ * - aixStreaming hints the source, but can be respected or not
+ *   - onReassemblyUpdate is optional, you can ignore the updates and await the final result
+ * - errors become Error fragments, and they can be dialect-sent, dispatch-excepts, client-read issues or even user aborts
+ * - empty fragments:
+ *   - in the interim updates, means no content yet
+ *   - in the final update, means there was no content received at all
+ * - the output (accumulaor) is always a complete object with all fragments
+ *   - of the reasons, 'client-abort' and 'out-of-tokens' are the only ones that can be set without any fragments
  *
- * NOTE: onUpdate is callback when a piece of a message (text, model name, typing..) is received
+ * Inputs are all Aix_* objects:
+ *
+ * @param aixAccess abstracts the provider-specific configuration
+ * @param aixModel selects and provides the model-specific configuration
+ * @param aixChatGenerate the chat generation request specifics, which includes system instructions and various tools use:
+ *    - tools include Function Declaration (for function calling) Gemini Code Execution, etc.
+ *    - special parts include 'In Reference To' (a decorator of messages)
+ *    - other special parts include the Anthropic Caching hints, on select message
+ * @param aixContext specifies the scope of the caller, such as what's the high level objective of this call
+ * @param aixStreaming requests the source to provide incremental updates
+ * @param abortSignal allows the caller to stop the operation
+ *
+ * The output is an accumulator object with the fragments, and the generator
+ * pieces (metrics, model name, token stop reason)
+ *
+ * @param onReassemblyUpdate updated with the same accumulator at every step, and at the end (with isDone=true)
+ * @returns the final accumulator object
+ *
  */
 async function _aix_LL_ChatGenerateContent(
   // aix inputs
@@ -255,11 +279,14 @@ async function _aix_LL_ChatGenerateContent(
   // others
   abortSignal: AbortSignal,
   // optional streaming callback
-  onStreamingUpdate?: (llAccumulator: Aix_LL_GenerateContentAccumulator, isDone: boolean) => void,
-): Promise<Aix_LL_GenerateContentAccumulator> {
+  onReassemblyUpdate?: (llAccumulator: Aix_LL_ChatGenerateContent_Accumulator, isDone: boolean) => void,
+): Promise<Aix_LL_ChatGenerateContent_Accumulator> {
 
   // Aix Low-Level Chat Generation Accumulator
-  const llAccumulator: Aix_LL_GenerateContentAccumulator = { fragments: [] /* rest is undefined */ };
+  const llAccumulator: Aix_LL_ChatGenerateContent_Accumulator = {
+    fragments: [],
+    /* rest start as undefined (missing in reality) */
+  };
   const contentReassembler = new ContentReassembler(llAccumulator);
 
   try {
@@ -279,32 +306,33 @@ async function _aix_LL_ChatGenerateContent(
     // reassemble the particles
     for await (const particle of particles) {
       contentReassembler.reassembleParticle(particle);
-      onStreamingUpdate?.(llAccumulator, false);
+      onReassemblyUpdate?.(llAccumulator, false);
     }
 
   } catch (error: any) {
+
     // something else broke, likely a User Abort, or an Aix server error (e.g. tRPC)
-    const isUserAbort1 = abortSignal.aborted;
-    const isUserAbort2 = (error instanceof Error) && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
-    if (!(isUserAbort1 || isUserAbort2)) {
+    const isUserAbort = abortSignal.aborted;
+    const isErrorAbort = (error instanceof Error) && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
+    if (isUserAbort || isErrorAbort) {
+      if (isUserAbort !== isErrorAbort)
+        if (process.env.NODE_ENV === 'development')
+          console.error(`[DEV] Aix streaming AbortError mismatch (${isUserAbort}, ${isErrorAbort})`, { error: error });
+      contentReassembler.reassembleClientAbort();
+    } else {
       if (process.env.NODE_ENV === 'development')
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!llAccumulator.fragments.length;
-      contentReassembler.reassembleExceptError(presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
-    } else {
-      // Note: saw this once, with isUserAbort1 = true, and isUserAbort2 = false; not very informative, hence disabling
-      // if (isUserAbort1 !== isUserAbort2) // never seen this happening, but just in case
-      //   contentReassembler.reassembleExceptError(`AbortError mismatch: ${isUserAbort1} !== ${isUserAbort2}`);
-      // else
-      contentReassembler.reassembleExceptUserAbort();
+      contentReassembler.reassembleClientException(presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
     }
+
   }
 
   // and we're done
   contentReassembler.reassembleFinalize();
 
   // streaming update
-  onStreamingUpdate?.(llAccumulator, true /* Last message, done */);
+  onReassemblyUpdate?.(llAccumulator, true /* Last message, done */);
 
   // return the final accumulated message
   return llAccumulator;

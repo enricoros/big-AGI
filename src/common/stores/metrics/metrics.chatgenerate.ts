@@ -1,17 +1,19 @@
 import { DChatGeneratePricing, getLlmPriceForTokens, isModelPriceFree } from '~/common/stores/llms/llms.pricing';
 
-
 /**
  * This is a stored type - IMPORTANT: do not break.
+ * - stored by DMessage > DMessageGenerator
+ */
+export type DChatGenerateMetricsMd =
+  Omit<ChatGenerateTokenMetrics, 'T'> &
+  ChatGenerateCostMetricsMd;
+
+/**
  * In particular this is used 'as' AixWire_Particles.CGSelectMetrics
  */
 export type DChatGenerateMetricsLg =
   ChatGenerateTokenMetrics &
   ChatGenerateTimeMetrics &
-  ChatGenerateCostMetricsMd;
-
-export type DChatGenerateMetricsMd =
-  Omit<ChatGenerateTokenMetrics, 'T'> &
   ChatGenerateCostMetricsMd;
 
 
