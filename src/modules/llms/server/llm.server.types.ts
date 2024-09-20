@@ -53,6 +53,8 @@ const TieredPrice_schema = z.union([
 const ChatGeneratePricing_schema = z.object({
   input: TieredPrice_schema.optional(),
   output: TieredPrice_schema.optional(),
+  // Future: Perplexity has a cost per request, consider this for future additions
+  // perRequest: z.number().optional(), // New field for fixed per-request pricing
   cache: z.object({
     cType: z.literal('ant-bp'),
     read: TieredPrice_schema,
