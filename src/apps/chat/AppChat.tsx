@@ -353,7 +353,7 @@ export function AppChat() {
       });
   }, []);
 
-  const handleConversationBranch = React.useCallback((srcConversationId: DConversationId, messageId: string | null): DConversationId | null => {
+  const handleConversationBranch = React.useCallback((srcConversationId: DConversationId, messageId: string | null, addSplitPane: boolean): DConversationId | null => {
     // clone data
     const branchedConversationId = branchConversation(srcConversationId, messageId);
 
@@ -363,7 +363,7 @@ export function AppChat() {
 
     // replace/open a new pane with this
     showNextTitleChange.current = true;
-    if (!isMultiAddable)
+    if (addSplitPane && !isMultiAddable)
       handleOpenConversationInFocusedPane(branchedConversationId);
     else
       handleOpenConversationInSplitPane(branchedConversationId);

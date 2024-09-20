@@ -36,7 +36,7 @@ export function ChatAppMenuItems(props: {
   disableItems: boolean,
   hasConversations: boolean,
   isMessageSelectionMode: boolean,
-  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
   onConversationClear: (conversationId: DConversationId) => void,
   onConversationFlatten: (conversationId: DConversationId) => void,
   // onConversationNew: (forceNoRecycle: boolean) => void,
@@ -80,7 +80,7 @@ export function ChatAppMenuItems(props: {
 
   const handleConversationBranch = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
-    props.conversationId && props.onConversationBranch(props.conversationId, null);
+    props.conversationId && props.onConversationBranch(props.conversationId, null, true);
   };
 
   const handleConversationFlatten = (event: React.MouseEvent<HTMLElement>) => {

@@ -44,7 +44,7 @@ export function ChatMessageList(props: {
   fitScreen: boolean,
   isMobile: boolean,
   isMessageSelectionMode: boolean,
-  onConversationBranch: (conversationId: DConversationId, messageId: string) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string, addSplitPane: boolean) => void,
   onConversationExecuteHistory: (conversationId: DConversationId) => Promise<void>,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
@@ -156,7 +156,7 @@ export function ChatMessageList(props: {
   }, [conversationId, props.conversationHandler]);
 
   const handleMessageBranch = React.useCallback((messageId: DMessageId) => {
-    conversationId && onConversationBranch(conversationId, messageId);
+    conversationId && onConversationBranch(conversationId, messageId, true);
   }, [conversationId, onConversationBranch]);
 
   const handleMessageTruncate = React.useCallback((messageId: DMessageId) => {
