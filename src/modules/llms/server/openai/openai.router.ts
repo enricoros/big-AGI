@@ -13,8 +13,9 @@ import { fixupHost } from '~/common/util/urlUtils';
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
-import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, perplexityAIModelDescriptions, perplexityAIModelSort, togetherAIModelsToModelDescriptions } from './models/models.data';
+import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
+import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 
 
@@ -118,7 +119,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         return { models };
       }
 
-      // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/discuss/65cf7fd19ac9a5002e8f1341)
+      // [Perplexity]: there's no API for models listing (upstream: https://docs.perplexity.ai/guides/model-cards)
       if (access.dialect === 'perplexity')
         return { models: perplexityAIModelDescriptions().sort(perplexityAIModelSort) };
 
