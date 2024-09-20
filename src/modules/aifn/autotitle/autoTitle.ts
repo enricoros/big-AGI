@@ -1,5 +1,5 @@
 import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { aixCreateChatGenerateNSContext, aixChatGenerateContent_DMessage } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage, aixCreateChatGenerateNSContext } from '~/modules/aix/client/aix.client';
 
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getFastLLMId } from '~/common/stores/llms/store-llms';
@@ -57,7 +57,7 @@ ${historyLines.join('\n')}
         }]),
       aixCreateChatGenerateNSContext('chat-ai-title', conversationId),
       false,
-      new AbortController().signal, // we don't abort
+      { abortSignal: new AbortController().signal /* we don't abort */ },
     );
 
     // parse response

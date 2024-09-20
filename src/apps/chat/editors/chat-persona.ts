@@ -1,4 +1,4 @@
-import { AixChatGenerateContent_DMessage, aixChatGenerateDMessageFromHistory } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
@@ -24,6 +24,7 @@ export interface PersonaProcessorInterface {
 
 /**
  * The main "chat" function.
+ * @returns `true` if the operation was successful, `false` otherwise.
  */
 export async function runPersonaOnConversationHead(
   assistantLlmId: DLLMId,
@@ -56,13 +57,12 @@ export async function runPersonaOnConversationHead(
   cHandler.setAbortController(abortController);
 
   // stream the assistant's messages directly to the state store
-  const messageStatus = await aixChatGenerateDMessageFromHistory(
+  const messageStatus = await aixChatGenerateContent_DMessage_FromHistory(
     assistantLlmId,
     history,
     'conversation',
     conversationId,
-    parallelViewCount,
-    abortController.signal,
+    { abortSignal: abortController.signal, throttleParallelThreads: parallelViewCount },
     (messageOverwrite: AixChatGenerateContent_DMessage, messageComplete: boolean) => {
       // Note: there was an abort check here, but it removed the last packet, which contained the cause and final text.
 
