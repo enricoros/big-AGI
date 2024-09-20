@@ -87,6 +87,17 @@ export async function runPersonaOnConversationHead(
     },
   );
 
+  // final message update (needed only in case of error)
+  const lastDeepCopy = structuredClone(messageStatus.lastDMessage);
+  if (messageStatus.outcome === 'errored')
+    cHandler.messageEdit(assistantMessageId, lastDeepCopy, true, false);
+
+  // special case: if the last message was aborted and had no content, delete it
+  if (lastDeepCopy.generator?.tokenStopReason === 'client-abort' && lastDeepCopy.fragments?.length === 0) {
+    cHandler.messagesDelete([assistantMessageId]);
+    return false;
+  }
+
   // check if aborted
   const hasBeenAborted = abortController.signal.aborted;
 
