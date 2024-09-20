@@ -3,7 +3,7 @@ import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionRes
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
-import { Aix_LL_GenerateContentAccumulator, DEBUG_PARTICLES } from './aix.client';
+import { Aix_LL_ChatGenerateContent_Accumulator, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
@@ -21,7 +21,7 @@ export class ContentReassembler {
 
   private currentTextFragmentIndex: number | null = null;
 
-  constructor(readonly accumulator: Aix_LL_GenerateContentAccumulator) {
+  constructor(readonly accumulator: Aix_LL_ChatGenerateContent_Accumulator) {
     // [DEV} nullify the global
     devMode_AixLastDispatchRequest = null;
   }
@@ -95,17 +95,17 @@ export class ContentReassembler {
       devMode_AixLastDispatchRequest.particles.push(JSON.stringify(op));
   }
 
-  reassembleExceptError(errorAsText: string): void {
+  reassembleClientAbort(): void {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p: abort-client');
+    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+  }
+
+  reassembleClientException(errorAsText: string): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p: issue:', errorAsText);
     this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
     this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
-  }
-
-  reassembleExceptUserAbort(): void {
-    if (DEBUG_PARTICLES)
-      console.log('-> aix.p: abort-client');
-    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
   }
 
   reassembleFinalize(): void {

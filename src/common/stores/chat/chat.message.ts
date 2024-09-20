@@ -76,9 +76,13 @@ export const MESSAGE_FLAG_VND_ANT_CACHE_USER: DMessageUserFlag = 'vnd.ant.cache.
 // Message > Generator
 
 export type DMessageGenerator = ({
+  // A named generator is a simple string, presented as-is
   mgt: 'named';
   name: 'web' | 'issue' | 'help' | string;
 } | {
+  // An AIX generator preserves information about original model and vendor:
+  // - vendor ids will be stable across time
+  // - no guarantee of consistency on the model, e.g. could be across different devices
   mgt: 'aix',
   name: string;                       // model that handled the request
   aix: {
