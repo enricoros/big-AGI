@@ -3,13 +3,13 @@ import * as React from 'react';
 import { Avatar, Box, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CopyAllIcon from '@mui/icons-material/CopyAll';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
-import ForkRightIcon from '@mui/icons-material/ForkRight';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
@@ -80,7 +80,7 @@ function ChatDrawerItem(props: {
   showSymbols: boolean | 'gif',
   bottomBarBasis: number,
   onConversationActivate: (conversationId: DConversationId, closeMenu: boolean) => void,
-  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
   onConversationDeleteNoConfirmation: (conversationId: DConversationId) => void,
   onConversationExport: (conversationId: DConversationId, exportAll: boolean) => void,
   onConversationFolderChange: (folderChangeRequest: FolderChangeRequest) => void,
@@ -128,7 +128,7 @@ function ChatDrawerItem(props: {
 
   const handleConversationBranch = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    conversationId && onConversationBranch(conversationId, null);
+    conversationId && onConversationBranch(conversationId, null, false /* no pane from Drawer duplicate */);
   }, [conversationId, onConversationBranch]);
 
 
@@ -365,9 +365,9 @@ function ChatDrawerItem(props: {
                   </FadeInButton>
                 </Tooltip>
 
-                <Tooltip disableInteractive title='Duplicate (Branch)'>
+                <Tooltip disableInteractive title='Duplicate'>
                   <FadeInButton size='sm' onClick={handleConversationBranch}>
-                    <ForkRightIcon />
+                    <CopyAllIcon />
                   </FadeInButton>
                 </Tooltip>
 

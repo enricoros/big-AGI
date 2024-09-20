@@ -65,7 +65,7 @@ function ChatDrawer(props: {
   chatPanesConversationIds: DConversationId[],
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
-  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => void,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
   onConversationNew: (forceNoRecycle: boolean) => void,
   onConversationsDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
   onConversationsExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,

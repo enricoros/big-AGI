@@ -82,7 +82,7 @@ function encodeConversationAsUserMessage(userPrompt: string, messages: DMessage[
 
 export function FlattenerModal(props: {
   conversationId: string | null,
-  onConversationBranch: (conversationId: DConversationId, messageId: string | null) => DConversationId | null,
+  onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => DConversationId | null,
   onClose: () => void,
 }) {
 
@@ -137,7 +137,7 @@ export function FlattenerModal(props: {
     if (!props.conversationId || !selectedStyle || !flattenedText) return;
     let newConversationId: string | null = props.conversationId;
     if (branch)
-      newConversationId = props.onConversationBranch(props.conversationId, null);
+      newConversationId = props.onConversationBranch(props.conversationId, null, false /* no pane from Flatter new */);
     if (newConversationId) {
       const ncHandler = ConversationsManager.getHandler(newConversationId);
       const newRootMessage = createDMessageTextContent('user', flattenedText);// [new chat] user:former chat summary
