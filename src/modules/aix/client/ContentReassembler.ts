@@ -31,7 +31,7 @@ export class ContentReassembler {
   //   this.currentTextFragmentIndex = null;
   // }
 
-  reassembleParticle(op: AixWire_Particles.ChatGenerateOp): void {
+  reassembleParticle(op: AixWire_Particles.ChatGenerateOp, debugIsAborted: boolean): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p:', op);
     let isDebug = false;
@@ -92,20 +92,20 @@ export class ContentReassembler {
 
     // [DEV] Debugging
     if (!isDebug && devMode_AixLastDispatchRequest?.particles)
-      devMode_AixLastDispatchRequest.particles.push(JSON.stringify(op));
+      devMode_AixLastDispatchRequest.particles.push((debugIsAborted ? '!(A)! ' : '') + JSON.stringify(op));
   }
 
   reassembleClientAbort(): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p: abort-client');
-    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' }, true);
   }
 
   reassembleClientException(errorAsText: string): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p: issue:', errorAsText);
     this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
-    this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
+    this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' }, false);
   }
 
   reassembleFinalize(): void {
