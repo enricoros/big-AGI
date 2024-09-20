@@ -361,7 +361,7 @@ async function _aixChatGenerateContent_LL(
 
     // reassemble the particles
     for await (const particle of particles) {
-      contentReassembler.reassembleParticle(particle);
+      contentReassembler.reassembleParticle(particle, abortSignal.aborted);
       onReassemblyUpdate?.(accumulator_LL, false);
     }
 
