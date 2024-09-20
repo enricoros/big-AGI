@@ -518,12 +518,12 @@ export function Composer(props: {
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
     }
     if (recognitionState.isActive) {
-      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 1 });
+      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 3 });
       composerShortcuts.push({
         key: ShortcutKey.Esc, action: () => {
           setMicContinuation(false);
           toggleRecognition(false);
-        }, description: 'Mic · Stop', level: 1,
+        }, description: 'Mic · Stop', level: 3,
       });
     } else if (browserSpeechRecognitionCapability().mayWork)
       composerShortcuts.push({
