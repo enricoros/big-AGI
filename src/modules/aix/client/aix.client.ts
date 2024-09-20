@@ -224,7 +224,12 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
     (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return;
       _llToDMessage(ll, dMessage);
-      throttler?.decimate(() => onStreamingUpdate?.(dMessage, false));
+      if (onStreamingUpdate) {
+        if (throttler)
+          throttler.decimate(() => onStreamingUpdate(dMessage, false));
+        else
+          onStreamingUpdate(dMessage, false);
+      }
     },
   );
 
