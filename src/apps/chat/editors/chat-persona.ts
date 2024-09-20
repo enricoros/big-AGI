@@ -64,10 +64,20 @@ export async function runPersonaOnConversationHead(
     conversationId,
     { abortSignal: abortController.signal, throttleParallelThreads: parallelViewCount },
     (messageOverwrite: AixChatGenerateContent_DMessage, messageComplete: boolean) => {
+
       // Note: there was an abort check here, but it removed the last packet, which contained the cause and final text.
+      // if (abortController.signal.aborted)
+      //   console.warn('runPersonaOnConversationHead: Aborted', { conversationId, assistantLlmId, messageOverwrite });
 
       // deep copy the object to avoid partial updates
-      cHandler.messageEdit(assistantMessageId, structuredClone(messageOverwrite), messageComplete, false);
+      let deepCopy = structuredClone(messageOverwrite);
+
+      // [Cosmetic Logic] if the content hasn't come yet, don't replace the fragments to still show the placeholder
+      if (!messageComplete && deepCopy.pendingIncomplete && deepCopy.fragments?.length === 0)
+        delete (deepCopy as any).fragments;
+
+      // update the message
+      cHandler.messageEdit(assistantMessageId, deepCopy, messageComplete, false);
 
       // if requested, speak the message
       autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
