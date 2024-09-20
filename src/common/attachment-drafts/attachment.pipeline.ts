@@ -807,7 +807,7 @@ export async function convertFilesToDAttachmentFragments(origin: AttachmentDraft
       }
 
       // 3. Select the already (pre-selected) active, or the first (non-disabled) Converter
-      if (!_draft.converters.findIndex(_c => _c.isActive)) {
+      if (_draft.converters.findIndex(_c => _c.isActive) === -1) {
         let activateIndex = _draft.converters.findIndex(_c => !_c.disabled);
         if (activateIndex === -1)
           activateIndex = 0;
@@ -820,7 +820,7 @@ export async function convertFilesToDAttachmentFragments(origin: AttachmentDraft
         (_, fragments) => _draft.outputFragments = fragments,
       );
       if (!_draft.outputFragments.length) {
-        console.warn(`Failed to convert file: ${fileWithHandle.name}`);
+        console.warn(`[DEV] Failed to convert file: ${fileWithHandle.name}`, _draft);
         continue;
       }
 
