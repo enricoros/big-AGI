@@ -62,6 +62,7 @@ export function ImageAttachmentFragments(props: {
   imageAttachments: DMessageAttachmentFragment[],
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
+  disabled?: boolean,
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
 }) {
 
@@ -99,6 +100,7 @@ export function ImageAttachmentFragments(props: {
               imageAltText={imageRefPart.altText || title}
               imageWidth={imageRefPart.width}
               imageHeight={imageRefPart.height}
+              disabled={props.disabled}
               onOpenInNewTab={() => showImageDataRefInNewTab(dataRef)}
               onDeleteFragment={() => props.onFragmentDelete(attachmentFragment.fId)}
               scaledImageSx={cardStyleSxMemo}
