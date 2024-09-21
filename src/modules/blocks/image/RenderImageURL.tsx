@@ -62,6 +62,7 @@ export const RenderImageURL = (props: {
   overlayText?: React.ReactNode,  // bottom overlay text
   expandableText?: string,        // expandable pane below the image
   variant: RenderImageURLVarint,  // either a responsive Block image, or an inline Card
+  disabled?: boolean,             // if true, interaction is disabled
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
   onImageRegenerate?: () => void,
@@ -132,6 +133,7 @@ export const RenderImageURL = (props: {
       <Sheet
         color={isCard ? 'primary' : undefined}
         variant={isCard ? 'outlined' : 'solid'}
+        aria-disabled={props.disabled}
         className={props.className}
         sx={{
           // style
@@ -145,7 +147,7 @@ export const RenderImageURL = (props: {
 
           // resizeable image
           '& picture': { display: 'flex', justifyContent: 'center' },
-          '& img': { maxWidth: '100%', maxHeight: '100%' },
+          '& img': { maxWidth: '100%', maxHeight: '100%', filter: props.disabled ? 'grayscale(100%)' : undefined },
           [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
           '&:hover .overlay-text': overlayButtonsActiveSx,
 
@@ -213,7 +215,7 @@ export const RenderImageURL = (props: {
         )}
 
         {/* [overlay] Buttons (RenderImage) */}
-        <Box className={overlayButtonsClassName} sx={overlayButtonsGridSx}>
+        {!props.disabled && <Box className={overlayButtonsClassName} sx={overlayButtonsGridSx}>
 
           {!!props.expandableText && (
             <OverlayButton tooltip={infoOpen ? 'Hide Prompt' : 'Show Prompt'} variant={infoOpen ? 'solid' : 'outlined'} color={isCard ? 'primary' : undefined} onClick={handleToggleInfoOpen} sx={{ gridRow: '1', gridColumn: '1' }}>
@@ -264,7 +266,7 @@ export const RenderImageURL = (props: {
             </OverlayButton>
           )}
 
-        </Box>
+        </Box>}
       </Sheet>
 
 

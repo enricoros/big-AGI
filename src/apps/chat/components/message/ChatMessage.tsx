@@ -663,11 +663,12 @@ export function ChatMessage(props: {
           )}
 
           {/* Image Attachment Fragments - just for a prettier display on top of the message */}
-          {imageAttachments.length >= 1 && !isEditingText && (
+          {imageAttachments.length >= 1 && (
             <ImageAttachmentFragments
               imageAttachments={imageAttachments}
               contentScaling={adjContentScaling}
               messageRole={messageRole}
+              disabled={isEditingText}
               onFragmentDelete={handleFragmentDelete}
             />
           )}

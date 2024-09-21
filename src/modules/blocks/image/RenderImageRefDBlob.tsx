@@ -38,6 +38,7 @@ export function RenderImageRefDBlob(props: {
   imageHeight?: number,
   // others
   variant: RenderImageURLVarint,
+  disabled?: boolean,
   onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
@@ -139,6 +140,7 @@ export function RenderImageRefDBlob(props: {
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
       className={isRegenerating ? 'agi-border-4' /* CSS Effect while regenerating */ : undefined}
       scaledImageSx={props.scaledImageSx}
+      disabled={props.disabled}
       variant={props.variant}
     />
   );
