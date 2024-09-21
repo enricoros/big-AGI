@@ -363,10 +363,10 @@ export function AppChat() {
 
     // replace/open a new pane with this
     showNextTitleChange.current = true;
-    if (addSplitPane && !isMultiAddable)
-      handleOpenConversationInFocusedPane(branchedConversationId);
-    else
+    if (addSplitPane && isMultiAddable)
       handleOpenConversationInSplitPane(branchedConversationId);
+    else
+      handleOpenConversationInFocusedPane(branchedConversationId);
 
     return branchedConversationId;
   }, [activeFolderId, branchConversation, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable]);
