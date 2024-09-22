@@ -46,20 +46,27 @@ export function useCameraCapture() {
   // (once) enumerate video devices and auto-select the back-facing camera
   React.useEffect(() => {
     if (!navigator.mediaDevices) return;
-    void navigator.mediaDevices.enumerateDevices().then((devices) => {
-      // get video devices
-      const newVideoDevices = devices.filter(device => device.kind === 'videoinput');
-      setCameras(newVideoDevices);
+    navigator.mediaDevices.enumerateDevices()
+      .then((devices) => {
+        console.log('[DEV] useCameraCapture: devices:', devices);
 
-      // auto-select the last device 'facing back', or the first device
-      if (newVideoDevices.length > 0) {
-        const idx = newVideoDevices.map(device => device.label).findLastIndex(label => label.toLowerCase().endsWith('facing back'));
-        setCameraIdx(idx >= 0 ? idx : 0);
-      } else {
-        setCameraIdx(-1);
-        setError('No cameras found');
-      }
-    });
+        // get video devices
+        const newVideoDevices = devices.filter(device => device.kind === 'videoinput');
+        setCameras(newVideoDevices);
+
+        // auto-select the last device 'facing back', or the first device
+        if (newVideoDevices.length > 0) {
+          const idx = newVideoDevices.map(device => device.label).findLastIndex(label => label.toLowerCase().endsWith('facing back'));
+          setCameraIdx(idx >= 0 ? idx : 0);
+        } else {
+          setCameraIdx(-1);
+          setError('No cameras found');
+        }
+      })
+      .catch((error) => {
+        console.warn('[DEV] useCameraCapture: enumerateDevices error:', error);
+        setError(error.message);
+      });
   }, []);
 
   // auto start the camera when the cameraIdx changes, and stop on unmount
@@ -111,7 +118,7 @@ async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefO
   if (!selectedDevice || !navigator.mediaDevices?.getUserMedia)
     throw new Error('Browser has no camera access');
 
-  const searchConstrants: MediaStreamConstraints & { video: { zoom: boolean } } = {
+  const searchConstraints: MediaStreamConstraints & { video: { zoom: boolean } } = {
     video: {
       deviceId: selectedDevice.deviceId,
       width: { ideal: 1920 }, // or any desired width
@@ -125,7 +132,7 @@ async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefO
   let track: MediaStreamTrack;
   try {
     // find the media stream
-    stream = await navigator.mediaDevices.getUserMedia(searchConstrants);
+    stream = await navigator.mediaDevices.getUserMedia(searchConstraints);
 
     // attach it to the Video html element (will begin playing)
     if (videoRef?.current)
@@ -135,7 +142,7 @@ async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefO
     [track] = stream.getVideoTracks();
   } catch (error: any) {
     console.log('useCameraCapture: startVideo error:', error);
-    throw (error.name === 'NotAllowedError') ? new Error('Camera access denied') : error;
+    throw (error.name === 'NotAllowedError') ? new Error('Camera access denied, please grant permissions.') : error;
   }
 
   if (!track)
