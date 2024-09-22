@@ -138,12 +138,29 @@ export function CameraCaptureModal(props: {
 
 
   return (
-    <Modal open onClose={stopAndClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Modal
+      open
+      onClose={stopAndClose}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      slotProps={{
+        backdrop: {
+          sx: {
+            backdropFilter: 'none', // using none because this is heavy
+            // backdropFilter: 'blur(4px)',
+            backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.5)',
+          },
+        },
+      }}
+    >
 
       <Box sx={{
         display: 'flex', flexDirection: 'column', m: 1,
         borderRadius: 'md', overflow: 'hidden',
-        boxShadow: 'sm',
+        boxShadow: 'lg',
       }}>
 
         {/* Top bar */}
