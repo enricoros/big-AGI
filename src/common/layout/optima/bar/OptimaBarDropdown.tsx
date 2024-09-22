@@ -81,7 +81,12 @@ export type OptimaDropdownItems = Record<string, {
 }>;
 
 
-export const OptimaBarDropdownMemo = React.memo(OptimaBarDropdown);
+export const OptimaBarDropdownMemo = React.memo(React.forwardRef(OptimaBarDropdown));
+
+export type OptimaBarControlMethods = {
+  openListbox: () => void,
+  // closeListbox: () => void,
+};
 
 /**
  * A Select component that blends-in nicely (cleaner, easier to the eyes)
@@ -97,11 +102,20 @@ function OptimaBarDropdown<TValue extends string>(props: {
   appendOption?: React.JSX.Element,
   placeholder?: string,
   showSymbols?: boolean,
-}) {
+}, ref: React.Ref<OptimaBarControlMethods>) {
 
   // state
   const [listboxOpen, setListboxOpen] = React.useState(false);
 
+  // Expose control methods via the ref
+  React.useImperativeHandle(ref, () => ({
+    openListbox: () => {
+      setListboxOpen(true);
+    },
+    // closeListbox: () => {
+    //   setListboxOpen(false);
+    // },
+  }), []);
 
   // derived state
   const { onChange } = props;

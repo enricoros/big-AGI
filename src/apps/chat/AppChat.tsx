@@ -16,6 +16,7 @@ import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
@@ -100,6 +101,8 @@ export function AppChat() {
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitleChange = React.useRef(false);
+  const llmDropdownRef = React.useRef<OptimaBarControlMethods>(null);
+  const personaDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
 
@@ -415,7 +418,7 @@ export function AppChat() {
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
       ? <ChatBarAltBeam beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
       : (barAltTitle === null)
-        ? <ChatBarDropdowns conversationId={focusedPaneConversationId} />
+        ? <ChatBarDropdowns conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} />
         : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
     , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId, isMobile],
   );
@@ -476,12 +479,9 @@ export function AppChat() {
     { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
     { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
     { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
-
-    // Ctrl+L to open the models dropdown inside ChatBarDropdowns
-    // { key: 'l', ctrl: true, action: FIXME... },
-    // Ctrl+P to open the persona dropdown inside ChatBarDropdowns
-    // { key: 'p', ctrl: true, action: FIXME... },
-
+    // open the dropdowns
+    { key: 'l', ctrl: true, action: () => llmDropdownRef.current?.openListbox() /*, description: 'Open Models Dropdown'*/ },
+    { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
   ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));

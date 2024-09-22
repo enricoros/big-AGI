@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { OptimaBarDropdownMemo } from '~/common/layout/optima/bar/OptimaBarDropdown';
+import { OptimaBarControlMethods, OptimaBarDropdownMemo } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUIComplexityIsMinimal } from '~/common/state/store-ui';
 
@@ -12,6 +12,7 @@ import { usePurposeStore } from '../persona-selector/store-purposes';
 
 
 function PersonaDropdown(props: {
+  dropdownRef: React.Ref<OptimaBarControlMethods>,
   systemPurposeId: SystemPurposeId | null,
   setSystemPurposeId: (systemPurposeId: SystemPurposeId | null) => void,
 }) {
@@ -41,6 +42,7 @@ function PersonaDropdown(props: {
 
   return (
     <OptimaBarDropdownMemo
+      ref={props.dropdownRef}
       items={visibleSystemPurposes}
       value={props.systemPurposeId}
       onChange={handleSystemPurposeChange}
@@ -50,7 +52,7 @@ function PersonaDropdown(props: {
 
 }
 
-export function usePersonaIdDropdown(conversationId: DConversationId | null) {
+export function usePersonaIdDropdown(conversationId: DConversationId | null, dropdownRef: React.Ref<OptimaBarControlMethods>) {
 
   // external state
   const { systemPurposeId } = useChatStore(useShallow(state => {
@@ -70,12 +72,13 @@ export function usePersonaIdDropdown(conversationId: DConversationId | null) {
       if (!systemPurposeId) return null;
       return (
         <PersonaDropdown
+          dropdownRef={dropdownRef}
           systemPurposeId={systemPurposeId}
           setSystemPurposeId={handleSetSystemPurposeId}
         />
       );
     },
-    [handleSetSystemPurposeId, systemPurposeId],
+    [dropdownRef, handleSetSystemPurposeId, systemPurposeId],
   );
 
   return { personaDropdown };
