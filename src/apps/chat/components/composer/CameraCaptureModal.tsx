@@ -4,6 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, Option, Select, Sheet, Tooltip, Typography } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CameraEnhanceIcon from '@mui/icons-material/CameraEnhance';
+import CameraFrontIcon from '@mui/icons-material/CameraFront';
+import CameraRearIcon from '@mui/icons-material/CameraRear';
 import DownloadIcon from '@mui/icons-material/Download';
 import FlipCameraAndroidOutlinedIcon from '@mui/icons-material/FlipCameraAndroidOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -141,8 +143,22 @@ export function CameraCaptureModal(props: {
     return cameras;
   }, [cameras]);
 
-  const canSwitchCameras = React.useMemo(() => {
-    if (displayCameras.length <= 1) return false;
+  const { canSwitchCameras, isFrontCamera, isBackCamera } = React.useMemo(() => {
+
+    // determine if the current device is a front or back camera
+    let isFrontCamera = false;
+    let isBackCamera = false;
+    if (cameraIdx !== -1) {
+      const currentDevice = displayCameras[cameraIdx];
+      if (currentDevice) {
+        isFrontCamera = currentDevice.label.includes('Front Camera') || currentDevice.label.toLowerCase().includes('front');
+        isBackCamera = currentDevice.label.includes('Back Camera') || currentDevice.label.toLowerCase().includes('back');
+      }
+    }
+
+    // quick out if we only have 1 or 0 cameras
+    if (displayCameras.length <= 1)
+      return { canSwitchCameras: false, isFrontCamera, isBackCamera };
 
     // use a reduction to find both the front and back cameras
     const foundCameras = displayCameras.reduce((acc, device) => {
@@ -154,8 +170,8 @@ export function CameraCaptureModal(props: {
       return acc;
     }, { front: false, back: false });
 
-    return (foundCameras.front && foundCameras.back) || displayCameras.length === 2;
-  }, [displayCameras]);
+    return { canSwitchCameras: (foundCameras.front && foundCameras.back) || displayCameras.length === 2, isFrontCamera, isBackCamera };
+  }, [cameraIdx, displayCameras]);
 
   const handleCameraSwitch = React.useCallback(() => {
 
@@ -187,6 +203,7 @@ export function CameraCaptureModal(props: {
     if (nextIdx !== undefined && nextIdx !== -1)
       setCameraIdx(nextIdx);
   }, [cameraIdx, displayCameras, setCameraIdx]);
+
 
   return (
     <Modal
@@ -250,7 +267,7 @@ export function CameraCaptureModal(props: {
 
             {canSwitchCameras && (
               <IconButton onClick={handleCameraSwitch}>
-                <FlipCameraAndroidOutlinedIcon />
+                {isFrontCamera ? <CameraRearIcon /> : isBackCamera ? <CameraFrontIcon /> : <FlipCameraAndroidOutlinedIcon />}
               </IconButton>
             )}
           </Box>
