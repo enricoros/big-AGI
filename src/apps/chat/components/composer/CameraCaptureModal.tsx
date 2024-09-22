@@ -29,21 +29,22 @@ const captureButtonContainerSx: SxProps = {
 };
 
 const captureButtonGroupSx: SxProps = {
-  '--ButtonGroup-separatorColor': 'none !important',
+  // '--ButtonGroup-separatorColor': 'black',
+  '--ButtonGroup-separatorSize': '2px',
   borderRadius: '3rem',
-  // boxShadow: 'md',
-  boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+  boxShadow: 'md',
+  // boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
 };
 
 const captureButtonSx: SxProps = {
-  backgroundColor: 'neutral.solidHoverBg',
+  // backgroundColor: 'neutral.solidHoverBg',
   pl: 3.25,
   pr: 4.5,
   py: 1.5,
   minWidth: { md: 200 },
-  '&:hover': {
-    backgroundColor: 'neutral.plainHoverColor',
-  },
+  // '&:hover': {
+  //   backgroundColor: 'neutral.plainHoverColor',
+  // },
 };
 
 const addButtonSx: SxProps = {
@@ -164,7 +165,7 @@ export function CameraCaptureModal(props: {
       }}>
 
         {/* Top bar */}
-        <Sheet variant='plain' invertedColors={false} sx={{
+        <Sheet variant='solid' invertedColors={true} sx={{
           p: 1,
           // backgroundColor: 'neutral.800',
           display: 'flex',
@@ -236,7 +237,13 @@ export function CameraCaptureModal(props: {
         </Box>
 
         {/* Bottom controls (zoom, ocr, download) & progress */}
-        <Sheet variant='soft' sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Sheet variant='solid' invertedColors={true} sx={{
+          p: 1,
+          // backgroundColor: 'neutral.800',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+        }}>
 
           {!!error && <InlineError error={error} />}
 
@@ -259,7 +266,7 @@ export function CameraCaptureModal(props: {
             {/*</Button>*/}
 
             {/* Capture */}
-            <ButtonGroup color="neutral" variant="solid" sx={captureButtonGroupSx}>
+            <ButtonGroup variant='solid' sx={captureButtonGroupSx}>
               <Tooltip disableInteractive arrow placement='top' title='Add to message'>
                 <IconButton size='sm' disabled={isAddButtonDisabled} onClick={handleVideoAddClicked} sx={addButtonSx}>
                   <AddRoundedIcon />
