@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, IconButton, Modal, ModalClose, Option, Select, Sheet, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, Option, Select, Sheet, Tooltip, Typography } from '@mui/joy';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CameraEnhanceIcon from '@mui/icons-material/CameraEnhance';
 import DownloadIcon from '@mui/icons-material/Download';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -19,13 +20,28 @@ const captureButtonContainerSx: SxProps = {
   alignItems: 'center',
 };
 
-const captureButtonSx: SxProps = {
-  minWidth: 150,
+const captureButtonGroupSx: SxProps = {
+  '--ButtonGroup-separatorColor': 'none !important',
   borderRadius: '3rem',
   // boxShadow: 'md',
   boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+}
+
+const captureButtonSx: SxProps = {
+  backgroundColor: 'neutral.solidHoverBg',
+  pl: 3.25,
+  pr: 4.5,
   py: 1.5,
+  minWidth: { md: 200 },
+  '&:hover': {
+    backgroundColor: 'neutral.plainHoverColor',
+  },
 };
+
+const addButtonSx: SxProps = {
+  pl: 2.5,
+  pr: 2,
+}
 
 
 export function CameraCaptureModal(props: {
@@ -85,6 +101,16 @@ export function CameraCaptureModal(props: {
       console.error('Error capturing video frame:', error);
     }
   }, [onAttachImage, stopAndClose, videoRef]);
+
+  const handleVideoAddClicked = React.useCallback(async () => {
+    if (!videoRef.current) return;
+    try {
+      const file = await renderVideoFrameAsPNGFile(videoRef.current, 'camera');
+      onAttachImage(file);
+    } catch (error) {
+      console.error('Error capturing video frame:', error);
+    }
+  }, [onAttachImage, videoRef]);
 
   const handleVideoDownloadClicked = React.useCallback(() => {
     if (!videoRef.current) return;
@@ -168,15 +194,16 @@ export function CameraCaptureModal(props: {
             {/*</Button>*/}
 
             {/* Capture */}
-            <Button
-              color='neutral'
-              size='lg'
-              onClick={handleVideoSnapClicked}
-              endDecorator={<CameraEnhanceIcon />}
-              sx={captureButtonSx}
-            >
-              Capture
-            </Button>
+            <ButtonGroup color="neutral" variant="solid" sx={captureButtonGroupSx}>
+              <Tooltip disableInteractive arrow placement='top' title='Add to message'>
+                <IconButton size='sm' onClick={handleVideoAddClicked} sx={addButtonSx}>
+                  <AddRoundedIcon />
+                </IconButton>
+              </Tooltip>
+              <Button size="lg" onClick={handleVideoSnapClicked} endDecorator={<CameraEnhanceIcon />} sx={captureButtonSx}>
+                Capture
+              </Button>
+            </ButtonGroup>
 
             {/* Download */}
             <IconButton onClick={handleVideoDownloadClicked}>
