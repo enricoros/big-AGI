@@ -164,6 +164,20 @@ export const animationBackgroundBeamGather = keyframes`
     }`;*/
 
 
+export const animationCameraFlash = keyframes`
+  15% {
+    background-color: rgba(0, 0, 0, 1);
+  } 
+  35% {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+  100% {
+    background-color: transparent;
+  }
+`;
+
+
+
 export const animationEnterBelow = keyframes`
     from {
         opacity: 0;
