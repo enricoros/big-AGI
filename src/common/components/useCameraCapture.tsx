@@ -4,13 +4,15 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Slider } from '@mui/joy';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
+import { Is } from '~/common/util/pwaUtils';
 
-// we need to use local state to avoid race conditions with start/stops (triggred by react/strict mode)
+
+// we need to use local state to avoid race conditions with start/stops (triggered by react/strict mode)
 let currMediaStream: MediaStream | null = null;
 
 
 /**
- * `useCamera` is our React hook for interacting with a camera device.
+ * `useCameraCapture` is our React hook for interacting with a camera device.
  *
  * It accepts a MediaDeviceInfo object representing the selected device,
  * and returns an object containing states and methods for controlling the camera.
@@ -32,7 +34,7 @@ export function useCameraCapture() {
   const resetVideo = React.useCallback(() => {
     if (currMediaStream) {
       const tracks = currMediaStream.getTracks();
-      tracks.forEach(track => track.stop());
+      tracks.forEach((track) => track.stop());
       currMediaStream = null;
     } else
       console.log('stopVideo: no video stream to stop');
@@ -42,22 +44,25 @@ export function useCameraCapture() {
     setError(null);
   }, []);
 
-
-  // (once) enumerate video devices and auto-select the back-facing camera
-  React.useEffect(() => {
-    if (!navigator.mediaDevices) return;
-    navigator.mediaDevices.enumerateDevices()
+  // Function to enumerate devices and update the camera list
+  const enumerateCameras = React.useCallback(() => {
+    navigator.mediaDevices
+      .enumerateDevices()
       .then((devices) => {
-        console.log('[DEV] useCameraCapture: devices:', devices);
 
         // get video devices
-        const newVideoDevices = devices.filter(device => device.kind === 'videoinput');
+        const newVideoDevices = devices.filter((device) => device.kind === 'videoinput');
         setCameras(newVideoDevices);
 
         // auto-select the last device 'facing back', or the first device
         if (newVideoDevices.length > 0) {
-          const idx = newVideoDevices.map(device => device.label).findLastIndex(label => label.toLowerCase().endsWith('facing back'));
-          setCameraIdx(idx >= 0 ? idx : 0);
+          const newBackCamIdx = newVideoDevices
+            .map((device) => device.label)
+            .findLastIndex((label) => {
+              if (Is.OS.iOS) return label.toLowerCase().includes('back camera');
+              return label.toLowerCase().includes('back') || label.toLowerCase().includes('rear');
+            });
+          setCameraIdx((prevIdx) => (prevIdx === -1 ? (newBackCamIdx >= 0 ? newBackCamIdx : 0) : prevIdx));
         } else {
           setCameraIdx(-1);
           setError('No cameras found');
@@ -68,6 +73,34 @@ export function useCameraCapture() {
         setError(error.message);
       });
   }, []);
+
+  // (once) enumerate video devices
+  React.useEffect(() => {
+    if (!navigator.mediaDevices) return;
+
+    // Initial enumeration of devices
+    enumerateCameras();
+
+    // Listen for permission changes
+    const permissionName = 'camera' as PermissionName;
+    if (navigator.permissions?.query)
+      navigator.permissions
+        .query({ name: permissionName })
+        .then((permissionStatus) => {
+          permissionStatus.onchange = () => {
+            // re-enumerate devices if permission changes
+            if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt')
+              enumerateCameras();
+          };
+        })
+        .catch((error) => {
+          console.warn('[DEV] useCameraCapture: permissions error:', error);
+        });
+
+    // Listen for device changes
+    navigator.mediaDevices.addEventListener('devicechange', enumerateCameras);
+    return () => navigator.mediaDevices.removeEventListener('devicechange', enumerateCameras);
+  }, [enumerateCameras]);
 
   // auto start the camera when the cameraIdx changes, and stop on unmount
   React.useEffect(() => {
@@ -97,8 +130,12 @@ export function useCameraCapture() {
     // the html video element
     videoRef,
     // list and select camera
-    cameras, cameraIdx, setCameraIdx,
-    zoomControl, info, error,
+    cameras,
+    cameraIdx,
+    setCameraIdx,
+    zoomControl,
+    info,
+    error,
     resetVideo,
   };
 }
@@ -152,14 +189,14 @@ async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefO
   currMediaStream = stream;
 
   // Get capabilities (for the zoom ranges)
-  const capabilities = track.getCapabilities() as MediaTrackCapabilities & { zoom: { min: number, max: number, step: number } };
+  const capabilities = track.getCapabilities() as MediaTrackCapabilities & { zoom: { min: number; max: number; step: number } };
   const settings = track.getSettings();
 
   // Map zoom to a slider element.
   let zoomControl: React.ReactNode | null = null;
   if (capabilities.zoom) {
     const { min, max, step } = capabilities.zoom;
-    zoomControl =
+    zoomControl = (
       <Box sx={sliderContainerSx}>
         <span>Zoom:</span>
         <Slider
@@ -171,7 +208,8 @@ async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefO
           onChange={(_event, value) => track.applyConstraints({ advanced: [{ zoom: value as number }] } as any)}
         />
         <ZoomInIcon opacity={0.5} />
-      </Box>;
+      </Box>
+    );
   }
 
   return {
