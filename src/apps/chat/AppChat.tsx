@@ -408,30 +408,6 @@ export function AppChat() {
   }, [showPromisedOverlay, deleteConversations, handleOpenConversationInFocusedPane]);
 
 
-  // Shortcuts
-
-  const handleOpenChatLlmOptions = React.useCallback(() => {
-    const chatLLMId = getChatLLMId();
-    if (!chatLLMId) return;
-    optimaActions().openModelOptions(chatLLMId);
-  }, []);
-
-  useGlobalShortcuts('AppChat', React.useMemo(() => [
-    // focused conversation
-    { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
-    { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam' },
-    { key: 'o', ctrl: true, action: handleFileOpenConversation },
-    { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
-    { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
-    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
-    { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
-    { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
-    { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
-    // focused conversation llm
-    { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
-
-
   // Pluggable Optima components
 
   const barAltTitle = showAltTitleBar ? focusedChatTitle ?? 'No Chat' : null;
@@ -479,6 +455,37 @@ export function AppChat() {
   );
 
   useSetOptimaAppMenu(focusedMenuItems, 'AppChat');
+
+
+  // Shortcuts
+
+  const handleOpenChatLlmOptions = React.useCallback(() => {
+    const chatLLMId = getChatLLMId();
+    if (!chatLLMId) return;
+    optimaActions().openModelOptions(chatLLMId);
+  }, []);
+
+  useGlobalShortcuts('AppChat', React.useMemo(() => [
+    // focused conversation
+    { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
+    { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam' },
+    { key: 'o', ctrl: true, action: handleFileOpenConversation },
+    { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
+    { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
+    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
+    { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
+    { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
+    { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
+
+    // Ctrl+L to open the models dropdown inside ChatBarDropdowns
+    // { key: 'l', ctrl: true, action: FIXME... },
+    // Ctrl+P to open the persona dropdown inside ChatBarDropdowns
+    // { key: 'p', ctrl: true, action: FIXME... },
+
+    // focused conversation llm
+    { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
+  ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+
 
   return <>
     <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
