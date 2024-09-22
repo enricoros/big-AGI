@@ -53,12 +53,12 @@ export function WorkspaceLiveFilePicker(props: {
 
     if (wLiveFiles.length === 1) {
       // auto-select the only LiveFile
-      onSelectLiveFile(wLiveFiles[0].id);
+      void onSelectLiveFile(wLiveFiles[0].id);
     } else {
       // auto-select by name
       const lfm = wLiveFiles.find(lfm => lfm.name === autoSelectName);
       if (lfm)
-        onSelectLiveFile(lfm.id);
+        void onSelectLiveFile(lfm.id);
     }
   }, [haveLiveFiles, wLiveFiles, autoSelectName, onSelectLiveFile]);
 
@@ -76,7 +76,7 @@ export function WorkspaceLiveFilePicker(props: {
 
   const handleSelectLiveFile = React.useCallback((id: LiveFileId | null) => {
     setMenuAnchor(null);
-    onSelectLiveFile(id);
+    void onSelectLiveFile(id);
   }, [onSelectLiveFile]);
 
   const handleSelectNewFile = React.useCallback(async () => {
