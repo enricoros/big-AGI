@@ -256,8 +256,10 @@ export function Composer(props: {
     // validate some chat mode inputs
     const isDraw = _chatExecuteMode === 'generate-image';
     const isBlank = !composerText.trim();
-    if (isDraw && isBlank)
+    if (isDraw && isBlank) {
+      addSnackbar({ key: 'chat-draw-empty', message: 'Please enter a description to generate an image.', type: 'info' });
       return false;
+    }
 
     // prepare the fragments: content (if any) and attachments (if allowed, and any)
     const fragments: (DMessageContentFragment | DMessageAttachmentFragment)[] = [];
@@ -271,7 +273,7 @@ export function Composer(props: {
     }
 
     if (!fragments.length) {
-      // addSnackbar({ key: 'chat-composer-empty', message: 'Nothing to send', type: 'info' });
+      // addSnackbar({ key: 'chat-composer-empty', message: 'Please enter a message or attach files.', type: 'info' });
       return false;
     }
 
@@ -504,10 +506,10 @@ export function Composer(props: {
 
   const handleAttachFiles = React.useCallback(async (files: FileWithHandle[], errorMessage: string | null) => {
     if (errorMessage)
-      addSnackbar({ key: 'attach-files-open-fail', message: `Could not open files (${errorMessage})`, type: 'issue' });
+      addSnackbar({ key: 'attach-files-open-fail', message: `Unable to open files: ${errorMessage}`, type: 'issue' });
     for (let file of files)
       await attachAppendFile('file-open', file)
-        .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Could not attach the file (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
+        .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Unable to attach the file "${file.name}" (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
   }, [attachAppendFile]);
 
 
@@ -531,7 +533,7 @@ export function Composer(props: {
   // Keyboard Shortcuts
 
   useGlobalShortcuts('ChatComposer.Gen', React.useMemo(() => [
-    ...(assistantAbortible ? [{ key: ShortcutKey.Esc, action: handleStopClicked, description: 'Stop', level: 2 }] : []),
+    ...(assistantAbortible ? [{ key: ShortcutKey.Esc, action: handleStopClicked, description: 'Stop response', level: 2 }] : []),
   ], [assistantAbortible, handleStopClicked]));
 
   useGlobalShortcuts('ChatComposer', React.useMemo(() => {
@@ -594,13 +596,17 @@ export function Composer(props: {
       : undefined;
 
   let textPlaceholder: string =
-    isDraw ? 'Describe an idea or a drawing...'
-      : isReAct ? 'Multi-step reasoning question...'
-        : isTextBeam ? 'Beam: combine the smarts of models...'
-          : showChatInReferenceTo ? 'Chat about this'
-            : props.isDeveloperMode ? 'Chat with me' + (isDesktop ? ' · drop source' : '') + ' · attach code...'
-              : props.capabilityHasT2I ? 'Chat · /beam · /draw · drop files...'
-                : 'Chat · /react · drop files...';
+    isDraw ? 'Describe what you would like to see...'
+      : isReAct ? 'Ask a multi-step reasoning question...'
+        : isTextBeam ? 'Combine insights from multiple AI models...'
+          : showChatInReferenceTo ? 'Chat about this...'
+            : 'Type'
+            + (props.isDeveloperMode ? ' · attach code' : '')
+            + (isDesktop ? ` · drop ${props.isDeveloperMode ? 'source' : 'files'}` : '')
+            + (props.capabilityHasT2I ? ' · /draw' : '')
+            + (recognitionState.isAvailable ? ' · ramble' : '')
+            + '...';
+
   if (isDesktop && timeToShowTips) {
     if (explainShiftEnter)
       textPlaceholder += !enterIsNewline ? '\n\n💡 Shift + Enter to add a new line' : '\n\n💡 Shift + Enter to send';
@@ -903,7 +909,7 @@ export function Composer(props: {
                   {/*</Tooltip>}*/}
 
                   {/* [Draw] Imagine */}
-                  {isDraw && !!composeText && <Tooltip title='Imagine a drawing prompt'>
+                  {isDraw && !!composeText && <Tooltip title='Generate an image prompt'>
                     <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>
                       <AutoAwesomeIcon />
                     </IconButton>
