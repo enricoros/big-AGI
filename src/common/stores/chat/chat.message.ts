@@ -63,12 +63,14 @@ export interface DMetaReferenceItem {
 export type DMessageUserFlag =
   | 'aix.skip'                        // mark this message as skipped during generation (won't be sent to the LLM)
   | 'starred'                         // user has starred this message
+  | 'notify.complete'                 // user has requested a notification when this message is complete
   | 'vnd.ant.cache.auto'              // [Anthropic] user requested breakpoints to be added automatically (per conversation)
   | 'vnd.ant.cache.user'              // [Anthropic] user requestd for a breakpoint to be added here specifically
   ;
 
 export const MESSAGE_FLAG_AIX_SKIP: DMessageUserFlag = 'aix.skip';
 export const MESSAGE_FLAG_STARRED: DMessageUserFlag = 'starred';
+export const MESSAGE_FLAG_NOTIFY_COMPLETE: DMessageUserFlag = 'notify.complete';
 export const MESSAGE_FLAG_VND_ANT_CACHE_AUTO: DMessageUserFlag = 'vnd.ant.cache.auto';
 export const MESSAGE_FLAG_VND_ANT_CACHE_USER: DMessageUserFlag = 'vnd.ant.cache.user';
 
@@ -196,6 +198,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
 const flag2EmojiMap: Record<DMessageUserFlag, string> = {
   [MESSAGE_FLAG_AIX_SKIP]: '',
   [MESSAGE_FLAG_STARRED]: '⭐️',
+  [MESSAGE_FLAG_NOTIFY_COMPLETE]: '', //'🔔',
   [MESSAGE_FLAG_VND_ANT_CACHE_AUTO]: '',
   [MESSAGE_FLAG_VND_ANT_CACHE_USER]: '',
 };
@@ -209,10 +212,15 @@ export function messageHasUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
 }
 
 export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag, on: boolean): DMessageUserFlag[] {
-  if (on)
+  if (on) {
+    if (message.userFlags?.includes(flag))
+      return message.userFlags;
     return [...(message.userFlags || []), flag];
-  else
+  } else {
+    if (!message.userFlags?.includes(flag))
+      return message.userFlags || [];
     return (message.userFlags || []).filter(_f => _f !== flag);
+  }
 }
 
 

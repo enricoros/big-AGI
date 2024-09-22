@@ -4,8 +4,9 @@ import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions'
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import type { DMessage } from '~/common/stores/chat/chat.message';
+import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
+import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
@@ -96,6 +97,12 @@ export async function runPersonaOnConversationHead(
   if (lastDeepCopy.generator?.tokenStopReason === 'client-abort' && lastDeepCopy.fragments?.length === 0) {
     cHandler.messagesDelete([assistantMessageId]);
     return false;
+  }
+
+  // notify when complete, if set
+  if (cHandler.messageHasUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE)) {
+    cHandler.messageSetUserFlag(assistantMessageId, MESSAGE_FLAG_NOTIFY_COMPLETE, false, false);
+    AudioGenerator.chatNotifyResponse();
   }
 
   // check if aborted
