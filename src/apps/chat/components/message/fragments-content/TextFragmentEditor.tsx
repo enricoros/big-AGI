@@ -83,7 +83,7 @@ export function TextFragmentEditor(props: {
   const isEdited = props.editedText !== undefined;
   useGlobalShortcuts('TextFragmentEditor', React.useMemo(() => !isFocused ? [] : [
     { key: ShortcutKey.Enter, shift: true, description: 'Save', disabled: !isEdited && props.enableRestart !== true, level: 1, action: () => onSubmit(false) },
-    ...props.enableRestart ? [{ key: ShortcutKey.Enter, ctrl: true, shift: true, description: 'Save & Retry', disabled: !isEdited, level: 1, action: () => onSubmit(true) }] : [],
+    ...props.enableRestart ? [{ key: ShortcutKey.Enter, ctrl: true, shift: true, description: 'Save & Retry', disabled: !isEdited, level: 3, action: () => onSubmit(true) }] : [],
     { key: ShortcutKey.Esc, description: 'Cancel', level: 1, action: onEscapePressed },
   ], [isEdited, isFocused, props.enableRestart, onEscapePressed, onSubmit]));
 
