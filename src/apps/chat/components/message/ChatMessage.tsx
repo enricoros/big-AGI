@@ -16,6 +16,8 @@ import ForkRightIcon from '@mui/icons-material/ForkRight';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ReplyAllRoundedIcon from '@mui/icons-material/ReplyAllRounded';
@@ -34,7 +36,7 @@ import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -199,10 +201,11 @@ export function ChatMessage(props: {
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
-  const wasEdited = !!messageUpdated;
+  const messageHasBeenEdited = !!messageUpdated;
 
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
+  const isUserNotifyComplete = messageHasUserFlag(props.message, MESSAGE_FLAG_NOTIFY_COMPLETE);
   const isVndAndCacheAuto = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_AUTO);
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
 
@@ -306,6 +309,10 @@ export function ChatMessage(props: {
 
   const handleOpsToggleStarred = React.useCallback(() => {
     onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_STARRED);
+  }, [messageId, onMessageToggleUserFlag]);
+
+  const handleOpsToggleNotifyComplete = React.useCallback(() => {
+    onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_NOTIFY_COMPLETE);
   }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
@@ -499,7 +506,7 @@ export function ChatMessage(props: {
 
 
   // style
-  const backgroundColor = messageBackground(messageRole, wasEdited, false /*isAssistantError && !errorMessage*/);
+  const backgroundColor = messageBackground(messageRole, messageHasBeenEdited, false /*isAssistantError && !errorMessage*/);
 
   const listItemSx: SxProps = React.useMemo(() => ({
     // vars
@@ -615,7 +622,7 @@ export function ChatMessage(props: {
 
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
-              <TooltipOutlined asLargePane title={messageAvatarTooltip} placement='bottom-start'>
+              <TooltipOutlined asLargePane enableInteractive title={messageAvatarTooltip} placement='bottom-start'>
                 <Typography level='body-xs' sx={messagePendingIncomplete ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
                   {messageAvatarLabel}
                 </Typography>
@@ -651,7 +658,7 @@ export function ChatMessage(props: {
           )}
 
           {/* (special case) System modified warning */}
-          {fromSystem && wasEdited && (
+          {fromSystem && messageHasBeenEdited && (
             <Typography level='body-sm' color='warning' sx={{ mt: 1, mx: 1.5, textAlign: 'end' }}>
               modified by user - auto-update disabled
             </Typography>
@@ -802,6 +809,15 @@ export function ChatMessage(props: {
               </MenuItem>
             )}
           </Box>
+
+          {/* Notify Complete */}
+          {messagePendingIncomplete && !!onMessageToggleUserFlag && <ListDivider />}
+          {messagePendingIncomplete && !!onMessageToggleUserFlag && (
+            <MenuItem onClick={handleOpsToggleNotifyComplete}>
+              <ListItemDecorator>{isUserNotifyComplete ? <NotificationsActiveIcon /> : <NotificationsOutlinedIcon />}</ListItemDecorator>
+              Notify on reply
+            </MenuItem>
+          )}
 
           <ListDivider />
 

@@ -373,6 +373,38 @@ export namespace AudioGenerator {
     o.stop(ctx.currentTime + 0.4);
   }
 
+  /** Play a gentle notification sound when the assistant's response is ready */
+  export function chatNotifyResponse(options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const volume = options.volume ?? 0.2;
+    const noteDuration = 0.12;
+
+    // const frequencies = [523.25, 783.99]; // C5, G5
+    const frequencies = [392.00, 466.16]; // G4, A#4 // Low and nice
+    // const frequencies = [880.00, 1108.73]; // A5, C#6 // High and more alert
+    // const frequencies = [783.99, 659.25, 523.25]; // G5, E5, C5
+
+    frequencies.forEach((freq, index) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, now + index * noteDuration);
+
+      gainNode.gain.setValueAtTime(0, now + index * noteDuration);
+      gainNode.gain.linearRampToValueAtTime(volume, now + index * noteDuration + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + (index + 1) * noteDuration);
+
+      oscillator.connect(gainNode); // .connect(agMasterGain);
+      applyRoomAcoustics(ctx, gainNode, options.roomSize || 'small');
+      oscillator.start(now + index * noteDuration);
+      oscillator.stop(now + (index + 2) * noteDuration);
+    });
+  }
+
 }
 
 

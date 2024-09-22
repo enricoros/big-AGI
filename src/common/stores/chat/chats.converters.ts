@@ -7,7 +7,7 @@ import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
-import { createDMessageTextContent, DMessage } from './chat.message';
+import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
 import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from './chat.fragments';
 
 
@@ -55,6 +55,9 @@ export namespace V4ToHeadConverters {
       if (isContentFragment(fragment) && fragment.part.pt === 'ph')
         m.fragments[i] = createErrorContentFragment(`${fragment.part.pText} (did not complete)`);
     }
+
+    // remove notification flags
+    m.userFlags = messageSetUserFlag(m, MESSAGE_FLAG_NOTIFY_COMPLETE, false);
 
     // run dev upgrades
     dev_inMemHeadUpgradeDMessage(m);
