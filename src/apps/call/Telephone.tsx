@@ -18,6 +18,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
+import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
@@ -100,10 +101,11 @@ export function Telephone(props: {
   const [personaTextInterim, setPersonaTextInterim] = React.useState<string | null>(null);
   const [pushToTalk, setPushToTalk] = React.useState(true);
   const [stage, setStage] = React.useState<'ring' | 'declined' | 'connected' | 'ended'>('ring');
+  const llmDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const responseAbortController = React.useRef<AbortController | null>(null);
 
   // external state
-  const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
+  const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown(llmDropdownRef);
   const { chatTitle, reMessages } = useChatStore(useShallow(state => {
     const conversation = props.callIntent.conversationId
       ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
