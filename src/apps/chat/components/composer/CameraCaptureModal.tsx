@@ -241,11 +241,13 @@ export function CameraCaptureModal(props: {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Select
+              size='sm'
               variant={displayCameras.length > 1 ? 'soft' : 'plain'}
               color='neutral'
               value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
               indicator={<KeyboardArrowDownIcon />}
               sx={{ background: 'transparent' }}
+              slotProps={{ listbox: { size: 'md' } }}
             >
               {(!displayCameras.length || DEBUG_NO_CAMERA_OPTION) && (
                 <Option key='video-dev-none' value={-1}>
