@@ -5,6 +5,7 @@ import { Box, Button, ButtonGroup, IconButton, Modal, ModalClose, Option, Select
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CameraEnhanceIcon from '@mui/icons-material/CameraEnhance';
 import DownloadIcon from '@mui/icons-material/Download';
+import FlipCameraAndroidOutlinedIcon from '@mui/icons-material/FlipCameraAndroidOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -128,7 +129,7 @@ export function CameraCaptureModal(props: {
   }, [videoRef]);
 
 
-  // reduced set of cameras
+  // Reduced set of cameras
 
   const displayCameras = React.useMemo(() => {
     // iOS/English: "Front Camera", "Back Camera"
@@ -140,6 +141,52 @@ export function CameraCaptureModal(props: {
     return cameras;
   }, [cameras]);
 
+  const canSwitchCameras = React.useMemo(() => {
+    if (displayCameras.length <= 1) return false;
+
+    // use a reduction to find both the front and back cameras
+    const foundCameras = displayCameras.reduce((acc, device) => {
+      if (acc.front && acc.back) return acc;
+      if (device.label.includes('Front Camera')) acc.front = true;
+      else if (device.label.toLowerCase().includes('front')) acc.front = true;
+      if (device.label.includes('Back Camera')) acc.back = true;
+      else if (device.label.toLowerCase().includes('back')) acc.back = true;
+      return acc;
+    }, { front: false, back: false });
+
+    return (foundCameras.front && foundCameras.back) || displayCameras.length === 2;
+  }, [displayCameras]);
+
+  const handleCameraSwitch = React.useCallback(() => {
+
+    // safety checks: has multiple cameras, and current camera is valid
+    if (displayCameras.length <= 1 || cameraIdx === -1) return;
+    const currentCamera = displayCameras[cameraIdx] || undefined;
+    if (!currentCamera) return;
+
+    // finds the camera to switch to
+    let nextIdx: number | undefined = undefined;
+
+    // iOS
+    if (currentCamera.label.includes('Front Camera'))
+      nextIdx = displayCameras.findIndex((device) => device.label.includes('Back Camera'));
+    else if (currentCamera.label.includes('Back Camera'))
+      nextIdx = displayCameras.findIndex((device) => device.label.includes('Front Camera'));
+
+    // Android
+    if (nextIdx === undefined && currentCamera.label.includes('facing front'))
+      nextIdx = displayCameras.map((device) => device.label).findLastIndex((label) => label.includes('facing back'));
+    else if (nextIdx === undefined && currentCamera.label.includes('facing back'))
+      nextIdx = displayCameras.map((device) => device.label).findLastIndex((label) => label.includes('facing front'));
+
+    // Generic: if we have 2 cameras, flip to the other one
+    if (nextIdx === undefined && displayCameras.length === 2)
+      nextIdx = cameraIdx === 0 ? 1 : 0;
+
+    // if we found a valid camera, switch to it
+    if (nextIdx !== undefined && nextIdx !== -1)
+      setCameraIdx(nextIdx);
+  }, [cameraIdx, displayCameras, setCameraIdx]);
 
   return (
     <Modal
@@ -174,30 +221,38 @@ export function CameraCaptureModal(props: {
           display: 'flex',
           justifyContent: 'space-between',
         }}>
-          <Select
-            variant={displayCameras.length > 1 ? 'soft' : 'plain'}
-            color='neutral'
-            value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
-            indicator={<KeyboardArrowDownIcon />}
-            sx={{ background: 'transparent' }}
-          >
-            {(!displayCameras.length || DEBUG_NO_CAMERA_OPTION) && (
-              <Option key='video-dev-none' value={-1}>
-                No Camera
-              </Option>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Select
+              variant={displayCameras.length > 1 ? 'soft' : 'plain'}
+              color='neutral'
+              value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
+              indicator={<KeyboardArrowDownIcon />}
+              sx={{ background: 'transparent' }}
+            >
+              {(!displayCameras.length || DEBUG_NO_CAMERA_OPTION) && (
+                <Option key='video-dev-none' value={-1}>
+                  No Camera
+                </Option>
+              )}
+              {displayCameras.map((device: MediaDeviceInfo, camIndex) => (
+                <Option key={'video-dev-' + camIndex} value={camIndex}>
+                  {/*{device.label?.includes('Face') ? <CameraFrontIcon />*/}
+                  {/*  : device.label?.includes('tual') ? <CameraRearIcon />*/}
+                  {/*    : null}*/}
+                  {device.label
+                    ?.replace('camera2 ', 'Camera ')
+                    .replace('facing front', 'Front')
+                    .replace('facing back', 'Back')}
+                </Option>
+              ))}
+            </Select>
+
+            {canSwitchCameras && (
+              <IconButton onClick={handleCameraSwitch}>
+                <FlipCameraAndroidOutlinedIcon />
+              </IconButton>
             )}
-            {displayCameras.map((device: MediaDeviceInfo, camIndex) => (
-              <Option key={'video-dev-' + camIndex} value={camIndex}>
-                {/*{device.label?.includes('Face') ? <CameraFrontIcon />*/}
-                {/*  : device.label?.includes('tual') ? <CameraRearIcon />*/}
-                {/*    : null}*/}
-                {device.label?.replace('camera2 ', 'Camera ')
-                  .replace('facing front', 'Front')
-                  .replace('facing back', 'Back')
-                }
-              </Option>
-            ))}
-          </Select>
+          </Box>
 
           <ModalClose size='lg' onClick={stopAndClose} sx={{ position: 'static' }} />
         </Sheet>
@@ -239,14 +294,16 @@ export function CameraCaptureModal(props: {
           {/*{ocrProgress !== null && <CircularProgress sx={{ position: 'absolute', top: 'calc(50% - 34px / 2)', left: 'calc(50% - 34px / 2)', zIndex: 2 }} />}*/}
         </Box>
 
-        {/* Bottom controls (zoom, ocr, download) & progress */}
-        <Sheet variant='soft' sx={{
-          p: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
-        }}>
-
+        {/* Bottom controls (zoom, download) & progress */}
+        <Sheet
+          variant='soft'
+          sx={{
+            p: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+          }}
+        >
           {!!error && <InlineError error={error} />}
 
           {zoomControl}
@@ -256,10 +313,7 @@ export function CameraCaptureModal(props: {
           <Box paddingBottom={zoomControl ? 1 : undefined} sx={captureButtonContainerSx}>
 
             {/* Info */}
-            <IconButton
-              disabled={!info}
-              onClick={() => setShowInfo((prev) => !prev)}
-            >
+            <IconButton disabled={!info} onClick={() => setShowInfo((prev) => !prev)}>
               <InfoOutlinedIcon />
             </IconButton>
 
