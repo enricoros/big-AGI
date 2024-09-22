@@ -25,6 +25,7 @@ import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageMetadata, DMetaReferenceItem, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -44,6 +45,7 @@ import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 import { useDebouncer } from '~/common/components/useDebouncer';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -114,6 +116,7 @@ export function Composer(props: {
   const micCardRef = React.useRef<HTMLDivElement>(null);
 
   // external state
+  const { showPromisedOverlay } = useOverlayComponents();
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -217,6 +220,24 @@ export function Composer(props: {
   }, [composerTextAreaRef, inReferenceTo]);
 
 
+  // Confirmation Modals
+
+  const confirmProceedIfAttachmentsNotSupported = React.useCallback(async (): Promise<boolean> => {
+    if (llmAttachmentDraftsCollection.canAttachAllFragments) return true;
+    return await showPromisedOverlay('composer-unsupported-attachments', { rejectWithValue: false }, ({ onResolve, onUserReject }) => (
+      <ConfirmationModal
+        open
+        onClose={onUserReject}
+        onPositive={() => onResolve(true)}
+        confirmationText="Some attached files may not be fully compatible with the current AI model. This could affect processing. Would you like to review or proceed?"
+        positiveActionText="Proceed"
+        negativeActionText="Review Attachments"
+        title="Attachment Compatibility Notice"
+      />
+    ));
+  }, [llmAttachmentDraftsCollection.canAttachAllFragments, showPromisedOverlay]);
+
+
   // Primary button
 
   const handleClear = React.useCallback(() => {
@@ -228,6 +249,9 @@ export function Composer(props: {
 
   const handleSendAction = React.useCallback(async (_chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
+
+    // await user confirmation (or rejection) if attachments are not supported
+    if (!await confirmProceedIfAttachmentsNotSupported()) return false;
 
     // validate some chat mode inputs
     const isDraw = _chatExecuteMode === 'generate-image';
@@ -550,7 +574,10 @@ export function Composer(props: {
 
   const sendButtonVariant: VariantProp = (isAppend || (isMobile && isTextBeam)) ? 'outlined' : 'solid';
 
-  const sendButtonColor: ColorPaletteProp = assistantAbortible ? 'warning' : chatExecuteModeSendColor;
+  const sendButtonColor: ColorPaletteProp =
+    assistantAbortible ? 'warning'
+      : !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
+        : chatExecuteModeSendColor;
 
   const sendButtonLabel = chatExecuteModeSendLabel;
 
@@ -561,6 +588,10 @@ export function Composer(props: {
           : isTextBeam ? <ChatBeamIcon /> /* <GavelIcon /> */
             : isDraw ? <FormatPaintTwoToneIcon />
               : <TelegramIcon />;
+
+  const beamButtonColor: ColorPaletteProp | undefined =
+    !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
+      : undefined;
 
   let textPlaceholder: string =
     isDraw ? 'Describe an idea or a drawing...'
@@ -845,7 +876,7 @@ export function Composer(props: {
                   {!assistantAbortible ? (
                     <Button
                       key='composer-act'
-                      fullWidth disabled={noConversation || noLLM || !llmAttachmentDraftsCollection.canAttachAllFragments}
+                      fullWidth disabled={noConversation || noLLM}
                       onClick={handleSendClicked}
                       endDecorator={sendButtonIcon}
                       sx={{ '--Button-gap': '1rem' }}
@@ -891,7 +922,8 @@ export function Composer(props: {
                 {/* [desktop] secondary-top buttons */}
                 {isDesktop && showChatExtras && !assistantAbortible && (
                   <ButtonBeamMemo
-                    disabled={noConversation || noLLM || !llmAttachmentDraftsCollection.canAttachAllFragments}
+                    color={beamButtonColor}
+                    disabled={noConversation || noLLM}
                     hasContent={!!composeText}
                     onClick={handleSendTextBeamClicked}
                   />

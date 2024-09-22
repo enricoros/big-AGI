@@ -24,6 +24,7 @@ export type GlobalOverlayId = // string - disabled so we keep an orderliness
   | 'shortcuts-confirm-close'
   | 'blocks-off-enhance-code'
   | 'llms-service-remove'
+  | 'composer-unsupported-attachments'    // The LLM does not seem to support this mime type - continue anyway?
 // | 'agi-patch-workflow-save' // make sure we use it
   ;
 
