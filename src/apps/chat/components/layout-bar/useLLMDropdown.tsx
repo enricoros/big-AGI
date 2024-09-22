@@ -10,14 +10,15 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
-import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
+import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { findModelsServiceOrNull, llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 
 
 function LLMDropdown(props: {
+  dropdownRef: React.Ref<OptimaBarControlMethods>,
   llms: DLLM[],
   chatLlmId: DLLMId | null,
   setChatLlmId: (llmId: DLLMId | null) => void,
@@ -167,6 +168,7 @@ function LLMDropdown(props: {
 
   return (
     <OptimaBarDropdownMemo
+      ref={props.dropdownRef}
       items={llmDropdownItems}
       value={chatLlmId}
       onChange={handleChatLLMChange}
@@ -179,7 +181,7 @@ function LLMDropdown(props: {
 }
 
 
-export function useChatLLMDropdown() {
+export function useChatLLMDropdown(dropdownRef: React.Ref<OptimaBarControlMethods>) {
   // external state
   const { llms, chatLLMId } = useModelsStore(useShallow(state => ({
     llms: state.llms, // NOTE: we don't need a deep comparison as we reference the same array
@@ -187,8 +189,8 @@ export function useChatLLMDropdown() {
   })));
 
   const chatLLMDropdown = React.useMemo(
-    () => <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={llmsStoreActions().setChatLLMId} />,
-    [llms, chatLLMId],
+    () => <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={llmsStoreActions().setChatLLMId} />,
+    [chatLLMId, dropdownRef, llms],
   );
 
   return { chatLLMId, chatLLMDropdown };

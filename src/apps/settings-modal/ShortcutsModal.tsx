@@ -20,6 +20,8 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + Shift + F | Attach file                             |
 | Ctrl + Shift + V | Attach clipboard (better than Ctrl + V) |
 | Ctrl + M         | Microphone (voice typing)               |
+| Ctrl + L         | Change Model                            |
+| Ctrl + P         | Change Persona                          |
 | **Chats**        |                                         |
 | Ctrl + O         | Open Chat ...                           |
 | Ctrl + S         | Save Chat ...                           |
