@@ -202,7 +202,8 @@ export function CameraCaptureModal(props: {
           sx: {
             backdropFilter: 'none', // using none because this is heavy
             // backdropFilter: 'blur(4px)',
-            backgroundColor: 'rgba(11 13 14 / 0.75)',
+            // backgroundColor: 'rgba(11 13 14 / 0.75)',
+            backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.5)',
           },
         },
       }}
@@ -217,7 +218,7 @@ export function CameraCaptureModal(props: {
         {/* Top bar */}
         <Sheet variant='solid' invertedColors={true} sx={{
           p: 1,
-          // backgroundColor: 'neutral.800',
+          backgroundColor: 'neutral.800',
           display: 'flex',
           justifyContent: 'space-between',
         }}>
