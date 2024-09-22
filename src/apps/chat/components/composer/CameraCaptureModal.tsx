@@ -239,7 +239,7 @@ export function CameraCaptureModal(props: {
           display: 'flex',
           justifyContent: 'space-between',
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Select
               variant={displayCameras.length > 1 ? 'soft' : 'plain'}
               color='neutral'
@@ -266,7 +266,7 @@ export function CameraCaptureModal(props: {
             </Select>
 
             {canSwitchCameras && (
-              <IconButton onClick={handleCameraSwitch}>
+              <IconButton size='sm' onClick={handleCameraSwitch}>
                 {isFrontCamera ? <CameraRearIcon /> : isBackCamera ? <CameraFrontIcon /> : <FlipCameraAndroidOutlinedIcon />}
               </IconButton>
             )}
