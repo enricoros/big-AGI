@@ -150,7 +150,8 @@ export function Composer(props: {
   const inReferenceTo = useChatComposerOverlayStore(conversationOverlayStore, store => allowInReferenceTo ? store.inReferenceTo : null);
 
   // don't load URLs if the user is typing a command or there's no capability
-  const enableLoadURLsInComposer = useBrowseCapability().inComposer && !composeText.startsWith('/');
+  const hasComposerBrowseCapability = useBrowseCapability().inComposer;
+  const enableLoadURLsInComposer = hasComposerBrowseCapability && !composeText.startsWith('/');
 
   // attachments-overlay: comes from the attachments slice of the conversation overlay
   const {
@@ -595,6 +596,14 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
+  // stable randomization of the /verb, between '/draw', '/react', '/beam', '/browse'
+  const placeholderAction = React.useMemo(() => {
+    const actions = ['/react', '/beam'];
+    if (props.capabilityHasT2I) actions.push('/draw');
+    if (hasComposerBrowseCapability) actions.push('/browse');
+    return actions[Math.floor(Math.random() * actions.length)];
+  }, [hasComposerBrowseCapability, props.capabilityHasT2I]);
+
   let textPlaceholder: string =
     isDraw ? 'Describe what you would like to see...'
       : isReAct ? 'Ask a multi-step reasoning question...'
@@ -603,7 +612,7 @@ export function Composer(props: {
             : 'Type'
             + (props.isDeveloperMode ? ' · attach code' : '')
             + (isDesktop ? ` · drop ${props.isDeveloperMode ? 'source' : 'files'}` : '')
-            + (props.capabilityHasT2I ? ' · /draw' : '')
+            + ` · ${placeholderAction}`
             + (recognitionState.isAvailable ? ' · ramble' : '')
             + '...';
 
