@@ -99,6 +99,11 @@ function OptimaBarDropdown<TValue extends string>(props: {
   showSymbols?: boolean,
 }) {
 
+  // state
+  const [listboxOpen, setListboxOpen] = React.useState(false);
+
+
+  // derived state
   const { onChange } = props;
 
   const handleOnChange = React.useCallback((_event: any, value: TValue | null) => {
@@ -113,6 +118,11 @@ function OptimaBarDropdown<TValue extends string>(props: {
       value={props.value}
       onChange={handleOnChange}
       placeholder={props.placeholder}
+      listboxOpen={listboxOpen}
+      onListboxOpenChange={(isOpen) => {
+        if (isOpen !== listboxOpen)
+          setListboxOpen(isOpen)
+      }}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={selectSlotProps}
     >
