@@ -5,7 +5,7 @@ import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.t
 
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
-import type { AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
+import type { AttachmentCreationOptions, AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftSource } from './attachment.types';
 import { attachmentCreate, attachmentDefineConverters, attachmentLoadInputAsync, attachmentPerformConversion } from './attachment.pipeline';
 import { removeAttachmentOwnedDBAsset, transferAttachmentOwnedDBAsset } from './attachment.dblobs';
 
@@ -20,7 +20,7 @@ interface AttachmentDraftsState {
 
 export interface AttachmentsDraftsStore extends AttachmentDraftsState {
 
-  createAttachmentDraft: (source: AttachmentDraftSource) => Promise<void>;
+  createAttachmentDraft: (source: AttachmentDraftSource, options: AttachmentCreationOptions) => Promise<void>;
   removeAllAttachmentDrafts: () => void;
   removeAttachmentDraft: (attachmentDraftId: AttachmentDraftId) => void;
   moveAttachmentDraft: (attachmentDraftId: AttachmentDraftId, delta: 1 | -1) => void;
@@ -52,7 +52,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
   attachmentDrafts: [],
 
   // actions
-  createAttachmentDraft: async (source: AttachmentDraftSource) => {
+  createAttachmentDraft: async (source: AttachmentDraftSource, options: AttachmentCreationOptions) => {
     const { _getAttachment, _editAttachment, toggleAttachmentDraftConverterAndConvert } = _get();
 
     const _attachmentDraft = attachmentCreate(source);
@@ -70,7 +70,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
       return;
 
     // 2. Define the I->O Converters
-    attachmentDefineConverters(source, loaded.input, editFn);
+    attachmentDefineConverters(source, loaded.input, options, editFn);
     const defined = _getAttachment(attachmentDraftId);
     if (!defined?.converters.length)
       return;

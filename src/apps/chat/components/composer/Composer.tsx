@@ -20,7 +20,7 @@ import type { DOpenAILLMOptions } from '~/modules/llms/vendors/openai/openai.ven
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
-import type { DLLM } from '~/common/stores/llms/llms.types';
+import { DLLM, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
@@ -149,6 +149,10 @@ export function Composer(props: {
   const allowInReferenceTo = chatExecuteMode === 'generate-content';
   const inReferenceTo = useChatComposerOverlayStore(conversationOverlayStore, store => allowInReferenceTo ? store.inReferenceTo : null);
 
+  // LLM-derived
+  const noLLM = !props.chatLLM;
+  const chatLLMSupportsImages = !!props.chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
+
   // don't load URLs if the user is typing a command or there's no capability
   const hasComposerBrowseCapability = useBrowseCapability().inComposer;
   const enableLoadURLsInComposer = hasComposerBrowseCapability && !composeText.startsWith('/');
@@ -158,10 +162,10 @@ export function Composer(props: {
     /* items */ attachmentDrafts,
     /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile,
     /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType,
-  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer);
+  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages);
 
   // attachments derived state
-  const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM);
+  const llmAttachmentDraftsCollection = useLLMAttachmentDrafts(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
 
   // drag/drop
   const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } = useComposerDragDrop(!props.isMobile, attachAppendDataTransfer);
@@ -176,8 +180,7 @@ export function Composer(props: {
   const isMobile = props.isMobile;
   const isDesktop = !props.isMobile;
   const noConversation = !targetConversationId;
-  const noLLM = !props.chatLLM;
-  const showLLMAttachments = chatExecuteModeCanAttach(chatExecuteMode);
+  const showChatAttachments = chatExecuteModeCanAttach(chatExecuteMode);
 
 
   // tokens derived state
@@ -286,7 +289,7 @@ export function Composer(props: {
     if (enqueued)
       handleClear();
     return enqueued;
-  }, [attachmentsTakeAllFragments, handleClear, inReferenceTo, onAction, targetConversationId]);
+  }, [attachmentsTakeAllFragments, confirmProceedIfAttachmentsNotSupported, handleClear, inReferenceTo, onAction, targetConversationId]);
 
 
   const handleAppendTextAndSend = React.useCallback(async (appendText: string) => {
@@ -539,7 +542,7 @@ export function Composer(props: {
 
   useGlobalShortcuts('ChatComposer', React.useMemo(() => {
     const composerShortcuts: ShortcutObject[] = [];
-    if (showLLMAttachments) {
+    if (showChatAttachments) {
       composerShortcuts.push({ key: 'f', ctrl: true, shift: true, action: () => openFileForAttaching(true, handleAttachFiles), description: 'Attach File' });
       if (supportsClipboardRead)
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
@@ -561,7 +564,7 @@ export function Composer(props: {
         }, description: 'Microphone',
       });
     return composerShortcuts;
-  }, [attachAppendClipboardItems, handleAttachFiles, recognitionState.hasSpeech, recognitionState.isActive, showLLMAttachments, toggleRecognition]));
+  }, [attachAppendClipboardItems, handleAttachFiles, recognitionState.hasSpeech, recognitionState.isActive, showChatAttachments, toggleRecognition]));
 
 
   // ...
@@ -659,10 +662,10 @@ export function Composer(props: {
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
 
                 {/* Responsive Camera OCR button */}
-                {showLLMAttachments && <ButtonAttachCameraMemo isMobile onOpenCamera={openCamera} />}
+                {showChatAttachments && <ButtonAttachCameraMemo isMobile onOpenCamera={openCamera} />}
 
                 {/* [mobile] [+] button */}
-                {showLLMAttachments && (
+                {showChatAttachments && (
                   <Dropdown>
                     <MenuButton slots={{ root: IconButton }}>
                       <AddCircleOutlineIcon />
@@ -690,7 +693,7 @@ export function Composer(props: {
             )}
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
-            {isDesktop && showLLMAttachments && (
+            {isDesktop && showChatAttachments && (
               <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
 
                 {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
@@ -847,7 +850,7 @@ export function Composer(props: {
               </Box>
 
               {/* Render any Attachments & menu items */}
-              {!!conversationOverlayStore && showLLMAttachments && (
+              {!!conversationOverlayStore && showChatAttachments && (
                 <LLMAttachmentsList
                   agiAttachmentPrompts={agiAttachmentPrompts}
                   attachmentDraftsStoreApi={conversationOverlayStore}

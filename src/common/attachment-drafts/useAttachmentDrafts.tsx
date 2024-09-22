@@ -20,7 +20,7 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean) => {
+export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean, hintAddImages: boolean) => {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -43,8 +43,8 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     return _createAttachmentDraft({
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
-    });
-  }, [_createAttachmentDraft]);
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, hintAddImages]);
 
   /**
    * Append data transfer to the attachments.
@@ -145,7 +145,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       if (textPlainUrl && textPlainUrl.trim()) {
         void _createAttachmentDraft({
           media: 'url', url: textPlainUrl, refUrl: textPlain,
-        });
+        }, { hintAddImages});
 
         return 'as_url';
       }
@@ -155,7 +155,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     if (attachText && (textHtml || textPlain)) {
       void _createAttachmentDraft({
         media: 'text', method, textPlain, textHtml,
-      });
+      }, { hintAddImages });
 
       return 'as_text';
     }
@@ -165,7 +165,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
+  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLs, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -223,7 +223,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
         if (textPlainUrl && textPlainUrl.trim()) {
           void _createAttachmentDraft({
             media: 'url', url: textPlainUrl.trim(), refUrl: textPlain,
-          });
+          }, { hintAddImages });
           continue;
         }
       }
@@ -232,13 +232,13 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       if (textHtml || textPlain) {
         void _createAttachmentDraft({
           media: 'text', method: 'clipboard-read', textPlain, textHtml,
-        });
+        }, { hintAddImages });
         continue;
       }
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [attachAppendFile, _createAttachmentDraft, enableLoadURLs]);
+  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLs, hintAddImages]);
 
   /**
    * Append ego content to the attachments.
@@ -257,8 +257,8 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
         conversationId,
         messageId,
       },
-    });
-  }, [_createAttachmentDraft]);
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, hintAddImages]);
 
 
   return {

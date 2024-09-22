@@ -20,7 +20,7 @@ import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaB
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
-import { LLM_IF_ANT_PromptCaching } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
@@ -559,6 +559,7 @@ export function AppChat() {
                   capabilityHasT2I={capabilityHasT2I}
                   chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
                   chatLLMContextTokens={chatLLM?.contextTokens ?? null}
+                  chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
                   fitScreen={isMobile || isMultiPane}
                   isMobile={isMobile}
                   isMessageSelectionMode={isMessageSelectionMode}
