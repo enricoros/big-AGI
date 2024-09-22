@@ -41,6 +41,7 @@ export function ChatMessageList(props: {
   capabilityHasT2I: boolean,
   chatLLMAntPromptCaching: boolean,
   chatLLMContextTokens: number | null,
+  chatLLMSupportsImages: boolean,
   fitScreen: boolean,
   isMobile: boolean,
   isMessageSelectionMode: boolean,
@@ -99,7 +100,9 @@ export function ChatMessageList(props: {
         await openFileForAttaching(true, async (filesWithHandle) => {
 
           // Retrieve fully-fledged Attachment Fragments (converted/extracted, with sources, mimes, etc.) from the selected files
-          const attachmentFragments = await convertFilesToDAttachmentFragments('file-open', filesWithHandle);
+          const attachmentFragments = await convertFilesToDAttachmentFragments('file-open', filesWithHandle, {
+            hintAddImages: props.chatLLMSupportsImages,
+          });
 
           // Create a User message with the prompt and the attachment fragments
           if (attachmentFragments.length) {
@@ -112,7 +115,7 @@ export function ChatMessageList(props: {
         });
         break;
     }
-  }, [conversationHandler, conversationId, onConversationExecuteHistory]);
+  }, [conversationHandler, conversationId, onConversationExecuteHistory, props.chatLLMSupportsImages]);
 
   const handleMessageContinue = React.useCallback(async (_messageId: DMessageId /* Ignored for now */) => {
     if (conversationId && conversationHandler) {

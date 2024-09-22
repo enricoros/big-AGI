@@ -62,6 +62,10 @@ export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file
 
 export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
+export type AttachmentCreationOptions = {
+  hintAddImages?: boolean;
+}
+
 
 // 1. draft input (loaded from the source)
 

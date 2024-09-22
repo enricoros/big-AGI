@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import type { AttachmentDraft } from '~/common/attachment-drafts/attachment.types';
+import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
-import { DLLM, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { estimateTokensForFragments } from '~/common/stores/chat/chat.tokens';
 
 
@@ -22,7 +22,7 @@ export interface LLMAttachmentDraft {
 }
 
 
-export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null): LLMAttachmentDraftsCollection {
+export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chatLLM: DLLM | null, chatLLMSupportsImages: boolean): LLMAttachmentDraftsCollection {
 
   /* [Optimization] Use a Ref to store the previous state of llmAttachmentDrafts and chatLLM
    *
@@ -44,8 +44,7 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
     const equalChatLLM = chatLLM === prevStateRef.current.chatLLM;
 
     // LLM-dependent multi-modal enablement
-    const supportsImages = !!chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
-    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = supportsImages ? ['image_ref', 'doc'] : ['doc'];
+    const supportedTypes: DMessageAttachmentFragment['part']['pt'][] = chatLLMSupportsImages ? ['image_ref', 'doc'] : ['doc'];
     const supportedTextTypes: DMessageAttachmentFragment['part']['pt'][] = supportedTypes.filter(pt => pt === 'doc');
 
     // Add LLM-specific properties to each attachment draft
@@ -87,5 +86,5 @@ export function useLLMAttachmentDrafts(attachmentDrafts: AttachmentDraft[], chat
       llmTokenCountApprox,
     };
 
-  }, [attachmentDrafts, chatLLM]); // Dependencies for the outer useMemo
+  }, [attachmentDrafts, chatLLM, chatLLMSupportsImages]); // Dependencies for the outer useMemo
 }
