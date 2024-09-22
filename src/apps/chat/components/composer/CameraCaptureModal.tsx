@@ -9,8 +9,16 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { InlineError } from '~/common/components/InlineError';
+import { Is } from '~/common/util/pwaUtils';
+import { animationCameraFlash } from '~/common/util/animUtils';
 import { downloadVideoFrameAsPNG, renderVideoFrameAsPNGFile } from '~/common/util/videoUtils';
 import { useCameraCapture } from '~/common/components/useCameraCapture';
+
+
+// configuration
+const DEBUG_NO_CAMERA_OPTION = false;
+const FLASH_DURATION_MS = 500;
+const ADD_COOLDOWN_MS = 400;
 
 
 const captureButtonContainerSx: SxProps = {
@@ -25,7 +33,7 @@ const captureButtonGroupSx: SxProps = {
   borderRadius: '3rem',
   // boxShadow: 'md',
   boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
-}
+};
 
 const captureButtonSx: SxProps = {
   backgroundColor: 'neutral.solidHoverBg',
@@ -41,18 +49,19 @@ const captureButtonSx: SxProps = {
 const addButtonSx: SxProps = {
   pl: 2.5,
   pr: 2,
-}
+};
 
 
 export function CameraCaptureModal(props: {
-  onCloseModal: () => void,
-  onAttachImage: (file: File) => void
+  onCloseModal: () => void;
+  onAttachImage: (file: File) => void;
   // onOCR: (ocrText: string) => void }
 }) {
 
   // state
   const [showInfo, setShowInfo] = React.useState(false);
-  // const [ocrProgress/*, setOCRProgress*/] = React.useState<number | null>(null);
+  const [isFlashing, setIsFlashing] = React.useState(false); // For flash effect
+  const [isAddButtonDisabled, setIsAddButtonDisabled] = React.useState(false); // Cooldown state
 
   // external state
   const {
@@ -72,28 +81,26 @@ export function CameraCaptureModal(props: {
     onCloseModal();
   }, [onCloseModal, resetVideo]);
 
-  /*const handleVideoOCRClicked = async () => {
-    if (!videoRef.current) return;
-    const renderedFrame = renderVideoFrameToCanvas(videoRef.current);
+  const handleFlashEffect = React.useCallback((cooldownMs: number) => {
+    // Flash effect
+    setIsFlashing(true);
+    setTimeout(() => {
+      setIsFlashing(false);
+    }, FLASH_DURATION_MS); // Flash duration in milliseconds
 
-    setOCRProgress(0);
-    const { recognize } = await import('tesseract.js');
-    const result = await recognize(renderedFrame, undefined, {
-      logger: m => {
-        // noinspection SuspiciousTypeOfGuard
-        if (typeof m.progress === 'number')
-          setOCRProgress(m.progress);
-      },
-      errorHandler: e => console.error(e),
-    });
-    setOCRProgress(null);
-    stopAndClose();
-    props.onOCR(result.data.text);
-  };*/
+    // Cooldown
+    if (cooldownMs) {
+      setIsAddButtonDisabled(true);
+      setTimeout(() => {
+        setIsAddButtonDisabled(false);
+      }, cooldownMs);
+    }
+  }, []);
 
   const handleVideoSnapClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
     try {
+      // handleFlashEffect(0); // Trigger flash
       const file = await renderVideoFrameAsPNGFile(videoRef.current, 'camera');
       onAttachImage(file);
       stopAndClose();
@@ -105,17 +112,29 @@ export function CameraCaptureModal(props: {
   const handleVideoAddClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
     try {
+      handleFlashEffect(ADD_COOLDOWN_MS); // Trigger flash and cooldown
       const file = await renderVideoFrameAsPNGFile(videoRef.current, 'camera');
       onAttachImage(file);
     } catch (error) {
       console.error('Error capturing video frame:', error);
     }
-  }, [onAttachImage, videoRef]);
+  }, [handleFlashEffect, onAttachImage, videoRef]);
 
   const handleVideoDownloadClicked = React.useCallback(() => {
     if (!videoRef.current) return;
     downloadVideoFrameAsPNG(videoRef.current, 'camera');
   }, [videoRef]);
+
+
+  const displayCameras = React.useMemo(() => {
+    // iOS/English: "Front Camera", "Back Camera"
+    if (Is.OS.iOS) {
+      let reducedCameras = cameras.filter((device) => ['Front Camera', 'Back Camera'].includes(device.label));
+      if (reducedCameras.length > 0)
+        return reducedCameras;
+    }
+    return cameras;
+  }, [cameras]);
 
 
   return (
@@ -130,20 +149,25 @@ export function CameraCaptureModal(props: {
         {/* Top bar */}
         <Sheet variant='solid' invertedColors sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
           <Select
-            variant='soft'
+            variant={displayCameras.length > 1 ? 'soft' : 'plain'}
             color='neutral'
             value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
             indicator={<KeyboardArrowDownIcon />}
           >
-            <Option value={-1}>
-              No Camera
-            </Option>
-            {cameras.map((device: MediaDeviceInfo, camIndex) => (
+            {(!displayCameras.length || DEBUG_NO_CAMERA_OPTION) && (
+              <Option key='video-dev-none' value={-1}>
+                No Camera
+              </Option>
+            )}
+            {displayCameras.map((device: MediaDeviceInfo, camIndex) => (
               <Option key={'video-dev-' + camIndex} value={camIndex}>
                 {/*{device.label?.includes('Face') ? <CameraFrontIcon />*/}
                 {/*  : device.label?.includes('tual') ? <CameraRearIcon />*/}
                 {/*    : null}*/}
-                {device.label?.replace('camera2 ', 'Camera ').replace('front', 'Front').replace('back', 'Back')}
+                {device.label?.replace('camera2 ', 'Camera ')
+                  .replace('facing front', 'Front')
+                  .replace('facing back', 'Back')
+                }
               </Option>
             ))}
           </Select>
@@ -156,19 +180,34 @@ export function CameraCaptureModal(props: {
           <video
             ref={videoRef} autoPlay playsInline
             style={{
-              display: 'block', width: '100%', maxHeight: 'calc(100vh - 200px)',
+              display: 'block',
+              width: !Is.Browser.Safari ? '100%' : undefined,
+              marginLeft: 'auto', marginRight: 'auto',
+              maxHeight: 'calc(100vh - 200px)',
               background: '#8888', //opacity: ocrProgress !== null ? 0.5 : 1,
             }}
           />
 
-          {showInfo && !!info && <Typography
-            sx={{
-              position: 'absolute', inset: 0, zIndex: 1, /* camera info on top of video */
-              background: 'rgba(0,0,0,0.5)', color: 'white',
-              whiteSpace: 'pre', overflowY: 'scroll',
-            }}>
-            {info}
-          </Typography>}
+          {/* Flash overlay */}
+          {isFlashing && (
+            <Box
+              sx={{
+                position: 'absolute', inset: 0, zIndex: 2,
+                animation: `${animationCameraFlash} ${FLASH_DURATION_MS / 1000}s`,
+              }}
+            />
+          )}
+
+          {showInfo && !!info && (
+            <Typography
+              sx={{
+                position: 'absolute', inset: 0, zIndex: 1, /* camera info on top of video */
+                background: 'rgba(0,0,0,0.5)', color: 'white',
+                whiteSpace: 'pre', overflowY: 'scroll',
+              }}>
+              {info}
+            </Typography>
+          )}
 
           {/*{ocrProgress !== null && <CircularProgress sx={{ position: 'absolute', top: 'calc(50% - 34px / 2)', left: 'calc(50% - 34px / 2)', zIndex: 2 }} />}*/}
         </Box>
@@ -185,7 +224,10 @@ export function CameraCaptureModal(props: {
           <Box paddingBottom={zoomControl ? 1 : undefined} sx={captureButtonContainerSx}>
 
             {/* Info */}
-            <IconButton disabled={!info} onClick={() => setShowInfo(info => !info)}>
+            <IconButton
+              disabled={!info}
+              onClick={() => setShowInfo((prev) => !prev)}
+            >
               <InfoOutlinedIcon />
             </IconButton>
 
@@ -196,7 +238,7 @@ export function CameraCaptureModal(props: {
             {/* Capture */}
             <ButtonGroup color="neutral" variant="solid" sx={captureButtonGroupSx}>
               <Tooltip disableInteractive arrow placement='top' title='Add to message'>
-                <IconButton size='sm' onClick={handleVideoAddClicked} sx={addButtonSx}>
+                <IconButton size='sm' disabled={isAddButtonDisabled} onClick={handleVideoAddClicked} sx={addButtonSx}>
                   <AddRoundedIcon />
                 </IconButton>
               </Tooltip>
