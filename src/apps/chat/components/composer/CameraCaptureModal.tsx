@@ -29,22 +29,22 @@ const captureButtonContainerSx: SxProps = {
 };
 
 const captureButtonGroupSx: SxProps = {
-  // '--ButtonGroup-separatorColor': 'black',
-  '--ButtonGroup-separatorSize': '2px',
+  '--ButtonGroup-separatorColor': 'none !important',
+  // '--ButtonGroup-separatorSize': '2px',
   borderRadius: '3rem',
-  boxShadow: 'md',
-  // boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+  // boxShadow: 'md',
+  boxShadow: '0 8px 12px -6px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
 };
 
 const captureButtonSx: SxProps = {
-  // backgroundColor: 'neutral.solidHoverBg',
+  backgroundColor: 'neutral.solidHoverBg',
   pl: 3.25,
   pr: 4.5,
   py: 1.5,
   minWidth: { md: 200 },
-  // '&:hover': {
-  //   backgroundColor: 'neutral.plainHoverColor',
-  // },
+  '&:hover': {
+    backgroundColor: 'neutral.plainHoverColor',
+  },
 };
 
 const addButtonSx: SxProps = {
@@ -81,6 +81,7 @@ export function CameraCaptureModal(props: {
     resetVideo();
     onCloseModal();
   }, [onCloseModal, resetVideo]);
+
 
   const handleFlashEffect = React.useCallback((cooldownMs: number) => {
     // Flash effect
@@ -127,6 +128,8 @@ export function CameraCaptureModal(props: {
   }, [videoRef]);
 
 
+  // reduced set of cameras
+
   const displayCameras = React.useMemo(() => {
     // iOS/English: "Front Camera", "Back Camera"
     if (Is.OS.iOS) {
@@ -152,7 +155,7 @@ export function CameraCaptureModal(props: {
           sx: {
             backdropFilter: 'none', // using none because this is heavy
             // backdropFilter: 'blur(4px)',
-            backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.75)',
+            backgroundColor: 'rgba(11 13 14 / 0.75)',
           },
         },
       }}
@@ -237,9 +240,8 @@ export function CameraCaptureModal(props: {
         </Box>
 
         {/* Bottom controls (zoom, ocr, download) & progress */}
-        <Sheet variant='solid' invertedColors={true} sx={{
+        <Sheet variant='soft' sx={{
           p: 1,
-          // backgroundColor: 'neutral.800',
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
