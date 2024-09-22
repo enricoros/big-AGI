@@ -186,9 +186,10 @@ export function useChatLLMDropdown() {
     chatLLMId: state.chatLLMId,
   })));
 
-  const chatLLMDropdown = React.useMemo(() => {
-    return <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={llmsStoreActions().setChatLLMId} />;
-  }, [llms, chatLLMId]);
+  const chatLLMDropdown = React.useMemo(
+    () => <LLMDropdown llms={llms} chatLlmId={chatLLMId} setChatLlmId={llmsStoreActions().setChatLLMId} />,
+    [llms, chatLLMId],
+  );
 
   return { chatLLMId, chatLLMDropdown };
 }
