@@ -17,8 +17,8 @@ import { useCameraCapture } from '~/common/components/useCameraCapture';
 
 // configuration
 const DEBUG_NO_CAMERA_OPTION = false;
-const FLASH_DURATION_MS = 500;
-const ADD_COOLDOWN_MS = 400;
+const FLASH_DURATION_MS = 600;
+const ADD_COOLDOWN_MS = 300;
 
 
 const captureButtonContainerSx: SxProps = {
@@ -151,7 +151,7 @@ export function CameraCaptureModal(props: {
           sx: {
             backdropFilter: 'none', // using none because this is heavy
             // backdropFilter: 'blur(4px)',
-            backgroundColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.5)',
+            backgroundColor: 'rgba(var(--joy-palette-neutral-darkChannel) / 0.75)',
           },
         },
       }}
@@ -164,12 +164,18 @@ export function CameraCaptureModal(props: {
       }}>
 
         {/* Top bar */}
-        <Sheet variant='solid' invertedColors sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+        <Sheet variant='plain' invertedColors={false} sx={{
+          p: 1,
+          // backgroundColor: 'neutral.800',
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}>
           <Select
             variant={displayCameras.length > 1 ? 'soft' : 'plain'}
             color='neutral'
             value={cameraIdx} onChange={(_event: any, value: number | null) => setCameraIdx(value === null ? -1 : value)}
             indicator={<KeyboardArrowDownIcon />}
+            sx={{ background: 'transparent' }}
           >
             {(!displayCameras.length || DEBUG_NO_CAMERA_OPTION) && (
               <Option key='video-dev-none' value={-1}>
@@ -189,11 +195,11 @@ export function CameraCaptureModal(props: {
             ))}
           </Select>
 
-          <ModalClose onClick={stopAndClose} sx={{ position: 'static' }} />
+          <ModalClose size='lg' onClick={stopAndClose} sx={{ position: 'static' }} />
         </Sheet>
 
         {/* (main) Video */}
-        <Box sx={{ position: 'relative' }}>
+        <Box sx={{ position: 'relative', backgroundColor: 'background.level3' }}>
           <video
             ref={videoRef} autoPlay playsInline
             style={{
