@@ -44,7 +44,11 @@ const defaultTypeConfig: {
   },
 };
 
-const titleSx: SxProps = {
+const typeDefaultSx: SxProps = {
+  border: '1px solid',
+};
+
+const typeTitleSx: SxProps = {
   '--Snackbar-inset': '64px',
   borderRadius: 'md',
   boxShadow: 'md',
@@ -98,7 +102,7 @@ export function SnackbarInsert() {
           <CloseRoundedIcon />
         </IconButton>
       )}
-      sx={activeMessage.type === 'title' ? titleSx : undefined}
+      sx={activeMessage.type === 'title' ? typeTitleSx : typeDefaultSx}
     >
       {activeMessage.message}
     </Snackbar>

@@ -16,7 +16,7 @@ export function copyToClipboard(text: string, typeLabel: string) {
         type: 'success',
         closeButton: false,
         overrides: {
-          autoHideDuration: 1400,
+          autoHideDuration: 2000,
         },
       });
     })
