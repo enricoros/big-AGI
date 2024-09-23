@@ -4,7 +4,7 @@
  */
 export function presentErrorToHumans(error: any, mdBold: boolean = false, devWarnError: boolean = false): string {
   if (devWarnError)
-    console.warn('presentErrorToHumans', { error });
+    console.error('presentErrorToHumans', { error });
 
   // Handle Error objects
   if (error instanceof Error) {
