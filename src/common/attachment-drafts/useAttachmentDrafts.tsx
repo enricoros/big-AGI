@@ -20,7 +20,7 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean, hintAddImages: boolean) => {
+export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean, hintAddImages: boolean, onFilterAGIFile: (file: File) => Promise<boolean>) => {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -41,10 +41,15 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     if (ATTACHMENTS_DEBUG_INTAKE)
       console.log('attachAppendFile', origin, fileWithHandle, overrideFileName);
 
+    // special case: intercept AGI files to potentially load them instead of attaching them
+    if (fileWithHandle.name.endsWith('.agi.json'))
+      if (await onFilterAGIFile(fileWithHandle))
+        return;
+
     return _createAttachmentDraft({
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
     }, { hintAddImages });
-  }, [_createAttachmentDraft, hintAddImages]);
+  }, [_createAttachmentDraft, hintAddImages, onFilterAGIFile]);
 
   /**
    * Append data transfer to the attachments.

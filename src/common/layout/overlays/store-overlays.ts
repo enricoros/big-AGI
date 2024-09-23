@@ -25,6 +25,7 @@ export type GlobalOverlayId = // string - disabled so we keep an orderliness
   | 'blocks-off-enhance-code'
   | 'llms-service-remove'
   | 'composer-unsupported-attachments'    // The LLM does not seem to support this mime type - continue anyway?
+  | 'composer-open-or-attach'             // Open a file or attach it to the chat?
 // | 'agi-patch-workflow-save' // make sure we use it
   ;
 

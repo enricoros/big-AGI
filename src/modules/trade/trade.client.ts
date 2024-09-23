@@ -19,28 +19,22 @@ import type { ImportedOutcome } from './ImportOutcomeModal';
 /// IMPORT ///
 
 /**
- * Open a file dialog and load all conversations from the selected JSON files
+ * Load conversations from the given Files (we don't need/use the handle here, as no LiveFile is involved in the import)
+ * @param files The files to import, if null the user may have cancelled the request
+ * @param preventClash If true, the importer will not overwrite existing conversations with the same ID
  */
-export async function openAndLoadConversations(preventClash: boolean = false): Promise<ImportedOutcome | null> {
+export async function importConversationsFromFilesAtRest(files: File[] | null, preventClash: boolean = false): Promise<ImportedOutcome> {
   const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
 
-  let blobs: FileWithHandle[];
-  try {
-    blobs = await fileOpen({
-      description: `${Brand.Title.Base} JSON Conversations`,
-      mimeTypes: ['application/json', 'application/big-agi'],
-      multiple: true,
-    });
-  } catch (error) {
-    // User closed the dialog
-    return null;
-  }
+  // user cancelled
+  if (!files)
+    return outcome;
 
   // unroll files to conversations
-  for (const blob of blobs) {
-    const fileName = blob.name || 'unknown file';
+  for (const file of files) {
+    const fileName = file.name || 'unknown file';
     try {
-      const fileString = await blob.text();
+      const fileString = await file.text();
       const fileObject = JSON.parse(fileString);
       loadConversationsFromAtRestV1(fileName, fileObject, outcome);
     } catch (error: any) {
@@ -63,6 +57,23 @@ export async function openAndLoadConversations(preventClash: boolean = false): P
   }
 
   return outcome;
+}
+
+/**
+ * Show a file picker dialog, then return the selected files
+ * - this chains well with `importConversationsFromFilesAtRest`
+ */
+export async function openConversationsAtRestPicker(): Promise<FileWithHandle[] | null> {
+  try {
+    return await fileOpen({
+      description: `${Brand.Title.Base} JSON Conversations`,
+      mimeTypes: ['application/json', 'application/big-agi'],
+      multiple: true,
+    });
+  } catch (error) {
+    // User closed the dialog
+    return null;
+  }
 }
 
 
