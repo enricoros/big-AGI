@@ -20,6 +20,15 @@ interface ShowOverlayOptions<TResolve> {
   rejectWithValue?: Exclude<TResolve, undefined>; // saves a try/catch in the caller
 }
 
+
+// The type of the function that will be returned by the hook
+type TShowPromiseOverlay = <TResolve>(
+  overlayId: GlobalOverlayId,
+  options: ShowOverlayOptions<TResolve>,
+  Component: React.ComponentType<OverlayComponentProps<TResolve>>,
+) => Promise<TResolve>;
+
+
 /**
  * Show overlays with promise-like callbacks. IDs are global and unique, for ease of deduplication.
  * - When the component unmounts, by default it will reject all the overlays that don't have
@@ -28,11 +37,7 @@ interface ShowOverlayOptions<TResolve> {
  *   and bring it to the front.
  */
 export function useOverlayComponents(): {
-  showPromisedOverlay: <TResolve>(
-    overlayId: GlobalOverlayId,
-    options: ShowOverlayOptions<TResolve>,
-    Component: React.ComponentType<OverlayComponentProps<TResolve>>,
-  ) => Promise<TResolve>;
+  showPromisedOverlay: TShowPromiseOverlay;
 } {
 
   // keep track of active overlays

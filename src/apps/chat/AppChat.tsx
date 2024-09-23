@@ -8,8 +8,7 @@ import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
-import { downloadSingleChat, openAndLoadConversations } from '~/modules/trade/trade.client';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
@@ -28,6 +27,7 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessageTextContent, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 import { themeBgAppChatComposer } from '~/common/app.theme';
@@ -330,19 +330,26 @@ export function AppChat() {
     setTradeConfig({ dir: 'export', conversationId, exportAll });
   }, []);
 
-  const handleFileOpenConversation = React.useCallback(() => {
-    openAndLoadConversations(true)
-      .then((outcome) => {
-        // activate the last (most recent) imported conversation
-        if (outcome?.activateConversationId) {
-          showNextTitleChange.current = true;
-          handleOpenConversationInFocusedPane(outcome.activateConversationId);
-        }
-      })
-      .catch(() => {
-        addSnackbar({ key: 'chat-import-fail', message: 'Could not open the file.', type: 'issue' });
-      });
-  }, [handleOpenConversationInFocusedPane]);
+  const handleConversationsImportFromFiles = React.useCallback(
+    (files: File[] | null): Promise<void> =>
+      importConversationsFromFilesAtRest(files, true)
+        .then((outcome) => {
+          // activate the last (most recent) imported conversation
+          if (outcome.activateConversationId) {
+            showNextTitleChange.current = true;
+            handleOpenConversationInFocusedPane(outcome.activateConversationId);
+          }
+        })
+        .catch(() => {
+          addSnackbar({ key: 'chat-import-fail', message: 'Could not open file.', type: 'issue' });
+        }),
+    [handleOpenConversationInFocusedPane],
+  );
+
+  const handleConversationsImportFormFilePicker = React.useCallback(
+    () => openConversationsAtRestPicker().then(handleConversationsImportFromFiles),
+    [handleConversationsImportFromFiles],
+  );
 
   const handleFileSaveConversation = React.useCallback((conversationId: DConversationId | null) => {
     const conversation = getConversation(conversationId);
@@ -472,7 +479,7 @@ export function AppChat() {
     // focused conversation
     { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
     { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam' },
-    { key: 'o', ctrl: true, action: handleFileOpenConversation },
+    { key: 'o', ctrl: true, action: handleConversationsImportFormFilePicker },
     { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
     { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
     { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
@@ -484,7 +491,7 @@ export function AppChat() {
     { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleFileOpenConversation, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+  ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleConversationsImportFormFilePicker, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   return <>
@@ -609,6 +616,7 @@ export function AppChat() {
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
       isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
+      onConversationsImportFromFiles={handleConversationsImportFromFiles}
       onTextImagine={handleImagineFromText}
       setIsMulticast={setIsComposerMulticast}
       sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
