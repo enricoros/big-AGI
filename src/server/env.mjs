@@ -34,6 +34,7 @@ export const env = createEnv({
 
     // LLM: Google AI's Gemini
     GEMINI_API_KEY: z.string().optional(),
+    GEMINI_API_KEYS: z.string().optional(),
 
     // LLM: Groq
     GROQ_API_KEY: z.string().optional(),
