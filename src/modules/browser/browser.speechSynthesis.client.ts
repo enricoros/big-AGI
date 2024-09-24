@@ -25,6 +25,11 @@ export async function speakText(text: string, voiceId?: number) {
   }
 }
 
+export async function cancel() {
+  const synth = window.speechSynthesis;
+  synth.cancel();
+}
+
 export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: number) {
   if (!(text?.trim())) return;
 

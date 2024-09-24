@@ -5,7 +5,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
 import { useBrowseVoiceId } from './store-module-browser';
-import { speakText } from './browser.speechSynthesis.client';
+import { speakText, cancel } from './browser.speechSynthesis.client';
 
 
 function VoicesDropdown(props: {
@@ -68,6 +68,9 @@ export function useBrowserSpeachVoiceDropdown(autoSpeak: boolean, disabled?: boo
   React.useEffect(() => {
     if (autoSpeak && voice) {
       speakText(`How can I assist you today?`, voiceId);
+    }
+    return () => {
+      cancel()
     }
   }, [autoSpeak, voice, voiceId]);
 
