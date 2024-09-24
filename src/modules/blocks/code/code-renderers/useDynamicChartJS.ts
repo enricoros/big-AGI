@@ -11,6 +11,8 @@ import type { Chart as ChartConstructorType } from 'chart.js/auto';
 
 import { devDependencies } from '../../../../../package.json';
 
+import { themeFontFamilyCss } from '~/common/app.theme';
+
 
 // Configuration
 const CHARTJS_VERSION = '4.4.4';
@@ -61,7 +63,10 @@ function loadCDNScript(): Promise<typeof ChartConstructorType> {
 }
 
 function initializeChartJS(Chart: typeof ChartConstructorType): typeof ChartConstructorType {
-  // Add custom plugins, options, etc. here
+  Chart.defaults.font.family = themeFontFamilyCss;
+  Chart.defaults.font.size = 13;
+  Chart.defaults.maintainAspectRatio = true;
+  Chart.defaults.responsive = true;
   return Chart;
 }
 
