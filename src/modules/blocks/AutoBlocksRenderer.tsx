@@ -4,6 +4,7 @@ import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
+import { BLOCK_CODE_VND_AGI_CHARTJS, renderCodeMemoOrNot } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
@@ -12,7 +13,6 @@ import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainChatText } from './plaintext/RenderPlainChatText';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
-import { renderCodeMemoOrNot } from './code/RenderCode';
 import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
@@ -115,7 +115,17 @@ export function AutoBlocksRenderer(props: {
 
           case 'code-bk':
             const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeMemoBeforeLastBlock);
-            return (props.codeRenderVariant === 'enhanced' && !bkInput.isPartial) ? (
+
+            // Custom handling for some of our blocks
+            let disableEnhancedRender = bkInput.isPartial;
+            let enhancedStartCollapsed = false;
+            if (bkInput.title === BLOCK_CODE_VND_AGI_CHARTJS) {
+              disableEnhancedRender = false;
+              // For ChartJS charts, at the moment, we use the 'unwanted' refresh at the end of the message to start (that block) without collapse
+              enhancedStartCollapsed = bkInput.isPartial;
+            }
+
+            return (props.codeRenderVariant === 'enhanced' && !disableEnhancedRender) ? (
               <EnhancedRenderCode
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
@@ -124,6 +134,7 @@ export function AutoBlocksRenderer(props: {
                 fitScreen={props.fitScreen}
                 isMobile={props.isMobile}
                 initialShowHTML={props.showUnsafeHtmlCode}
+                initialIsCollapsed={enhancedStartCollapsed}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
                 codeSx={scaledCodeSx}
