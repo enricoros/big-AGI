@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { shallow } from 'zustand/shallow';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
+import { ASREngineList, TTSEngineList } from '~/common/components/useVoiceCapabilities';
 
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
@@ -32,6 +33,12 @@ interface AppChatStore {
 
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
+
+  TTSEngine: string;
+  setTTSEngine: (TTSEngine: string) => void;
+
+  ASREngine: string;
+  setASREngine: (ASREngine: string) => void;
 
   showPersonaIcons: boolean;
   setShowPersonaIcons: (showPersonaIcons: boolean) => void;
@@ -68,6 +75,12 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
+
+    TTSEngine: TTSEngineList[0],
+    setTTSEngine: (TTSEngine: string) => _set({ TTSEngine }),
+
+    ASREngine: ASREngineList[0],
+    setASREngine: (ASREngine: string) => _set({ ASREngine }),
 
     showPersonaIcons: true,
     setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons }),
@@ -125,6 +138,13 @@ export const useChatMicTimeoutMsValue = (): number =>
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(state => [state.micTimeoutMs, state.setMicTimeoutMs], shallow);
+
+export const useTTSEngine = (): [string, (micTimeoutMs: string) => void] =>
+  useAppChatStore(state => [state.TTSEngine, state.setTTSEngine], shallow);
+export const getTTSEngine = () => useAppChatStore.getState().TTSEngine;
+
+export const useASREngine = (): [string, (micTimeoutMs: string) => void] =>
+  useAppChatStore(state => [state.ASREngine, state.setASREngine], shallow);
 
 export const useChatDrawerFilters = () => {
   const values = useAppChatStore(useShallow(state => ({

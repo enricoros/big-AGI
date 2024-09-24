@@ -1,0 +1,79 @@
+import { getTTSEngine } from 'src/apps/chat/store-app-chat';
+import { CapabilitySpeechSynthesis } from '~/common/components/useCapabilities';
+
+import { useCapability as useElevenlabsCapability } from '~/modules/elevenlabs/elevenlabs.client'
+import { speakText as elevenlabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client'
+import { EXPERIMENTAL_speakTextStream as EXPERIMENTAL_elevenlabsSpeakTextStream } from '~/modules/elevenlabs/elevenlabs.client'
+
+import { useCapability as useBrowserSpeechSynthesisCapability } from '~/modules/browser/browser.speechSynthesis.client'
+import { speakText as browserSpeechSynthesisSpeakText } from '~/modules/browser/browser.speechSynthesis.client'
+import { EXPERIMENTAL_speakTextStream as EXPERIMENTAL_browserSpeechSynthesisSpeakTextStream } from '~/modules/browser/browser.speechSynthesis.client'
+
+import { useElevenLabsVoices } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
+import { useBrowserSpeachVoices } from '~/modules/browser/useBrowserSpeachVoiceDropdown';
+
+export const TTSEngineList: string[] = [
+  'Elevenlabs',
+  'Web Speech API'
+]
+
+export const ASREngineList: string[] = [
+  'Web Speech API'
+]
+
+export function getConditionalVoices(){
+  const TTSEngine = getTTSEngine();
+  if (TTSEngine === 'Elevenlabs') {
+    return useElevenLabsVoices
+  }else if (TTSEngine === 'Web Speech API') {
+    return useBrowserSpeachVoices
+  }
+  throw new Error('TTSEngine is not found');
+}
+
+export function hasVoices(): boolean {
+  console.log('getConditionalVoices', getConditionalVoices()().hasVoices)
+  return getConditionalVoices()().hasVoices;
+} 
+
+export function getConditionalCapability(): () => CapabilitySpeechSynthesis {
+  const TTSEngine = getTTSEngine();
+  if (TTSEngine === 'Elevenlabs') {
+    return useElevenlabsCapability
+  }else if (TTSEngine === 'Web Speech API') {
+    return useBrowserSpeechSynthesisCapability
+  }
+  throw new Error('TTSEngine is not found');
+}
+
+export function useCapability(): CapabilitySpeechSynthesis {
+  return getConditionalCapability()();
+}
+
+
+export async function speakText(text: string, voiceId?: string | number) {
+  const TTSEngine = getTTSEngine();
+  if (TTSEngine === 'Elevenlabs') {
+    if (voiceId !== undefined && typeof voiceId !== 'string') throw new Error('if use Elevenlabs, voiceId should be a string'); 
+    return await elevenlabsSpeakText(text, voiceId);
+  }else if (TTSEngine === 'Web Speech API') {
+    if (voiceId !== undefined && typeof voiceId !== 'number') throw new Error('if use browserSpeechAPI, voiceId should be a number'); 
+    return await browserSpeechSynthesisSpeakText(text, voiceId);
+  }
+  throw new Error('TTSEngine is not found'); 
+}
+
+// let liveAudioPlayer: LiveAudioPlayer | undefined = undefined;
+
+export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: string | number) {
+  const TTSEngine = getTTSEngine();
+  if (TTSEngine === 'Elevenlabs') {
+    if (typeof voiceId !== 'string') throw new Error('if use Elevenlabs, voiceId should be a string'); 
+    return await EXPERIMENTAL_elevenlabsSpeakTextStream(text, voiceId);
+  }else if (TTSEngine === 'Web Speech API') {
+    // if (typeof voiceId !== 'number') throw new Error('if use browserSpeechAPI, voiceId should be a number');
+    if (typeof voiceId!== 'number') voiceId = undefined; 
+    return await EXPERIMENTAL_browserSpeechSynthesisSpeakTextStream(text, voiceId);
+  }
+  throw new Error('TTSEngine is not found'); 
+}

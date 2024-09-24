@@ -12,7 +12,7 @@ import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptim
 import { ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
 import { createDMessage, DConversationId, DMessage, DMessageUserFlag, getConversation, messageToggleUserFlag, useChatStore } from '~/common/state/store-chats';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
-import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useVoiceCapability } from '~/common/components/useCapabilities';
 import { useEphemerals } from '~/common/chats/EphemeralsStore';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -63,7 +63,7 @@ export function ChatMessageList(props: {
     };
   }));
   const ephemerals = useEphemerals(props.conversationHandler);
-  const { mayWork: isSpeakable } = useCapabilityElevenLabs();
+  const { mayWork: isSpeakable } = useVoiceCapability();
 
   // derived state
   const { conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;

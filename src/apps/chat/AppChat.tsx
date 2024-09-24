@@ -11,7 +11,7 @@ import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { downloadConversation, openAndLoadConversations } from '~/modules/trade/trade.client';
 import { getChatLLMId, useChatLLM } from '~/modules/llms/store-llms';
 import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { speakText } from '~/common/components/useVoiceCapabilities';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 

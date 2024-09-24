@@ -3,7 +3,7 @@ import type { StreamingClientUpdate } from '~/modules/llms/vendors/unifiedStream
 import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 import { conversationAutoTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { llmStreamingChatGenerate, VChatContextRef, VChatMessageIn, VChatStreamContextName } from '~/modules/llms/llm.client';
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { speakText } from '~/common/components/useVoiceCapabilities';
 
 import type { DMessage } from '~/common/state/store-chats';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';

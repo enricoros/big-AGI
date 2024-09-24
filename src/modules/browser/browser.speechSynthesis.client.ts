@@ -1,0 +1,41 @@
+import { CapabilitySpeechSynthesis } from "~/common/components/useCapabilities";
+import { getBrowseVoiceId } from "./store-module-browser";
+
+export function useCapability(): CapabilitySpeechSynthesis {
+  const synth = window.speechSynthesis;
+  const voices = synth.getVoices();
+  const isConfiguredServerSide = false;
+  const isConfiguredClientSide = true;
+  const mayWork = voices.length > 0;
+  return { mayWork, isConfiguredServerSide, isConfiguredClientSide };
+}
+
+
+export async function speakText(text: string, voiceId?: number) {
+  if (!(text?.trim())) return;
+
+  try {
+    const synth = window.speechSynthesis;
+    const utterThis = new SpeechSynthesisUtterance(text);
+    const voices = synth.getVoices();
+    utterThis.voice = voices[voiceId || getBrowseVoiceId()]
+    synth.speak(utterThis);
+  } catch (error) {
+    console.error('Error playing first text:', error);
+  }
+}
+
+export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: number) {
+  if (!(text?.trim())) return;
+
+  try {
+    const synth = window.speechSynthesis;
+    const utterThis = new SpeechSynthesisUtterance(text);
+    const voices = synth.getVoices();
+    utterThis.voice = voices[voiceId || getBrowseVoiceId()]
+    synth.speak(utterThis);
+  } catch (error) {
+    // has happened once in months of testing, not sure what was the cause
+    console.error('EXPERIMENTAL_speakTextStream:', error);
+  }
+}

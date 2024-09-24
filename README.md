@@ -1,3 +1,14 @@
+
+
+# 
+UI 组件和样式: @emotion/*, @mui/*，这些是用于创建 UI 组件和样式的库。
+数据存储和管理: prisma-client, idb-keyval, 这些是用于数据存储和管理的库。
+分析和性能优化: next/bundle-analyzer, @vercel/*，这些是用于分析和性能优化的工具。
+缓存: react-query, dexie，这些是用于缓存数据的库。
+UI 效果和交互: nprogress, plantuml-encoder, 这些是用于创建 UI 效果和交互的库。
+文档和显示: remark-math, rehype-katex, react-markdown,这些是用于文档和显示数学表达式的库。
+媒体处理: pdfjs-dist, sharp，这些是用于处理 PDF 和图片的库。
+
 # BIG-AGI 🧠✨
 
 Welcome to big-AGI, the AI suite for professionals that need function, form,
