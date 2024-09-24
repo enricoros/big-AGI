@@ -71,13 +71,14 @@ export function TextFragmentEditor(props: {
       const withControl = e.ctrlKey;
       if (enterIsNewline ? shiftOrAlt : !shiftOrAlt) {
         e.preventDefault();
-        onSubmit(withControl);
+        if (!withControl || props.enableRestart)
+          onSubmit(withControl);
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
       onEscapePressed();
     }
-  }, [enterIsNewline, onSubmit, onEscapePressed]);
+  }, [enterIsNewline, props.enableRestart, onSubmit, onEscapePressed]);
 
   // shortcuts
   const isEdited = props.editedText !== undefined;
