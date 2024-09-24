@@ -86,6 +86,7 @@
     "@types/react-katex": "^3.0.4",
     "@types/react-timeago": "^4.1.7",
     "@types/turndown": "^5.0.5",
+    "chart.js": "^4.4.4",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.13",
     "prettier": "^3.3.3",
