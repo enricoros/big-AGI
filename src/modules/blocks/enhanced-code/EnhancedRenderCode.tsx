@@ -9,8 +9,8 @@ import type { ContentScaling } from '~/common/app.theme';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
+import { BLOCK_CODE_VND_AGI_CHARTJS, RenderCodeMemo } from '../code/RenderCode';
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
-import { RenderCodeMemo } from '../code/RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '../code/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
 import { useLiveFilePatch } from './livefile-patch/useLiveFilePatch';
@@ -34,13 +34,14 @@ export function EnhancedRenderCode(props: {
   language?: string,
   color?: ColorPaletteProp;
   contentScaling: ContentScaling;
+  initialIsCollapsed: boolean;
 
   // onLiveFileCreate?: () => void,
 }) {
 
   // state
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(false);
+  const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(props.initialIsCollapsed);
 
   // LiveFile - patch state
   const { button: liveFileButton, actionBar: liveFileActionBar } = useLiveFilePatch(
@@ -120,8 +121,9 @@ export function EnhancedRenderCode(props: {
             cursor: 'pointer',
           }}
         />
-        <Typography level='title-sm'>
-          {props.title || 'Code'}
+        <Typography level={props.title !== BLOCK_CODE_VND_AGI_CHARTJS ? 'title-sm' : 'body-sm'}>
+          {props.title === BLOCK_CODE_VND_AGI_CHARTJS ? 'Chart' + (props.isPartial ? ' ...' : '')
+            : props.title || 'Code'}
         </Typography>
       </Box>
     </TooltipOutlined>

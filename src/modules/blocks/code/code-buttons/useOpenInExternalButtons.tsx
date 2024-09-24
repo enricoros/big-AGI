@@ -3,6 +3,7 @@ import * as React from 'react';
 import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
 import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 
+import { BLOCK_CODE_VND_AGI_CHARTJS } from '../RenderCode';
 import { OverlayButton } from '../../OverlayButton';
 import { isCodePenSupported, openInCodePen } from './openInCodePen';
 import { isJSFiddleSupported, openInJsFiddle } from './openInJsFiddle';
@@ -14,6 +15,9 @@ const stableNoButtons: React.ReactNode[] = [];
 export function useOpenInExternalButtons(code: string, blockTitle: string, blockIsPartial: boolean, inferredCodeLanguage: string | null, isSVGCode: boolean, noTooltips: boolean) {
   return React.useMemo(() => {
     if (blockIsPartial)
+      return stableNoButtons;
+
+    if (blockTitle === BLOCK_CODE_VND_AGI_CHARTJS)
       return stableNoButtons;
 
     const mayExternal = code?.indexOf('\n') > 0;

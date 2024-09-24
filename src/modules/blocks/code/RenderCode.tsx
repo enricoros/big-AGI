@@ -31,6 +31,7 @@ import './RenderCode.css';
 
 // configuration
 const ALWAYS_SHOW_OVERLAY = true;
+export const BLOCK_CODE_VND_AGI_CHARTJS = 'chartjs';
 
 
 // RenderCode
@@ -161,7 +162,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const renderSVG = isSVGCode && showSVG;
   const canScaleSVG = renderSVG && code.includes('viewBox="');
 
-  const isChartJSCode = lcBlockTitle === 'chartjs' && !blockIsPartial;
+  const isChartJSCode = lcBlockTitle === BLOCK_CODE_VND_AGI_CHARTJS && !blockIsPartial;
   const renderChartJS = isChartJSCode && showChartJS;
 
   const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG && !renderChartJS;
@@ -268,44 +269,37 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               </OverlayButton>
             )}
 
-            {/* Show SVG */}
-            {isSVGCode && (
-              <OverlayButton tooltip={noTooltips ? null : renderSVG ? 'Show Code' : 'Render SVG'} variant={renderSVG ? 'solid' : 'outlined'} color='warning' smShadow onClick={() => setShowSVG(!showSVG)}>
-                <ChangeHistoryTwoToneIcon />
-              </OverlayButton>
-            )}
-
-            {/* Show Diagrams */}
-            {(isMermaidCode || isPlantUMLCode) && (
+            {/* SVG, ChartJS, Mermaid, PlantUML -- including a max-out button */}
+            {(isSVGCode || isChartJSCode || isMermaidCode || isPlantUMLCode) && (
               <ButtonGroup aria-label='Diagram' sx={overlayGroupWithShadowSx}>
                 {/* Toggle rendering */}
-                <OverlayButton tooltip={noTooltips ? null : (renderMermaid || renderPlantUML) ? 'Show Code' : isMermaidCode ? 'Mermaid Diagram' : 'PlantUML Diagram'} variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'} onClick={() => {
-                  if (isMermaidCode) setShowMermaid(on => !on);
-                  if (isPlantUMLCode) setShowPlantUML(on => !on);
-                }}>
-                  <SquareTwoToneIcon />
+                <OverlayButton
+                  tooltip={noTooltips ? null
+                    : (renderSVG || renderMermaid || renderPlantUML) ? 'Show Code'
+                      : renderChartJS ? 'Show Data'
+                        : isSVGCode ? 'Render SVG'
+                          : isChartJSCode ? 'Show Chart'
+                            : isMermaidCode ? 'Mermaid Diagram'
+                              : 'PlantUML Diagram'
+                  }
+                  variant={(renderChartJS || renderMermaid || renderPlantUML) ? 'solid' : 'outlined'}
+                  color={isSVGCode ? 'warning' : isChartJSCode ? 'primary' : undefined}
+                  onClick={() => {
+                    if (isSVGCode) setShowSVG(on => !on);
+                    if (isChartJSCode) setShowChartJS(on => !on);
+                    if (isMermaidCode) setShowMermaid(on => !on);
+                    if (isPlantUMLCode) setShowPlantUML(on => !on);
+                  }}>
+                  {isSVGCode ? <ChangeHistoryTwoToneIcon /> : isChartJSCode ? <BarChartIcon /> : <SquareTwoToneIcon />}
                 </OverlayButton>
 
                 {/* Fit-To-Screen */}
-                {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
+                {(/*(isChartJSCode && showChartJS) ||*/ (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
                   <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Screen'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
                     <FitScreenIcon />
                   </OverlayButton>
                 )}
               </ButtonGroup>
-            )}
-
-            {/* Show ChartJS */}
-            {isChartJSCode && (
-              <OverlayButton
-                tooltip={noTooltips ? null : renderChartJS ? 'Show Code' : 'Render Chart'}
-                variant={renderChartJS ? 'solid' : 'outlined'}
-                color='primary'
-                smShadow
-                onClick={() => setShowChartJS(on => !on)}
-              >
-                <BarChartIcon />
-              </OverlayButton>
             )}
 
             {/* Group: Text Options */}
