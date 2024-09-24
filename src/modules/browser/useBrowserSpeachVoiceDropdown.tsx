@@ -18,7 +18,7 @@ function VoicesDropdown(props: {
   setVoiceId: (voiceId: number) => void,
 }) {
 
-  const handleVoiceChange = (_event: any, value: number) => props.setVoiceId(value);
+  const handleVoiceChange = (_event: any, value: number | null) => props.setVoiceId(value === null? 0 : value);
 
   return (
     <Select
