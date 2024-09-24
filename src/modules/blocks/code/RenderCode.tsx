@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
@@ -15,6 +16,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
+import { RenderCodeChartJS } from './code-renderers/RenderCodeChartJS';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
 import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
@@ -108,6 +110,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
+  const [showChartJS, setShowChartJS] = React.useState(true);
   const { showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
     showLineNumbers: state.renderCodeLineNumbers,
     showSoftWrap: state.renderCodeSoftWrap,
@@ -141,10 +144,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // heuristics for specialized rendering
 
+  const lcBlockTitle = blockTitle.trim().toLowerCase();
+
   const isHTMLCode = heuristicIsBlockPureHTML(code);
   const renderHTML = isHTMLCode && showHTML;
 
-  const isMermaidCode = blockTitle === 'mermaid' && !blockIsPartial;
+  const isMermaidCode = lcBlockTitle === 'mermaid' && !blockIsPartial;
   const renderMermaid = isMermaidCode && showMermaid;
 
   const isPlantUMLCode = heuristicIsCodePlantUML(code);
@@ -156,10 +161,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const renderSVG = isSVGCode && showSVG;
   const canScaleSVG = renderSVG && code.includes('viewBox="');
 
-  const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
+  const isChartJSCode = lcBlockTitle === 'chartjs' && !blockIsPartial;
+  const renderChartJS = isChartJSCode && showChartJS;
 
-
-  const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap;
+  const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG && !renderChartJS;
+  const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap || renderChartJS;
   const renderLineNumbers = showLineNumbers && !cannotRenderLineNumbers;
 
 
@@ -242,7 +248,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
             : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
               : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
+                : renderChartJS ? <RenderCodeChartJS chartJSCode={code} fitScreen={fitScreen} />
+                  : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
 
       </Box>
@@ -286,6 +293,19 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                   </OverlayButton>
                 )}
               </ButtonGroup>
+            )}
+
+            {/* Show ChartJS */}
+            {isChartJSCode && (
+              <OverlayButton
+                tooltip={noTooltips ? null : renderChartJS ? 'Show Code' : 'Render Chart'}
+                variant={renderChartJS ? 'solid' : 'outlined'}
+                color='primary'
+                smShadow
+                onClick={() => setShowChartJS(on => !on)}
+              >
+                <BarChartIcon />
+              </OverlayButton>
             )}
 
             {/* Group: Text Options */}

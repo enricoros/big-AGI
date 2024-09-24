@@ -100,6 +100,7 @@ Current date: {{LocaleNow}}
 {{RenderHTML}}
 {{RenderSVG}}
 {{PreferTables}}
+{{RenderChartJS}}
 `.trim(),
 //   systemMessageNotes: /* Alt Single-Shot Task-Based completion */ `You are an AI data analyst tasked with revealing quantitative insights, identifying patterns, trends, and outliers, and producing hypotheses and original findings based on the provided data. Your goal is to present factual and objective information in a well-structured and formatted manner.
 //
