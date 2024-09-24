@@ -5,6 +5,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box } from '@mui/joy';
 import Face6Icon from '@mui/icons-material/Face6';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
@@ -100,6 +101,7 @@ export function makeMessageAvatarIcon(
   messagePurposeId: SystemPurposeId | string | undefined,
   messageIncomplete: boolean,
   messageFlagAixSkip: boolean,
+  messageFlaxNotifyComplete: boolean,
   larger: boolean,
 ): React.JSX.Element {
 
@@ -111,6 +113,10 @@ export function makeMessageAvatarIcon(
   // if skipped, just return the skip symbol
   if (messageFlagAixSkip)
     return <Box sx={aixSkipBoxSx}><VisibilityOffOutlinedIcon sx={aixSkipIconSx} /></Box>;
+
+  // if pending a notification, return the busy icon
+  if (messageFlaxNotifyComplete)
+    return <Box sx={aixSkipBoxSx}><NotificationsActiveIcon sx={aixSkipIconSx} /></Box>;
 
   switch (messageRole) {
     case 'system':

@@ -75,7 +75,7 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   const backgroundColor = messageBackground(messageRole, !!messageUpdated, isAssistantError);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
-    return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false);
+    return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false, false);
   }, [isUserMessageSkipped, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole]);
 
   const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) =>
