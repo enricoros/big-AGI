@@ -22,7 +22,15 @@ const DEFAULT_GEMINI_HOST = 'https://generativelanguage.googleapis.com';
 
 export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
 
-  const geminiKey = access.geminiKey || env.GEMINI_API_KEY || '';
+  let geminiKey: string;
+  if (access.geminiKey.includes(',')) {
+    // If access.geminiKey includes commas, treat it as a list of keys and choose a random one
+    const keys = access.geminiKey.split(',').map(key => key.trim()).filter(key => key.length > 0);
+    geminiKey = keys[Math.floor(Math.random() * keys.length)];
+  } else {
+    // Otherwise, treat it as a single key
+    geminiKey = access.geminiKey;
+  }
   const geminiHost = fixupHost(DEFAULT_GEMINI_HOST, apiPath);
 
   // update model-dependent paths
