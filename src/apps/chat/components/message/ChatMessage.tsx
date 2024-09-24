@@ -193,10 +193,6 @@ export function ChatMessage(props: {
     created: messageCreated,
     updated: messageUpdated,
   } = props.message;
-  const zenMode = uiComplexityMode === 'minimal';
-
-  const messageGeneratorName = messageGenerator?.name;
-  const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
 
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
@@ -563,12 +559,18 @@ export function ChatMessage(props: {
   }), [adjContentScaling, backgroundColor, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
 
 
-  // avatar
+  // avatar icon & label & tooltip
+
+  const zenMode = uiComplexityMode === 'minimal';
+
   const showAvatarIcon = !props.hideAvatar && !zenMode;
-  const avatarIconEl: React.JSX.Element | null = React.useMemo(
-    () => showAvatarIcon ? makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, true) : null,
-    [isUserMessageSkipped, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
+  const messageGeneratorName = messageGenerator?.name;
+  const messageAvatarIcon = React.useMemo(
+    () => !showAvatarIcon ? null : makeMessageAvatarIcon(uiComplexityMode, messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, isUserNotifyComplete, true),
+    [isUserMessageSkipped, isUserNotifyComplete, messageGeneratorName, messagePendingIncomplete, messagePurposeId, messageRole, showAvatarIcon, uiComplexityMode],
   );
+
+  const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
 
 
   return (
@@ -607,7 +609,7 @@ export function ChatMessage(props: {
               sx={personaAvatarOrMenuSx}
             >
               {showAvatarIcon && !isHovering && !opsMenuAnchor ? (
-                avatarIconEl
+                messageAvatarIcon
               ) : (
                 <IconButton
                   size='sm'
