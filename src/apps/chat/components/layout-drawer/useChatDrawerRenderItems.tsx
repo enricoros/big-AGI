@@ -1,8 +1,9 @@
-import { useStoreWithEqualityFn } from 'zustand/traditional';
+import * as React from 'react';
 
 import type { DFolder } from '~/common/state/store-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { getLocalMidnightInUTCTimestamp, getTimeBucketEn } from '~/common/util/timeUtils';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -14,9 +15,14 @@ import type { ChatNavigationItemData } from './ChatDrawerItem';
 const SEARCH_MIN_CHARS = 3;
 
 
-export type ChatNavGrouping = false | 'date' | 'persona' | 'dimension';
-
-export type ChatSearchSorting = 'frequency' | 'date';
+interface ChatDrawerRenderItems {
+  renderNavItems: (ChatNavigationItemData | ChatNavigationGroupData | ChatNavigationInfoMessage)[];
+  filteredChatIDs: DConversationId[];
+  filteredChatsCount: number;
+  filteredChatsAreEmpty: boolean;
+  filteredChatsBarBasis: number;
+  filteredChatsIncludeActive: boolean;
+}
 
 interface ChatNavigationGroupData {
   type: 'nav-item-group',
@@ -28,7 +34,9 @@ interface ChatNavigationInfoMessage {
   message: string,
 }
 
-type ChatRenderItemData = ChatNavigationItemData | ChatNavigationGroupData | ChatNavigationInfoMessage;
+export type ChatNavGrouping = false | 'date' | 'persona' | 'dimension';
+
+export type ChatSearchSorting = 'frequency' | 'date';
 
 
 // Returns a string with the pane indices where the conversation is also open, or false if it's not
@@ -39,37 +47,6 @@ function findOpenInViewNumbers(chatPanesConversationIds: DConversationId[], ourI
       acc.push((idx + 1).toString());
     return acc;
   }, []).join(', ') || false;
-}
-
-function getNextMidnightTime(): number {
-  const midnight = new Date();
-  // midnight.setDate(midnight.getDate() - 1);
-  midnight.setHours(24, 0, 0, 0);
-  return midnight.getTime();
-}
-
-function getTimeBucketEn(currentTime: number, midnightTime: number): string {
-  const oneDay = 24 * 60 * 60 * 1000;
-  const oneWeek = oneDay * 7;
-  const oneMonth = oneDay * 30; // approximation
-
-  const diff = midnightTime - currentTime;
-
-  if (diff < oneDay) {
-    return 'Today';
-  } else if (diff < oneDay * 2) {
-    return 'Yesterday';
-  } else if (diff < oneWeek) {
-    return 'This Week';
-  } else if (diff < oneWeek * 2) {
-    return 'Last Week';
-  } else if (diff < oneMonth) {
-    return 'This Month';
-  } else if (diff < oneMonth * 2) {
-    return 'Last Month';
-  } else {
-    return 'Older';
-  }
 }
 
 export function isDrawerSearching(filterByQuery: string): { isSearching: boolean, lcTextQuery: string } {
@@ -97,15 +74,11 @@ export function useChatDrawerRenderItems(
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
-): {
-  renderNavItems: ChatRenderItemData[],
-  filteredChatIDs: DConversationId[],
-  filteredChatsCount: number,
-  filteredChatsAreEmpty: boolean,
-  filteredChatsBarBasis: number,
-  filteredChatsIncludeActive: boolean,
-} {
-  return useStoreWithEqualityFn(useChatStore, ({ conversations }) => {
+): ChatDrawerRenderItems {
+
+  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>();
+
+  return useChatStore(({ conversations }) => {
 
       // filter 1: select all conversations or just the ones in the active folder
       const selectedConversations = !activeFolder ? conversations : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));
@@ -183,7 +156,7 @@ export function useChatDrawerRenderItems(
         chatNavItems.sort((a, b) => b.searchFrequency - a.searchFrequency);
 
       // Render List
-      let renderNavItems: ChatRenderItemData[] = chatNavItems;
+      let renderNavItems: ChatDrawerRenderItems['renderNavItems'] = chatNavItems;
 
       // [search] add a header if searching
       if (isSearching) {
@@ -208,7 +181,7 @@ export function useChatDrawerRenderItems(
             break;
         }
 
-        const midnightTime = getNextMidnightTime();
+        const midnightTime = getLocalMidnightInUTCTimestamp();
         const grouped = chatNavItems.reduce((acc, item) => {
 
           // derive the bucket name
@@ -278,7 +251,18 @@ export function useChatDrawerRenderItems(
         ? chatNavItems.reduce((longest, _c) => Math.max(longest, isSearching ? _c.searchFrequency : _c.messageCount), 1)
         : 0;
 
-      return {
+      // stabilize individual renderNavItems (only if in the same place)
+      const prev = stabilizeRenderItems.current;
+      // Update: we don't need this as <ChatDrawerItem> is already memoed
+      // if (prev && renderNavItems.length === prev.renderNavItems.length)
+      //   renderNavItems = renderNavItems.map((item, index) => {
+      //     if (index < prev.renderNavItems.length && shallowEquals(item, prev.renderNavItems[index]))
+      //       return prev.renderNavItems[index];
+      //     return item;
+      //   });
+
+      // next state
+      const next: ChatDrawerRenderItems = {
         renderNavItems,
         filteredChatIDs,
         filteredChatsCount,
@@ -286,16 +270,18 @@ export function useChatDrawerRenderItems(
         filteredChatsBarBasis,
         filteredChatsIncludeActive,
       };
-    },
-    (a, b) => {
-      // we only compare the renderNavItems array, which shall be changed if the rest changes
-      return a.renderNavItems.length === b.renderNavItems.length
-        && a.renderNavItems.every((_a, i) => shallowEquals(_a, b.renderNavItems[i]))
-        && shallowEquals(a.filteredChatIDs, b.filteredChatIDs)
-        && a.filteredChatsCount === b.filteredChatsCount
-        && a.filteredChatsAreEmpty === b.filteredChatsAreEmpty
-        && a.filteredChatsBarBasis === b.filteredChatsBarBasis
-        && a.filteredChatsIncludeActive === b.filteredChatsIncludeActive;
+
+      // stabilize the render items
+      if (prev
+        && prev.renderNavItems.length === next.renderNavItems.length
+        && prev.renderNavItems.every((_a, i) => shallowEquals(_a, next.renderNavItems[i]))
+        && shallowEquals(prev.filteredChatIDs, next.filteredChatIDs)
+        && prev.filteredChatsCount === next.filteredChatsCount
+        && prev.filteredChatsAreEmpty === next.filteredChatsAreEmpty
+        && prev.filteredChatsBarBasis === next.filteredChatsBarBasis
+        && prev.filteredChatsIncludeActive === next.filteredChatsIncludeActive
+      ) return prev;
+      return stabilizeRenderItems.current = next;
     },
   );
 }
