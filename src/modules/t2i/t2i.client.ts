@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import type { DBlobDBContextId, DBlobDBScopeId } from '~/modules/dblobs/dblobs.types';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
@@ -10,8 +9,8 @@ import type { CapabilityTextToImage, TextToImageProvider } from '~/common/compon
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
-import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
+import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { T2iCreateImageOutput } from './t2i.server';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
@@ -34,12 +33,16 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   const activeProviderId = useTextToImageStore(state => state.activeProviderId);
   const setActiveProviderId = useTextToImageStore.getState().setActiveProviderId;
 
-  const llmsModelServices: T2ILlmsModelServices[] = useStoreWithEqualityFn(useModelsStore,
-    ({ llms, sources }) => getLlmsModelServices(llms, sources),
-    (a, b) =>
-      a.length === b.length
-      && a.every((_a, i) => shallowEquals(_a, b[i])),
-  );
+  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>();
+  const llmsModelServices = useModelsStore(({ llms, sources }) => {
+    const next = getLlmsModelServices(llms, sources);
+    const prev = stableLlmsModelServices.current;
+    if (prev
+      && prev.length === next.length
+      && prev.every((v, i) => shallowEquals(v, next[i]))
+    ) return prev;
+    return stableLlmsModelServices.current = next;
+  });
 
   const hasProdiaModels = useProdiaStore(state => !!state.prodiaModelId);
 
