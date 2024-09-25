@@ -84,10 +84,10 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   mixed = mixed.replace('{{PreferTables}}', 'Data presentation: prefer tables (auto-columns)');
   // {{Render...}}
   mixed = mixed.replace('{{RenderChartJS}}', `
-When presenting data that would be better visualized as a chart, output a ChartJS configuration object in this format:
+When presenting data that would be better visualized as a chart, output a Chart.js configuration object in this format:
 \`\`\`chartjs
 {
-  // Valid and complete ChartJS configuration JSON (DO NOT USE FUNCTIONS)
+  // Valid and complete Chart.js configuration JSON (DO NOT USE FUNCTIONS)
 }
 \`\`\`
 Choose the most suitable chart type based on the data and context. Include only the JSON configuration, without any explanatory text. Ensure the JSON is valid and complete.

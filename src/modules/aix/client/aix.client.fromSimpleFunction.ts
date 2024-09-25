@@ -70,13 +70,13 @@ export function aixRequireSingleFunctionCallInvocation(fragments: DMessageConten
   if (!Array.isArray(fragments) || fragments.length !== 1) {
     if (AIX_DEBUG_CLIENT_TOOLS)
       console.error('[DEV] single-function-call: invalid fragments:', fragments, 'for', debugLabel);
-    throw new Error('AIX: Unexpected response for ' + debugLabel);
+    throw new Error('AIX: Unexpected response.');
   }
 
   if (!isContentFragment(fragments[0]) || fragments[0].part.pt !== 'tool_invocation') {
     if (AIX_DEBUG_CLIENT_TOOLS)
       console.error('[DEV] single-function-call: invalid fragment part:', fragments[0].part, 'for', debugLabel);
-    throw new Error('AIX: Missing tool invocation for ' + debugLabel);
+    throw new Error('AIX: Missing tool invocation.');
   }
 
   const { invocation } = fragments[0].part;
@@ -84,7 +84,7 @@ export function aixRequireSingleFunctionCallInvocation(fragments: DMessageConten
   if (invocation.type !== 'function_call' || invocation.name !== expectedFunctionName) {
     if (AIX_DEBUG_CLIENT_TOOLS)
       console.error('[DEV] single-function-call: invalid invocation:', invocation, 'for', debugLabel);
-    throw new Error('AIX: Expected a function call to ' + expectedFunctionName + ' for ' + debugLabel);
+    throw new Error('AIX: Expected a function call.');
   }
 
   if (!invocation.args) {

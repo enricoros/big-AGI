@@ -146,7 +146,7 @@ export function AutoBlocksRenderer(props: {
             let enhancedStartCollapsed = false;
             if (bkInput.title === BLOCK_CODE_VND_AGI_CHARTJS) {
               disableEnhancedRender = false;
-              // For ChartJS charts, at the moment, we use the 'unwanted' refresh at the end of the message to start (that block) without collapse
+              // For Chart.js charts, at the moment, we use the 'unwanted' refresh at the end of the message to start (that block) without collapse
               enhancedStartCollapsed = bkInput.isPartial;
             }
 

@@ -269,7 +269,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               </OverlayButton>
             )}
 
-            {/* SVG, ChartJS, Mermaid, PlantUML -- including a max-out button */}
+            {/* SVG, Chart.js, Mermaid, PlantUML -- including a max-out button */}
             {(isSVGCode || isChartJSCode || isMermaidCode || isPlantUMLCode) && (
               <ButtonGroup aria-label='Diagram' sx={overlayGroupWithShadowSx}>
                 {/* Toggle rendering */}
