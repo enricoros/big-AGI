@@ -38,6 +38,7 @@ export function EnhancedRenderCode(props: {
   initialIsCollapsed: boolean;
 
   // onLiveFileCreate?: () => void,
+  onReplaceInCode?: (search: string, replace: string) => boolean;
 }) {
 
   // state
@@ -203,6 +204,7 @@ export function EnhancedRenderCode(props: {
           initialShowHTML={props.initialShowHTML}
           noCopyButton={props.noCopyButton}
           optimizeLightweight={props.optimizeLightweight}
+          onReplaceInCode={props.onReplaceInCode}
           sx={patchCodeSx}
         />
       </ExpanderControlledBox>

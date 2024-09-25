@@ -22,7 +22,10 @@ const chartContainerSx: SxProps = {
 };
 
 
-export function RenderCodeChartJS(props: { chartJSCode: string }) {
+export function RenderCodeChartJS(props: {
+  chartJSCode: string;
+  onReplaceInCode?: (search: string, replace: string) => boolean;
+}) {
 
   // state
   const [renderError, setRenderError] = React.useState<string | null>(null);

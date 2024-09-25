@@ -57,6 +57,13 @@ export function AutoBlocksRenderer(props: {
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
+
+  /**
+   * If defined, this is a function that will replace the first occurrence of
+   * the search string with the replace string.
+   */
+  setText?: (newText: string) => void;
+
 }) {
 
   // props-derived state
@@ -71,9 +78,24 @@ export function AutoBlocksRenderer(props: {
   let autoBlocksStable =
     useAutoBlocksMemoSemiStable(text, props.renderAsCodeWithTitle, fromSystem, props.renderSanityTextDiffs);
 
+  // handlers
+  const { setText } = props;
+  const handleReplaceCode = React.useCallback((search: string, replace: string): boolean => {
+    if (setText) {
+      const newText = text.replace(search, replace);
+      if (newText !== text) {
+        setText(newText);
+        return true;
+      }
+    }
+    return false;
+  }, [setText, text]);
+
+
   // apply specialDiagramMode filter if applicable
   if (props.blocksProcessor === 'diagram')
     autoBlocksStable = autoBlocksStable.filter(({ bkt }) => bkt === 'code-bk' || autoBlocksStable.length === 1);
+
 
   // Memo the styles, to minimize re-renders
   const scaledCodeSx = useScaledCodeSx(fromAssistant, props.contentScaling, props.codeRenderVariant || 'outlined');
@@ -114,6 +136,9 @@ export function AutoBlocksRenderer(props: {
             );
 
           case 'code-bk':
+            // NOTE: 2024-09-24: Just memo the code all the time to prevent state loss on the last block when it switches to complete
+            // const RenderCodeMemoOrNot = renderCodeMemoOrNot(true /* optimizeMemoBeforeLastBlock */);
+            // NOTE: 2024-09-24/2: Keep it for now, as the issue seems to be on the upstream ChatMessage
             const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeMemoBeforeLastBlock);
 
             // Custom handling for some of our blocks
@@ -137,6 +162,7 @@ export function AutoBlocksRenderer(props: {
                 initialIsCollapsed={enhancedStartCollapsed}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
+                onReplaceInCode={setText ? handleReplaceCode : undefined}
                 codeSx={scaledCodeSx}
               />
             ) : (
@@ -148,6 +174,7 @@ export function AutoBlocksRenderer(props: {
                 initialShowHTML={props.showUnsafeHtmlCode /* && !bkInput.isPartial NOTE: with this, it would be only auto-rendered at the end, preventing broken renders */}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={optimizeMemoBeforeLastBlock}
+                onReplaceInCode={setText ? handleReplaceCode : undefined}
                 sx={scaledCodeSx}
               />
             );

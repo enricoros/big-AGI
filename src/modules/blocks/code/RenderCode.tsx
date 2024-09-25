@@ -49,6 +49,7 @@ interface RenderCodeBaseProps {
   initialShowHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
+  onReplaceInCode?: (search: string, replace: string) => boolean;
   sx?: SxProps,
 }
 
@@ -249,7 +250,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
             : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
               : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                : renderChartJS ? <RenderCodeChartJS chartJSCode={code} />
+                : renderChartJS ? <RenderCodeChartJS chartJSCode={code} onReplaceInCode={props.onReplaceInCode} />
                   : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
       </Box>
