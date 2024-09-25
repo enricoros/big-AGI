@@ -122,7 +122,7 @@ export function EnhancedRenderCode(props: {
           }}
         />
         <Typography level={props.title !== BLOCK_CODE_VND_AGI_CHARTJS ? 'title-sm' : 'body-sm'}>
-          {props.title === BLOCK_CODE_VND_AGI_CHARTJS ? 'Chart' + (props.isPartial ? ' ...' : '')
+          {props.title === BLOCK_CODE_VND_AGI_CHARTJS ? 'Chart ' + (props.isPartial ? '.'.repeat(Math.round(props.code.length / 100) % 4) : '')
             : props.title || 'Code'}
         </Typography>
       </Box>

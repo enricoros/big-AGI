@@ -10,7 +10,6 @@ import { create } from 'zustand';
 import type { Chart as ChartConstructorType } from 'chart.js/auto';
 
 import { devDependencies } from '../../../../../package.json';
-
 import { themeFontFamilyCss } from '~/common/app.theme';
 
 
@@ -20,6 +19,24 @@ const CHARTJS_CDN_URL = `https://cdn.jsdelivr.net/npm/chart.js@${CHARTJS_VERSION
 const CHARTJS_SCRIPT_ID = 'chartjs-cdn';
 
 export type { ChartConstructorType };
+
+
+// Code manipulation functions
+
+export function fixupChartJSObject(chartConfig: ChartConstructorType['config']): void {
+  // Remove responsive options - we hadle this ourselves by default
+  delete chartConfig?.options?.responsive;
+  delete chartConfig?.options?.maintainAspectRatio;
+}
+
+function _initializeChartJS(Chart: typeof ChartConstructorType): typeof ChartConstructorType {
+  Chart.defaults.font.family = themeFontFamilyCss;
+  Chart.defaults.font.size = 13;
+  Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
+  Chart.defaults.responsive = true; // re-draw on resize
+  // Chart.defaults.layout.autoPadding = true; // default padding
+  return Chart;
+}
 
 
 // Singleton promise for loading Chart.js
@@ -47,7 +64,7 @@ function loadCDNScript(): Promise<typeof ChartConstructorType> {
     script.async = true;
 
     script.onload = () => {
-      if ((window as any).Chart) resolve(initializeChartJS((window as any).Chart));
+      if ((window as any).Chart) resolve(_initializeChartJS((window as any).Chart));
       else reject(new Error('Chart.js failed to load.'));
     };
 
@@ -60,14 +77,6 @@ function loadCDNScript(): Promise<typeof ChartConstructorType> {
   });
 
   return chartJSPromise;
-}
-
-function initializeChartJS(Chart: typeof ChartConstructorType): typeof ChartConstructorType {
-  Chart.defaults.font.family = themeFontFamilyCss;
-  Chart.defaults.font.size = 13;
-  Chart.defaults.maintainAspectRatio = true;
-  Chart.defaults.responsive = true;
-  return Chart;
 }
 
 

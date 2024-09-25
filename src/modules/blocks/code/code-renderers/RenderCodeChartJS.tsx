@@ -1,11 +1,28 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Typography } from '@mui/joy';
 
-import { ChartConstructorType, useDynamicChartJS } from './useDynamicChartJS';
+import { ChartConstructorType, fixupChartJSObject, useDynamicChartJS } from './useDynamicChartJS';
 
 
-export function RenderCodeChartJS(props: { chartJSCode: string, fitScreen: boolean }) {
+const chartContainerSx: SxProps = {
+  // required by Chart.js
+  position: 'relative',
+
+  // width: '100%',
+
+  // limit height of the canvas or it can too large easily
+  '& canvas': {
+    // width: '100% !important',
+    // height: '100%',
+    // minHeight: '320px',
+    maxHeight: '640px',
+  },
+};
+
+
+export function RenderCodeChartJS(props: { chartJSCode: string }) {
 
   // state
   const [renderError, setRenderError] = React.useState<string | null>(null);
@@ -20,6 +37,7 @@ export function RenderCodeChartJS(props: { chartJSCode: string, fitScreen: boole
   const parseResult = React.useMemo(() => {
     try {
       const config = JSON.parse(props.chartJSCode) as ChartConstructorType['config'];
+      fixupChartJSObject(config);
       return { chartConfig: config, parseError: null };
     } catch (error: any) {
       return { chartConfig: null, parseError: 'Invalid Chart.js input: ' + (error.message || 'Unknown error.') };
@@ -67,7 +85,7 @@ export function RenderCodeChartJS(props: { chartJSCode: string, fitScreen: boole
 
   // Render the chart
   return (
-    <Box sx={props.fitScreen ? { width: '100%', height: '100%' } : {}}>
+    <Box sx={chartContainerSx}>
       <canvas ref={canvasRef} />
     </Box>
   );

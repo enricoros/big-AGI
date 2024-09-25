@@ -249,9 +249,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
             : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
               : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                : renderChartJS ? <RenderCodeChartJS chartJSCode={code} fitScreen={fitScreen} />
+                : renderChartJS ? <RenderCodeChartJS chartJSCode={code} />
                   : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
-
 
       </Box>
 
@@ -294,7 +293,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                 </OverlayButton>
 
                 {/* Fit-To-Screen */}
-                {(/*(isChartJSCode && showChartJS) ||*/ (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
+                {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
                   <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Screen'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
                     <FitScreenIcon />
                   </OverlayButton>
