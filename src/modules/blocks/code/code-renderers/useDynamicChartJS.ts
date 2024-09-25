@@ -31,10 +31,10 @@ interface ChartDefaults {
     family: string;
     size: number;
   };
-  moaintainAspectRatio?: boolean;
+  maintainAspectRatio?: boolean;
   responsive?: boolean;
 
-  [key: string]: any;
+  // [key: string]: any;
 }
 
 export interface ChartConfiguration {
@@ -42,7 +42,7 @@ export interface ChartConfiguration {
   data?: any;
   options?: ChartDefaults;
 
-  [key: string]: any;
+  // [key: string]: any;
 }
 
 export interface ChartInstanceType {
