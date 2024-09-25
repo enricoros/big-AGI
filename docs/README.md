@@ -1,59 +1,63 @@
-# big-AGI Documentation
+# Big-AGI Documentation
 
-Find all the information you need to get started, configure, and effectively use big-AGI.
+Information you need to get started, configure, and use big-AGI productively.
 
-[//]: # (## Quick Start)
+## Getting Started
 
-[//]: # (- **[Introduction]&#40;big-agi.md&#41;**: Overview of big-AGI's features.)
+Guides for basic big-AGI features:
 
-## Configuration Guides
+- **[Enabling Microphone for Speech Recognition](help-feature-microphone.md)**: Instructions to
+  allow speech recognition in browsers and apps.
 
-Detailed guides to configure your big-AGI interface and models.
+## AI Model Configuration
 
-👉 The following applies to the users of big-AGI.com, as the public instance is empty and to be configured by the user.
+Detailed guides to configure AI models and advanced features in big-AGI.
 
-- **Cloud Model Services**:
+> 👉 The following applies to users of big-AGI.com, as the public instance is empty and requires user configuration.
+
+- **Cloud AI Services**:
   - **[Azure OpenAI](config-azure-openai.md)**
   - **[OpenRouter](config-openrouter.md)**
-  - easy API key: **Anthropic**, **Google AI**, **Groq**, **Mistral**, **OpenAI**, **Perplexity**, **TogetherAI**
+  - Easy API key setup: **Anthropic**, **Deepseek**, **Google AI**, **Groq**, **Mistral**, **OpenAI**, **OpenPipe**, **Perplexity**, **TogetherAI**
 
 
-- **Local Model Servers**:
+- **Local AI Integrations**:
   - **[LocalAI](config-local-localai.md)**
   - **[LM Studio](config-local-lmstudio.md)**
   - **[Ollama](config-local-ollama.md)**
   - **[Oobabooga](config-local-oobabooga.md)**
 
 
-- **Advanced Feature Configuration**:
-  - **[Browse](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud (advanced)
-  - **ElevenLabs API**: Voice and cutom voice generation, only requires their API key
-  - **Google Search API**: guide not yet available, see the Google options in '[Environment Variables](environment-variables.md)'
-  - **Prodia API**: Stable Diffusion XL image generation, only requires their API key, alternative to DALL·E
+- **Enhanced AI Features**:
+  - **[Web Browsing](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud (advanced)
+  - **Web Search**: Google Search API (see '[Environment Variables](environment-variables.md)')
+  - **Image Generation**: DALL·E 3 and 2, or Prodia API for Stable Diffusion XL
+  - **Voice Synthesis**: ElevenLabs API for voice generation
 
-## Deployment
+## Deployment & Customization
 
-System integrators, administrators, whitelabelers: instead of using the public big-AGI instance on get.big-agi.com, you can deploy your own instance.
+> 👉 The following applies to developers and experts who deploy their own big-AGI instance.
 
-Step-by-step deployment and system configuration instructions.
+For deploying a custom big-AGI instance:
 
-- **[Installation](installation.md)**: Set up your own instance of big-AGI and related products
-  - build from source or use pre-built
-  - locally, in the public cloud, or on your own servers
+- **[Installation Guide](installation.md)**: Set up your own big-AGI instance
+  - Source build or pre-built options
+  - Local, cloud, or on-premises deployment
 
 
-- **Advanced Customizations**:
-  - **[Source code alterations guide](customizations.md)**: source code primer and alterations guidelines
-  - **[Basic Authentication](deploy-authentication.md)**: Optional, adds a username and password wall
+- **Advanced Setup**:
+  - **[Source Code Customization Guide](customizations.md)**: Modify the source code
+  - **[Access Control](deploy-authentication.md)**: Optional, add basic user authentication
   - **[Database Setup](deploy-database.md)**: Optional, enables "Chat Link Sharing"
-  - **[Environment Variables](environment-variables.md)**: 📌 Pre-configures models and services
+  - **[Reverse Proxy](deploy-reverse-proxy.md)**: Optional, enables custom domains and SSL
+  - **[Environment Variables](environment-variables.md)**: Pre-configures models and services
 
-## Support and Community
+## Community & Support
 
-Join our community or get support:
+Connect with the growing big-AGI community:
 
 - Visit our [GitHub repository](https://github.com/enricoros/big-AGI) for source code and issue tracking
 - Check the latest updates and features on [Changelog](changelog.md) or the in-app [News](https://get.big-agi.com/news)
 - Connect with us and other users on [Discord](https://discord.gg/MkH4qj2Jp9) for discussions, help, and sharing your experiences with big-AGI
 
-Thank you for choosing big-AGI. We're excited to see what you'll build.
+Thank you for choosing big-AGI. We're excited to give you the best tools to amplify yourself.

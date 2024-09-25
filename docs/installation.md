@@ -99,6 +99,43 @@ or follow the steps below for a quick start.
    ```
    Access your big-AGI instance at `http://localhost:3000`.
 
+If you deploy big-AGI behind a reverse proxy, you may want to check out the [Reverse Proxy Configuration Guide](deploy-reverse-proxy.md).
+
+### Kubernetes Deployment
+
+Deploy big-AGI on a Kubernetes cluster for enhanced scalability and management. Follow these steps for a Kubernetes deployment:
+
+1. Clone the big-AGI repository:
+   ```bash
+   git clone https://github.com/enricoros/big-AGI.git
+   cd big-AGI
+   ```
+
+2. Configure the environment variables:
+   ```bash
+   cp docs/k8s/env-secret.yaml env-secret.yaml
+   vim env-secret.yaml  # Edit the file to set your environment variables
+   ```
+
+3. Apply the Kubernetes configurations:
+   ```bash
+   kubectl create namespace ns-big-agi
+   kubectl apply -f docs/k8s/big-agi-deployment.yaml -f env-secret.yaml
+   ```
+
+4. Verify the deployment:
+   ```bash
+   kubectl -n ns-big-agi get svc,pod,deployment
+   ```
+
+5. Access the big-AGI application:
+   ```bash
+   kubectl -n ns-big-agi port-forward service/svc-big-agi 3000:3000
+   ```
+   Your big-AGI instance is now accessible at `http://localhost:3000`.
+
+For more detailed instructions on Kubernetes deployment, including updating and troubleshooting, refer to our [Kubernetes Deployment Guide](deploy-k8s.md).
+
 ### Midori AI Subsystem for Docker Deployment
 
 Follow the instructions found on [Midori AI Subsystem Site](https://io.midori-ai.xyz/subsystem/manager/)

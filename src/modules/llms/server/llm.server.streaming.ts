@@ -617,6 +617,7 @@ function _prepareRequestData({
       };
 
     case 'azure':
+    case 'deepseek':
     case 'groq':
     case 'lmstudio':
     case 'localai':

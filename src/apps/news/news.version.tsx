@@ -7,7 +7,7 @@ import { useAppStateStore } from '~/common/state/store-appstate';
 
 
 // update this variable every time you want to broadcast a new version to clients
-export const incrementalNewsVersion: number = 16.1; // not notifying for 16.3
+export const incrementalNewsVersion: number = 16.1; // not notifying for 1.16.8
 
 
 interface NewsState {
