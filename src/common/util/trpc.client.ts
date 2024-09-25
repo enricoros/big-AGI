@@ -17,6 +17,10 @@ import { getBaseUrl } from './urlUtils';
 import { reactQueryClientSingleton } from '../app.queryclient';
 
 
+// configuration
+const VERCEL_WORKAROUND_EDGE_1MB_PAYLOAD_LIMIT = true;
+
+
 const enableLoggerLink = (opts: any) => {
   return process.env.NODE_ENV === 'development' ||
     (opts.direction === 'down' && opts.result instanceof Error);
@@ -87,6 +91,13 @@ export const apiStream = createTRPCClient<AppRouterEdge>({
     unstable_httpBatchStreamLink({
       url: `${getBaseUrl()}/api/trpc-edge`,
       transformer: transformer,
+      /**
+       * WORKAROUND:
+       * Due to the fact that we are sending large payloads with images, and having a 1MB max payload size
+       * limit on Vercel, we need to limit the number of items in the stream to 1, to err on the side of
+       * safety.
+       */
+      ...(VERCEL_WORKAROUND_EDGE_1MB_PAYLOAD_LIMIT && { maxItems: 1 }),
     }),
   ],
 });
