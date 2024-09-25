@@ -1,7 +1,7 @@
-import React, { createContext } from 'react';
+import React, { createContext, type Dispatch, type SetStateAction } from 'react';
 
 import type { IParticlesProps } from '@tsparticles/react';
-import { useMap, useStep, type UseStepActions } from 'usehooks-ts';
+import { useMap, useStep } from 'usehooks-ts';
 import configDefault from './config-default';
 import configBottom from './config-bottom';
 import configExplosiions from './config-explosions';
@@ -9,6 +9,21 @@ import configFalling from './config-falling';
 import configMouse from './config-mouse';
 import confettiConfigside from './config-side';
 import confettiConfigsingle from './config-single';
+
+export type UseStepActions = {
+  /** Go to the next step in the process. */
+  goToNextStep: () => void;
+  /** Go to the previous step in the process. */
+  goToPrevStep: () => void;
+  /** Reset the step to the initial step. */
+  reset: () => void;
+  /** Check if the next step is available. */
+  canGoToNextStep: boolean;
+  /** Check if the previous step is available. */
+  canGoToPrevStep: boolean;
+  /** Set the current step to a specific value. */
+  setStep: Dispatch<SetStateAction<number>>;
+};
 
 export type ConfettiSettingName =
   | 'default'
@@ -23,7 +38,7 @@ export type ConfettiProps = IParticlesProps['options'];
 /**
  * Nested array of confetti settings for consumption by an iterable.
  */
-export const confettiConfigs: [ConfettiSettingName, NonNullable<ConfettiProps>][] = [
+export const confettiConfigs: readonly [ConfettiSettingName, NonNullable<ConfettiProps>][] = [
   ['default', configDefault],
   ['bottom', configBottom],
   ['explosions', configExplosiions],
@@ -75,30 +90,21 @@ export function setupRandomConfettiSettings(confettiSettingsArray: typeof confet
 }
 export type ConfettiConfigActions = UseStepActions & { random: () => IParticlesProps['options'] };
 
-export function useConfettiSettings(
-  allConfigs = confettiConfigs
-): readonly [ConfettiSetting, ConfettiConfigActions] {
+export function useConfettiSettings(allConfigs = confettiConfigs) {
   /**
    * Safety and types for the Map of different Confetti Setting Options
    */
-  const [allSettings, actions] = useMap(allConfigs);
+  const [allSettings, actions] = useMap(new Map(allConfigs));
   const getRandomConfig = setupRandomConfettiSettings(allConfigs);
 
   /**
    * The user's current setting. Defaults to 'default'.
    */
-  const [activeSetting, setActiveSetting] = React.useState(allSettings.get('default'));
+  const [activeSetting, setActiveSetting] = React.useState(allSettings.get('default' as const)!);
 
   const [step, commands] = useStep(confettiConfigs.length);
   return [activeSetting, { ...commands, random: getRandomConfig }] as const;
 }
 
-export type ConfettiState = {
-  createContext({
-    allConfigs,
-    currentConfigIndex: number,
-    currentConfigName: string,
-  }): readonly [ConfettiSetting, ConfettiConfigActions];
-};
 export const ConfettiContext = createContext(confettiConfigs);
 export const ConfettiProvider = ConfettiContext.Provider;
