@@ -18,8 +18,19 @@ export const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 
 // AIX <> Simple Text API helpers
 
-function aixCGRTextPart(text: string) {
-  return { pt: 'text' as const, text };
+export function aixChatGenerateRequestSimple(systemMessage: string, messages: { role: AixMessages_ChatMessage['role'], text: string }[]): AixAPIChatGenerate_Request {
+  return {
+    systemMessage: aixCGR_SystemMessage(systemMessage),
+    chatSequence: messages.map(m => {
+      switch (m.role) {
+        case 'user':
+          return aixCGR_UserMessageText(m.text);
+        case 'model':
+        case 'tool':
+          return aixCGR_ModelMessageText(m.text);
+      }
+    }),
+  };
 }
 
 export function aixCGR_SystemMessage(text: string) {
@@ -34,19 +45,8 @@ function aixCGR_ModelMessageText(text: string): AixMessages_ModelMessage {
   return { role: 'model', parts: [aixCGRTextPart(text)] };
 }
 
-export function aixChatGenerateRequestSimple(systemMessage: string, messages: { role: AixMessages_ChatMessage['role'], text: string }[]): AixAPIChatGenerate_Request {
-  return {
-    systemMessage: aixCGR_SystemMessage(systemMessage),
-    chatSequence: messages.map(m => {
-      switch (m.role) {
-        case 'user':
-          return aixCGR_UserMessageText(m.text);
-        case 'model':
-        case 'tool':
-          return aixCGR_ModelMessageText(m.text);
-      }
-    }),
-  };
+function aixCGRTextPart(text: string) {
+  return { pt: 'text' as const, text };
 }
 
 

@@ -5,9 +5,9 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixCGR_SystemMessage, aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateStreamContext } from '~/modules/aix/client/aix.client';
-import { aixFunctionCallTool } from '~/modules/aix/client/aix.client.fromSimpleFunction';
+import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageToolInvocationPart, isContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
@@ -70,18 +70,10 @@ Analyze the provided content to determine its nature, identify any relationships
     { abortSignal },
   );
 
-  // validate
-  if (!Array.isArray(fragments) || fragments.length !== 1)
-    throw new Error('AIX: Unexpected response');
-  if (!isContentFragment(fragments[0]) || fragments[0].part.pt !== 'tool_invocation')
-    throw new Error('AIX: Missing invocation');
-  const toolInvocation: DMessageToolInvocationPart = fragments[0].part;
-  if (toolInvocation.invocation.type !== 'function_call' || toolInvocation.invocation.name !== 'propose_user_actions_for_attachments')
-    throw new Error('AIX: Unexpected invocation');
-  if (!toolInvocation.invocation.args)
-    throw new Error('AIX: Missing args');
-  const argsJson = JSON.parse(toolInvocation.invocation.args);
-  const args = inputSchema.parse(argsJson);
+  // extract the function call
+  const { argsObject } = aixRequireSingleFunctionCallInvocation(fragments, 'propose_user_actions_for_attachments', 'agiAttachmentPrompts');
+
+  const args = inputSchema.parse(argsObject);
   if (!args.top_orthogonal_user_actions?.length)
     throw new Error('AIX: Missing output');
 
