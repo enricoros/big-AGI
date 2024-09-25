@@ -26,22 +26,21 @@ interface ChartConstructorType {
 }
 
 interface ChartDefaults {
-  font: {
+  devicePixelRatio?: number;
+  font?: {
     family: string;
     size: number;
   };
-  maintainAspectRatio: boolean;
-  responsive: boolean;
+  moaintainAspectRatio?: boolean;
+  responsive?: boolean;
+
+  [key: string]: any;
 }
 
 export interface ChartConfiguration {
   type?: string;
   data?: any;
-  options?: {
-    responsive?: boolean;
-    maintainAspectRatio?: boolean;
-    [key: string]: any;
-  };
+  options?: ChartDefaults;
 
   [key: string]: any;
 }
@@ -54,17 +53,27 @@ export interface ChartInstanceType {
 // Code manipulation functions
 
 export function fixupChartJSObject(chartConfig: ChartConfiguration): void {
+  // Do not remove Font, allow for override
+  // delete chartConfig?.options?.font;
   // Remove responsive options - we handle this ourselves by default
   delete chartConfig?.options?.responsive;
   delete chartConfig?.options?.maintainAspectRatio;
+  delete chartConfig?.options?.devicePixelRatio;
 }
 
 function _initializeChartJS(Chart: ChartConstructorType): ChartConstructorType {
-  Chart.defaults.font.family = themeFontFamilyCss;
-  Chart.defaults.font.size = 13;
+  Chart.defaults.font = {
+    ...Chart.defaults.font,
+    family: themeFontFamilyCss,
+    size: 13,
+  };
   Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
   Chart.defaults.responsive = true; // re-draw on resize
   // Chart.defaults.layout.autoPadding = true; // default padding
+  if (window.devicePixelRatio) {
+    console.log(`[DEV] Setting Chart.js devicePixelRatio to 2*${window.devicePixelRatio} from ${Chart.defaults.devicePixelRatio}`);
+    Chart.defaults.devicePixelRatio = 2 * window.devicePixelRatio;
+  }
   return Chart;
 }
 
