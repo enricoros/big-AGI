@@ -1,7 +1,10 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Typography } from '@mui/joy';
+import { Box, Button, Typography } from '@mui/joy';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+
+import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
 import { ChartConstructorType, fixupChartJSObject, useDynamicChartJS } from './useDynamicChartJS';
 
@@ -29,6 +32,7 @@ export function RenderCodeChartJS(props: {
 
   // state
   const [renderError, setRenderError] = React.useState<string | null>(null);
+  const [fixupError, setFixupError] = React.useState<string | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = React.useRef<ChartConstructorType | null>(null);
 
@@ -43,9 +47,12 @@ export function RenderCodeChartJS(props: {
       fixupChartJSObject(config);
       return { chartConfig: config, parseError: null };
     } catch (error: any) {
-      return { chartConfig: null, parseError: 'Invalid Chart.js input: ' + (error.message || 'Unknown error.') };
+      return { chartConfig: null, parseError: error.message as string || 'Unknown error.' };
     }
   }, [props.chartJSCode]);
+
+  // AI functions
+  const { isFetching, refetch } = useAgiFixupCode('chartjs-issue', false, props.chartJSCode, parseResult.parseError);
 
 
   // Rendering
@@ -72,6 +79,24 @@ export function RenderCodeChartJS(props: {
   }, [chartJS, parseResult.chartConfig]);
 
 
+  // handlers
+
+  const { onReplaceInCode } = props;
+
+  const handleChartRegenerate = React.useCallback(async () => {
+    if (!onReplaceInCode) return;
+    setFixupError(null);
+    refetch().then((result) => {
+      if (result.data)
+        onReplaceInCode(props.chartJSCode, result.data);
+      else if (result.error)
+        setFixupError(result.error.message || 'Unknown error.');
+      else
+        setFixupError('Unknown Fixup error.');
+    });
+  }, [onReplaceInCode, props.chartJSCode, refetch]);
+
+
   // Handle all the non-chart states
   switch (true) {
     case isLibraryLoading:
@@ -80,8 +105,38 @@ export function RenderCodeChartJS(props: {
       return null;
     case !!loadingError:
       return <Typography level='body-sm' color='danger'>{loadingError}</Typography>;
-    case !!parseResult.parseError:
-      return <Typography level='body-sm' color='warning'>{parseResult.parseError}</Typography>;
+    case !!parseResult.parseError || !!fixupError:
+      return (
+        <Box sx={{ display: 'grid', gap: 1, justifyItems: 'start' }}>
+          {props.onReplaceInCode && (
+            <Button
+              size='sm'
+              variant='outlined'
+              color='success'
+              onClick={handleChartRegenerate}
+              loading={isFetching}
+              loadingPosition='end'
+              sx={{
+                minWidth: 160,
+                backgroundColor: 'background.surface',
+                boxShadow: 'xs',
+              }}
+              endDecorator={<AutoAwesomeIcon />}
+            >
+              {isFetching ? 'Fixing Chart...' : 'Fix Chart'}
+            </Button>
+          )}
+          {fixupError ? (
+            <Typography level='body-sm' color='danger'>
+              Error fixing chart: {fixupError}
+            </Typography>
+          ) : (parseResult.parseError && !isFetching) && (
+            <Typography level='body-xs'>
+              Invalid Chart.js input: {parseResult.parseError}
+            </Typography>
+          )}
+        </Box>
+      );
     case !!renderError:
       return <Typography level='body-sm' color='warning' variant='plain'>{renderError}</Typography>;
   }
