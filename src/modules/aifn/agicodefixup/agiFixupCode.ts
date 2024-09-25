@@ -22,21 +22,21 @@ const CodeFixes: Record<string, CodeFix> = {
 
   // See `RenderCodeChartJS`
   'chartjs-issue': {
-    description: 'Provides the corrected Chart.js configuration code.',
-    systemMessage: `You are an AI assistant that helps fix invalid Chart.js configuration JSON code.
-When provided with invalid Chart.js code, you analyze it, identify errors, and output a corrected version in valid JSON format.
+    description: 'Provides the corrected ChartJS configuration code.',
+    systemMessage: `You are an AI assistant that helps fix invalid ChartJS configuration JSON code.
+When provided with invalid ChartJS code, you analyze it, identify errors, and output a corrected version in valid JSON format.
 Respond only by calling the \`{{functionName}}\` function.`,
-    userInstructionTemplate: `The following Chart.js configuration code is invalid and cannot be parsed:
+    userInstructionTemplate: `The following ChartJS configuration code is invalid and cannot be parsed:
 \`\`\`json
 {{codeToFix}}
 \`\`\`
 
 {{errorMessageSection}}
-Please analyze the code, correct any errors, and provide a valid JSON configuration that can be parsed by Chart.js.
+Please analyze the code, correct any errors, and provide a valid JSON configuration that can be parsed by ChartJS.
 Call the function \`{{functionName}}\` once, providing the corrected code.`,
     functionName: 'provide_corrected_chartjs_code',
     outputSchema: z.object({
-      corrected_code: z.string().describe('The corrected Chart.js configuration code in valid JSON format.'),
+      corrected_code: z.string().describe('The corrected ChartJS configuration code in valid JSON format.'),
     }),
   },
 
