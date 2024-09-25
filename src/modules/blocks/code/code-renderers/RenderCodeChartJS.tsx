@@ -6,7 +6,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
-import { ChartConstructorType, fixupChartJSObject, useDynamicChartJS } from './useDynamicChartJS';
+import { ChartConfiguration, ChartInstanceType, fixupChartJSObject, useDynamicChartJS } from './useDynamicChartJS';
 
 
 const chartContainerSx: SxProps = {
@@ -34,7 +34,7 @@ export function RenderCodeChartJS(props: {
   const [renderError, setRenderError] = React.useState<string | null>(null);
   const [fixupError, setFixupError] = React.useState<string | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const chartInstanceRef = React.useRef<ChartConstructorType | null>(null);
+  const chartInstanceRef = React.useRef<ChartInstanceType | null>(null);
 
   // external state
   const { chartJS, loadingError, isLoading: isLibraryLoading } = useDynamicChartJS();
@@ -43,7 +43,7 @@ export function RenderCodeChartJS(props: {
   // immediate parsing (note, this could be done with useEffect and state, but we save a render cycle)
   const parseResult = React.useMemo(() => {
     try {
-      const config = JSON.parse(props.chartJSCode) as ChartConstructorType['config'];
+      const config = JSON.parse(props.chartJSCode) as ChartConfiguration;
       fixupChartJSObject(config);
       return { chartConfig: config, parseError: null };
     } catch (error: any) {

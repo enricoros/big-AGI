@@ -7,9 +7,7 @@
 
 import * as React from 'react';
 import { create } from 'zustand';
-import type { Chart as ChartConstructorType } from 'chart.js/auto';
 
-import { devDependencies } from '../../../../../package.json';
 import { themeFontFamilyCss } from '~/common/app.theme';
 
 
@@ -18,18 +16,50 @@ const CHARTJS_VERSION = '4.4.4';
 const CHARTJS_CDN_URL = `https://cdn.jsdelivr.net/npm/chart.js@${CHARTJS_VERSION}/dist/chart.umd.js`;
 const CHARTJS_SCRIPT_ID = 'chartjs-cdn';
 
-export type { ChartConstructorType };
+
+// Minimal type definitions for Chart.js - as of 4.4.4
+
+interface ChartConstructorType {
+  defaults: ChartDefaults;
+
+  new(context: CanvasRenderingContext2D | HTMLCanvasElement, config: ChartConfiguration): ChartInstanceType;
+}
+
+interface ChartDefaults {
+  font: {
+    family: string;
+    size: number;
+  };
+  maintainAspectRatio: boolean;
+  responsive: boolean;
+}
+
+export interface ChartConfiguration {
+  type?: string;
+  data?: any;
+  options?: {
+    responsive?: boolean;
+    maintainAspectRatio?: boolean;
+    [key: string]: any;
+  };
+
+  [key: string]: any;
+}
+
+export interface ChartInstanceType {
+  destroy(): void;
+}
 
 
 // Code manipulation functions
 
-export function fixupChartJSObject(chartConfig: ChartConstructorType['config']): void {
-  // Remove responsive options - we hadle this ourselves by default
+export function fixupChartJSObject(chartConfig: ChartConfiguration): void {
+  // Remove responsive options - we handle this ourselves by default
   delete chartConfig?.options?.responsive;
   delete chartConfig?.options?.maintainAspectRatio;
 }
 
-function _initializeChartJS(Chart: typeof ChartConstructorType): typeof ChartConstructorType {
+function _initializeChartJS(Chart: ChartConstructorType): ChartConstructorType {
   Chart.defaults.font.family = themeFontFamilyCss;
   Chart.defaults.font.size = 13;
   Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
@@ -40,20 +70,20 @@ function _initializeChartJS(Chart: typeof ChartConstructorType): typeof ChartCon
 
 
 // Singleton promise for loading Chart.js
-let chartJSPromise: Promise<typeof ChartConstructorType> | null = null;
+let chartJSPromise: Promise<ChartConstructorType> | null = null;
 
-function loadCDNScript(): Promise<typeof ChartConstructorType> {
-
+function loadCDNScript(): Promise<ChartConstructorType> {
   // Resolve immediately if already loaded
   if ((window as any).Chart)
-    return Promise.resolve((window as any).Chart);
+    return Promise.resolve(_initializeChartJS((window as any).Chart));
 
   // If loading has already started, return the existing promise
   if (chartJSPromise) return chartJSPromise;
 
   // Ensure the API definitions from package.json match the CDN loaded version
-  if (devDependencies['chart.js'] !== CHARTJS_VERSION)
-    return Promise.reject(new Error(`Chart.js version mismatch: loaded ${CHARTJS_VERSION}, expected ${devDependencies['chart.js']}.`));
+  // NOTE: Disabled because we are not using the package.json version anymore, we replaced the API
+  // if (devDependencies['chart.js'] !== CHARTJS_VERSION)
+  //   return Promise.reject(new Error(`Chart.js version mismatch: loaded ${CHARTJS_VERSION}, expected ${devDependencies['chart.js']}.`));
 
   chartJSPromise = new Promise((resolve, reject) => {
 
@@ -84,7 +114,7 @@ function loadCDNScript(): Promise<typeof ChartConstructorType> {
 interface ChartApiStore {
 
   // state
-  chartJS: typeof ChartConstructorType | null;
+  chartJS: ChartConstructorType | null;
   loadingError: string | null;
   isLoading: boolean;
 
