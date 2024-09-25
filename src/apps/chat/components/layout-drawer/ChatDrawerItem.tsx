@@ -19,7 +19,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/state/store-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { isDeepEqual } from '~/common/util/jsUtils';
+import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import { ANIM_BUSY_TYPING } from '../message/messageUtils';

@@ -1,9 +1,12 @@
+import React from 'react';
+
+
 /*
  * Custom implementation of deep equality check for objects and arrays.
  * Note that some libs provide it, but we don't want another dependency and this
  * is just right for us.
  */
-export function isDeepEqual<T>(a: Readonly<T>, b: Readonly<T>): boolean {
+export function isDeepEqual<T>(a: T, b: T): boolean {
   // Check if both are the same reference or both are null/undefined
   if (a === b) return true;
 
@@ -38,4 +41,15 @@ export function isDeepEqual<T>(a: Readonly<T>, b: Readonly<T>): boolean {
 
   // If none of the complex object checks apply or if they fail, the objects are not deeply equal
   return false;
+}
+
+
+export function useDeep<S, U>(selector: (state: S) => U): (state: S) => U {
+  const prev = React.useRef<U>();
+  return (state) => {
+    const next = selector(state);
+    return isDeepEqual(prev.current, next)
+      ? (prev.current as U)
+      : (prev.current = next);
+  };
 }
