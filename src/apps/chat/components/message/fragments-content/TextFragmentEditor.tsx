@@ -44,7 +44,7 @@ export function TextFragmentEditor(props: {
 
   // edited value
   editedText?: string,
-  setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
+  setEditedText: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onSubmit: (withControl: boolean) => void,
   onEscapePressed: () => void,
 }) {
@@ -62,7 +62,7 @@ export function TextFragmentEditor(props: {
 
   // handlers
   const handleEditTextChanged = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    (e.target.value !== undefined) && setEditedText(fragmentId, e.target.value);
+    (e.target.value !== undefined) && setEditedText(fragmentId, e.target.value, false);
   }, [fragmentId, setEditedText]);
 
   const handleEditKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {

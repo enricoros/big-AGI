@@ -244,19 +244,22 @@ export function ChatMessage(props: {
 
   const isEditingText = !!textContentEditState;
 
+  const handleApplyEdit = React.useCallback((fragmentId: DMessageFragmentId, editedText: string) => {
+    if (editedText.length > 0)
+      handleFragmentReplace(fragmentId, createTextContentFragment(editedText));
+    else
+      handleFragmentDelete(fragmentId);
+  }, [handleFragmentDelete, handleFragmentReplace]);
+
   const handleApplyAllEdits = React.useCallback(async (withControl: boolean) => {
     const state = textContentEditState || {};
     setTextContentEditState(null);
-    for (const [fragmentId, editedText] of Object.entries(state)) {
-      if (editedText.length > 0)
-        handleFragmentReplace(fragmentId, createTextContentFragment(editedText));
-      else
-        handleFragmentDelete(fragmentId);
-    }
+    for (const [fragmentId, editedText] of Object.entries(state))
+      handleApplyEdit(fragmentId, editedText);
     // if the user pressed Ctrl, we begin a regeneration from here
     if (withControl && onMessageAssistantFrom)
       await onMessageAssistantFrom(messageId, 0);
-  }, [handleFragmentDelete, handleFragmentReplace, messageId, onMessageAssistantFrom, textContentEditState]);
+  }, [handleApplyEdit, messageId, onMessageAssistantFrom, textContentEditState]);
 
   const handleEditsApplyClicked = React.useCallback(() => handleApplyAllEdits(false), [handleApplyAllEdits]);
 
@@ -264,8 +267,12 @@ export function ChatMessage(props: {
 
   const handleEditsCancel = React.useCallback(() => setTextContentEditState(null), []);
 
-  const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string) =>
-    setTextContentEditState((prev): ChatMessageTextPartEditState => ({ ...prev, [fragmentId]: editedText || '' })), []);
+  const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string, applyNow: boolean) => {
+    if (applyNow)
+      handleApplyEdit(fragmentId, editedText);
+    else
+      setTextContentEditState((prev): ChatMessageTextPartEditState => ({ ...prev, [fragmentId]: editedText || '' }));
+  }, [handleApplyEdit]);
 
 
   // Message Operations Menu
