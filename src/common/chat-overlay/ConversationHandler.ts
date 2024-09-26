@@ -234,7 +234,7 @@ export class ConversationHandler {
       terminateKeepingSettings();
     };
 
-    beamOpen(viewHistory, getChatLLMId(), onBeamSuccess);
+    beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
     importMessages.length && beamImportRays(importMessages, getChatLLMId());
   }
 
