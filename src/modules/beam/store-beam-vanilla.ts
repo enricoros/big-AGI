@@ -32,6 +32,7 @@ type BeamSuccessCallback = (messageUpdate: Pick<DMessage, 'fragments' | 'generat
 interface RootStateSlice {
 
   isOpen: boolean;
+  isEditMode: boolean;
   isMaximized: boolean;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
@@ -43,6 +44,7 @@ interface RootStateSlice {
 const initRootStateSlice = (): RootStateSlice => ({
 
   isOpen: false,
+  isEditMode: false,
   isMaximized: false,
   inputHistory: null,
   inputIssues: null,
@@ -54,7 +56,7 @@ const initRootStateSlice = (): RootStateSlice => ({
 export interface RootStoreSlice extends RootStateSlice {
 
   // lifecycle
-  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, isEditMode: boolean, callback: BeamSuccessCallback) => void;
   terminateKeepingSettings: () => void;
   loadBeamConfig: (preset: BeamConfigSnapshot | null) => void;
 
@@ -70,7 +72,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, isEditMode: boolean, callback: BeamSuccessCallback) => {
     const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, hadImportedRays, setRayLlmIds, setCurrentGatherLlmId } = _get();
 
     // reset pending operations
@@ -84,6 +86,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       // input
       isOpen: true,
+      isEditMode,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid conversation history: missing user message',
       inputReady: isValidHistory,
