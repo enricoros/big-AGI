@@ -5,7 +5,9 @@
  * Also see imageUtils.ts for more image-related functions.
  */
 
+import { canvasToImageBlob } from './canvasUtils';
 import { prettyTimestampForFilenames } from './timeUtils';
+
 
 export function downloadVideoFrameAsPNG(videoElement: HTMLVideoElement, prefixName: string) {
   // current video frame -> canvas -> dataURL PNG
@@ -24,7 +26,7 @@ export function downloadVideoFrameAsPNG(videoElement: HTMLVideoElement, prefixNa
 export async function renderVideoFrameAsPNGFile(videoElement: HTMLVideoElement, prefixName: string): Promise<File> {
   // current video frame -> canvas -> Blob PNG
   const renderedFrame = _renderVideoFrameToCanvas(videoElement);
-  const blob = await _canvasToBlob(renderedFrame, 'image/png');
+  const blob = await canvasToImageBlob(renderedFrame, 'image/png');
 
   // to File
   if (!blob)
@@ -45,13 +47,4 @@ function _renderVideoFrameToCanvas(videoElement: HTMLVideoElement): HTMLCanvasEl
   const ctx = canvas.getContext('2d');
   ctx?.drawImage(videoElement, 0, 0);
   return canvas;
-}
-
-/**
- * Creates a Blob object representing the image contained in the canvas
- * @param canvas The canvas element to convert to a Blob.
- * @param imageFormat Browsers are required to support image/png; many will support additional formats including image/jpeg and image/webp.
- */
-async function _canvasToBlob(canvas: HTMLCanvasElement, imageFormat: 'image/png' /* was ": string = 'image/png'", but we are more strict for now */): Promise<Blob | null> {
-  return new Promise((resolve) => canvas.toBlob(resolve, imageFormat));
 }
