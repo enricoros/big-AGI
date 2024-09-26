@@ -191,7 +191,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG && !renderChartJS;
   const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap || renderChartJS;
-  const renderLineNumbers = showLineNumbers && !cannotRenderLineNumbers && uiComplexityMode === 'extra';
+  const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode === 'extra') /* || isFullscreen */);
 
 
   // Language & Highlight
@@ -343,7 +343,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               )}
 
               {/* Fullscreen */}
-              <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
+              <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : !renderSyntaxHighlight ? 'Fullscreen' : 'Present'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
                 <FullscreenRoundedIcon />
               </OverlayButton>
 
