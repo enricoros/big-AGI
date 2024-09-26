@@ -63,7 +63,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-1.5-flash-latest', // updated regularly and might be a preview version
     isPreview: true,
     chatPrice: gemini15FlashPricing,
-    symLink: '-002 or newer',
+    // symLink: '-002 or newer',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */],
   },
   {
@@ -114,7 +114,7 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemini-1.5-pro-latest', // updated to latest stable version
     chatPrice: gemini15ProPricing,
-    symLink: '-002 or newer',
+    // symLink: '-002 or newer',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
   },
   {
