@@ -91,7 +91,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
         const isMobile = getIsMobile(); // no need to react to this
         // recreate the UI for this
         inputs.updateInstructionComponent(
-          <ChatMessage
+          <ChatMessage /* Not Memo as this changes frequently */
             message={inputs.intermediateDMessage}
             fitScreen={isMobile}
             isMobile={isMobile}
