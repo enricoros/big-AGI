@@ -164,7 +164,7 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
     if (converter.id === 'rich-text')
       return 'Rich HTML';
   }
-  return ellipsizeFront(attachmentDraft.label, 24);
+  return ellipsizeFront(attachmentDraft.label, 22);
 }
 
 
