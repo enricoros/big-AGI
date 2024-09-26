@@ -256,7 +256,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         ref={fullScreenElementRef}
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
-        sx={codeSx}
+        sx={!isFullscreen ? codeSx : {...codeSx, backgroundColor: 'background.surface' }}
       >
 
         {/* Markdown Title (File/Type) */}
