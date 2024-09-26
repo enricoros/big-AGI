@@ -53,11 +53,19 @@ export function AppChatSettingsAI() {
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart title='Generative Diagrams'
+                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'No'} />
+      <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
+              endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart
         title={<>
           <b>Generative UI · Alpha</b>
           <GoodTooltip enableInteractive arrow title={<>
-            SECUIRTY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES
+            SECURITY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES
             <hr />
             Alpha quality, for testing only. Does not include state synchronization. Use at your own risk.
             {' - '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/227'>#227</ExternalLink>
@@ -71,15 +79,6 @@ export function AppChatSettingsAI() {
               endDecorator={autoSuggestHTMLUI ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
-
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Generative Diagrams'
-                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'No'} />
-      <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
-              endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
-
 
     {/*<FormControl disabled orientation='horizontal' sx={{ justifyContent: 'space-between' }}>*/}
     {/*  <FormLabelStart title='Auto Questions'*/}
