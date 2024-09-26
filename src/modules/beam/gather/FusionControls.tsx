@@ -10,6 +10,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 
 import type { BFusion } from './beam.gather';
 import type { FusionFactorySpec } from './instructions/beam.gather.factories';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 
 export const FusionControlsMemo = React.memo(FusionControls);
@@ -22,6 +23,7 @@ function FusionControls(props: {
   isUsable: boolean,
   llmLabel: string,
   llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
+  fusionAvatarTooltip: React.ReactNode,
   onRemove: () => void,
   onToggleGenerate: () => void,
 }) {
@@ -30,11 +32,11 @@ function FusionControls(props: {
 
       {/* LLM Icon */}
       {!!props.llmVendorIcon && (
-        <GoodTooltip placement='top' arrow title={props.llmLabel}>
+        <TooltipOutlined asLargePane enableInteractive title={props.fusionAvatarTooltip || props.llmLabel} placement='top-start'>
           <Box sx={{ display: 'flex' }}>
             <props.llmVendorIcon sx={{ fontSize: 'lg', my: 'auto' }} />
           </Box>
-        </GoodTooltip>
+        </TooltipOutlined>
       )}
 
       {/* Title / Progress Component */}
