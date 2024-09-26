@@ -7,8 +7,9 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
 import { asyncCanvasToBlob } from '~/common/util/canvasUtils';
+import { themeFontFamilyCss } from '~/common/app.theme';
 
-import { ChartConfiguration, ChartInstanceType, chartJSApplyTheme, chartJSFixupGeneratedObject, useDynamicChartJS } from './useDynamicChartJS';
+import { ChartConfiguration, ChartInstanceType, chartJSApplyTheme, chartJSFixupGeneratedObject, chartJSPixelRatio, useDynamicChartJS } from './useDynamicChartJS';
 
 
 const chartContainerSx: SxProps = {
@@ -93,10 +94,34 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
     getChartPNG: async () => {
-      if (!canvasRef.current) return null;
-      return await asyncCanvasToBlob(canvasRef.current, 'image/png');
+      const chartCanvas = canvasRef.current;
+      if (!chartCanvas) return null;
+
+      // Create a new canvas
+      const pngCanvas = document.createElement('canvas');
+      pngCanvas.width = chartCanvas.width;
+      pngCanvas.height = chartCanvas.height;
+      const ctx = pngCanvas.getContext('2d', { alpha: true });
+      if (!ctx)
+        return await asyncCanvasToBlob(chartCanvas, 'image/png');
+
+      // Omit the background layer
+      // ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+      // ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
+
+      // Draw the chart
+      ctx.drawImage(chartCanvas, 0, 0);
+
+      // Great work Big-AGI!
+      const pr = chartJSPixelRatio();
+      ctx.font = `${9 * pr}px ${themeFontFamilyCss}`;
+      ctx.fillStyle = isDarkMode ? '#9FA6AD' : '#555E68';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Big-AGI.com', 8 * pr, pngCanvas.height - 7 * pr);
+      return await asyncCanvasToBlob(pngCanvas, 'image/png');
     },
-  }), []);
+  }), [isDarkMode]);
 
 
   // handlers

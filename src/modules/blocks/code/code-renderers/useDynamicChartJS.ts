@@ -71,12 +71,16 @@ function _chartJSInitializeDeaults(Chart: ChartConstructorType): ChartConstructo
   //        the re-render when a window is moved to a different screen with different DPI. In some sense
   //        we are anchoring the DPR to the first screen's x 2.
   if (window.devicePixelRatio)
-    Chart.defaults.devicePixelRatio = 2 * window.devicePixelRatio;
+    Chart.defaults.devicePixelRatio = chartJSPixelRatio();
 
   // Change the default padding for the title
   Chart.defaults.plugins.title.padding = { top: 8, bottom: 16 };
 
   return Chart;
+}
+
+export function chartJSPixelRatio() {
+  return 2 * (window.devicePixelRatio || 1);
 }
 
 export function chartJSApplyTheme(Chart: ChartConstructorType, isDarkMode: boolean) {
