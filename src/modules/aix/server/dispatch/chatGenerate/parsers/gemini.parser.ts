@@ -55,7 +55,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
     if (generationChunk.candidates?.length !== 1)
       throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
     const candidate0 = generationChunk.candidates[0];
-    if (candidate0.index !== 0)
+    if (candidate0.index !== undefined && candidate0.index !== 0)
       throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
     // see the message architecture
