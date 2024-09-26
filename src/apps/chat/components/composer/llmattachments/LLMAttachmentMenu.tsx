@@ -180,6 +180,20 @@ export function LLMAttachmentMenu(props: {
         <LinearProgress determinate value={100 * draft.outputsConversionProgress} sx={{ mx: 1 }} />
       )}
 
+      {SHOW_INLINING_OPERATIONS && <ListDivider />}
+      {SHOW_INLINING_OPERATIONS && (
+        <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
+          <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+          Inline text
+        </MenuItem>
+      )}
+      {SHOW_INLINING_OPERATIONS && (
+        <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
+          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+          Copy text
+        </MenuItem>
+      )}
+
       <MenuItem
         variant='soft'
         color={isOutputMissing ? 'warning' : 'success'}
@@ -292,30 +306,6 @@ export function LLMAttachmentMenu(props: {
           </Box>
         )}
       </MenuItem>
-
-      {/* Destructive Operations */}
-      {/*<MenuItem onClick={handleCopyToClipboard} disabled={!isOutputTextInlineable}>*/}
-      {/*  <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>*/}
-      {/*  Copy*/}
-      {/*</MenuItem>*/}
-      {/*<MenuItem onClick={handleSummarizeText} disabled={!isOutputTextInlineable}>*/}
-      {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
-      {/*  Shrink*/}
-      {/*</MenuItem>*/}
-
-      {SHOW_INLINING_OPERATIONS && (
-        <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
-          <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-          Inline text
-        </MenuItem>
-      )}
-      {SHOW_INLINING_OPERATIONS && (
-        <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
-          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-          Copy text
-        </MenuItem>
-      )}
-      {SHOW_INLINING_OPERATIONS && <ListDivider />}
 
       <MenuItem onClick={handleRemove}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
