@@ -229,7 +229,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           };
         }),
 
-      historyView: (conversationId: DConversationId) =>
+      historyView: (conversationId: DConversationId): Readonly<DMessage[]> | undefined =>
         _get().conversations.find(_c => _c.id === conversationId)?.messages ?? undefined,
 
 

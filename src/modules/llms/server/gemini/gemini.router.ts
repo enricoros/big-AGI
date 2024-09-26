@@ -100,6 +100,7 @@ export const llmGeminiRouter = createTRPCRouter({
       const models = detailedModels
         .filter(geminiFilterModels)
         .map(geminiModel => geminiModelToModelDescription(geminiModel))
+        .filter(model => !!model)
         .sort(geminiSortModels);
 
       return {

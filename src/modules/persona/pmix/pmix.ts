@@ -83,6 +83,15 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   // {{Prefer...}}
   mixed = mixed.replace('{{PreferTables}}', 'Data presentation: prefer tables (auto-columns)');
   // {{Render...}}
+  mixed = mixed.replace('{{RenderChartJS}}', `
+When presenting data that would be better visualized as a chart, output a ChartJS configuration JSON in this format:
+\`\`\`chartjs
+{
+  // Valid and complete ChartJS configuration JSON (DO NOT USE FUNCTIONS)
+}
+\`\`\`
+Choose the most suitable chart type based on the data and context. Include only the JSON configuration, without any explanatory text. Ensure the JSON is valid and complete and can be parsed by ChartJS.
+`.trim());
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled for diagrams and pie charts and no other charts');
   mixed = mixed.replace('{{RenderPlantUML}}', 'PlantUML rendering: Enabled');
   mixed = mixed.replace('{{RenderHTML}}', `HTML in markdown rendering: Sleek HTML5 for ${Is.Desktop ? 'desktop' : 'mobile'} screens (self-contained with CSS/JS, leverage top libraries, external links OK)`);

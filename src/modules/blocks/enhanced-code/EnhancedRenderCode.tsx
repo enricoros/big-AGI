@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, IconButton, Typography } from '@mui/joy';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import CodeIcon from '@mui/icons-material/Code';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -9,8 +10,8 @@ import type { ContentScaling } from '~/common/app.theme';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
+import { BLOCK_CODE_VND_AGI_CHARTJS, RenderCodeMemo } from '../code/RenderCode';
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
-import { RenderCodeMemo } from '../code/RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '../code/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
 import { useLiveFilePatch } from './livefile-patch/useLiveFilePatch';
@@ -34,19 +35,27 @@ export function EnhancedRenderCode(props: {
   language?: string,
   color?: ColorPaletteProp;
   contentScaling: ContentScaling;
+  initialIsCollapsed: boolean;
 
   // onLiveFileCreate?: () => void,
+  onReplaceInCode?: (search: string, replace: string) => boolean;
 }) {
 
   // state
   const [contextMenuAnchor, setContextMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(false);
+  const [isCodeCollapsed, setIsCodeCollapsed] = React.useState(props.initialIsCollapsed);
 
   // LiveFile - patch state
   const { button: liveFileButton, actionBar: liveFileActionBar } = useLiveFilePatch(
     props.title, props.code, props.isPartial,
     props.isMobile,
   );
+
+
+  // React to changes in the collapsed state. Note that by default, nothing is collapsed
+  React.useEffect(() => {
+    setIsCodeCollapsed(props.initialIsCollapsed);
+  }, [props.initialIsCollapsed]);
 
 
   // handlers
@@ -107,39 +116,44 @@ export function EnhancedRenderCode(props: {
     </Box>
   ), [props.code, props.semiStableId, props.title]);
 
-  const headerRow = React.useMemo(() => <>
-    {/* Icon and Title */}
-    <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <CodeIcon
-          aria-hidden
-          onClick={handleToggleCodeCollapse}
-          sx={{
-            transform: isCodeCollapsed ? 'rotate(-90deg)' : 'none',
-            transition: 'transform 0.2s cubic-bezier(.17,.84,.44,1)',
-            cursor: 'pointer',
-          }}
-        />
-        <Typography level='title-sm'>
-          {props.title || 'Code'}
-        </Typography>
-      </Box>
-    </TooltipOutlined>
+  const headerRow = React.useMemo(() => {
+    const isChart = props.title === BLOCK_CODE_VND_AGI_CHARTJS;
+    const Icon = (isChart && !isCodeCollapsed) ? BarChartIcon : CodeIcon;
+    return <>
+      {/* Icon and Title */}
+      <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Icon
+            aria-hidden
+            onClick={handleToggleCodeCollapse}
+            sx={{
+              transform: (isCodeCollapsed && !isChart) ? 'rotate(-90deg)' : 'none',
+              transition: 'transform 0.2s cubic-bezier(.17,.84,.44,1)',
+              cursor: 'pointer',
+            }}
+          />
+          <Typography level={!isChart ? 'title-sm' : 'body-sm'}>
+            {isChart ? 'Chart ' + (props.isPartial ? '.'.repeat(Math.round(props.code.length / 100) % 4) : '')
+              : props.title || 'Code'}
+          </Typography>
+        </Box>
+      </TooltipOutlined>
 
-    {/* LiveFile - Select */}
-    {liveFileButton}
+      {/* LiveFile - Select */}
+      {liveFileButton}
 
-    {/* Menu Options button */}
-    <IconButton
-      size='sm'
-      onClick={handleToggleContextMenu}
-      onContextMenu={handleToggleContextMenu}
-      sx={{ mr: -0.5 }}
-    >
-      <MoreVertIcon />
-    </IconButton>
+      {/* Menu Options button */}
+      <IconButton
+        size='sm'
+        onClick={handleToggleContextMenu}
+        onContextMenu={handleToggleContextMenu}
+        sx={{ mr: -0.5 }}
+      >
+        <MoreVertIcon />
+      </IconButton>
 
-  </>, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.title]);
+    </>;
+  }, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.code.length, props.isPartial, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -190,6 +204,7 @@ export function EnhancedRenderCode(props: {
           initialShowHTML={props.initialShowHTML}
           noCopyButton={props.noCopyButton}
           optimizeLightweight={props.optimizeLightweight}
+          onReplaceInCode={props.onReplaceInCode}
           sx={patchCodeSx}
         />
       </ExpanderControlledBox>

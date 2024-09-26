@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography } from '@mui/joy';
+import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography, VariantProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -19,12 +19,11 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
-import { GoodTooltip } from '~/common/components/GoodTooltip';
+import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
 
-import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 
 
@@ -32,7 +31,8 @@ import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 const ATTACHMENT_MIN_STYLE = {
   height: '100%',
   minHeight: '40px',
-  minWidth: '64px',
+  // commented, this is messing with the style
+  // minWidth: '64px',
 };
 
 
@@ -49,8 +49,8 @@ const ellipsizeLabel = (label?: string) => {
 /**
  * Displayed while a source is loading
  */
-const LoadingIndicator = React.forwardRef((props: { label: string }, _ref) =>
-  <Sheet
+function InputLoadingPlaceholder(props: { label: string }) {
+  return <Sheet
     color='success' variant='soft'
     sx={{
       border: '1px solid',
@@ -59,21 +59,22 @@ const LoadingIndicator = React.forwardRef((props: { label: string }, _ref) =>
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
       ...ATTACHMENT_MIN_STYLE,
       boxSizing: 'border-box',
-      px: 1,
-      py: 0.5,
+      px: 1, py: 0.5, // reduce
     }}
   >
     <CircularProgress color='success' size='sm' />
     <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
       {ellipsizeLabel(props.label)}
     </Typography>
-  </Sheet>,
-);
-LoadingIndicator.displayName = 'LoadingIndicator';
+  </Sheet>;
+}
 
-
-const InputErrorIndicator = () =>
-  <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
+/**
+ * Displayed when there is an error loading the input (e.g. file does not exist)
+ */
+function InputErrorIndicator() {
+  return <WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />;
+}
 
 
 const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.ComponentType<any> | null } = {
@@ -164,7 +165,7 @@ function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
     if (converter.id === 'rich-text')
       return 'Rich HTML';
   }
-  return ellipsizeFront(attachmentDraft.label, 24);
+  return ellipsizeFront(attachmentDraft.label, 22);
 }
 
 
@@ -198,91 +199,59 @@ function LLMAttachmentButton(props: {
     onToggleMenu(draft.id, event.currentTarget);
   }, [draft.id, onToggleMenu]);
 
-
-  // compose tooltip
-  let tooltip: string | null = '';
-  if (draft.source.media !== 'text')
-    tooltip += draft.source.media + ': ';
-  tooltip += draft.label;
-  // if (hasInput)
-  //   tooltip += `\n(${aInput.mimeType}: ${aInput.dataSize.toLocaleString()} bytes)`;
-  // if (aOutputs && aOutputs.length >= 1)
-  //   tooltip += `\n\n${JSON.stringify(aOutputs)}`;
-
   // choose variants and color
-  let color: ColorPaletteProp;
-  let variant: 'soft' | 'outlined' | 'contained' = 'soft';
-  if (isInputLoading || isOutputLoading) {
-    color = 'success';
-  } else if (isInputError) {
-    color = 'danger';
-    tooltip = props.menuShown ? null
-      : `Issue loading the attachment: ${draft.inputError}\n\n${tooltip}`;
-  } else if (showWarning) {
-    color = 'warning';
-    tooltip = props.menuShown ? null
-      : isUnconvertible
-        ? `Attachments of type '${draft.input?.mimeType}' are not supported yet. You can open a feature request on GitHub.\n\n${tooltip}`
-        : `Not compatible with the selected LLM or file not supported. Please try another format.\n\n${tooltip}`;
-  } else {
-    // all good
-    tooltip = null;
-    color = /*props.menuShown ? 'primary' :*/ 'neutral';
-    variant = 'outlined';
-  }
+  const color: ColorPaletteProp =
+    (isInputLoading || isOutputLoading) ? 'success'
+      : isInputError ? 'danger'
+        : showWarning ? 'warning'
+          : /*props.menuShown ? 'primary' :*/ 'neutral';
 
+  const variant: VariantProp =
+    (isInputLoading || isOutputLoading || isInputError || showWarning) ? 'soft'
+      : 'outlined';
 
-  return <Box>
+  // loading indicator before we are ready for a button
+  if (isInputLoading)
+    return <InputLoadingPlaceholder label={draft.label} />;
 
-    <GoodTooltip
-      title={tooltip}
-      isError={isInputError}
-      isWarning={showWarning}
-      sx={{ p: 1, whiteSpace: 'break-spaces' }}
+  return (
+    <Button
+      size='sm'
+      color={color}
+      variant={variant}
+      onClick={handleToggleMenu}
+      onContextMenu={handleToggleMenu}
+      sx={{
+        backgroundColor: props.menuShown ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
+        border: variant === 'soft' ? '1px solid' : undefined,
+        borderColor: variant === 'soft' ? `${color}.solidBg` : undefined,
+        borderRadius: 'sm',
+        ...ATTACHMENT_MIN_STYLE,
+        px: 1, py: 0.5, // reduce
+        gap: 1,
+      }}
     >
-      {isInputLoading
-        ? <LoadingIndicator label={draft.label} />
-        : (
-          <Button
-            size='sm'
-            color={color}
-            variant={variant}
-            onClick={handleToggleMenu}
-            onContextMenu={handleToggleMenu}
-            sx={{
-              backgroundColor: props.menuShown ? `${color}.softActiveBg` : variant === 'outlined' ? 'background.popup' : undefined,
-              border: variant === 'soft' ? '1px solid' : undefined,
-              borderColor: variant === 'soft' ? `${color}.solidBg` : undefined,
-              borderRadius: 'sm',
-              ...ATTACHMENT_MIN_STYLE,
-              px: 1, py: 0.5,
-              display: 'flex', flexDirection: 'row', gap: 1,
-            }}
-          >
-            {isInputError
-              ? <InputErrorIndicator />
-              : <>
-                {/* Icons: Web Page Screenshot, Converter[s] */}
-                {attachmentIcons(draft)}
 
-                {/* Label */}
-                <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
-                  {isOutputLoading ? 'Converting... ' : attachmentLabelText(draft)}
-                </Typography>
+      {isInputError && <InputErrorIndicator />}
 
-                {/* Loading icon */}
-                {isOutputLoading && <CircularProgress color='success' size='sm' />}
+      {/* Icons: Web Page Screenshot, Converter[s] */}
+      {attachmentIcons(draft)}
 
-                {/* LiveFile icon */}
-                {hasLiveFiles && (
-                  <TooltipOutlined title='LiveFile is supported' placement='top-end'>
-                    <LiveFileIcon />
-                  </TooltipOutlined>
-                )}
-              </>}
-          </Button>
-        )}
-    </GoodTooltip>
+      {/* Label */}
+      <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
+        {isOutputLoading ? 'Converting... ' : attachmentLabelText(draft)}
+      </Typography>
 
-  </Box>;
+      {/* Is Converting icon */}
+      {isOutputLoading && <CircularProgress color='success' size='sm' />}
+
+      {/* LiveFile is supported icon */}
+      {hasLiveFiles && (
+        <TooltipOutlined title='LiveFile is supported' placement='top-end'>
+          <LiveFileIcon />
+        </TooltipOutlined>
+      )}
+
+    </Button>
+  );
 }

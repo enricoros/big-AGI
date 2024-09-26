@@ -379,7 +379,7 @@ async function _aixChatGenerateContent_LL(
       if (process.env.NODE_ENV === 'development')
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!accumulator_LL.fragments.length;
-      contentReassembler.reassembleClientException(presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
+      contentReassembler.reassembleClientException('Application error: ' + presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
     }
 
   }

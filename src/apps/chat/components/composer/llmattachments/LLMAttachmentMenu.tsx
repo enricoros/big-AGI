@@ -61,21 +61,28 @@ export function LLMAttachmentMenu(props: {
 
   // derived state
 
+  const isUnmoveable = props.isPositionFirst && props.isPositionLast;
+
   const {
     attachmentDraft: draft,
+    llmSupportsAllFragments,
     llmSupportsTextFragments,
     llmTokenCountApprox,
   } = props.llmAttachmentDraft;
 
-  const draftId = draft.id;
-  const draftSource = draft.source;
-  const draftInput = draft.input;
-  const isConverting = draft.outputsConverting;
+  const {
+    id: draftId,
+    source: draftSource,
+    input: draftInput,
+    outputsConverting: isConverting,
+  } = draft;
+
+  const isInputError = !!draft.inputError;
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
   const hasLiveFiles = draft.outputFragments.some(_f => _f.liveFileId);
 
-  const isUnmoveable = props.isPositionFirst && props.isPositionLast;
+  const showWarning = isUnconvertible || isOutputMissing || !llmSupportsAllFragments;
 
 
   // hooks
@@ -119,7 +126,7 @@ export function LLMAttachmentMenu(props: {
       dense placement='top'
       noTopPadding
       open anchorEl={props.menuAnchor} onClose={props.onClose}
-      sx={{ minWidth: 260 }}
+      sx={{ minWidth: 260, maxWidth: 420 }}
     >
 
       {/* Move Arrows */}
@@ -180,13 +187,63 @@ export function LLMAttachmentMenu(props: {
         <LinearProgress determinate value={100 * draft.outputsConversionProgress} sx={{ mx: 1 }} />
       )}
 
-      <MenuItem
+      {SHOW_INLINING_OPERATIONS && <ListDivider />}
+      {SHOW_INLINING_OPERATIONS && (
+        <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
+          <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+          Inline text
+        </MenuItem>
+      )}
+      {SHOW_INLINING_OPERATIONS && (
+        <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
+          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
+          Copy text
+        </MenuItem>
+      )}
+
+      {/* Warning box */}
+      {(isInputError || showWarning) && (
+        <Box>
+          <MenuItem
+            variant='soft'
+            color={isInputError ? 'danger' : 'warning'}
+            sx={{
+              mt: !isInputError ? 0.75 : 0,
+              mb: !isInputError ? 0 : 0.75,
+              border: '1px solid',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderColor: 'divider',
+              fontSize: 'sm',
+              py: 1,
+            }}
+          >
+            <ListItemDecorator>
+              {/*<WarningRoundedIcon />*/}
+            </ListItemDecorator>
+            <Box>
+              <Typography color={isInputError ? 'danger' : 'warning'} level='title-sm'>
+                {isInputError ? 'Loading Issue' : 'Warning'}
+              </Typography>
+              {isInputError ? <div>{draft.inputError}</div>
+                : isUnconvertible ? <div>Attachments of type {draft.input?.mimeType} are not supported yet. You can request this on GitHub.</div>
+                  : isOutputMissing ? <div>File not supported. Please try another format.</div>
+                    : !llmSupportsAllFragments ? <div>May not be compatible with the current model. Please try another format.</div>
+                      : <>Unknown warning</>}
+            </Box>
+          </MenuItem>
+        </Box>
+      )}
+
+      {/* Details Expandable Menu */}
+      {!isInputError && <MenuItem
         variant='soft'
         color={isOutputMissing ? 'warning' : 'success'}
         disabled={!canHaveDetails}
         onClick={handleToggleShowDetails}
         sx={{
-          my: 0.75,
+          mt: (isInputError || showWarning) ? 0 : 0.75,
+          mb: 0.75,
           border: '1px solid',
           borderLeft: 'none',
           borderRight: 'none',
@@ -291,32 +348,9 @@ export function LLMAttachmentMenu(props: {
 
           </Box>
         )}
-      </MenuItem>
+      </MenuItem>}
 
-      {/* Destructive Operations */}
-      {/*<MenuItem onClick={handleCopyToClipboard} disabled={!isOutputTextInlineable}>*/}
-      {/*  <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>*/}
-      {/*  Copy*/}
-      {/*</MenuItem>*/}
-      {/*<MenuItem onClick={handleSummarizeText} disabled={!isOutputTextInlineable}>*/}
-      {/*  <ListItemDecorator><CompressIcon color='success' /></ListItemDecorator>*/}
-      {/*  Shrink*/}
-      {/*</MenuItem>*/}
-
-      {SHOW_INLINING_OPERATIONS && (
-        <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
-          <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-          Inline text
-        </MenuItem>
-      )}
-      {SHOW_INLINING_OPERATIONS && (
-        <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
-          <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
-          Copy text
-        </MenuItem>
-      )}
-      {SHOW_INLINING_OPERATIONS && <ListDivider />}
-
+      {/* Remove */}
       <MenuItem onClick={handleRemove}>
         <ListItemDecorator><ClearIcon /></ListItemDecorator>
         Remove

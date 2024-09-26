@@ -6,7 +6,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } fr
 
 
 // dev options
-const DEV_DEBUG_GEMINI_MODELS = false;
+const DEV_DEBUG_GEMINI_MODELS = true;
 
 
 // supported interfaces
@@ -51,113 +51,149 @@ const gemini10ProPricing: ModelDescriptionSchema['chatPrice'] = {
 const _knownGeminiModels: ({
   id: string,
   isNewest?: boolean,
-  isPreview?: boolean
-  symLink?: string
-} & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'trainingDataCutoff' | 'hidden'>)[] = [
+  isPreview?: boolean,
+  symLink?: string,
+  _delete?: boolean, // some gemini models are not acknowledged by Google Docs anymore, and leaving them in the list will confuse users
+} & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'hidden'>)[] = [
 
   // Generation 1.5
+
+  // Gemini 1.5 Flash Models
   {
     id: 'models/gemini-1.5-flash-latest', // updated regularly and might be a preview version
-    isNewest: true,
     isPreview: true,
     chatPrice: gemini15FlashPricing,
-    trainingDataCutoff: 'May 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
+    // symLink: '-002 or newer',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */],
   },
   {
     id: 'models/gemini-1.5-flash',
-    // copied from above
+    // Defaults to version 002 on Oct 8, 2024
+    symLink: 'models/gemini-1.5-flash-001',
     chatPrice: gemini15FlashPricing,
-    trainingDataCutoff: 'Apr 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // input: audio, images and text
-    hidden: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
   },
   {
-    id: 'models/gemini-1.5-flash-001',
-    // copied from above
+    id: 'models/gemini-1.5-flash-002', // new stable version
     chatPrice: gemini15FlashPricing,
-    trainingDataCutoff: 'Apr 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json], // input: audio, images and text
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'models/gemini-1.5-flash-001', // previous stable version
+    chatPrice: gemini15FlashPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'models/gemini-1.5-flash-001-tuning', // supports model tuning
+    chatPrice: gemini15FlashPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /* Tuning ... */],
     hidden: true,
   },
 
+  // Experimental Gemini 1.5 Flash Models
+  {
+    id: 'models/gemini-1.5-flash-8b-exp-0924',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
+  {
+    id: 'models/gemini-1.5-flash-exp-0827',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
+  {
+    id: 'models/gemini-1.5-flash-8b-exp-0827',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
+
+  // Gemini 1.5 Pro Models
+  {
+    id: 'models/gemini-1.5-pro-latest', // updated to latest stable version
+    chatPrice: gemini15ProPricing,
+    // symLink: '-002 or newer',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'models/gemini-1.5-pro',
+    // Defaults to version 002 on Oct 8, 2024
+    symLink: 'models/gemini-1.5-pro-001',
+    chatPrice: gemini15ProPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'models/gemini-1.5-pro-002',
+    chatPrice: gemini15ProPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'models/gemini-1.5-pro-001',
+    chatPrice: gemini15ProPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+
+  // Added missing experimental model
   {
     id: 'models/gemini-1.5-pro-exp-0801',
-    isNewest: true,
     isPreview: true,
     chatPrice: gemini15ProPricing,
-    trainingDataCutoff: 'May 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
-  },
-  {
-    id: 'models/gemini-1.5-pro-latest', // updated regularly and might be a preview version
-    isNewest: true,
-    isPreview: true,
-    chatPrice: gemini15ProPricing,
-    trainingDataCutoff: 'May 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */], // input: audio, images and text
-  },
-  {
-    id: 'models/gemini-1.5-pro', // latest stable -> 001
-    // copied from above
-    chatPrice: gemini15ProPricing,
-    trainingDataCutoff: 'Apr 2024',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-pro-001', // stable snapshot
-    // copied from above
-    chatPrice: gemini15ProPricing,
-    trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
   },
 
+  // Experimental Gemini 1.5 Pro Models
+  {
+    id: 'models/gemini-1.5-pro-exp-0827',
+    isPreview: true,
+    chatPrice: gemini15ProPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
 
   // Generation 1.0
+
+  // Gemini 1.0 Pro Models
   {
     id: 'models/gemini-1.0-pro-latest',
+    symLink: 'models/gemini-1.0-pro-001+',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
-  },
-  {
-    id: 'models/gemini-1.0-pro',
-    chatPrice: gemini10ProPricing,
-    interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
+    _delete: true, // confusing
   },
   {
     id: 'models/gemini-1.0-pro-001',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
-    hidden: true,
   },
-
-  // Generation 1.0 + Vision
   {
-    id: 'models/gemini-1.0-pro-vision-latest',
+    id: 'models/gemini-1.0-pro',
+    symLink: 'models/gemini-1.0-pro-001',
     chatPrice: gemini10ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // Text and Images
-    hidden: true,
+    interfaces: [LLM_IF_OAI_Chat],
   },
-
-  // Older symlinks
   {
     id: 'models/gemini-pro',
     symLink: 'models/gemini-1.0-pro',
-    // copied from symlinked
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
+  },
+
+
+  // Gemini 1.0 Pro Vision Model
+  {
+    id: 'models/gemini-1.0-pro-vision-latest',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     hidden: true,
+    _delete: true, // confusing
   },
   {
     id: 'models/gemini-pro-vision',
-    // copied from symlinked
     symLink: 'models/gemini-1.0-pro-vision',
-    chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // Text and Images
-    hidden: true,
+    _delete: true, // confusing
   },
 ];
 
@@ -175,14 +211,20 @@ export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
   return b.label.localeCompare(a.label);
 }
 
-export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models_List.Model): ModelDescriptionSchema {
+export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models_List.Model): ModelDescriptionSchema | null {
   const { description, displayName, name: modelId, supportedGenerationMethods } = geminiModel;
 
-  if (DEV_DEBUG_GEMINI_MODELS)
-    console.log('geminiModelToModelDescription', geminiModel);
+  // if (DEV_DEBUG_GEMINI_MODELS)
+  //   console.log('geminiModelToModelDescription', geminiModel);
 
   // find known manual mapping
   const knownModel = _knownGeminiModels.find(m => m.id === modelId);
+  if (!knownModel && DEV_DEBUG_GEMINI_MODELS)
+    console.warn('geminiModelToModelDescription: unknown model', modelId, geminiModel);
+
+  // handle _delete
+  if (knownModel?._delete)
+    return null;
 
   // handle symlinks
   const label = knownModel?.symLink
@@ -216,7 +258,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     description: descriptionLong,
     contextWindow: contextWindow,
     maxCompletionTokens: outputTokenLimit,
-    trainingDataCutoff: knownModel?.trainingDataCutoff,
+    // trainingDataCutoff: knownModel?.trainingDataCutoff, // disabled as we don't get this from Gemini
     interfaces,
     // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
     // benchmarks: ...

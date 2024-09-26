@@ -53,7 +53,7 @@ export function ContentFragments(props: {
   showUnsafeHtmlCode?: boolean,
 
   textEditsState: ChatMessageTextPartEditState | null,
-  setEditedText: (fragmentId: DMessageFragmentId, value: string) => void,
+  setEditedText: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
@@ -170,6 +170,8 @@ export function ContentFragments(props: {
               key={fragment.fId}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}
+              setEditedText={props.setEditedText}
+              fragmentId={fragment.fId}
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
               fitScreen={props.fitScreen}
