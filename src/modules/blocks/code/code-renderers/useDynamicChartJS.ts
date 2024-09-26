@@ -70,10 +70,8 @@ function _initializeChartJS(Chart: ChartConstructorType): ChartConstructorType {
   Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
   Chart.defaults.responsive = true; // re-draw on resize
   // Chart.defaults.layout.autoPadding = true; // default padding
-  if (window.devicePixelRatio) {
-    console.log(`[DEV] Setting Chart.js devicePixelRatio to 2*${window.devicePixelRatio} from ${Chart.defaults.devicePixelRatio}`);
+  if (window.devicePixelRatio)
     Chart.defaults.devicePixelRatio = 2 * window.devicePixelRatio;
-  }
   return Chart;
 }
 
