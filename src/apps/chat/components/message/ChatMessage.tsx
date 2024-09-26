@@ -924,7 +924,7 @@ export function ChatMessage(props: {
               {!fromAssistant
                 ? <>Beam <span style={{ opacity: 0.5 }}>from here</span></>
                 : !props.isBottom
-                  ? <>Beam <span style={{ opacity: 0.5 }}>this message</span></>
+                  ? <>Beam Edit</>
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Beam Edit<KeyStroke variant='outlined' combo='Ctrl + Shift + B' /></Box>}
             </MenuItem>
           )}

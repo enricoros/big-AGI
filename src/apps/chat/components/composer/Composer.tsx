@@ -6,7 +6,6 @@ import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuB
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import AutoModeIcon from '@mui/icons-material/AutoMode';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import PsychologyIcon from '@mui/icons-material/Psychology';
@@ -605,7 +604,7 @@ export function Composer(props: {
   const sendButtonLabel = chatExecuteModeSendLabel;
 
   const sendButtonIcon =
-    micContinuation ? <AutoModeIcon />
+    micContinuation ? null
       : isAppend ? <SendIcon sx={{ fontSize: 18 }} />
         : isReAct ? <PsychologyIcon />
           : isTextBeam ? <ChatBeamIcon /> /* <GavelIcon /> */
@@ -808,7 +807,8 @@ export function Composer(props: {
 
                     {micIsRunning && (
                       <ButtonMicContinuationMemo
-                        variant={micContinuation ? 'solid' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
+                        isActive={micContinuation}
+                        variant={micContinuation ? 'soft' : 'soft'} color={micContinuation ? 'primary' : 'neutral'} sx={{ background: micContinuation ? undefined : 'none' }}
                         onClick={handleToggleMicContinuation}
                       />
                     )}
