@@ -30,7 +30,7 @@ const chartContainerSx: SxProps = {
 
 // Exposed API
 export type RenderCodeChartJSHandle = {
-  getChartPNG: () => Promise<Blob | null>;
+  getChartPNG: (withBackground: boolean) => Promise<Blob | null>;
 };
 
 
@@ -93,7 +93,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
 
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
-    getChartPNG: async () => {
+    getChartPNG: async (withBackground: boolean) => {
       const chartCanvas = canvasRef.current;
       if (!chartCanvas) return null;
 
@@ -106,19 +106,21 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
         return await asyncCanvasToBlob(chartCanvas, 'image/png');
 
       // Omit the background layer
-      // ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
-      // ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
+      if (withBackground) {
+        ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+        ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
+      }
 
       // Draw the chart
       ctx.drawImage(chartCanvas, 0, 0);
 
       // Great work Big-AGI!
       const pr = chartJSPixelRatio();
-      ctx.font = `${9 * pr}px ${themeFontFamilyCss}`;
+      ctx.font = `${10 * pr}px ${themeFontFamilyCss}`;
       ctx.fillStyle = isDarkMode ? '#9FA6AD' : '#555E68';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
-      ctx.fillText('Big-AGI.com', 8 * pr, pngCanvas.height - 7 * pr);
+      ctx.fillText('Big-AGI.com', 7 * pr, pngCanvas.height - 6 * pr);
       return await asyncCanvasToBlob(pngCanvas, 'image/png');
     },
   }), [isDarkMode]);
