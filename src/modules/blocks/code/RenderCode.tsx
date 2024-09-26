@@ -2,10 +2,11 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
+import { Box, ButtonGroup, Dropdown, ListItem, Menu, MenuButton, Sheet, Tooltip, Typography } from '@mui/joy';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
@@ -20,7 +21,7 @@ import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
+import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx, StyledOverlayButton, } from '../OverlayButton';
 import { RenderCodeChartJS, RenderCodeChartJSHandle } from './code-renderers/RenderCodeChartJS';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
@@ -28,7 +29,7 @@ import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
-import { useOpenInExternalButtons } from '~/modules/blocks/code/code-buttons/useOpenInExternalButtons';
+import { useOpenInWebEditors } from './code-buttons/useOpenInWebEditors';
 
 // style for line-numbers
 import './RenderCode.css';
@@ -214,12 +215,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
 
   // External Buttons
-  const openExternallyButtons = useOpenInExternalButtons(code, blockTitle, blockIsPartial, inferredCodeLanguage, isSVGCode, noTooltips === true);
+  const openExternallyItems = useOpenInWebEditors(code, blockTitle, blockIsPartial, inferredCodeLanguage, isSVGCode);
 
   // style
 
   const isRenderingDiagram = renderMermaid || renderPlantUML;
-  const hasExternalButtons = openExternallyButtons.length > 0;
+  const hasExternalButtons = openExternallyItems.length > 0;
 
   const codeSx: SxProps = React.useMemo(() => ({
 
@@ -240,9 +241,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     ...props.sx,
 
     // patch the min height if we have the second row
-    ...(hasExternalButtons ? { minHeight: '5.25rem' } : {}),
+    // ...(hasExternalButtons ? { minHeight: '5.25rem' } : {}),
 
-  }), [hasExternalButtons, isBorderless, isRenderingDiagram, props.sx, showSoftWrap]);
+  }), [isBorderless, isRenderingDiagram, props.sx, showSoftWrap]);
 
 
   return (
@@ -328,9 +329,15 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
             {/* Group: Text Options */}
             <ButtonGroup aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
+
+              {/* Fullscreen */}
+              <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : !renderSyntaxHighlight ? 'Fullscreen' : 'Present'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
+                <FullscreenRoundedIcon />
+              </OverlayButton>
+
               {/* Soft Wrap toggle */}
               {renderSyntaxHighlight && (
-                <OverlayButton tooltip={noTooltips ? null : 'Soft Wrap'} disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
+                <OverlayButton tooltip={noTooltips ? null : 'Wrap Lines'} disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
                   <WrapTextIcon />
                 </OverlayButton>
               )}
@@ -342,10 +349,25 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                 </OverlayButton>
               )}
 
-              {/* Fullscreen */}
-              <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : !renderSyntaxHighlight ? 'Fullscreen' : 'Present'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
-                <FullscreenRoundedIcon />
-              </OverlayButton>
+              {/* Open In Web Editors */}
+              {hasExternalButtons && (
+                <Dropdown>
+                  <Tooltip disableInteractive arrow placement='top' title='Web Editors'>
+                    <MenuButton
+                      slots={{ root: StyledOverlayButton }}
+                      slotProps={{ root: { variant: 'outlined' } }}
+                    >
+                      <EditRoundedIcon />
+                    </MenuButton>
+                  </Tooltip>
+                  <Menu sx={{ minWidth: 160 }} placement='bottom-end'>
+                    <ListItem>
+                      <Typography level='body-sm'>Edit with:</Typography>
+                    </ListItem>
+                    {openExternallyItems}
+                  </Menu>
+                </Dropdown>
+              )}
 
               {/* Copy */}
               {props.noCopyButton !== true && !renderChartJS && (
@@ -358,23 +380,29 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             {/* Special Group: ChartJS */}
             {props.noCopyButton !== true && renderChartJS && (
               <ButtonGroup aria-label='Chart Actions' sx={overlayGroupWithShadowSx}>
+
+                {/* Download Chart PNG */}
                 <OverlayButton tooltip={noTooltips ? null : <>Download PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for background</Box></>} onClick={handleChartDownload}>
                   <FileDownloadOutlinedIcon />
                 </OverlayButton>
+
+                {/* Copy Chart PNG */}
                 <OverlayButton tooltip={noTooltips ? null : <>Copy PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for background</Box></>} onClick={handleChartCopyToClipboard}>
                   <ContentCopyIcon />
                 </OverlayButton>
+
               </ButtonGroup>
             )}
 
           </Box>
 
+          {/* DISABLED: Converted to a Dropdown */}
           {/* [row 2, optional] Group: Open Externally */}
-          {!!openExternallyButtons.length && (
-            <ButtonGroup aria-label='Open code in external editors' sx={overlayGroupWithShadowSx}>
-              {openExternallyButtons}
-            </ButtonGroup>
-          )}
+          {/*{!!openExternallyButtons.length && (*/}
+          {/*  <ButtonGroup aria-label='Open code in external editors' sx={overlayGroupWithShadowSx}>*/}
+          {/*    {openExternallyButtons}*/}
+          {/*  </ButtonGroup>*/}
+          {/*)}*/}
 
         </Box>
       )}
