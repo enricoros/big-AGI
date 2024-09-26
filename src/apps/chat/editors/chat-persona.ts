@@ -6,7 +6,7 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE } from '~/common/stores/chat/chat.message';
+import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
@@ -94,7 +94,7 @@ export async function runPersonaOnConversationHead(
     cHandler.messageEdit(assistantMessageId, lastDeepCopy, true, false);
 
   // special case: if the last message was aborted and had no content, delete it
-  if (lastDeepCopy.generator?.tokenStopReason === 'client-abort' && lastDeepCopy.fragments?.length === 0) {
+  if (messageWasInterruptedAtStart(lastDeepCopy)) {
     cHandler.messagesDelete([assistantMessageId]);
     return false;
   }

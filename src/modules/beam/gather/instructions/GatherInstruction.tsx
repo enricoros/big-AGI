@@ -7,7 +7,7 @@ import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessag
 import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -112,6 +112,10 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : 1 },
     onMessageUpdated,
   ).then((status) => {
+
+    const clearFragments = messageWasInterruptedAtStart(status.lastDMessage);
+    if (clearFragments)
+      inputs.intermediateDMessage.fragments = [];
 
     // re-throw errors, as streamAssistantMessage catches internally
     if (status.outcome === 'aborted') {
