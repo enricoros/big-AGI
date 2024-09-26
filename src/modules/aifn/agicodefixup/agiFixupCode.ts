@@ -9,6 +9,8 @@ import { getFastLLMId } from '~/common/stores/llms/store-llms';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 
 
+export type CodeFixType = keyof typeof CodeFixes;
+
 interface CodeFix {
   description: string;
   systemMessage: string;
@@ -16,7 +18,6 @@ interface CodeFix {
   functionName: string;
   outputSchema: ZodObject<any>;
 }
-
 
 const CodeFixes: Record<string, CodeFix> = {
 
@@ -32,7 +33,7 @@ Respond only by calling the \`{{functionName}}\` function.`,
 \`\`\`
 
 {{errorMessageSection}}
-Please analyze the code, correct any errors, and provide a valid JSON configuration that can be parsed by ChartJS.
+Please analyze the code, correct any errors, in particular remove functions if any, and provide a valid JSON configuration that can be parsed by ChartJS.
 Call the function \`{{functionName}}\` once, providing the corrected code.`,
     functionName: 'provide_corrected_chartjs_code',
     outputSchema: z.object({
@@ -41,8 +42,6 @@ Call the function \`{{functionName}}\` once, providing the corrected code.`,
   },
 
 };
-
-export type CodeFixType = keyof typeof CodeFixes;
 
 
 /**
@@ -62,7 +61,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
   // Construct the AI chat generate request
   const templateVariables = {
     codeToFix: codeToFix,
-    errorMessageSection: errorString?.trim() ? `The error message was:\n${errorString}\n` : '',
+    errorMessageSection: errorString?.trim() ? `The error message was:\n${errorString}\n\n` : '',
     functionName: config.functionName,
   };
 
