@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Sheet } from '@mui/joy';
+import { Box, Button, Sheet, Typography } from '@mui/joy';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 
@@ -309,13 +309,9 @@ export function ContentFragments(props: {
         case '_pt_sentinel':
         default:
           return (
-            <ContentPartPlaceholder
-              key={fragment.fId}
-              placeholderText={`Unknown Content fragment: ${fragment.part.pt}`}
-              messageRole={props.messageRole}
-              contentScaling={props.contentScaling}
-              showAsDanger
-            />
+            <Typography key={fragment.fId} level='body-sm' color='danger'>
+              Unknown Content fragment: {fragment.part.pt}
+            </Typography>
           );
       }
     }).filter(Boolean)}
