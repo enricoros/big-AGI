@@ -26,6 +26,7 @@ interface ChartConstructorType {
 }
 
 interface ChartDefaults {
+  color?: string;
   devicePixelRatio?: number;
   font?: {
     family: string;
@@ -33,6 +34,7 @@ interface ChartDefaults {
   };
   maintainAspectRatio?: boolean;
   responsive?: boolean;
+  plugins?: any,
 
   // [key: string]: any;
 }
@@ -52,27 +54,43 @@ export interface ChartInstanceType {
 
 // Code manipulation functions
 
-export function fixupChartJSObject(chartConfig: ChartConfiguration): void {
+function _chartJSInitializeDeaults(Chart: ChartConstructorType): ChartConstructorType {
+
+  // Use the application fonts
+  if (Chart.defaults.font) {
+    Chart.defaults.font.family = themeFontFamilyCss;
+    Chart.defaults.font.size = 13;
+  }
+
+  // Responsive defaults, to autosize the chart while keepingthe aspect ratios
+  Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
+  Chart.defaults.responsive = true; // re-draw on resize
+
+  // Set devicePixelRatio to double, to enable downloading/zooming of charts
+  // FIXME: there's an issue here, by overriding the default (which invokes getDevicePixelRatio) we stop
+  //        the re-render when a window is moved to a different screen with different DPI. In some sense
+  //        we are anchoring the DPR to the first screen's x 2.
+  if (window.devicePixelRatio)
+    Chart.defaults.devicePixelRatio = 2 * window.devicePixelRatio;
+
+  // Change the default padding for the title
+  Chart.defaults.plugins.title.padding = { top: 8, bottom: 16 };
+
+  return Chart;
+}
+
+export function chartJSApplyTheme(Chart: ChartConstructorType, isDarkMode: boolean) {
+  // responsive color
+  Chart.defaults.color = isDarkMode ? '#CDD7E1' : '#32383E';
+}
+
+export function chartJSFixupGeneratedObject(chartConfig: ChartConfiguration): void {
   // Do not remove Font, allow for override
   // delete chartConfig?.options?.font;
   // Remove responsive options - we handle this ourselves by default
   delete chartConfig?.options?.responsive;
   delete chartConfig?.options?.maintainAspectRatio;
   delete chartConfig?.options?.devicePixelRatio;
-}
-
-function _initializeChartJS(Chart: ChartConstructorType): ChartConstructorType {
-  Chart.defaults.font = {
-    ...Chart.defaults.font,
-    family: themeFontFamilyCss,
-    size: 13,
-  };
-  Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
-  Chart.defaults.responsive = true; // re-draw on resize
-  // Chart.defaults.layout.autoPadding = true; // default padding
-  if (window.devicePixelRatio)
-    Chart.defaults.devicePixelRatio = 2 * window.devicePixelRatio;
-  return Chart;
 }
 
 
@@ -82,7 +100,7 @@ let chartJSPromise: Promise<ChartConstructorType> | null = null;
 function loadCDNScript(): Promise<ChartConstructorType> {
   // Resolve immediately if already loaded
   if ((window as any).Chart)
-    return Promise.resolve(_initializeChartJS((window as any).Chart));
+    return Promise.resolve(_chartJSInitializeDeaults((window as any).Chart));
 
   // If loading has already started, return the existing promise
   if (chartJSPromise) return chartJSPromise;
@@ -101,7 +119,7 @@ function loadCDNScript(): Promise<ChartConstructorType> {
     script.async = true;
 
     script.onload = () => {
-      if ((window as any).Chart) resolve(_initializeChartJS((window as any).Chart));
+      if ((window as any).Chart) resolve(_chartJSInitializeDeaults((window as any).Chart));
       else reject(new Error('Chart.js failed to load.'));
     };
 
