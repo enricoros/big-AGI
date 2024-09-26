@@ -6,6 +6,8 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
+import { asyncCanvasToBlob } from '~/common/util/canvasUtils';
+
 import { ChartConfiguration, ChartInstanceType, fixupChartJSObject, useDynamicChartJS } from './useDynamicChartJS';
 
 
@@ -25,10 +27,16 @@ const chartContainerSx: SxProps = {
 };
 
 
-export function RenderCodeChartJS(props: {
+// Exposed API
+export type RenderCodeChartJSHandle = {
+  getChartPNG: () => Promise<Blob | null>;
+};
+
+
+export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(props: {
   chartJSCode: string;
   onReplaceInCode?: (search: string, replace: string) => boolean;
-}) {
+}, ref: React.Ref<RenderCodeChartJSHandle>) {
 
   // state
   const [renderError, setRenderError] = React.useState<string | null>(null);
@@ -77,6 +85,15 @@ export function RenderCodeChartJS(props: {
       chartInstanceRef.current = null;
     };
   }, [chartJS, parseResult.chartConfig]);
+
+
+  // Expose control methods
+  React.useImperativeHandle(ref, () => ({
+    getChartPNG: async () => {
+      if (!canvasRef.current) return null;
+      return await asyncCanvasToBlob(canvasRef.current, 'image/png');
+    },
+  }), []);
 
 
   // handlers
@@ -147,4 +164,4 @@ export function RenderCodeChartJS(props: {
       <canvas ref={canvasRef} />
     </Box>
   );
-}
+});

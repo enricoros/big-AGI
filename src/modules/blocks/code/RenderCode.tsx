@@ -6,17 +6,20 @@ import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
-import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { copyBlobToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
+import { downloadBlob } from '~/common/util/downloadUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
-import { RenderCodeChartJS } from './code-renderers/RenderCodeChartJS';
+import { RenderCodeChartJS, RenderCodeChartJSHandle } from './code-renderers/RenderCodeChartJS';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
 import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
@@ -113,6 +116,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
   const [showChartJS, setShowChartJS] = React.useState(true);
+  const chartJSRef = React.useRef<RenderCodeChartJSHandle>(null);
   const { showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
     showLineNumbers: state.renderCodeLineNumbers,
     showSoftWrap: state.renderCodeSoftWrap,
@@ -142,6 +146,16 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     e.stopPropagation();
     copyToClipboard(code, 'Code');
   }, [code]);
+
+  const handleChartCopyToClipboard = React.useCallback(async () => {
+    chartJSRef.current?.getChartPNG()
+      .then(blob => !!blob && copyBlobToClipboard(blob, 'Chart Image'));
+  }, []);
+
+  const handleChartDownload = React.useCallback(async () => {
+    chartJSRef.current?.getChartPNG()
+      .then(blob => !!blob && downloadBlob(blob, `chart_${prettyTimestampForFilenames()}.png`));
+  }, []);
 
 
   // heuristics for specialized rendering
@@ -250,7 +264,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
             : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
               : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                : renderChartJS ? <RenderCodeChartJS chartJSCode={code} onReplaceInCode={props.onReplaceInCode} />
+                : renderChartJS ? <RenderCodeChartJS ref={chartJSRef} chartJSCode={code} onReplaceInCode={props.onReplaceInCode} />
                   : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
 
       </Box>
@@ -319,12 +333,25 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               )}
 
               {/* Copy */}
-              {props.noCopyButton !== true && (
+              {props.noCopyButton !== true && !renderChartJS && (
                 <OverlayButton tooltip={noTooltips ? null : 'Copy Code'} variant='outlined' onClick={handleCopyToClipboard}>
                   <ContentCopyIcon />
                 </OverlayButton>
               )}
             </ButtonGroup>
+
+            {/* Special Group: ChartJS */}
+            {props.noCopyButton !== true && renderChartJS && (
+              <ButtonGroup color='primary' aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
+                <OverlayButton tooltip={noTooltips ? null : 'Download Image'} onClick={handleChartDownload}>
+                  <FileDownloadOutlinedIcon />
+                </OverlayButton>
+                <OverlayButton tooltip={noTooltips ? null : 'Copy Image'} onClick={handleChartCopyToClipboard}>
+                  <ContentCopyIcon />
+                </OverlayButton>
+              </ButtonGroup>
+            )}
+
           </Box>
 
           {/* [row 2, optional] Group: Open Externally */}
