@@ -5,6 +5,7 @@ import { Box } from '@mui/joy';
 
 export function RenderCodeSyntax(props: {
   highlightedSyntaxAsHtml: string | null;
+  presenterMode?: boolean;
 }) {
   return (
     <Box
@@ -12,6 +13,7 @@ export function RenderCodeSyntax(props: {
       aria-label='Code block'
       className='code-container'
       dangerouslySetInnerHTML={{ __html: props.highlightedSyntaxAsHtml ?? '' }}
+      sx={props.presenterMode ? { fontSize: '125%' } : undefined}
     />
   );
 }

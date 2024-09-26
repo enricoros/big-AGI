@@ -8,6 +8,7 @@ import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
+import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
@@ -16,6 +17,7 @@ import WrapTextIcon from '@mui/icons-material/WrapText';
 import { copyBlobToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
+import { useFullscreenElement } from '~/common/components/useFullscreenElement';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
@@ -116,8 +118,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
   const [showChartJS, setShowChartJS] = React.useState(true);
+  const fullScreenElementRef = React.useRef<HTMLDivElement>(null);
   const chartJSRef = React.useRef<RenderCodeChartJSHandle>(null);
-  const { showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
+
+  // external state
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenElement(fullScreenElementRef);
+  const { uiComplexityMode, showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
+    uiComplexityMode: state.complexityMode,
     showLineNumbers: state.renderCodeLineNumbers,
     showSoftWrap: state.renderCodeSoftWrap,
     setShowLineNumbers: state.setRenderCodeLineNumbers,
@@ -184,7 +191,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG && !renderChartJS;
   const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap || renderChartJS;
-  const renderLineNumbers = showLineNumbers && !cannotRenderLineNumbers;
+  const renderLineNumbers = showLineNumbers && !cannotRenderLineNumbers && uiComplexityMode === 'extra';
 
 
   // Language & Highlight
@@ -246,6 +253,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     >
 
       <Box
+        ref={fullScreenElementRef}
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
         sx={codeSx}
@@ -267,7 +275,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
               : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
                 : renderChartJS ? <RenderCodeChartJS ref={chartJSRef} chartJSCode={code} onReplaceInCode={props.onReplaceInCode} />
-                  : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} />}
+                  : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} presenterMode={isFullscreen} />}
 
       </Box>
 
@@ -309,9 +317,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                   {isSVGCode ? <ChangeHistoryTwoToneIcon /> : isChartJSCode ? <BarChartIcon /> : <SquareTwoToneIcon />}
                 </OverlayButton>
 
-                {/* Fit-To-Screen */}
+                {/* Fit-Content */}
                 {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
-                  <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Screen'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
+                  <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Content'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
                     <FitScreenIcon />
                   </OverlayButton>
                 )}
@@ -328,11 +336,16 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               )}
 
               {/* Line Numbers toggle */}
-              {renderSyntaxHighlight && (
+              {renderSyntaxHighlight && uiComplexityMode === 'extra' && (
                 <OverlayButton tooltip={noTooltips ? null : 'Line Numbers'} disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
                   <NumbersRoundedIcon />
                 </OverlayButton>
               )}
+
+              {/* Fullscreen */}
+              <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
+                <FullscreenRoundedIcon />
+              </OverlayButton>
 
               {/* Copy */}
               {props.noCopyButton !== true && !renderChartJS && (
