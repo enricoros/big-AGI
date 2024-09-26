@@ -14,7 +14,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { InlineError } from '~/common/components/InlineError';
 import { Is } from '~/common/util/pwaUtils';
 import { animationCameraFlash } from '~/common/util/animUtils';
-import { downloadVideoFrameAsPNG, renderVideoFrameAsPNGFile } from '~/common/util/videoUtils';
+import { downloadVideoFrame, renderVideoFrameAsFile } from '~/common/util/videoUtils';
 import { useCameraCapture } from '~/common/components/useCameraCapture';
 
 
@@ -106,7 +106,7 @@ export function CameraCaptureModal(props: {
     if (!videoRef.current) return;
     try {
       // handleFlashEffect(0); // Trigger flash
-      const file = await renderVideoFrameAsPNGFile(videoRef.current, 'camera');
+      const file = await renderVideoFrameAsFile(videoRef.current, 'camera', 'image/jpeg', 0.95);
       onAttachImage(file);
       stopAndClose();
     } catch (error) {
@@ -118,16 +118,16 @@ export function CameraCaptureModal(props: {
     if (!videoRef.current) return;
     try {
       handleFlashEffect(ADD_COOLDOWN_MS); // Trigger flash and cooldown
-      const file = await renderVideoFrameAsPNGFile(videoRef.current, 'camera');
+      const file = await renderVideoFrameAsFile(videoRef.current, 'camera', 'image/jpeg', 0.95);
       onAttachImage(file);
     } catch (error) {
       console.error('Error capturing video frame:', error);
     }
   }, [handleFlashEffect, onAttachImage, videoRef]);
 
-  const handleVideoDownloadClicked = React.useCallback(() => {
+  const handleVideoDownloadClicked = React.useCallback(async () => {
     if (!videoRef.current) return;
-    downloadVideoFrameAsPNG(videoRef.current, 'camera');
+    await downloadVideoFrame(videoRef.current, 'camera', 'image/jpeg', 0.98);
   }, [videoRef]);
 
 
@@ -348,7 +348,7 @@ export function CameraCaptureModal(props: {
                   <AddRoundedIcon />
                 </IconButton>
               </Tooltip>
-              <Button size="lg" onClick={handleVideoSnapClicked} endDecorator={<CameraEnhanceIcon />} sx={captureButtonSx}>
+              <Button size='lg' onClick={handleVideoSnapClicked} endDecorator={<CameraEnhanceIcon />} sx={captureButtonSx}>
                 Capture
               </Button>
             </ButtonGroup>
