@@ -147,13 +147,15 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     copyToClipboard(code, 'Code');
   }, [code]);
 
-  const handleChartCopyToClipboard = React.useCallback(async () => {
-    chartJSRef.current?.getChartPNG()
-      .then(blob => !!blob && copyBlobToClipboard(blob, 'Chart Image'));
+  const handleChartCopyToClipboard = React.useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    chartJSRef.current?.getChartPNG(e.shiftKey)
+      .then(blob => !!blob && copyBlobToClipboard(blob, 'Chart Image' + (e.shiftKey ? ' with background' : '')));
   }, []);
 
-  const handleChartDownload = React.useCallback(async () => {
-    chartJSRef.current?.getChartPNG()
+  const handleChartDownload = React.useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    chartJSRef.current?.getChartPNG(e.shiftKey)
       .then(blob => !!blob && downloadBlob(blob, `chart_${prettyTimestampForFilenames()}.png`));
   }, []);
 
@@ -342,11 +344,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
             {/* Special Group: ChartJS */}
             {props.noCopyButton !== true && renderChartJS && (
-              <ButtonGroup color='primary' aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
-                <OverlayButton tooltip={noTooltips ? null : 'Download Image'} onClick={handleChartDownload}>
+              <ButtonGroup aria-label='Chart Actions' sx={overlayGroupWithShadowSx}>
+                <OverlayButton tooltip={noTooltips ? null : <>Download PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for background</Box></>} onClick={handleChartDownload}>
                   <FileDownloadOutlinedIcon />
                 </OverlayButton>
-                <OverlayButton tooltip={noTooltips ? null : 'Copy Image'} onClick={handleChartCopyToClipboard}>
+                <OverlayButton tooltip={noTooltips ? null : <>Copy PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for background</Box></>} onClick={handleChartCopyToClipboard}>
                   <ContentCopyIcon />
                 </OverlayButton>
               </ButtonGroup>
