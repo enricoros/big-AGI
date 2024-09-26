@@ -9,7 +9,6 @@ import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutl
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
-import TextureIcon from '@mui/icons-material/Texture';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
@@ -74,7 +73,8 @@ function RayControls(props: {
             {props.rayLetter}
           </Typography>
         ) : props.llmVendorIcon ? <props.llmVendorIcon sx={{ fontSize: 'lg' }} />
-          : <TextureIcon sx={{ fontSize: 'lg' }} />
+          : null
+          // : <TextureIcon sx={{ fontSize: 'lg' }} />
         }
       </Box>
     </TooltipOutlined>

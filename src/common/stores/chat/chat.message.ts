@@ -193,6 +193,13 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
 }
 
 
+// helpers - status checks
+
+export function messageWasInterruptedAtStart(message: Pick<DMessage, 'generator' | 'fragments'>): boolean {
+  return message.generator?.tokenStopReason === 'client-abort' && message.fragments.length === 0;
+}
+
+
 // helpers - user flags
 
 const flag2EmojiMap: Record<DMessageUserFlag, string> = {
