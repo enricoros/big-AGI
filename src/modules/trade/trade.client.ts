@@ -1,7 +1,6 @@
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
-import { prettyShortChatModelName } from '../../apps/chat/components/message/messageUtils';
 
 import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
@@ -9,6 +8,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/state/store-folders';

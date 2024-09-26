@@ -6,10 +6,10 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessageUtils';
 
 import { TokenBadgeMemo } from '../composer/tokens/TokenBadge';
 import { isErrorChatMessage } from './explainServiceErrors';
-import { makeMessageAvatarIcon, messageBackground } from './messageUtils';
 import { messageSkippedSx } from './ChatMessage';
 
 
