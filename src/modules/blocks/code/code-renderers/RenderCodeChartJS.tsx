@@ -1,14 +1,14 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Typography } from '@mui/joy';
+import { Box, Button, Typography, useColorScheme } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
 import { asyncCanvasToBlob } from '~/common/util/canvasUtils';
 
-import { ChartConfiguration, ChartInstanceType, fixupChartJSObject, useDynamicChartJS } from './useDynamicChartJS';
+import { ChartConfiguration, ChartInstanceType, chartJSApplyTheme, chartJSFixupGeneratedObject, useDynamicChartJS } from './useDynamicChartJS';
 
 
 const chartContainerSx: SxProps = {
@@ -45,14 +45,14 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
   const chartInstanceRef = React.useRef<ChartInstanceType | null>(null);
 
   // external state
+  const isDarkMode = useColorScheme().mode === 'dark';
   const { chartJS, loadingError, isLoading: isLibraryLoading } = useDynamicChartJS();
-
 
   // immediate parsing (note, this could be done with useEffect and state, but we save a render cycle)
   const parseResult = React.useMemo(() => {
     try {
       const config = JSON.parse(props.chartJSCode) as ChartConfiguration;
-      fixupChartJSObject(config);
+      chartJSFixupGeneratedObject(config);
       return { chartConfig: config, parseError: null };
     } catch (error: any) {
       return { chartConfig: null, parseError: error.message as string || 'Unknown error.' };
@@ -71,6 +71,9 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
       // Destroy previous chart instance if it exists
       chartInstanceRef.current?.destroy();
 
+      // React to the theme
+      chartJSApplyTheme(chartJS, isDarkMode);
+
       // Create new chart instance
       chartInstanceRef.current = new chartJS(canvasRef.current, parseResult.chartConfig);
       setRenderError(null);
@@ -84,7 +87,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
       chartInstanceRef.current?.destroy();
       chartInstanceRef.current = null;
     };
-  }, [chartJS, parseResult.chartConfig]);
+  }, [chartJS, parseResult.chartConfig, isDarkMode]);
 
 
   // Expose control methods
@@ -140,15 +143,15 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
               }}
               endDecorator={<AutoAwesomeIcon />}
             >
-              {isFetching ? 'Fixing Chart...' : 'Fix Chart'}
+              {isFetching ? 'Fixing Chart... ' : 'Attempt Fix'}
             </Button>
           )}
           {fixupError ? (
-            <Typography level='body-sm' color='danger'>
+            <Typography level='body-sm' color='danger' sx={{ ml: 0.5 }}>
               Error fixing chart: {fixupError}
             </Typography>
           ) : (parseResult.parseError && !isFetching) && (
-            <Typography level='body-xs'>
+            <Typography level='body-xs' sx={{ ml: 0.5 }}>
               Invalid Chart.js input: {parseResult.parseError}
             </Typography>
           )}
