@@ -829,26 +829,27 @@ export function ChatMessage(props: {
             </MenuItem>
           )}
 
-          <ListDivider />
-
           {/* Anthropic Breakpoint Toggle */}
-          {!isUserMessageSkipped && !!props.showAntPromptCaching && (
+          {!messagePendingIncomplete && <ListDivider />}
+          {!messagePendingIncomplete && !isUserMessageSkipped && !!props.showAntPromptCaching && (
             <MenuItem onClick={handleOpsToggleAntCacheUser}>
               <ListItemDecorator><AnthropicIcon sx={isVndAndCacheUser ? antCachePromptOnSx : antCachePromptOffSx} /></ListItemDecorator>
               {isVndAndCacheUser ? 'Do not cache' : <>Cache <span style={{ opacity: 0.5 }}>up to here</span></>}
             </MenuItem>
           )}
-          {!isUserMessageSkipped && !!props.showAntPromptCaching && isVndAndCacheAuto && !isVndAndCacheUser && (
+          {!messagePendingIncomplete && !isUserMessageSkipped && !!props.showAntPromptCaching && isVndAndCacheAuto && !isVndAndCacheUser && (
             <MenuItem disabled>
               <ListItemDecorator><TextureIcon sx={{ color: ModelVendorAnthropic.brandColor }} /></ListItemDecorator>
               Auto-Cached <span style={{ opacity: 0.5 }}>for 5 min</span>
             </MenuItem>
           )}
           {/* Aix Skip Message */}
-          <MenuItem onClick={handleOpsToggleSkipMessage}>
-            <ListItemDecorator>{isUserMessageSkipped ? <VisibilityOffIcon sx={{ color: 'danger.plainColor' }} /> : <VisibilityIcon />}</ListItemDecorator>
-            {isUserMessageSkipped ? 'Unskip (Process with AI)' : 'Skip AI processing'}
-          </MenuItem>
+          {!messagePendingIncomplete && (
+            <MenuItem onClick={handleOpsToggleSkipMessage}>
+              <ListItemDecorator>{isUserMessageSkipped ? <VisibilityOffIcon sx={{ color: 'danger.plainColor' }} /> : <VisibilityIcon />}</ListItemDecorator>
+              {isUserMessageSkipped ? 'Unskip' : 'Skip AI processing'}
+            </MenuItem>
+          )}
 
           {/* Delete / Branch / Truncate */}
           {!!props.onMessageBranch && <ListDivider />}
