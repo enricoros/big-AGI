@@ -198,6 +198,9 @@ export function Composer(props: {
   const noConversation = !targetConversationId;
   const showChatAttachments = chatExecuteModeCanAttach(chatExecuteMode);
 
+  const micIsRunning = !!speechInterimResult;
+  // more mic way below, as we use complex hooks
+
 
   // tokens derived state
 
@@ -315,12 +318,20 @@ export function Composer(props: {
   }, [chatExecuteMode, composeText, handleSendAction, setComposeText]);
 
   const handleSendClicked = React.useCallback(async () => {
+    if (micIsRunning) {
+      addSnackbar({ key: 'chat-mic-running', message: 'Please wait for the microphone to finish.', type: 'info' });
+      return;
+    }
     await handleSendAction(chatExecuteMode, composeText); // 'chat/write/...' button
-  }, [chatExecuteMode, composeText, handleSendAction]);
+  }, [chatExecuteMode, composeText, handleSendAction, micIsRunning]);
 
   const handleSendTextBeamClicked = React.useCallback(async () => {
+    if (micIsRunning) {
+      addSnackbar({ key: 'chat-mic-running', message: 'Please wait for the microphone to finish.', type: 'info' });
+      return;
+    }
     await handleSendAction('beam-content', composeText); // 'beam' button
-  }, [composeText, handleSendAction]);
+  }, [composeText, handleSendAction, micIsRunning]);
 
   const handleStopClicked = React.useCallback(() => {
     targetConversationId && abortConversationTemp(targetConversationId);
@@ -476,7 +487,6 @@ export function Composer(props: {
 
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
-  const micIsRunning = !!speechInterimResult;
   const micContinuationTrigger = micContinuation && !micIsRunning && !assistantAbortible && !recognitionState.errorMessage;
   const micColor: ColorPaletteProp = recognitionState.errorMessage ? 'danger' : recognitionState.isActive ? 'primary' : recognitionState.hasAudio ? 'primary' : 'neutral';
   const micVariant: VariantProp = recognitionState.hasSpeech ? 'solid' : recognitionState.hasAudio ? 'soft' : 'soft';  //(isDesktop ? 'soft' : 'plain');
