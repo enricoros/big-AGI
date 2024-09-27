@@ -1,30 +1,25 @@
 import * as React from 'react';
 
-import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 
-export function ContentPartPlaceholder(props: {
+export function BlockPartPlaceholder(props: {
   placeholderText: string,
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
-  showAsDanger?: boolean,
   showAsItalic?: boolean,
   // showAsProgress?: boolean,
 }) {
   // const placeholder = (
   return (
-    <AutoBlocksRenderer
+    <ScaledTextBlockRenderer
       text={props.placeholderText}
-      fromRole={props.messageRole}
       contentScaling={props.contentScaling}
-      fitScreen={false}
-      isMobile={false /* assumption that the Placeholder Part doesn't react to size, and we assume desktop */}
-      showAsDanger={props.showAsDanger}
-      showAsItalic={props.showAsItalic}
       textRenderVariant='text'
+      showAsItalic={props.showAsItalic}
     />
   );
   //

@@ -18,7 +18,7 @@ import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAtta
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
-import { TextFragmentEditor } from '../fragments-content/TextFragmentEditor';
+import { BlockEdit_TextFragment } from '../fragments-content/BlockEdit_TextFragment';
 import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButton';
 import { useLiveFileSync } from './livefile-sync/useLiveFileSync';
 
@@ -258,7 +258,7 @@ export function DocAttachmentFragment(props: {
       {/* Show / Edit the Document Attachment Part */}
       {isEditing ? (
         // Document Editor
-        <TextFragmentEditor
+        <BlockEdit_TextFragment
           textPartText={fragmentDocPart.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}

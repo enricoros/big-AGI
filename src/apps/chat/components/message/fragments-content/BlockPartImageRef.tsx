@@ -11,7 +11,7 @@ import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 
-export function ContentPartImageRef(props: {
+export function BlockPartImageRef(props: {
   imageRefPart: DMessageImageRefPart,
   fragmentId: DMessageFragmentId,
   contentScaling: ContentScaling,
