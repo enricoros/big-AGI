@@ -38,6 +38,8 @@ export interface AttachmentsDraftsStore extends AttachmentDraftsState {
    */
   takeFragmentsByType: (fragmentsType: DMessageAttachmentFragment['part']['pt'], attachmentDraftId: AttachmentDraftId | null, removeFragments: boolean) => DMessageAttachmentFragment[];
 
+  removeAttachmentDraftOutputFragment: (attachmentDraftId: AttachmentDraftId, fragmentIndex: number) => void;
+
   _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>> | ((attachment: AttachmentDraft) => Partial<Omit<AttachmentDraft, 'outputFragments'>>)) => void;
   _replaceAttachmentOutputFragments: (attachmentDraftId: AttachmentDraftId, outputFragments: DMessageAttachmentFragment[]) => void;
   _getAttachment: (attachmentDraftId: AttachmentDraftId) => AttachmentDraft | undefined;
@@ -238,6 +240,45 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
 
     return textFragments;
   },
+
+
+  removeAttachmentDraftOutputFragment: (attachmentDraftId: AttachmentDraftId, fragmentIndex: number) =>
+    _set((state) => {
+      const { attachmentDrafts } = state;
+
+      // Find Attachment Draft
+      const attachmentIndex = attachmentDrafts.findIndex((a) => a.id === attachmentDraftId);
+      if (attachmentIndex === -1) return state;
+
+      // Find the Fragment
+      const attachment = attachmentDrafts[attachmentIndex];
+      const fragmentToRemove = attachment.outputFragments[fragmentIndex];
+      if (!fragmentToRemove) return state;
+
+      // Removal: rmeove associated DBlob items (there are no other references to the fragment, it's only the attachment)
+      void removeAttachmentOwnedDBAsset(fragmentToRemove);
+
+      // Create a new array of fragments without the removed one
+      const newOutputFragments = [...attachment.outputFragments];
+      newOutputFragments.splice(fragmentIndex, 1);
+
+      // If there are no fragments left, remove the entire attachment draft
+      if (newOutputFragments.length === 0) {
+        const newAttachments = [...attachmentDrafts];
+        newAttachments.splice(attachmentIndex, 1);
+        return {
+          attachmentDrafts: newAttachments,
+        };
+      }
+
+      // Update the attachment draft with the new fragments
+      const newAttachments = [...attachmentDrafts];
+      newAttachments[attachmentIndex] = { ...attachment, outputFragments: newOutputFragments };
+      return {
+        attachmentDrafts: newAttachments,
+      };
+    }),
+
 
   _editAttachment: (attachmentDraftId: AttachmentDraftId, update: Partial<Omit<AttachmentDraft, 'outputFragments'>> | ((attachment: AttachmentDraft) => Partial<Omit<AttachmentDraft, 'outputFragments'>>)) =>
     _set(state => ({

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip } from '@mui/joy';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
@@ -65,7 +65,7 @@ export function BlockOpEmpty(props: {
           size={props.contentScaling === 'md' ? 'lg' : 'md'}
           onClick={props.onDelete}
           sx={chipSx}
-          startDecorator={<DeleteOutlineIcon />}
+          startDecorator={<DeleteForeverIcon />}
         >
           Delete
         </Chip>
