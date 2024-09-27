@@ -8,7 +8,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 
-import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
@@ -231,12 +231,9 @@ export function ExplainerCarousel(props: {
               '--color-canvas-default': 'transparent!important',
             },
           }}>
-            <AutoBlocksRenderer
+            <ScaledTextBlockRenderer
               text={mdText}
-              fromRole='assistant'
               contentScaling={contentScaling /* was: 'md' */}
-              fitScreen={isMobile}
-              isMobile={isMobile}
               textRenderVariant='markdown'
             />
           </Box>
