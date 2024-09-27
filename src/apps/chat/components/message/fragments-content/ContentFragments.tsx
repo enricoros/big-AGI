@@ -6,7 +6,7 @@ import { Box, Button, Sheet } from '@mui/joy';
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
-import type { ContentScaling } from '~/common/app.theme';
+import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
@@ -47,6 +47,7 @@ export function ContentFragments(props: {
   showEmptyNotice: boolean,
 
   contentScaling: ContentScaling,
+  uiComplexityMode: UIComplexityMode,
   fitScreen: boolean,
   isMobile: boolean,
   messageRole: DMessageRole,
@@ -75,7 +76,7 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   // const isMonoFragment = props.fragments.length < 2;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
-  const showDataStreamViz = props.fragments.length === 1 && isContentFragment(props.fragments[0]) && props.fragments[0].part.pt === 'ph';
+  const showDataStreamViz = props.uiComplexityMode !== 'minimal' && props.fragments.length === 1 && isContentFragment(props.fragments[0]) && props.fragments[0].part.pt === 'ph';
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
   if (isEditingText && !props.fragments.length)

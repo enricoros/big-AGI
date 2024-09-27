@@ -8,7 +8,7 @@ import { DataStreamViz } from '~/common/components/DataStreamViz';
 
 
 // configuration
-const DATASTREAM_VISUALIZATION_DELAY = 5000;
+const DATASTREAM_VISUALIZATION_DELAY = Math.round(Math.PI * 1000);
 
 
 export function BlockPartPlaceholder(props: {
