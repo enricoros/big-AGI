@@ -33,7 +33,7 @@ Respond only by calling the \`{{functionName}}\` function.`,
 \`\`\`
 
 {{errorMessageSection}}
-Please analyze the code, correct any errors, in particular remove functions if any, and provide a valid JSON configuration that can be parsed by ChartJS.
+Please analyze the JSON, correct any errors (of course remove functions if any), and provide a valid JSON configuration that can be parsed by ChartJS.
 Call the function \`{{functionName}}\` once, providing the corrected code.`,
     functionName: 'provide_corrected_chartjs_code',
     outputSchema: z.object({
@@ -86,7 +86,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
     aixRequest,
     aixCreateChatGenerateStreamContext('DEV', 'DEV'),
     false,
-    { abortSignal },
+    { abortSignal, llmOptionsOverride: { llmTemperature: 0 /* chill the model for fixing code, we need valid json, not creativity */ } },
   );
 
   // Validate and parse the AI's response
