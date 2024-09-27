@@ -28,7 +28,7 @@ function VoicesDropdown(props: {
       // color={props.isErrorVoices ? 'danger' : undefined}
       placeholder={props.isErrorVoices ? 'Issue loading voices' : 'Select a voice'}
       startDecorator={<RecordVoiceOverTwoToneIcon />}
-      endDecorator={props.isValidKey && props.isLoadingVoices && <CircularProgress size='sm' />}
+      endDecorator={props.isValidKey && props.isFetchingVoices && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={{
         root: { sx: { width: '100%' } },
@@ -97,7 +97,7 @@ export function useBrowserSpeachVoiceDropdown(autoSpeak: boolean, disabled?: boo
 
   const voicesDropdown = React.useMemo(() =>
       <VoicesDropdown
-        isValidKey={true} isFetchingVoices={true} isErrorVoices={false} disabled={disabled}
+        isValidKey={true} isFetchingVoices={false} isErrorVoices={false} disabled={disabled}
         voices={voices}
         voiceId={voiceId} setVoiceId={setVoiceId}
       />,
