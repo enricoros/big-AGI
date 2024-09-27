@@ -21,7 +21,7 @@ export function copyToClipboard(text: string, typeLabel: string) {
       });
     })
     .catch((err) => {
-      console.error('Failed to copy message: ', err);
+      alert(`Failed to message to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
     });
 }
 
@@ -48,8 +48,8 @@ export function copyBlobToClipboard(blob: Blob, typeLabel: string) {
       });
     })
     .catch((err) => {
-      console.error('Failed to copy blob to clipboard: ', err);
-      alert('Failed to copy image to clipboard. Please try again.');
+      const [media, type] = (blob.type || 'data/this') .split('/');
+      alert(`Failed to copy ${type?.toUpperCase()} ${media} to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
     });
 }
 
