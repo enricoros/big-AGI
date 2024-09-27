@@ -181,7 +181,7 @@ export const RenderImageURL = (props: {
                 display: 'block',
               }}
             >
-              {loadingTimeout ? 'Could not load image' : 'Loading...'}
+              {loadingTimeout ? 'Image Missing' : 'Loading...'}
             </Box>
           )}
 

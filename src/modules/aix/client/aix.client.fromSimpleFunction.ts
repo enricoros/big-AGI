@@ -77,7 +77,7 @@ export function aixRequireSingleFunctionCallInvocation(fragments: DMessageConten
   if (!isContentFragment(fragments[toolIdx]) || fragments[toolIdx].part.pt !== 'tool_invocation') {
     if (AIX_DEBUG_CLIENT_TOOLS)
       console.error('[DEV] single-function-call: invalid fragment part:', fragments[toolIdx].part, 'for', debugLabel);
-    throw new Error('AIX: Missing tool invocation.');
+    throw new Error('AIX: Missing function invocation.');
   }
 
   const { invocation } = fragments[toolIdx].part;

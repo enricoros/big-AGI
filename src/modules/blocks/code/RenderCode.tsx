@@ -157,14 +157,18 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const handleChartCopyToClipboard = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    chartJSRef.current?.getChartPNG(e.shiftKey)
-      .then(blob => !!blob && copyBlobToClipboard(blob, 'Chart Image' + (e.shiftKey ? ' with background' : '')));
+    chartJSRef.current?.getChartPNG(e.shiftKey).then((blob) => {
+      if (blob) return copyBlobToClipboard(blob, 'Chart Image' + (e.shiftKey ? ' with background' : ''));
+      alert('Chart not ready yet.');
+    });
   }, []);
 
   const handleChartDownload = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    chartJSRef.current?.getChartPNG(e.shiftKey)
-      .then(blob => !!blob && downloadBlob(blob, `chart_${prettyTimestampForFilenames()}.png`));
+    chartJSRef.current?.getChartPNG(e.shiftKey).then((blob) => {
+      if (blob) return downloadBlob(blob, `chart_${prettyTimestampForFilenames()}.png`);
+      alert('Chart not ready yet.');
+    });
   }, []);
 
 
