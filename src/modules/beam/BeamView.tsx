@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Alert, Box, CircularProgress } from '@mui/joy';
 
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { useUICounter } from '~/common/state/store-ui';
 
@@ -30,9 +30,12 @@ export function BeamView(props: {
 
   // external state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
-  const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
+  const { cardAdd, gatherAutoStartAfterScatter } = useModuleBeamStore(useShallow(state => ({
+    cardAdd: state.cardAdd,
+    gatherAutoStartAfterScatter: state.gatherAutoStartAfterScatter,
+  })));
   const {
-    /* root */ editInputHistoryMessage,
+    /* root */ inputHistoryReplaceMessageFragment,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
   } = props.beamStore.getState();
   const {
@@ -149,7 +152,7 @@ export function BeamView(props: {
       <BeamScatterInput
         isMobile={props.isMobile}
         history={inputHistory}
-        editHistory={editInputHistoryMessage}
+        onMessageFragmentReplace={inputHistoryReplaceMessageFragment}
       />
 
       {/* Scatter Controls */}
@@ -158,6 +161,7 @@ export function BeamView(props: {
         isMobile={props.isMobile}
         rayCount={raysCount}
         setRayCount={handleRaySetCount}
+        showRayAdd={!cardAdd}
         startEnabled={inputReady}
         startBusy={isScattering}
         onStart={handleScatterStart}
@@ -171,6 +175,7 @@ export function BeamView(props: {
         beamStore={props.beamStore}
         isMobile={props.isMobile}
         rayIds={rayIds}
+        showRayAdd={cardAdd}
         hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
         // linkedLlmId={currentGatherLlmId}

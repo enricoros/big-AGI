@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Button, FormControl, Switch } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
@@ -8,26 +8,23 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
-import { isPwa } from '~/common/util/pwaUtils';
-import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { isPwa } from '~/common/util/pwaUtils';
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
-import { SettingContentScaling } from './SettingContentScaling';
+import { SettingUIComplexity } from './SettingUIComplexity';
+import { SettingUIContentScaling } from './SettingUIContentScaling';
 
 
 // configuration
+const SHOW_MARKDOWN_DISABLE_SETTING = false;
 const SHOW_PURPOSE_FINDER = false;
 
-
-const ModelsSetupButton = () => {
-
-  // external state
-  const { openModelsSetup } = useOptimaLayout();
-
+function ModelsSetupButton() {
   return <Button
     // variant='soft' color='success'
-    onClick={openModelsSetup}
+    onClick={optimaOpenModels}
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
@@ -35,7 +32,7 @@ const ModelsSetupButton = () => {
   >
     Models
   </Button>;
-};
+}
 
 
 export function AppChatSettingsUI() {
@@ -44,25 +41,23 @@ export function AppChatSettingsUI() {
   const isMobile = useIsMobile();
   const {
     centerMode, setCenterMode,
+    disableMarkdown, setDisableMarkdown,
     doubleClickToEdit, setDoubleClickToEdit,
     enterIsNewline, setEnterIsNewline,
-    renderMarkdown, setRenderMarkdown,
     showPersonaFinder, setShowPersonaFinder,
-    zenMode, setZenMode,
-  } = useUIPreferencesStore(state => ({
+  } = useUIPreferencesStore(useShallow(state => ({
     centerMode: state.centerMode, setCenterMode: state.setCenterMode,
+    disableMarkdown: state.disableMarkdown, setDisableMarkdown: state.setDisableMarkdown,
     doubleClickToEdit: state.doubleClickToEdit, setDoubleClickToEdit: state.setDoubleClickToEdit,
     enterIsNewline: state.enterIsNewline, setEnterIsNewline: state.setEnterIsNewline,
-    renderMarkdown: state.renderMarkdown, setRenderMarkdown: state.setRenderMarkdown,
     showPersonaFinder: state.showPersonaFinder, setShowPersonaFinder: state.setShowPersonaFinder,
-    zenMode: state.zenMode, setZenMode: state.setZenMode,
-  }), shallow);
+  })));
 
   const handleEnterIsNewlineChange = (event: React.ChangeEvent<HTMLInputElement>) => setEnterIsNewline(!event.target.checked);
 
   const handleDoubleClickToEditChange = (event: React.ChangeEvent<HTMLInputElement>) => setDoubleClickToEdit(event.target.checked);
 
-  const handleRenderMarkdownChange = (event: React.ChangeEvent<HTMLInputElement>) => setRenderMarkdown(event.target.checked);
+  const handleDisableMarkdown = (event: React.ChangeEvent<HTMLInputElement>) => setDisableMarkdown(event.target.checked);
 
   const handleShowSearchBarChange = (event: React.ChangeEvent<HTMLInputElement>) => setShowPersonaFinder(event.target.checked);
 
@@ -82,13 +77,15 @@ export function AppChatSettingsUI() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Markdown'
-                      description={renderMarkdown ? 'Render markdown' : 'As text'} />
-      <Switch checked={renderMarkdown} onChange={handleRenderMarkdownChange}
-              endDecorator={renderMarkdown ? 'On' : 'Off'}
-              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
-    </FormControl>
+    {SHOW_MARKDOWN_DISABLE_SETTING && (
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+        <FormLabelStart title='Disable Markdown'
+                        description={disableMarkdown ? 'As text' : 'Render markdown'} />
+        <Switch checked={disableMarkdown} onChange={handleDisableMarkdown}
+                endDecorator={disableMarkdown ? 'On' : 'Off'}
+                slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+      </FormControl>
+    )}
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Edit mode'
@@ -106,16 +103,9 @@ export function AppChatSettingsUI() {
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>}
 
-    <FormRadioControl
-      title='Appearance'
-      description={zenMode === 'clean' ? 'Show senders' : 'Minimal UI'}
-      options={[
-        { label: 'Clean', value: 'clean' },
-        { label: 'Zen', value: 'cleaner' },
-      ]}
-      value={zenMode} onChange={setZenMode} />
+    <SettingUIComplexity />
 
-    <SettingContentScaling />
+    <SettingUIContentScaling />
 
     {!isPwa() && !isMobile && (
       <FormRadioControl

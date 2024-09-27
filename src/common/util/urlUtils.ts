@@ -1,6 +1,6 @@
 // noinspection JSUnresolvedReference
 
-import { isBrowser, isVercelFromBackendOrSSR } from './pwaUtils';
+import { Is, isBrowser } from './pwaUtils';
 
 /**
  * Return the base URL for the current environment.
@@ -10,7 +10,8 @@ import { isBrowser, isVercelFromBackendOrSSR } from './pwaUtils';
  */
 export function getBaseUrl(): string {
   if (isBrowser) return ''; // browser should use relative url
-  if (isVercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
+  if (Is.Deployment.VercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
+  // NOTE: untested with https://localhost:3000
   return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 }
 
@@ -20,7 +21,8 @@ export function getBaseUrl(): string {
  */
 export function getOriginUrl(): string {
   if (isBrowser) return window.location.origin;
-  if (isVercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`;
+  if (Is.Deployment.VercelFromBackendOrSSR) return `https://${process.env.VERCEL_URL}`;
+  // NOTE: untested with https://localhost:3000
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
@@ -45,4 +47,36 @@ export function fixupHost(host: string, apiPath: string): string {
   if (host.endsWith('/') && apiPath.startsWith('/'))
     host = host.slice(0, -1);
   return host;
+}
+
+
+/**
+ * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance)
+ */
+export function createBlobURLFromData(base64Data: string, mimeType: string) {
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: mimeType });
+  return URL.createObjectURL(blob);
+}
+
+/**
+ * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance) from a Data URL
+ */
+export function createBlobURLFromDataURL(dataURL: string) {
+  if (!dataURL.startsWith('data:')) {
+    console.error('createBlobURLFromDataURL: Invalid data URL', dataURL);
+    return null;
+  }
+  const mimeType = dataURL.slice(5, dataURL.indexOf(';'));
+  const base64Data = dataURL.slice(dataURL.indexOf(',') + 1);
+  if (!mimeType || !base64Data) {
+    console.error('createBlobURLFromDataURL: Invalid data URL', dataURL);
+    return null;
+  }
+  return createBlobURLFromData(base64Data, mimeType);
 }

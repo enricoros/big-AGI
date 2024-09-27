@@ -1,10 +1,13 @@
-import { createStore } from 'zustand/vanilla';
+import { createStore as createVanillaStore } from 'zustand/vanilla';
 import { persist } from 'zustand/middleware';
 
-import { DModelSource, useModelsStore } from '~/modules/llms/store-llms';
-import { createModelSourceForVendor, findAllVendors } from '~/modules/llms/vendors/vendors.registry';
+import { createModelsServiceForVendor } from '~/modules/llms/vendors/vendor.helpers';
+import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
-import { llmsUpdateModelsForSourceOrThrow } from '~/modules/llms/llm.client';
+import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
+
+import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
+import { llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
 interface AutoConfStore {
@@ -20,7 +23,7 @@ interface AutoConfStore {
 }
 
 
-const autoConfVanillaStore = createStore<AutoConfStore>()(persist((_set, _get) => ({
+const autoConfVanillaStore = createVanillaStore<AutoConfStore>()(persist((_set, _get) => ({
 
   // init state
   isConfiguring: false,
@@ -44,7 +47,7 @@ const autoConfVanillaStore = createStore<AutoConfStore>()(persist((_set, _get) =
     _set({ isConfiguring: true, lastSeenBackendEnvHash: backendHash });
 
     // find
-    let configurableVendors = findAllVendors()
+    let configurableVendors = findAllModelVendors()
       .filter(vendor => vendor.hasBackendCapKey && backendCaps[vendor.hasBackendCapKey]);
 
     // Sequentially auto-configure each vendor
@@ -52,21 +55,21 @@ const autoConfVanillaStore = createStore<AutoConfStore>()(persist((_set, _get) =
       return promiseChain
         .then(async () => {
 
-          // find the first source for this vendor
-          const { sources, addSource } = useModelsStore.getState();
-          let source: DModelSource;
-          const fistSourceForVendor = sources.find(source => source.vId === vendor.id);
-          if (fistSourceForVendor)
-            source = fistSourceForVendor;
-          else {
-            // create and append the model source, assuming the backend configuration will be successful
-            source = createModelSourceForVendor(vendor.id, sources);
-            addSource(source);
-            source = useModelsStore.getState().sources.find(_s => _s.id === source.id)!;
-          }
+          // find the first service for this vendor
+          const { sources: modelsServices, addService } = llmsStoreState();
+          let service: DModelsService;
+          const firstServiceForVendor = modelsServices.find(s => s.vId === vendor.id);
+          if (!firstServiceForVendor) {
+            // create and append the model service, assuming the backend configuration will be successful
+            service = createModelsServiceForVendor(vendor.id, modelsServices);
+            addService(service);
+            // re-find it now what's added
+            service = llmsStoreState().sources.find(_s => _s.id === service.id)!;
+          } else
+            service = firstServiceForVendor;
 
-          // auto-configure this source
-          await llmsUpdateModelsForSourceOrThrow(source.id, true);
+          // auto-configure this service
+          await llmsUpdateModelsForServiceOrThrow(service.id, true);
         })
         .catch(error => {
           // catches errors and logs them, but does not stop the chain

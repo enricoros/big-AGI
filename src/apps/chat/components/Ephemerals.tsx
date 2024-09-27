@@ -1,12 +1,12 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PushPinIcon from '@mui/icons-material/PushPin';
 
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { DConversationId } from '~/common/state/store-chats';
-import { DEphemeral } from '~/common/chats/EphemeralsStore';
+import type { DEphemeral } from '~/common/chat-overlay/store-ephemeralsoverlay-slice';
+import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
@@ -75,24 +75,36 @@ function StateRenderer(props: { state: object }) {
 }
 
 
-function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, ephemeral: DEphemeral }) {
+function EphemeralItem(props: {
+  ephemeral: DEphemeral,
+  conversationHandler: ConversationHandler,
+}) {
+
+  const { ephemeral, conversationHandler } = props;
 
   const handleDelete = React.useCallback(() => {
-    ConversationsManager.getHandler(conversationId).ephemeralsStore.delete(ephemeral.id);
-  }, [conversationId, ephemeral.id]);
+    conversationHandler.overlayActions.ephemeralsDelete(ephemeral.id);
+  }, [conversationHandler, ephemeral.id]);
+
+  const handleTogglePinned = React.useCallback(() => {
+    conversationHandler.overlayActions.ephemeralsTogglePinned(ephemeral.id);
+  }, [conversationHandler, ephemeral.id]);
 
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
       position: 'relative',
+      borderTop: '1px solid',
+      borderTopColor: 'divider',
       // border: (i < ephemerals.length - 1) ? `2px solid ${theme.palette.divider}` : undefined,
-      '&:hover > button': { opacity: 1 },
     }}>
 
     {/* Title */}
-    {ephemeral.title && <Typography level='title-sm' sx={{ mb: 1.5 }}>
-      {ephemeral.title} Development Tools
-    </Typography>}
+    {ephemeral.title && (
+      <Typography level='title-sm' sx={{ mb: 1.5 }}>
+        {ephemeral.title} Internal Monologue
+      </Typography>
+    )}
 
     {/* Vertical | split */}
     <Grid container spacing={2}>
@@ -105,26 +117,52 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
       </Grid>
 
       {/* Right pane (state) */}
-      {!!ephemeral.state && <Grid
-        xs={12} md={6}
-        sx={{
-          borderLeft: { md: `1px dashed` },
-          borderTop: { xs: `1px dashed`, md: 'none' },
-        }}>
-        <StateRenderer state={ephemeral.state} />
-      </Grid>}
+      {!!ephemeral.state && (
+        <Grid
+          xs={12} md={6}
+          sx={{
+            borderLeft: { md: `1px dashed` },
+            borderTop: { xs: `1px dashed`, md: 'none' },
+          }}>
+          <StateRenderer state={ephemeral.state} />
+        </Grid>
+      )}
     </Grid>
 
-    {/* Close button (right of title) */}
-    <IconButton
-      size='sm'
-      onClick={handleDelete}
-      sx={{
-        position: 'absolute', top: 8, right: 8,
-        opacity: { xs: 1, sm: 0.5 }, transition: 'opacity 0.3s',
-      }}>
-      <CloseRoundedIcon />
-    </IconButton>
+
+    {/* Buttons */}
+    <Box sx={{
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      m: 1,
+      display: 'flex',
+      gap: 1,
+    }}>
+
+      {/* Pin button */}
+      <IconButton
+        size='sm'
+        variant={ephemeral.pinned ? 'soft' : 'outlined'}
+        color={ephemeral.pinned ? 'primary' : 'neutral'}
+        onClick={handleTogglePinned}
+        sx={{
+          '& > *': { transition: 'transform 0.2s' },
+        }}
+      >
+        <PushPinIcon sx={ephemeral.pinned ? { transform: 'rotate(45deg)' } : undefined} />
+      </IconButton>
+
+      {/* Close button */}
+      <IconButton
+        size='sm'
+        variant={ephemeral.done ? 'solid' : 'outlined'}
+        onClick={handleDelete}
+      >
+        <CloseRoundedIcon />
+      </IconButton>
+
+    </Box>
 
   </Box>;
 }
@@ -136,30 +174,21 @@ function EphemeralItem({ conversationId, ephemeral }: { conversationId: string, 
 // `);
 
 
-export function Ephemerals(props: { ephemerals: DEphemeral[], conversationId: DConversationId | null, sx?: SxProps }) {
-  // global state
-  // const ephemerals = useChatStore(state => {
-  //   const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
-  //   return conversation ? conversation.ephemerals : [];
-  // }, shallow);
-
-  const ephemerals = props.ephemerals;
-  // if (!ephemerals?.length) return null;
-
+export function Ephemerals(props: {
+  ephemerals: DEphemeral[],
+  conversationHandler: ConversationHandler,
+  sx?: SxProps
+}) {
   return (
-    <Sheet
-      variant='soft' color='success' invertedColors
-      sx={{
-        borderTop: '1px solid',
-        borderTopColor: 'divider',
-        // backgroundImage: `url("data:image/svg+xml,${dashedBorderSVG.replace('currentColor', '%23A1E8A1')}")`,
-        // backgroundSize: '100% 100%',
-        // backgroundRepeat: 'no-repeat',
-        ...(props.sx || {}),
-      }}>
+    <Sheet variant='soft' color='success' invertedColors sx={props.sx}>
 
-      {ephemerals.map((ephemeral, i) =>
-        props.conversationId && <EphemeralItem key={`ephemeral-${i}`} conversationId={props.conversationId} ephemeral={ephemeral} />)}
+      {props.ephemerals.map((ephemeral, i) => (
+        <EphemeralItem
+          key={`ephemeral-${i}`}
+          ephemeral={ephemeral}
+          conversationHandler={props.conversationHandler}
+        />
+      ))}
 
     </Sheet>
   );

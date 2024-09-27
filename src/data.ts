@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'Executive' | 'Generic' | 'Scientist' | 'YouTubeTranscriber';
+export type SystemPurposeId = 'Catalyst' | 'Custom' | 'DataAnalyst1' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'Executive' | 'Generic' | 'Scientist' | 'YouTubeTranscriber';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
@@ -11,11 +11,13 @@ export type SystemPurposeData = {
   systemMessageNotes?: string;
   symbol: string;
   imageUri?: string;
-  examples?: string[];
+  examples?: SystemPurposeExample[];
   highlighted?: boolean;
   call?: { starters?: string[] };
   voices?: { elevenLabs?: { voiceId: string } };
 };
+
+export type SystemPurposeExample = string | { prompt: string, action?: 'require-data-attachment' };
 
 export const SystemPurposes: { [key in SystemPurposeId]: SystemPurposeData } = {
   Generic: {
@@ -82,6 +84,67 @@ Current date: {{LocaleNow}}
     call: { starters: ['Ready to skyrocket. What\'s up?', 'Growth hacker on line. What\'s the plan?', 'Marketing whiz ready.', 'Hey.'] },
     voices: { elevenLabs: { voiceId: 'EXAVITQu4vr4xnSDxMaL' } },
   },
+  DataAnalyst1: {
+    title: 'Data Analyst',
+    description: 'Answers questions, reveals insights',
+    // NOTE: the LowRL section applies to models that have not been excessively task-tuned.
+    // Higher grade models don't need the Logic hint, the CoT hint and the Limitations section, and produce better results without those.
+    systemMessage: `
+You are a sophisticated, accurate, and modern AI data analyst. Your task is to reveal quantitative insights, identify patterns, trends, and outliers, and produce hypotheses and original findings based on the provided data.
+{{LowRL:Present well-structured and formatted information. Present findings using clear, concise language, supporting conclusions with evidence. Clearly state any non-obvious limitations or uncertainties in your analysis. Prioritize accuracy when data is limited.}}
+{{LowRL:Remember, you have no code execution capabilities and no access to additional data.}}
+
+Current date: {{LocaleNow}}
+{{RenderPlantUML}}
+{{RenderMermaid}}
+{{RenderHTML}}
+{{RenderSVG}}
+{{PreferTables}}
+{{RenderChartJS}}
+`.trim(),
+//   systemMessageNotes: /* Alt Single-Shot Task-Based completion */ `You are an AI data analyst tasked with revealing quantitative insights, identifying patterns, trends, and outliers, and producing hypotheses and original findings based on the provided data. Your goal is to present factual and objective information in a well-structured and formatted manner.
+//
+// Here is the data you will be analyzing:
+//
+// <data>
+// {{DATA}}
+// </data>
+//
+// The user has asked the following question about this data:
+//
+// <question>
+// {{QUESTION}}
+// </question>
+//
+// Before beginning your analysis, outline your approach in a <plan> section. Break down the steps you will take to address the user's question.
+//
+// Next, conduct your analysis step by step. Use a <analysis> section to show your work, including any calculations, statistical tests, or data manipulations you perform. Remember that you don't have code execution capabilities, so describe your process in detail.
+//
+// Present your findings in a <findings> section. Use clear, concise language and support your conclusions with statistical evidence from your analysis. Formulate testable hypotheses based solely on the available information.
+//
+// If you identify any limitations or uncertainties in your analysis, clearly state them in a <limitations> section.
+//
+// Finally, provide a concise summary of your key insights and recommendations in a <summary> section.
+//
+// Remember:
+// 1. You have no access to external or real-time data beyond what is provided in the <data> section.
+// 2. Prioritize accuracy over comprehensiveness when data is limited.
+// 3. Do not make assumptions about data that isn't explicitly provided.
+// 4. If the question cannot be fully answered with the available data, state this clearly and explain what additional data would be needed.
+//
+// Begin your response with your analysis plan, followed by your step-by-step analysis, findings, limitations, and summary.`,
+    symbol: '📊',
+    examples: [
+      { prompt: 'analyze this data for trends and insights', action: 'require-data-attachment' },
+      { prompt: 'what original questions should I ask?', action: 'require-data-attachment' },
+      'why is data important for business?',
+      'how to start a data strategy',
+      // 'Create a visualization of this data',
+      // 'Simple data visualization tips',
+    ],
+    call: { starters: ['Data topic?', 'What to know?', 'Curious about?', 'Let\'s discuss:'] },
+    voices: { elevenLabs: { voiceId: 'bIHbv24MWmeRgasZH58o' /* Will */ } },
+  },
   Executive: {
     title: 'Executive',
     description: 'Helps you write business emails',
@@ -105,14 +168,6 @@ When asked to design or draw something, please work step by step detailing the c
     call: { starters: ['Hey! What\'s the vision?', 'Designer on call. What\'s the project?', 'Ready for design talk.', 'Hey.'] },
     voices: { elevenLabs: { voiceId: 'MF3mGyEYCl7XYWbV9V6O' } },
   },
-  Custom: {
-    title: 'Custom',
-    description: 'Define the persona, or task:',
-    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
-    symbol: '⚡',
-    call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
-    voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
-  },
   YouTubeTranscriber: {
     title: 'YouTube Transcriber',
     description: 'Enter a YouTube URL to get the transcript and chat about the content.',
@@ -121,6 +176,14 @@ When asked to design or draw something, please work step by step detailing the c
     examples: ['Analyze the sentiment of this video', 'Summarize the key points of the lecture'],
     call: { starters: ['Enter a YouTube URL to begin.', 'Ready to transcribe YouTube content.', 'Paste the YouTube link here.'] },
     voices: { elevenLabs: { voiceId: 'z9fAnlkpzviPz146aGWa' } },
+  },
+  Custom: {
+    title: 'Custom',
+    description: 'Define the persona, or task:',
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.\nCurrent date: {{Today}}',
+    symbol: '⚡',
+    call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Yes?'] },
+    voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
   },
 
 };

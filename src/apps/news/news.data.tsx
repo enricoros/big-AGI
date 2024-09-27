@@ -231,7 +231,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>Enhanced security via <B code='/docs/deploy-authentication.md'>password protection</B></> },
       { text: <>{platformAwareKeystrokes('Ctrl+Shift+O')}: quick access to model options</> },
       { text: <>Optimized voice input and performance</> },
-      { text: <>Latest Ollama and Oobabooga models</> },
+      { text: <>Latest Ollama models</> },
     ],
   },
   {
@@ -292,7 +292,6 @@ export const NewsItems: NewsItem[] = [
       { text: <><B>Flattener</B> - 4-mode conversations summarizer</> },
       { text: <><B>Forking</B> - branch your conversations</> },
       { text: <><B>/s</B> and <B>/a</B> to append a <i>system</i> or <i>assistant</i> message</> },
-      { text: <>Local LLMs with <B code='/docs/config-local-oobabooga.md'>Oobabooga server</B></> },
       { text: 'NextJS STOP bug.. squashed, with Vercel!' },
     ],
   },

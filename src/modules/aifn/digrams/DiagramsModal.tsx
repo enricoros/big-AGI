@@ -9,17 +9,18 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
 
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { adjustContentScaling } from '~/common/app.theme';
-import { createDMessage, useChatStore } from '~/common/state/store-chats';
+import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
 
@@ -64,7 +65,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
   // external state
   const isMobile = useIsMobile();
-  const contentScaling = useUIPreferencesStore(state => state.contentScaling);
+  const contentScaling = useUIContentScaling();
   const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
 
   // derived state
@@ -95,7 +96,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     const stepAbortController = new AbortController();
     setAbortController(stepAbortController);
 
-    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
+    const systemMessageText = messageFragmentsReduceText(systemMessage.fragments);
+    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessageText, subject, customInstruction);
 
     try {
       await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, 'ai-diagram', messageId, null, null, stepAbortController.signal,
@@ -143,9 +145,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     if (!diagramCode)
       return setErrorMessage('Nothing to add to the conversation.');
 
-    const diagramMessage = createDMessage('assistant', diagramCode);
+    const diagramMessage = createDMessageTextContent('assistant', diagramCode); // [chat] append assistant:diagram
     // diagramMessage.purposeId = conversation.systemPurposeId;
-    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '');
+    diagramMessage.generator = { mgt: 'named', name: DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '') };
 
     useChatStore.getState().appendMessage(conversationId, diagramMessage);
     props.onClose();
@@ -220,13 +222,16 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           p: { xs: 1, md: 2 },
           overflow: 'hidden',
         }}>
-          <BlocksRenderer
+          <AutoBlocksRenderer
             text={diagramCode}
             fromRole='assistant'
-            fitScreen={isMobile}
             contentScaling={adjustContentScaling(contentScaling, -1)}
-            renderTextAsMarkdown={false}
-            specialDiagramMode
+            fitScreen={isMobile}
+            isMobile={isMobile}
+            blocksProcessor='diagram'
+            codeRenderVariant='plain'
+            textRenderVariant='text'
+            // Edit is moved from the BlocksRenderer to the ContentPartText
             // onMessageEdit={(text) => setMessage({ ...message, text })}
           />
         </Box>

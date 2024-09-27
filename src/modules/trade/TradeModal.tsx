@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { DConversationId } from '~/common/state/store-chats';
-import { GoodModal } from '~/common/components/GoodModal';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 
 import { ExportChats, ExportConfig } from './ExportChats';
 import { ImportChats, ImportConfig } from './ImportChats';

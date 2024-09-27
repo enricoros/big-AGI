@@ -7,14 +7,17 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { ChatMessageMemo } from '../chat/components/message/ChatMessage';
 import { useChatShowSystemMessages } from '../chat/store-app-chat';
 
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { Brand } from '~/common/app.config';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
+import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle, DConversation, useChatStore } from '~/common/state/store-chats';
+import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
 import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 
 /**
@@ -35,20 +38,6 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
   const messages = props.conversation.messages;
   const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages);
   const hasMessages = filteredMessages.length > 0;
-
-
-  // Effect: Turn on Markdown (globally) if there are tables in the chat
-
-  React.useEffect(() => {
-    const { renderMarkdown, setRenderMarkdown } = useUIPreferencesStore.getState();
-    if (!renderMarkdown) {
-      const hasMarkdownTables = messages.some(m => m.text.includes('|---'));
-      if (hasMarkdownTables) {
-        setRenderMarkdown(true);
-        console.log('Turning on Markdown because of tables');
-      }
-    }
-  }, [messages]);
 
   // Effect: Scroll to bottom of list when messages change
 
@@ -108,49 +97,56 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
         p: 0,
       }}>
 
-        <ScrollToBottom bootToBottom bootSmoothly>
+        <WorkspaceIdProvider conversationId={null}>
 
-          <List sx={{
-            minHeight: '100%',
-            p: 0,
-            display: 'flex', flexDirection: 'column',
-            flexGrow: 1,
-          }}>
+          <ScrollToBottom bootToBottom bootSmoothly>
 
-            <ListItem sx={{
-              // backgroundColor: 'background.surface',
-              borderBottom: '1px solid',
-              borderBottomColor: 'divider',
-              borderBottomStyle: 'dashed',
-              // justifyContent: 'center',
-              px: { xs: 2.5, md: 3.5 }, py: 2,
+            <List sx={{
+              minHeight: '100%',
+              p: 0,
+              display: 'flex', flexDirection: 'column',
+              flexGrow: 1,
             }}>
-              <Typography level='body-md'>
-                Welcome to the chat! 👋
-              </Typography>
-            </ListItem>
 
-            {filteredMessages.map((message, idx) =>
-              <ChatMessageMemo
-                key={'msg-' + message.id}
-                message={message}
-                fitScreen={isMobile}
-                showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
-                onMessageEdit={(_messageId, text: string) => message.text = text}
-              />,
-            )}
+              <ListItem sx={{
+                // backgroundColor: 'background.surface',
+                borderBottom: '1px solid',
+                borderBottomColor: 'divider',
+                borderBottomStyle: 'dashed',
+                // justifyContent: 'center',
+                px: { xs: 2.5, md: 3.5 }, py: 2,
+              }}>
+                <Typography level='body-md'>
+                  Welcome to the chat! 👋
+                </Typography>
+              </ListItem>
 
-            <ListItem sx={{
-              px: { xs: 2.5, md: 3.5 }, py: 2,
-            }}>
-              <Typography level='body-sm' ref={listBottomRef}>
-                Like the chat? Import it and keep the talk going! 🚀
-              </Typography>
-            </ListItem>
+              {filteredMessages.map((message, idx) =>
+                <ChatMessageMemo
+                  key={'msg-' + message.id}
+                  message={message}
+                  fitScreen={isMobile}
+                  isMobile={isMobile}
+                  showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
+                  onMessageFragmentReplace={(_messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+                    message.fragments = message.fragments.map(f => (f.fId === fragmentId) ? newFragment : f);
+                  }}
+                />,
+              )}
 
-          </List>
+              <ListItem sx={{
+                px: { xs: 2.5, md: 3.5 }, py: 2,
+              }}>
+                <Typography level='body-sm' ref={listBottomRef}>
+                  Like the chat? Import it and keep the talk going! 🚀
+                </Typography>
+              </ListItem>
 
-        </ScrollToBottom>
+            </List>
+
+          </ScrollToBottom>
+
+        </WorkspaceIdProvider>
 
       </Card>
 

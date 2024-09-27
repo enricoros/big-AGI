@@ -1,0 +1,99 @@
+/* AGI processing - nice effects */
+@property --rotate {
+    syntax: "<angle>";
+    initial-value: 132deg;
+    inherits: false;
+}
+
+@keyframes rotation-loop {
+    0% {
+        --rotate: 0deg;
+    }
+    100% {
+        --rotate: 360deg;
+    }
+}
+
+
+/* Spinning effect, used while re-rendering images */
+
+.agi-border-4 {
+    /* config */
+    --border-width: 4px;
+    --border-radius: 2px;
+
+    z-index: 0;
+    position: relative;
+    border-radius: var(--border-width);
+}
+
+.agi-border-4 > * {
+    clip-path: inset(var(--border-width));
+    border-radius: var(--border-radius);
+    opacity: 0.94;
+}
+
+.agi-border-4::before {
+    content: "";
+    z-index: 0;
+    position: absolute;
+    inset: 0;
+    border-radius: var(--border-radius);
+    /*background-image: conic-gradient(*/
+    /*        from var(--rotate),*/
+    /*        #636B74, #0B6BCB, #1F7A1F*/
+    /*);*/
+    background-image: conic-gradient(
+            from var(--rotate),
+            violet, indigo, blue, green,
+            yellow, orange, red, violet
+    );
+    animation: rotation-loop 2.5s linear infinite;
+}
+
+
+/* Simple highlight, used for <mark/> tags and ==highlighted== text  */
+.agi-highlight {
+    /*background-color: rgb(var(--agi-color-mark-highlight-channel));*/
+    background: linear-gradient(
+            104deg,
+            rgba(var(--agi-color-mark-highlight-channel) / 0),
+            rgba(var(--agi-color-mark-highlight-channel) / 1) 0.9%,
+            rgba(var(--agi-color-mark-highlight-channel) / 1) 99.1%,
+            rgba(var(--agi-color-mark-highlight-channel) / 0)
+    );
+    padding-block: 2px;
+}
+
+[data-joy-color-scheme="dark"] .agi-highlight {
+    --agi-color-mark-highlight-channel: 118 108 0; /* 0 0 184; */
+}
+
+[data-joy-color-scheme="light"] .agi-highlight {
+    --agi-color-mark-highlight-channel: 255 255 0;
+}
+
+/* Simple text content deletion */
+.agi-content-delete {
+    text-decoration: line-through;
+    text-decoration-color: var(--color-danger-fg);
+    /*text-decoration-thickness: 2px;*/
+    font-style: italic;
+}
+
+/*.agi-highlight-yellow {*/
+/*    background: linear-gradient(104deg, rgba(255,255,132,0) 0.9%, rgba(255,255,132,1) 2.4%, rgba(255,252,132,1) 50%, rgba(255,255,132,1) 97.6%, rgba(255,255,132,0) 99.1%);*/
+/*    color: red;*/
+/*}*/
+
+/*.agi-border-4::after {*/
+/*    content: "";*/
+/*    z-index: -1;*/
+/*    position: absolute;*/
+/*    inset: 0;*/
+/*    margin: 0 auto;*/
+/*    transform: translate(0%, 20%) scale(0.8);*/
+/*    filter: blur(48px);*/
+/*    background-image: linear-gradient(var(--rotate), #5ddcff, #3c67e3 43%, #4e00c2);*/
+/*    animation: rotation-loop 2.5s linear infinite;*/
+/*}*/

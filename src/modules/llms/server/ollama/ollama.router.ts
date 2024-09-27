@@ -1,20 +1,18 @@
 import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError, fetchTextOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat } from '../../store-llms';
-
+import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, ModelDescriptionSchema } from '../llm.server.types';
+import { ListModelsResponse_schema } from '../llm.server.types';
+import { OpenAIHistorySchema, OpenAIModelSchema } from '../openai/openai.router';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
-import { WireOllamaChatCompletionInput, wireOllamaChunkedOutputSchema, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
+import { WireOllamaChatCompletionInput, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
 
 
 // Default hosts
@@ -88,12 +86,12 @@ export function ollamaCompletionPayload(model: OpenAIModelSchema, history: OpenA
 
 async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = ollamaAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut>(url, 'GET', headers, undefined, 'Ollama');
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Ollama' });
 }
 
 async function ollamaPOST<TOut extends object, TPostBody extends object>(access: OllamaAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = ollamaAccess(access, apiPath);
-  return await fetchJsonOrTRPCError<TOut, TPostBody>(url, 'POST', headers, body, 'Ollama');
+  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Ollama' });
 }
 
 
@@ -113,15 +111,6 @@ const accessOnlySchema = z.object({
 const adminPullModelSchema = z.object({
   access: ollamaAccessSchema,
   name: z.string(),
-});
-
-const chatGenerateInputSchema = z.object({
-  access: ollamaAccessSchema,
-  model: openAIModelSchema,
-  history: openAIHistorySchema,
-  // functions: openAIFunctionsSchema.optional(),
-  // forceFunctionName: z.string().optional(),
-  context: llmsGenerateContextSchema.optional(),
 });
 
 const listPullableOutputSchema = z.object({
@@ -162,7 +151,7 @@ export const llmOllamaRouter = createTRPCRouter({
 
       // fetch as a large text buffer, made of JSONs separated by newlines
       const { headers, url } = ollamaAccess(input.access, '/api/pull');
-      const pullRequest = await fetchTextOrTRPCError(url, 'POST', headers, { 'name': input.name }, 'Ollama::pull');
+      const pullRequest = await fetchTextOrTRPCThrow({ url, method: 'POST', headers, body: { 'name': input.name }, name: 'Ollama::pull' });
 
       // accumulate status and error messages
       let lastStatus: string = 'unknown';
@@ -183,7 +172,7 @@ export const llmOllamaRouter = createTRPCRouter({
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
       const { headers, url } = ollamaAccess(input.access, '/api/delete');
-      const deleteOutput = await fetchTextOrTRPCError(url, 'DELETE', headers, { 'name': input.name }, 'Ollama::delete');
+      const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, body: { 'name': input.name }, name: 'Ollama::delete' });
       if (deleteOutput?.length && deleteOutput !== 'null')
         throw new Error('Ollama delete issue: ' + deleteOutput);
     }),
@@ -192,7 +181,7 @@ export const llmOllamaRouter = createTRPCRouter({
   /* Ollama: List the Models available */
   listModels: publicProcedure
     .input(accessOnlySchema)
-    .output(llmsListModelsOutputSchema)
+    .output(ListModelsResponse_schema)
     .query(async ({ input }) => {
 
       // get the models
@@ -244,36 +233,8 @@ export const llmOllamaRouter = createTRPCRouter({
             description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
             contextWindow,
             interfaces: [LLM_IF_OAI_Chat],
-          } satisfies ModelDescriptionSchema;
+          };
         }),
-      };
-    }),
-
-  /* Ollama: Chat generation */
-  chatGenerate: publicProcedure
-    .input(chatGenerateInputSchema)
-    .output(llmsChatGenerateOutputSchema)
-    .mutation(async ({ input: { access, history, model } }) => {
-
-      const wireGeneration = await ollamaPOST(access, ollamaChatCompletionPayload(model, history, access.ollamaJson, false), OLLAMA_PATH_CHAT);
-      const generation = wireOllamaChunkedOutputSchema.parse(wireGeneration);
-
-      if ('error' in generation)
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: `Ollama chat-generation issue: ${generation.error}`,
-        });
-
-      if (!generation.message?.content)
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: `Ollama chat-generation API issue: ${JSON.stringify(wireGeneration)}`,
-        });
-
-      return {
-        role: 'assistant',
-        content: generation.message.content,
-        finish_reason: generation.done ? 'stop' : null,
       };
     }),
 

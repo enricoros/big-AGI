@@ -5,11 +5,14 @@ import { Textarea } from '@mui/joy';
 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-
+/**
+ * TODO: P3: use Buttons when possible instead of the Blur action. Should add them to the bottom? See `ContentPartTextEdit` for a newer impl.
+ */
 export function InlineTextarea(props: {
   initialText: string,
+  disableAutoSaveOnBlur?: boolean // NOTE: this will disable the enter=newline as well
   placeholder?: string,
-  decolor?: boolean
+  decolor?: boolean,
   invertedColors?: boolean,
   minRows?: number,
   onEdit: (text: string) => void,
@@ -18,7 +21,7 @@ export function InlineTextarea(props: {
 }) {
 
   const [text, setText] = React.useState(props.initialText);
-  const enterIsNewline = useUIPreferencesStore(state => state.enterIsNewline);
+  const enterIsNewline = useUIPreferencesStore(state => (!props.disableAutoSaveOnBlur && state.enterIsNewline));
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value);
 
@@ -35,7 +38,10 @@ export function InlineTextarea(props: {
     }
   };
 
-  const handleEditBlur = () => props.onEdit(text);
+  const handleEditBlur = () => {
+    if (!props.disableAutoSaveOnBlur)
+      props.onEdit(text);
+  };
 
   return (
     <Textarea
@@ -44,8 +50,10 @@ export function InlineTextarea(props: {
       autoFocus={!props.decolor}
       minRows={props.minRows !== undefined ? props.minRows : 1}
       placeholder={props.placeholder}
-      value={text} onChange={handleEditTextChanged}
-      onKeyDown={handleEditKeyDown} onBlur={handleEditBlur}
+      value={text}
+      onChange={handleEditTextChanged}
+      onKeyDown={handleEditKeyDown}
+      onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       slotProps={{
         textarea: {
           enterKeyHint: enterIsNewline ? 'enter' : 'done',

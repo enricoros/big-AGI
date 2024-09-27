@@ -36,13 +36,17 @@ export { useCapability as useVoiceCapability } from '~/common/components/useVoic
 /// Image Generation
 
 export interface TextToImageProvider {
-  id: string;             // e.g. 'openai-2' or 'localai'
-  label: string;          // e.g. 'OpenAI #2'
-  painter: string;        // e.g. 'DALL·E' or 'Prodia'
+  providerId: string;                 // unique ID of this provider, used for selecting in a list (e.g. 'openai-2' or 'localai')
+  vendor: TextToImageVendor;
+  // UI attributes
+  label: string;              // e.g. 'OpenAI #2'
+  painter: string;            // e.g. 'DALL·E' or 'Prodia'
   description: string;
   configured: boolean;
-  vendor: 'localai' | 'openai' | 'prodia';
 }
+
+type TextToImageVendor = 'localai' | 'openai' | 'prodia';
+
 
 export interface CapabilityTextToImage {
   mayWork: boolean;

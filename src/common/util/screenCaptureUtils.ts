@@ -1,5 +1,5 @@
 import { isBrowser } from './pwaUtils';
-import { renderVideoFrameAsPNGFile } from '~/common/util/videoUtils';
+import { renderVideoFrameAsFile } from '~/common/util/videoUtils';
 
 
 // Check if the browser supports screen capture
@@ -33,11 +33,11 @@ export async function takeScreenCapture(): Promise<File | null> {
   await metadataLoaded;
 
   // short timeout to ensure the video frame is ready
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   // capture a frame (or throw)
   try {
-    const file = await renderVideoFrameAsPNGFile(video, 'capture');
+    const file = await renderVideoFrameAsFile(video, 'capture', 'image/png');
     _stopScreenCaptureStream(mediaStream, video);
     return file;
   } catch (error) {

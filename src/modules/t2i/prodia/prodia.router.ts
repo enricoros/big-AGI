@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
-import { t2iCreateImagesOutputSchema } from '../t2i.server.types';
+import { getPngDimensionsFromBytes, t2iCreateImagesOutputSchema } from '../t2i.server';
 
 import { HARDCODED_MODELS } from './prodia.models';
 
@@ -85,14 +85,26 @@ export const prodiaRouter = createTRPCRouter({
       if (j.status !== 'succeeded' || !j.imageUrl)
         throw new Error(`Prodia image generation failed within ${elapsed}s`);
 
+      // download the image and convert to base64
+      const imageResponse = await fetch(j.imageUrl);
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const base64Image = Buffer.from(imageBuffer).toString('base64');
+
+      // width and height by looking at the PNG (imageBuffer)
+      const { width, height } = getPngDimensionsFromBytes(imageBuffer);
+
       // respond with 1 result
-      return [
-        {
-          imageUrl: j.imageUrl,
-          altText: jobRequest.prompt,
-          elapsed,
-        },
-      ];
+      const { prompt: altText, ...otherParameters } = jobRequest;
+      return [{
+        mimeType: 'image/png',
+        base64Data: base64Image,
+        altText,
+        width,
+        height,
+        generatorName: 'prodia-' + input.prodiaModel,
+        parameters: otherParameters,
+        generatedAt: new Date().toISOString(),
+      }];
     }),
 
   /** List models - for now just hardcode the list, as there's no endpoint */
@@ -103,8 +115,8 @@ export const prodiaRouter = createTRPCRouter({
       // fetch in parallel both the SD and SDXL models
       const { headers, url } = prodiaAccess(input.prodiaKey, `/v1/sd/models`);
       const [sdModelIds, sdXlModelIds] = await Promise.all([
-        fetchJsonOrTRPCError<string[]>(url, 'GET', headers, undefined, 'Prodia'),
-        fetchJsonOrTRPCError<string[]>(url.replace('/sd/', '/sdxl/'), 'GET', headers, undefined, 'Prodia'),
+        fetchJsonOrTRPCThrow<string[]>({ url, headers, name: 'Prodia SD' }),
+        fetchJsonOrTRPCThrow<string[]>({ url: url.replace('/sd/', '/sdxl/'), headers, name: 'Prodia SDXL' }),
       ]);
       const apiModelIDs = [...sdModelIds, ...sdXlModelIds];
 
@@ -181,12 +193,12 @@ export interface JobResponse {
 
 async function createGenerationJob<TJobRequest extends JobRequestBase>(apiKey: string | undefined, isGenSDXL: boolean, jobRequest: TJobRequest): Promise<JobResponse> {
   const { headers, url } = prodiaAccess(apiKey, isGenSDXL ? '/v1/sdxl/generate' : '/v1/sd/generate');
-  return await fetchJsonOrTRPCError<JobResponse, TJobRequest>(url, 'POST', headers, jobRequest, 'Prodia Job Create');
+  return await fetchJsonOrTRPCThrow<JobResponse, TJobRequest>({ url, method: 'POST', headers, body: jobRequest, name: 'Prodia Job Create' });
 }
 
 async function getJobStatus(apiKey: string | undefined, jobId: string): Promise<JobResponse> {
   const { headers, url } = prodiaAccess(apiKey, `/v1/job/${jobId}`);
-  return await fetchJsonOrTRPCError<JobResponse>(url, 'GET', headers, undefined, 'Prodia Job Status');
+  return await fetchJsonOrTRPCThrow<JobResponse>({ url, headers, name: 'Prodia Job Status' });
 }
 
 

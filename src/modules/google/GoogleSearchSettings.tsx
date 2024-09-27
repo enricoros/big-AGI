@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { FormControl, FormHelperText, Input } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
@@ -18,10 +18,10 @@ export function GoogleSearchSettings() {
 
   // external state
   const backendHasGoogle = getBackendCapabilities().hasGoogleCustomSearch;
-  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useGoogleSearchStore(state => ({
+  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useGoogleSearchStore(useShallow(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,
-  }), shallow);
+  })));
 
 
   // derived state

@@ -44,7 +44,7 @@ const wireOllamaChatCompletionInputSchema = z.object({
   // required
   model: z.string(),
   messages: z.array(z.object({
-    role: z.enum(['assistant', 'system', 'user']),
+    role: z.enum(['system', 'user', 'assistant']),
     content: z.string(),
     images: z.array(z.string()).optional(), // base64 encoded images
   })),
@@ -101,10 +101,10 @@ export const wireOllamaChunkedOutputSchema = z.union([
     // only on the last message
     // context: z.array(z.number()), // non-chat endpoint
     // total_duration: z.number(),
-    // prompt_eval_count: z.number(),
+    prompt_eval_count: z.number().optional(),
     // prompt_eval_duration: z.number(),
-    // eval_count: z.number(),
-    // eval_duration: z.number(),
+    eval_count: z.number().optional(),
+    eval_duration: z.number().optional(),
 
   }),
   // Possible Error

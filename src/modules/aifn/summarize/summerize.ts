@@ -1,5 +1,7 @@
-import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
+
+import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
 // prompt to be tried when doing recursive summerization.

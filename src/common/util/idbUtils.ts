@@ -103,7 +103,7 @@ class WriteScheduler {
   }
 }
 
-const writeScheduler = new WriteScheduler(1000, 400);
+const writeScheduler = new WriteScheduler(1200, 400);
 
 
 /**
@@ -140,6 +140,17 @@ export const idbStateStorage: StateStorage = {
     await idbDel(name);
   },
 };
+
+
+export async function backupIdbV3(keyFrom: string, keyTo: string): Promise<boolean> {
+  const existingItem = await idbStateStorage.getItem(keyFrom);
+  if (existingItem === null) {
+    console.warn('idbUtils: E3: backupIdbV3: item not found:', keyFrom);
+    return false;
+  }
+  await idbStateStorage.setItem(keyTo, existingItem);
+  return true;
+}
 
 
 /// Maintenance
@@ -208,7 +219,7 @@ function deleteValue(dbName, key) {
 // Example usage:
 const myNewJsonString = '{"your": "new json string"}'; // Replace with your desired JSON string
 await setValue('keyval-store', 'app-chats', myNewJsonString);
-await copyValue('keyval-store', 'app-chats', 'app-chats-copy');
+await copyValue('keyval-store', 'app-chats-copy', 'app-chats');
 await deleteValue('keyval-store', 'app-chats-prev');
 
 */

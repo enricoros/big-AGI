@@ -9,7 +9,7 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
 import { DEV_MODE_SETTINGS } from '../../../apps/settings-modal/UxLabsSettings';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
 import { useModuleBeamStore } from '../store-module-beam';
@@ -68,6 +68,7 @@ export function BeamScatterDropdown(props: {
   // external state
   const {
     presets, addPreset, deletePreset,
+    cardAdd, toggleCardAdd,
     cardScrolling, toggleCardScrolling,
     scatterShowPrevMessages, toggleScatterShowPrevMessages,
     scatterShowLettering, toggleScatterShowLettering,
@@ -154,6 +155,11 @@ export function BeamScatterDropdown(props: {
         <MenuItem onClick={toggleScatterShowPrevMessages}>
           <ListItemDecorator>{scatterShowPrevMessages && <CheckRoundedIcon />}</ListItemDecorator>
           History
+        </MenuItem>
+
+        <MenuItem onClick={toggleCardAdd}>
+          <ListItemDecorator>{cardAdd && <CheckRoundedIcon />}</ListItemDecorator>
+          Add Button
         </MenuItem>
 
         <MenuItem onClick={toggleCardScrolling}>

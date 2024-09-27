@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { SxProps, TypographySystem } from '@mui/joy/styles/types';
+import type { ColorPaletteProp, SxProps, TypographySystem } from '@mui/joy/styles/types';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -19,14 +19,15 @@ const wowStyle: SxProps = {
 
 export function ExternalLink(props: {
   href: string,
+  color?: ColorPaletteProp,
   level?: keyof TypographySystem | 'inherit',
   highlight?: boolean,
-  icon?: 'issue',
+  icon?: 'issue' | 'public-docs',
   children: React.ReactNode,
 }) {
   return (
-    <Link level={props.level} href={props.href} target='_blank' sx={props.highlight ? wowStyle : undefined}>
-      {props.children} {props.icon === 'issue'
+    <Link level={props.level} color={props.color} href={props.href} target='_blank' sx={props.highlight ? wowStyle : undefined}>
+      {props.children} {(props.icon === 'issue' || props.icon === 'public-docs')
       ? <AutoStoriesOutlinedIcon sx={{ mx: 0.5, fontSize: 16 }} />
       : <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
     }

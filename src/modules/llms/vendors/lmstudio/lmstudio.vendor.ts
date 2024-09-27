@@ -1,18 +1,18 @@
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
-import { LMStudioSourceSetup } from './LMStudioSourceSetup';
+import { LMStudioServiceSetup } from './LMStudioServiceSetup';
 import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
 
 
-export interface SourceSetupLMStudio {
+interface DLMStudioServiceSettings {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorLMStudio: IModelVendor<SourceSetupLMStudio, OpenAIAccessSchema, LLMOptionsOpenAI> = {
+export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'lmstudio',
   name: 'LM Studio',
   rank: 21,
@@ -21,7 +21,7 @@ export const ModelVendorLMStudio: IModelVendor<SourceSetupLMStudio, OpenAIAccess
 
   // components
   Icon: LMStudioIcon,
-  SourceSetupComponent: LMStudioSourceSetup,
+  ServiceSetupComponent: LMStudioServiceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
@@ -39,6 +39,5 @@ export const ModelVendorLMStudio: IModelVendor<SourceSetupLMStudio, OpenAIAccess
 
   // OpenAI transport ('lmstudio' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

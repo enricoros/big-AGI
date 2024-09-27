@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import { Box, Container, ListDivider, Typography } from '@mui/joy';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+
+import { OptimaDrawerIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 
 import { Creator } from './creator/Creator';
 import { CreatorDrawer } from './creator/CreatorDrawer';
@@ -25,10 +26,9 @@ export function AppPersonas() {
     );
   }, [selectedSimplePersonaId]);
 
-  usePluggableOptimaLayout(drawerContent, null, null, 'AppPersonas');
+  return <>
+    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
 
-
-  return (
     <Box sx={{
       flexGrow: 1,
       overflowY: 'auto',
@@ -50,5 +50,5 @@ export function AppPersonas() {
       </Container>
 
     </Box>
-  );
+  </>;
 }

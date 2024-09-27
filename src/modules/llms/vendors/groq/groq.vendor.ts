@@ -3,17 +3,17 @@ import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { LLMOptionsOpenAI, ModelVendorOpenAI } from '../openai/openai.vendor';
+import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
 import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
 
-import { GroqSourceSetup } from './GroqSourceSetup';
+import { GroqServiceSetup } from './GroqServiceSetup';
 
 
-export interface SourceSetupGroq {
+interface DGroqServiceSettings {
   groqKey: string;
 }
 
-export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, LLMOptionsOpenAI> = {
+export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'groq',
   name: 'Groq',
   rank: 18,
@@ -23,7 +23,7 @@ export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, 
 
   // components
   Icon: GroqIcon,
-  SourceSetupComponent: GroqSourceSetup,
+  ServiceSetupComponent: GroqServiceSetup,
   LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
@@ -44,6 +44,5 @@ export const ModelVendorGroq: IModelVendor<SourceSetupGroq, OpenAIAccessSchema, 
 
   // OpenAI transport ('Groq' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
-  rpcChatGenerateOrThrow: ModelVendorOpenAI.rpcChatGenerateOrThrow,
-  streamingChatGenerateOrThrow: ModelVendorOpenAI.streamingChatGenerateOrThrow,
+
 };

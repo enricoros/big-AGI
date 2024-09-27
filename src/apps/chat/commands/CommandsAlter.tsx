@@ -3,18 +3,18 @@ import ClearIcon from '@mui/icons-material/Clear';
 import type { ICommandsProvider } from './ICommandsProvider';
 
 export const CommandsAlter: ICommandsProvider = {
-  id: 'chat-alter',
+  id: 'cmd-chat-alter',
   rank: 25,
 
   getCommands: () => [{
     primary: '/assistant',
     alternatives: ['/a'],
-    arguments: ['text'],
+    arguments: ['text...'],
     description: 'Injects assistant response',
   }, {
     primary: '/system',
     alternatives: ['/s'],
-    arguments: ['text'],
+    arguments: ['text...'],
     description: 'Injects system message',
   }, {
     primary: '/clear',

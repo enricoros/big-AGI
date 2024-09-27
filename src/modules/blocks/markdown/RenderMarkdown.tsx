@@ -5,8 +5,6 @@ import { Box, styled } from '@mui/joy';
 
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
-import type { TextBlock } from '../blocks';
-
 
 /*
  * For performance reasons, we style this component here and copy the equivalent of 'props.sx' (the lineHeight) locally.
@@ -25,14 +23,14 @@ const RenderMarkdownBox = styled(Box)({
 
 const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
-export function RenderMarkdown(props: { textBlock: TextBlock; sx?: SxProps; }) {
+export function RenderMarkdown(props: { content: string; sx?: SxProps; }) {
   return (
     <RenderMarkdownBox
       className='markdown-body' /* NODE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
       sx={props.sx}
     >
       <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer content={props.textBlock.content} />
+        <DynamicMarkdownRenderer content={props.content} />
       </React.Suspense>
     </RenderMarkdownBox>
   );

@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
-import { v4 as uuidv4 } from 'uuid';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Alert, Avatar, Box, Button, Card, CardContent, Checkbox, IconButton, Input, List, ListItem, ListItemButton, Textarea, Tooltip, Typography } from '@mui/joy';
@@ -11,15 +10,17 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import SearchIcon from '@mui/icons-material/Search';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { SystemPurposeData, SystemPurposeId, SystemPurposes } from '../../../../data';
+import { SystemPurposeData, SystemPurposeExample, SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
-import { useChatLLM } from '~/modules/llms/store-llms';
 
-import { DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
+import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
+import { useChatLLM } from '~/common/stores/llms/llms.hooks';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -57,6 +58,7 @@ function Tile(props: {
         height: `${tileSize}rem`,
         fontWeight: 'md',
         lineHeight: 'xs',
+        paddingInline: 0.5,
         ...((props.isEditMode || !props.isActive) ? {
           boxShadow: `0 2px 8px -3px rgb(var(--joy-palette-${TILE_ACTIVE_COLOR}-darkChannel) / 30%)`,
           // boxShadow: props.isHighlighted
@@ -113,33 +115,43 @@ function Tile(props: {
 /**
  * Purpose selector for the current chat. Clicking on any item activates it for the current chat.
  */
-export function PersonaSelector(props: { conversationId: DConversationId, runExample: (example: string) => void }) {
+export function PersonaSelector(props: {
+  conversationId: DConversationId,
+  isMobile: boolean,
+  runExample: (example: SystemPurposeExample) => void,
+}) {
 
   // state
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredIDs, setFilteredIDs] = React.useState<SystemPurposeId[] | null>(null);
   const [editMode, setEditMode] = React.useState(false);
-  const [isYouTubeTranscriberActive, setIsYouTubeTranscriberActive] = React.useState(false);
 
 
   // external state
-  const showFinder = useUIPreferencesStore(state => state.showPersonaFinder);
-  const [showExamples, showExamplescomponent] = useChipBoolean('Examples', false);
+  const { complexityMode, showPersonaFinder } = useUIPreferencesStore(useShallow(state => ({
+    complexityMode: state.complexityMode,
+    showPersonaFinder: state.showPersonaFinder,
+  })));
+  const [showExamples, showExamplescomponent] = useChipBoolean('Examples', complexityMode === 'extra' && !props.isMobile);
   const [showPrompt, showPromptComponent] = useChipBoolean('Prompt', false);
-  const { systemPurposeId, setSystemPurposeId } = useChatStore(state => {
+  const { systemPurposeId, setSystemPurposeId } = useChatStore(useShallow(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       systemPurposeId: conversation ? conversation.systemPurposeId : null,
       setSystemPurposeId: conversation ? state.setSystemPurposeId : null,
     };
-  }, shallow);
-  const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(state => ({ hiddenPurposeIDs: state.hiddenPurposeIDs, toggleHiddenPurposeId: state.toggleHiddenPurposeId }), shallow);
+  }));
+  const { hiddenPurposeIDs, toggleHiddenPurposeId } = usePurposeStore(useShallow(state => ({
+    hiddenPurposeIDs: state.hiddenPurposeIDs,
+    toggleHiddenPurposeId: state.toggleHiddenPurposeId,
+  })));
   const { chatLLM } = useChatLLM();
 
 
   // derived state
 
   const isCustomPurpose = systemPurposeId === 'Custom';
+  const isYouTubeTranscriber = systemPurposeId === 'YouTubeTranscriber';
 
   const { selectedPurpose, fourExamples } = React.useMemo(() => {
     const selectedPurpose: SystemPurposeData | null = systemPurposeId ? (SystemPurposes[systemPurposeId] ?? null) : null;
@@ -151,57 +163,25 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
   }, [systemPurposeId]);
 
 
-  const unfilteredPurposeIDs = (filteredIDs && showFinder) ? filteredIDs : Object.keys(SystemPurposes) as SystemPurposeId[];
+  const unfilteredPurposeIDs = (filteredIDs && showPersonaFinder) ? filteredIDs : Object.keys(SystemPurposes) as SystemPurposeId[];
   const visiblePurposeIDs = editMode ? unfilteredPurposeIDs : unfilteredPurposeIDs.filter(id => !hiddenPurposeIDs.includes(id));
   const hidePersonaCreator = hiddenPurposeIDs.includes(PURPOSE_ID_PERSONA_CREATOR);
 
 
   // Handlers
 
-// Modify the handlePurposeChanged function to check for the YouTube Transcriber
   const handlePurposeChanged = React.useCallback((purposeId: SystemPurposeId | null) => {
-    if (purposeId) {
-      if (purposeId === 'YouTubeTranscriber') {
-        // If the YouTube Transcriber tile is clicked, set the state accordingly
-        setIsYouTubeTranscriberActive(true);
-      } else {
-        setIsYouTubeTranscriberActive(false);
-      }
-      if (setSystemPurposeId) {
-        setSystemPurposeId(props.conversationId, purposeId);
-      }
-    }
+    if (purposeId && setSystemPurposeId)
+      setSystemPurposeId(props.conversationId, purposeId);
   }, [props.conversationId, setSystemPurposeId]);
 
-  React.useEffect(() => {
-    const isTranscriberActive = systemPurposeId === 'YouTubeTranscriber';
-    setIsYouTubeTranscriberActive(isTranscriberActive);
-  }, [systemPurposeId]);
-
-
-// Implement handleAddMessage function
-  const handleAddMessage = (messageText: string) => {
-    // Retrieve the appendMessage action from the useChatStore
-    const { appendMessage } = useChatStore.getState();
-
-    const conversationId = props.conversationId;
-
+  const handleAppendTranscriptAsMessage = React.useCallback((messageText: string) => {
     // Create a new message object
-    const newMessage: DMessage = {
-      id: uuidv4(),
-      text: messageText,
-      sender: 'Bot',
-      avatar: null,
-      typing: false,
-      role: 'assistant' as 'assistant',
-      tokenCount: 0,
-      created: Date.now(),
-      updated: null,
-    };
+    const newMessage = createDMessageTextContent('assistant', messageText); // [chat] append assistant:YouTube transcript
 
     // Append the new message to the conversation
-    appendMessage(conversationId, newMessage);
-  };
+    useChatStore.getState().appendMessage(props.conversationId, newMessage);
+  }, [props.conversationId]);
 
 
   const handleCustomSystemMessageChange = React.useCallback((v: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -272,7 +252,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
       py: 2,
     }}>
 
-      {showFinder && <Box>
+      {showPersonaFinder && <Box>
         <Input
           fullWidth
           variant='outlined' color='neutral'
@@ -353,8 +333,7 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
 
 
         {/* [row -3] Description */}
-        <Box sx={{ gridColumn: '1 / -1', mt: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-
+        <Box sx={{ gridColumn: '1 / -1', mt: 3, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
 
           {/* Description*/}
           <Typography level='body-sm' sx={{ color: 'text.primary' }}>
@@ -362,11 +341,13 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
               ? 'Cannot find the former persona' + (systemPurposeId ? ` "${systemPurposeId}"` : '')
               : selectedPurpose?.description || 'No description available'}
           </Typography>
-          {/* Examples Toggle */}
-          {/*<Box sx={{ display: 'flex', flexFlow: 'row wrap', flexShrink: 1 }}>*/}
-          {fourExamples && showExamplescomponent}
-          {!isCustomPurpose && showPromptComponent}
-          {/*</Box>*/}
+
+          {/* Examples/Prompt Toggles */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {fourExamples && showExamplescomponent}
+            {!isCustomPurpose && showPromptComponent}
+          </Box>
+
         </Box>
 
         {/* [row -3] Example incipits */}
@@ -397,7 +378,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
                   >
                     <ListItemButton onClick={() => props.runExample(example)} sx={{ justifyContent: 'space-between', borderRadius: 'md' }}>
                       <Typography level='body-sm'>
-                        {example}
+                        {/* Icon 📁 when the .action is 'require-data-attachment' */}
+                        {(typeof example === 'object' && example.action === 'require-data-attachment') ? '📁 ' : ''}
+                        {(typeof example === 'string') ? example : example.prompt}
                       </Typography>
                       <TelegramIcon color='primary' sx={{}} />
                     </ListItemButton>
@@ -465,10 +448,9 @@ export function PersonaSelector(props: { conversationId: DConversationId, runExa
         )}
 
         {/* [row -1] YouTube URL */}
-        {isYouTubeTranscriberActive && (
+        {isYouTubeTranscriber && (
           <YouTubeURLInput
-            onSubmit={(url) => handleAddMessage(url)}
-            isFetching={false}
+            onSubmit={handleAppendTranscriptAsMessage}
             sx={{
               gridColumn: '1 / -1',
             }}

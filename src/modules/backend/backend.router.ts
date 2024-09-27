@@ -4,7 +4,7 @@ import type { BackendCapabilities } from '~/modules/backend/store-backend-capabi
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { analyticsListCapabilities } from './backend.analytics';
 
@@ -57,6 +57,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmMistral: !!env.MISTRAL_API_KEY,
         hasLlmOllama: !!env.OLLAMA_API_HOST,
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
+        hasLlmOpenPipe: !!env.OPENPIPE_API_KEY,
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
@@ -73,9 +74,12 @@ export const backendRouter = createTRPCRouter({
     .input(z.object({ code: z.string() }))
     .query(async ({ input }) => {
       // Documented here: https://openrouter.ai/docs#oauth
-      return await fetchJsonOrTRPCError<{ key: string }, { code: string }>('https://openrouter.ai/api/v1/auth/keys', 'POST', {}, {
-        code: input.code,
-      }, 'Backend.exchangeOpenRouterKey');
+      return await fetchJsonOrTRPCThrow<{ key: string }, { code: string }>({
+        url: 'https://openrouter.ai/api/v1/auth/keys',
+        method: 'POST',
+        body: { code: input.code },
+        name: 'Backend.exchangeOpenRouterKey',
+      });
     }),
 
 });

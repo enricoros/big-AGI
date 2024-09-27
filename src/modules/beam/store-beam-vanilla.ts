@@ -1,8 +1,9 @@
-import { createStore, StateCreator } from 'zustand/vanilla';
+import { createStore as createVanillaStore, StateCreator } from 'zustand/vanilla';
 
-import { DLLMId, getDiverseTopLlmIds } from '~/modules/llms/store-llms';
-
-import type { DMessage } from '~/common/state/store-chats';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { getDiverseTopLlmIds } from '~/common/stores/llms/store-llms';
 
 import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
 import { SCATTER_RAY_DEF } from './beam.config';
@@ -15,7 +16,7 @@ import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from '
 
 export type BeamStore = RootStoreSlice & GatherStoreSlice & ScatterStoreSlice;
 
-export const createBeamVanillaStore = () => createStore<BeamStore>()((...a) => ({
+export const createBeamVanillaStore = () => createVanillaStore<BeamStore>()((...a) => ({
 
   ...createRootSlice(...a),
   ...createScatterSlice(...a),
@@ -26,11 +27,12 @@ export const createBeamVanillaStore = () => createStore<BeamStore>()((...a) => (
 
 /// Common Store Slice ///
 
-type BeamSuccessCallback = (text: string, llmId: DLLMId) => void;
+type BeamSuccessCallback = (messageUpdate: Pick<DMessage, 'fragments' | 'generator'>) => void;
 
 interface RootStateSlice {
 
   isOpen: boolean;
+  isEditMode: boolean;
   isMaximized: boolean;
   inputHistory: DMessage[] | null;
   inputIssues: string | null;
@@ -42,6 +44,7 @@ interface RootStateSlice {
 const initRootStateSlice = (): RootStateSlice => ({
 
   isOpen: false,
+  isEditMode: false,
   isMaximized: false,
   inputHistory: null,
   inputIssues: null,
@@ -53,12 +56,12 @@ const initRootStateSlice = (): RootStateSlice => ({
 export interface RootStoreSlice extends RootStateSlice {
 
   // lifecycle
-  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => void;
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, isEditMode: boolean, callback: BeamSuccessCallback) => void;
   terminateKeepingSettings: () => void;
   loadBeamConfig: (preset: BeamConfigSnapshot | null) => void;
 
   setIsMaximized: (maximized: boolean) => void;
-  editInputHistoryMessage: (messageId: string, newText: string) => void;
+  inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
 
 }
 
@@ -69,7 +72,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
   ...initRootStateSlice(),
 
 
-  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, callback: BeamSuccessCallback) => {
+  open: (chatHistory: Readonly<DMessage[]>, initialChatLlmId: DLLMId | null, isEditMode: boolean, callback: BeamSuccessCallback) => {
     const { isOpen: wasAlreadyOpen, terminateKeepingSettings, loadBeamConfig, hadImportedRays, setRayLlmIds, setCurrentGatherLlmId } = _get();
 
     // reset pending operations
@@ -83,6 +86,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       // input
       isOpen: true,
+      isEditMode,
       inputHistory: isValidHistory ? history : null,
       inputIssues: isValidHistory ? null : 'Invalid conversation history: missing user message',
       inputReady: isValidHistory,
@@ -137,11 +141,29 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       isMaximized: maximized,
     }),
 
-  editInputHistoryMessage: (messageId: string, newText: string) =>
+  inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
     _set(state => ({
-      inputHistory: state.inputHistory?.map((message) => (message.id !== messageId) ? message : {
-        ...message,
-        text: newText,
+      inputHistory: state.inputHistory?.map((message): DMessage => {
+        if (message.id !== messageId)
+          return message;
+
+        // probably unnecessary development warning
+        if (message.fragments.findIndex(f => f.fId === fragmentId) === -1) {
+          console.error(`inputHistoryReplaceMessageFragment: cannot find missing fragment ID ${fragmentId} for message ${messageId}`);
+          return message;
+        }
+
+        const updatedFragments = message.fragments.map((fragment) =>
+          (fragment.fId === fragmentId)
+            ? newFragment
+            : fragment,
+        );
+
+        return {
+          ...message,
+          fragments: updatedFragments,
+          updated: Date.now(),
+        };
       }),
     })),
 

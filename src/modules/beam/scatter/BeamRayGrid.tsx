@@ -27,11 +27,11 @@ const rayGridMobileSx: SxProps = {
 
 export function BeamRayGrid(props: {
   beamStore: BeamStoreApi,
-  hadImportedRays: boolean
+  hadImportedRays: boolean,
   isMobile: boolean,
   onIncreaseRayCount: () => void,
   rayIds: string[],
-  // linkedLlmId: DLLMId | null,
+  showRayAdd: boolean,
 }) {
 
   const raysCount = props.rayIds.length;
@@ -46,6 +46,7 @@ export function BeamRayGrid(props: {
           rayIndexWeak={index}
           beamStore={props.beamStore}
           hadImportedRays={props.hadImportedRays}
+          isMobile={props.isMobile}
           isRemovable={raysCount > SCATTER_RAY_MIN}
           rayId={rayId}
           // linkedLlmId={props.linkedLlmId}
@@ -53,7 +54,7 @@ export function BeamRayGrid(props: {
       ))}
 
       {/* Add Ray */}
-      {raysCount < SCATTER_RAY_MAX && (
+      {(props.showRayAdd && raysCount < SCATTER_RAY_MAX) && (
         <BeamCard sx={{ mb: 'auto' }}>
           <Button variant='plain' color='neutral' onClick={props.onIncreaseRayCount} sx={{
             minHeight: 'calc(2 * var(--Card-padding) + 2rem - 0.5rem)',

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
 
 
 /// Composer Store
@@ -28,5 +27,7 @@ const useComposerStore = create<ComposerStore>()(
 export const setComposerStartupText = (text: string | null) =>
   useComposerStore.getState().setStartupText(text);
 
-export const useComposerStartupText = (): [string | null, (text: string | null) => void] =>
-  useComposerStore(state => [state.startupText, state.setStartupText], shallow);
+export const useComposerStartupText = (): [string | null, (text: string | null) => void] => {
+  const text = useComposerStore(state => state.startupText);
+  return [text, useComposerStore.getState().setStartupText];
+};

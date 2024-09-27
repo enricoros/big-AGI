@@ -1,31 +1,65 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
-import { shallow } from 'zustand/shallow';
 
 import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
+import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useDefaultLLMIDs, useLLM } from '~/common/stores/llms/llms.hooks';
 
-import { DLLMId, useModelsStore } from '../store-llms';
-import { findVendorById } from '../vendors/vendors.registry';
+import { findModelVendor } from '../vendors/vendors.registry';
 
 
-function VendorLLMOptions(props: { llmId: DLLMId }) {
+function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
   // get LLM (warning: this will refresh all children components on every change of any LLM field)
-  const llm = useModelsStore(state => state.llms.find(llm => llm.id === props.llmId), shallow);
+  const llm = useLLM(props.llmId);
   if (!llm)
     return 'Options issue: LLM not found for id ' + props.llmId;
 
   // get vendor
-  const vendor = findVendorById(llm._source.vId);
+  const vendor = findModelVendor(llm.vId);
   if (!vendor)
-    return 'Options issue: Vendor not found for LLM ' + props.llmId + ', source ' + llm._source.id;
+    return `Options issue: Vendor not found for LLM ${props.llmId}, service ${llm.sId}, vendor ${llm.vId}`;
 
   return <vendor.LLMOptionsComponent llm={llm} />;
+}
+
+
+function prettyPricingComponent(chatPricing: DChatGeneratePricing): React.ReactNode {
+  if (!chatPricing) return 'Pricing not available';
+
+  const formatPrice = (price: DChatGeneratePricing['input']): string => {
+    if (!price) return 'N/A';
+    if (price === 'free') return 'Free';
+    if (typeof price === 'number') return `$${price.toFixed(4)}`;
+    if (Array.isArray(price))
+      return price.map(bp => `${bp.upTo === null ? '>' : '<='} ${bp.upTo} tokens: ${formatPrice(bp.price)}`).join(', ');
+    return 'Unknown';
+  };
+
+  const inputPrice = formatPrice(chatPricing.input);
+  const outputPrice = formatPrice(chatPricing.output);
+
+  let cacheInfo = '';
+  if (chatPricing.cache) {
+    const { read, write, duration } = chatPricing.cache;
+    cacheInfo = `Cache: Read ${formatPrice(read)}, Write ${formatPrice(write)}, Duration: ${duration}s`;
+  }
+
+  return (
+    <Typography level='body-sm'>
+      <strong>Pricing ($/M tokens):</strong><br />
+      Input: {inputPrice}<br />
+      Output: {outputPrice}<br />
+      {cacheInfo && <>{cacheInfo}<br /></>}
+    </Typography>
+  );
 }
 
 
@@ -35,27 +69,16 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
   const [showDetails, setShowDetails] = React.useState(false);
 
   // external state
-  const {
-    llm,
-    removeLLM, updateLLM,
-    isChatLLM, setChatLLMId,
-    isFastLLM, setFastLLMId,
-    isFuncLLM, setFuncLLMId,
-  } = useModelsStore(state => ({
-    llm: state.llms.find(llm => llm.id === props.id),
-    removeLLM: state.removeLLM,
-    updateLLM: state.updateLLM,
-    isChatLLM: state.chatLLMId === props.id,
-    isFastLLM: state.fastLLMId === props.id,
-    isFuncLLM: state.funcLLMId === props.id,
-    setChatLLMId: state.setChatLLMId,
-    setFastLLMId: state.setFastLLMId,
-    setFuncLLMId: state.setFuncLLMId,
-  }), shallow);
+  const llm = useLLM(props.id);
+  const { chatLLMId, fastLLMId, funcLLMId } = useDefaultLLMIDs();
+  const { removeLLM, updateLLM, setChatLLMId, setFastLLMId, setFuncLLMId } = llmsStoreActions();
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
 
+  const isChatLLM = chatLLMId === props.id;
+  const isFastLLM = fastLLMId === props.id;
+  const isFuncLLM = funcLLMId === props.id;
 
   const handleLlmLabelSet = (event: React.ChangeEvent<HTMLInputElement>) => updateLLM(llm.id, { label: event.target.value || '' });
 
@@ -79,7 +102,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     >
 
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
-        <VendorLLMOptions llmId={props.id} />
+        <VendorLLMOptionsComponent llmId={props.id} />
       </Box>
 
       <Divider />
@@ -126,7 +149,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
           {!!llm.description && <Typography level='body-sm'>
             {llm.description}
           </Typography>}
-          {!!llm.tmpIsFree && <Typography level='body-xs'>
+          {!!llm.pricing?.chat?._isFree && <Typography level='body-xs'>
             🎁 Free model - note: refresh models to check for updates in pricing
           </Typography>}
           <Typography level='body-xs'>
@@ -135,7 +158,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             max output tokens: <b>{llm.maxOutputTokens ? llm.maxOutputTokens.toLocaleString() : 'not provided'}</b><br />
             {!!llm.created && <>created: <TimeAgo date={new Date(llm.created * 1000)} /><br /></>}
             {/*· tags: {llm.tags.join(', ')}*/}
-            {!!llm.pricing && <>pricing: $<b>{llm.pricing.chatIn || '(unk) '}</b>/M in, $<b>{llm.pricing.chatOut || '(unk) '}</b>/M out<br /></>}
+            {!!llm.pricing?.chat && prettyPricingComponent(llm.pricing.chat)}
             {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
             config: {JSON.stringify(llm.options)}
           </Typography>

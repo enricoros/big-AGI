@@ -1,5 +1,5 @@
-import { addSnackbar } from '../components/useSnackbarsStore';
-import { isBrowser, isFirefox } from './pwaUtils';
+import { addSnackbar } from '../components/snackbar/useSnackbarsStore';
+import { Is, isBrowser } from './pwaUtils';
 
 export function copyToClipboard(text: string, typeLabel: string) {
   if (!isBrowser)
@@ -16,7 +16,7 @@ export function copyToClipboard(text: string, typeLabel: string) {
         type: 'success',
         closeButton: false,
         overrides: {
-          autoHideDuration: 1400,
+          autoHideDuration: 2000,
         },
       });
     })
@@ -25,8 +25,36 @@ export function copyToClipboard(text: string, typeLabel: string) {
     });
 }
 
+export function copyBlobToClipboard(blob: Blob, typeLabel: string) {
+  if (!isBrowser)
+    return;
+  if (!navigator.clipboard || !navigator.clipboard.write) {
+    alert('Clipboard access is blocked or not supported in this browser.');
+    return;
+  }
+  // Create a ClipboardItem with the Blob
+  const clipboardItem = new ClipboardItem({ [blob.type]: blob });
+  // Write the ClipboardItem to the clipboard
+  navigator.clipboard.write([clipboardItem])
+    .then(() => {
+      addSnackbar({
+        key: 'copy-blob-to-clipboard',
+        message: `${typeLabel} copied to clipboard`,
+        type: 'success',
+        closeButton: false,
+        overrides: {
+          autoHideDuration: 2000,
+        },
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to copy blob to clipboard: ', err);
+      alert('Failed to copy image to clipboard. Please try again.');
+    });
+}
+
 // NOTE: this could be implemented in a platform-agnostic manner with !!.read, but we call it out here for clarity
-export const supportsClipboardRead = !isFirefox;
+export const supportsClipboardRead = !Is.Browser.Firefox;
 
 export async function getClipboardItems(): Promise<ClipboardItem[] | null> {
   if (!isBrowser || !window.navigator.clipboard?.read)

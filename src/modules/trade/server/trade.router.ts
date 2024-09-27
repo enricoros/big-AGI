@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchTextOrTRPCError } from '~/server/api/trpc.router.fetchers';
+import { fetchTextOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 
 import { chatGptParseConversation, chatGptSharedChatSchema } from './chatgpt';
 import { postToPasteGGOrThrow, publishToInputSchema, publishToOutputSchema } from './pastegg';
@@ -11,7 +11,7 @@ import { storageGetProcedure, storageMarkAsDeletedProcedure, storagePutProcedure
 
 export const importChatGptShareInputSchema = z.union([
   z.object({
-    url: z.string().url().startsWith('https://chat.openai.com/share/'),
+    url: z.string().url().startsWith('https://chatgpt.com/share/'),
   }),
   z.object({
     htmlPage: z.string(),
@@ -34,12 +34,16 @@ export const tradeRouter = createTRPCRouter({
         htmlPage = input.htmlPage;
       } else {
         // add headers that make it closest to a browser request
-        htmlPage = await fetchTextOrTRPCError(input.url, 'GET', {
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-        }, undefined, 'ChatGPT Importer');
+        htmlPage = await fetchTextOrTRPCThrow({
+          url: input.url,
+          headers: {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+          },
+          name: 'ChatGPT Importer',
+        });
       }
 
       const data = chatGptParseConversation(htmlPage);

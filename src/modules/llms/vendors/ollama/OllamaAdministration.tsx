@@ -5,7 +5,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import FormatListNumberedRtlIcon from '@mui/icons-material/FormatListNumberedRtl';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -24,10 +24,9 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
   // external state
   const { data: pullableData } = apiQuery.llmOllama.adminListPullable.useQuery({ access: props.access }, {
     staleTime: 1000 * 60,
-    refetchOnWindowFocus: false,
   });
-  const { data: pullData, isLoading: isPulling, status: pullStatus, error: pullError, mutate: pullMutate, reset: pullReset } = apiQuery.llmOllama.adminPull.useMutation();
-  const { isLoading: isDeleting, status: deleteStatus, error: deleteError, mutate: deleteMutate, reset: deleteReset } = apiQuery.llmOllama.adminDelete.useMutation();
+  const { data: pullData, isPending: isPulling, status: pullStatus, error: pullError, mutate: pullMutate, reset: pullReset } = apiQuery.llmOllama.adminPull.useMutation();
+  const { isPending: isDeleting, status: deleteStatus, error: deleteError, mutate: deleteMutate, reset: deleteReset } = apiQuery.llmOllama.adminDelete.useMutation();
 
   // derived state
   let pullable = pullableData?.pullable || [];
