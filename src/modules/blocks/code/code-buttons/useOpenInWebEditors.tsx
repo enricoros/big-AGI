@@ -3,11 +3,13 @@ import * as React from 'react';
 import { ListItemDecorator, MenuItem } from '@mui/joy';
 
 import { CodePenIcon } from '~/common/components/icons/3rdparty/CodePenIcon';
+import { GoogleColabIcon } from '~/common/components/icons/3rdparty/GoogleColabIcon';
 import { JSFiddleIcon } from '~/common/components/icons/3rdparty/JSFiddleIcon';
 import { StackBlitzIcon } from '~/common/components/icons/3rdparty/StackBlitzIcon';
 
 import { BLOCK_CODE_VND_AGI_CHARTJS } from '../RenderCode';
 import { isCodePenSupported, openInCodePen } from './openInCodePen';
+import { isGoogleColabSupported, openInGoogleColab } from './openInGoogleColab';
 import { isJSFiddleSupported, openInJsFiddle } from './openInJsFiddle';
 import { isStackBlitzSupported, openInStackBlitz } from './openInStackBlitz';
 
@@ -33,7 +35,7 @@ export function useOpenInWebEditors(
     const canJSFiddle = isJSFiddleSupported(inferredCodeLanguage, code);
     if (canJSFiddle)
       items.push(
-        <MenuItem key="jsfiddle" onClick={() => openInJsFiddle(code, inferredCodeLanguage!)}>
+        <MenuItem key='jsfiddle' onClick={() => openInJsFiddle(code, inferredCodeLanguage!)}>
           <ListItemDecorator>
             <JSFiddleIcon />
           </ListItemDecorator>
@@ -44,7 +46,7 @@ export function useOpenInWebEditors(
     const canCodePen = isCodePenSupported(inferredCodeLanguage, isSVGCode);
     if (canCodePen)
       items.push(
-        <MenuItem key="codepen" onClick={() => openInCodePen(code, inferredCodeLanguage!)}>
+        <MenuItem key='codepen' onClick={() => openInCodePen(code, inferredCodeLanguage!)}>
           <ListItemDecorator>
             <CodePenIcon />
           </ListItemDecorator>
@@ -55,11 +57,22 @@ export function useOpenInWebEditors(
     const canStackBlitz = isStackBlitzSupported(inferredCodeLanguage);
     if (canStackBlitz)
       items.push(
-        <MenuItem key="stackblitz" onClick={() => openInStackBlitz(code, inferredCodeLanguage!, blockTitle)}>
+        <MenuItem key='stackblitz' onClick={() => openInStackBlitz(code, inferredCodeLanguage!, blockTitle)}>
           <ListItemDecorator>
             <StackBlitzIcon />
           </ListItemDecorator>
           StackBlitz
+        </MenuItem>,
+      );
+
+    const canGoogleColab = isGoogleColabSupported(inferredCodeLanguage);
+    if (canGoogleColab)
+      items.push(
+        <MenuItem key='googlecolab' onClick={() => openInGoogleColab(code)}>
+          <ListItemDecorator>
+            <GoogleColabIcon />
+          </ListItemDecorator>
+          Copy &amp; Paste in Colab
         </MenuItem>,
       );
 
