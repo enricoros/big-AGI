@@ -17,13 +17,18 @@ const MAJOR_GRID_INTERVAL = 5;
 const MAX_TOKENS = 30;
 const TOKEN_CREATION_INTERVAL = 500;
 
+// Original grayscale color palette
 const colorPalette = ['#CDD7E1', '#9FA6AD', '#636B74', '#555E68', '#32383E'];
 // const shapeOpacity = { min: 0.5, max: 0.9 };
+
+// Additional vibrant colors to use occasionally
+const specialColors = ['#FF6B6B', '#4ECDC4', '#45B7D1'];
+
 const sizeVariation = { min: 0.6, max: 1 };
 const speedVariation = {
   slow: { min: 20, max: 40 },
   fast: { min: 80, max: 120 },
-};
+} as const;
 
 type ShapeType = typeof shapes[number];
 const shapes = ['circle', 'rect', 'triangle'] as const;
@@ -73,20 +78,19 @@ export function DataStreamViz(props: { height: number }) {
     if (tokensRef.current.length >= MAX_TOKENS) return;
     if (Math.random() > 0.7) return; // Density variation
 
-    const size =
-      GRID_SIZE *
-      (sizeVariation.min + Math.random() * (sizeVariation.max - sizeVariation.min));
+    const size = GRID_SIZE * (sizeVariation.min + Math.random() * (sizeVariation.max - sizeVariation.min));
+    const yPosition = Math.floor(Math.random() * ((height - size) / GRID_SIZE)) * GRID_SIZE;
 
-    const yPosition =
-      Math.floor(Math.random() * ((height - size) / GRID_SIZE)) * GRID_SIZE;
-    const colorIndex = Math.floor(Math.random() * colorPalette.length);
-    const isFast = Math.random() > 0.7;
+    // Decide whether to use a special color
+    const useSpecialColor = Math.random() < 0.1; // 10% chance to use a special color
+    const colorArray = useSpecialColor ? specialColors : colorPalette;
+    const colorIndex = Math.floor(Math.random() * colorArray.length);
+
+    const isFast = Math.random() > 0.7 || useSpecialColor; // 30% chance to be fast
     const speed =
       (isFast
-        ? speedVariation.fast.min +
-        Math.random() * (speedVariation.fast.max - speedVariation.fast.min)
-        : speedVariation.slow.min +
-        Math.random() * (speedVariation.slow.max - speedVariation.slow.min)) / 1000;
+        ? speedVariation.fast.min + Math.random() * (speedVariation.fast.max - speedVariation.fast.min)
+        : speedVariation.slow.min + Math.random() * (speedVariation.slow.max - speedVariation.slow.min)) / 1000;
 
     tokensRef.current.push({
       x: width,
@@ -94,8 +98,8 @@ export function DataStreamViz(props: { height: number }) {
       size: size,
       speed: speed,
       type: shapes[Math.floor(Math.random() * shapes.length)],
-      color: colorPalette[colorIndex],
-      // opacity: shapeOpacity.min + Math.random() * (shapeOpacity.max - shapeOpacity.min),
+      color: colorArray[colorIndex],
+      // opacity: useSpecialColor ? 1 : shapeOpacity.min + Math.random() * (shapeOpacity.max - shapeOpacity.min),
       entryProgress: 0,
     });
   }, []);
@@ -114,23 +118,21 @@ export function DataStreamViz(props: { height: number }) {
 
     for (let x = 0; x <= width; x += GRID_SIZE) {
       ctx.beginPath();
-      ctx.strokeStyle =
-        (x / GRID_SIZE) % MAJOR_GRID_INTERVAL === 0 ? '#e0e0e0' : '#f0f0f0';
+      ctx.strokeStyle = (x / GRID_SIZE) % MAJOR_GRID_INTERVAL === 0 ? '#e0e0e0' : '#f0f0f0';
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
       ctx.stroke();
     }
   }, []);
 
-
+  // Draw token function
   const drawToken = React.useCallback((ctx: CanvasRenderingContext2D, token: Token, width: number) => {
     ctx.fillStyle = token.color;
     ctx.strokeStyle = token.color;
     ctx.lineWidth = 0.5;
     // ctx.globalAlpha = token.opacity * (token.entryProgress < 1 ? token.entryProgress : 1);
 
-    const x =
-      token.entryProgress < 1 ? width - (1 - token.entryProgress) * token.size : token.x;
+    const x = token.entryProgress < 1 ? width - (1 - token.entryProgress) * token.size : token.x;
 
     switch (token.type) {
       case 'circle':
@@ -157,7 +159,7 @@ export function DataStreamViz(props: { height: number }) {
     ctx.globalAlpha = 1;
   }, []);
 
-
+  // Animation function
   const animate = React.useCallback((currentTime: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -172,8 +174,7 @@ export function DataStreamViz(props: { height: number }) {
 
     ctx.clearRect(-1, -1, width + 2, height + 2);
 
-    if (SHOW_GRID)
-      drawGrid(ctx, width, height);
+    if (SHOW_GRID) drawGrid(ctx, width, height);
 
     if (currentTime - lastTokenTimeRef.current > TOKEN_CREATION_INTERVAL) {
       createToken(width, height);
@@ -225,10 +226,10 @@ export function DataStreamViz(props: { height: number }) {
     <Box
       ref={containerRef}
       sx={{
-        // width: '100%',
         height: `${props.height}px`,
         overflow: 'hidden',
         position: 'relative',
+        width: '100%', // Ensure the canvas fits horizontally
       }}
     >
       <canvas ref={canvasRef} />
