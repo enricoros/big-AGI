@@ -18,7 +18,7 @@ const MAX_TOKENS = 30;
 const TOKEN_CREATION_INTERVAL = 500;
 
 const colorPalette = ['#CDD7E1', '#9FA6AD', '#636B74', '#555E68', '#32383E'];
-const shapeOpacity = { min: 0.5, max: 0.9 };
+// const shapeOpacity = { min: 0.5, max: 0.9 };
 const sizeVariation = { min: 0.6, max: 1 };
 const speedVariation = {
   slow: { min: 20, max: 40 },
@@ -35,7 +35,7 @@ type Token = {
   speed: number;
   type: ShapeType;
   color: string;
-  opacity: number;
+  // opacity: number;
   entryProgress: number;
 };
 
@@ -95,7 +95,7 @@ export function DataStreamViz(props: { height: number }) {
       speed: speed,
       type: shapes[Math.floor(Math.random() * shapes.length)],
       color: colorPalette[colorIndex],
-      opacity: shapeOpacity.min + Math.random() * (shapeOpacity.max - shapeOpacity.min),
+      // opacity: shapeOpacity.min + Math.random() * (shapeOpacity.max - shapeOpacity.min),
       entryProgress: 0,
     });
   }, []);
@@ -127,7 +127,7 @@ export function DataStreamViz(props: { height: number }) {
     ctx.fillStyle = token.color;
     ctx.strokeStyle = token.color;
     ctx.lineWidth = 0.5;
-    ctx.globalAlpha = token.opacity * (token.entryProgress < 1 ? token.entryProgress : 1);
+    // ctx.globalAlpha = token.opacity * (token.entryProgress < 1 ? token.entryProgress : 1);
 
     const x =
       token.entryProgress < 1 ? width - (1 - token.entryProgress) * token.size : token.x;
