@@ -15,10 +15,8 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
-
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessageAttachmentFragment, DMessageDataRef, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
@@ -50,8 +48,9 @@ export function LLMAttachmentMenu(props: {
   menuAnchor: HTMLAnchorElement,
   isPositionFirst: boolean,
   isPositionLast: boolean,
-  onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
   onClose: () => void,
+  onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
+  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
 }) {
 
   // state
@@ -97,7 +96,7 @@ export function LLMAttachmentMenu(props: {
 
   // operations
 
-  const { attachmentDraftsStoreApi, onDraftAction, onClose } = props;
+  const { attachmentDraftsStoreApi, onClose, onDraftAction, onViewImageRefPart } = props;
 
   const handleMoveUp = React.useCallback(() => {
     attachmentDraftsStoreApi.getState().moveAttachmentDraft(draftId, -1);
@@ -128,11 +127,11 @@ export function LLMAttachmentMenu(props: {
     copyToClipboard(text, 'Attachment Text');
   }, []);
 
-  const handleViewMessageDataRef = React.useCallback((event: React.MouseEvent, dataRef: DMessageDataRef) => {
+  const handleViewImageRefPart = React.useCallback((event: React.MouseEvent, imageRefPart: DMessageImageRefPart) => {
     event.preventDefault();
     event.stopPropagation();
-    void showImageDataRefInNewTab(dataRef); // fire/forget
-  }, []);
+    onViewImageRefPart(imageRefPart);
+  }, [onViewImageRefPart]);
 
   const canHaveDetails = !!draftInput && !isConverting;
 
@@ -327,7 +326,7 @@ export function LLMAttachmentMenu(props: {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
                         <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? (part.dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
-                        <Chip size='sm' color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewMessageDataRef(event, part.dataRef)}>
+                        <Chip size='sm' color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
                           see
                         </Chip>
                         {isOutputMultiple && <Chip size='sm' color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>

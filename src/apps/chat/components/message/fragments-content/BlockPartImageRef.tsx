@@ -13,7 +13,7 @@ import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
 export function BlockPartImageRef(props: {
   imageRefPart: DMessageImageRefPart,
-  fragmentId: DMessageFragmentId,
+  fragmentId?: DMessageFragmentId,
   contentScaling: ContentScaling,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
@@ -25,11 +25,13 @@ export function BlockPartImageRef(props: {
 
   // event handlers
   const handleDeleteFragment = React.useCallback(() => {
-    onFragmentDelete?.(fragmentId);
+    if (fragmentId && onFragmentDelete)
+      onFragmentDelete(fragmentId);
   }, [fragmentId, onFragmentDelete]);
 
   const handleReplaceFragment = React.useCallback((newImageFragment: DMessageContentFragment) => {
-    onFragmentReplace?.(fragmentId, newImageFragment);
+    if (fragmentId && onFragmentReplace)
+      onFragmentReplace(fragmentId, newImageFragment);
   }, [fragmentId, onFragmentReplace]);
 
   const handleOpenInNewTab = React.useCallback(() => {
