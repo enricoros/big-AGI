@@ -51,106 +51,110 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
       return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
     }
 
-    // expect: single completion
-    if (generationChunk.candidates?.length !== 1)
-      throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
-    const candidate0 = generationChunk.candidates[0];
-    if (candidate0.index !== undefined && candidate0.index !== 0)
-      throw new Error(`expected completion index 0, got ${candidate0.index}`);
+    // candidates may be an optional field (started happening on 2024-09-27)
+    if (generationChunk.candidates) {
 
-    // see the message architecture
-    for (const mPart of (candidate0.content?.parts || [])) {
-      switch (true) {
+      // expect: single completion
+      if (generationChunk.candidates.length !== 1)
+        throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
+      const candidate0 = generationChunk.candidates[0];
+      if (candidate0.index !== undefined && candidate0.index !== 0)
+        throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
-        // <- TextPart
-        case 'text' in mPart:
-          pt.appendText(mPart.text || '');
-          break;
+      // see the message architecture
+      for (const mPart of (candidate0.content?.parts || [])) {
+        switch (true) {
 
-        // <- FunctionCallPart
-        case 'functionCall' in mPart:
-          pt.startFunctionCallInvocation(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args ?? null);
-          pt.endMessagePart();
-          break;
+          // <- TextPart
+          case 'text' in mPart:
+            pt.appendText(mPart.text || '');
+            break;
 
-        // <- ExecutableCodePart
-        case 'executableCode' in mPart:
-          pt.addCodeExecutionInvocation(null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
-          break;
+          // <- FunctionCallPart
+          case 'functionCall' in mPart:
+            pt.startFunctionCallInvocation(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args ?? null);
+            pt.endMessagePart();
+            break;
 
-        // <- CodeExecutionResultPart
-        case 'codeExecutionResult' in mPart:
-          switch (mPart.codeExecutionResult.outcome) {
-            case 'OUTCOME_OK':
-              pt.addCodeExecutionResponse(null, false, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
-              break;
-            case 'OUTCOME_FAILED':
-              pt.addCodeExecutionResponse(null, true, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
-              break;
-            case 'OUTCOME_DEADLINE_EXCEEDED':
-              const deadlineError = 'Code execution deadline exceeded' + (mPart.codeExecutionResult.output ? `: ${mPart.codeExecutionResult.output}` : '');
-              pt.addCodeExecutionResponse(null, deadlineError, '', 'gemini_auto_inline', 'upstream');
-              break;
-            default:
-              throw new Error(`unexpected code execution outcome: ${mPart.codeExecutionResult.outcome}`);
-          }
-          break;
+          // <- ExecutableCodePart
+          case 'executableCode' in mPart:
+            pt.addCodeExecutionInvocation(null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
+            break;
 
-        default:
-          throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
+          // <- CodeExecutionResultPart
+          case 'codeExecutionResult' in mPart:
+            switch (mPart.codeExecutionResult.outcome) {
+              case 'OUTCOME_OK':
+                pt.addCodeExecutionResponse(null, false, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
+                break;
+              case 'OUTCOME_FAILED':
+                pt.addCodeExecutionResponse(null, true, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
+                break;
+              case 'OUTCOME_DEADLINE_EXCEEDED':
+                const deadlineError = 'Code execution deadline exceeded' + (mPart.codeExecutionResult.output ? `: ${mPart.codeExecutionResult.output}` : '');
+                pt.addCodeExecutionResponse(null, deadlineError, '', 'gemini_auto_inline', 'upstream');
+                break;
+              default:
+                throw new Error(`unexpected code execution outcome: ${mPart.codeExecutionResult.outcome}`);
+            }
+            break;
+
+          default:
+            throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
+        }
       }
-    }
 
-    // -> Token Stop Reason
-    if (candidate0.finishReason) {
-      switch (candidate0.finishReason) {
-        case 'STOP':
-          // this is expected for every fragment up to the end, when it may switch to one of the reasons below in the last packet
-          // we cannot assume this signals a good ending, however it will be `pt` to set it to 'ok' if not set to an issue by the end
-          break;
+      // -> Token Stop Reason
+      if (candidate0.finishReason) {
+        switch (candidate0.finishReason) {
+          case 'STOP':
+            // this is expected for every fragment up to the end, when it may switch to one of the reasons below in the last packet
+            // we cannot assume this signals a good ending, however it will be `pt` to set it to 'ok' if not set to an issue by the end
+            break;
 
-        case 'MAX_TOKENS':
-          pt.setTokenStopReason('out-of-tokens');
-          // NOTE: we call setEnded instread of setDialectTerminatingIssue, because we don't want an extra message appended,
-          // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
-          return pt.setEnded('issue-dialect');
+          case 'MAX_TOKENS':
+            pt.setTokenStopReason('out-of-tokens');
+            // NOTE: we call setEnded instread of setDialectTerminatingIssue, because we don't want an extra message appended,
+            // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
+            return pt.setEnded('issue-dialect');
 
-        case 'SAFETY':
-          pt.setTokenStopReason('filter-content');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null);
+          case 'SAFETY':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null);
 
-        case 'RECITATION':
-          pt.setTokenStopReason('filter-recitation');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
+          case 'RECITATION':
+            pt.setTokenStopReason('filter-recitation');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
 
-        case 'LANGUAGE':
-          pt.setTokenStopReason('filter-content');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to LANGUAGE`, IssueSymbols.Language);
+          case 'LANGUAGE':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to LANGUAGE`, IssueSymbols.Language);
 
-        case 'OTHER':
-          pt.setTokenStopReason('filter-content');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to 'OTHER' (unknown reason)`, null);
+          case 'OTHER':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to 'OTHER' (unknown reason)`, null);
 
-        case 'BLOCKLIST':
-          pt.setTokenStopReason('filter-content');
-          return pt.setDialectTerminatingIssue(`Generation stopped due the content containing forbidden terms`, null);
+          case 'BLOCKLIST':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due the content containing forbidden terms`, null);
 
-        case 'PROHIBITED_CONTENT':
-          pt.setTokenStopReason('filter-content');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to potentially containing prohibited content`, null);
+          case 'PROHIBITED_CONTENT':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to potentially containing prohibited content`, null);
 
-        case 'SPII':
-          pt.setTokenStopReason('filter-content');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to potentially containing Sensitive Personally Identifiable Information (SPII)`, null);
+          case 'SPII':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to potentially containing Sensitive Personally Identifiable Information (SPII)`, null);
 
-        case 'MALFORMED_FUNCTION_CALL':
-          pt.setTokenStopReason('cg-issue');
-          return pt.setDialectTerminatingIssue(`Generation stopped due to the function call generated by the model being invalid`, null);
+          case 'MALFORMED_FUNCTION_CALL':
+            pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Generation stopped due to the function call generated by the model being invalid`, null);
 
-        default:
-          throw new Error(`unexpected empty generation (finish reason: ${candidate0?.finishReason})`);
+          default:
+            throw new Error(`unexpected empty generation (finish reason: ${candidate0?.finishReason})`);
+        }
       }
-    }
+    } /* end of .candidates */
 
     // -> Stats
     if (generationChunk.usageMetadata) {

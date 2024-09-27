@@ -481,7 +481,8 @@ export namespace GeminiWire_API_Generate_Content {
 
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
-    candidates: z.array(Candidate_schema),
+    candidates: z.array(Candidate_schema)
+      .optional(), // 2024-09-27: added for when Gemini only sends usageMetadata (happened firs this day, on gemini-pro-1.5-001)
     promptFeedback: GeminiWire_Safety.PromptFeedback_schema.optional(), // rarely sent (only on violations?)
     /**
      * Metadata on the generation requests' token usage.
