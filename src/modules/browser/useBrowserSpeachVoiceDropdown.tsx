@@ -6,11 +6,12 @@ import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTo
 
 import { useBrowseVoiceId } from './store-module-browser';
 import { speakText, cancel } from './browser.speechSynthesis.client';
+import { promises } from 'dns';
 
 
 function VoicesDropdown(props: {
   isValidKey: boolean,
-  isLoadingVoices: boolean,
+  isFetchingVoices: boolean,
   isErrorVoices: boolean,
   disabled?: boolean,
   voices: SpeechSynthesisVoice[],
@@ -25,7 +26,7 @@ function VoicesDropdown(props: {
       value={props.voiceId} onChange={handleVoiceChange}
       variant='outlined' disabled={props.disabled || !props.voices.length}
       // color={props.isErrorVoices ? 'danger' : undefined}
-      placeholder={props.isErrorVoices ? 'Issue loading voices' : props.isValidKey ? 'Select a voice' : 'Missing API Key'}
+      placeholder={props.isErrorVoices ? 'Issue loading voices' : 'Select a voice'}
       startDecorator={<RecordVoiceOverTwoToneIcon />}
       endDecorator={props.isValidKey && props.isLoadingVoices && <CircularProgress size='sm' />}
       indicator={<KeyboardArrowDownIcon />}
@@ -43,10 +44,30 @@ function VoicesDropdown(props: {
   );
 }
 
+function allVoicesObtained(): Promise<SpeechSynthesisVoice[]> {
+  return new Promise(function (resolve, reject) {
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length !== 0) {
+      resolve(voices);
+    } else {
+      window.speechSynthesis.addEventListener('voiceschanged', function () {
+        voices = window.speechSynthesis.getVoices();
+        resolve(voices);
+      });
+    }
+  });
+}
 
 export function useBrowserSpeachVoices() {
-  const synth = window.speechSynthesis;
-  const voices = synth.getVoices();
+  
+  const [voices, setVoices] = React.useState<SpeechSynthesisVoice[]>([]);
+  
+  React.useEffect(() => {
+    allVoicesObtained()
+    .then(data =>
+      setVoices(data)
+    );
+   }, [])
 
   return {
     hasVoices: voices.length > 0,
@@ -76,7 +97,7 @@ export function useBrowserSpeachVoiceDropdown(autoSpeak: boolean, disabled?: boo
 
   const voicesDropdown = React.useMemo(() =>
       <VoicesDropdown
-        isValidKey={true} isLoadingVoices={false} isErrorVoices={false} disabled={disabled}
+        isValidKey={true} isFetchingVoices={true} isErrorVoices={false} disabled={disabled}
         voices={voices}
         voiceId={voiceId} setVoiceId={setVoiceId}
       />,
@@ -84,7 +105,7 @@ export function useBrowserSpeachVoiceDropdown(autoSpeak: boolean, disabled?: boo
   );
 
   return {
-    hasVoices: hasVoices,
+    hasVoices,
     voiceId,
     voiceName: voice?.name,
     voicesDropdown,

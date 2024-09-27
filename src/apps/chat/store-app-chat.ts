@@ -188,11 +188,11 @@ export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] 
   useAppChatStore(useShallow(state => [state.micTimeoutMs, state.setMicTimeoutMs]));
 
 export const useTTSEngine = (): [string, (micTimeoutMs: string) => void] =>
-  useAppChatStore(state => [state.TTSEngine, state.setTTSEngine], shallow);
+  useAppChatStore(useShallow(state => [state.TTSEngine, state.setTTSEngine]));
 export const getTTSEngine = () => useAppChatStore.getState().TTSEngine;
 
 export const useASREngine = (): [string, (micTimeoutMs: string) => void] =>
-  useAppChatStore(state => [state.ASREngine, state.setASREngine], shallow);
+  useAppChatStore(useShallow(state => [state.ASREngine, state.setASREngine]));
 
 export const useChatDrawerFilters = () => {
   const values = useAppChatStore(useShallow(state => ({
