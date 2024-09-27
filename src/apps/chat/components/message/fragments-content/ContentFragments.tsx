@@ -75,6 +75,7 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   // const isMonoFragment = props.fragments.length < 2;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
+  const showDataStreamViz = props.fragments.length === 1 && isContentFragment(props.fragments[0]) && props.fragments[0].part.pt === 'ph';
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
   if (isEditingText && !props.fragments.length)
@@ -92,7 +93,7 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && !props.fragments.length)
     return null;
 
-  return <Box aria-label='message body' sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
+  return <Box aria-label='message body' sx={(isEditingText || showDataStreamViz) ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
@@ -159,6 +160,7 @@ export function ContentFragments(props: {
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
               showAsItalic
+              showAsDataStreamViz={showDataStreamViz}
             />
           );
 

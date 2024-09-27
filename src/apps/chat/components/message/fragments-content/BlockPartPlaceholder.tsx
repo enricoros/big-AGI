@@ -4,6 +4,11 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { DataStreamViz } from '~/common/components/DataStreamViz';
+
+
+// configuration
+const DATASTREAM_VISUALIZATION_DELAY = 5000;
 
 
 export function BlockPartPlaceholder(props: {
@@ -11,9 +16,29 @@ export function BlockPartPlaceholder(props: {
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
   showAsItalic?: boolean,
-  // showAsProgress?: boolean,
+  showAsDataStreamViz?: boolean,
 }) {
-  // const placeholder = (
+
+  // state
+  const [showVisualization, setShowVisualization] = React.useState(false);
+
+
+  React.useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+
+    if (props.showAsDataStreamViz)
+      timerId = setTimeout(() => setShowVisualization(true), DATASTREAM_VISUALIZATION_DELAY);
+    else
+      setShowVisualization(false);
+
+    return () => timerId && clearTimeout(timerId);
+  }, [props.showAsDataStreamViz]);
+
+
+  // Alternative placeholder visualization
+  if (props.showAsDataStreamViz && showVisualization)
+    return <DataStreamViz height={1 + 8 * 4} />;
+
   return (
     <ScaledTextBlockRenderer
       text={props.placeholderText}
@@ -22,12 +47,4 @@ export function BlockPartPlaceholder(props: {
       showAsItalic={props.showAsItalic}
     />
   );
-  //
-  // return props.showAsProgress ? (
-  //   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-  //     <CircularProgress color='neutral' size='sm' sx={{ ml: 1.5, '--CircularProgress-size': '16px', '--CircularProgress-trackThickness': '2px' }} /> {placeholder}
-  //   </Box>
-  // ) : (
-  //   placeholder
-  // );
 }
