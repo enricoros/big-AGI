@@ -10,7 +10,7 @@ import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
-import { RenderPlainChatText } from './plaintext/RenderPlainChatText';
+import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
@@ -122,12 +122,14 @@ export function AutoBlocksRenderer(props: {
           case 'md-bk':
             const RenderMarkdownMemoOrNot = optimizeMemoBeforeLastBlock ? RenderMarkdownMemo : RenderMarkdown;
             return (props.textRenderVariant === 'text' || fromSystem || isUserCommand) ? (
-              <RenderPlainChatText
+              // Keep in sync with ScaledPlainTextRenderer
+              <RenderPlainText
                 key={'txt-bk-' + index}
                 content={bkInput.content}
                 sx={scaledTypographySx}
               />
             ) : (
+              // Keep in sync with ScaledMarkdownRenderer
               <RenderMarkdownMemoOrNot
                 key={'md-bk-' + index}
                 content={bkInput.content}

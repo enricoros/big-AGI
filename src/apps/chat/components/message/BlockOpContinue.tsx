@@ -3,10 +3,10 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, ColorPaletteProp } from '@mui/joy';
 
+import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
+
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageId, DMessageRole } from '~/common/stores/chat/chat.message';
-
-import { ContentPartPlaceholder } from './fragments-content/ContentPartPlaceholder';
 
 
 // configuration
@@ -14,6 +14,7 @@ const ACTIVE_COLOR: ColorPaletteProp = 'warning';
 
 
 const containerSx: SxProps = {
+  marginInlineStart: 1.5,
   backgroundColor: `${ACTIVE_COLOR}.softBg`,
   borderRadius: 'lg',
   // boxShadow: 'xs',
@@ -30,7 +31,7 @@ const chipSx: SxProps = {
 };
 
 
-export function ContinueFragment(props: {
+export function BlockOpContinue(props: {
   contentScaling: ContentScaling,
   messageId: DMessageId,
   messageRole: DMessageRole,
@@ -46,10 +47,10 @@ export function ContinueFragment(props: {
   return (
     <Box sx={containerSx}>
 
-      <ContentPartPlaceholder
-        placeholderText='🧱 Token limit hit.'
-        messageRole={props.messageRole}
+      <ScaledTextBlockRenderer
+        text='🧱 Token limit hit.'
         contentScaling={props.contentScaling}
+        textRenderVariant='text'
         // showAsItalic
       />
 

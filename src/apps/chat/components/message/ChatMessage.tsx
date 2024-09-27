@@ -47,8 +47,8 @@ import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from 
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
+import { BlockOpContinue } from './BlockOpContinue';
 import { ContentFragments } from './fragments-content/ContentFragments';
-import { ContinueFragment } from './ContinueFragment';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
@@ -226,7 +226,7 @@ export function ChatMessage(props: {
   // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
 
 
-  const { onMessageAssistantFrom, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;
+  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;
 
   const handleFragmentNew = React.useCallback(() => {
     onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
@@ -385,9 +385,9 @@ export function ChatMessage(props: {
     handleCloseOpsMenu();
   };
 
-  const handleOpsDelete = (_e: React.MouseEvent) => {
-    props.onMessageDelete?.(messageId);
-  };
+  const handleOpsDelete = React.useCallback(() => {
+    onMessageDelete?.(messageId);
+  }, [messageId, onMessageDelete]);
 
 
   // Context Menu
@@ -712,6 +712,7 @@ export function ChatMessage(props: {
             onFragmentBlank={handleFragmentNew}
             onFragmentDelete={handleFragmentDelete}
             onFragmentReplace={handleFragmentReplace}
+            onMessageDelete={props.onMessageDelete ? handleOpsDelete : undefined}
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
@@ -734,7 +735,7 @@ export function ChatMessage(props: {
 
           {/* Continue... */}
           {props.isBottom && messageGenerator?.tokenStopReason === 'out-of-tokens' && !!props.onMessageContinue && (
-            <ContinueFragment
+            <BlockOpContinue
               contentScaling={adjContentScaling}
               messageId={messageId}
               messageRole={messageRole}

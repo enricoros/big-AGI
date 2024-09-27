@@ -10,7 +10,7 @@ import { extractChatCommand } from '../../../apps/chat/commands/commands.registr
  * Renders a text block with chat commands.
  * NOTE: should remove the commands parsing dependency.
  */
-export const RenderPlainChatText = (props: { content: string; sx?: SxProps; }) => {
+export const RenderPlainText = (props: { content: string; sx?: SxProps; }) => {
 
   const elements = extractChatCommand(props.content);
 
