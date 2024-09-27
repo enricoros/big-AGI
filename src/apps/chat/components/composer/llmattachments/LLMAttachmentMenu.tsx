@@ -295,7 +295,20 @@ export function LLMAttachmentMenu(props: {
                 <Typography level='body-sm' startDecorator={<ReadMoreIcon sx={indicatorSx} />}>...</Typography>
               ) : (
                 draft.outputFragments.map(({ part }, index) => {
-                  if (isImageRefPart(part)) {
+                  if (isDocPart(part)) {
+                    return (
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
+                        {part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·
+                        <Link endDecorator={<ContentCopyIcon sx={{ fontSize: 16 }} />} onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          copyToClipboard(part.data.text, 'Attachment Text');
+                        }}>
+                          &nbsp;copy
+                        </Link>
+                      </Typography>
+                    );
+                  } else if (isImageRefPart(part)) {
                     const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'unknown resolution';
                     const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
                     return (
@@ -307,19 +320,6 @@ export function LLMAttachmentMenu(props: {
                           void showImageDataRefInNewTab(part.dataRef);
                         }}>
                           &nbsp;open
-                        </Link>
-                      </Typography>
-                    );
-                  } else if (isDocPart(part)) {
-                    return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
-                        {part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·
-                        <Link endDecorator={<ContentCopyIcon sx={{ fontSize: 16 }} />} onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          copyToClipboard(part.data.text, 'Attachment Text');
-                        }}>
-                          &nbsp;copy
                         </Link>
                       </Typography>
                     );
