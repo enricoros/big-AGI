@@ -14,20 +14,21 @@ const imageViewerModalSx: SxProps = {
 };
 
 const imageViewerContainerSx: SxProps = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  // display: 'flex',
+  // alignItems: 'center',
+  // justifyContent: 'center',
   maxHeight: '80vh',
   overflow: 'auto',
 };
 
 
-export function ImageRefPartModal(props: { imageRefPart: DMessageImageRefPart, onClose: () => void }) {
+export function ViewImageRefPartModal(props: { imageRefPart: DMessageImageRefPart, onClose: () => void }) {
+  const title = props.imageRefPart.altText || 'Attachment Image';
   return (
     <GoodModal
       open
       onClose={props.onClose}
-      title='Attachment Image Viewer'
+      title={title}
       noTitleBar={false}
       sx={imageViewerModalSx}
     >

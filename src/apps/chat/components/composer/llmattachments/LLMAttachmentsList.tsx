@@ -17,7 +17,7 @@ import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.ty
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
 import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 
-import { ImageRefPartModal } from '../../message/fragments-content/ImageRefPartModal';
+import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
 
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
@@ -165,8 +165,11 @@ export function LLMAttachmentsList(props: {
     </Box>
 
 
-    {/* Optional Modal to view the Image */}
-    {viewerImageRefPart && <ImageRefPartModal imageRefPart={viewerImageRefPart} onClose={handleCloseImageViewer} />}
+    {/* Image Viewer Modal - when opening attachment images */}
+    {viewerImageRefPart && (
+      <ViewImageRefPartModal imageRefPart={viewerImageRefPart} onClose={handleCloseImageViewer} />
+    )}
+
 
     {/* Single LLM Attachment Draft Menu */}
     {!!itemMenuAnchor && !!itemMenuAttachmentDraft && !!props.attachmentDraftsStoreApi && (
