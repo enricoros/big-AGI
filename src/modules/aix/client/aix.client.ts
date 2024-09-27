@@ -30,11 +30,19 @@ export function aixCreateChatGenerateStreamContext(name: AixAPI_Context_ChatGene
   return { method: 'chat-stream', name, ref };
 }
 
-export function aixCreateModelFromLLMOptions(llmOptions: Record<string, any>, debugLlmId: string): AixAPI_Model {
+export function aixCreateModelFromLLMOptions(
+  llmOptions: Record<string, any> | undefined,
+  llmOptionsOverride: Record<string, any> | undefined,
+  debugLlmId: string
+): AixAPI_Model {
   // model params (llm)
-  const { llmRef, llmTemperature, llmResponseTokens } = llmOptions || {};
+  let { llmRef, llmTemperature, llmResponseTokens } = llmOptions || {};
   if (!llmRef || llmTemperature === undefined)
-    throw new Error(`Error in configuration for model ${debugLlmId}: ${JSON.stringify(llmOptions)}`);
+    throw new Error(`AIX: Error in configuration for model ${debugLlmId} (missing ref, temperature): ${JSON.stringify(llmOptions)}`);
+
+  // model params overrides
+  if (llmOptionsOverride?.llmTemperature !== undefined) llmTemperature = llmOptionsOverride.llmTemperature;
+  if (llmOptionsOverride?.llmResponseTokens !== undefined) llmResponseTokens = llmOptionsOverride.llmResponseTokens;
 
   return {
     id: llmRef,
@@ -64,6 +72,10 @@ type StreamMessageStatus = {
 interface AixClientOptions {
   abortSignal: AbortSignal,
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
+  llmOptionsOverride?: Partial<{
+    llmTemperature: number,
+    llmResponseTokens: number,
+  }>;
 }
 
 
@@ -178,7 +190,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   const { transportAccess: aixAccess, serviceSettings, vendor } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
   // Aix Model
-  const aixModel = aixCreateModelFromLLMOptions(llm.options, llmId);
+  const aixModel = aixCreateModelFromLLMOptions(llm.options, clientOptions?.llmOptionsOverride, llmId);
 
   // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
