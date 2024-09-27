@@ -326,10 +326,10 @@ export function LLMAttachmentMenu(props: {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
                         <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? (part.dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
-                        <Chip size='sm' color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
+                        <Chip size={isOutputMultiple ? 'sm' : 'md'} color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
                           see
                         </Chip>
-                        {isOutputMultiple && <Chip size='sm' color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
+                        {isOutputMultiple && <Chip size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
                           del
                         </Chip>}
                       </Typography>
