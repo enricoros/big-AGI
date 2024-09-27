@@ -50,7 +50,7 @@ Analyze the provided content to determine its nature, identify any relationships
       fragments: attachmentFragments,
     }, {
       role: 'user',
-      fragments: [createTextContentFragment(`Call the function once, filling in order the attachments, the relationships between them, the top ${num_suggestions} orthogonal actions you inferred and the single modst valuable action.`)],
+      fragments: [createTextContentFragment(`Call the function once, filling in order the attachments, the relationships between them, the top ${num_suggestions} orthogonal actions you inferred and the single most valuable action.`)],
     }])).chatSequence,
     tools: [
       aixFunctionCallTool({
@@ -71,7 +71,7 @@ Analyze the provided content to determine its nature, identify any relationships
   );
 
   // extract the function call
-  const { argsObject } = aixRequireSingleFunctionCallInvocation(fragments, 'propose_user_actions_for_attachments', 'agiAttachmentPrompts');
+  const { argsObject } = aixRequireSingleFunctionCallInvocation(fragments, 'propose_user_actions_for_attachments', false, 'agiAttachmentPrompts');
 
   const args = inputSchema.parse(argsObject);
   if (!args.top_orthogonal_user_actions?.length)
