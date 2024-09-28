@@ -5,7 +5,7 @@ import { aixChatGenerateContent_DMessage, aixCreateChatGenerateStreamContext } f
 import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { getFastLLMId } from '~/common/stores/llms/store-llms';
+import { getChatLLMId, getFastLLMId } from '~/common/stores/llms/store-llms';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 
 
@@ -54,8 +54,8 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
   const config = CodeFixes[issueType];
   if (!config) throw new Error('Invalid issue type.');
 
-  // Require the Fast LLM
-  const llmId = getFastLLMId();
+  // Require the Chat LLM (for a change) - as this is a small but important call
+  const llmId = getChatLLMId();
   if (!llmId) throw new Error('No LLM configured.');
 
 
