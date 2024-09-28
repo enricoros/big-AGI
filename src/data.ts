@@ -137,7 +137,7 @@ Current date: {{LocaleNow}}
     examples: [
       { prompt: 'analyze this data for trends and insights', action: 'require-data-attachment' },
       { prompt: 'what original questions should I ask?', action: 'require-data-attachment' },
-      'make up a fun chart about capybaras',
+      'make up a fun chart about capybara',
       'how to start a data strategy',
       // 'Create a visualization of this data',
       // 'Simple data visualization tips',
