@@ -69,14 +69,19 @@ export function aixRequireSingleFunctionCallInvocation(fragments: DMessageConten
 
   if (!Array.isArray(fragments) || !(fragments.length >= 1)) {
     if (AIX_DEBUG_CLIENT_TOOLS)
-      console.error('[DEV] single-function-call: invalid fragments:', fragments, 'for', debugLabel);
+      console.error(`[DEV] single-function-call (${debugLabel}): invalid fragments:`, { fragments });
     throw new Error('AIX: Unexpected response.');
   }
 
   const toolIdx = allowThinkPart ? fragments.length - 1 : 0;
   if (!isContentFragment(fragments[toolIdx]) || fragments[toolIdx].part.pt !== 'tool_invocation') {
     if (AIX_DEBUG_CLIENT_TOOLS)
-      console.error('[DEV] single-function-call: invalid fragment part:', fragments[toolIdx].part, 'for', debugLabel);
+      console.error(`[DEV] single-function-call (${debugLabel}): invalid fragment part:`, { part: fragments[toolIdx].part });
+
+    // special case, if we have an error part, rethrow that message instead (better error message)
+    if (fragments[toolIdx].part.pt === 'error')
+      throw new Error('AIX: Error invoking function: ' + fragments[toolIdx].part.error);
+
     throw new Error('AIX: Missing function invocation.');
   }
 
@@ -84,13 +89,13 @@ export function aixRequireSingleFunctionCallInvocation(fragments: DMessageConten
 
   if (invocation.type !== 'function_call' || invocation.name !== expectedFunctionName) {
     if (AIX_DEBUG_CLIENT_TOOLS)
-      console.error('[DEV] single-function-call: invalid invocation:', invocation, 'for', debugLabel);
+      console.error(`[DEV] single-function-call (${debugLabel}): invalid invocation:`, { invocation });
     throw new Error('AIX: Expected a function call.');
   }
 
   if (!invocation.args) {
     if (AIX_DEBUG_CLIENT_TOOLS)
-      console.error('[DEV] single-function-call: missing invocation args:', invocation, 'for', debugLabel);
+      console.error(`[DEV] single-function-call (${debugLabel}): missing invocation args:`, { invocation });
     throw new Error('AIX: Missing function arguments.');
   }
 
