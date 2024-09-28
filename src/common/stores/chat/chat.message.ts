@@ -1,6 +1,6 @@
 import { agiUuid } from '~/common/util/idUtils';
 
-import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragments, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
+import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragmentsNoPH, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
@@ -145,12 +145,12 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
 
 // helpers - duplication
 
-export function duplicateDMessage(message: Readonly<DMessage>): DMessage {
+export function duplicateDMessageNoPH(message: Readonly<DMessage>): DMessage {
   return {
     id: agiUuid('chat-dmessage'),
 
     role: message.role,
-    fragments: duplicateDMessageFragments(message.fragments),
+    fragments: duplicateDMessageFragmentsNoPH(message.fragments), // [*] full message duplication (see downstream)
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
 

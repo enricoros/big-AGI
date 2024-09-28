@@ -267,7 +267,7 @@ export function BeamRay(props: {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {isImported ? 'From Chat' : /*props.hadImportedRays ? 'Replace' : 'Use'*/ <TelegramIcon />}
+                {isImported ? 'From Chat (copied)' : /*props.hadImportedRays ? 'Replace' : 'Use'*/ <TelegramIcon />}
               </IconButton>
             </GoodTooltip>
 
