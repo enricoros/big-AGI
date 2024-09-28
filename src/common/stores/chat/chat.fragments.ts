@@ -256,8 +256,8 @@ function _createSentinelFragment(): _DMessageSentinelFragment {
 }
 
 
-export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
-  return fragments.map(_duplicateFragment);
+export function duplicateDMessageFragmentsNoPH(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
+  return fragments.map(_duplicateFragment).filter(f => f.ft !== 'content' || f.part.pt !== 'ph');
 }
 
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
