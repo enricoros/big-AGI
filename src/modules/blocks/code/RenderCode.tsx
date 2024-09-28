@@ -15,7 +15,7 @@ import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 
-import { copyBlobToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
+import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
@@ -157,10 +157,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const handleChartCopyToClipboard = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    chartJSRef.current?.getChartPNG(e.shiftKey).then((blob) => {
-      if (blob) return copyBlobToClipboard(blob, 'Chart Image' + (e.shiftKey ? ' with background' : ''));
-      alert('Chart not ready yet.');
-    });
+    copyBlobPromiseToClipboard('image/png', new Promise(async (resolve, reject) => {
+      const blob = await chartJSRef.current?.getChartPNG(e.shiftKey);
+      if (blob) resolve(blob);
+      else if (blob === undefined) reject('Chart not ready yet.')
+      else reject('Failed to generate chart image.');
+    }), `Chart Image${e.shiftKey ? ' with background' : ''}`);
   }, []);
 
   const handleChartDownload = React.useCallback(async (e: React.MouseEvent) => {
