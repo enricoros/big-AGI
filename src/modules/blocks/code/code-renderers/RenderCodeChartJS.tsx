@@ -54,26 +54,6 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
     try {
       const config = JSON.parse(props.chartJSCode) as ChartConfiguration;
       chartJSFixupGeneratedObject(config);
-      
-      // Include zoom plugin options
-      config.options = config.options || {};
-      config.options.plugins = config.options.plugins || [];
-      config.options.plugins.zoom = {
-        pan: {
-          enabled: true,
-          mode: 'xy',
-        },
-        zoom: {
-          wheel: {
-            enabled: false,
-          },
-          pinch: {
-            enabled: true,
-          },
-          mode: 'xy',
-        },
-      };
-      
       return { chartConfig: config, parseError: null };
     } catch (error: any) {
       return { chartConfig: null, parseError: error.message as string || 'Unknown error.' };
@@ -127,7 +107,8 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
 
       // Omit the background layer
       if (withBackground) {
-        ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+        // ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+        ctx.fillStyle = isDarkMode ? '#000' : '#FFF';
         ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
       }
 

@@ -16,16 +16,11 @@ const CHARTJS_VERSION = '4.4.4';
 const CHARTJS_CDN_URL = `https://cdn.jsdelivr.net/npm/chart.js@${CHARTJS_VERSION}/dist/chart.umd.js`;
 const CHARTJS_SCRIPT_ID = 'chartjs-cdn';
 
-// Add constants for the Zoom plugin
-const CHARTJS_ZOOM_PLUGIN_VERSION = '2.0.1';
-const CHARTJS_ZOOM_PLUGIN_CDN_URL = `https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@${CHARTJS_ZOOM_PLUGIN_VERSION}/dist/chartjs-plugin-zoom.min.js`;
-
 
 // Minimal type definitions for Chart.js - as of 4.4.4
 
 interface ChartConstructorType {
   defaults: ChartDefaults;
-  register: (plugin: any) => void;
 
   new(context: CanvasRenderingContext2D | HTMLCanvasElement, config: ChartConfiguration): ChartInstanceType;
 }
@@ -47,25 +42,7 @@ interface ChartDefaults {
 export interface ChartConfiguration {
   type?: string;
   data?: any;
-  options?: ChartDefaults & {
-    plugins?: {
-      zoom?: {
-        pan?: {
-          enabled: boolean;
-          mode: string;
-        };
-        zoom?: {
-          wheel?: {
-            enabled: boolean;
-          };
-          pinch?: {
-            enabled: boolean;
-          };
-          mode?: string;
-        };
-      };
-    };
-  };
+  options?: ChartDefaults;
 
   // [key: string]: any;
 }
@@ -98,13 +75,6 @@ function _chartJSInitializeDefaults(Chart: ChartConstructorType): ChartConstruct
 
   // Change the default padding for the title
   Chart.defaults.plugins.title.padding = { top: 8, bottom: 16 };
-
-  // Register the Zoom plugin
-  if ((window as any).ChartZoom) {
-    Chart.register((window as any).ChartZoom);
-  } else {
-    console.warn('[ChartJS] Zoom plugin is not available to register.');
-  }
 
   return Chart;
 }
@@ -153,14 +123,8 @@ function loadCDNScript(): Promise<ChartConstructorType> {
     script.async = true;
 
     script.onload = () => {
-      // After Chart.js is loaded, load the Zoom plugin
-      loadChartJSZoomPlugin().then(() => {
-        if ((window as any).Chart) resolve(_chartJSInitializeDefaults((window as any).Chart));
-        else reject(new Error('Chart.js failed to load.'));
-      }).catch((error) => {
-        console.error('[ChartJS] Zoom plugin failed to load:', error);
-        reject(new Error('Chart.js Zoom plugin failed to load.'));
-      });
+      if ((window as any).Chart) resolve(_chartJSInitializeDefaults((window as any).Chart));
+      else reject(new Error('Chart.js failed to load.'));
     };
 
     script.onerror = () => {
@@ -172,31 +136,6 @@ function loadCDNScript(): Promise<ChartConstructorType> {
   });
 
   return chartJSPromise;
-}
-
-function loadChartJSZoomPlugin(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Check if the plugin is already loaded
-    if ((window as any).ChartZoom) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = CHARTJS_ZOOM_PLUGIN_CDN_URL;
-    script.async = true;
-
-    script.onload = () => {
-      resolve();
-    };
-
-    script.onerror = () => {
-      console.error('[ChartJS] Failed to load Chart.js Zoom plugin from CDN.');
-      reject(new Error('Failed to load Chart.js Zoom plugin from CDN.'));
-    };
-
-    document.head.appendChild(script);
-  });
 }
 
 
