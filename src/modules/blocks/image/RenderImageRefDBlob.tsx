@@ -11,9 +11,10 @@ import { t2iGenerateImageContentFragments } from '~/modules/t2i/t2i.client';
 import { useDBAsset } from '~/modules/dblobs/dblobs.hooks';
 
 import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/chat/chat.fragments';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { showBlobURLInNewTab } from '~/common/util/imageUtils';
 
-import { RenderImageURL, RenderImageURLVarint } from './RenderImageURL';
+import { RenderImageURL, RenderImageURLVariant } from './RenderImageURL';
 
 
 /**
@@ -25,7 +26,14 @@ export async function showImageDataRefInNewTab(dataRef: DMessageDataRef) {
     imageBlobURL = dataRef.url;
   else if (dataRef.reftype === 'dblob')
     imageBlobURL = await getImageAssetAsBlobURL(dataRef.dblobAssetId);
-  return imageBlobURL ? showBlobURLInNewTab(imageBlobURL) : false;
+
+  // the upstream hsould not let this happen
+  if (!imageBlobURL)
+    return false;
+
+  // notify the user that the image has been opened in a new tab (for Safari when it's blocking by default)
+  addSnackbar({ key: 'opened-image-in-new-tab', message: 'Image opened in a New Tab.', type: 'success', closeButton: false, overrides: { autoHideDuration: 1600 } });
+  return showBlobURLInNewTab(imageBlobURL);
 }
 
 
@@ -37,7 +45,7 @@ export function RenderImageRefDBlob(props: {
   imageWidth?: number,
   imageHeight?: number,
   // others
-  variant: RenderImageURLVarint,
+  variant: RenderImageURLVariant,
   disabled?: boolean,
   onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,

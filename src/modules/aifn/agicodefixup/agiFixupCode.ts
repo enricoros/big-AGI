@@ -16,6 +16,7 @@ interface CodeFix {
   systemMessage: string;
   userInstructionTemplate: string; // Template with placeholders for `codeToFix` and `errorString`
   functionName: string;
+  functionPolicy: 'invoke' | 'think-then-invoke';
   outputSchema: ZodObject<any>;
 }
 
@@ -23,21 +24,21 @@ const CodeFixes: Record<string, CodeFix> = {
 
   // See `RenderCodeChartJS`
   'chartjs-issue': {
-    description: 'Provides the corrected ChartJS configuration code.',
-    systemMessage: `You are an AI assistant that helps fix invalid ChartJS configuration JSON code.
-When provided with invalid ChartJS code, you analyze it, identify errors, and output a corrected version in valid JSON format.
-Respond only by calling the \`{{functionName}}\` function.`,
-    userInstructionTemplate: `The following ChartJS configuration code is invalid and cannot be parsed:
+    description: 'Provides the corrected Chart.js configuration code.',
+    systemMessage: `You are an AI assistant that fixes invalid Chart.js configuration JSON.
+When provided with invalid Chart.js code, you analyze it, identify errors, especially remove all functions if any, and output a corrected version in valid JSON format.
+Respond first with a very brief analysis of where the error is and exactly what to change, and then call the \`{{functionName}}\` function.`,
+    userInstructionTemplate: `The following Chart.js ChartOptions JSON is invalid and cannot be parsed:
 \`\`\`json
 {{codeToFix}}
 \`\`\`
 
 {{errorMessageSection}}
-Please analyze the code, correct any errors, in particular remove functions if any, and provide a valid JSON configuration that can be parsed by ChartJS.
-Call the function \`{{functionName}}\` once, providing the corrected code.`,
+Please analyze the JSON, correct any errors (REMOVE FUNCTIONS!!!), and provide a valid JSON-only ChartOptions that can be parsed by Chart.js.`,
     functionName: 'provide_corrected_chartjs_code',
+    functionPolicy: 'think-then-invoke',
     outputSchema: z.object({
-      corrected_code: z.string().describe('The corrected ChartJS configuration code in valid JSON format.'),
+      corrected_code: z.string().describe('The corrected Chart.js ChartOptions in valid JSON format.'),
     }),
   },
 
@@ -77,7 +78,9 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
         inputSchema: config.outputSchema,
       }),
     ],
-    toolsPolicy: { type: 'function_call', function_call: { name: config.functionName } },
+    toolsPolicy:
+      config.functionPolicy === 'invoke' ?  { type: 'function_call', function_call: { name: config.functionName } }
+        : config.functionPolicy === 'think-then-invoke' ? { type: 'auto' } : undefined,
   };
 
   // Invoke the AI model
@@ -86,11 +89,11 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
     aixRequest,
     aixCreateChatGenerateStreamContext('DEV', 'DEV'),
     false,
-    { abortSignal },
+    { abortSignal, llmOptionsOverride: { llmTemperature: 0 /* chill the model for fixing code, we need valid json, not creativity */ } },
   );
 
   // Validate and parse the AI's response
-  const { argsObject } = aixRequireSingleFunctionCallInvocation(fragments, config.functionName, issueType);
+  const { argsObject } = aixRequireSingleFunctionCallInvocation(fragments, config.functionName, config.functionPolicy === 'think-then-invoke', issueType);
   const argsZod = config.outputSchema.parse(argsObject);
 
   // Return the corrected code

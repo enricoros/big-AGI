@@ -33,7 +33,7 @@ import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition, } from '~/common/components/useSpeechRecognition';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoPH } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { launchAppCall } from '~/common/app.routes';
@@ -381,7 +381,7 @@ export function Composer(props: {
     const conversation = getConversation(conversationId);
     const messageToEmbed = conversation?.messages.find(m => m.id === messageId);
     if (conversation && messageToEmbed) {
-      const fragmentsCopy = duplicateDMessageFragments(messageToEmbed.fragments);
+      const fragmentsCopy = duplicateDMessageFragmentsNoPH(messageToEmbed.fragments); // [attach] deep copy a message's fragments to attach to ego
       if (fragmentsCopy.length) {
         const chatTitle = conversationTitle(conversation);
         const messageText = messageFragmentsReduceText(fragmentsCopy);
@@ -574,12 +574,12 @@ export function Composer(props: {
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
     }
     if (recognitionState.isActive) {
-      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 3 });
+      composerShortcuts.push({ key: 'm', ctrl: true, action: () => toggleRecognition(true), description: 'Mic · Send', disabled: !recognitionState.hasSpeech, endDecoratorIcon: TelegramIcon as any, level: 4 });
       composerShortcuts.push({
         key: ShortcutKey.Esc, action: () => {
           setMicContinuation(false);
           toggleRecognition(false);
-        }, description: 'Mic · Stop', level: 3,
+        }, description: 'Mic · Stop', level: 4,
       });
     } else if (browserSpeechRecognitionCapability().mayWork)
       composerShortcuts.push({

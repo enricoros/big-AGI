@@ -62,24 +62,25 @@ function _recursiveObjectSchemaCleanup(obj: Record<string, any>, thisKey?: strin
 
 
 /** Extract the function name from the Aix FunctionCall Tool Definition */
-export function aixRequireSingleFunctionCallInvocation(fragments: DMessageContentFragment[], expectedFunctionName: string, debugLabel: string): {
+export function aixRequireSingleFunctionCallInvocation(fragments: DMessageContentFragment[], expectedFunctionName: string, allowThinkPart: boolean, debugLabel: string): {
   invocation: Extract<DMessageToolInvocationPart['invocation'], { type: 'function_call' }>;
   argsObject: object;
 } {
 
-  if (!Array.isArray(fragments) || fragments.length !== 1) {
+  if (!Array.isArray(fragments) || !(fragments.length >= 1)) {
     if (AIX_DEBUG_CLIENT_TOOLS)
       console.error('[DEV] single-function-call: invalid fragments:', fragments, 'for', debugLabel);
     throw new Error('AIX: Unexpected response.');
   }
 
-  if (!isContentFragment(fragments[0]) || fragments[0].part.pt !== 'tool_invocation') {
+  const toolIdx = allowThinkPart ? fragments.length - 1 : 0;
+  if (!isContentFragment(fragments[toolIdx]) || fragments[toolIdx].part.pt !== 'tool_invocation') {
     if (AIX_DEBUG_CLIENT_TOOLS)
-      console.error('[DEV] single-function-call: invalid fragment part:', fragments[0].part, 'for', debugLabel);
-    throw new Error('AIX: Missing tool invocation.');
+      console.error('[DEV] single-function-call: invalid fragment part:', fragments[toolIdx].part, 'for', debugLabel);
+    throw new Error('AIX: Missing function invocation.');
   }
 
-  const { invocation } = fragments[0].part;
+  const { invocation } = fragments[toolIdx].part;
 
   if (invocation.type !== 'function_call' || invocation.name !== expectedFunctionName) {
     if (AIX_DEBUG_CLIENT_TOOLS)

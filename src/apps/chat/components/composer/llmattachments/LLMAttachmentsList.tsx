@@ -15,6 +15,9 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
+import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
+
+import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
 
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
@@ -40,6 +43,7 @@ export function LLMAttachmentsList(props: {
   const { showPromisedOverlay } = useOverlayComponents();
   const [draftMenu, setDraftMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentDraftId: AttachmentDraftId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [viewerImageRefPart, setViewerImageRefPart] = React.useState<DMessageImageRefPart | null>(null);
 
   // derived state
 
@@ -106,6 +110,14 @@ export function LLMAttachmentsList(props: {
     onAttachmentDraftsAction(attachmentDraftId, actionId);
   }, [handleDraftMenuHide, onAttachmentDraftsAction]);
 
+  const handleViewImageRefPart = React.useCallback((imageRefPart: DMessageImageRefPart) => {
+    setViewerImageRefPart(imageRefPart);
+  }, []);
+
+  const handleCloseImageViewer = React.useCallback(() => {
+    setViewerImageRefPart(null);
+  }, []);
+
 
   // no components without attachments
   if (!hasAttachments)
@@ -153,7 +165,13 @@ export function LLMAttachmentsList(props: {
     </Box>
 
 
-    {/* LLM Attachment Draft Menu */}
+    {/* Image Viewer Modal - when opening attachment images */}
+    {viewerImageRefPart && (
+      <ViewImageRefPartModal imageRefPart={viewerImageRefPart} onClose={handleCloseImageViewer} />
+    )}
+
+
+    {/* Single LLM Attachment Draft Menu */}
     {!!itemMenuAnchor && !!itemMenuAttachmentDraft && !!props.attachmentDraftsStoreApi && (
       <LLMAttachmentMenu
         attachmentDraftsStoreApi={props.attachmentDraftsStoreApi}
@@ -161,8 +179,9 @@ export function LLMAttachmentsList(props: {
         menuAnchor={itemMenuAnchor}
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === llmAttachmentDrafts.length - 1}
-        onDraftAction={handleDraftAction}
         onClose={handleDraftMenuHide}
+        onDraftAction={handleDraftAction}
+        onViewImageRefPart={handleViewImageRefPart}
       />
     )}
 

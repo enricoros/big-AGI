@@ -1,19 +1,22 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Sheet, Typography } from '@mui/joy';
+import { Box, Button, Sheet } from '@mui/joy';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
+import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
-import { ContentPartImageRef } from './ContentPartImageRef';
-import { ContentPartPlaceholder } from './ContentPartPlaceholder';
-import { ContentPartText_AutoBlocks } from './ContentPartText_AutoBlocks';
-import { TextFragmentEditor } from './TextFragmentEditor';
+import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
+import { BlockOpEmpty } from './BlockOpEmpty';
+import { BlockPartError } from './BlockPartError';
+import { BlockPartImageRef } from './BlockPartImageRef';
+import { BlockPartPlaceholder } from './BlockPartPlaceholder';
+import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 
 
 const editLayoutSx: SxProps = {
@@ -53,13 +56,14 @@ export function ContentFragments(props: {
   showUnsafeHtmlCode?: boolean,
 
   textEditsState: ChatMessageTextPartEditState | null,
-  setEditedText: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
+  setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
   onFragmentBlank: () => void
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
+  onMessageDelete?: () => void,
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
@@ -71,6 +75,7 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   // const isMonoFragment = props.fragments.length < 2;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
+  const showDataStreamViz = props.fragments.length === 1 && isContentFragment(props.fragments[0]) && props.fragments[0].part.pt === 'ph';
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
   if (isEditingText && !props.fragments.length)
@@ -88,18 +93,15 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && !props.fragments.length)
     return null;
 
-  return <Box aria-label='message body' sx={isEditingText ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
+  return <Box aria-label='message body' sx={(isEditingText || showDataStreamViz) ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
 
-    {/* The overall message is empty - show an indication of it */}
+    {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
-      <Sheet variant='solid' color='neutral' invertedColors sx={{ mx: 1.5 }}>
-        <ContentPartPlaceholder
-          placeholderText={`empty ${fromAssistant ? 'assistant ' : fromUser ? 'user ' : ''}message - please edit or delete`}
-          messageRole={props.messageRole}
-          contentScaling={props.contentScaling}
-          showAsItalic
-        />
-      </Sheet>
+      <BlockOpEmpty
+        text={`empty ${fromAssistant ? 'model ' : fromUser ? 'user ' : ''}message`}
+        contentScaling={props.contentScaling}
+        onDelete={props.onMessageDelete}
+      />
     )}
 
     {props.fragments.map((fragment) => {
@@ -109,9 +111,9 @@ export function ContentFragments(props: {
         return null;
 
       // editing for text parts
-      if (props.textEditsState && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
+      if (props.textEditsState && !!props.setEditedText && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
         return (
-          <TextFragmentEditor
+          <BlockEdit_TextFragment
             key={'edit-' + fragment.fId}
             textPartText={isTextPart(fragment.part) ? fragment.part.text : fragment.part.error}
             fragmentId={fragment.fId}
@@ -129,20 +131,18 @@ export function ContentFragments(props: {
       switch (fragment.part.pt) {
         case 'error':
           return (
-            <ContentPartPlaceholder
+            <BlockPartError
               key={fragment.fId}
-              placeholderText={fragment.part.error}
+              errorText={fragment.part.error}
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
-              showAsDanger
-              // showAsItalic
             />
           );
 
 
         case 'image_ref':
           return (
-            <ContentPartImageRef
+            <BlockPartImageRef
               key={fragment.fId}
               imageRefPart={fragment.part}
               fragmentId={fragment.fId}
@@ -154,19 +154,20 @@ export function ContentFragments(props: {
 
         case 'ph':
           return (
-            <ContentPartPlaceholder
+            <BlockPartPlaceholder
               key={fragment.fId}
               placeholderText={fragment.part.pText}
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
               showAsItalic
+              showAsDataStreamViz={showDataStreamViz}
             />
           );
 
         // This is the most frequent part by far, and can be broken down into sub-blocks
         case 'text':
           return (
-            <ContentPartText_AutoBlocks
+            <BlockPartText_AutoBlocks
               key={fragment.fId}
               // ref={blocksRendererRef}
               textPartText={fragment.part.text}
@@ -309,9 +310,13 @@ export function ContentFragments(props: {
         case '_pt_sentinel':
         default:
           return (
-            <Typography key={fragment.fId} level='body-sm' color='danger'>
-              Unknown Content fragment: {fragment.part.pt}
-            </Typography>
+            <ScaledTextBlockRenderer
+              key={fragment.fId}
+              text={`Unknown Content fragment: ${fragment.part.pt}`}
+              contentScaling={props.contentScaling}
+              textRenderVariant='text'
+              showAsDanger
+            />
           );
       }
     }).filter(Boolean)}

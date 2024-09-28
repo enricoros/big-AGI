@@ -21,11 +21,11 @@ export function copyToClipboard(text: string, typeLabel: string) {
       });
     })
     .catch((err) => {
-      console.error('Failed to copy message: ', err);
+      alert(`Failed to message to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
     });
 }
 
-export function copyBlobToClipboard(blob: Blob, typeLabel: string) {
+export function copyBlobPromiseToClipboard(mimeType: string, blobPromise: Promise<Blob>, typeLabel: string) {
   if (!isBrowser)
     return;
   if (!navigator.clipboard || !navigator.clipboard.write) {
@@ -33,7 +33,8 @@ export function copyBlobToClipboard(blob: Blob, typeLabel: string) {
     return;
   }
   // Create a ClipboardItem with the Blob
-  const clipboardItem = new ClipboardItem({ [blob.type]: blob });
+  const clipboardItem = new ClipboardItem({ [mimeType]: blobPromise });
+
   // Write the ClipboardItem to the clipboard
   navigator.clipboard.write([clipboardItem])
     .then(() => {
@@ -48,8 +49,8 @@ export function copyBlobToClipboard(blob: Blob, typeLabel: string) {
       });
     })
     .catch((err) => {
-      console.error('Failed to copy blob to clipboard: ', err);
-      alert('Failed to copy image to clipboard. Please try again.');
+      const [media, type] = mimeType.split('/');
+      alert(`Failed to copy ${type?.toUpperCase()} ${media} to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
     });
 }
 

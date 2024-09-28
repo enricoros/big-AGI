@@ -55,13 +55,13 @@ const overlayButtonsGridSx: SxProps = {
   gap: 0.5,
 };
 
-export type RenderImageURLVarint = 'content-part' | 'attachment-card' | 'attachment-button';
+export type RenderImageURLVariant = 'content-part' | 'attachment-card' | 'attachment-button';
 
 export const RenderImageURL = (props: {
   imageURL: string | null,        // remote URL, or data URL: `data:image/png;base64,...`
   overlayText?: React.ReactNode,  // bottom overlay text
   expandableText?: string,        // expandable pane below the image
-  variant: RenderImageURLVarint,  // either a responsive Block image, or an inline Card
+  variant: RenderImageURLVariant,  // either a responsive Block image, or an inline Card
   disabled?: boolean,             // if true, interaction is disabled
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
@@ -181,7 +181,7 @@ export const RenderImageURL = (props: {
                 display: 'block',
               }}
             >
-              {loadingTimeout ? 'Could not load image' : 'Loading...'}
+              {loadingTimeout ? 'Image Missing' : 'Loading...'}
             </Box>
           )}
 

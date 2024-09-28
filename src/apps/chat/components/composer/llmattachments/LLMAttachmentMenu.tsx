@@ -1,10 +1,11 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Checkbox, CircularProgress, LinearProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
+import { Box, Checkbox, Chip, CircularProgress, LinearProgress, Link, ListDivider, ListItem, ListItemDecorator, MenuItem, Radio, Typography } from '@mui/joy';
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import ClearIcon from '@mui/icons-material/Clear';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -12,11 +13,10 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
-
-import { showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessageAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
@@ -48,8 +48,9 @@ export function LLMAttachmentMenu(props: {
   menuAnchor: HTMLAnchorElement,
   isPositionFirst: boolean,
   isPositionLast: boolean,
-  onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
   onClose: () => void,
+  onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
+  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
 }) {
 
   // state
@@ -80,6 +81,7 @@ export function LLMAttachmentMenu(props: {
   const isInputError = !!draft.inputError;
   const isUnconvertible = !draft.converters.length;
   const isOutputMissing = !draft.outputFragments.length;
+  const isOutputMultiple = draft.outputFragments.length > 1;
   const hasLiveFiles = draft.outputFragments.some(_f => _f.liveFileId);
 
   const showWarning = isUnconvertible || isOutputMissing || !llmSupportsAllFragments;
@@ -94,7 +96,7 @@ export function LLMAttachmentMenu(props: {
 
   // operations
 
-  const { attachmentDraftsStoreApi, onDraftAction, onClose } = props;
+  const { attachmentDraftsStoreApi, onClose, onDraftAction, onViewImageRefPart } = props;
 
   const handleMoveUp = React.useCallback(() => {
     attachmentDraftsStoreApi.getState().moveAttachmentDraft(draftId, -1);
@@ -113,9 +115,23 @@ export function LLMAttachmentMenu(props: {
     return attachmentDraftsStoreApi.getState().toggleAttachmentDraftConverterAndConvert(draftId, converterIdx);
   }, [draftId, attachmentDraftsStoreApi]);
 
-  // const handleSummarizeText = React.useCallback(() => {
-  //   onAttachmentDraftSummarizeText(draftId);
-  // }, [draftId, onAttachmentDraftSummarizeText]);
+  const handleDeleteOutputFragment = React.useCallback((event: React.MouseEvent, fragmentIndex: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    attachmentDraftsStoreApi.getState().removeAttachmentDraftOutputFragment(draftId, fragmentIndex);
+  }, [attachmentDraftsStoreApi, draftId]);
+
+  const handleCopyToClipboard = React.useCallback((event: React.MouseEvent, text: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    copyToClipboard(text, 'Attachment Text');
+  }, []);
+
+  const handleViewImageRefPart = React.useCallback((event: React.MouseEvent, imageRefPart: DMessageImageRefPart) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onViewImageRefPart(imageRefPart);
+  }, [onViewImageRefPart]);
 
   const canHaveDetails = !!draftInput && !isConverting;
 
@@ -126,7 +142,7 @@ export function LLMAttachmentMenu(props: {
       dense placement='top'
       noTopPadding
       open anchorEl={props.menuAnchor} onClose={props.onClose}
-      sx={{ minWidth: 260, maxWidth: 420 }}
+      sx={{ minWidth: 260, maxWidth: 460 }}
     >
 
       {/* Move Arrows */}
@@ -295,32 +311,27 @@ export function LLMAttachmentMenu(props: {
                 <Typography level='body-sm' startDecorator={<ReadMoreIcon sx={indicatorSx} />}>...</Typography>
               ) : (
                 draft.outputFragments.map(({ part }, index) => {
-                  if (isImageRefPart(part)) {
-                    const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'unknown resolution';
+                  if (isDocPart(part)) {
+                    return (
+                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
+                        <span>{part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·&nbsp;</span>
+                        <Chip size='sm' color='primary' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>
+                          copy
+                        </Chip>
+                      </Typography>
+                    );
+                  } else if (isImageRefPart(part)) {
+                    const resolution = part.width && part.height ? `${part.width} x ${part.height}` : 'no resolution';
                     const mime = part.dataRef.reftype === 'dblob' ? part.dataRef.mimeType : 'unknown image';
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
-                        {mime/*unic.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? part.dataRef.bytesSize?.toLocaleString() : '(remote)'} ·
-                        <Link endDecorator={<LaunchIcon sx={{ fontSize: 16 }} />} onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          void showImageDataRefInNewTab(part.dataRef);
-                        }}>
-                          &nbsp;open
-                        </Link>
-                      </Typography>
-                    );
-                  } else if (isDocPart(part)) {
-                    return (
-                      <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
-                        {part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·
-                        <Link endDecorator={<ContentCopyIcon sx={{ fontSize: 16 }} />} onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          copyToClipboard(part.data.text, 'Attachment Text');
-                        }}>
-                          &nbsp;copy
-                        </Link>
+                        <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? (part.dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
+                        <Chip size={isOutputMultiple ? 'sm' : 'md'} color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
+                          see
+                        </Chip>
+                        {isOutputMultiple && <Chip size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
+                          del
+                        </Chip>}
                       </Typography>
                     );
                   } else {
