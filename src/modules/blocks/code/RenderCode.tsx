@@ -158,16 +158,16 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const handleChartCopyToClipboard = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     copyBlobPromiseToClipboard('image/png', new Promise(async (resolve, reject) => {
-      const blob = await chartJSRef.current?.getChartPNG(!e.shiftKey);
+      const blob = await chartJSRef.current?.getChartPNG(e.shiftKey);
       if (blob) resolve(blob);
       else if (blob === undefined) reject('Chart not ready yet.')
       else reject('Failed to generate chart image.');
-    }), `Chart Image${!e.shiftKey ? ' with transparent background' : ''}`);
+    }), `Chart Image${e.shiftKey ? ' with transparent background' : ''}`);
   }, []);
 
   const handleChartDownload = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    chartJSRef.current?.getChartPNG(!e.shiftKey).then((blob) => {
+    chartJSRef.current?.getChartPNG(e.shiftKey).then((blob) => {
       if (blob) return downloadBlob(blob, `chart_${prettyTimestampForFilenames()}.png`);
       alert('Chart not ready yet.');
     });

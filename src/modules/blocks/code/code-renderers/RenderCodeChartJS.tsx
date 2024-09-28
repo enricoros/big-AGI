@@ -30,7 +30,7 @@ const chartContainerSx: SxProps = {
 
 // Exposed API
 export type RenderCodeChartJSHandle = {
-  getChartPNG: (withBackground: boolean) => Promise<Blob | null>;
+  getChartPNG: (transparentBackground: boolean) => Promise<Blob | null>;
 };
 
 
@@ -93,7 +93,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
 
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
-    getChartPNG: async (withBackground: boolean) => {
+    getChartPNG: async (transparentBackground: boolean) => {
       const chartCanvas = canvasRef.current;
       if (!chartCanvas) return null;
 
@@ -106,7 +106,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
         return await asyncCanvasToBlob(chartCanvas, 'image/png');
 
       // Omit the background layer
-      if (withBackground) {
+      if (!transparentBackground) {
         // ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
         ctx.fillStyle = isDarkMode ? '#000' : '#FFF';
         ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
