@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, IconButton, Tooltip } from '@mui/joy';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 
+import { Is } from '~/common/util/pwaUtils';
 import { takeScreenCapture } from '~/common/util/screenCaptureUtils';
 
 
@@ -26,7 +27,7 @@ function ButtonAttachScreenCapture(props: { isMobile?: boolean, onAttachScreenCa
       file && onAttachScreenCapture(file);
     } catch (error: any) {
       const message = error instanceof Error ? error.message : String(error);
-      setError(`Screen capture issue: ${message}`);
+      setError(`Issue: ${message}`);
     }
     setCapturing(false);
   }, [onAttachScreenCapture]);
@@ -38,11 +39,14 @@ function ButtonAttachScreenCapture(props: { isMobile?: boolean, onAttachScreenCa
     </IconButton>
   ) : (
     <Tooltip
-      arrow disableInteractive variant='solid' placement='top-start'
+      arrow disableInteractive placement='top-start'
       title={
         <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
           <b>Attach screen capture</b><br />
           {error || 'Attach the image of a window, a browser tab, or a screen'}
+          {!error && Is.OS.MacOS && Is.Browser.Safari && (
+            <Box sx={{ mt: 1 }}><b>Safari</b>: canceling the window selection may cause a 60-second delay.</Box>
+          )}
         </Box>
       }
     >
@@ -52,6 +56,7 @@ function ButtonAttachScreenCapture(props: { isMobile?: boolean, onAttachScreenCa
         color={!!error ? 'danger' : 'neutral'}
         onClick={handleTakeScreenCapture}
         loading={capturing}
+        loadingPosition={capturing ? 'start' : 'center'}
         startDecorator={<ScreenshotMonitorIcon />}
         sx={{ justifyContent: 'flex-start' }}
       >
