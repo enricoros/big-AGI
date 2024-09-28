@@ -11,6 +11,7 @@ import { BlockPartImageRef } from './BlockPartImageRef';
 
 const imageViewerModalSx: SxProps = {
   maxWidth: '90vw',
+  backgroundColor: 'background.level2',
 };
 
 const imageViewerContainerSx: SxProps = {
@@ -26,7 +27,7 @@ export function ViewImageRefPartModal(props: { imageRefPart: DMessageImageRefPar
   const title = props.imageRefPart.altText || 'Attachment Image';
   return (
     <GoodModal
-      open
+      open={true}
       onClose={props.onClose}
       title={title}
       noTitleBar={false}
