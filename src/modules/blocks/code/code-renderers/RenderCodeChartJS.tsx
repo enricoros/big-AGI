@@ -107,7 +107,8 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
 
       // Omit the background layer
       if (withBackground) {
-        ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+        // ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+        ctx.fillStyle = isDarkMode ? '#000' : '#FFF';
         ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
       }
 
