@@ -82,7 +82,7 @@ export function DataStreamViz(props: { height: number }) {
     const yPosition = Math.floor(Math.random() * ((height - size) / GRID_SIZE)) * GRID_SIZE;
 
     // Decide whether to use a special color
-    const useSpecialColor = Math.random() < 0.1; // 10% chance to use a special color
+    const useSpecialColor = Math.random() < 0.05; // 5% chance to use a special color
     const colorArray = useSpecialColor ? specialColors : colorPalette;
     const colorIndex = Math.floor(Math.random() * colorArray.length);
 
@@ -93,7 +93,7 @@ export function DataStreamViz(props: { height: number }) {
         : speedVariation.slow.min + Math.random() * (speedVariation.slow.max - speedVariation.slow.min)) / 1000;
 
     tokensRef.current.push({
-      x: width,
+      x: width + size, // Start off-screen
       y: yPosition,
       size: size,
       speed: speed,
@@ -126,13 +126,13 @@ export function DataStreamViz(props: { height: number }) {
   }, []);
 
   // Draw token function
-  const drawToken = React.useCallback((ctx: CanvasRenderingContext2D, token: Token, width: number) => {
-    ctx.fillStyle = token.color;
+  const drawToken = React.useCallback((ctx: CanvasRenderingContext2D, token: Token) => {
+    ctx.fillStyle = /*token.entryProgress < 1 ? specialColors[Math.floor(Math.random() * colorPalette.length)] :*/ token.color;
     ctx.strokeStyle = token.color;
     ctx.lineWidth = 0.5;
-    // ctx.globalAlpha = token.opacity * (token.entryProgress < 1 ? token.entryProgress : 1);
+    // ctx.globalAlpha = /* token.opacity * */ (token.entryProgress < 1 ? token.entryProgress : 1);
 
-    const x = token.entryProgress < 1 ? width - (1 - token.entryProgress) * token.size : token.x;
+    const x = token.x; //  /* - 10 */ * token.size * (1 - token.entryProgress);
 
     switch (token.type) {
       case 'circle':
@@ -185,10 +185,12 @@ export function DataStreamViz(props: { height: number }) {
       const token = tokensRef.current[i];
       if (token.entryProgress < 1) {
         token.entryProgress += deltaTime / 300; // Adjust entry animation speed
-      } else {
-        token.x -= token.speed * deltaTime;
+        token.entryProgress = Math.min(token.entryProgress, 1); // Ensure it doesn't exceed 1
       }
-      drawToken(ctx, token, width);
+
+      token.x -= token.speed * deltaTime;
+
+      drawToken(ctx, token);
 
       if (token.x + token.size < 0) {
         tokensRef.current.splice(i, 1);
