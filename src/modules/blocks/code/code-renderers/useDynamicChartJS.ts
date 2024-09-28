@@ -77,7 +77,7 @@ export interface ChartInstanceType {
 
 // Code manipulation functions
 
-function _chartJSInitializeDeaults(Chart: ChartConstructorType): ChartConstructorType {
+function _chartJSInitializeDefaults(Chart: ChartConstructorType): ChartConstructorType {
 
   // Use the application fonts
   if (Chart.defaults.font) {
@@ -85,7 +85,7 @@ function _chartJSInitializeDeaults(Chart: ChartConstructorType): ChartConstructo
     Chart.defaults.font.size = 13;
   }
 
-  // Responsive defaults, to autosize the chart while keepingthe aspect ratios
+  // Responsive defaults, to autosize the chart while keeping the aspect ratios
   Chart.defaults.maintainAspectRatio = true; // defaults to 1 for polar and so, 2 for bars and more
   Chart.defaults.responsive = true; // re-draw on resize
 
@@ -134,7 +134,7 @@ let chartJSPromise: Promise<ChartConstructorType> | null = null;
 function loadCDNScript(): Promise<ChartConstructorType> {
   // Resolve immediately if already loaded
   if ((window as any).Chart)
-    return Promise.resolve(_chartJSInitializeDeaults((window as any).Chart));
+    return Promise.resolve(_chartJSInitializeDefaults((window as any).Chart));
 
   // If loading has already started, return the existing promise
   if (chartJSPromise) return chartJSPromise;
@@ -155,7 +155,7 @@ function loadCDNScript(): Promise<ChartConstructorType> {
     script.onload = () => {
       // After Chart.js is loaded, load the Zoom plugin
       loadChartJSZoomPlugin().then(() => {
-        if ((window as any).Chart) resolve(_chartJSInitializeDeaults((window as any).Chart));
+        if ((window as any).Chart) resolve(_chartJSInitializeDefaults((window as any).Chart));
         else reject(new Error('Chart.js failed to load.'));
       }).catch((error) => {
         console.error('[ChartJS] Zoom plugin failed to load:', error);
