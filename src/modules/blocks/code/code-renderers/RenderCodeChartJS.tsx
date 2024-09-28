@@ -16,7 +16,10 @@ const chartContainerSx: SxProps = {
   // required by Chart.js
   position: 'relative',
 
-  // width: '100%',
+  // to try to regain the chart size after shrinking
+  width: '100%',
+  // to better get resized when fullscreen
+  flex: 1,
 
   // limit height of the canvas or it can too large easily
   '& canvas': {
@@ -177,7 +180,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
           </Button>
           {/*)}*/}
           {fixupError ? (
-            <Typography level='body-sm' color='danger' sx={{ ml: 0.5 }}>
+            <Typography level='body-sm' color='warning' sx={{ ml: 0.5 }}>
               Error fixing chart: {fixupError}
             </Typography>
           ) : (parseResult.parseError && !isFetching) && (
