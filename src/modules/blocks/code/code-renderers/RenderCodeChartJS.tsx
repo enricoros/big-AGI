@@ -155,24 +155,26 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
     case !!parseResult.parseError || !!fixupError:
       return (
         <Box sx={{ display: 'grid', gap: 1, justifyItems: 'start' }}>
-          {props.onReplaceInCode && (
-            <Button
-              size='sm'
-              variant='outlined'
-              color='success'
-              onClick={handleChartRegenerate}
-              loading={isFetching}
-              loadingPosition='end'
-              sx={{
-                minWidth: 160,
-                backgroundColor: 'background.surface',
-                boxShadow: 'xs',
-              }}
-              endDecorator={<AutoAwesomeIcon />}
-            >
-              {isFetching ? 'Fixing Chart... ' : 'Attempt Fix'}
-            </Button>
-          )}
+          {/* Here we play like if we won't get the callback, but we will */}
+          {/*{props.onReplaceInCode && (*/}
+          <Button
+            size='sm'
+            variant='outlined'
+            color='success'
+            disabled={!props.onReplaceInCode}
+            onClick={handleChartRegenerate}
+            loading={isFetching}
+            loadingPosition='end'
+            sx={{
+              minWidth: 160,
+              backgroundColor: 'background.surface',
+              boxShadow: 'xs',
+            }}
+            endDecorator={props.onReplaceInCode ? <AutoAwesomeIcon /> : undefined}
+          >
+            {isFetching ? 'Fixing Chart... ' : props.onReplaceInCode ? 'Attempt Fix' : 'Detected Issue'}
+          </Button>
+          {/*)}*/}
           {fixupError ? (
             <Typography level='body-sm' color='danger' sx={{ ml: 0.5 }}>
               Error fixing chart: {fixupError}
