@@ -705,7 +705,7 @@ export function ChatMessage(props: {
             enhanceCodeBlocks={labsEnhanceCodeBlocks}
 
             textEditsState={textContentEditState}
-            setEditedText={handleEditSetText}
+            setEditedText={!messagePendingIncomplete ? handleEditSetText : undefined}
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 

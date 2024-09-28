@@ -56,7 +56,7 @@ export function ContentFragments(props: {
   showUnsafeHtmlCode?: boolean,
 
   textEditsState: ChatMessageTextPartEditState | null,
-  setEditedText: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
+  setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
@@ -111,7 +111,7 @@ export function ContentFragments(props: {
         return null;
 
       // editing for text parts
-      if (props.textEditsState && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
+      if (props.textEditsState && !!props.setEditedText && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
         return (
           <BlockEdit_TextFragment
             key={'edit-' + fragment.fId}

@@ -18,7 +18,7 @@ import { explainServiceErrors } from '../explainServiceErrors';
 export function BlockPartText_AutoBlocks(props: {
   // current value
   textPartText: string,
-  setEditedText: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
+  setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
 
   fragmentId: DMessageFragmentId,
   messageRole: DMessageRole,
@@ -48,7 +48,7 @@ export function BlockPartText_AutoBlocks(props: {
   const { fragmentId, setEditedText } = props;
 
   const handleSetText = React.useCallback((newText: string) => {
-    setEditedText(fragmentId, newText, true);
+    setEditedText?.(fragmentId, newText, true);
   }, [fragmentId, setEditedText]);
 
 
@@ -80,7 +80,7 @@ export function BlockPartText_AutoBlocks(props: {
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
-      setText={handleSetText}
+      setText={props.setEditedText ? handleSetText : undefined}
     />
   );
 }
