@@ -14,7 +14,7 @@ import type { DMessageContentFragment, DMessageDataRef } from '~/common/stores/c
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { showBlobURLInNewTab } from '~/common/util/imageUtils';
 
-import { RenderImageURL, RenderImageURLVarint } from './RenderImageURL';
+import { RenderImageURL, RenderImageURLVariant } from './RenderImageURL';
 
 
 /**
@@ -45,7 +45,7 @@ export function RenderImageRefDBlob(props: {
   imageWidth?: number,
   imageHeight?: number,
   // others
-  variant: RenderImageURLVarint,
+  variant: RenderImageURLVariant,
   disabled?: boolean,
   onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,
