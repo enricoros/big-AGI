@@ -170,7 +170,7 @@ export function DataStreamViz(props: { height: number }) {
     if (!lastTimeRef.current) lastTimeRef.current = currentTime;
     const deltaTime = currentTime - lastTimeRef.current;
 
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(-1, -1, width + 2, height + 2);
 
     if (SHOW_GRID)
       drawGrid(ctx, width, height);
@@ -206,7 +206,7 @@ export function DataStreamViz(props: { height: number }) {
     const handleResize = () => {
       const width = container.offsetWidth;
       const ctx = setupCanvas(canvasRef.current, width, props.height);
-      ctx.clearRect(0, 0, width, props.height);
+      ctx.clearRect(-1, -1, width + 2, props.height + 2);
     };
 
     handleResize();
