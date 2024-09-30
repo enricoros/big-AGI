@@ -11,14 +11,14 @@ export function useCapability(): CapabilitySpeechSynthesis {
 }
 
 
-export async function speakText(text: string, voiceId?: number) {
+export async function speakText(text: string, voiceId?: string) {
   if (!(text?.trim())) return;
-
+  
   try {
     const synth = window.speechSynthesis;
     const utterThis = new SpeechSynthesisUtterance(text);
     const voices = synth.getVoices();
-    utterThis.voice = voices[voiceId || getBrowseVoiceId()]
+    utterThis.voice = voices[(voiceId && parseInt(voiceId)) || getBrowseVoiceId()]
     synth.speak(utterThis);
   } catch (error) {
     console.error('Error playing first text:', error);
@@ -30,14 +30,14 @@ export async function cancel() {
   synth.cancel();
 }
 
-export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: number) {
+export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: string) {
   if (!(text?.trim())) return;
 
   try {
     const synth = window.speechSynthesis;
     const utterThis = new SpeechSynthesisUtterance(text);
     const voices = synth.getVoices();
-    utterThis.voice = voices[voiceId || getBrowseVoiceId()]
+    utterThis.voice = voices[(voiceId && parseInt(voiceId)) || getBrowseVoiceId()]
     synth.speak(utterThis);
   } catch (error) {
     // has happened once in months of testing, not sure what was the cause

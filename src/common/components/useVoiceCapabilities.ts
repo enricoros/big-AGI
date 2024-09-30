@@ -51,13 +51,11 @@ export function useCapability(): CapabilitySpeechSynthesis {
 }
 
 
-export async function speakText(text: string, voiceId?: string | number) {
+export async function speakText(text: string, voiceId?: string) {
   const TTSEngine = getTTSEngine();
   if (TTSEngine === 'Elevenlabs') {
-    if (voiceId !== undefined && typeof voiceId !== 'string') throw new Error('if use Elevenlabs, voiceId should be a string'); 
     return await elevenlabsSpeakText(text, voiceId);
   }else if (TTSEngine === 'Web Speech API') {
-    if (voiceId !== undefined && typeof voiceId !== 'number') throw new Error('if use browserSpeechAPI, voiceId should be a number'); 
     return await browserSpeechSynthesisSpeakText(text, voiceId);
   }
   throw new Error('TTSEngine is not found'); 
@@ -65,14 +63,11 @@ export async function speakText(text: string, voiceId?: string | number) {
 
 // let liveAudioPlayer: LiveAudioPlayer | undefined = undefined;
 
-export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: string | number) {
+export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: string) {
   const TTSEngine = getTTSEngine();
   if (TTSEngine === 'Elevenlabs') {
-    if (typeof voiceId !== 'string') throw new Error('if use Elevenlabs, voiceId should be a string'); 
     return await EXPERIMENTAL_elevenlabsSpeakTextStream(text, voiceId);
   }else if (TTSEngine === 'Web Speech API') {
-    // if (typeof voiceId !== 'number') throw new Error('if use browserSpeechAPI, voiceId should be a number');
-    if (typeof voiceId!== 'number') voiceId = undefined; 
     return await EXPERIMENTAL_browserSpeechSynthesisSpeakTextStream(text, voiceId);
   }
   throw new Error('TTSEngine is not found'); 

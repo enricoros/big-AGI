@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import { shallow } from 'zustand/shallow';
 
 export type BrowsePageTransform = 'html' | 'text' | 'markdown';
 
@@ -16,7 +15,7 @@ export const useBrowseStore = create<BrowseState>()(
   persist(
     (set) => ({
 
-      browseVoiceId: 0,
+      browseVoiceId: NaN,
       setBrowseVoiceId: (browseVoiceId: number) => set(() => ({ browseVoiceId })),
 
     }),

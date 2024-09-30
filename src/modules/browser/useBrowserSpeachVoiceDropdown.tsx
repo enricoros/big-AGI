@@ -75,25 +75,24 @@ export function useBrowserSpeachVoices() {
   };
 }
 
-
 export function useBrowserSpeachVoiceDropdown(autoSpeak: boolean, disabled?: boolean) {
 
   // external state
   const { hasVoices, voices } = useBrowserSpeachVoices();
-  const [voiceId, setVoiceId] = useBrowseVoiceId();
+  const [ voiceId, setVoiceId ] = useBrowseVoiceId();
 
   // derived state
-  const voice = voices.length > voiceId? voices[voiceId] : null;
+  const voice = Number.isNaN(voiceId)? null : voices[voiceId];
 
   // [E] autoSpeak
   React.useEffect(() => {
-    if (autoSpeak && voice) {
-      speakText(`How can I assist you today?`, voiceId);
+    if (autoSpeak) {
+      speakText(`How can I assist you today?`, String(voiceId));
     }
     return () => {
       cancel()
     }
-  }, [autoSpeak, voice, voiceId]);
+  }, [autoSpeak, voiceId]);
 
   const voicesDropdown = React.useMemo(() =>
       <VoicesDropdown
