@@ -162,7 +162,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
       if (blob) resolve(blob);
       else if (blob === undefined) reject('Chart not ready yet.')
       else reject('Failed to generate chart image.');
-    }), `Chart Image${e.shiftKey ? ' with background' : ''}`);
+    }), `Chart Image${e.shiftKey ? ' with transparent background' : ''}`);
   }, []);
 
   const handleChartDownload = React.useCallback(async (e: React.MouseEvent) => {
@@ -388,12 +388,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               <ButtonGroup aria-label='Chart Actions' sx={overlayGroupWithShadowSx}>
 
                 {/* Download Chart PNG */}
-                <OverlayButton tooltip={noTooltips ? null : <>Download PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for background</Box></>} onClick={handleChartDownload}>
+                <OverlayButton tooltip={noTooltips ? null : <>Download PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for transparent</Box></>} onClick={handleChartDownload}>
                   <FileDownloadOutlinedIcon />
                 </OverlayButton>
 
                 {/* Copy Chart PNG */}
-                <OverlayButton tooltip={noTooltips ? null : <>Copy PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for background</Box></>} onClick={handleChartCopyToClipboard}>
+                <OverlayButton tooltip={noTooltips ? null : <>Copy PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for transparent</Box></>} onClick={handleChartCopyToClipboard}>
                   <ContentCopyIcon />
                 </OverlayButton>
 

@@ -696,6 +696,7 @@ export function ChatMessage(props: {
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={adjContentScaling}
+            uiComplexityMode={uiComplexityMode}
             fitScreen={props.fitScreen}
             isMobile={props.isMobile}
             messageRole={messageRole}

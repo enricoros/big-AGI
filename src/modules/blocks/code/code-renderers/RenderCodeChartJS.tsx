@@ -16,7 +16,10 @@ const chartContainerSx: SxProps = {
   // required by Chart.js
   position: 'relative',
 
-  // width: '100%',
+  // to try to regain the chart size after shrinking
+  width: '100%',
+  // to better get resized when fullscreen
+  flex: 1,
 
   // limit height of the canvas or it can too large easily
   '& canvas': {
@@ -30,7 +33,7 @@ const chartContainerSx: SxProps = {
 
 // Exposed API
 export type RenderCodeChartJSHandle = {
-  getChartPNG: (withBackground: boolean) => Promise<Blob | null>;
+  getChartPNG: (transparentBackground: boolean) => Promise<Blob | null>;
 };
 
 
@@ -93,7 +96,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
 
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
-    getChartPNG: async (withBackground: boolean) => {
+    getChartPNG: async (transparentBackground: boolean) => {
       const chartCanvas = canvasRef.current;
       if (!chartCanvas) return null;
 
@@ -106,8 +109,9 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
         return await asyncCanvasToBlob(chartCanvas, 'image/png');
 
       // Omit the background layer
-      if (withBackground) {
-        ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+      if (!transparentBackground) {
+        // ctx.fillStyle = isDarkMode ? '#171A1C' : '#F0F4F8';
+        ctx.fillStyle = isDarkMode ? '#000' : '#FFF';
         ctx.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
       }
 
@@ -176,7 +180,7 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
           </Button>
           {/*)}*/}
           {fixupError ? (
-            <Typography level='body-sm' color='danger' sx={{ ml: 0.5 }}>
+            <Typography level='body-sm' color='warning' sx={{ ml: 0.5 }}>
               Error fixing chart: {fixupError}
             </Typography>
           ) : (parseResult.parseError && !isFetching) && (
