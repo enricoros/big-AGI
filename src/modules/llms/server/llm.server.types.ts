@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 
 
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
@@ -15,6 +15,7 @@ export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
 /// Interfaces
 
 // TODO: just remove this, and move to a capabilities array (I/O/...)
+// FIXME: keep this in sync with the client side on llms.types.ts
 const Interface_enum = z.enum([
   LLM_IF_OAI_Chat,              // OpenAI Chat
   LLM_IF_OAI_Fn,                // JSON mode?
@@ -23,6 +24,7 @@ const Interface_enum = z.enum([
   LLM_IF_OAI_Complete,          // Complete mode
   LLM_IF_ANT_PromptCaching,     // Anthropic Prompt caching
   LLM_IF_SPECIAL_OAI_O1Preview, // Special OAI O1 Preview
+  LLM_IF_OAI_PromptCaching,     // OpenAI Prompt caching
 ]);
 
 
