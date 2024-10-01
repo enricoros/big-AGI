@@ -9,7 +9,7 @@ import { useBrowserSpeechVoiceDropdown } from './useBrowserSpeechVoiceDropdown';
 import { useLanguageCodeForFilter } from './store-module-browser';
 
 // languages are defined as a JSON file
-import { languages } from './web-speech-recommended-voices/json/localizedNames/full/en.json';
+import languages from './web-speech-recommended-voices/json/localizedNames/full/en.json';
 
 
 export function BrowserSpeechSettings() {
@@ -47,7 +47,7 @@ export function BrowserSpeechSettings() {
   const { voicesDropdown } = useBrowserSpeechVoiceDropdown(true, { voiceNameFilters, testUtterance });
 
   const languageOptions = React.useMemo(() => {
-    return Object.entries(languages).map(([languagesCode, languagesName]) => (
+    return Object.entries(languages.languages).map(([languagesCode, languagesName]) => (
       <Option key={languagesCode} value={languagesCode}>
         {`${languagesName}`}
       </Option>
