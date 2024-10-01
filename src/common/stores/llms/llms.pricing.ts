@@ -20,7 +20,7 @@ export type DChatGeneratePricing = {
     write: DTieredPricing;
     duration: number; // seconds
   } | {
-    cType: 'oai-apc';
+    cType: 'oai-ac';
     read: DTieredPricing;
     // write: DTieredPricing; // Not needed, as it's automatic
   };

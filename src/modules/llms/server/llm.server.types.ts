@@ -67,9 +67,9 @@ const ChatGeneratePricing_schema = z.object({
       duration: z.number(),
     }),
     z.object({
-      cType: z.literal('oai-apc'), // [OpenAI] Automatic Prompt Caching
+      cType: z.literal('oai-ac'), // [OpenAI] Automatic Caching
       read: TieredPricing_schema,
-      // write: TieredPricing_schema, // Not needed, as it's automatic
+      // write: TieredPricing_schema, // Not needed, as it's the same as input cost, i.e. = 0
     }),
   ]).optional(),
   // Not for the server-side, computed on the client only
