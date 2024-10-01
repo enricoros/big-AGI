@@ -6,8 +6,8 @@ export type BrowsePageTransform = 'html' | 'text' | 'markdown';
 
 interface BrowseState {
 
-  browseVoiceId: number;
-  setBrowseVoiceId: (value: number) => void;
+  browseVoiceId: string;
+  setBrowseVoiceId: (value: string) => void;
 
 }
 
@@ -15,8 +15,8 @@ export const useBrowseStore = create<BrowseState>()(
   persist(
     (set) => ({
 
-      browseVoiceId: NaN,
-      setBrowseVoiceId: (browseVoiceId: number) => set(() => ({ browseVoiceId })),
+      browseVoiceId: '',
+      setBrowseVoiceId: (browseVoiceId: string) => set(() => ({ browseVoiceId })),
 
     }),
     {
@@ -25,7 +25,7 @@ export const useBrowseStore = create<BrowseState>()(
   ),
 );
 
-export function useBrowseVoiceId(): [number, (value: number) => void] {
+export function useBrowseVoiceId(): [string, (value: string) => void] {
   return useBrowseStore(useShallow(state => [state.browseVoiceId, state.setBrowseVoiceId]))
 }
 

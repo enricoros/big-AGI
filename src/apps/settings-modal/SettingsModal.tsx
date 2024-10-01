@@ -22,7 +22,7 @@ import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceSettings } from './VoiceSettings';
-import { BrowserSpeachSettings } from '~/modules/browser/BrowserSpeachSettings';
+import { BrowserSpeechSettings } from '~/modules/browser/BrowserSpeechSettings';
 
 import { useTTSEngine } from 'src/apps/chat/store-app-chat';
 
@@ -202,7 +202,7 @@ export function SettingsModal(props: {
               <ElevenlabsSettings />
             </Topic>}
             {TTSEngine === 'Web Speech API' && <Topic icon='📢' title='Web Speech API'>
-              <BrowserSpeachSettings />
+              <BrowserSpeechSettings />
             </Topic>}
           </Topics>
         </TabPanel>

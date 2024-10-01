@@ -18,7 +18,8 @@ export async function speakText(text: string, voiceId?: string) {
     const synth = window.speechSynthesis;
     const utterThis = new SpeechSynthesisUtterance(text);
     const voices = synth.getVoices();
-    utterThis.voice = voices[(voiceId && parseInt(voiceId)) || getBrowseVoiceId()]
+    voiceId = voiceId || getBrowseVoiceId();
+    utterThis.voice = voices.find((voice) => voiceId === voice.name) || null;
     synth.speak(utterThis);
   } catch (error) {
     console.error('Error playing first text:', error);
@@ -37,7 +38,8 @@ export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: strin
     const synth = window.speechSynthesis;
     const utterThis = new SpeechSynthesisUtterance(text);
     const voices = synth.getVoices();
-    utterThis.voice = voices[(voiceId && parseInt(voiceId)) || getBrowseVoiceId()]
+    voiceId = voiceId || getBrowseVoiceId();
+    utterThis.voice = voices.find((voice) => voiceId === voice.name) || null;
     synth.speak(utterThis);
   } catch (error) {
     // has happened once in months of testing, not sure what was the cause

@@ -10,7 +10,7 @@ import { speakText as browserSpeechSynthesisSpeakText } from '~/modules/browser/
 import { EXPERIMENTAL_speakTextStream as EXPERIMENTAL_browserSpeechSynthesisSpeakTextStream } from '~/modules/browser/browser.speechSynthesis.client'
 
 import { useElevenLabsVoices } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
-import { useBrowserSpeachVoices } from '~/modules/browser/useBrowserSpeachVoiceDropdown';
+import { useBrowserSpeechVoices } from '~/modules/browser/useBrowserSpeechVoiceDropdown';
 
 export const TTSEngineList: string[] = [
   'Elevenlabs',
@@ -26,7 +26,7 @@ export function getConditionalVoices(){
   if (TTSEngine === 'Elevenlabs') {
     return useElevenLabsVoices
   }else if (TTSEngine === 'Web Speech API') {
-    return useBrowserSpeachVoices
+    return useBrowserSpeechVoices
   }
   throw new Error('TTSEngine is not found');
 }
