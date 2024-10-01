@@ -5,16 +5,21 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-
 import { useBrowserSpeechVoiceDropdown } from './useBrowserSpeechVoiceDropdown';
+import { useLanguageCodeForFilter } from './store-module-browser';
 
 // languages are defined as a JSON file
 import { languages } from './web-speech-recommended-voices/json/localizedNames/full/en.json';
 
+
 export function BrowserSpeechSettings() {
-  const [languageCode, setLanguageCode] = React.useState<string | null>(null);
+
+  // state
   const [testUtterance, setTestUtterance] = React.useState<string | null>(null);
   const [voiceNameFilters, setVoiceNameFilters] = React.useState<string[] | null>(null);
+
+  // external state
+  const [languageCode, setLanguageCode] = useLanguageCodeForFilter();
 
   React.useEffect(() => {
     if (languageCode) {
@@ -50,7 +55,7 @@ export function BrowserSpeechSettings() {
   }, []);
 
   function handleLanguageChanged(_event: any, newValue: string | null) {
-    setLanguageCode(newValue);
+    setLanguageCode(newValue || '');
   }
 
   return (
@@ -79,7 +84,7 @@ export function BrowserSpeechSettings() {
                   event.stopPropagation();
                 }}
                 onClick={() => {
-                  setLanguageCode(null);
+                  setLanguageCode('');
                 }}
               >
                 <CloseRounded />
