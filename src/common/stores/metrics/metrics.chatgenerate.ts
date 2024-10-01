@@ -87,7 +87,7 @@ export function finishChatGenerateTokenMetrics(metrics: DChatGenerateMetricsLg |
 
 const USD_TO_CENTS = 100;
 
-export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetricsMd>, pricing?: DChatGeneratePricing): ChatGenerateCostMetricsMd | undefined {
+export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetricsMd>, pricing?: DChatGeneratePricing | undefined, logLlmRefId?: string): ChatGenerateCostMetricsMd | undefined {
   if (!metrics)
     return undefined;
 
@@ -118,35 +118,64 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
   if ($in === undefined || $out === undefined)
     return { $code: 'partial-price' };
 
-  // handle price with cache
-  if (cacheReadTokens || cacheWriteTokens) {
 
-    // 2024-08-22: DEV Note: we put this here to break in case we start having tiered price with cache,
-    // for which we don't know if the tier discriminator is the input tokens level, or the equivalent
-    // tokens level (input + cache)
-    if (Array.isArray(pricing.cache?.read) || Array.isArray(pricing.cache?.write))
-      throw new Error('Tiered pricing with cache is not supported');
+  // Standard price
+  const $cNoCacheRounded = Math.round(($in + $out) * USD_TO_CENTS * 10000) / 10000;
+  if (!cacheReadTokens && !cacheWriteTokens)
+    return { $c: $cNoCacheRounded, ...isPartialMessage ? { $code: 'partial-msg' } : {} };
 
-    const inputNoCache = inputTokens + cacheReadTokens + cacheWriteTokens;
-    const $cacheRead = getLlmCostForTokens(inputNoCache, cacheReadTokens, pricing.cache?.read);
-    const $cacheWrite = getLlmCostForTokens(inputNoCache, cacheWriteTokens, pricing.cache?.write);
-    if ($cacheRead === undefined || $cacheWrite === undefined)
-      return { $code: 'partial-price' };
 
-    // compute the advantage from caching
-    const $inNoCache = getLlmCostForTokens(inputNoCache, inputNoCache, pricing.input)!;
-    return {
-      $c: Math.round(($in + $out + $cacheRead + $cacheWrite) * USD_TO_CENTS * 10000) / 10000,
-      $cdCache: Math.round(($inNoCache - $in - $cacheRead - $cacheWrite) * USD_TO_CENTS * 10000) / 10000,
-      ...isPartialMessage ? { $code: 'partial-msg' } : {},
-    };
-
+  // Price with Caching
+  const cachePricing = pricing.cache;
+  if (!cachePricing) {
+    console.log(`No cache pricing for ${logLlmRefId}`);
+    return { $c: $cNoCacheRounded, $code: 'partial-price' };
   }
 
-  // price without cache
+  // 2024-08-22: DEV Note: we put this here to break in case we start having tiered price with cache,
+  // for which we don't know if the tier discriminator is the input tokens level, or the equivalent
+  // tokens level (input + cache)
+  if (Array.isArray(cachePricing.read) || ('write' in cachePricing && Array.isArray(cachePricing.write)))
+    throw new Error('Tiered pricing with cache is not supported');
+
+  const inputAsIfNoCache = inputTokens + cacheReadTokens + cacheWriteTokens;
+
+  // compute the input cache read costs
+  const $cacheRead = getLlmCostForTokens(inputAsIfNoCache, cacheReadTokens, cachePricing.read);
+  if ($cacheRead === undefined) {
+    console.log(`Missing cache read pricing for ${logLlmRefId}`);
+    return { $c: $cNoCacheRounded, $code: 'partial-price' };
+  }
+
+  // compute the input cache write costs
+  let $cacheWrite;
+  switch (cachePricing.cType) {
+    case 'ant-bp':
+      $cacheWrite = getLlmCostForTokens(inputAsIfNoCache, cacheWriteTokens, cachePricing.write);
+      break;
+    case 'oai-ac':
+      $cacheWrite = 0;
+      break;
+    default:
+      throw new Error('computeChatGenerationCosts: Unknown cache type');
+  }
+  if ($cacheWrite === undefined) {
+    console.log(`Missing cache write pricing for ${logLlmRefId}`);
+    return { $c: $cNoCacheRounded, $code: 'partial-price' };
+  }
+
+  // compute the cost for this call
+  const $c = Math.round(($in + $out + $cacheRead + $cacheWrite) * USD_TO_CENTS * 10000) / 10000;
+
+  // compute the advantage from caching
+  const $inAsIfNoCache = getLlmCostForTokens(inputAsIfNoCache, inputAsIfNoCache, pricing.input)!;
+  const $cdCache = Math.round(($inAsIfNoCache - $in - $cacheRead - $cacheWrite) * USD_TO_CENTS * 10000) / 10000;
+
+  // mark the costs as partial if the message was not completely received - i.e. the server did not tell us the final tokens count
   return {
-    $c: Math.round(($in + $out) * USD_TO_CENTS * 10000) / 10000,
-    ...isPartialMessage ? { $code: 'partial-msg' } : {},
+    $c,
+    $cdCache,
+    ...(isPartialMessage && { $code: 'partial-msg' }),
   };
 }
 

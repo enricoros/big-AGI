@@ -37,9 +37,9 @@ function prettyPricingComponent(chatPricing: DChatGeneratePricing): React.ReactN
   const formatPrice = (price: DChatGeneratePricing['input']): string => {
     if (!price) return 'N/A';
     if (price === 'free') return 'Free';
-    if (typeof price === 'number') return `$${price.toFixed(4)}`;
+    if (typeof price === 'number') return `$${price.toFixed(2)}`;
     if (Array.isArray(price))
-      return price.map(bp => `${bp.upTo === null ? '>' : '<='} ${bp.upTo} tokens: ${formatPrice(bp.price)}`).join(', ');
+      return price.map(bp => `${bp.upTo === null ? '>' : '<='} ${bp.upTo || ''} tokens: ${formatPrice(bp.price)}`).join(', ');
     return 'Unknown';
   };
 
@@ -48,17 +48,29 @@ function prettyPricingComponent(chatPricing: DChatGeneratePricing): React.ReactN
 
   let cacheInfo = '';
   if (chatPricing.cache) {
-    const { read, write, duration } = chatPricing.cache;
-    cacheInfo = `Cache: Read ${formatPrice(read)}, Write ${formatPrice(write)}, Duration: ${duration}s`;
+    switch (chatPricing.cache.cType) {
+      case 'ant-bp': {
+        const { read, write, duration } = chatPricing.cache;
+        cacheInfo = `Cache: Read ${formatPrice(read)}, Write ${formatPrice(write)}, Duration: ${duration}s`;
+        break;
+      }
+      case 'oai-ac': {
+        const { read } = chatPricing.cache;
+        cacheInfo = `Cache: Read ${formatPrice(read)}`;
+        break;
+      }
+      default:
+        throw new Error('LLMOptionsModal: Unknown cache type');
+    }
   }
 
   return (
-    <Typography level='body-sm'>
-      <strong>Pricing ($/M tokens):</strong><br />
-      Input: {inputPrice}<br />
-      Output: {outputPrice}<br />
-      {cacheInfo && <>{cacheInfo}<br /></>}
-    </Typography>
+    <div>
+      <span>pricing ($/M tokens):</span><br />
+      &nbsp;- Input: {inputPrice}<br />
+      &nbsp;- Output: {outputPrice}<br />
+      {cacheInfo && <>&nbsp;- {cacheInfo}<br /></>}
+    </div>
   );
 }
 

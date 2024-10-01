@@ -33,7 +33,7 @@ export function aixCreateChatGenerateStreamContext(name: AixAPI_Context_ChatGene
 export function aixCreateModelFromLLMOptions(
   llmOptions: Record<string, any> | undefined,
   llmOptionsOverride: Record<string, any> | undefined,
-  debugLlmId: string
+  debugLlmId: string,
 ): AixAPI_Model {
   // model params (llm)
   let { llmRef, llmTemperature, llmResponseTokens } = llmOptions || {};
@@ -271,7 +271,7 @@ function _llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateCont
 
 function _updateDMessageCosts(dest: AixChatGenerateContent_DMessage, llm: DLLM) {
   // Compute costs
-  const costs = computeChatGenerationCosts(dest.generator.metrics, llm.pricing?.chat);
+  const costs = computeChatGenerationCosts(dest.generator.metrics, llm.pricing?.chat, llm.options?.llmRef || llm.id);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices
     return;
