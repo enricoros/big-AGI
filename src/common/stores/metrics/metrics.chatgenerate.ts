@@ -1,4 +1,4 @@
-import { DChatGeneratePricing, getLlmPriceForTokens, isModelPriceFree } from '~/common/stores/llms/llms.pricing';
+import { DChatGeneratePricing, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 
 /**
  * This is a stored type - IMPORTANT: do not break.
@@ -105,7 +105,7 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
     return { $code: 'no-pricing' };
 
   // pricing: bail if free
-  if (isModelPriceFree(pricing))
+  if (isModelPricingFree(pricing))
     return { $code: 'free' };
 
 
@@ -113,8 +113,8 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
   const isPartialMessage = metrics.TsR === 'pending' || metrics.TsR === 'aborted';
 
   // Calculate costs
-  const $in = getLlmPriceForTokens(inputTokens, inputTokens, pricing.input);
-  const $out = getLlmPriceForTokens(inputTokens, outputTokens, pricing.output);
+  const $in = getLlmCostForTokens(inputTokens, inputTokens, pricing.input);
+  const $out = getLlmCostForTokens(inputTokens, outputTokens, pricing.output);
   if ($in === undefined || $out === undefined)
     return { $code: 'partial-price' };
 
@@ -128,13 +128,13 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
       throw new Error('Tiered pricing with cache is not supported');
 
     const inputNoCache = inputTokens + cacheReadTokens + cacheWriteTokens;
-    const $cacheRead = getLlmPriceForTokens(inputNoCache, cacheReadTokens, pricing.cache?.read);
-    const $cacheWrite = getLlmPriceForTokens(inputNoCache, cacheWriteTokens, pricing.cache?.write);
+    const $cacheRead = getLlmCostForTokens(inputNoCache, cacheReadTokens, pricing.cache?.read);
+    const $cacheWrite = getLlmCostForTokens(inputNoCache, cacheWriteTokens, pricing.cache?.write);
     if ($cacheRead === undefined || $cacheWrite === undefined)
       return { $code: 'partial-price' };
 
     // compute the advantage from caching
-    const $inNoCache = getLlmPriceForTokens(inputNoCache, inputNoCache, pricing.input)!;
+    const $inNoCache = getLlmCostForTokens(inputNoCache, inputNoCache, pricing.input)!;
     return {
       $c: Math.round(($in + $out + $cacheRead + $cacheWrite) * USD_TO_CENTS * 10000) / 10000,
       $cdCache: Math.round(($inNoCache - $in - $cacheRead - $cacheWrite) * USD_TO_CENTS * 10000) / 10000,

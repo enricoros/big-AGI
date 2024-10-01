@@ -48,27 +48,28 @@ const PriceUpTo_schema = z.object({
   price: PricePerMToken_schema,
 });
 
-const TieredPrice_schema = z.union([
+const TieredPricing_schema = z.union([
   PricePerMToken_schema,
   z.array(PriceUpTo_schema),
 ]);
 
+// NOTE: (!) keep this in sync with DChatGeneratePricing (llms.pricing.ts)
 const ChatGeneratePricing_schema = z.object({
-  input: TieredPrice_schema.optional(),
-  output: TieredPrice_schema.optional(),
+  input: TieredPricing_schema.optional(),
+  output: TieredPricing_schema.optional(),
   // Future: Perplexity has a cost per request, consider this for future additions
   // perRequest: z.number().optional(), // New field for fixed per-request pricing
   cache: z.discriminatedUnion('cType', [
     z.object({
       cType: z.literal('ant-bp'), // [Anthropic] Breakpoint-based caching
-      read: TieredPrice_schema,
-      write: TieredPrice_schema,
+      read: TieredPricing_schema,
+      write: TieredPricing_schema,
       duration: z.number(),
     }),
     z.object({
       cType: z.literal('oai-apc'), // [OpenAI] Automatic Prompt Caching
-      read: TieredPrice_schema,
-      // write: TieredPrice_schema, // Not needed, as it's automatic
+      read: TieredPricing_schema,
+      // write: TieredPricing_schema, // Not needed, as it's automatic
     }),
   ]).optional(),
   // Not for the server-side, computed on the client only

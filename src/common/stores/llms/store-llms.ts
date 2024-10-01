@@ -10,7 +10,7 @@ import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from './llms.types';
 import type { DModelsService, DModelsServiceId } from './modelsservice.types';
-import { portModelPricingV2toV3 } from './llms.pricing';
+import { getLlmCostForTokens, portModelPricingV2toV3 } from './llms.pricing';
 
 
 /// ModelsStore - a store for configured LLMs and configured services
@@ -331,57 +331,52 @@ export function getLLMsDebugInfo() {
 
 function _heuristicUpdateSelectedLLMs(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null) {
 
-  // the output of _groupLlmsByVendorRankedByElo
-  let grouped: ReturnType<typeof _groupLlmsByVendorRankedByElo> | null = null;
+  let grouped: GroupedVendorLLMs;
 
   function cachedGrouped() {
     if (!grouped) grouped = _groupLlmsByVendorRankedByElo(allLlms);
     return grouped;
   }
 
-  // the best llm
+  // default Chat: top vendor by Elo, top model
   if (!chatLlmId || !allLlms.find(llm => llm.id === chatLlmId)) {
     const vendors = cachedGrouped();
     chatLlmId = vendors.length ? vendors[0].llmsByElo[0].id : null;
   }
 
-  // a fast llm (bottom elo of the top vendor ~~ not really a proxy, but not sure which heuristic to use here)
-  if (!fastLlmId && !allLlms.find(llm => llm.id === fastLlmId)) {
+  // default Fast: vendors by Elo, lowest cost (if available)
+  if (!fastLlmId || !allLlms.find(llm => llm.id === fastLlmId)) {
     const vendors = cachedGrouped();
-    fastLlmId = vendors.length
-      ? vendors[0].llmsByElo.findLast(llm => llm.cbaElo)?.id // last with ELO
-      ?? vendors[0].llmsByElo[vendors[0].llmsByElo.length - 1].id ?? null // last
-      : null;
+    fastLlmId = _selectFastLlmID(vendors);
   }
 
-  // a func llm (same as chat for now, hoping the highest grade also has function calling)
+  // a func llm (same as chat for now)
   if (!funcLlmId || !allLlms.find(llm => llm.id === funcLlmId))
     funcLlmId = chatLlmId;
 
   return { chatLLMId: chatLlmId, fastLLMId: fastLlmId, funcLLMId: funcLlmId };
 }
 
-function _groupLlmsByVendorRankedByElo(llms: DLLM[]): { vendorId: ModelVendorId, llmsByElo: { id: DLLMId, cbaElo: number | undefined }[] }[] {
+
+type BenchVendorLLMs = { vendorId: ModelVendorId, llmsByElo: { id: DLLMId, cbaElo: number | undefined, costRank: number | undefined }[] };
+type GroupedVendorLLMs = BenchVendorLLMs[];
+
+function _groupLlmsByVendorRankedByElo(llms: DLLM[]): GroupedVendorLLMs {
   // group all LLMs by vendor
   const grouped = llms.reduce((acc, llm) => {
     if (llm.hidden) return acc;
-    const vendor = acc.find(v => v.vendorId === llm.vId);
-    if (!vendor) {
-      acc.push({
-        vendorId: llm.vId,
-        llmsByElo: [{
-          id: llm.id,
-          cbaElo: llm.benchmark?.cbaElo,
-        }],
-      });
-    } else {
-      vendor.llmsByElo.push({
-        id: llm.id,
-        cbaElo: llm.benchmark?.cbaElo,
-      });
-    }
+    const group = acc.find(v => v.vendorId === llm.vId);
+    const eloCostItem = {
+      id: llm.id,
+      cbaElo: llm.benchmark?.cbaElo,
+      costRank: !llm.pricing ? undefined : _getLlmCostBenchmark(llm),
+    };
+    if (!group)
+      acc.push({ vendorId: llm.vId, llmsByElo: [eloCostItem] });
+    else
+      group.llmsByElo.push(eloCostItem);
     return acc;
-  }, [] as { vendorId: ModelVendorId, llmsByElo: { id: DLLMId, cbaElo: number | undefined }[] }[]);
+  }, [] as GroupedVendorLLMs);
 
   // sort each vendor's LLMs by elo, decreasing
   for (const vendor of grouped)
@@ -390,4 +385,29 @@ function _groupLlmsByVendorRankedByElo(llms: DLLM[]): { vendorId: ModelVendorId,
   // sort all vendors by their highest elo, decreasing
   grouped.sort((a, b) => (b.llmsByElo[0].cbaElo ?? -1) - (a.llmsByElo[0].cbaElo ?? -1));
   return grouped;
+}
+
+// Hypothetical cost benchmark for a model, based on total cost of 100k input tokens and 10k output tokens.
+function _getLlmCostBenchmark(llm: DLLM): number | undefined {
+  if (!llm.pricing?.chat) return undefined;
+  const costIn = getLlmCostForTokens(100000, 100000, llm.pricing.chat.input);
+  const costOut = getLlmCostForTokens(100000, 10000, llm.pricing.chat.output);
+  return (costIn !== undefined && costOut !== undefined) ? costIn + costOut : undefined;
+}
+
+// Selects the 'fast' llm
+function _selectFastLlmID(vendors: GroupedVendorLLMs) {
+  if (!vendors.length) return null;
+  for (const vendor of vendors) {
+    const lowestCostLlm = vendor.llmsByElo.reduce((acc, llm) => {
+      if (!acc)
+        return llm;
+      if (!llm.costRank || !acc.costRank)
+        return acc;
+      return llm.costRank < acc.costRank ? llm : acc;
+    }, null as BenchVendorLLMs['llmsByElo'][number] | null);
+    if (lowestCostLlm)
+      return lowestCostLlm.id;
+  }
+  return null;
 }

@@ -327,7 +327,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
-    // benchmark: { cbaElo: 1106 }, // disabled so that it won't be picked up as 'fast' model
+    benchmark: { cbaElo: 1106 },
   },
   {
     idPrefix: 'gpt-3.5-turbo',
@@ -341,7 +341,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
-    // benchmark: { cbaElo: 1106 }, // disabled so that it won't be picked up as 'fast' model
+    benchmark: { cbaElo: 1106 },
   },
   {
     idPrefix: 'gpt-3.5-turbo-1106',
@@ -352,7 +352,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 1, output: 2 },
-    // benchmark: { cbaElo: 1072 }, // disabled so that it won't be picked up as 'fast' model
+    benchmark: { cbaElo: 1072 },
     hidden: true,
   },
 
