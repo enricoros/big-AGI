@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 
 
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
@@ -25,6 +25,7 @@ const Interface_enum = z.enum([
   LLM_IF_ANT_PromptCaching,     // Anthropic Prompt caching
   LLM_IF_SPECIAL_OAI_O1Preview, // Special OAI O1 Preview
   LLM_IF_OAI_PromptCaching,     // OpenAI Prompt caching
+  LLM_IF_OAI_Realtime,         // OpenAI Realtime
 ]);
 
 
@@ -57,12 +58,19 @@ const ChatGeneratePricing_schema = z.object({
   output: TieredPrice_schema.optional(),
   // Future: Perplexity has a cost per request, consider this for future additions
   // perRequest: z.number().optional(), // New field for fixed per-request pricing
-  cache: z.object({
-    cType: z.literal('ant-bp'),
-    read: TieredPrice_schema,
-    write: TieredPrice_schema,
-    duration: z.number(),
-  }).optional(),
+  cache: z.discriminatedUnion('cType', [
+    z.object({
+      cType: z.literal('ant-bp'), // [Anthropic] Breakpoint-based caching
+      read: TieredPrice_schema,
+      write: TieredPrice_schema,
+      duration: z.number(),
+    }),
+    z.object({
+      cType: z.literal('oai-apc'), // [OpenAI] Automatic Prompt Caching
+      read: TieredPrice_schema,
+      // write: TieredPrice_schema, // Not needed, as it's automatic
+    }),
+  ]).optional(),
   // Not for the server-side, computed on the client only
   // _isFree: z.boolean().optional(),
 });
