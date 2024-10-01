@@ -35,7 +35,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching], // + Structured Outputs?
     chatPrice: { input: 2.5, cache: { cType: 'oai-apc', read: 1.25 }, output: 10 },
-    benchmark: { cbaElo: 1286 + 1 },
+    benchmark: { cbaElo: 1264 },
   },
   {
     idPrefix: 'gpt-4o-2024-05-13',
@@ -46,7 +46,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 5, output: 15 },
-    benchmark: { cbaElo: 1286 },
+    benchmark: { cbaElo: 1285 },
     hidden: true,
   },
   {
@@ -58,6 +58,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 5, output: 15 },
+    benchmark: { cbaElo: 1337 },
   },
 
   // GPT-4o mini
@@ -73,18 +74,18 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 0.15, cache: { cType: 'oai-apc', read: 0.075 }, output: 0.60 },
-    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
+    benchmark: { cbaElo: 1272 },
   },
   {
     idPrefix: 'gpt-4o-mini-2024-07-18',
     label: 'GPT-4o Mini (2024-07-18)',
-    description: 'Affordable model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo.',
+    description: 'Affordable model for fast, lightweight tasks. GPT-4o Mini is cheaper and more capable than GPT-3.5 Turbo.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 0.15, cache: { cType: 'oai-apc', read: 0.075 }, output: 0.60 },
-    benchmark: { cbaElo: 1277, cbaMmlu: 82.0 },
+    benchmark: { cbaElo: 1272 },
   },
 
   // GPT-4o Realtime Preview
@@ -127,6 +128,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 15, output: 60 },
+    benchmark: { cbaElo: 1339 },
     isPreview: true,
   },
   {
@@ -138,6 +140,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 15, output: 60 },
+    benchmark: { cbaElo: 1339 },
     isPreview: true,
   },
 
@@ -154,6 +157,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 3, output: 12 },
+    benchmark: { cbaElo: 1314 },
     isPreview: true,
   },
   {
@@ -165,6 +169,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 3, output: 12 },
+    benchmark: { cbaElo: 1314 },
     isPreview: true,
   },
 
@@ -195,10 +200,10 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1257 },
   },
 
-  // GPT4 Turbo Previews
+  // GPT-4 Turbo Previews
   {
     idPrefix: 'gpt-4-turbo-preview',
-    label: 'GPT-4 Preview Turbo',
+    label: 'GPT-4 Turbo Preview',
     description: 'GPT-4 Turbo preview model. Currently points to gpt-4-0125-preview.',
     symLink: 'gpt-4-0125-preview',
     hidden: true,
@@ -209,7 +214,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1245 },
+    benchmark: { cbaElo: 1251 },
   },
   {
     idPrefix: 'gpt-4-0125-preview',
@@ -220,7 +225,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Dec 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1245 },
+    benchmark: { cbaElo: 1251 },
     hidden: true,
   },
   {
@@ -263,7 +268,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   {
     idPrefix: 'gpt-4-32k-0314',
     label: 'GPT-4 32k (0314)',
-    description: 'Snapshot of gpt-4-32 from March 14th 2023. Will be deprecated on June 13th 2024 at the earliest.',
+    description: 'Snapshot of gpt-4-32k from March 14th 2023. Will be deprecated on June 13th 2024 at the earliest.',
     contextWindow: 32768,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat],
@@ -284,7 +289,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 30, output: 60 },
-    benchmark: { cbaElo: 1161 },
+    benchmark: { cbaElo: 1163 },
     isLegacy: true,
   },
   {
@@ -295,7 +300,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 30, output: 60 },
-    benchmark: { cbaElo: 1161 },
+    benchmark: { cbaElo: 1163 },
     hidden: true,
   },
   {
@@ -322,7 +327,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
-    // benchmark: { cbaElo: 1105 }, // disabled so that it won't be picked up as 'fast' model
+    // benchmark: { cbaElo: 1106 }, // disabled so that it won't be picked up as 'fast' model
   },
   {
     idPrefix: 'gpt-3.5-turbo',
@@ -336,7 +341,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
-    // benchmark: { cbaElo: 1105 }, // disabled so that it won't be picked up as 'fast' model
+    // benchmark: { cbaElo: 1106 }, // disabled so that it won't be picked up as 'fast' model
   },
   {
     idPrefix: 'gpt-3.5-turbo-1106',
