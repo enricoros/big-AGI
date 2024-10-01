@@ -57,7 +57,7 @@
     "dexie": "^4.0.7",
     "eventsource-parser": "^1.1.2",
     "idb-keyval": "^6.2.1",
-    "next": "~14.1.4",
+    "next": "~14.2.4",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "4.2.67",
     "plantuml-encoder": "^1.4.0",

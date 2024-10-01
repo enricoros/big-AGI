@@ -1,37 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { type Container, type ISourceOptions, MoveDirection, OutMode } from '@tsparticles/engine';
+// import { type Container, type ISourceOptions, MoveDirection, OutMode } from '@tsparticles/engine';
 import Particles, { initParticlesEngine } from '@tsparticles/react';
 // import { loadAll } from "@tsparticles/all"; // if you are going to use `loadAll`, install the "@tsparticles/all" package too.
 import { loadFull } from 'tsparticles'; // if you are going to use `loadFull`, install the "tsparticles" package too.
 import { useIsClient } from '../../hooks/is-client';
+import { useConfettiSettings } from './confetti-settings';
+import { ConfettiToolbar } from './ConfettiToolbar';
 // import { loadSlim } from "@tsparticles/slim"; // if you are going to use `loadSlim`, install the "@tsparticles/slim" package too.
 // import { loadBasic } from "@tsparticles/basic"; // if you are going t
-
-import configDefault from './config-default';
-import configBottom from './config-bottom';
-import configExplosiions from './config-explosions';
-import configFalling from './config-falling';
-import configMouse from './config-mouse';
-import configSide from './config-side';
-import configSingle from './config-single';
-import React from 'react';
-
-const configs = [
-  configMouse,
-  configDefault,
-  configBottom,
-  configExplosiions,
-  configFalling,
-  configSide,
-  configSingle,
-] as const;
 
 export function Confetti() {
   const [init, setInit] = useState(false);
   const isClient = useIsClient();
   console.log(`is client: ${isClient}`);
+  const [activeSetting, commands] = useConfettiSettings();
 
   // this should be run only once per application lifetime
   useEffect(() => {
@@ -63,10 +47,15 @@ export function Confetti() {
     console.log(container);
   };
 
-  const options = useMemo(() => configDefault, []);
+  const options = useMemo(() => activeSetting, [activeSetting]);
 
   if (isClient && init) {
-    return <Particles id="tsparticles" particlesLoaded={particlesLoaded} options={options} />;
+    return (
+      <>
+        <ConfettiToolbar />
+        <Particles id="tsparticles" particlesLoaded={particlesLoaded} options={options} />
+      </>
+    );
   }
 
   return <></>;

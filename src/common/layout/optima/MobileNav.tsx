@@ -5,7 +5,6 @@ import type { SxProps } from '@mui/joy/styles/types';
 
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 
-import { UserButton } from '@clerk/nextjs';
 import { InvertedBar } from './components/InvertedBar';
 import { MobileNavGroupBox, MobileNavIcon, mobileNavItemClasses } from './components/MobileNavIcon';
 
@@ -51,10 +50,7 @@ export function MobileNav(props: {
 
   return (
     <InvertedBar id="mobile-nav" component={props.component} direction="horizontal" sx={props.sx}>
-      <MobileNavGroupBox>
-        <UserButton />
-        {navAppItems}
-      </MobileNavGroupBox>
+      <MobileNavGroupBox>{navAppItems}</MobileNavGroupBox>
     </InvertedBar>
   );
 }

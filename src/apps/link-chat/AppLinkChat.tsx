@@ -86,7 +86,8 @@ async function fetchStoredChatV1(objectId: string | null) {
 
   // validate a CHAT_V1
   const { dataType, dataObject, storedAt, expiresAt } = result;
-  if (typeof dataType === 'string' && dataType !== 'CHAT_V1') throw new Error('Unsupported data type: ' + dataType);
+  if (typeof dataType === 'string' && dataType !== 'CHAT_V1')
+    throw new Error('Unsupported data type: ' + dataType);
 
   // convert to DConversation
   const restored = createConversationFromJsonV1(dataObject as any);
@@ -147,7 +148,10 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
 
   // Delete: ID confirmation
 
-  const handleConfirmDeletion = React.useCallback((linkId: string) => linkId && setDeleteConfirmId(linkId), []);
+  const handleConfirmDeletion = React.useCallback(
+    (linkId: string) => linkId && setDeleteConfirmId(linkId),
+    []
+  );
 
   const handleCancelDeletion = React.useCallback(() => setDeleteConfirmId(null), []);
 
@@ -184,12 +188,12 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
         onDeleteLink={handleConfirmDeletion}
       />
     ),
-    [handleConfirmDeletion, linkId, sharedChatLinkItems],
+    [handleConfirmDeletion, linkId, sharedChatLinkItems]
   );
 
   const pageMenuItems = React.useMemo(
     () => <LinkChatPageMenuItems activeLinkId={linkId} onDeleteLink={handleConfirmDeletion} />,
-    [handleConfirmDeletion, linkId],
+    [handleConfirmDeletion, linkId]
   );
 
   usePluggableOptimaLayout(drawerContent, null, pageMenuItems, 'AppChatLink');
@@ -209,7 +213,11 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
       ) : isError ? (
         <ShowError error={error} />
       ) : !!data?.conversation ? (
-        <LinkChatViewer conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
+        <LinkChatViewer
+          conversation={data.conversation}
+          storedAt={data.storedAt}
+          expiresAt={data.expiresAt}
+        />
       ) : (
         <Centerer backgroundColor={themeBgAppDarker} />
       )}

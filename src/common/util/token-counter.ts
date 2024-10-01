@@ -1,4 +1,4 @@
-import type { Tiktoken, TiktokenEncoding, TiktokenModel } from 'tiktoken';
+import { type Tiktoken, type TiktokenEncoding, type TiktokenModel } from 'tiktoken';
 
 import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
 

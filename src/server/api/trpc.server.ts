@@ -6,9 +6,22 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
+
+/** Move? */
+import * as trpc from '@trpc/server';
+import * as trpcNext from '@trpc/server/adapters/next';
+import { getAuth } from '@clerk/nextjs/server';
+import type { NextRequest } from 'next/server';
+
+/** tRPC context w/auth */
+export const createContext = async (opts: trpcNext.CreateNextContextOptions) => {
+  return { auth: getAuth(opts.req) };
+};
+
+export type Context = trpc.inferAsyncReturnType<typeof createContext>;
 
 /**
  * 1. CONTEXT
@@ -17,15 +30,20 @@ import { ZodError } from 'zod';
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
-export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
+export const createTRPCFetchContext = ({
+  req /*, resHeaders*/,
+}: {
+  req: NextRequest | Request;
+  resHeaders: Headers;
+}) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
   return {
     // only used by Backend Analytics
     hostName: req.headers?.get('host') ?? 'localhost',
+    auth: getAuth(req as NextRequest),
   };
 };
-
 
 /**
  * 2. INITIALIZATION
@@ -41,11 +59,22 @@ const t = initTRPC.context<typeof createTRPCFetchContext>().create({
       ...shape,
       data: {
         ...shape.data,
-        zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
+        zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
       },
     };
   },
+});
+
+// check if the user is signed in, otherwise throw an UNAUTHORIZED code
+const isAuthed = t.middleware(({ next, ctx }) => {
+  if (!ctx.auth.userId) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  return next({
+    ctx: {
+      auth: ctx.auth,
+    },
+  });
 });
 
 /**
@@ -70,3 +99,6 @@ export const createTRPCRouter = t.router;
  * are logged in.
  */
 export const publicProcedure = t.procedure;
+
+// export this procedure to be used anywhere in your application
+export const protectedProcedure = t.procedure.use(isAuthed);
