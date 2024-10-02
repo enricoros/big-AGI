@@ -23,7 +23,7 @@ const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGene
    - Latest stable     version  gemini-1.0-pro  <model>-<generation>-<variation>
    - Stable versions   gemini-1.0-pro-001       <model>-<generation>-<variation>-<version>
 
-   Gemini capabilities chart (updated 2024-08-03):
+   Gemini capabilities chart (updated 2024-10-01):
    - [table stakes] System instructions
    - JSON Mode, with optional JSON Schema [NOTE: JSON Schema is poorly supported?]
    - Adjustable Safety Settings
@@ -54,7 +54,7 @@ const _knownGeminiModels: ({
   isPreview?: boolean,
   symLink?: string,
   _delete?: boolean, // some gemini models are not acknowledged by Google Docs anymore, and leaving them in the list will confuse users
-} & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'hidden'>)[] = [
+} & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
   // Generation 1.5
 
@@ -72,6 +72,7 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-1.5-flash-001',
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    benchmark: { cbaElo: 1227 },
   },
   {
     id: 'models/gemini-1.5-flash-002', // new stable version
@@ -82,6 +83,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-1.5-flash-001', // previous stable version
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    benchmark: { cbaElo: 1227 },
   },
   {
     id: 'models/gemini-1.5-flash-001-tuning', // supports model tuning
@@ -102,12 +104,14 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
+    benchmark: { cbaElo: 1269 },
   },
   {
     id: 'models/gemini-1.5-flash-8b-exp-0827',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
+    benchmark: { cbaElo: 1205 },
   },
 
   // Gemini 1.5 Pro Models
@@ -133,6 +137,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-1.5-pro-001',
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    benchmark: { cbaElo: 1260 },
   },
 
   // Added missing experimental model
@@ -151,6 +156,7 @@ const _knownGeminiModels: ({
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
+    benchmark: { cbaElo: 1299 },
   },
 
   // Generation 1.0
@@ -167,6 +173,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-1.0-pro-001',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
+    benchmark: { cbaElo: 1132 },
   },
   {
     id: 'models/gemini-1.0-pro',
@@ -261,7 +268,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     // trainingDataCutoff: knownModel?.trainingDataCutoff, // disabled as we don't get this from Gemini
     interfaces,
     // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
-    // benchmarks: ...
+    benchmark: knownModel?.benchmark,
     chatPrice: knownModel?.chatPrice,
     hidden,
   };
