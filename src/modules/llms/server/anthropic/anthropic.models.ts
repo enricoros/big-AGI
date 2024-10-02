@@ -32,7 +32,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1271, cbaMmlu: 88.7 },
+    benchmark: { cbaElo: 1269, cbaMmlu: 88.7 },
   },
   // {
   //   id: 'claude-3.5-haiku', // ...
@@ -87,7 +87,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 0.25, output: 1.25, cache: { cType: 'ant-bp', read: 0.03, write: 0.30, duration: 300 } },
-    benchmark: { cbaElo: 1178, cbaMmlu: 75.2 },
+    benchmark: { cbaElo: 1179, cbaMmlu: 75.2 },
   },
 
   // Claude 2 models
@@ -100,7 +100,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 8, output: 24 },
-    benchmark: { cbaElo: 1119 },
+    benchmark: { cbaElo: 1118 },
     hidden: true,
     isLegacy: true,
   },
@@ -113,7 +113,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 8, output: 24 },
-    benchmark: { cbaElo: 1131, cbaMmlu: 78.5 },
+    benchmark: { cbaElo: 1132, cbaMmlu: 78.5 },
     hidden: true,
     isLegacy: true,
   },
