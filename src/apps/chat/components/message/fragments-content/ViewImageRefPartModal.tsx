@@ -20,6 +20,12 @@ const imageViewerContainerSx: SxProps = {
   // justifyContent: 'center',
   maxHeight: '80vh',
   overflow: 'auto',
+
+  // pre-compensate the Block > Render Items 1.5 margin
+  m: -1.5,
+  '& > div': {
+    pt: 1.5,
+  },
 };
 
 
