@@ -2,15 +2,20 @@ import * as React from 'react';
 
 import type { NextPageWithLayout } from '~/common/types/next.page';
 
+import { ContainerLayout } from '~/common/layout/container/ContainerLayout';
 import { OptimaLayout } from './optima/OptimaLayout';
-import { PlainLayout } from './plain/PlainLayout';
 
 
 type PerPageLayoutOptions = {
+  // Center in a container at 100dvh
+  type: 'container';
+} | {
+  // No layout, just the page
+  type: 'noop';
+} | {
+  // Flexible layout with pluggable components
   type: 'optima';
   suspendAutoModelsSetup?: boolean;
-} | {
-  type: 'plain';
 };
 
 
@@ -23,12 +28,16 @@ export function withNextJSPerPageLayout(options: PerPageLayoutOptions, page: Nex
 
   switch (type) {
 
-    case 'optima':
-      page.getLayout = (page: React.ReactElement) => <OptimaLayout {...rest}>{page}</OptimaLayout>;
+    case 'container':
+      page.getLayout = (page: React.ReactElement) => <ContainerLayout {...rest}>{page}</ContainerLayout>;
       return page;
 
-    case 'plain':
-      page.getLayout = (page: React.ReactElement) => <PlainLayout {...rest}>{page}</PlainLayout>;
+    case 'noop':
+      page.getLayout = (page: React.ReactElement) => page;
+      return page;
+
+    case 'optima':
+      page.getLayout = (page: React.ReactElement) => <OptimaLayout {...rest}>{page}</OptimaLayout>;
       return page;
 
     default:
