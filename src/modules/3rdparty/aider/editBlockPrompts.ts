@@ -76,10 +76,15 @@ Examples of when to suggest shell commands:
   }, 'shellCmdPrompt');
 }
 
-export const noShellCmdPrompt = `
+export function getNoShellCmdPrompt(platform: string) {
+  const template = `
 Keep in mind these details about the user's platform and environment:
 {{platform}}
 `;
+  return processPromptTemplate(template, {
+    platform,
+  }, 'noShellCmdPrompt');
+}
 
 export const exampleMessages = [
   {
