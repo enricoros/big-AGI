@@ -198,7 +198,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG && !renderChartJS;
   const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap || renderChartJS;
-  const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode === 'extra') /* || isFullscreen */);
+  const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode === 'extra') || isFullscreen);
 
 
   // Language & Highlight
