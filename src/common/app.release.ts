@@ -14,8 +14,8 @@ export const Release = {
   TenantSlug: 'open',
 
   App: {
-    versionCode: '2.0.0-rc1',       // 1.92.0 sequentially...
-    versionName: 'Big-AGI V2 RC1',
+    versionCode: '2.0.0-open-rc2',       // 1.92.0 sequentially...
+    versionName: 'Big-AGI 2',
   },
 
   // Future compatibility
@@ -28,7 +28,7 @@ export const Release = {
   // this is here to trigger revalidation of data, e.g. models refresh
   Monotonics: {
     Aix: 13,
-    NewsVersion: 191,
+    NewsVersion: 192,
   },
 
   /**
