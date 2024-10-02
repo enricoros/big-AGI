@@ -13,7 +13,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { InlineError } from '~/common/components/InlineError';
 import { Is } from '~/common/util/pwaUtils';
-import { animationCameraFlash } from '~/common/util/animUtils';
+import { animationBackgroundCameraFlash } from '~/common/util/animUtils';
 import { downloadVideoFrame, renderVideoFrameAsFile } from '~/common/util/videoUtils';
 import { useCameraCapture } from '~/common/components/useCameraCapture';
 
@@ -295,7 +295,7 @@ export function CameraCaptureModal(props: {
             <Box
               sx={{
                 position: 'absolute', inset: 0, zIndex: 2,
-                animation: `${animationCameraFlash} ${FLASH_DURATION_MS / 1000}s`,
+                animation: `${animationBackgroundCameraFlash} ${FLASH_DURATION_MS / 1000}s`,
               }}
             />
           )}
