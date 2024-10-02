@@ -140,7 +140,7 @@ export const RenderImageURL = (props: {
           mx: isOnButton ? undefined : 1.5,  // 1.5 like the other 'Render*' components
           minWidth: isOnButton ? 20 : 256,
           minHeight: isOnButton ? 20 : 128,
-          boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'md',
+          boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'sm',
 
           // enable anchoring
           position: 'relative',
