@@ -28,7 +28,7 @@ export function ApproximateCosts(props: {
         <Box>
           Approximate costs: <b>{formatModelsCost(totalCosts)}</b> · <span style={{ opacity: 0.75 }}>Costs are partial,
           local to this instance, and may not reflect the latest pricing.
-          Beginning <TimeAgo date={firstUsageDate} /> we counted {usageCount?.toLocaleString()} requests
+          Starting <TimeAgo date={firstUsageDate} /> we counted {usageCount?.toLocaleString()} requests
           {(partialMessageUsages > usageCount / 10) ? ` (${partialMessageUsages} of which were partial)` : ''}
           {' '}and {(totalInputTokens + totalOutputTokens).toLocaleString()} tokens.</span>
           {/*<ExternalLink href='https://console.anthropic.com/settings/usage'>Anthropic usage</ExternalLink>*/}
