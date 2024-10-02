@@ -2,9 +2,11 @@ import * as React from 'react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
 
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Sheet, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
+
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
@@ -15,7 +17,6 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
-import { bigAgi2NewsCallout } from './bigAgi2.data';
 
 
 // number of news items to show by default, before the expander
@@ -60,6 +61,8 @@ export const newsRoadmapCallout =
 export function AppNews() {
   // state
   const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(NEWS_INITIAL_COUNT - 1);
+
+  const backendBuild = getBackendCapabilities().build;
 
   // news selection
   const news = NewsItems.filter((_, idx) => idx <= lastNewsIdx);
@@ -115,11 +118,11 @@ export function AppNews() {
             return <React.Fragment key={idx}>
 
               {/* Inject the Big-AGI 2.0 item here*/}
-              {idx === 0 && (
-                <Box sx={{ mb: 3 }}>
-                  {bigAgi2NewsCallout}
-                </Box>
-              )}
+              {/*{idx === 1 && (*/}
+              {/*  <Box sx={{ mb: 3 }}>*/}
+              {/*    {bigAgi2NewsCallout}*/}
+              {/*  </Box>*/}
+              {/*)}*/}
 
               {/* Inject the Beam item here*/}
               {idx === 2 && (
@@ -163,6 +166,14 @@ export function AppNews() {
                         </li>
                       ))}
                     </ul>
+                  )}
+
+                  {idx === 0 && (
+                    <Sheet variant='soft' invertedColors sx={{ mt: 1, fontSize: 'xs', color: 'text.tertiary', p: 1, borderRadius: 'sm' }}>
+                      PL: {Release.App.pl} · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
+                      Frontend: {_frontendBuild.gitSha} - deployed {_frontendBuild.timestamp ? <TimeAgo date={_frontendBuild.timestamp} /> : 'unknown'}, and
+                      backend {backendBuild?.gitSha}, {backendBuild?.timestamp === _frontendBuild.timestamp ? 'same time' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown'}.
+                    </Sheet>
                   )}
 
                 </CardContent>
