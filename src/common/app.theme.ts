@@ -3,6 +3,8 @@ import createCache from '@emotion/cache';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
+import { animationEnterModal } from '~/common/util/animUtils';
+
 
 // Definitions
 export type UIComplexityMode = 'minimal' | 'pro' | 'extra';
@@ -116,11 +118,16 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
     //   },
     // },
 
-    JoyModal: !uiComplexityMinimal ? undefined : {
+    JoyModal: {
       styleOverrides: {
-        backdrop: {
+        backdrop: !uiComplexityMinimal ? undefined : {
           backdropFilter: 'none',
           // backdropFilter: 'blur(2px)',
+        },
+        root: uiComplexityMinimal ? undefined : {
+          '& .agi-animate-enter': {
+            animation: `${animationEnterModal} 0.2s`,
+          },
         },
       },
     },

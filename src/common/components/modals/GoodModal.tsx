@@ -13,6 +13,7 @@ export function GoodModal(props: {
   strongerTitle?: boolean,
   noTitleBar?: boolean,
   dividers?: boolean,
+  animateEnter?: boolean,
   open: boolean,
   onClose?: () => void,
   hideBottomClose?: boolean,
@@ -36,6 +37,7 @@ export function GoodModal(props: {
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
+          className={props.animateEnter ? 'agi-animate-enter' : ''}
           sx={{
             minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
             maxWidth: 700,
