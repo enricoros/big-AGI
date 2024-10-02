@@ -1,7 +1,6 @@
 import * as React from 'react';
-import TimeAgo from 'react-timeago';
 
-import { Alert, Box, FormControl, Typography } from '@mui/joy';
+import { Alert, FormControl, Typography } from '@mui/joy';
 
 import { useChatAutoAI } from '../../../../apps/chat/store-app-chat';
 
@@ -15,10 +14,9 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { formatModelsCost } from '~/common/util/costUtils';
-import { useCostMetricsForLLMService } from '~/common/stores/metrics/store-metrics';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -36,9 +34,6 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   const { autoVndAntBreakpoints, setAutoVndAntBreakpoints } = useChatAutoAI();
 
-  const { totalCosts, totalSavings, totalInputTokens, totalOutputTokens, firstUsageDate, usageCount, partialMessageUsages } =
-    useCostMetricsForLLMService(service?.id);
-
   // derived state
   const { anthropicKey, anthropicHost, heliconeKey } = serviceAccess;
   const needsUserKey = !serviceHasBackendCap;
@@ -47,40 +42,19 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);
 
-  const hasSaved = totalSavings && totalSavings > 0;
-
   // fetch models
   const { isFetching, refetch, isError, error } =
     useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
   return <>
 
-    {totalCosts ? (
-      <Alert color={hasSaved ? 'success' : undefined} sx={{ display: 'grid', gap: 1 }}>
-        <Box>
-          Approximate costs: <b>{formatModelsCost(totalCosts)}</b> · <span style={{ opacity: 0.75 }}>Costs are partial,
-          and may not reflect the latest pricing.
-          Costs measurements for this service began <TimeAgo date={firstUsageDate} /> and processed {usageCount?.toLocaleString()} requests
-          {(partialMessageUsages > usageCount / 5) ? ` (${partialMessageUsages} of which were interrupted)` : ''},
-          {' '}and {(totalInputTokens + totalOutputTokens).toLocaleString()} tokens.</span>
-          {/*<ExternalLink href='https://console.anthropic.com/settings/usage'>Anthropic usage</ExternalLink>*/}
-        </Box>
-        {!!hasSaved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <span style={{ opacity: 0.75 }}>Thanks to Prompt Caching, </span>Big-AGI saved you approximately <b>{formatModelsCost(totalSavings)}</b>.
-          </div>
-          {/*{advanced.on && <Button variant='outlined' size='sm' color='success' onClick={handleResetCosts}>*/}
-          {/*  Reset*/}
-          {/*</Button>}*/}
-        </Box>}
-      </Alert>
-    ) : (
+    <ApproximateCosts serviceId={service?.id} whoSaved='Big-AGI saved you'>
       <Alert variant='soft' color='success'>
         <div>
           Enjoy <b>Sonnet 3.5</b>, <b>Opus</b> and <b>Haiku 3</b>. Anthropic <ExternalLink level='body-sm' href='https://status.anthropic.com/'>server status</ExternalLink>.
         </div>
       </Alert>
-    )}
+    </ApproximateCosts>
 
     <FormInputKey
       autoCompleteId='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
