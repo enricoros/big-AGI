@@ -67,6 +67,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
       title={<>Configure <b>AI Models</b></>}
       open onClose={optimaActions().closeModels}
       animateEnter={llmCount === 0}
+      unfilterBackdrop
       startButton={
         multiService ? <Checkbox
           label='All Services'
