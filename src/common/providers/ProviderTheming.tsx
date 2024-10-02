@@ -61,7 +61,8 @@ export const ProviderTheming = (props: { emotionCache?: EmotionCache, children: 
     <CacheProvider value={props.emotionCache || clientSideEmotionCache}>
       <CssVarsProvider defaultMode='light' theme={theme}>
         <CssBaseline />
-        <_GlobalSVGFiltersMemo />
+        {/* Disabled for now, we don't use those */}
+        {/*<_GlobalSVGFiltersMemo />*/}
         {props.children}
       </CssVarsProvider>
     </CacheProvider>
