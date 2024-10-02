@@ -2,18 +2,20 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
+import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SdCardOutlinedIcon from '@mui/icons-material/SdCardOutlined';
 import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
-import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import { DLLM, DLLMId, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useDefaultLLMIDs, useFilteredLLMs } from '~/common/stores/llms/llms.hooks';
 
-import { IModelVendor } from '../vendors/IModelVendor';
+import type { IModelVendor } from '../vendors/IModelVendor';
 import { findModelVendor } from '../vendors/vendors.registry';
 
 
@@ -29,7 +31,6 @@ function ModelItem(props: {
   vendor: IModelVendor,
   chipChat: boolean,
   chipFast: boolean,
-  chipFunc: boolean,
   onModelClicked: (llmId: DLLMId) => void,
   onModelSetHidden: (llmId: DLLMId, hidden: boolean) => void,
 }) {
@@ -75,19 +76,24 @@ function ModelItem(props: {
       return null;
     return llm.interfaces.map((iface, i) => {
       switch (iface) {
-        case 'oai-chat':
+        case LLM_IF_OAI_Chat:
           return <Chip key={i} size='sm' variant={props.chipChat ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}><TextsmsOutlinedIcon /></Chip>;
-        case 'oai-chat-fn':
-          return <Chip key={i} size='sm' variant={props.chipFunc ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}>{'{}'}</Chip>;
-        case 'oai-chat-vision':
+        case LLM_IF_OAI_Vision:
           return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><VisibilityOutlinedIcon />️</Chip>;
-        case 'oai-chat-json':
-          return null;
-        case 'oai-complete':
+        case LLM_IF_ANT_PromptCaching:
+        case LLM_IF_OAI_PromptCaching:
+          return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><SdCardOutlinedIcon /></Chip>;
+        case LLM_IF_SPECIAL_OAI_O1Preview:
+          return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><PsychologyOutlinedIcon /></Chip>;
+        // Ignored
+        case LLM_IF_OAI_Json:
+        case LLM_IF_OAI_Fn:
+        case LLM_IF_OAI_Complete:
+        case LLM_IF_OAI_Realtime:
           return null;
       }
     }).reverse();
-  }, [llm.interfaces, props.chipChat, props.chipFunc]);
+  }, [llm.interfaces, props.chipChat]);
 
   return (
     <ListItem>
@@ -125,7 +131,6 @@ function ModelItem(props: {
         )) : <>
           {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
           {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
-          {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
         </>}
 
         {/* Action Buttons */}
@@ -154,7 +159,7 @@ export function ModelsList(props: {
 }) {
 
   // external state
-  const { chatLLMId, fastLLMId, funcLLMId } = useDefaultLLMIDs();
+  const { chatLLMId, fastLLMId } = useDefaultLLMIDs();
   const llms = useFilteredLLMs(props.filterServiceId === null ? false : props.filterServiceId);
 
   const { onOpenLLMOptions } = props;
@@ -198,7 +203,6 @@ export function ModelsList(props: {
         vendor={vendor}
         chipChat={llm.id === chatLLMId}
         chipFast={llm.id === fastLLMId}
-        chipFunc={llm.id === funcLLMId}
         onModelClicked={handleModelClicked}
         onModelSetHidden={handleModelSetHidden}
       />,

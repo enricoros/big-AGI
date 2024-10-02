@@ -23,7 +23,6 @@ interface LlmsState {
 
   chatLLMId: DLLMId | null;
   fastLLMId: DLLMId | null;
-  funcLLMId: DLLMId | null;
 
 }
 
@@ -40,7 +39,6 @@ interface LlmsActions {
 
   setChatLLMId: (id: DLLMId | null) => void;
   setFastLLMId: (id: DLLMId | null) => void;
-  setFuncLLMId: (id: DLLMId | null) => void;
 
   // special
   setOpenRouterKey: (key: string) => void;
@@ -57,19 +55,15 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
 
     chatLLMId: null,
     fastLLMId: null,
-    funcLLMId: null,
 
 
     // actions
 
     setChatLLMId: (id: DLLMId | null) =>
-      set(state => _heuristicUpdateSelectedLLMs(state.llms, id, state.fastLLMId, state.funcLLMId)),
+      set(state => _heuristicUpdateSelectedLLMs(state.llms, id, state.fastLLMId)),
 
     setFastLLMId: (id: DLLMId | null) =>
-      set(state => _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, id, state.funcLLMId)),
-
-    setFuncLLMId: (id: DLLMId | null) =>
-      set(state => _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, state.fastLLMId, id)),
+      set(state => _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, id)),
 
     setLLMs: (llms: DLLM[], serviceId: DModelsServiceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) =>
       set(state => {
@@ -95,7 +89,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
         return {
           llms: newLlms,
-          ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId, state.funcLLMId),
+          ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId),
         };
       }),
 
@@ -104,7 +98,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         const newLlms = state.llms.filter(llm => llm.id !== id);
         return {
           llms: newLlms,
-          ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId, state.funcLLMId),
+          ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId),
         };
       }),
 
@@ -150,7 +144,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         return {
           llms,
           sources: state.sources.filter(s => s.id !== id),
-          ..._heuristicUpdateSelectedLLMs(llms, state.chatLLMId, state.fastLLMId, state.funcLLMId),
+          ..._heuristicUpdateSelectedLLMs(llms, state.chatLLMId, state.fastLLMId),
         };
       }),
 
@@ -200,12 +194,11 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
       if (fromVersion < 2) {
         for (const llm of state.llms) {
           delete (llm as any)['tags'];
-          llm.interfaces = ['oai-chat'];
+          llm.interfaces = ['oai-chat' /* this is here like this to reduce dependencies */];
           // llm.inputTypes = { 'text': {} };
         }
         state.chatLLMId = null;
         state.fastLLMId = null;
-        state.funcLLMId = null;
       }
 
       // 2 -> 3: big-AGI v2: update all models for pricing info
@@ -240,8 +233,8 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
 
       // Select the best LLMs automatically, if not set
       try {
-        if (!state.chatLLMId || !state.fastLLMId || !state.funcLLMId)
-          Object.assign(state, _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, state.fastLLMId, state.funcLLMId));
+        if (!state.chatLLMId || !state.fastLLMId)
+          Object.assign(state, _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, state.fastLLMId));
       } catch (error) {
         console.error('Error in autoPickModels', error);
       }
@@ -266,12 +259,28 @@ export function getChatLLMId(): DLLMId | null {
   return llmsStoreState().chatLLMId;
 }
 
-export function getFastLLMId(): DLLMId | null {
-  return llmsStoreState().fastLLMId;
-}
+const messageMissingFast = 'Please select a valid "fast" model in the Model Configuration.';
 
-export function getFuncLLMId(): DLLMId | null {
-  return llmsStoreState().funcLLMId;
+/**
+ * Must support function calling, hence we verify here.
+ */
+export function getFastLLMIdOrThrow(useCaseLabel: string): DLLMId {
+  const fastLLMId = llmsStoreState().fastLLMId;
+
+  if (!fastLLMId)
+    throw new Error(`No model available for '${useCaseLabel}'. ${messageMissingFast}`);
+
+  let fastLLM;
+  try {
+    fastLLM = findLLMOrThrow(fastLLMId);
+  } catch (error) {
+    throw new Error(`Model ${fastLLMId} not found. ${messageMissingFast}`);
+  }
+
+  if (!fastLLM.interfaces.includes('oai-chat-fn'  /* this is here like this to reduce dependencies */))
+    throw new Error(`Model ${fastLLMId} is not a function model. ${messageMissingFast}`);
+
+  return fastLLMId;
 }
 
 export function llmsStoreState(): LlmsState & LlmsActions {
@@ -325,11 +334,11 @@ export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallback
 }
 
 export function getLLMsDebugInfo() {
-  const { llms, sources, chatLLMId, fastLLMId, funcLLMId } = llmsStoreState();
-  return { services: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId, funcId: funcLLMId };
+  const { llms, sources, chatLLMId, fastLLMId } = llmsStoreState();
+  return { services: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId };
 }
 
-function _heuristicUpdateSelectedLLMs(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null, funcLlmId: DLLMId | null) {
+function _heuristicUpdateSelectedLLMs(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null) {
 
   let grouped: GroupedVendorLLMs;
 
@@ -350,11 +359,7 @@ function _heuristicUpdateSelectedLLMs(allLlms: DLLM[], chatLlmId: DLLMId | null,
     fastLlmId = _selectFastLlmID(vendors);
   }
 
-  // a func llm (same as chat for now)
-  if (!funcLlmId || !allLlms.find(llm => llm.id === funcLlmId))
-    funcLlmId = chatLlmId;
-
-  return { chatLLMId: chatLlmId, fastLLMId: fastLlmId, funcLLMId: funcLlmId };
+  return { chatLLMId: chatLlmId, fastLLMId: fastLlmId };
 }
 
 

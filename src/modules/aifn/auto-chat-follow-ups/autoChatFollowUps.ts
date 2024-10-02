@@ -1,10 +1,9 @@
 import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modules/llms/llm.client';
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { DLLMId, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { findLLMOrThrow, getFuncLLMId } from '~/common/stores/llms/store-llms';
+import { getFastLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -80,7 +79,7 @@ const suggestPlantUMLFn: VChatFunctionIn = {
 
 const suggestUIFunctionName = 'generate_web_ui';
 
-export const suggestUIMixin = `Do not generate code, unless via the \`${suggestUIFunctionName}\` function call, IF DEFINED`;
+export const autoFollowUpUIMixin = `Do not generate code, unless via the \`${suggestUIFunctionName}\` function call, IF DEFINED`;
 
 // noinspection HtmlRequiredTitleElement
 const suggestUISystemPrompt = `
@@ -139,40 +138,28 @@ const suggestUIFn: VChatFunctionIn = {
 };
 
 
-function validateFunctionLLMId(funcLLMId: DLLMId | null): DLLMId | null {
-  // check if the model supports function calls
-  if (funcLLMId) {
-    try {
-
-      // check if the model supports the required interface
-      const funcLLM = findLLMOrThrow(funcLLMId);
-      if (funcLLM.interfaces.includes(LLM_IF_OAI_Fn))
-        return funcLLMId;
-
-      console.log(`validateFunctionLLMId: LLM ${funcLLMId} does not support the required interface ${LLM_IF_OAI_Fn}. dropping to the default Func LLM`);
-    } catch (error) {
-      console.log(`validateFunctionLLMId: LLM ${funcLLMId} not found. dropping to the default Func LLM`);
-    }
-  }
-
-  // if not provided, or provided but not a function llm, then use the default
-  return getFuncLLMId();
-}
-
-
 /**
- * Formulates proposals for follow-up questions, prompts, and counterpoints, based on the last 2 chat messages.
+ * Formulates proposals (based on 2 messages, at least) for:
+ * - Diagrams: will process the message and append diagrams
+ * - HTML UI: automatically append a HTML UI, if valuable
+ * - [missing] follow-up questions
+ * - [missing] prompts
+ * - [missing] counterpoints
  */
-export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId: string, assistantMessageId: string, suggestDiagrams: boolean, suggestHTMLUI: boolean, suggestQuestions: boolean) {
+export function autoChatFollowUps(conversationId: string, assistantMessageId: string, suggestDiagrams: boolean, suggestHTMLUI: boolean, suggestQuestions: boolean) {
 
-  // use valid fast model
-  const funcLLMId = validateFunctionLLMId(suggestFuncLLMId);
-  if (!funcLLMId) return;
-
-  // only operate on valid conversations, without any title
+  // skip invalid or short conversations
   const { conversations } = useChatStore.getState();
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
-  if (!conversation || conversation.messages.length < 3) return;
+  if (!conversation || conversation.messages.length < 2) return;
+
+  // require a valid fast model
+  let llmId;
+  try {
+    llmId = getFastLLMIdOrThrow('chat message follow up');
+  } catch (error) {
+    return console.log(`autoSuggestions: ${error}`);
+  }
 
   // find the index of the assistant message
   const assistantMessageIndex = conversation.messages.findIndex(m => m.id === assistantMessageId);
@@ -194,7 +181,7 @@ export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId:
 
   // Follow-up: Question
   if (suggestQuestions) {
-    // llmChatGenerateOrThrow(funcLLMId, [
+    // llmChatGenerateOrThrow(llmId, [
     //     { role: 'system', content: systemMessage.text },
     //     { role: 'user', content: userMessage.text },
     //     { role: 'assistant', content: assistantMessageText },
@@ -220,8 +207,9 @@ export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId:
     if (preAssistantMessage)
       instructions.splice(1, 0, { role: preAssistantMessage.role, content: messageFragmentsReduceText(preAssistantMessage.fragments) });
 
+    // FIXME: AIX PORT
     llmChatGenerateOrThrow(
-      funcLLMId, instructions, 'chat-followup-diagram', conversationId,
+      llmId, instructions, 'chat-followup-diagram', conversationId,
       [suggestPlantUMLFn], suggestDiagramFunctionName,
     ).then(chatResponse => {
 
@@ -264,8 +252,10 @@ export function autoSuggestions(suggestFuncLLMId: DLLMId | null, conversationId:
       { role: 'user', content: messageFragmentsReduceText(userMessage.fragments) },
       { role: 'assistant', content: assistantMessageText },
     ];
+
+    // FIXME: AIX PORT
     llmChatGenerateOrThrow(
-      funcLLMId, instructions, 'chat-followup-htmlui', conversationId,
+      llmId, instructions, 'chat-followup-htmlui', conversationId,
       [suggestUIFn], suggestUIFunctionName,
     ).then(chatResponse => {
 

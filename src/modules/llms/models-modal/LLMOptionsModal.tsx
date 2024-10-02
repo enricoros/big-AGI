@@ -82,15 +82,14 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   // external state
   const llm = useLLM(props.id);
-  const { chatLLMId, fastLLMId, funcLLMId } = useDefaultLLMIDs();
-  const { removeLLM, updateLLM, setChatLLMId, setFastLLMId, setFuncLLMId } = llmsStoreActions();
+  const { chatLLMId, fastLLMId } = useDefaultLLMIDs();
+  const { removeLLM, updateLLM, setChatLLMId, setFastLLMId } = llmsStoreActions();
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
 
   const isChatLLM = chatLLMId === props.id;
   const isFastLLM = fastLLMId === props.id;
-  const isFuncLLM = funcLLMId === props.id;
 
   const handleLlmLabelSet = (event: React.ChangeEvent<HTMLInputElement>) => updateLLM(llm.id, { label: event.target.value || '' });
 
@@ -134,9 +133,6 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
           <Tooltip title='Use this Model for "fast" features, such as Auto-Title, Summarize, etc.'>
             <Button variant={isFastLLM ? 'solid' : undefined} onClick={() => setFastLLMId(isFastLLM ? null : props.id)}>Fast</Button>
           </Tooltip>
-          <Tooltip title='Use this Model for "function calling" and other structured features, such as Auto-Chart, Auto-Follow-ups, etc.'>
-            <Button variant={isFuncLLM ? 'solid' : undefined} onClick={() => setFuncLLMId(isFuncLLM ? null : props.id)}>Func</Button>
-          </Tooltip>
         </ButtonGroup>
       </FormControl>
 
@@ -148,12 +144,6 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
                   slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
         </Tooltip>
       </FormControl>
-
-      {/*<FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>*/}
-      {/* <FormLabelStart title='Flags' sx={{ minWidth: 80 }} /> >*/}
-      {/*  <Checkbox color='neutral' checked={llm.tags?.includes('chat')} readOnly disabled label='Chat' sx={{ ml: 4 }} />*/}
-      {/*  <Checkbox color='neutral' checked={llm.tags?.includes('stream')} readOnly disabled label='Stream' sx={{ ml: 4 }} />*/}
-      {/*</FormControl>*/}
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />

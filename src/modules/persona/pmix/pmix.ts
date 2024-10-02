@@ -1,4 +1,4 @@
-import { suggestUIMixin } from '~/modules/aifn/autosuggestions/autoSuggestions';
+import { autoFollowUpUIMixin } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { BrowserLang, Is } from '~/common/util/pwaUtils';
@@ -100,7 +100,7 @@ Choose the most suitable chart type based on the data and context. Include only 
   mixed = mixed.replace('{{InputImage0}}', 'Image input capabilities: Disabled');
   mixed = mixed.replace('{{ToolBrowser0}}', 'Web browsing capabilities: Disabled');
   // {{AutoSuggest...}}
-  mixed = mixed.replace('{{AutoSuggestHTMLUI}}', suggestUIMixin);
+  mixed = mixed.replace('{{AutoSuggestHTMLUI}}', autoFollowUpUIMixin);
   // mixed = mixed.replace('{{AutoSuggestDiagrams}}', suggestDiagramMixin);
 
   // {{Cutoff}} or remove the line
