@@ -19,7 +19,7 @@ interface DOllamaServiceSettings {
 export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAccessSchema, DOpenAILLMOptions> = {
   id: 'ollama',
   name: 'Ollama',
-  rank: 22,
+  displayRank: 54,
   location: 'local',
   instanceLimit: 2,
   hasBackendCapKey: 'hasLlmOllama',

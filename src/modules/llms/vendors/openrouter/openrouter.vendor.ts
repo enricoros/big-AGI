@@ -32,7 +32,7 @@ export interface DOpenRouterServiceSettings {
 export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'openrouter',
   name: 'OpenRouter',
-  rank: 12,
+  displayRank: 40,
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,

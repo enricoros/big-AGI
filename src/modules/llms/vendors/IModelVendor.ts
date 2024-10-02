@@ -14,7 +14,7 @@ import type { ModelVendorId } from './vendors.registry';
 export interface IModelVendor<TServiceSettings = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TLLMOptions>> {
   readonly id: ModelVendorId;
   readonly name: string;
-  readonly rank: number;
+  readonly displayRank: number; // [10...] Foundation Models, [30...] 3rd party Clouds, [40...] Aggregators, [50...] Local Models
   readonly location: 'local' | 'cloud';
   readonly brandColor?: string;
   readonly instanceLimit?: number;

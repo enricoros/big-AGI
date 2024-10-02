@@ -16,7 +16,7 @@ interface DPerpexityServiceSettings {
 export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'perplexity',
   name: 'Perplexity',
-  rank: 18,
+  displayRank: 20,
   location: 'cloud',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmPerplexity',
