@@ -13,6 +13,7 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { getCallbackUrl } from '~/common/app.routes';
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -64,6 +65,8 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
   }, [props.serviceId]);
 
   return <>
+
+    <ApproximateCosts serviceId={service?.id} />
 
     <Typography level='body-sm'>
       <Link href='https://openrouter.ai/keys' target='_blank'>OpenRouter</Link> is an independent service

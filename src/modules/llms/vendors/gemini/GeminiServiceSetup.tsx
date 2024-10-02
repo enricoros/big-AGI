@@ -12,6 +12,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -48,6 +49,8 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   return <>
 
+    <ApproximateCosts serviceId={service?.id} />
+
     <FormInputKey
       autoCompleteId='gemini-key' label='Gemini API Key'
       rightLabel={<>{needsUserKey
@@ -81,10 +84,10 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <FormHelperText sx={{ display: 'block' }}>
       Gemini has <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
-      adjustable safety settings</Link> on four categories: Harassment, Hate speech,
-      Sexually explicit, and Dangerous content, in addition to non-adjustable built-in filters.
-      By default, the model will block content with <em>medium and above</em> probability
-      of being unsafe.
+      adjustable safety settings</Link> on: Harassment, Hate speech,
+      Sexually explicit, Civic integrity, and Dangerous content, in addition to non-adjustable built-in filters.
+      {/*By default, the model will block content with <em>medium and above</em> probability*/}
+      {/*of being unsafe.*/}
     </FormHelperText>
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />

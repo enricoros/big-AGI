@@ -13,6 +13,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -45,6 +46,8 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
   return <>
+
+    <ApproximateCosts serviceId={service?.id} />
 
     <FormInputKey
       autoCompleteId='openai-key' label='API Key'
