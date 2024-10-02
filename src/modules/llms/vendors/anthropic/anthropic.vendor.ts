@@ -22,7 +22,7 @@ interface DAnthropicServiceSettings {
 export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, AnthropicAccessSchema, DOpenAILLMOptions> = {
   id: 'anthropic',
   name: 'Anthropic',
-  rank: 13,
+  displayRank: 12,
   location: 'cloud',
   brandColor: '#cc785c',
   instanceLimit: 1,

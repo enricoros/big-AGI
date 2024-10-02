@@ -19,7 +19,7 @@ type DMistralServiceSettings = Pick<DOpenAIServiceSettings, 'oaiKey' | 'oaiHost'
 export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'mistral',
   name: 'Mistral',
-  rank: 15,
+  displayRank: 18,
   location: 'cloud',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmMistral',

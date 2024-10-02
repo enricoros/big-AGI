@@ -15,7 +15,7 @@ interface DLMStudioServiceSettings {
 export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'lmstudio',
   name: 'LM Studio',
-  rank: 21,
+  displayRank: 52,
   location: 'local',
   instanceLimit: 1,
 

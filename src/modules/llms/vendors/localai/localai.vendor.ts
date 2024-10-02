@@ -17,7 +17,7 @@ interface DLocalAIServiceSettings {
 export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'localai',
   name: 'LocalAI',
-  rank: 20,
+  displayRank: 50,
   location: 'local',
   instanceLimit: 4,
   hasBackendCapKey: 'hasLlmLocalAIHost',

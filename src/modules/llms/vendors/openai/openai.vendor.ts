@@ -33,7 +33,7 @@ export interface DOpenAILLMOptions {
 export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'openai',
   name: 'OpenAI',
-  rank: 10,
+  displayRank: 10,
   location: 'cloud',
   instanceLimit: 5,
   hasBackendCapKey: 'hasLlmOpenAI',
