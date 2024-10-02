@@ -220,6 +220,13 @@ Or bring your API keys and jump straight into our free instance on [big-AGI.com]
 
 [//]: # ([![License]&#40;https://img.shields.io/github/license/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/LICENSE&#41;)
 
+## 📜 Licensing
+
+Big-AGI incorporates third-party software components that are subject
+to separate license terms. For detailed information about these
+components and their respective licenses, please refer to
+the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
+
 ---
 
 2023-2024 · Enrico Ros x [big-AGI](https://big-agi.com) · License: [MIT](LICENSE) · Made with 💙
