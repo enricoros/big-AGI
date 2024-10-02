@@ -5,7 +5,7 @@ import { aixChatGenerateContent_DMessage, aixCreateChatGenerateStreamContext } f
 import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { getChatLLMId, getFastLLMId } from '~/common/stores/llms/store-llms';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 
 
