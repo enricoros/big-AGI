@@ -80,7 +80,7 @@ function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
  * Docs: https://openrouter.ai/docs#oauth
  * Example URL: https://localhost:3000/link/callback_openrouter?code=SomeCode
  */
-export default withNextJSPerPageLayout({ type: 'plain' }, () => {
+export default withNextJSPerPageLayout({ type: 'container' }, () => {
 
   // external state - get the 'code=...' from the URL
   const { code } = useRouterQuery<{ code: string | undefined }>();
