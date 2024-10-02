@@ -14,6 +14,7 @@ export function GoodModal(props: {
   noTitleBar?: boolean,
   dividers?: boolean,
   animateEnter?: boolean,
+  unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
   open: boolean,
   onClose?: () => void,
   hideBottomClose?: boolean,
@@ -26,14 +27,13 @@ export function GoodModal(props: {
     <Modal
       open={props.open}
       onClose={props.onClose}
-      // slotProps={{
-      //   backdrop: {
-      //     sx: {
-      //       animation: `${cssBackgroundFadeIn} 0.2s ease-in-out`,
-      //       backdropFilter: 'blur(6px)',
-      //     },
-      //   },
-      // }}
+      slotProps={!props.unfilterBackdrop ? undefined : {
+        backdrop: {
+          sx: {
+            backdropFilter: 'none',
+          },
+        },
+      }}
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
@@ -43,7 +43,8 @@ export function GoodModal(props: {
             maxWidth: 700,
             display: 'grid', gap: 'var(--Card-padding)',
             ...props.sx,
-          }}>
+          }}
+        >
 
           {!props.noTitleBar && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography component='h1' level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator}>
