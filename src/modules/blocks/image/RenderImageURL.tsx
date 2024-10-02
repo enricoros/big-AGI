@@ -66,6 +66,7 @@ export const RenderImageURL = (props: {
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
   onImageRegenerate?: () => void,
+  onClick?: (e: React.MouseEvent) => void,  // use this generic as a fallback, but should not be needed
   scaledImageSx?: SxProps,
   className?: string,
 }) => {
@@ -134,6 +135,7 @@ export const RenderImageURL = (props: {
         color={isCard ? 'primary' : undefined}
         variant={isCard ? 'outlined' : 'solid'}
         aria-disabled={props.disabled}
+        onClick={props.onClick}
         className={props.className}
         sx={{
           // style

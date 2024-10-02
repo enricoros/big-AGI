@@ -47,6 +47,7 @@ export function RenderImageRefDBlob(props: {
   // others
   variant: RenderImageURLVariant,
   disabled?: boolean,
+  onClick?: (e: React.MouseEvent) => void,  // use this generic as a fallback, but should not be needed
   onOpenInNewTab?: () => void
   onDeleteFragment?: () => void,
   onReplaceFragment?: (newFragment: DMessageContentFragment) => void,
@@ -143,6 +144,7 @@ export function RenderImageRefDBlob(props: {
       imageURL={dataUrlMemo}
       expandableText={altText}
       overlayText={overlayText}
+      onClick={props.onClick}
       onOpenInNewTab={props.onOpenInNewTab}
       onImageDelete={props.onDeleteFragment}
       onImageRegenerate={(!!recreationPrompt && !isRegenerating && !!props.onReplaceFragment) ? handleImageRegenerate : undefined}
