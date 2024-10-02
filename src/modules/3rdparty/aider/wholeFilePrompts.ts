@@ -1,7 +1,7 @@
 /*
  * This file includes code derived from Aider (https://github.com/paul-gauthier/aider)
  * Originally licensed under the Apache License, Version 2.0
- * Modifications and translations to JavaScript made by [Your Name]
+ * Modifications and translations to JavaScript made by Enrico Ros
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
