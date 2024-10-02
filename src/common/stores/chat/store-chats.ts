@@ -371,6 +371,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             userTitle,
+            ...(!userTitle && { autoTitle: undefined }), // clear autotitle when clearing usertitle
           }),
 
       setUserSymbol: (conversationId: DConversationId, userSymbol: string | null) =>
