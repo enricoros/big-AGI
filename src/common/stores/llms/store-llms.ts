@@ -30,6 +30,7 @@ interface LlmsActions {
 
   setLLMs: (llms: DLLM[], serviceId: DModelsServiceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) => void;
   removeLLM: (id: DLLMId) => void;
+  rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
 
@@ -99,6 +100,26 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         return {
           llms: newLlms,
           ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId),
+        };
+      }),
+
+    rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) =>
+      set(state => {
+        // Create a mapping of service IDs to their index in the provided order
+        const serviceIdToIndex = serviceIdOrder.reduce((acc, sId, idx) => {
+          acc[sId] = idx;
+          return acc;
+        }, {} as Record<DModelsServiceId, number>);
+
+        // Sort the LLMs based on the order of their service IDs
+        const orderedLlms = [...state.llms].sort((a, b) => {
+          const aIndex = serviceIdToIndex[a.sId] ?? Number.MAX_SAFE_INTEGER;
+          const bIndex = serviceIdToIndex[b.sId] ?? Number.MAX_SAFE_INTEGER;
+          return aIndex - bIndex;
+        });
+
+        return {
+          llms: orderedLlms,
         };
       }),
 

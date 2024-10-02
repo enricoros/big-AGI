@@ -6,8 +6,8 @@ import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
 
-import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
-import { llmsStoreState } from '~/common/stores/llms/store-llms';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
 interface AutoConfStore {
@@ -50,6 +50,9 @@ const autoConfVanillaStore = createVanillaStore<AutoConfStore>()(persist((_set, 
     let configurableVendors = findAllModelVendors()
       .filter(vendor => vendor.hasBackendCapKey && backendCaps[vendor.hasBackendCapKey]);
 
+    // List to keep track of the service IDs in order
+    const configuredServiceIds: DModelsServiceId[] = [];
+
     // Sequentially auto-configure each vendor
     await configurableVendors.reduce(async (promiseChain, vendor) => {
       return promiseChain
@@ -63,10 +66,13 @@ const autoConfVanillaStore = createVanillaStore<AutoConfStore>()(persist((_set, 
             // create and append the model service, assuming the backend configuration will be successful
             service = createModelsServiceForVendor(vendor.id, modelsServices);
             addService(service);
-            // re-find it now what's added
+            // re-find it now that it's added
             service = llmsStoreState().sources.find(_s => _s.id === service.id)!;
           } else
             service = firstServiceForVendor;
+
+          // keep track of the configured service IDs
+          configuredServiceIds.push(service.id);
 
           // auto-configure this service
           await llmsUpdateModelsForServiceOrThrow(service.id, true);
@@ -80,6 +86,9 @@ const autoConfVanillaStore = createVanillaStore<AutoConfStore>()(persist((_set, 
           return new Promise(resolve => setTimeout(resolve, 50));
         });
     }, Promise.resolve());
+
+    // Re-rank the LLMs based on the order of configured services
+    llmsStoreActions().rerankLLMsByServices(configuredServiceIds);
 
     // end configuration
     _set({ isConfiguring: false, isConfigurationDone: true });
