@@ -55,7 +55,7 @@ function _isPricingFree(pricing: DTieredPricing | undefined): boolean {
 
 /// Human readable cost
 
-export function getLlmCostForTokens(inputTokens: number, tokens: number, pricing: DTieredPricing | undefined): number | undefined {
+export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing: DTieredPricing | undefined): number | undefined {
   if (!pricing) return undefined;
   if (pricing === 'free') return 0;
 
@@ -63,9 +63,9 @@ export function getLlmCostForTokens(inputTokens: number, tokens: number, pricing
   if (typeof pricing === 'number') return tokens * pricing / 1e6;
 
   // Find the applicable tier based on input tokens
-  const applicableTier = pricing.find(tier => tier.upTo === null || inputTokens <= tier.upTo);
+  const applicableTier = pricing.find(tier => tier.upTo === null || tierTokens <= tier.upTo);
   if (!applicableTier) {
-    console.log('[DEV] getLlmCostForTokens: No applicable tier found for input tokens', { inputTokens, pricing });
+    console.log('[DEV] getLlmCostForTokens: No applicable tier found for input tokens', { tierTokens, pricing });
     return undefined;
   }
 
