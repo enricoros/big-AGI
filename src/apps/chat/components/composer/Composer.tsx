@@ -123,7 +123,7 @@ export function Composer(props: {
     labsShowCost: state.labsShowCost,
     labsShowShortcutBar: state.labsShowShortcutBar,
   })));
-  const timeToShowTips = useAppStateStore(state => state.usageCount > 2);
+  const timeToShowTips = useAppStateStore(state => state.usageCount >= 5);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
   const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
   const { novel: explainCtrlEnter, touch: touchCtrlEnter } = useUICounter('composer-ctrl-enter');
