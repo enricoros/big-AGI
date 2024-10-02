@@ -327,8 +327,10 @@ function B(props: {
   );
   if (!href)
     return boldText;
+  // append UTM details if missing
+  const hrefWithUtm = href.includes('utm_source=') ? href : href + clientUtmSource();
   return (
-    <ExternalLink href={href + clientUtmSource()} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
+    <ExternalLink href={hrefWithUtm} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
       {boldText}
     </ExternalLink>
   );
