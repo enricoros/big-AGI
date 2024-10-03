@@ -37,13 +37,6 @@ export function explainServiceErrors(text: string, isAssistant: boolean) {
         for up to date information, and at your option try again.
       </>;
 
-    case text.includes('"model_not_found"'):
-      return <>
-        The API key appears to be unauthorized for this model. You can change to <b>GPT-3.5
-        Turbo</b> and simultaneously <Link noLinkStyle href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request
-        access</Link> to the desired model.
-      </>;
-
     case text.includes('"context_length_exceeded"'):
       const pattern = /maximum context length is (\d+) tokens.+resulted in (\d+) tokens/;
       const match = pattern.exec(text);
