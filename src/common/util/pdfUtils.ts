@@ -1,3 +1,5 @@
+import { canvasToDataURLAndMimeType } from './canvasUtils';
+
 // configuration
 const SKIP_LOADING_IN_DEV = false;
 
@@ -97,26 +99,29 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
 
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d')!;
     canvas.height = viewport.height;
     canvas.width = viewport.width;
     onProgress((i * 3 + 1) / (pdf.numPages * 3));
 
     await page.render({
-      canvasContext: context!,
+      canvasContext: context,
       viewport,
     }).promise;
 
-    const base64DataUrl = canvas.toDataURL(imageMimeType, imageQuality);
-    const base64Data = base64DataUrl.slice(`data:${imageMimeType};base64,`.length);
-
-    images.push({
-      mimeType: imageMimeType,
-      base64Data,
-      scale,
-      width: viewport.width,
-      height: viewport.height,
-    });
+    // Convert canvas image to a DataURL string
+    try {
+      const { mimeType: actualMimeType, base64Data } = canvasToDataURLAndMimeType(canvas, imageMimeType, imageQuality, 'pdf-to-image');
+      images.push({
+        mimeType: actualMimeType,
+        base64Data,
+        scale,
+        width: viewport.width,
+        height: viewport.height,
+      });
+    } catch (error) {
+      console.warn(`pdfToImageDataURLs: failed to convert image to ${imageMimeType}.`, { error });
+    }
     onProgress((i * 3 + 2) / (pdf.numPages * 3));
   }
 

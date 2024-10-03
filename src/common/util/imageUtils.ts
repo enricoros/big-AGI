@@ -5,6 +5,7 @@
  * Also see videoUtils.ts for more image-related functions.
  */
 
+import { canvasToDataURLAndMimeType } from './canvasUtils';
 import { createBlobURLFromDataURL } from './urlUtils';
 
 
@@ -67,11 +68,18 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
         return;
       }
       ctx.drawImage(image, 0, 0);
-      const dataUrl = canvas.toDataURL(destMimeType, destQuality);
-      resolve({
-        mimeType: destMimeType,
-        base64: dataUrl.split(',')[1],
-      });
+
+      // Convert canvas image to a DataURL string
+      try {
+        const { mimeType: actualMimeType, base64Data } = canvasToDataURLAndMimeType(canvas, destMimeType, destQuality, 'image-convert');
+        resolve({
+          mimeType: actualMimeType,
+          base64: base64Data,
+        });
+      } catch (error) {
+        console.warn(`imageUtils: failed to convert image to ${destMimeType}.`, { error });
+        reject(new Error(`Failed to convert image to '${destMimeType}'.`));
+      }
     };
     image.onerror = (error) => {
       console.warn('Failed to load image for conversion.', error);
@@ -222,11 +230,18 @@ export async function resizeBase64ImageIfNeeded(inputMimeType: string, inputBase
       canvas.width = newWidth;
       canvas.height = newHeight;
       ctx.drawImage(image, 0, 0, newWidth, newHeight);
-      const resizedDataUrl = canvas.toDataURL(destMimeType, destQuality);
-      resolve({
-        mimeType: destMimeType,
-        base64: resizedDataUrl.split(',')[1], // Return base64 part only
-      });
+
+      // Convert canvas image to a DataURL string
+      try {
+        const { mimeType: actualMimeType, base64Data } = canvasToDataURLAndMimeType(canvas, destMimeType, destQuality, 'image-resize');
+        resolve({
+          mimeType: actualMimeType,
+          base64: base64Data,
+        });
+      } catch (error) {
+        console.warn(`imageUtils: failed to resize image to '${resizeMode}' as ${destMimeType}.`, { error });
+        reject(new Error(`Failed to resize image to '${resizeMode}' as '${destMimeType}'.`));
+      }
     };
 
     image.onerror = (error) => {
