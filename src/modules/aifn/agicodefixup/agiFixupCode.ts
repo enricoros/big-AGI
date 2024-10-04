@@ -22,26 +22,6 @@ interface CodeFix {
 
 const CodeFixes: Record<string, CodeFix> = {
 
-  // See `RenderCodeChartJS`
-  'chartjs-issue': {
-    description: 'Provides the corrected Chart.js configuration code.',
-    systemMessage: `You are an AI assistant that fixes invalid Chart.js configuration JSON.
-When provided with invalid Chart.js code, you analyze it, identify errors, especially remove all functions if any, and output a corrected version in valid JSON format.
-Respond first with a very brief analysis of where the error is and exactly what to change, and then call the \`{{functionName}}\` function.`,
-    userInstructionTemplate: `The following Chart.js ChartOptions JSON is invalid and cannot be parsed:
-\`\`\`json
-{{codeToFix}}
-\`\`\`
-
-{{errorMessageSection}}
-Please analyze the JSON, correct any errors (REMOVE FUNCTIONS!!!), and provide a valid JSON-only ChartOptions that can be parsed by Chart.js.`,
-    functionName: 'provide_corrected_chartjs_code',
-    functionPolicy: 'think-then-invoke',
-    outputSchema: z.object({
-      corrected_code: z.string().describe('The corrected Chart.js ChartOptions in valid JSON format.'),
-    }),
-  },
-
 };
 
 
