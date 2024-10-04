@@ -36,9 +36,6 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
 
   // if we have a block title, use it to infer the language
   if (blockTitle) {
-    // vnd.agi - we tell how to format these blocks, so we know what's the language inside
-    if (blockTitle.trim().toLowerCase() === 'chartjs')
-      return 'json'; // {{RenderChartJS}}
 
     // single word: assume it's the syntax highlight language
     if (!blockTitle.includes('.'))
