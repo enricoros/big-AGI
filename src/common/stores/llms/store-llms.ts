@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DLLM, DLLMId } from './llms.types';
+import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import type { DModelsService, DModelsServiceId } from './modelsservice.types';
 import { getLlmCostForTokens, portModelPricingV2toV3 } from './llms.pricing';
 
@@ -280,29 +280,30 @@ export function getChatLLMId(): DLLMId | null {
   return llmsStoreState().chatLLMId;
 }
 
-const messageMissingFast = 'Please select a valid "fast" model in the Model Configuration.';
 
-/**
- * Must support function calling, hence we verify here.
- */
-export function getFastLLMIdOrThrow(useCaseLabel: string): DLLMId {
-  const fastLLMId = llmsStoreState().fastLLMId;
+export function getLLMIdOrThrow(order: ('chat' | 'fast')[], supportsFunctionCallTool: boolean, supportsImageInput: boolean, useCaseLabel: string): DLLMId {
+  const { chatLLMId, fastLLMId } = llmsStoreState();
 
-  if (!fastLLMId)
-    throw new Error(`No model available for '${useCaseLabel}'. ${messageMissingFast}`);
-
-  let fastLLM;
-  try {
-    fastLLM = findLLMOrThrow(fastLLMId);
-  } catch (error) {
-    throw new Error(`Model ${fastLLMId} not found. ${messageMissingFast}`);
+  for (const preference of order) {
+    const llmId = preference === 'chat' ? chatLLMId : fastLLMId;
+    // we don't have one of those assigned, skip
+    if (!llmId)
+      continue;
+    try {
+      const llm = findLLMOrThrow(llmId);
+      if (supportsFunctionCallTool && !llm.interfaces.includes(LLM_IF_OAI_Fn))
+        continue;
+      if (supportsImageInput && !llm.interfaces.includes(LLM_IF_OAI_Vision))
+        continue;
+      return llmId;
+    } catch (error) {
+      // Try next or fall back to the error
+    }
   }
 
-  if (!fastLLM.interfaces.includes('oai-chat-fn'  /* this is here like this to reduce dependencies */))
-    throw new Error(`Model ${fastLLMId} is not a function model. ${messageMissingFast}`);
-
-  return fastLLMId;
+  throw new Error(`No model available for '${useCaseLabel}'. Pease select a ${order.join(' or ')} model that supports${supportsFunctionCallTool ? ' function calls' : ' text input'}${supportsImageInput ? ' and image input' : ''} in the Model Configuration.`);
 }
+
 
 export function llmsStoreState(): LlmsState & LlmsActions {
   return useModelsStore.getState();

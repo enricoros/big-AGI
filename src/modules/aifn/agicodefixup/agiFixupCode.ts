@@ -5,7 +5,7 @@ import { aixChatGenerateContent_DMessage, aixCreateChatGenerateStreamContext } f
 import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 
 
@@ -35,9 +35,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
   if (!config) throw new Error('Invalid issue type.');
 
   // Require the Chat LLM (for a change) - as this is a small but important call
-  const llmId = getChatLLMId();
-  if (!llmId) throw new Error('No LLM configured.');
-
+  const llmId = getLLMIdOrThrow(['chat', 'fast'], true, false, 'autofix-code');
 
   // Construct the AI chat generate request
   const templateVariables = {

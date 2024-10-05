@@ -3,7 +3,7 @@ import { llmChatGenerateOrThrow, VChatFunctionIn, VChatMessageIn } from '~/modul
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { getFastLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -153,10 +153,10 @@ export function autoChatFollowUps(conversationId: string, assistantMessageId: st
   const conversation = conversations.find(c => c.id === conversationId) ?? null;
   if (!conversation || conversation.messages.length < 2) return;
 
-  // require a valid fast model
+  // require a valid fast model (only)
   let llmId;
   try {
-    llmId = getFastLLMIdOrThrow('chat message follow up');
+    llmId = getLLMIdOrThrow(['fast'], true, false, 'chat-followups');
   } catch (error) {
     return console.log(`autoSuggestions: ${error}`);
   }

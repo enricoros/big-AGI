@@ -2,7 +2,7 @@ import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.ch
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateNSContext } from '~/modules/aix/client/aix.client';
 
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { getFastLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { isTextPart } from '~/common/stores/chat/chat.fragments';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
@@ -14,9 +14,9 @@ import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 export async function autoConversationTitle(conversationId: string, forceReplace: boolean): Promise<boolean> {
 
   // use valid fast model
-  let fastLLMId;
+  let autoTitleLlmId;
   try {
-    fastLLMId = getFastLLMIdOrThrow('conversation titler');
+    autoTitleLlmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'conversation-titler');
   } catch (error) {
     console.log(`autoConversationTitle: ${error}`);
     return false;
@@ -47,7 +47,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
 
     // LLM chat-generate call
     const { fragments, generator } = await aixChatGenerateContent_DMessage(
-      fastLLMId,
+      autoTitleLlmId,
       aixChatGenerateRequestSimple(
         'You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.',
         [{
