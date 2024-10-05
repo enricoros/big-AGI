@@ -1,23 +1,27 @@
 import { z } from 'zod';
 
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixCGR_SystemMessage, aixChatGenerateRequestFromDMessages } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateStreamContext } from '~/modules/aix/client/aix.client';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { createTextContentFragment, DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 
 export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
-  // sanity checks
-  const llmId = getChatLLMId();
+
+  // precondition
   // const docParts = attachmentFragments.filter(f => f.part.pt === 'doc').map(f => f.part) as DMessageDocPart[];
   // const docs_count = docParts.length;
   const docs_count = attachmentFragments.length;
-  if (!llmId || docs_count < 1)
+  if (docs_count < 1)
     return [];
+
+  // require llm
+  const requireVision = attachmentFragments.some(f => isImageRefPart(f.part));
+  const llmId = getLLMIdOrThrow(['fast', 'chat'], true, requireVision, 'guess-attachments-prompts');
 
   const num_suggestions = 3;
 

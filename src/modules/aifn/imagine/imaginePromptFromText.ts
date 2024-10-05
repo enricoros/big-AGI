@@ -1,6 +1,6 @@
 import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 
 
 const simpleImagineSystemPrompt =
@@ -14,9 +14,9 @@ Provide output a single image generation prompt and nothing else.`;
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
 export async function imaginePromptFromText(messageText: string, contextRef: string | null): Promise<string | null> {
+
   // we used the fast LLM, but let's just converge to the chat LLM here
-  const chatLLMId = getChatLLMId();
-  if (!chatLLMId) return null;
+  const llmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'imagine-prompt-from-text');
 
   // truncate the messageText to full words and up to 1000 characters
   const lastSpace = messageText.slice(0, 1000).lastIndexOf(' ');
@@ -28,7 +28,7 @@ export async function imaginePromptFromText(messageText: string, contextRef: str
       { role: 'system', content: simpleImagineSystemPrompt },
       { role: 'user', content: 'Write a minimum of 20-30 words prompt and up to the size of the input, based on the INPUT below.\n\nINPUT:\n' + messageText },
     ];
-    const chatResponse = await llmChatGenerateOrThrow(chatLLMId, instructions, 'draw-expand-prompt', contextRef, null, null);
+    const chatResponse = await llmChatGenerateOrThrow(llmId, instructions, 'draw-expand-prompt', contextRef, null, null);
     return chatResponse.content?.trim() ?? null;
   } catch (error: any) {
     console.error('imaginePromptFromText: fetch request error:', error);
