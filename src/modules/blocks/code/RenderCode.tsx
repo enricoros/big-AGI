@@ -169,7 +169,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const renderSyntaxHighlight = !renderHTML && !renderMermaid && !renderPlantUML && !renderSVG;
   const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap;
-  const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode === 'extra') || isFullscreen);
+  const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode !== 'minimal') || isFullscreen);
 
 
   // Language & Highlight
@@ -316,7 +316,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               )}
 
               {/* Line Numbers toggle */}
-              {renderSyntaxHighlight && uiComplexityMode === 'extra' && (
+              {renderSyntaxHighlight && uiComplexityMode !== 'minimal' && (
                 <OverlayButton tooltip={noTooltips ? null : 'Line Numbers'} disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
                   <NumbersRoundedIcon />
                 </OverlayButton>
