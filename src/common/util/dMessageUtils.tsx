@@ -299,7 +299,7 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
   if (!reason) return null;
   switch (reason) {
     case 'client-abort':
-      return complexity === 'extra' ? 'Stopped' : '';
+      return complexity !== 'minimal' ? 'Stopped' : '';
     case 'filter':
       return 'Filtered';
     case 'issue':
