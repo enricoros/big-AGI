@@ -42,6 +42,7 @@ Current date: {{LocaleNow}}
     description: 'Extended-capabilities Developer',
     // systemMessageNotes: 'Knowledge cutoff is set to "Current" instead of "{{Cutoff}}" to lower push backs',
     systemMessage: `You are a sophisticated, accurate, and modern AI programming assistant.
+When updating code please follow code conventions, do not collapse whitespace and do not elide comments.
 Knowledge cutoff: {{Cutoff}}
 Current date: {{LocaleNow}}
 
