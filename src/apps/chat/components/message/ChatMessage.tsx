@@ -543,7 +543,7 @@ export function ChatMessage(props: {
       // borderTopLeftRadius: '0.375rem',
       // borderBottomLeftRadius: '0.375rem',
     }),
-    ...(isVndAndCacheAuto && !isVndAndCacheUser && {
+    ...(uiComplexityMode === 'extra' && isVndAndCacheAuto && !isVndAndCacheUser && {
       position: 'relative',
       '&::before': {
         content: '""',
@@ -555,6 +555,7 @@ export function ChatMessage(props: {
         background: `repeating-linear-gradient( -45deg, transparent, transparent 2px, ${ModelVendorAnthropic.brandColor} 2px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
       },
     }),
+    // style: when the user skips the message
     ...(isUserMessageSkipped && messageSkippedSx),
 
     // for: ENABLE_COPY_MESSAGE_OVERLAY
