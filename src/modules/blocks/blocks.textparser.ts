@@ -57,8 +57,8 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     switch (matchType) {
       case 'codeBlock':
         const blockTitle: string = (match[1] || '').trim();
-        // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces, we trim that
-        const blockCode: string = match[2].replace(/\s+$/, '');
+        // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
+        const blockCode: string = match[2].replace(/[\t ]+$/, '');
         const blockEnd: string = match[3];
         blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, isPartial: !blockEnd.startsWith('```') });
         break;
