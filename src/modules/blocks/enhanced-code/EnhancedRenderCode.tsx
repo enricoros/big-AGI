@@ -189,7 +189,7 @@ export function EnhancedRenderCode(props: {
       headerRow={headerRow}
       subHeaderInline={liveFileActionBar}
       onHeaderClick={/*props.isMobile ? handleToggleCodeCollapse :*/ undefined}
-      onHeaderContext={handleToggleContextMenu}
+      // onHeaderContext={handleToggleContextMenu} // disabled because ERC got larger, and this will intercept it all
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
