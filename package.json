@@ -48,7 +48,7 @@
     "nanoid": "^5.0.7",
     "next": "~14.2.14",
     "nprogress": "^0.2.0",
-    "pdfjs-dist": "4.6.82",
+    "pdfjs-dist": "4.7.76",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
