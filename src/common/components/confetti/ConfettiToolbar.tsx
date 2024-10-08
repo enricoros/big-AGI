@@ -13,10 +13,18 @@ export function ConfettiToolbar() {
     commands.goToNextStep();
   };
   const random: MouseEventHandler = (_?: unknown) => {
-    commands.random();
+    try {
+      commands.random();
+    } catch (e) {
+      console.error(e);
+    }
   };
   const reset: MouseEventHandler = (_?: unknown) => {
-    commands.reset();
+    try {
+      commands.reset();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -27,15 +35,15 @@ export function ConfettiToolbar() {
       aria-label="confetti button group"
     >
       {/* <Button>🎆</Button> */}
-      <Button onClick={(e) => prev(e)} startDecorator={'⏮'}>
+      {/* <Button onClick={(e) => prev(e)} startDecorator={'⏮'}>
         Prev
-      </Button>
-      <Button onClick={(e) => random(e)} startDecorator={'➿︎'} endDecorator={'➿︎'}>
+      </Button> */}
+      <Button onClick={(e) => random(e)} startDecorator={'🎆'} endDecorator={'🎆'}>
         Rand
       </Button>
-      <Button onClick={(e) => next(e)} endDecorator={'⏭'}>
+      {/* <Button onClick={(e) => next(e)} endDecorator={'⏭'}>
         Next
-      </Button>
+      </Button> */}
       <Button onClick={(e) => reset(e)} endDecorator={'↩'}>
         Reset
       </Button>

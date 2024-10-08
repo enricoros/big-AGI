@@ -50,6 +50,7 @@ const ABERRATION_FIXUP_SQUASH = '\n\n\n---\n\n\n';
 
 const openAIDialects = z.enum([
   'azure',
+  'deepseek',
   'groq',
   'lmstudio',
   'localai',
@@ -316,7 +317,7 @@ export const llmOpenAIRouter = createTRPCRouter({
             .map(openRouterModelToModelDescription);
           break;
       }
-
+      // @ts-expect-error zod types are not perfect
       return { models };
     }),
 
@@ -692,6 +693,7 @@ export function openAIAccess(
         url: togetherHost + apiPath,
       };
   }
+  throw new Error('Unknown OpenAI dialect: ' + access.dialect);
 }
 
 export function openAIChatCompletionPayload(

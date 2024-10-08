@@ -8,8 +8,6 @@ import { loadFull } from 'tsparticles'; // if you are going to use `loadFull`, i
 import { useIsClient } from '../../hooks/is-client';
 import { useConfettiSettings } from './confetti-settings';
 import { ConfettiToolbar } from './ConfettiToolbar';
-// import { loadSlim } from "@tsparticles/slim"; // if you are going to use `loadSlim`, install the "@tsparticles/slim" package too.
-// import { loadBasic } from "@tsparticles/basic"; // if you are going t
 
 export function Confetti() {
   const [init, setInit] = useState(false);

@@ -617,7 +617,7 @@ function _prepareRequestData({
       };
 
     case 'azure':
-    case 'deepseek':
+    // case 'deepseek':
     case 'groq':
     case 'lmstudio':
     case 'localai':
@@ -634,4 +634,5 @@ function _prepareRequestData({
         vendorStreamParser: createStreamParserOpenAI(),
       };
   }
+  throw new Error(`Unknown dialect: ${access.dialect}`);
 }

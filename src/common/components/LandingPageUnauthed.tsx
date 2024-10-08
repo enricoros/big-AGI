@@ -4,14 +4,11 @@ import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import dynamic from 'next/dynamic';
 import React from 'react';
-import { confettiConfigs, ConfettiProvider } from './confetti/confetti-settings';
 
-const DynamicConfetti = dynamic(
-  () => import('~/common/components/confetti/Confetti').then((m) => m.Confetti),
-  {
-    ssr: false,
-  }
-);
+const DynamicConfetti = dynamic(() => import('./confetti/ConfettiWithProvider'), {
+  ssr: false,
+  loading: () => <p>Loading...</p>,
+});
 
 export function LandingPageUnAuthed(props: { children?: React.ReactNode }) {
   return (
@@ -30,14 +27,12 @@ export function LandingPageUnAuthed(props: { children?: React.ReactNode }) {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
+            flexDirection: 'column',
             height: '100vh',
             width: '100vw',
           }}
         >
-          <ConfettiProvider value={confettiConfigs}>
-            <DynamicConfetti />
-          </ConfettiProvider>
-
+          <DynamicConfetti />
           <SignInButton>
             <Button
               sx={{
