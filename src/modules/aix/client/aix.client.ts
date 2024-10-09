@@ -366,7 +366,11 @@ async function _aixChatGenerateContent_LL(
       chatGenerate: aixChatGenerate,
       context: aixContext,
       streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
-      connectionOptions: getLabsDevMode() ? { debugDispatchRequestbody: true } : undefined,
+      ...(getLabsDevMode() && {
+        connectionOptions: {
+          debugDispatchRequestbody: true, // [DEV] Debugging the request without requiring a server restart
+        },
+      }),
     }, {
       signal: abortSignal,
     });
