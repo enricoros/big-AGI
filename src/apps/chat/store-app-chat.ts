@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
+import type { DLLMId } from '~/common/stores/llms/llms.types';
+
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
 
@@ -61,11 +63,19 @@ interface AppChatStore {
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
+  // other chat-specific configuration
+
+  notificationEnabledModelIds: DLLMId[];
+  setNotificationEnabledForModel: (modelId: DLLMId, enabled: boolean) => void;
+  isNotificationEnabledForModel: (modelId: DLLMId) => boolean;
+
 }
 
 
 const useAppChatStore = create<AppChatStore>()(persist(
   (_set, _get) => ({
+
+    // Chat AI
 
     autoSpeak: 'off',
     setAutoSpeak: (autoSpeak: ChatAutoSpeakType) => _set({ autoSpeak }),
@@ -87,6 +97,8 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoVndAntBreakpoints: true, // 2024-08-24: on as it saves user's money
     setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => _set({ autoVndAntBreakpoints }),
+
+    // Chat UI
 
     clearFilters: () => _set({ filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
 
@@ -113,6 +125,18 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     showSystemMessages: false,
     setShowSystemMessages: (showSystemMessages: boolean) => _set({ showSystemMessages }),
+
+    // Other chat-specific configuration
+
+    notificationEnabledModelIds: [],
+    setNotificationEnabledForModel: (modelId: DLLMId, enabled: boolean) => {
+      const notificationEnabledModelIds = _get().notificationEnabledModelIds;
+      if (!enabled)
+        _set({ notificationEnabledModelIds: notificationEnabledModelIds.filter(id => id !== modelId) });
+      else if (!notificationEnabledModelIds.includes(modelId))
+        _set({ notificationEnabledModelIds: [...notificationEnabledModelIds, modelId] });
+    },
+    isNotificationEnabledForModel: (modelId: DLLMId) => _get().notificationEnabledModelIds.includes(modelId),
 
   }), {
     name: 'app-app-chat',
@@ -202,3 +226,9 @@ export const getChatShowSystemMessages = (): boolean =>
 
 export const useChatShowSystemMessages = (): [boolean, (showSystemMessages: boolean) => void] =>
   useAppChatStore(useShallow(state => [state.showSystemMessages, state.setShowSystemMessages]));
+
+export const getIsNotificationEnabledForModel = (modelId: DLLMId): boolean =>
+  useAppChatStore.getState().isNotificationEnabledForModel(modelId);
+
+export const setIsNotificationEnabledForModel = (modelId: DLLMId, enabled: boolean) =>
+  useAppChatStore.getState().setNotificationEnabledForModel(modelId, enabled);
