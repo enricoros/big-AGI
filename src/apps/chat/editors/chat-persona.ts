@@ -10,7 +10,7 @@ import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } 
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
-import { getChatAutoAI } from '../store-app-chat';
+import { getChatAutoAI, getIsNotificationEnabledForModel } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
 
@@ -36,19 +36,21 @@ export async function runPersonaOnConversationHead(
 
   const history = cHandler.historyViewHead('runPersonaOnConversationHead') as Readonly<DMessage[]>;
 
-  const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
-
-  // ai follow-up operations (fire/forget)
-  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
-
   // assistant response placeholder
+  const isNotifyEnabled = getIsNotificationEnabledForModel(assistantLlmId);
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     CHATGENERATE_RESPONSE_PLACEHOLDER,
     {
       purposeId: history[0].purposeId,
       generator: { mgt: 'named', name: assistantLlmId },
+      ...(isNotifyEnabled ? { userFlags: [MESSAGE_FLAG_NOTIFY_COMPLETE] } : {}),
     },
   );
+
+  const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
+
+  // ai follow-up operations (fire/forget)
+  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // AutoSpeak
   const autoSpeaker: PersonaProcessorInterface | null = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;

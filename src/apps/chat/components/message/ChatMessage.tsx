@@ -53,7 +53,7 @@ import { DocumentAttachmentFragments } from './fragments-attachment-doc/Document
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
-import { useChatShowTextDiff } from '../../store-app-chat';
+import { setIsNotificationEnabledForModel, useChatShowTextDiff } from '../../store-app-chat';
 import { useFragmentBuckets } from './useFragmentBuckets';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
@@ -316,8 +316,10 @@ export function ChatMessage(props: {
   }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsToggleNotifyComplete = React.useCallback(() => {
+    // also remember the preference, for auto-setting flags by the persona
+    setIsNotificationEnabledForModel(messageId, !isUserNotifyComplete);
     onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_NOTIFY_COMPLETE);
-  }, [messageId, onMessageToggleUserFlag]);
+  }, [isUserNotifyComplete, messageId, onMessageToggleUserFlag]);
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
