@@ -11,9 +11,22 @@ export function BlockPartError(props: {
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
 }) {
+
+  // Check if the errorText starts with '**' and has a closing '**' following Markdown rules
+  let unBoldText = props.errorText;
+  if (unBoldText.startsWith('**')) {
+    const closingBoldIndex = unBoldText.indexOf('**', 2);
+    if (closingBoldIndex > 2) {
+      // Remove the starting and ending '**' from the first occurrence
+      unBoldText =
+        unBoldText.substring(2, closingBoldIndex) +
+        unBoldText.substring(closingBoldIndex + 2);
+    }
+  }
+
   return (
     <ScaledTextBlockRenderer
-      text={props.errorText}
+      text={unBoldText}
       contentScaling={props.contentScaling}
       textRenderVariant='text'
       showAsDanger
