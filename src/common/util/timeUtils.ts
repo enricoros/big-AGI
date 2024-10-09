@@ -16,14 +16,26 @@ export function getLocalMidnightInUTCTimestamp(): number {
   return midnight.getTime();
 }
 
-export function getTimeBucketEn(currentTimestamp: number, midnightTimestamp: number): string {
-  const oneDay = 24 * 60 * 60 * 1000;
+export function getTimeBucketEn(itemTimeStamp: number, midnightTimestamp: number): string {
+  const oneHour = 60 * 60 * 1000;
+  const oneDay = oneHour * 24;
   const oneWeek = oneDay * 7;
   const oneMonth = oneDay * 30; // approximation
 
-  const diff = midnightTimestamp - currentTimestamp;
+  // relative time
+  const relDiff = Date.now() - itemTimeStamp;
+  if (relDiff < oneHour)
+    return 'Last Hour';
 
+  // midnight-relative time
+  const diff = midnightTimestamp - itemTimeStamp;
   if (diff < oneDay) {
+    // if (diff > oneDay / 2)
+    //   return 'This morning';
+    // else if (diff > oneDay / 4)
+    //   return 'This afternoon';
+    // else
+    //   return 'This evening';
     return 'Today';
   } else if (diff < oneDay * 2) {
     return 'Yesterday';
