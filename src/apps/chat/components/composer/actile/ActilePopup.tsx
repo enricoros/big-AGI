@@ -4,38 +4,44 @@ import { Box, ListItem, ListItemButton, ListItemDecorator, Sheet, Typography } f
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
 
-import type { ActileItem } from './ActileProvider';
-
+import type { ActileItem, ActileProvider } from './ActileProvider';
 
 export function ActilePopup(props: {
   anchorEl: HTMLElement | null,
   onClose: () => void,
-  title?: string,
-  items: ActileItem[],
-  activeItemIndex: number | undefined,
+  itemsByProvider: { provider: ActileProvider, items: ActileItem[] }[],
+  activeItemIndex: number,
   activePrefixLength: number,
   onItemClick: (item: ActileItem) => void,
-  children?: React.ReactNode
 }) {
 
-  const hasAnyIcon = props.items.some(item => !!item.Icon);
+  // We need to keep track of the overall item index to correctly match with activeItemIndex
+  const itemIndices = React.useMemo(() => {
+    const indices: { providerKey: string, itemKey: string, isActive: boolean }[] = [];
+    let indexCounter = 0;
+    props.itemsByProvider.forEach(({ provider, items }) => {
+      items.forEach((item) => {
+        indices.push({
+          providerKey: provider.key,
+          itemKey: item.key,
+          isActive: indexCounter === props.activeItemIndex,
+        });
+        indexCounter += 1;
+      });
+    });
+    return indices;
+  }, [props.itemsByProvider, props.activeItemIndex]);
 
   return (
     <CloseableMenu
-      noTopPadding noBottomPadding
       open anchorEl={props.anchorEl} onClose={props.onClose}
+      noTopPadding
+      noBottomPadding
+      maxHeightGapPx={320}
       sx={{ minWidth: 320 }}
     >
 
-      {!!props.title && (
-        <Sheet variant='soft' sx={{ p: 1, borderBottom: '1px solid', borderBottomColor: 'neutral.softActiveBg' }}>
-          <Typography level='title-sm'>
-            {props.title}
-          </Typography>
-        </Sheet>
-      )}
-
-      {!props.items.length && (
+      {!props.itemsByProvider.length && (
         <ListItem variant='soft' color='warning'>
           <Typography level='body-md'>
             No matching command
@@ -43,45 +49,64 @@ export function ActilePopup(props: {
         </ListItem>
       )}
 
-      {props.items.map((item, idx) => {
-          const isActive = idx === props.activeItemIndex;
-          const labelBold = item.label.slice(0, props.activePrefixLength);
-          const labelNormal = item.label.slice(props.activePrefixLength);
-          return (
-            <ListItem
-              key={item.key}
-              variant={isActive ? 'soft' : undefined}
-              color={isActive ? 'primary' : undefined}
-              onClick={() => props.onItemClick(item)}
-            >
-              <ListItemButton color='primary'>
-                {hasAnyIcon && (
-                  <ListItemDecorator>
-                    {item.Icon ? <item.Icon /> : null}
-                  </ListItemDecorator>
-                )}
-                <Box>
+      {props.itemsByProvider.map(({ provider, items }) => (
+        <React.Fragment key={provider.key}>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography level='title-sm' color={isActive ? 'primary' : undefined}>
-                      <span style={{ textDecoration: 'underline' }}><b>{labelBold}</b></span>{labelNormal}
-                    </Typography>
-                    {item.argument && <Typography level='body-sm'>
-                      {item.argument}
+          {/* Provider Label */}
+          <Sheet variant='soft' sx={{ p: 1, borderBottom: '1px solid', borderBottomColor: 'neutral.softActiveBg' }}>
+            <Typography level='title-sm'>
+              {provider.label}
+            </Typography>
+          </Sheet>
+
+          {/* Items */}
+          {items.map((item) => {
+            const index = itemIndices.findIndex(idx => idx.providerKey === provider.key && idx.itemKey === item.key);
+            const isActive = itemIndices[index]?.isActive;
+
+            const labelBold = item.label.slice(0, props.activePrefixLength);
+            const labelNormal = item.label.slice(props.activePrefixLength);
+
+            return (
+              <ListItem
+                key={`${provider.key}-${item.key}`}
+                variant={isActive ? 'soft' : undefined}
+                color={isActive ? 'primary' : undefined}
+                onClick={() => props.onItemClick(item)}
+              >
+                <ListItemButton color='primary'>
+                  {item.Icon && (
+                    <ListItemDecorator>
+                      <item.Icon />
+                    </ListItemDecorator>
+                  )}
+
+                  {/* Item*/}
+                  <Box>
+
+                    {/* Item main text  */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography level='title-sm' color={isActive ? 'primary' : undefined}>
+                        <span style={{ textDecoration: 'underline' }}><b>{labelBold}</b></span>{labelNormal}
+                      </Typography>
+                      {item.argument && <Typography level='body-sm'>
+                        {item.argument}
+                      </Typography>}
+                    </Box>
+
+                    {/* Item description */}
+                    {!!item.description && <Typography level='body-xs'>
+                      {item.description}
                     </Typography>}
+
                   </Box>
 
-                  {!!item.description && <Typography level='body-xs'>
-                    {item.description}
-                  </Typography>}
-                </Box>
-              </ListItemButton>
-            </ListItem>
-          );
-        },
-      )}
-
-      {props.children}
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </React.Fragment>
+      ))}
 
     </CloseableMenu>
   );
