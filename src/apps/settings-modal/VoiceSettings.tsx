@@ -2,24 +2,25 @@ import * as React from 'react';
 
 import { FormControl } from '@mui/joy';
 
-import { useChatAutoAI, useChatMicTimeoutMs } from '../chat/store-app-chat';
+import { useASREngine, useChatAutoAI, useChatMicTimeoutMs, useTTSEngine } from '../chat/store-app-chat';
 
-import { useElevenLabsVoices } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
+
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-
+import { hasVoices, ASREngineList, TTSEngineList } from '~/common/components/useVoiceCapabilities';
 
 export function VoiceSettings() {
 
   // external state
   const isMobile = useIsMobile();
   const { autoSpeak, setAutoSpeak } = useChatAutoAI();
-  const { hasVoices } = useElevenLabsVoices();
-  const [chatTimeoutMs, setChatTimeoutMs] = useChatMicTimeoutMs();
 
+  const [chatTimeoutMs, setChatTimeoutMs]  = useChatMicTimeoutMs();
+  const [TTSEngine, setTTSEngine ] = useTTSEngine();
+  const [ASREngine, setASREngine ] = useASREngine();
 
   // this converts from string keys to numbers and vice versa
   const chatTimeoutValue: string = '' + chatTimeoutMs;
@@ -57,6 +58,22 @@ export function VoiceSettings() {
         { value: 'all', label: 'Full' },
       ]}
       value={autoSpeak} onChange={setAutoSpeak}
+    />
+
+    <FormRadioControl
+      title='TTS engine'
+      description='Text to speech'
+      tooltip=''
+      options={TTSEngineList.map((i) => ({ value: i, label: i }))}
+      value={TTSEngine} onChange={setTTSEngine}
+    />
+
+    <FormRadioControl
+      title='ASR engine'
+      description='Automatic Speech Recognition'
+      tooltip=''
+      options={ASREngineList.map((i) => ({ value: i, label: i }))}
+      value={ASREngine} onChange={setASREngine}
     />
 
   </>;

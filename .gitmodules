@@ -1,0 +1,3 @@
+[submodule "src/modules/browser/web-speech-recommended-voices"]
+	path = src/modules/browser/web-speech-recommended-voices
+	url = https://github.com/HadrienGardeur/web-speech-recommended-voices.git
