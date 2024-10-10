@@ -98,6 +98,7 @@ export async function runPersonaOnConversationHead(
   // special case: if the last message was aborted and had no content, delete it
   if (messageWasInterruptedAtStart(lastDeepCopy)) {
     cHandler.messagesDelete([assistantMessageId]);
+    // NOTE: ok to exit here, as the abort was already done
     return false;
   }
 

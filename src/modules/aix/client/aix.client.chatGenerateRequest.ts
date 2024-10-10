@@ -12,8 +12,8 @@ import type { AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_M
 
 
 // configuration
-export const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
-export const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
+const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
+const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 
 
 // AIX <> Simple Text API helpers

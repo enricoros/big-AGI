@@ -59,7 +59,7 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
       return true;
 
     case 'cmd-mode-react':
-      return await runReActUpdatingState(cHandler, chatCommand.params, chatLLMId);
+      return await runReActUpdatingState(cHandler, chatCommand.params, chatLLMId, lastMessageId);
 
     default:
       cHandler.messageAppendAssistantText('This command is not supported', 'help');

@@ -134,7 +134,7 @@ export async function llmChatGenerateOrThrow<TServiceSettings extends object = {
   forceFunctionName: string | null,
   maxTokens?: number,
 ): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut> {
-  throw new Error(`llmChatGenerateOrThrow: ${contextName} not migrated to AIX yet.`);
+  throw new Error(`llmChatGenerateOrThrow: ${contextName} please migrate to AIX via aixChatGenerateTextNS_Simple.`);
 }
 
 export async function llmStreamingChatGenerate<
