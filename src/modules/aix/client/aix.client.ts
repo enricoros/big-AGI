@@ -71,7 +71,7 @@ type StreamMessageStatus = {
 
 
 interface AixClientOptions {
-  abortSignal: AbortSignal,
+  abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
   llmOptionsOverride?: Partial<{
     llmTemperature: number,
@@ -172,12 +172,12 @@ export async function aixChatGenerateTextNS_Simple(
     aixChatGenerate,
     aixContext,
     false,
-    { abortSignal: abortSignal },
+    { abortSignal: abortSignal || 'NON_ABORTABLE' },
     undefined, // no streaming
   );
 
   // re-throw the user-initiated abort, as the former function catches it
-  if (abortSignal.aborted)
+  if (abortSignal?.aborted)
     throw new DOMException('Stopped.', 'AbortError');
 
   const textContentFragments = (fragments || []).filter(f => isTextPart(f.part));
@@ -274,6 +274,13 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
 
   // decimator for the updates
   const throttler = (onStreamingUpdate && clientOptions.throttleParallelThreads) ? new ThrottleFunctionCall(clientOptions.throttleParallelThreads) : null;
+
+  // Abort: if the operation is non-abortable, we can't use the AbortSignal
+  if (clientOptions.abortSignal === 'NON_ABORTABLE') {
+    // [DEV] UGLY: here we have non-abortable operations -- we silence the warning, but something may be done in the future
+    // console.log('[DEV] Aix non-abortable operation:', { aixContext, llmId });
+    clientOptions.abortSignal = new AbortController().signal;
+  }
 
   // Aix Low-Level Chat Generation
   const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal,
