@@ -224,7 +224,7 @@ export function ContentFragments(props: {
               isMobile={props.isMobile}
               disableMarkdownText={props.disableMarkdownText}
               enhanceCodeBlocks={props.enhanceCodeBlocks}
-              // renderTextDiff={textDiffs || undefined}
+              // renderWordsDiff={wordsDiff || undefined}
               showUnsafeHtmlCode={props.showUnsafeHtmlCode}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               onContextMenu={props.onContextMenu}

@@ -91,7 +91,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
           };
         }
 
-        // Sanity check: Get the focused pane
+        // sanity check: Get the focused pane
         const focusedPane = chatPanes[chatPaneFocusIndex];
         if (!focusedPane) {
           console.warn('openConversationInFocusedPane: focusedPane is null', chatPaneFocusIndex, chatPanes);

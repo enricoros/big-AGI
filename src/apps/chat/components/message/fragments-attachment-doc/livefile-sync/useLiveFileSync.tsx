@@ -1,6 +1,6 @@
 import * as React from 'react';
+import { diffLines } from 'diff';
 import { fileOpen } from 'browser-fs-access';
-import { cleanupEfficiency, makeDiff } from '@sanity/diff-match-patch';
 
 import { Box, Button, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet } from '@mui/joy';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -22,21 +22,16 @@ import { useLiveFileContent } from '~/common/livefile/useLiveFileContent';
 import { LiveFileControlButton } from './LiveFileControlButton';
 
 
-interface DiffSummary {
+interface LinesDiffSummary {
   insertions: number;
   deletions: number;
 }
 
-function calculateDiffStats(fromText: string, toText: string): DiffSummary {
-  // compute the insertions and deletions diff - NOTE: character-based, not lines
-  const diffs = cleanupEfficiency(makeDiff(fromText, toText, {
-    timeout: 1,
-    checkLines: true,
-  }), 4);
-
-  return diffs.reduce((acc, [operation, text]) => {
-    if (operation === 1) acc.insertions += text.length;
-    else if (operation === -1) acc.deletions += text.length;
+function _computeLineDiffStats(fromText: string, toText: string): LinesDiffSummary {
+  // compute the insertions and deletions diff - NOTE: lines are the most common
+  return (diffLines(fromText, toText) || []).reduce((acc, part) => {
+    if (part.added) acc.insertions += part.count ?? 1;
+    if (part.removed) acc.deletions += part.count ?? 1;
     return acc;
   }, { insertions: 0, deletions: 0 });
 }
@@ -59,7 +54,7 @@ export function useLiveFileSync(
 
   // state
   const { showPromisedOverlay } = useOverlayComponents();
-  const [diffSummary, setDiffSummary] = React.useState<DiffSummary | null>(null);
+  const [diffSummary, setDiffSummary] = React.useState<LinesDiffSummary | null>(null);
   const [status, setStatus] = React.useState<FileOperationStatus | null>(null);
 
   // external state
@@ -98,17 +93,17 @@ export function useLiveFileSync(
     }
 
     // Compute the diff
-    const summary = calculateDiffStats(fileContent, bufferText);
-    setDiffSummary(summary);
-    if (summary.insertions && summary.deletions)
+    const lineDiffs = _computeLineDiffStats(bufferText, fileContent);
+    setDiffSummary(lineDiffs);
+    if (lineDiffs.insertions && lineDiffs.deletions)
       setStatus({
-        message: <>Document has {summary.insertions} <Box component='span' sx={{ color: 'success.solidBg' }}>insertions</Box> and {summary.deletions} <Box component='span' sx={{ color: 'danger.softColor' }}>deletions</Box>.</>,
+        message: <>File has {lineDiffs.insertions?.toLocaleString()} <Box component='span' sx={{ color: 'success.solidBg' }}>added</Box> and {lineDiffs.deletions?.toLocaleString()} <Box component='span' sx={{ color: 'danger.softColor' }}>removed</Box> lines.</>,
         mtype: 'changes',
       });
-    else if (summary.insertions)
-      setStatus({ message: <>Document has {summary.insertions} <Box component='span' sx={{ color: 'success.solidBg' }}>insertions</Box>.</>, mtype: 'changes' });
-    else if (summary.deletions)
-      setStatus({ message: <>Document has {summary.deletions} <Box component='span' sx={{ color: 'danger.softColor' }}>deletions</Box>.</>, mtype: 'changes' });
+    else if (lineDiffs.insertions)
+      setStatus({ message: <>File has {lineDiffs.insertions?.toLocaleString()} <Box component='span' sx={{ color: 'success.solidBg' }}>added lines</Box>.</>, mtype: 'changes' });
+    else if (lineDiffs.deletions)
+      setStatus({ message: <>File has {lineDiffs.deletions?.toLocaleString()} <Box component='span' sx={{ color: 'danger.softColor' }}>removed lines</Box>.</>, mtype: 'changes' });
     else
       setStatus({ message: 'No changes.', mtype: 'info' });
   }, [bufferText, fileContent, isMobile]);
