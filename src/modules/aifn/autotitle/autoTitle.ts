@@ -1,4 +1,4 @@
-import { aixChatGenerateTextNS_Simple } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
@@ -44,7 +44,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   try {
 
     // LLM chat-generate call
-    let title = await aixChatGenerateTextNS_Simple(
+    let title = await aixChatGenerateText_Simple(
       autoTitleLlmId,
       'You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.',
       `Analyze the given short conversation (every line is truncated) and extract a concise chat title that summarizes the conversation in as little as a couple of words.

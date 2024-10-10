@@ -55,7 +55,7 @@ interface ServiceMetricsState {
 }
 
 interface ServiceMetricsActions {
-  addChatGenerateCostEntry: (costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, serviceId: DModelsServiceId | null) => void;
+  addChatGenerateCostEntry: (costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, serviceId: DModelsServiceId | null, debugCostSource: string) => void;
   getAggregateMetricsForService: (serviceId: DModelsServiceId) => ServiceMetricsAggregate | undefined;
 }
 
@@ -65,7 +65,7 @@ export const createServiceMetricsSlice: StateCreator<ServiceMetricsSlice, [], []
 
   serviceMetrics: {},
 
-  addChatGenerateCostEntry: (costs, inputTokens, outputTokens, serviceId: DModelsServiceId | null) => set((state) => {
+  addChatGenerateCostEntry: (costs, inputTokens, outputTokens, serviceId: DModelsServiceId | null, debugCostSource: string) => set((state) => {
     if (!serviceId) return state;
 
     const currentMetrics = state.serviceMetrics[serviceId] || createServiceMetricsAggregate();

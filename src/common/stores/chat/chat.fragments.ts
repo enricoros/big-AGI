@@ -182,6 +182,10 @@ export function isTextPart(part: DMessageContentFragment['part']) {
   return part.pt === 'text';
 }
 
+export function isErrorPart(part: DMessageContentFragment['part']) {
+  return part.pt === 'error';
+}
+
 
 /// Fragments Creation & Duplication
 
