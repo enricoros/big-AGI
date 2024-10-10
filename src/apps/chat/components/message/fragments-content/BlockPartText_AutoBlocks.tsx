@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { Diff as TextDiff } from '@sanity/diff-match-patch';
 
+import type { WordsDiff } from '~/modules/blocks/wordsdiff/RenderWordsDiff';
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
@@ -28,7 +28,7 @@ export function BlockPartText_AutoBlocks(props: {
   fitScreen: boolean,
   disableMarkdownText: boolean,
   enhanceCodeBlocks: boolean,
-  renderTextDiff?: TextDiff[];
+  renderAsWordsDiff?: WordsDiff,
 
   showUnsafeHtmlCode?: boolean,
   optiAllowSubBlocksMemo: boolean,
@@ -74,7 +74,7 @@ export function BlockPartText_AutoBlocks(props: {
       fitScreen={props.fitScreen}
       isMobile={props.isMobile}
       showUnsafeHtmlCode={props.showUnsafeHtmlCode}
-      renderSanityTextDiffs={props.renderTextDiff}
+      renderAsWordsDiff={props.renderAsWordsDiff}
       codeRenderVariant={props.enhanceCodeBlocks ? 'enhanced' : 'outlined'}
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
