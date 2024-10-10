@@ -36,7 +36,8 @@ type RequestConfig<TJsonBody extends object | undefined> = {
 } & (
   | { method?: 'GET' /* in case of GET, the method is optional, and no body */ }
   | { method: 'POST'; body: TJsonBody }
-  | { method: 'DELETE'; body: TJsonBody }
+  | { method: 'PUT'; body: TJsonBody }      // [fred-sync] added PUT
+  | { method: 'DELETE'; body?: TJsonBody }  // [Ollama] Violates the spec and has a body on DELETE requests
   );
 
 
