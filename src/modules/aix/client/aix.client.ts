@@ -4,22 +4,23 @@ import { DLLM, DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { apiStream } from '~/common/util/trpc.client';
 import { chatGenerateMetricsLgToMd, computeChatGenerationCosts, DChatGenerateMetricsLg } from '~/common/stores/metrics/metrics.chatgenerate';
-import { createErrorContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, DMessageContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixAPI_Context_ChatGenerateStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixAPI_Context_ChatGenerateStream, AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage } from '../server/api/aix.wiretypes';
 
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
-import { aixChatGenerateRequestFromDMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
+import { aixChatGenerateRequestFromDMessages, aixChatGenerateRequestSimple, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 
 
 // configuration
 export const DEBUG_PARTICLES = false;
+const AIX_CLIENT_DEV_ASSERTS = process.env.NODE_ENV === 'development';
 
 
 export function aixCreateChatGenerateNSContext(name: AixAPI_Context_ChatGenerateNS['name'], ref: string): AixAPI_Context_ChatGenerateNS {
@@ -144,6 +145,49 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
     lastDMessage: lastDMessage,
     errorMessage: errorMessage || undefined,
   };
+}
+
+
+/**
+ * Simpler facade to aixChatGenerateContent_DMessage, expecting text-only inputs/outputs and no streaming
+ * @throws Error if the LLM is not found or other misconfigurations, but handles most other errors internally.
+ */
+export async function aixChatGenerateTextNS_Simple(
+  // [V1-like text-only API] text inputs -> string output
+  llmId: DLLMId,
+  systemInstruction: string,
+  textMessages: { role: AixMessages_ChatMessage['role'], text: string }[],
+  // aix inputs
+  aixContextName: AixAPI_Context_ChatGenerateNS['name'],
+  aixContextRef: AixAPI_Context['ref'],
+  // others
+  abortSignal: AbortSignal,
+) {
+
+  const aixChatGenerate = aixChatGenerateRequestSimple(systemInstruction, textMessages);
+  const aixContext = aixCreateChatGenerateNSContext(aixContextName, aixContextRef);
+
+  const { fragments, generator, pendingIncomplete } = await aixChatGenerateContent_DMessage(
+    llmId,
+    aixChatGenerate,
+    aixContext,
+    false,
+    { abortSignal: abortSignal },
+    undefined, // no streaming
+  );
+
+  // re-throw the user-initiated abort, as the former function catches it
+  if (abortSignal.aborted)
+    throw new DOMException('Stopped.', 'AbortError');
+
+  const textContentFragments = (fragments || []).filter(f => isTextPart(f.part));
+  if (textContentFragments.length !== 1 || !isTextPart(textContentFragments[0].part)) {
+    if (AIX_CLIENT_DEV_ASSERTS)
+      console.error(`[DEV] aixChatGenerateTextNS_Simple (${aixContextName}): Invalid text response:`, { fragments });
+    throw new Error('AIX: Invalid text response.');
+  }
+
+  return textContentFragments[0].part.text;
 }
 
 
@@ -388,11 +432,11 @@ async function _aixChatGenerateContent_LL(
     const isErrorAbort = (error instanceof Error) && (error.name === 'AbortError' || (error.cause instanceof DOMException && error.cause.name === 'AbortError'));
     if (isUserAbort || isErrorAbort) {
       if (isUserAbort !== isErrorAbort)
-        if (process.env.NODE_ENV === 'development')
+        if (AIX_CLIENT_DEV_ASSERTS)
           console.error(`[DEV] Aix streaming AbortError mismatch (${isUserAbort}, ${isErrorAbort})`, { error: error });
       contentReassembler.reassembleClientAbort();
     } else {
-      if (process.env.NODE_ENV === 'development')
+      if (AIX_CLIENT_DEV_ASSERTS)
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!accumulator_LL.fragments.length;
       contentReassembler.reassembleClientException('Application error: ' + presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
