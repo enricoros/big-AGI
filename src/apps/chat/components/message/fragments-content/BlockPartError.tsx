@@ -13,22 +13,31 @@ export function BlockPartError(props: {
 }) {
 
   // Check if the errorText starts with '**' and has a closing '**' following Markdown rules
-  let unBoldText = props.errorText;
-  if (unBoldText.startsWith('**')) {
-    const closingBoldIndex = unBoldText.indexOf('**', 2);
+  let textToRender = props.errorText;
+  let renderAsMarkdown = false;
+
+  // render as markdown (better looking) if there is no 'structure' that requres plaintext ("{" basically)
+  const containsBold = textToRender.indexOf('**') !== -1;
+  const containsStructure = textToRender.indexOf('{') !== -1 && props.errorText.indexOf('}') !== -1;
+  if (containsBold && !containsStructure)
+    renderAsMarkdown = true;
+
+  // if there's structure, still (potentially) remove the starting and ending '**' from the first occurrence
+  if (!renderAsMarkdown && containsBold && textToRender.startsWith('**')) {
+    const closingBoldIndex = textToRender.indexOf('**', 2);
     if (closingBoldIndex > 2) {
       // Remove the starting and ending '**' from the first occurrence
-      unBoldText =
-        unBoldText.substring(2, closingBoldIndex) +
-        unBoldText.substring(closingBoldIndex + 2);
+      textToRender =
+        textToRender.substring(2, closingBoldIndex) +
+        textToRender.substring(closingBoldIndex + 2);
     }
   }
 
   return (
     <ScaledTextBlockRenderer
-      text={unBoldText}
+      text={textToRender}
       contentScaling={props.contentScaling}
-      textRenderVariant='text'
+      textRenderVariant={renderAsMarkdown ? 'markdown' : 'text'}
       showAsDanger
     />
   );

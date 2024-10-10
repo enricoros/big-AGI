@@ -13,7 +13,7 @@ Provide output a single image generation prompt and nothing else.`;
 /**
  * Creates a caption for a drawing or photo given some description - used to elevate the quality of the imaging
  */
-export async function imaginePromptFromText(messageText: string, contextRef: string): Promise<string | null> {
+export async function imaginePromptFromTextOrThrow(messageText: string, contextRef: string): Promise<string> {
 
   // we used the fast LLM, but let's just converge to the chat LLM here
   const llmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'imagine-prompt-from-text');
@@ -23,17 +23,12 @@ export async function imaginePromptFromText(messageText: string, contextRef: str
   messageText = messageText.slice(0, lastSpace > 0 ? lastSpace : 1000);
   if (!/[.!?]$/.test(messageText)) messageText += '.';
 
-  try {
-    return (await aixChatGenerateText_Simple(
-      llmId,
-      simpleImagineSystemPrompt,
-      'Write a minimum of 20-30 words prompt and up to the size of the input, based on the INPUT below.\n\nINPUT:\n' + messageText,
-      'draw-expand-prompt', contextRef,
-    )).trim();
-  } catch (error: any) {
-    console.error('imaginePromptFromText: fetch request error:', error);
-    return null;
-  }
+  return (await aixChatGenerateText_Simple(
+    llmId,
+    simpleImagineSystemPrompt,
+    'Write a minimum of 20-30 words prompt and up to the size of the input, based on the INPUT below.\n\nINPUT:\n' + messageText,
+    'draw-expand-prompt', contextRef,
+  )).trim();
 }
 
 // https://www.youtube.com/watch?v=XLG-qtZwxIw

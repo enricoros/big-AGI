@@ -55,7 +55,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
   } catch (error: any) {
     console.error('ReAct error', error);
 
-    logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
+    logToEphemeral(ephemeralText + `\n${error || 'unknown'}`);
 
     const reactError = `Issue: ReAct couldn't answer your question. ${error?.message || error?.toString() || 'Unknown error'}`;
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(reactError), true);
