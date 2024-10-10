@@ -45,7 +45,7 @@ export function aixCGR_SystemMessage(text: string) {
   return { parts: [aixCGRTextPart(text)] };
 }
 
-function aixCGR_UserMessageText(text: string): AixMessages_UserMessage {
+export function aixCGR_UserMessageText(text: string): AixMessages_UserMessage {
   return { role: 'user', parts: [aixCGRTextPart(text)] };
 }
 
