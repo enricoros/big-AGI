@@ -2,7 +2,7 @@
  * porting of implementation from here: https://til.simonwillison.net/llms/python-react-pattern
  */
 
-import { aixChatGenerateTextNS_Simple } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
@@ -137,7 +137,7 @@ export class Agent {
 
   async llmChat(S: State, prompt: string, llmId: DLLMId): Promise<string> {
     S.messages.push({ role: 'user', text: prompt });
-    let response = await aixChatGenerateTextNS_Simple(llmId, S.instruction, S.messages, 'chat-react-turn', this.contextRef, this.abortSignal);
+    let response = await aixChatGenerateText_Simple(llmId, S.instruction, S.messages, 'chat-react-turn', this.contextRef, { abortSignal: this.abortSignal });
     // process response, strip out potential hallucinated response after PAUSE is detected
     response = this.truncateStringAfterPause(response);
     S.messages.push({ role: 'model', text: response });

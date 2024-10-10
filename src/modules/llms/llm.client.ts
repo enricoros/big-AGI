@@ -125,18 +125,6 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
 }
 
 
-export async function llmChatGenerateOrThrow<TServiceSettings extends object = {}, TAccess = unknown, TLLMOptions = unknown>(
-  llmId: DLLMId,
-  messages: VChatMessageIn[],
-  contextName: string,
-  contextRef: string | null,
-  functions: VChatFunctionIn[] | null,
-  forceFunctionName: string | null,
-  maxTokens?: number,
-): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut> {
-  throw new Error(`llmChatGenerateOrThrow: ${contextName} please migrate to AIX via aixChatGenerateTextNS_Simple.`);
-}
-
 export async function llmStreamingChatGenerate<
   TServiceSettings extends object = {},
   TAccess = undefined,

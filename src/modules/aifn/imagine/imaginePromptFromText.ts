@@ -1,4 +1,4 @@
-import { aixChatGenerateTextNS_Simple } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 
@@ -24,7 +24,7 @@ export async function imaginePromptFromText(messageText: string, contextRef: str
   if (!/[.!?]$/.test(messageText)) messageText += '.';
 
   try {
-    return (await aixChatGenerateTextNS_Simple(
+    return (await aixChatGenerateText_Simple(
       llmId,
       simpleImagineSystemPrompt,
       'Write a minimum of 20-30 words prompt and up to the size of the input, based on the INPUT below.\n\nINPUT:\n' + messageText,

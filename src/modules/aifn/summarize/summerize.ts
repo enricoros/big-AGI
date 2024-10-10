@@ -1,4 +1,4 @@
-import { aixChatGenerateTextNS_Simple } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
@@ -82,7 +82,7 @@ async function cleanUpContent(chunk: string, llmId: DLLMId, _ignored_was_targetW
   const autoResponseTokensSize = contextTokens ? Math.floor(contextTokens * outputTokenShare) : null;
 
   try {
-    return (await aixChatGenerateTextNS_Simple(
+    return (await aixChatGenerateText_Simple(
       llmId,
       cleanupPrompt,
       chunk,
