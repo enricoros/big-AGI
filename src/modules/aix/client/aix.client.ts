@@ -11,11 +11,11 @@ import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metri
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixAPI_Context_ChatGenerateStream, AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixAPI_Context_ChatGenerateStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
+import { AixChatGenerate_TextMessages, aixChatGenerateRequestFromDMessages, aixChatGenerateRequestSimple, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
-import { aixChatGenerateRequestFromDMessages, aixChatGenerateRequestSimple, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 
 
 // configuration
@@ -156,18 +156,21 @@ export async function aixChatGenerateTextNS_Simple(
   // [V1-like text-only API] text inputs -> string output
   llmId: DLLMId,
   systemInstruction: string,
-  textMessages: { role: AixMessages_ChatMessage['role'], text: string }[],
+  aixTextMessages: AixChatGenerate_TextMessages | string, // if string, it's a single user message - maximum simplicity
   // aix inputs
   aixContextName: AixAPI_Context_ChatGenerateNS['name'],
   aixContextRef: AixAPI_Context['ref'],
-  // others
-  abortSignal: AbortSignal,
-) {
+  // optional - for this low-stakes API:
+  abortSignal?: AbortSignal,
+): Promise<string> {
 
-  const aixChatGenerate = aixChatGenerateRequestSimple(systemInstruction, textMessages);
+  aixTextMessages = typeof aixTextMessages === 'string' ? [{ role: 'user', text: aixTextMessages }] : aixTextMessages;
+
+  const aixChatGenerate = aixChatGenerateRequestSimple(systemInstruction, aixTextMessages);
+
   const aixContext = aixCreateChatGenerateNSContext(aixContextName, aixContextRef);
 
-  const { fragments, generator, pendingIncomplete } = await aixChatGenerateContent_DMessage(
+  const { fragments /*, generator <- there could be some signal here, in particular interruptions TODO? */ } = await aixChatGenerateContent_DMessage(
     llmId,
     aixChatGenerate,
     aixContext,
