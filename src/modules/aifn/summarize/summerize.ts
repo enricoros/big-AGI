@@ -1,4 +1,4 @@
-import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
+import { aixChatGenerateTextNS_Simple } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
@@ -82,12 +82,12 @@ async function cleanUpContent(chunk: string, llmId: DLLMId, _ignored_was_targetW
   const autoResponseTokensSize = contextTokens ? Math.floor(contextTokens * outputTokenShare) : null;
 
   try {
-    const instructions: VChatMessageIn[] = [
-      { role: 'system', content: cleanupPrompt },
-      { role: 'user', content: chunk },
-    ];
-    const chatResponse = await llmChatGenerateOrThrow(llmId, instructions, 'chat-ai-summarize', null, null, null, autoResponseTokensSize ?? undefined);
-    return chatResponse?.content ?? '';
+    return (await aixChatGenerateTextNS_Simple(
+      llmId,
+      cleanupPrompt,
+      chunk,
+      'chat-ai-summarize', 'DEV',
+    )).trim();
   } catch (error: any) {
     return '';
   }

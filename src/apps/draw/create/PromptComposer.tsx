@@ -119,7 +119,7 @@ export function PromptComposer(props: {
   const handleSimpleEnhance = React.useCallback(async () => {
     if (nonEmptyPrompt?.trim()) {
       setIsSimpleEnhancing(true);
-      const improvedPrompt = await imaginePromptFromText(nonEmptyPrompt, null).catch(console.error);
+      const improvedPrompt = await imaginePromptFromText(nonEmptyPrompt, 'DEV').catch(console.error);
       if (improvedPrompt)
         setNextPrompt(improvedPrompt);
       setIsSimpleEnhancing(false);
