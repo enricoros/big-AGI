@@ -72,6 +72,8 @@ ${historyLines.join('\n')}
   } catch (error: any) {
     // not critical at all
     console.log('Failed to auto-title conversation', conversationId, { error });
+    if (forceReplace)
+      setAutoTitle(conversationId, '');
   }
 
   return false;
