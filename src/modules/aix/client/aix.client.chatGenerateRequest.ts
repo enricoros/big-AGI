@@ -26,7 +26,7 @@ export type AixChatGenerate_TextMessages = {
   text: string;
 }[];
 
-export function aixChatGenerateRequestSimple(systemMessage: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
+export function aixCGR_FromSimpleText(systemMessage: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
   return {
     systemMessage: aixCGR_SystemMessage(systemMessage),
     chatSequence: messages.map(m => {
@@ -62,7 +62,7 @@ function aixCGRTextPart(text: string) {
 // AIX <> Chat Messages API helpers
 //
 
-export async function aixChatGenerateRequestFromDMessages(
+export async function aixCGR_FromDMessages(
   messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
   _assemblyMode: 'complete' = 'complete',
 ): Promise<AixAPIChatGenerate_Request> {
