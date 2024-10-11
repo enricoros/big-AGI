@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { AppNews } from '../src/apps/news/AppNews';
-import { markNewsAsSeen } from '../src/apps/news/news.version';
 
+import { markNewsAsSeen } from '~/common/logic/store-logic-sherpa';
 import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 

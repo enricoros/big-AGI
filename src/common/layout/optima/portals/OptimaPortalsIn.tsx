@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import { OptimaPortalId, useOptimaPortalsStore } from './store-optima-portals';
+import { OptimaPortalId, useLayoutPortalsStore } from './store-layout-portals';
 
 
 export function OptimaDrawerIn(props: { children: React.ReactNode }) {
@@ -25,11 +25,11 @@ export function OptimaToolbarIn(props: { children: React.ReactNode }) {
  */
 function useOptimaPortalTargetElement(targetPortalId: OptimaPortalId) {
   // get the output element
-  const targetPortalEl = useOptimaPortalsStore(state => state.portals[targetPortalId]?.element ?? null);
+  const targetPortalEl = useLayoutPortalsStore(state => state.portals[targetPortalId]?.element ?? null);
 
   // increment/decrement input count
   React.useEffect(() => {
-    const { incrementInputs, decrementInputs } = useOptimaPortalsStore.getState();
+    const { incrementInputs, decrementInputs } = useLayoutPortalsStore.getState();
     incrementInputs(targetPortalId);
     return () => decrementInputs(targetPortalId);
   }, [targetPortalId]);

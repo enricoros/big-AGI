@@ -32,7 +32,7 @@ import { getConversation, getConversationSystemPurposeId, useConversation } from
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useChatLLM } from '~/common/stores/llms/llms.hooks';
-import { useFolderStore } from '~/common/state/store-folders';
+import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';

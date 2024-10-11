@@ -9,7 +9,7 @@ import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined
 
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
-import type { DEphemeral } from '~/common/chat-overlay/store-ephemeralsoverlay-slice';
+import type { DEphemeral } from '~/common/chat-overlay/store-perchat_ephemerals_slice';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { adjustContentScaling, ContentScaling, lineHeightChatTextMd } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/state/store-ui';

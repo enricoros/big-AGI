@@ -14,7 +14,7 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts-slice';
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
 import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';

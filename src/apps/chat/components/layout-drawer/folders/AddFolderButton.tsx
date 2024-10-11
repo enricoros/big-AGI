@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { getRotatingFolderColor, useFolderStore } from '~/common/state/store-folders';
+import { getRotatingFolderColor, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
 
 export function AddFolderButton() {

@@ -15,7 +15,7 @@ import { getConversation } from '~/common/stores/chat/store-chats';
 
 import type { StoragePutSchema, StorageUpdateDeletionKeySchema } from '../server/link';
 import { ChatLinkDetails } from './ChatLinkDetails';
-import { rememberChatLinkItem, updateChatLinkDeletionKey, useLinkStorageOwnerId } from './store-link';
+import { rememberChatLinkItem, updateChatLinkDeletionKey, useLinkStorageOwnerId } from './store-share-link';
 
 
 export function ChatLinkExport(props: {

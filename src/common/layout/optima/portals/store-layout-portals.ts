@@ -30,7 +30,7 @@ interface OptimaPortalActions {
 }
 
 
-export const useOptimaPortalsStore = create<OptimaPortalState & OptimaPortalActions>((_set, _get) => ({
+export const useLayoutPortalsStore = create<OptimaPortalState & OptimaPortalActions>((_set, _get) => ({
 
   // init state
   portals: {

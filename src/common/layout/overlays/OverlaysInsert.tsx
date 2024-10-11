@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { useOverlayStore } from './store-overlays';
+import { useLayoutOverlaysStore } from './store-layout-overlays';
 
 
 export const OverlaysInsert: React.FC = () => {
 
   // external state
-  const overlays = useOverlayStore(state => state.overlays);
+  const overlays = useLayoutOverlaysStore(state => state.overlays);
 
   // Transient Overlays / Modals
   return overlays.map(({ id, component }) => (

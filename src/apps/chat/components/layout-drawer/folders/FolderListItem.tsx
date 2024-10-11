@@ -10,7 +10,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/state/store-folders';
+import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 

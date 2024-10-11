@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Button, Card, CardContent, Divider, Input, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { forgetChatLinkItem, useSharedChatLinkItems } from '~/modules/trade/link/store-link';
+import { forgetChatLinkItem, useSharedChatLinkItems } from '~/modules/trade/link/store-share-link';
 
 import { Brand } from '~/common/app.config';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';

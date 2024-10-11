@@ -11,7 +11,7 @@ import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useFolderStore } from '~/common/state/store-folders';
+import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
 import type { ImportedOutcome } from './ImportOutcomeModal';
 

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Alert, Box, Button, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { setComposerStartupText } from '../../src/apps/chat/components/composer/store-composer';
+import { setComposerStartupText } from '~/common/logic/store-logic-sherpa';
 
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 

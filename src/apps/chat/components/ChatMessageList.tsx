@@ -20,7 +20,7 @@ import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useChatOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
+import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
