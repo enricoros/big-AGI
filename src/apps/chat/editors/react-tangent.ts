@@ -28,7 +28,7 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
 
   // Abort controller for the ReAct loop
   const abortController = new AbortController();
-  cHandler.setAbortController(abortController);
+  cHandler.setAbortController(abortController, 'react-tangent');
 
   // Ephemeral: the space of Status and Logs, auto-plugged to the UI
   const hEphemeral = cHandler.createEphemeralHandler(`Reason+Act`, 'Initializing ReAct..');
@@ -63,6 +63,6 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     return false;
   } finally {
     // FIXME: Massive race condition here
-    cHandler.setAbortController(null);
+    cHandler.clearAbortController('react-tangent');
   }
 }

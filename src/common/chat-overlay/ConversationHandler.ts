@@ -106,8 +106,12 @@ export class ConversationHandler {
     }
   }
 
-  setAbortController(abortController: AbortController | null): void {
-    this.chatActions.setAbortController(this.conversationId, abortController);
+  setAbortController(abortController: AbortController | null, debugScope: string): void {
+    this.chatActions.setAbortController(this.conversationId, abortController, debugScope);
+  }
+
+  clearAbortController(debugScope: string): void {
+    this.chatActions.setAbortController(this.conversationId, null, debugScope);
   }
 
 
