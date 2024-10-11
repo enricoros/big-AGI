@@ -26,9 +26,9 @@ export type AixChatGenerate_TextMessages = {
   text: string;
 }[];
 
-export function aixCGR_FromSimpleText(systemMessage: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
+export function aixCGR_FromSimpleText(systemInstruction: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
   return {
-    systemMessage: aixCGR_SystemMessage(systemMessage),
+    systemMessage: aixCGR_SystemMessage(systemInstruction),
     chatSequence: messages.map(m => {
       switch (m.role) {
         case 'user':

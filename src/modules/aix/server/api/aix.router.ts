@@ -21,7 +21,7 @@ export const aixRouter = createTRPCRouter({
       access: AixWire_API.Access_schema,
       model: AixWire_API.Model_schema,
       chatGenerate: AixWire_API_ChatContentGenerate.Request_schema,
-      context: AixWire_API.Context_schema,
+      context: AixWire_API.ContextChatGenerate_schema,
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
