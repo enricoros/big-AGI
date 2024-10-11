@@ -158,7 +158,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const isMermaidCode = lcBlockTitle === 'mermaid' && !blockIsPartial;
   const renderMermaid = isMermaidCode && showMermaid;
 
-  const isPlantUMLCode = heuristicIsCodePlantUML(code);
+  const isPlantUMLCode = heuristicIsCodePlantUML(code.trim());
   let renderPlantUML = isPlantUMLCode && showPlantUML;
   const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, code);
   renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
