@@ -199,7 +199,15 @@ export async function aixChatGenerateText_Simple(
   const aixContext = aixCreateChatGenerateContext(aixContextName, aixContextRef);
 
   // Aix Streaming - implicit if the callback is provided
-  const aixStreaming = !!onTextStreamUpdate;
+  let aixStreaming = !!onTextStreamUpdate;
+
+
+  // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
+  const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
+  if (isO1Preview) {
+    clientHotFixGenerateRequestForO1Preview(aixChatGenerate);
+    aixStreaming = false;
+  }
 
 
   // Variable to store the final text
@@ -239,7 +247,7 @@ export async function aixChatGenerateText_Simple(
     !aixStreaming ? undefined : (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization
       _llToText(ll, state);
-      if (state.text !== null) {
+      if (onTextStreamUpdate && state.text !== null) {
         // TODO: throttler? or push it down to the lower level
         onTextStreamUpdate(state.text, false, state.generator);
       }
