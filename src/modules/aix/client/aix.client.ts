@@ -11,7 +11,7 @@ import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metri
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPI_Access, AixAPI_Context, AixAPI_Context_ChatGenerateNS, AixAPI_Context_ChatGenerateStream, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
 import { aixCGR_FromDMessages, aixCGR_FromSimpleText, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
@@ -23,12 +23,8 @@ export const DEBUG_PARTICLES = false;
 const AIX_CLIENT_DEV_ASSERTS = process.env.NODE_ENV === 'development';
 
 
-export function aixCreateChatGenerateNSContext(name: AixAPI_Context_ChatGenerateNS['name'], ref: string): AixAPI_Context_ChatGenerateNS {
+export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['name'], ref: string | '_DEV_'): AixAPI_Context_ChatGenerate {
   return { method: 'chat-generate', name, ref };
-}
-
-export function aixCreateChatGenerateStreamContext(name: AixAPI_Context_ChatGenerateStream['name'], ref: string): AixAPI_Context_ChatGenerateStream {
-  return { method: 'chat-stream', name, ref };
 }
 
 export function aixCreateModelFromLLMOptions(
@@ -88,8 +84,8 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
   llmId: DLLMId,
   chatHistory: Readonly<DMessage[]>,
   // aix inputs
-  aixContextName: AixAPI_Context_ChatGenerateStream['name'],
-  aixContextRef: AixAPI_Context['ref'],
+  aixContextName: AixAPI_Context_ChatGenerate['name'],
+  aixContextRef: AixAPI_Context_ChatGenerate['ref'],
   // others
   clientOptions: AixClientOptions,
   onStreamingUpdate: (update: AixChatGenerateContent_DMessage, isDone: boolean) => void,
@@ -114,7 +110,7 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
     await aixChatGenerateContent_DMessage(
       llmId,
       aixChatContentGenerateRequest,
-      aixCreateChatGenerateStreamContext(aixContextName, aixContextRef),
+      aixCreateChatGenerateContext(aixContextName, aixContextRef),
       true,
       clientOptions,
       (update: AixChatGenerateContent_DMessage, isDone: boolean) => {
@@ -178,8 +174,8 @@ export async function aixChatGenerateText_Simple(
   systemInstruction: string,
   aixTextMessages: AixChatGenerate_TextMessages | string, // if string, it's a single user message - maximum simplicity
   // aix inputs
-  aixContextName: AixAPI_Context_ChatGenerateNS['name'],
-  aixContextRef: AixAPI_Context['ref'],
+  aixContextName: AixAPI_Context_ChatGenerate['name'],
+  aixContextRef: AixAPI_Context_ChatGenerate['ref'],
   // optional options
   clientOptions?: Partial<AixClientOptions>, // this makes the abortController optional
   // optional callback for streaming
@@ -200,7 +196,7 @@ export async function aixChatGenerateText_Simple(
   );
 
   // Aix Context
-  const aixContext = aixCreateChatGenerateNSContext(aixContextName, aixContextRef);
+  const aixContext = aixCreateChatGenerateContext(aixContextName, aixContextRef);
 
   // Aix Streaming - implicit if the callback is provided
   const aixStreaming = !!onTextStreamUpdate;
@@ -349,7 +345,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   llmId: DLLMId,
   // aix inputs
   aixChatGenerate: AixAPIChatGenerate_Request,
-  aixContext: AixAPI_Context,
+  aixContext: AixAPI_Context_ChatGenerate,
   aixStreaming: boolean,
   // others
   clientOptions: AixClientOptions,
@@ -521,7 +517,7 @@ async function _aixChatGenerateContent_LL(
   aixAccess: AixAPI_Access,
   aixModel: AixAPI_Model,
   aixChatGenerate: AixAPIChatGenerate_Request,
-  aixContext: AixAPI_Context,
+  aixContext: AixAPI_Context_ChatGenerate,
   aixStreaming: boolean,
   // others
   abortSignal: AbortSignal,

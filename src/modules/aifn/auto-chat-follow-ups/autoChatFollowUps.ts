@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixClientFunctionCallToolDefinition, aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 import { aixCGR_FromDMessages, aixCGR_SystemMessage } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { aixChatGenerateContent_DMessage, aixCreateChatGenerateNSContext } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -190,7 +190,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
     aixChatGenerateContent_DMessage(
       llmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(diagramsTool.fun)], toolsPolicy: { type: 'any' } },
-      aixCreateChatGenerateNSContext('chat-followup-diagram', conversationId),
+      aixCreateChatGenerateContext('chat-followup-diagram', conversationId),
       false,
       { abortSignal: 'NON_ABORTABLE' },
     ).then(({ fragments }) => {
@@ -241,7 +241,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
     aixChatGenerateContent_DMessage(
       llmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(uiTool.fun)], toolsPolicy: { type: 'any' } },
-      aixCreateChatGenerateNSContext('chat-followup-htmlui', conversationId),
+      aixCreateChatGenerateContext('chat-followup-htmlui', conversationId),
       false,
       { abortSignal: 'NON_ABORTABLE' },
     ).then(({ fragments }) => {
