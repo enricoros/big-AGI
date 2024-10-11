@@ -57,7 +57,7 @@ export async function runPersonaOnConversationHead(
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
-  cHandler.setAbortController(abortController);
+  cHandler.setAbortController(abortController, 'chat-persona');
 
   // stream the assistant's messages directly to the state store
   const messageStatus = await aixChatGenerateContent_DMessage_FromHistory(
@@ -113,7 +113,7 @@ export async function runPersonaOnConversationHead(
 
   // clear to send, again
   // FIXME: race condition? (for sure!)
-  cHandler.setAbortController(null);
+  cHandler.clearAbortController('chat-persona');
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set
