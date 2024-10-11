@@ -5,7 +5,7 @@ import { Box, Button, Typography } from '@mui/joy';
 
 import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 import { BeamView } from '~/modules/beam/BeamView';
-import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
+import { createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
 
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { createDConversation, DConversation } from '~/common/stores/chat/chat.conversation';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { OptimaPortalId, useOptimaPortalsStore } from './store-optima-portals';
+import { OptimaPortalId, useLayoutPortalsStore } from './store-layout-portals';
 
 
 /**
@@ -20,7 +20,7 @@ export function useOptimaPortalOutRef(portalTargetId: OptimaPortalId, debugCalle
   const ref = React.useRef<HTMLElement>(null);
 
   React.useLayoutEffect(() => {
-    const { setElement } = useOptimaPortalsStore.getState();
+    const { setElement } = useLayoutPortalsStore.getState();
     if (!ref.current) {
       console.warn(`useOptimaPortalOut: ref.current is null for type ${portalTargetId} (called by ${debugCallerName})`);
     } else {

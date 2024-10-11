@@ -10,10 +10,10 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
-import { useChatAttachmentsStore } from '~/common/chat-overlay/store-chat-overlay';
+import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_vanilla';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
-import type { AttachmentDraftsStoreApi } from './store-attachment-drafts-slice';
+import type { AttachmentDraftsStoreApi } from './store-perchat-attachment-drafts_slice';
 
 
 // enable to debug operations

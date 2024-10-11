@@ -7,7 +7,7 @@ import { Is } from '~/common/util/pwaUtils';
 // UX Labs Experiments
 
 // UxLabsSettings.tsx contains the graduated settings, but the following are not stated:
-//  - Text Tools: dinamically shown where applicable
+//  - Text Tools: dynamically shown where applicable
 //  - Chat Mode: Follow-Ups; moved to Chat Advanced UI
 interface UXLabsStore {
 

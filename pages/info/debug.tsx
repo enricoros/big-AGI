@@ -17,16 +17,16 @@ import { Brand } from '~/common/app.config';
 import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
 
 // apps access
-import { incrementalNewsVersion, useAppNewsStateStore } from '../../src/apps/news/news.version';
+import { incrementalNewsVersion } from '../../src/apps/news/news.version';
 
 // capabilities access
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
 // stores access
 import { getLLMsDebugInfo } from '~/common/stores/llms/store-llms';
-import { useAppStateStore } from '~/common/state/store-appstate';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useFolderStore } from '~/common/state/store-folders';
+import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 // utils access
@@ -81,8 +81,7 @@ function AppDebug() {
   const chatsCount = useChatStore.getState().conversations?.length;
   const uxLabsExperiments = Object.entries(useUXLabsStore.getState()).filter(([_k, v]) => v === true).map(([k, _]) => k).join(', ');
   const { folders, enableFolders } = useFolderStore.getState();
-  const { lastSeenNewsVersion } = useAppNewsStateStore.getState();
-  const { usageCount } = useAppStateStore.getState();
+  const { lastSeenNewsVersion, usageCount } = useLogicSherpaStore.getState();
 
   // derived state
   const cClient = {

@@ -1,9 +1,9 @@
 import { StoreApi, useStore } from 'zustand';
 import { createStore as createVanillaStore } from 'zustand/vanilla';
 
-import { AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-attachment-drafts-slice';
-import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-composeroverlay-slice';
-import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './store-ephemeralsoverlay-slice';
+import { AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
+import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-perchat_composer_slice';
+import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './store-perchat_ephemerals_slice';
 
 
 /* Per-chat overlay store, combining all the slices.

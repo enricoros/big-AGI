@@ -3,11 +3,11 @@ import { useRouter } from 'next/router';
 
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
 import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
-import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
-import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
-import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
+import { autoConfInitiateConfiguration } from '~/common/logic/store-logic-autoconf_vanilla';
 import { estimatePersistentStorageOrThrow, requestPersistentStorage } from '~/common/util/storageUtils';
+import { markNewsAsSeen, shallRedirectToNews } from '~/common/logic/store-logic-sherpa';
+import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
@@ -20,7 +20,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   useNextLoadProgress(route, events);
 
 
-  // [bootup] logic
+  // [boot-up] logic
   const isOnChat = route === ROUTE_APP_CHAT;
   const doRedirectToNews = isOnChat && shallRedirectToNews();
 

@@ -25,7 +25,7 @@ interface LinkStore {
 
 }
 
-const useLinkStore = create<LinkStore>()(
+const useShareLinkStore = create<LinkStore>()(
   persist(
     (set) => ({
 
@@ -52,18 +52,18 @@ const useLinkStore = create<LinkStore>()(
 
 
 // by AppChatLink
-export const useSharedChatLinkItems = () => useLinkStore(useShallow(state => state.chatLinkItems));
+export const useSharedChatLinkItems = () => useShareLinkStore(useShallow(state => state.chatLinkItems));
 
 // by ChatLinkExport/ChatLinkDetails
-export const rememberChatLinkItem = useLinkStore.getState().chatLinkItemAdd;
-export const updateChatLinkDeletionKey = useLinkStore.getState().chatLinkItemChangeDeletionKey;
-export const forgetChatLinkItem = useLinkStore.getState().chatLinkItemRemove;
-export const useLinkStorageOwnerId = () => useLinkStore(useShallow(state => ({
+export const rememberChatLinkItem = useShareLinkStore.getState().chatLinkItemAdd;
+export const updateChatLinkDeletionKey = useShareLinkStore.getState().chatLinkItemChangeDeletionKey;
+export const forgetChatLinkItem = useShareLinkStore.getState().chatLinkItemRemove;
+export const useLinkStorageOwnerId = () => useShareLinkStore(useShallow(state => ({
   linkStorageOwnerId: state.linkStorageOwnerId,
   setLinkStorageOwnerId: state.setLinkStorageOwnerId,
 })));
 
 // by Nav
 export function hasNoChatLinkItems() {
-  return !useLinkStore.getState().chatLinkItems.length;
+  return !useShareLinkStore.getState().chatLinkItems.length;
 }

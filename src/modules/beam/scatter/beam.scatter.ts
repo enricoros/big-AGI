@@ -9,7 +9,7 @@ import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragmen
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
-import type { RootStoreSlice } from '../store-beam-vanilla';
+import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
 import { updateBeamLastConfig } from '../store-module-beam';
 

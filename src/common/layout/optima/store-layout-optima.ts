@@ -101,7 +101,7 @@ export interface OptimaActions {
 }
 
 
-export const useOptimaStore = create<OptimaState & OptimaActions>((_set, _get) => ({
+export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _get) => ({
 
   ...initialState,
 

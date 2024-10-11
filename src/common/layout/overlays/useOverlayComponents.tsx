@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { GlobalOverlayId, useOverlayStore } from './store-overlays';
+import { GlobalOverlayId, useLayoutOverlaysStore } from './store-layout-overlays';
 
 
 enum OverlayCloseReason {
@@ -65,7 +65,7 @@ export function useOverlayComponents(): {
   ): Promise<TResolve> => {
     return new Promise<TResolve>((pResolve, pReject) => {
 
-      const { appendOverlay, overlayExists, overlayToFront, removeOverlay } = useOverlayStore.getState();
+      const { appendOverlay, overlayExists, overlayToFront, removeOverlay } = useLayoutOverlaysStore.getState();
 
       // Check if the overlay already exists and exit early
       // This is like doReject, but doesn't remove the overlay as we don't insert it

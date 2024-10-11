@@ -3,7 +3,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { SystemPurposes } from '../../data';
 import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 
-import { createBeamVanillaStore } from '~/modules/beam/store-beam-vanilla';
+import { createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -14,8 +14,8 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI } from '../../apps/chat/store-app-chat';
 
-import { createDEphemeral } from './store-ephemeralsoverlay-slice';
-import { createPerChatVanillaStore } from './store-chat-overlay';
+import { createDEphemeral } from './store-perchat_ephemerals_slice';
+import { createPerChatVanillaStore } from './store-perchat_vanilla';
 
 
 // configuration

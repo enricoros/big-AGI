@@ -41,8 +41,8 @@ import { lineHeightTextareaMd } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
-import { useAppStateStore } from '~/common/state/store-appstate';
-import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
+import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
+import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
@@ -75,7 +75,6 @@ import { StatusBar } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
-import { useComposerStartupText } from './store-composer';
 
 
 const zIndexComposerOverlayMic = 10;
@@ -124,7 +123,7 @@ export function Composer(props: {
     labsShowCost: state.labsShowCost,
     labsShowShortcutBar: state.labsShowShortcutBar,
   })));
-  const timeToShowTips = useAppStateStore(state => state.usageCount >= 5);
+  const timeToShowTips = useLogicSherpaStore(state => state.usageCount >= 5);
   const { novel: explainShiftEnter, touch: touchShiftEnter } = useUICounter('composer-shift-enter');
   const { novel: explainAltEnter, touch: touchAltEnter } = useUICounter('composer-alt-enter');
   const { novel: explainCtrlEnter, touch: touchCtrlEnter } = useUICounter('composer-ctrl-enter');
