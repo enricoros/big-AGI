@@ -4,6 +4,7 @@ import { Link } from '~/common/components/Link';
 
 
 export function isErrorChatMessage(text: string) {
+  if (!text) return false;
   return ['**[Service Issue] ', '[Issue] ', '[OpenAI Issue] '].some(prefix => text.startsWith(prefix));
 }
 
@@ -47,8 +48,7 @@ export function explainServiceErrors(text: string, isAssistant: boolean) {
         choose a model with larger context, or submit a shorter new message.
         {!usedText && ` -- ${text}`}
       </>;
-
-    default:
-      return undefined;
   }
+
+  return null;
 }
