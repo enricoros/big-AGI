@@ -10,7 +10,7 @@ export const SNACKBAR_ANIMATION_DURATION = 200;
 export interface SnackbarMessage {
   key: string;
   message: string;
-  type: 'success' | 'issue' | 'title' | 'info';
+  type: 'success' | 'issue' | 'center-title' | 'info' | 'precondition-fail';
   closeButton?: boolean,
   overrides?: Partial<SnackbarTypeMap['props']>;
 }
@@ -105,8 +105,19 @@ export const useSnackbarsStore = create<SnackbarStore>()(
   }),
 );
 
-export const addSnackbar = (snackbar: SnackbarMessage) =>
-  useSnackbarsStore.getState().addSnackbar(snackbar);
+/**
+ * This is here to quickly trace back to "unexpected" branches in the code
+ */
+export function addSnackUnexpected(userMessage: string) {
+  if (process.env.NODE_ENV === 'development')
+    console.warn(`[DEV] Unexpected branch reached: ${userMessage}`);
+  return addSnackbar({ key: 'unexpected', message: userMessage, type: 'precondition-fail' });
+}
 
-export const removeSnackbar = (key: string) =>
-  useSnackbarsStore.getState().removeSnackbar(key);
+export function addSnackbar(snackbar: SnackbarMessage) {
+  return useSnackbarsStore.getState().addSnackbar(snackbar);
+}
+
+export function removeSnackbar(key: string) {
+  return useSnackbarsStore.getState().removeSnackbar(key);
+}

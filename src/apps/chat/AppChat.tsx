@@ -207,7 +207,7 @@ export function AppChat() {
     if (showNextTitleChange.current) {
       showNextTitleChange.current = false;
       const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
-      const id = addSnackbar({ key: 'focused-title', message: title, type: 'title' });
+      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
       return () => removeSnackbar(id);
     }
   }, [focusedChatNumber, focusedChatTitle]);
