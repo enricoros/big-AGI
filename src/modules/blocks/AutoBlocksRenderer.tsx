@@ -75,8 +75,13 @@ export function AutoBlocksRenderer(props: {
   // state
   const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } =
     useTextCollapser(props.text, fromUser);
-  let autoBlocksStable =
-    useAutoBlocksMemoSemiStable(text, props.renderAsCodeWithTitle, fromSystem, props.renderSanityTextDiffs);
+  const autoBlocksStable = useAutoBlocksMemoSemiStable(
+    text,
+    props.renderAsCodeWithTitle,
+    fromSystem,
+    props.renderSanityTextDiffs,
+    props.blocksProcessor === 'diagram',
+  );
 
   // handlers
   const { setText } = props;
@@ -90,11 +95,6 @@ export function AutoBlocksRenderer(props: {
     }
     return false;
   }, [setText, text]);
-
-
-  // apply specialDiagramMode filter if applicable
-  if (props.blocksProcessor === 'diagram')
-    autoBlocksStable = autoBlocksStable.filter(({ bkt }) => bkt === 'code-bk' || autoBlocksStable.length === 1);
 
 
   // Memo the styles, to minimize re-renders

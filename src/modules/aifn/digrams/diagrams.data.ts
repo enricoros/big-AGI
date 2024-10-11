@@ -1,9 +1,11 @@
+import type { AixChatGenerate_TextMessages } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+
 import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
-import type { VChatMessageIn } from '~/modules/llms/llm.client';
 
 
 export type DiagramType = 'auto' | 'mind';
 export type DiagramLanguage = 'mermaid' | 'plantuml';
+
 
 // NOTE: keep these global, or it will trigger re-renders
 export const diagramTypes: FormRadioOption<DiagramType>[] = [
@@ -64,12 +66,20 @@ function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: str
 const sysSuffixPM = 'The next three messages will outline: 1. your personality, 2. the data you\'ll work with, and 3. a clear restatement of the instructions.';
 const usrSuffixCoT = 'Please think step by step, then generate valid diagram code in a markdown block as instructed, and stop your response.';
 
-export function bigDiagramPrompt(diagramType: DiagramType, diagramLanguage: DiagramLanguage, chatSystemPrompt: string, subject: string, customInstruction: string): VChatMessageIn[] {
+export function bigDiagramPrompt(
+  diagramType: DiagramType,
+  diagramLanguage: DiagramLanguage,
+  chatSystemPrompt: string,
+  subject: string,
+  customInstruction: string,
+): { systemInstruction: string, messages: AixChatGenerate_TextMessages } {
   const { sys, usr } = diagramLanguage === 'mermaid' ? mermaidDiagramPrompt(diagramType) : plantumlDiagramPrompt(diagramType);
-  return [
-    { role: 'system', content: sys + '\n' + sysSuffixPM },
-    { role: 'user', content: chatSystemPrompt },
-    { role: 'assistant', content: subject },
-    { role: 'user', content: (!customInstruction?.trim() ? usr : `${usr} Also consider the following instructions: ${customInstruction.trim()}`) + '\n' + usrSuffixCoT },
-  ];
+  return {
+    systemInstruction: sys + '\n' + sysSuffixPM,
+    messages: [
+      { role: 'user', text: chatSystemPrompt },
+      { role: 'model', text: subject },
+      { role: 'user', text: (!customInstruction?.trim() ? usr : `${usr} Also consider the following instructions: ${customInstruction.trim()}`) + '\n' + usrSuffixCoT },
+    ],
+  };
 }
