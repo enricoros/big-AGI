@@ -11,6 +11,12 @@ export function useIsMobile(): boolean {
   return _useMatchMedia(_isMobileQuery, false);
 }
 
+export function useIsTallScreen(): boolean {
+  // Adjust the aspect ratio value as needed (e.g., 10/9 for a slightly taller than square ratio)
+  return _useMatchMedia('(max-aspect-ratio: 10/9)', false);
+}
+
+
 // the query was was ${appTheme.breakpoints.values.md: { xs: 0, sm: 600, md: 900, lg: 1200, xl: 1536 } - 1}px
 const _isMobileQuery: string = `(max-width: 899px)`;
 

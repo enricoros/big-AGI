@@ -34,7 +34,7 @@ import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useChatLLM } from '~/common/stores/llms/llms.hooks';
 import { useFolderStore } from '~/common/state/store-folders';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -110,6 +110,7 @@ export function AppChat() {
   const theme = useTheme();
 
   const isMobile = useIsMobile();
+  const isTallScreen = useIsTallScreen();
 
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
@@ -508,7 +509,7 @@ export function AppChat() {
     <OptimaToolbarIn>{focusedBarContent}</OptimaToolbarIn>
 
     <PanelGroup
-      direction={isMobile ? 'vertical' : 'horizontal'}
+      direction={(isMobile || isTallScreen) ? 'vertical' : 'horizontal'}
       id='app-chat-panels'
     >
 
