@@ -49,7 +49,6 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(reactResult), true);
 
     hEphemeral.markAsDone();
-    setTimeout(() => hEphemeral.deleteIfNotPinned(), EPHEMERAL_DELETION_DELAY);
 
     return true;
   } catch (error: any) {

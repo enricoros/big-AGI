@@ -18,6 +18,10 @@ import { createDEphemeral } from './store-ephemeralsoverlay-slice';
 import { createPerChatVanillaStore } from './store-chat-overlay';
 
 
+// configuration
+const EPHEMERAL_DELETION_DELAY = 5 * 1000;
+
+
 /**
  * ConversationHandler is a class to overlay state onto a conversation.
  * It is a singleton per conversationId.
@@ -253,14 +257,19 @@ export class ConversationHandler {
     const eId = ephemeral.id;
     ephemeralsAppend(ephemeral);
 
+    // delete if not pinned
+    const deleteIfNotPinned = () => {
+      if (!ephemeralsIsPinned(eId))
+        ephemeralsDelete(eId);
+    };
+
     // return a 'handler' (manipulation functions)
     return {
       updateText: (text: string) => ephemeralsUpdate(eId, { text }),
       updateState: (state: object) => ephemeralsUpdate(eId, { state }),
-      markAsDone: () => ephemeralsUpdate(eId, { done: true }),
-      deleteIfNotPinned: () => {
-        if (!ephemeralsIsPinned(eId))
-          ephemeralsDelete(eId);
+      markAsDone: () => {
+        ephemeralsUpdate(eId, { done: true });
+        setTimeout(deleteIfNotPinned, EPHEMERAL_DELETION_DELAY);
       },
     };
   }
