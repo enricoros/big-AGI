@@ -53,10 +53,10 @@ type DoneReason =
 
 function _chunkExpressionReplaceEN(fullText: string) {
   return fullText
-    .replaceAll(/\.?\scomma\.?/gi, ',')
-    .replaceAll(/\.?\speriod\.?/gi, '.')
-    .replaceAll(/\.?\squestion mark\.?/gi, '?')
-    .replaceAll(/\.?\sexclamation mark\.?/gi, '!');
+    .replaceAll(/\.?\scomma\b/gi, ',')
+    .replaceAll(/\.?\speriod\b/gi, '.')
+    .replaceAll(/\.?\squestion mark\b/gi, '?')
+    .replaceAll(/\.?\sexclamation mark\b/gi, '!');
 }
 
 
