@@ -8,9 +8,8 @@ import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
 import { remarkMark } from 'remark-mark-highlight';
 
-import { Box, Button, Tooltip } from '@mui/joy';
+import { Box, Button } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
