@@ -55,4 +55,4 @@ ensure that your proxy is configured to support streaming output as described ab
 - For Kubernetes deployments, see our [Kubernetes Deployment Guide](deploy-k8s.md)
 - For general installation instructions, see our [Installation Guide](installation.md)
 
-If you continue to experience issues, please reach out to our [community support channels](README.md#support-and-community).
+If you continue to experience issues, please reach out to our [community support channels](../README.md#-get-involved).
