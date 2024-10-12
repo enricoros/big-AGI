@@ -8,27 +8,25 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { Search } from './search.types';
 
 
-const inputSchema = z.object({
-  query: z.string(),
-  key: z.string().optional(), // could be server-set
-  cx: z.string().optional(), // could be server-set
-});
-
-
 export const googleSearchRouter = createTRPCRouter({
 
   /**
    * Google Search via the Google Programmable Search product
    */
   search: publicProcedure
-    .input(inputSchema)
+    .input(z.object({
+      query: z.string(),
+      items: z.number(),
+      key: z.string().optional(), // could be server-set
+      cx: z.string().optional(), // could be server-set
+    }))
     .query(async ({ input }): Promise<{ pages: Search.API.BriefResult[] }> => {
 
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
         cx: (input.cx || env.GOOGLE_CSE_ID || '').trim(),
         key: (input.key || env.GOOGLE_CLOUD_API_KEY || '').trim(),
-        num: 5,
+        num: input.items,
       };
 
       if (!customSearchParams.key || !customSearchParams.cx)
