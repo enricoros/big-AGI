@@ -13,6 +13,7 @@ export interface DEphemeral {
   state: object;
   done: boolean;
   pinned: boolean;
+  showState: boolean;
 }
 
 type DEphemeralId = string;
@@ -25,6 +26,7 @@ export function createDEphemeral(title: string, initialText: string): DEphemeral
     state: {},
     done: false,
     pinned: lastEphemeralPinned,
+    showState: lastEphemeralShowState,
   };
 }
 
@@ -32,6 +34,7 @@ export function createDEphemeral(title: string, initialText: string): DEphemeral
 /// Ephemerals Overlay Store ///
 
 let lastEphemeralPinned = false;
+let lastEphemeralShowState = false;
 
 interface EphemeralsOverlayState {
 
@@ -47,6 +50,9 @@ export interface EphemeralsOverlayStore extends EphemeralsOverlayState {
 
   ephemeralsIsPinned: (ephemeralId: DEphemeralId) => boolean;
   ephemeralsTogglePinned: (ephemeralId: DEphemeralId) => void;
+
+  ephemeralsIsShowState: (ephemeralId: DEphemeralId) => boolean;
+  ephemeralsToggleShowState: (ephemeralId: DEphemeralId) => void;
 
 }
 
@@ -71,6 +77,8 @@ export const createEphemeralsOverlayStoreSlice: StateCreator<EphemeralsOverlaySt
     _set((state) => {
       if (update.pinned !== undefined)
         lastEphemeralPinned = update.pinned;
+      if (update.showState !== undefined)
+        lastEphemeralShowState = update.showState;
       return {
         ephemerals: state.ephemerals.map((e) =>
           e.id === ephemeralId
@@ -92,6 +100,16 @@ export const createEphemeralsOverlayStoreSlice: StateCreator<EphemeralsOverlaySt
       else
         ephemeralsUpdate(ephemeralId, { pinned: !ephemeral.pinned });
     }
+  },
+
+  ephemeralsIsShowState: (ephemeralId) =>
+    _get().ephemerals.find((e) => e.id === ephemeralId)?.showState || false,
+
+  ephemeralsToggleShowState: (ephemeralId) => {
+    const { ephemerals, ephemeralsUpdate } = _get();
+    const ephemeral = ephemerals.find((e) => e.id === ephemeralId);
+    if (ephemeral)
+      ephemeralsUpdate(ephemeralId, { showState: !ephemeral.showState });
   },
 
 });
