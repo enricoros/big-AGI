@@ -85,7 +85,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.6: Groq <B>Llama 3.1</B> support</> },
       { text: <>1.16.7: Gpt-4o <B>2024-08-06</B></> },
       { text: <>1.16.8: <B>ChatGPT-4o</B> latest</> },
-      { text: <>OpenAI <B>o1</B> and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/FDggwwZv?utm_source=github&utm_medium=news116&utm_campaign=ba20'>Sign up here</B></> },
+      { text: <>OpenAI <B>o1</B> and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-main&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
     ],
   },
   {
