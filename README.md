@@ -13,7 +13,7 @@ Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 > 🚀 Big-AGI 2 is launching Q4 2024. Be the first to experience it before the public release.
 >
-> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/FDggwwZv?utm_source=github&utm_medium=readme&utm_campaign=ba20)
+> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-stable&utm_medium=readme&utm_campaign=ea2)
 
 Or fork & run on Vercel
 
