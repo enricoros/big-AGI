@@ -163,7 +163,7 @@ export function useChatDrawerRenderItems(
 
         // only prepend a 'Results' group if there are results
         if (chatNavItems.length)
-          renderNavItems = [{ type: 'nav-item-group', title: 'Search results' }, ...chatNavItems];
+          renderNavItems = [{ type: 'nav-item-group', title: chatNavItems.length >= 10 ? `Search results (${chatNavItems.length})` : 'Search Result' }, ...chatNavItems];
 
       }
       // [grouping] group by date or persona
