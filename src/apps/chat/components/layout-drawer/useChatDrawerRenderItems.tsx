@@ -156,14 +156,20 @@ export function useChatDrawerRenderItems(
         chatNavItems.sort((a, b) => b.searchFrequency - a.searchFrequency);
 
       // Render List
-      let renderNavItems: ChatDrawerRenderItems['renderNavItems'] = chatNavItems;
+      let renderNavItems: ChatDrawerRenderItems['renderNavItems'];
 
       // [search] add a header if searching
       if (isSearching) {
 
+        // start growing the render array from the nav array
+        renderNavItems = [...chatNavItems]
+
         // only prepend a 'Results' group if there are results
         if (chatNavItems.length)
-          renderNavItems = [{ type: 'nav-item-group', title: chatNavItems.length >= 10 ? `Search results (${chatNavItems.length})` : 'Search Result' }, ...chatNavItems];
+          renderNavItems.unshift({
+            type: 'nav-item-group',
+            title: chatNavItems.length >= 10 ? `Search results (${chatNavItems.length})` : chatNavItems.length > 1 ? 'Search Results' : 'Search Result',
+          });
 
       }
       // [grouping] group by date or persona
@@ -220,6 +226,12 @@ export function useChatDrawerRenderItems(
           { type: 'nav-item-group', title: groupName },
           ...items,
         ]);
+      } else {
+
+        // [no grouping & no searching] just render the chatNavItems
+        // Note: we don't want to modify the original array, as we're including spurious objects for subsequent reduction functions
+        renderNavItems = [...chatNavItems];
+
       }
 
       // [zero state] searching & filtering
@@ -247,9 +259,8 @@ export function useChatDrawerRenderItems(
       const filteredChatIDs = chatNavItems.map(_c => _c.conversationId);
       const filteredChatsCount = chatNavItems.length;
       const filteredChatsAreEmpty = !filteredChatsCount || (filteredChatsCount === 1 && chatNavItems[0].isEmpty);
-      const filteredChatsBarBasis = ((showRelativeSize && filteredChatsCount >= 2) || isSearching)
-        ? chatNavItems.reduce((longest, _c) => Math.max(longest, isSearching ? _c.searchFrequency : _c.messageCount), 1)
-        : 0;
+      const filteredChatsBarBasis = !isSearching && (!showRelativeSize || filteredChatsCount < 2) ? 0
+        : chatNavItems.reduce((longest, _c) => Math.max(longest, isSearching ? _c.searchFrequency : _c.messageCount), 1);
 
       // stabilize individual renderNavItems (only if in the same place)
       const prev = stabilizeRenderItems.current;
@@ -270,6 +281,22 @@ export function useChatDrawerRenderItems(
         filteredChatsBarBasis,
         filteredChatsIncludeActive,
       };
+
+      if (prev)
+      console.log(
+
+      prev.renderNavItems.length === next.renderNavItems.length,
+      prev.renderNavItems.every((_a, i) => shallowEquals(_a, next.renderNavItems[i])),
+       shallowEquals(prev.filteredChatIDs, next.filteredChatIDs),
+       prev.filteredChatsCount === next.filteredChatsCount,
+       prev.filteredChatsAreEmpty === next.filteredChatsAreEmpty,
+       prev.filteredChatsBarBasis === next.filteredChatsBarBasis,
+        prev.filteredChatsBarBasis, next.filteredChatsBarBasis,
+       prev.filteredChatsIncludeActive === next.filteredChatsIncludeActive,
+        chatNavItems,
+        structuredClone(next),
+        structuredClone(prev)
+      )
 
       // stabilize the render items
       if (prev
