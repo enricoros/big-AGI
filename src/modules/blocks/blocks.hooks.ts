@@ -99,5 +99,5 @@ export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: st
     prevTextRef.current = text;
 
     return recycledBlocks;
-  }, [forceCodeWithTitle, forceMarkdown, forceSanityTextDiffs, text]);
+  }, [forceCodeWithTitle, forceMarkdown, forceSanityTextDiffs, selectSingleCodeBlock, text]);
 }

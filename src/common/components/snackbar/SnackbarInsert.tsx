@@ -13,34 +13,41 @@ const defaultTypeConfig: {
     closeButton: boolean;
   })
 } = {
-  success: {
+  'success': {
     color: 'success',
     variant: 'soft',
     autoHideDuration: 5000,
     clickAway: false,
     closeButton: true,
   },
-  info: {
+  'info': {
     color: 'primary',
     variant: 'soft',
     autoHideDuration: 2000,
     clickAway: false,
     closeButton: true,
   },
-  issue: {
+  'issue': {
     color: 'warning',
     variant: 'solid',
     autoHideDuration: null, // Will not auto-hide
     clickAway: false,
     closeButton: true,
   },
-  title: {
+  'center-title': {
     color: 'neutral',
     variant: 'plain',
     autoHideDuration: 2000,
     clickAway: false,
     closeButton: false,
     anchorOrigin: { vertical: 'top', horizontal: 'center' },
+  },
+  'precondition-fail': {
+    color: 'warning',
+    variant: 'outlined',
+    autoHideDuration: 2000,
+    clickAway: false,
+    closeButton: true,
   },
 };
 
@@ -102,7 +109,7 @@ export function SnackbarInsert() {
           <CloseRoundedIcon />
         </IconButton>
       )}
-      sx={activeMessage.type === 'title' ? typeTitleSx : typeDefaultSx}
+      sx={activeMessage.type === 'center-title' ? typeTitleSx : typeDefaultSx}
     >
       {activeMessage.message}
     </Snackbar>

@@ -4,11 +4,18 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PushPinIcon from '@mui/icons-material/PushPin';
+import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
+import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
+
+import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { DEphemeral } from '~/common/chat-overlay/store-ephemeralsoverlay-slice';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import { lineHeightChatTextMd } from '~/common/app.theme';
+import { adjustContentScaling, ContentScaling, lineHeightChatTextMd } from '~/common/app.theme';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+
+// State Pane
 
 const StateLine = styled(Typography)(({ theme }) => ({
   textOverflow: 'ellipsis',
@@ -46,8 +53,7 @@ function ObjectRenderer({ name }: { name: string }) {
   return <StateLine><b>{name}</b>: <i>object not displayed</i></StateLine>;
 }
 
-
-function StateRenderer(props: { state: object }) {
+function StateRenderer(props: { state: object, contentScaling: ContentScaling }) {
   if (typeof props.state !== 'object')
     return <pre>Developer Warning: state is not an object: {JSON.stringify(props.state, null, 2)}</pre>;
 
@@ -55,10 +61,17 @@ function StateRenderer(props: { state: object }) {
 
   return (
     <Box>
-      <Typography fontSize='smaller' sx={{ mb: 1 }}>
-        ## Internal State
-      </Typography>
-      <Sheet sx={{ p: 1 }}>
+      <ScaledTextBlockRenderer
+        text='**Internal State**'
+        contentScaling={props.contentScaling}
+        textRenderVariant='markdown'
+      />
+      <Box sx={{
+        mt: 1,
+        p: 1,
+        borderRadius: 'md',
+        background: 'linear-gradient(180deg, var(--joy-palette-success-softHoverBg), transparent)',
+      }}>
         {!entries && <Typography level='body-sm'>No state variables</Typography>}
         {entries.map(([key, value]) =>
           isPrimitive(value)
@@ -69,15 +82,31 @@ function StateRenderer(props: { state: object }) {
                 ? <ObjectRenderer key={'state-' + key} name={key} />
                 : <Typography key={'state-' + key} level='body-sm'>{key}: {value}</Typography>,
         )}
-      </Sheet>
+      </Box>
     </Box>
   );
 }
 
 
+const leftPaneSx = {
+  // <pre> looks
+  overflowWrap: 'anywhere',
+  whiteSpace: 'break-spaces',
+  // 'undo' some of the github-markdown CSS customizations
+  '.markdown-body': { mx: '0!important' },
+  '.markdown-body p': { mb: 0 },
+};
+
+const rightPaneSx = {
+  borderLeft: { md: `1px dashed` },
+  borderTop: { xs: `1px dashed`, md: 'none' },
+};
+
+
 function EphemeralItem(props: {
   ephemeral: DEphemeral,
   conversationHandler: ConversationHandler,
+  contentScaling: ContentScaling,
 }) {
 
   const { ephemeral, conversationHandler } = props;
@@ -90,6 +119,12 @@ function EphemeralItem(props: {
     conversationHandler.overlayActions.ephemeralsTogglePinned(ephemeral.id);
   }, [conversationHandler, ephemeral.id]);
 
+  const handleToggleShowState = React.useCallback(() => {
+    conversationHandler.overlayActions.ephemeralsToggleShowState(ephemeral.id);
+  }, [conversationHandler, ephemeral.id]);
+
+  const showStatePane = ephemeral.showState && !!ephemeral.state;
+
   return <Box
     sx={{
       p: { xs: 1, md: 2 },
@@ -101,7 +136,7 @@ function EphemeralItem(props: {
 
     {/* Title */}
     {ephemeral.title && (
-      <Typography level='title-sm' sx={{ mb: 1.5 }}>
+      <Typography level='title-sm' sx={{ mt: -0.25, mb: 2, color: 'success.solidBg' }}>
         {ephemeral.title} Internal Monologue
       </Typography>
     )}
@@ -109,24 +144,28 @@ function EphemeralItem(props: {
     {/* Vertical | split */}
     <Grid container spacing={2}>
 
-      {/* Left pane (console) */}
-      <Grid xs={12} md={ephemeral.state ? 6 : 12}>
-        <Typography fontSize='smaller' sx={{ overflowWrap: 'anywhere', whiteSpace: 'break-spaces', lineHeight: lineHeightChatTextMd }}>
-          {ephemeral.text}
-        </Typography>
+      {/* Left pane (log) */}
+      <Grid xs={12} md={showStatePane ? 6 : 12}>
+        {/* New renderer, with */}
+        <Box sx={leftPaneSx}>
+          <ScaledTextBlockRenderer
+            text={ephemeral.text}
+            contentScaling={props.contentScaling}
+            textRenderVariant='markdown'
+          />
+        </Box>
       </Grid>
 
       {/* Right pane (state) */}
-      {!!ephemeral.state && (
-        <Grid
-          xs={12} md={6}
-          sx={{
-            borderLeft: { md: `1px dashed` },
-            borderTop: { xs: `1px dashed`, md: 'none' },
-          }}>
-          <StateRenderer state={ephemeral.state} />
+      {showStatePane && (
+        <Grid xs={12} md={6} sx={rightPaneSx}>
+          <StateRenderer
+            state={ephemeral.state}
+            contentScaling={props.contentScaling}
+          />
         </Grid>
       )}
+
     </Grid>
 
 
@@ -140,11 +179,10 @@ function EphemeralItem(props: {
       gap: 1,
     }}>
 
-      {/* Pin button */}
+      {/* Pin */}
       <IconButton
         size='sm'
-        variant={ephemeral.pinned ? 'soft' : 'outlined'}
-        color={ephemeral.pinned ? 'primary' : 'neutral'}
+        variant={ephemeral.pinned ? 'soft' : 'plain'}
         onClick={handleTogglePinned}
         sx={{
           '& > *': { transition: 'transform 0.2s' },
@@ -153,7 +191,16 @@ function EphemeralItem(props: {
         <PushPinIcon sx={ephemeral.pinned ? { transform: 'rotate(45deg)' } : undefined} />
       </IconButton>
 
-      {/* Close button */}
+      {/* Show State */}
+      <IconButton
+        size='sm'
+        variant={ephemeral.showState ? 'soft' : 'plain'}
+        onClick={handleToggleShowState}
+      >
+        {ephemeral.showState ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />}
+      </IconButton>
+
+      {/* Close */}
       <IconButton
         size='sm'
         variant={ephemeral.done ? 'solid' : 'outlined'}
@@ -167,26 +214,25 @@ function EphemeralItem(props: {
   </Box>;
 }
 
-// const dashedBorderSVG = encodeURIComponent(`
-//   <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>
-//     <rect x='0' y='0' width='100%' height='100%' fill='none' stroke='currentColor' stroke-width='2' stroke-dasharray='16, 2' />
-//   </svg>
-// `);
-
 
 export function Ephemerals(props: {
   ephemerals: DEphemeral[],
   conversationHandler: ConversationHandler,
   sx?: SxProps
 }) {
+
+  // external state
+  const adjContentScaling = useUIPreferencesStore(state => adjustContentScaling(state.contentScaling, -1));
+
   return (
     <Sheet variant='soft' color='success' invertedColors sx={props.sx}>
 
       {props.ephemerals.map((ephemeral, i) => (
         <EphemeralItem
-          key={`ephemeral-${i}`}
+          key={ephemeral.id}
           ephemeral={ephemeral}
           conversationHandler={props.conversationHandler}
+          contentScaling={adjContentScaling}
         />
       ))}
 

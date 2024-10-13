@@ -84,7 +84,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
                 videoThumbnailUrl: videoData.thumbnailUrl,
                 videoTranscript: videoData.transcript,
               },
-              urlImage: videoData.thumbnailImage ?? undefined,
+              urlImage: !videoData.thumbnailImage ? undefined : {
+                ...videoData.thumbnailImage,
+                generator: 'youtube-thumbnail',
+                timestamp: Date.now(),
+              },
             },
           });
           break;
@@ -107,7 +111,11 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
                 pageCleanedHtml: html ?? undefined,
                 pageTitle: title || undefined,
               },
-              urlImage: screenshot || undefined,
+              urlImage: !screenshot ? undefined : {
+                ...screenshot,
+                generator: 'web-capture',
+                timestamp: Date.now(),
+              },
             },
           });
         else

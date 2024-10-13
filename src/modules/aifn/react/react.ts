@@ -36,11 +36,11 @@ ALWAYS look up on google when the question is related to live events or factual 
 e.g. loadUrl: https://arxiv.org/abs/1706.03762
 Opens the given URL and displays it
 
-` : '') + `calculate:
+` : '') + /*`calculate:
 e.g. calculate: 4 * 7 / 3
 Runs a simple javascript calculation and returns the number, the input must be javascript 
 
-wikipedia:
+` + */ `wikipedia:
 e.g. wikipedia: Django
 Returns a summary from searching Wikipedia
 
@@ -204,11 +204,14 @@ async function browse(url: string): Promise<string> {
   }
 }
 
-const calculate = async (what: string): Promise<string> => String(eval(what));
+// Disable, as it allows for arbitrary code execution
+// async function calculate(what: string): Promise<string> {
+//   return String(eval(what));
+// }
 
 const knownActions: { [key: string]: ActionFunction } = {
   wikipedia: wikipedia,
   google: search,
   loadUrl: browse,
-  calculate: calculate,
+  // calculate: calculate, // DISABLED: security
 };

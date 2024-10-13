@@ -143,6 +143,7 @@ export function LLMAttachmentsList(props: {
             llmAttachment={llmAttachment}
             menuShown={llmAttachment.attachmentDraft.id === itemMenuAttachmentDraftId}
             onToggleMenu={handleDraftMenuToggle}
+            onViewImageRefPart={handleViewImageRefPart}
           />,
         )}
 

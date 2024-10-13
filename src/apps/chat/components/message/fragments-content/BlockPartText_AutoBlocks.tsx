@@ -53,7 +53,7 @@ export function BlockPartText_AutoBlocks(props: {
 
 
   const errorExplainer = React.useMemo(
-    () => explainServiceErrors(messageText, fromAssistant),
+    () => !messageText ? null : explainServiceErrors(messageText, fromAssistant),
     [fromAssistant, messageText],
   );
 

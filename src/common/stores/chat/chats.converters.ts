@@ -8,7 +8,11 @@ import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
-import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from './chat.fragments';
+import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isTextPart } from './chat.fragments';
+
+
+// configuration
+const EMERGENCY_CLEANUP_PARTS = false;
 
 
 export namespace V4ToHeadConverters {
@@ -54,6 +58,21 @@ export namespace V4ToHeadConverters {
       // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
       if (isContentFragment(fragment) && fragment.part.pt === 'ph')
         m.fragments[i] = createErrorContentFragment(`${fragment.part.pText} (did not complete)`);
+
+      // [Emergency] validate part types, can mess up in development
+      if (EMERGENCY_CLEANUP_PARTS) {
+        // If a text part has 'object' in place of 'string' for pText: remove the part altogether
+        if (isContentFragment(fragment) && isTextPart(fragment.part)) {
+          if (typeof fragment.part.text !== 'string') {
+            // Remove this fragment
+            m.fragments.splice(i, 1);
+            i--; // Adjust index since we modified the array
+            // noinspection UnnecessaryContinueJS
+            continue;
+          }
+        }
+      }
+
     }
 
     // remove notification flags

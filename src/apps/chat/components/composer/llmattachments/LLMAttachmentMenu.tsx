@@ -127,6 +127,12 @@ export function LLMAttachmentMenu(props: {
     copyToClipboard(text, 'Attachment Text');
   }, []);
 
+  const handleCopyLabelToClipboard = React.useCallback((event: React.MouseEvent, text: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    copyToClipboard(text, 'Attachment Name');
+  }, []);
+
   const handleViewImageRefPart = React.useCallback((event: React.MouseEvent, imageRefPart: DMessageImageRefPart) => {
     event.preventDefault();
     event.stopPropagation();
@@ -175,6 +181,11 @@ export function LLMAttachmentMenu(props: {
             : draftSource.media === 'text'
               ? (draftSource.method === 'drop' ? 'drop' : draftSource.method === 'clipboard-read' ? 'clipboard' : draftSource.method === 'paste' ? 'paste' : '')
               : ''} as:
+          {uiComplexityMode === 'extra' && (
+            <Chip component='span' size='sm' color='neutral' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyLabelToClipboard(event, draft.label)} sx={{ ml: 'auto' }}>
+              copy name
+            </Chip>
+          )}
         </ListItem>
       )}
       {!isUnconvertible && draft.converters.map((c, idx) =>
