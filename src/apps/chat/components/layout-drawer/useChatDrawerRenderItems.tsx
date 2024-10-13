@@ -39,8 +39,21 @@ export type ChatNavGrouping = false | 'date' | 'persona' | 'dimension';
 export type ChatSearchSorting = 'frequency' | 'date';
 
 
+
+function messageHasDocAttachmentFragments(message: DMessage): boolean {
+  return message.fragments.some(fragment => isAttachmentFragment(fragment) && isDocPart(fragment.part));
+}
+
+function messageHasImageFragments(message: DMessage): boolean {
+  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) /*&& fragment.part.dataRef.reftype === 'dblob'*/);
+}
+
+function messageHasStarredFragments(message: DMessage): boolean {
+  return messageHasUserFlag(message, MESSAGE_FLAG_STARRED);
+}
+
 // Returns a string with the pane indices where the conversation is also open, or false if it's not
-function findOpenInViewNumbers(chatPanesConversationIds: DConversationId[], ourId: DConversationId): string | false {
+function findOpenInViewIndices(chatPanesConversationIds: DConversationId[], ourId: DConversationId): string | false {
   if (chatPanesConversationIds.length <= 1) return false;
   return chatPanesConversationIds.reduce((acc: string[], id, idx) => {
     if (id === ourId)
@@ -81,45 +94,51 @@ export function useChatDrawerRenderItems(
   return useChatStore(({ conversations }) => {
 
       // filter 1: select all conversations or just the ones in the active folder
-      const selectedConversations = !activeFolder ? conversations : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));
+      const conversationsInFolder = !activeFolder ? conversations
+        : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));
 
       // filter 2: preparation: lowercase the query
       const { isSearching, lcTextQuery } = isDrawerSearching(filterByQuery);
 
-      function messageHasDocAttachmentFragments(message: DMessage): boolean {
-        return message.fragments.some(fragment => isAttachmentFragment(fragment) && isDocPart(fragment.part));
-      }
-
-      function messageHasImageFragments(message: DMessage): boolean {
-        return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) /*&& fragment.part.dataRef.reftype === 'dblob'*/);
-      }
-
       // transform (the conversations into ChatNavigationItemData) + filter2 (if searching)
-      const chatNavItems = selectedConversations
-        .filter(_c => !filterHasStars || _c.messages.some(m => messageHasUserFlag(m, MESSAGE_FLAG_STARRED)))
-        .filter(_c => !filterHasImageAssets || _c.messages.some(messageHasImageFragments))
-        .filter(_c => !filterHasDocFragments || _c.messages.some(messageHasDocAttachmentFragments))
-        .map((_c): ChatNavigationItemData => {
+      const chatNavItems = conversationsInFolder
+        .map((_c): ChatNavigationItemData | null => {
+
+          // optimized reduction to find stars/images/docs/and lowercased text for search
+          const messageCount = _c.messages.length;
+          const messageFlags = new Set<DMessageUserFlag>();
+          let lcMessageSearchText = '';
+          let hasStars = false, hasImages = false, hasDocs = false;
+          for (const _m of _c.messages) {
+            _m.userFlags?.forEach(flag => messageFlags.add(flag));
+            if (isSearching) {
+              const messageText = messageFragmentsReduceText(_m.fragments, '\n');
+              if (messageText) lcMessageSearchText += messageText.toLowerCase() + '\n';
+            }
+            if (!hasStars && messageHasStarredFragments(_m)) hasStars = true;
+            if (!hasImages && messageHasImageFragments(_m)) hasImages = true;
+            if (!hasDocs && messageHasDocAttachmentFragments(_m)) hasDocs = true;
+          }
+
+          // filter for required attributes
+          if ((filterHasStars && !hasStars) || (filterHasImageAssets && !hasImages) || (filterHasDocFragments && !hasDocs))
+            return null;
+
           // rich properties
           const title = conversationTitle(_c);
-          const isAlsoOpen = findOpenInViewNumbers(chatPanesConversationIds, _c.id);
+          const isAlsoOpen = findOpenInViewIndices(chatPanesConversationIds, _c.id);
 
           // set the frequency counters if filtering is enabled
           let searchFrequency: number = 0;
           if (isSearching) {
             const titleFrequency = title.toLowerCase().split(lcTextQuery).length - 1;
-            const messageFrequency = _c.messages.reduce((count, message) => {
-              return count + messageFragmentsReduceText(message.fragments).toLowerCase().split(lcTextQuery).length - 1;
-            }, 0);
+            const messageFrequency = lcMessageSearchText.split(lcTextQuery).length - 1;
             searchFrequency = titleFrequency + messageFrequency;
           }
 
           // union of message flags -> emoji string
-          const allFlags = new Set<DMessageUserFlag>();
-          _c.messages.forEach(_m => _m.userFlags?.forEach(flag => allFlags.add(flag)));
-          const userFlagsSummary = !allFlags.size ? undefined : Array.from(allFlags).map(messageUserFlagToEmoji).join('');
-          const containsDocAttachments = filterHasDocFragments || _c.messages.some(messageHasDocAttachmentFragments);
-          const containsImageAssets = filterHasImageAssets || _c.messages.some(messageHasImageFragments);
+          const userFlagsUnique = !messageFlags.size ? undefined
+            : Array.from(messageFlags).map(messageUserFlagToEmoji).join('');
 
           // create the ChatNavigationData
           return {
@@ -127,25 +146,25 @@ export function useChatDrawerRenderItems(
             conversationId: _c.id,
             isActive: _c.id === activeConversationId,
             isAlsoOpen,
-            isEmpty: !_c.messages.length && !_c.userTitle,
+            isEmpty: !messageCount && !_c.userTitle,
             title,
             userSymbol: _c.userSymbol || undefined,
-            userFlagsSummary,
-            containsDocAttachments: containsDocAttachments && filterHasDocFragments, // special case: only show this icon when filtering - too many icons otherwise
-            containsImageAssets,
+            userFlagsSummary: userFlagsUnique,
+            containsDocAttachments: hasDocs && filterHasDocFragments, // special case: only show this icon when filtering - too many icons otherwise
+            containsImageAssets: hasImages,
             folder: !allFolders.length
               ? undefined                             // don't show folder select if folders are disabled
               : _c.id === activeConversationId        // only show the folder for active conversation(s)
                 ? allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null
                 : null,
             updatedAt: _c.updated || _c.created || 0,
-            messageCount: _c.messages.length,
+            messageCount,
             beingGenerated: !!_c._abortController, // FIXME: when the AbortController is moved at the message level, derive the state in the conv
             systemPurposeId: _c.systemPurposeId,
             searchFrequency,
           };
         })
-        .filter(item => !isSearching || item.searchFrequency > 0);
+        .filter(item => !!item && (!isSearching || item.searchFrequency > 0)) as ChatNavigationItemData[];
 
       // check if the active conversation has an item in the list
       const filteredChatsIncludeActive = chatNavItems.some(_c => _c.conversationId === activeConversationId);
@@ -281,22 +300,6 @@ export function useChatDrawerRenderItems(
         filteredChatsBarBasis,
         filteredChatsIncludeActive,
       };
-
-      if (prev)
-      console.log(
-
-      prev.renderNavItems.length === next.renderNavItems.length,
-      prev.renderNavItems.every((_a, i) => shallowEquals(_a, next.renderNavItems[i])),
-       shallowEquals(prev.filteredChatIDs, next.filteredChatIDs),
-       prev.filteredChatsCount === next.filteredChatsCount,
-       prev.filteredChatsAreEmpty === next.filteredChatsAreEmpty,
-       prev.filteredChatsBarBasis === next.filteredChatsBarBasis,
-        prev.filteredChatsBarBasis, next.filteredChatsBarBasis,
-       prev.filteredChatsIncludeActive === next.filteredChatsIncludeActive,
-        chatNavItems,
-        structuredClone(next),
-        structuredClone(prev)
-      )
 
       // stabilize the render items
       if (prev
