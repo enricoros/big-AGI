@@ -55,7 +55,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
   // execute a command, if the last message has one
   if (lastMessage.role === 'user') {
-    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, cHandler, chatLLMId);
+    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, lastMessage, cHandler, chatLLMId);
     if (cmdRC !== RET_NO_CMD) return cmdRC;
   }
 

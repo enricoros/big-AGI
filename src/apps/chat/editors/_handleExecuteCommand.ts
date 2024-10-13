@@ -1,5 +1,5 @@
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import type { DMessageId } from '~/common/stores/chat/chat.message';
+import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createTextContentFragment, DMessageFragment, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
@@ -12,38 +12,46 @@ import { runReActUpdatingState } from './react-tangent';
 export const RET_NO_CMD = 'no-cmd';
 
 
-export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessageFirstFragment: DMessageFragment, cHandler: ConversationHandler, chatLLMId: DLLMId) {
+export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessageFirstFragment: DMessageFragment, lastMessage: Readonly<DMessage>, cHandler: ConversationHandler, chatLLMId: DLLMId) {
 
   // commands must have a first Content DMessageTextPart
   if (!isContentFragment(lastMessageFirstFragment) || !isTextPart(lastMessageFirstFragment.part))
     return RET_NO_CMD;
 
   // check if we have a command
-  const chatCommand = extractChatCommand(lastMessageFirstFragment.part.text)[0];
-  if (chatCommand?.type !== 'cmd')
+  const _chatCommand = extractChatCommand(lastMessageFirstFragment.part.text)[0];
+  if (_chatCommand?.type !== 'cmd')
     return RET_NO_CMD;
 
+  // extract the information from the command
+  const { providerId, command: userCommand, params: userText, isErrorNoArgs } = _chatCommand;
+
+  // create a copy of the lastMessage without the 'command' part in the first fragment
+  // TODO: future: move command to be decorators (meta parts) on the message
+  const lastMessageNoCommand = { ...lastMessage };
+
+
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
-  switch (chatCommand.providerId) {
+  switch (providerId) {
 
     case 'cmd-ass-browse':
-      return await runBrowseGetPageUpdatingState(cHandler, chatCommand.params);
+      return await runBrowseGetPageUpdatingState(cHandler, userText);
 
     case 'cmd-ass-t2i':
-      return await runImageGenerationUpdatingState(cHandler, chatCommand.params);
+      return await runImageGenerationUpdatingState(cHandler, userText);
 
     case 'cmd-chat-alter':
       // clear command
-      if (chatCommand.command === '/clear') {
-        if (chatCommand.params === 'all')
+      if (userCommand === '/clear') {
+        if (userText === 'all')
           cHandler.historyClear();
         else
           cHandler.messageAppendAssistantText('Issue: this command requires the \'all\' parameter to confirm the operation.', 'issue');
         return true;
       }
       // assistant/system command: change role and remove the /command
-      cHandler.messageEdit(lastMessageId, { role: chatCommand.command.startsWith('/s') ? 'system' : chatCommand.command.startsWith('/a') ? 'assistant' : 'user' }, false, false);
-      cHandler.messageFragmentReplace(lastMessageId, lastMessageFirstFragment.fId, createTextContentFragment(chatCommand.params || ''), true);
+      cHandler.messageEdit(lastMessageId, { role: userCommand.startsWith('/s') ? 'system' : userCommand.startsWith('/a') ? 'assistant' : 'user' }, false, false);
+      cHandler.messageFragmentReplace(lastMessageId, lastMessageFirstFragment.fId, createTextContentFragment(userText || ''), true);
       return true;
 
     case 'cmd-help':
@@ -51,15 +59,17 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
       return true;
 
     case 'cmd-mode-beam':
-      if (chatCommand.isErrorNoArgs || !chatCommand.params)
+      if (isErrorNoArgs || !userText)
         return false;
       // remove '/beam ', as we want to be a user chat message
-      cHandler.messageFragmentReplace(lastMessageId, lastMessageFirstFragment.fId, createTextContentFragment(chatCommand.params), true);
+      cHandler.messageFragmentReplace(lastMessageId, lastMessageFirstFragment.fId, createTextContentFragment(userText), true);
       cHandler.beamInvoke(cHandler.historyViewHead('cmd-mode-beam'), [], null);
       return true;
 
     case 'cmd-mode-react':
-      return await runReActUpdatingState(cHandler, chatCommand.params, chatLLMId, lastMessageId);
+      // create a temporary copy of the message,
+
+      return await runReActUpdatingState(cHandler, userText, chatLLMId, lastMessageId);
 
     default:
       cHandler.messageAppendAssistantText('This command is not supported', 'help');

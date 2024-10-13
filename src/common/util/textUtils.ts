@@ -50,3 +50,32 @@ export function ellipsizeMiddle(text: string, maxLength: number) {
   const half = Math.floor(maxLength / 2);
   return text.slice(0, half) + '…' + text.slice(-(maxLength - half - 1));
 }
+
+export function ellipsizeEnd(text: string, maxLength: number, maxLines?: number) {
+  let wasTruncated = false;
+
+  // Handle maxLines if specified
+  if (maxLines !== undefined && maxLines > 0) {
+    const lines = text.split('\n');
+    if (lines.length > maxLines) {
+      text = lines.slice(0, maxLines).join('\n');
+      wasTruncated = true;
+    }
+  }
+
+  // Check if text exceeds maxLength and truncate if necessary
+  if (text.length > maxLength) {
+    text = text.slice(0, maxLength - 1) + '…';
+    // wasTruncated = true; // not useful here
+  } else if (wasTruncated) {
+    // If text was truncated by lines but not by length, add ellipsis if possible
+    if (text.length + 1 <= maxLength) {
+      text += '…';
+    } else if (maxLength > 0) {
+      // Truncate one character to add ellipsis without exceeding maxLength
+      text = text.slice(0, maxLength - 1) + '…';
+    }
+  }
+
+  return text;
+}

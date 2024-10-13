@@ -180,7 +180,7 @@ export function DocAttachmentFragment(props: {
           : '';
 
     return <>
-      <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
+      <TooltipOutlined color='neutral' placement='top-start' slowEnter title={headerTooltipContents}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {TitleIcon && <TitleIcon />}
           <Typography level='title-sm'>
