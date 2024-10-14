@@ -22,6 +22,9 @@ import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceSettings } from './VoiceSettings';
+import { BrowserSpeechSettings } from '~/modules/browser/speech-synthesis/BrowserSpeechSettings';
+
+import { useTTSEngine } from 'src/apps/chat/store-app-chat';
 
 
 // styled <AccordionGroup variant='plain'> into a Topics component
@@ -122,6 +125,8 @@ export function SettingsModal(props: {
   // external state
   const isMobile = useIsMobile();
 
+  const [TTSEngine] = useTTSEngine()
+
   // handlers
 
   const { setTab } = props;
@@ -193,9 +198,12 @@ export function SettingsModal(props: {
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
             </Topic>
-            <Topic icon='📢' title='ElevenLabs API'>
+            {TTSEngine === 'Elevenlabs' && <Topic icon='📢' title='ElevenLabs API'>
               <ElevenlabsSettings />
-            </Topic>
+            </Topic>}
+            {TTSEngine === 'Web Speech API' && <Topic icon='📢' title='Web Speech API'>
+              <BrowserSpeechSettings />
+            </Topic>}
           </Topics>
         </TabPanel>
 

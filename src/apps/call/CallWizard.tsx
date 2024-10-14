@@ -12,7 +12,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
-import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useCapabilityBrowserSpeechRecognition, useVoiceCapability } from '~/common/components/useCapabilities';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
@@ -45,7 +45,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
   // external state
   const recognition = useCapabilityBrowserSpeechRecognition();
-  const synthesis = useCapabilityElevenLabs();
+  const synthesis = useVoiceCapability();
   const chatIsEmpty = useChatStore(state => {
     if (!props.conversationId)
       return false;

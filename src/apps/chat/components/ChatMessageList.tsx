@@ -19,7 +19,7 @@ import { getConversation, useChatStore } from '~/common/stores/chat/store-chats'
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
-import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
+import { useVoiceCapability } from '~/common/components/useCapabilities';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-chat-overlay';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -75,7 +75,7 @@ export function ChatMessageList(props: {
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
   })));
-  const { mayWork: isSpeakable } = useCapabilityElevenLabs();
+  const { mayWork: isSpeakable } = useVoiceCapability();
 
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;

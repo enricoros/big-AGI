@@ -82,6 +82,10 @@ export function useElevenLabsVoiceDropdown(autoSpeak: boolean, disabled?: boolea
   React.useEffect(() => {
     if (previewUrl)
       void AudioPlayer.playUrl(previewUrl);
+
+    return () => {
+      // TODO: stop audio
+    }
   }, [previewUrl]);
 
   const voicesDropdown = React.useMemo(() =>

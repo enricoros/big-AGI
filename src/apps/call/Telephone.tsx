@@ -13,7 +13,7 @@ import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown';
 
-import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
+import { EXPERIMENTAL_speakTextStream } from '~/common/components/useVoiceCapabilities';
 import { SystemPurposeId, SystemPurposes } from '../../data';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
@@ -245,13 +245,22 @@ export function Telephone(props: {
     // perform completion
     responseAbortController.current = new AbortController();
     let finalText = '';
+    let currentSentence = '';
     let error: any | null = null;
     setPersonaTextInterim('💭...');
     llmStreamingChatGenerate(chatLLMId, callPrompt, 'call', callMessages[0].id, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
       const text = textSoFar?.trim();
       if (text) {
-        finalText = text;
         setPersonaTextInterim(text);
+
+        // Maintain and say the current sentence
+        if (/[.,!?]$/.test(text)) {
+          currentSentence = text.substring(finalText?.length)
+          finalText = text
+          if (currentSentence?.length >= 1)
+            void EXPERIMENTAL_speakTextStream(currentSentence, personaVoiceId);
+        }
+        currentSentence = text.substring(finalText?.length) // to be added to the final text
       }
     }).catch((err: DOMException) => {
       if (err?.name !== 'AbortError')
@@ -261,8 +270,8 @@ export function Telephone(props: {
       if (finalText || error)
         setCallMessages(messages => [...messages, createDMessageTextContent('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]); // [state] append assistant:call_response
       // fire/forget
-      if (finalText?.length >= 1)
-        void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
+      if (currentSentence?.length >= 1)
+        void EXPERIMENTAL_speakTextStream(currentSentence, personaVoiceId);
     });
 
     return () => {
