@@ -35,7 +35,7 @@ export namespace AnthropicWire_Blocks {
     type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(),
-    input: z.any(),
+    input: z.unknown(),
   });
 
   export const ToolResultBlock_schema = _CommonBlock_schema.extend({
@@ -54,8 +54,8 @@ export namespace AnthropicWire_Blocks {
     return { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
   }
 
-  export function ToolUseBlock(id: string, name: string, input: unknown): z.infer<typeof ToolUseBlock_schema> {
-    return { type: 'tool_use', id, name, input };
+  export function ToolUseBlock(id: string, name: string, input: string | null): z.infer<typeof ToolUseBlock_schema> {
+    return { type: 'tool_use', id, name, input: input ? JSON.parse(input) : null };
   }
 
   export function ToolResultBlock(tool_use_id: string, content: z.infer<typeof ToolResultBlock_schema>['content'], is_error?: boolean): z.infer<typeof ToolResultBlock_schema> {
