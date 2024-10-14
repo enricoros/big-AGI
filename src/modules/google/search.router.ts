@@ -38,6 +38,11 @@ export const googleSearchRouter = createTRPCRouter({
       const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await fetchJsonOrTRPCThrow({
         url,
         name: 'Google Custom Search',
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip',
+          'User-Agent': 'Big-AGI (gzip)',
+        },
       });
 
       if (data.error)
