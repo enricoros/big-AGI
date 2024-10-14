@@ -54,7 +54,7 @@ export function GoogleSearchSettings() {
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Google CSE ID'
+      <FormLabelStart title='Search Engine ID'
                       description={<>Get it <Link href='https://programmablesearchengine.google.com/' noLinkStyle target='_blank'>here</Link></>}
                       tooltip='Create your Google "Programmable Search Engine" and enter its ID here' />
       <Input
