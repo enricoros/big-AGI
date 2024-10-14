@@ -620,7 +620,7 @@ export async function attachmentPerformConversion(
           break;
         }
         try {
-          // duplicated from from 'pdf-images' (different progress update)
+          // duplicated from 'pdf-images' (different progress update)
           const imageFragments: DMessageAttachmentFragment[] = [];
           const imageDataURLs = await pdfToImageDataURLs(new Uint8Array(input.data.slice(0)), DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress / 2 }); // Update progress (0% to 50%)
