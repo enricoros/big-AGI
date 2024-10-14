@@ -13,6 +13,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -46,10 +47,12 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   return <>
 
+    <ApproximateCosts serviceId={service?.id} />
+
     <FormInputKey
       autoCompleteId='openai-key' label='API Key'
       rightLabel={<>{needsUserKey
-        ? !oaiKey && <><Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create key</Link> and <Link level='body-sm' href='https://openai.com/waitlist/gpt-4-api' target='_blank'>request access to GPT-4</Link></>
+        ? !oaiKey && <Link level='body-sm' href='https://platform.openai.com/account/api-keys' target='_blank'>create key</Link>
         : <AlreadySet />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://platform.openai.com/account/usage' target='_blank'>check usage</Link>}
       </>}
@@ -71,7 +74,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     {advanced.on && <FormTextField
       autoCompleteId='openai-org'
       title='Organization ID'
-      description={<Link level='body-sm' href={`${Brand.URIs.OpenRepo}/issues/63`} target='_blank'>What is this</Link>}
+      description={<Link level='body-sm' href={Brand.URIs.OpenRepo + '/issues/63'} target='_blank'>What is this</Link>}
       placeholder='Optional, for enterprise users'
       value={oaiOrg}
       onChange={text => updateSettings({ oaiOrg: text })}

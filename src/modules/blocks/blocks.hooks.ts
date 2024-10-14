@@ -61,7 +61,7 @@ function areBlocksEqualIdIgnored(block1: RenderBlockInputs[number] | undefined, 
  *   as part of the the running text, in which case the growing text will be
  *   reassigned (when it's chopped to before the code block, in the next call)
  */
-export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: string | undefined, forceMarkdown: boolean, forceSanityTextDiffs: SanityTextDiff[] | undefined): RenderBlockInputs {
+export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: string | undefined, forceMarkdown: boolean, forceSanityTextDiffs: SanityTextDiff[] | undefined, selectSingleCodeBlock: boolean): RenderBlockInputs {
 
   // state - previous blocks, to stabilize objects
   const prevBlocksRef = React.useRef<RenderBlockInputs>([]);
@@ -75,8 +75,11 @@ export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: st
       newBlocks = [{ bkt: 'md-bk', content: text }];
     else if (forceSanityTextDiffs && forceSanityTextDiffs.length >= 1)
       newBlocks = [{ bkt: 'txt-diffs-bk', sanityTextDiffs: forceSanityTextDiffs }];
-    else
+    else {
       newBlocks = parseBlocksFromText(text);
+      if (selectSingleCodeBlock && newBlocks.length > 1)
+        newBlocks = newBlocks.filter(({ bkt }) => bkt === 'code-bk');
+    }
 
     const recycledBlocks: RenderBlockInputs = newBlocks.map((newBlock, index) => {
       const prevBlock = prevBlocksRef.current[index] ?? undefined;
@@ -96,5 +99,5 @@ export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: st
     prevTextRef.current = text;
 
     return recycledBlocks;
-  }, [forceCodeWithTitle, forceMarkdown, forceSanityTextDiffs, text]);
+  }, [forceCodeWithTitle, forceMarkdown, forceSanityTextDiffs, selectSingleCodeBlock, text]);
 }

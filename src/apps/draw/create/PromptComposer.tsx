@@ -12,7 +12,7 @@ import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import RemoveIcon from '@mui/icons-material/Remove';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 
-import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
+import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
 
 import { agiUuid } from '~/common/util/idUtils';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -119,7 +119,8 @@ export function PromptComposer(props: {
   const handleSimpleEnhance = React.useCallback(async () => {
     if (nonEmptyPrompt?.trim()) {
       setIsSimpleEnhancing(true);
-      const improvedPrompt = await imaginePromptFromText(nonEmptyPrompt, null).catch(console.error);
+      const improvedPrompt = await imaginePromptFromTextOrThrow(nonEmptyPrompt, 'DEV')
+        .catch(console.error);
       if (improvedPrompt)
         setNextPrompt(improvedPrompt);
       setIsSimpleEnhancing(false);

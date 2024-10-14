@@ -4,7 +4,6 @@ import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
-import { BLOCK_CODE_VND_AGI_CHARTJS, renderCodeMemoOrNot } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
@@ -13,6 +12,7 @@ import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderTextDiff } from './textdiff/RenderTextDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
+import { renderCodeMemoOrNot } from './code/RenderCode';
 import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
@@ -75,8 +75,13 @@ export function AutoBlocksRenderer(props: {
   // state
   const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } =
     useTextCollapser(props.text, fromUser);
-  let autoBlocksStable =
-    useAutoBlocksMemoSemiStable(text, props.renderAsCodeWithTitle, fromSystem, props.renderSanityTextDiffs);
+  const autoBlocksStable = useAutoBlocksMemoSemiStable(
+    text,
+    props.renderAsCodeWithTitle,
+    fromSystem,
+    props.renderSanityTextDiffs,
+    props.blocksProcessor === 'diagram',
+  );
 
   // handlers
   const { setText } = props;
@@ -90,11 +95,6 @@ export function AutoBlocksRenderer(props: {
     }
     return false;
   }, [setText, text]);
-
-
-  // apply specialDiagramMode filter if applicable
-  if (props.blocksProcessor === 'diagram')
-    autoBlocksStable = autoBlocksStable.filter(({ bkt }) => bkt === 'code-bk' || autoBlocksStable.length === 1);
 
 
   // Memo the styles, to minimize re-renders
@@ -146,11 +146,6 @@ export function AutoBlocksRenderer(props: {
             // Custom handling for some of our blocks
             let disableEnhancedRender = bkInput.isPartial;
             let enhancedStartCollapsed = false;
-            if (bkInput.title === BLOCK_CODE_VND_AGI_CHARTJS) {
-              disableEnhancedRender = false;
-              // For Chart.js charts, at the moment, we use the 'unwanted' refresh at the end of the message to start (that block) without collapse
-              enhancedStartCollapsed = bkInput.isPartial;
-            }
 
             return (props.codeRenderVariant === 'enhanced' && !disableEnhancedRender) ? (
               <EnhancedRenderCode

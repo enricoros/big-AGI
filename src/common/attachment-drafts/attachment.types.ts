@@ -81,6 +81,9 @@ export type AttachmentDraftInput = {
     mimeType: string;
     width: number;
     height: number;
+    // to discriminate the source
+    generator: 'web-capture' | 'youtube-thumbnail';
+    timestamp: number; // Unix timestamp
   };
   // preview?: AttachmentPreview; // Preview of the input
 };

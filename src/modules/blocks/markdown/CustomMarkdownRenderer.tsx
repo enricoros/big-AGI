@@ -8,8 +8,10 @@ import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
 import { remarkMark } from 'remark-mark-highlight';
 
-import { Button } from '@mui/joy';
+import { Box, Button } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
+
+import { copyToClipboard } from '~/common/util/clipboardUtils';
 
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
 
@@ -17,8 +19,8 @@ import { wrapWithMarkdownSyntax } from './markdown.wrapper';
 // LinkRenderer adds a target="_blank" to all links
 
 interface LinkRendererProps {
-  node?: any; // an optional field we want to not pass to the <table/> element
-  children: React.JSX.Element;
+  node?: any; // an optional field we want to not pass to the <a/> element
+  children: React.ReactNode;
 }
 
 const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
@@ -40,7 +42,12 @@ function MarkRenderer({ children }: { children: React.ReactNode }) {
 }
 
 
-// TableRenderer adds a CSV Download Link
+// TableRenderer adds a CSV Download Link and a Copy Markdown Button
+
+const tableButtonsSx = {
+  backgroundColor: 'background.popup',
+  borderRadius: 0,
+};
 
 interface TableRendererProps {
   node?: any; // an optional field we want to not pass to element
@@ -52,64 +59,108 @@ function TableRenderer({ children, node, ...props }: TableRendererProps) {
   // Apply custom styles or modifications here
   const tableData = _extractTableData(children);
 
+  // Generate markdown string
+  const markdownString = tableData?.length >= 1 ? generateMarkdownTableFromData(tableData) : '';
+
+  // Function to copy markdown to clipboard
+  const copyMarkdownToClipboard = React.useCallback(() => {
+    copyToClipboard(markdownString, 'Markdown Table');
+  }, [markdownString]);
+
   return (
     <>
       <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.5rem' }} {...props}>
         {children}
       </table>
 
-      {/* Download CSV link */}
+      {/* Download CSV link and Copy Markdown Button */}
       {tableData?.length >= 1 && (
-        <CSVLink filename='big-agi-export' data={tableData}>
-          <Button variant='outlined' color='neutral' size='md' endDecorator={<DownloadIcon />} sx={{
-            mb: '1rem',
-            backgroundColor: 'background.popup', // make this button 'pop' a bit from the page
-          }}>
-            Download table as .csv
-          </Button>
-        </CSVLink>
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CSVLink filename='big-agi-table.csv' data={tableData}>
+            <Button
+              variant='outlined'
+              color='neutral'
+              size='sm'
+              endDecorator={<DownloadIcon />}
+              sx={tableButtonsSx}
+            >
+              Download CSV
+            </Button>
+          </CSVLink>
+
+          {/* Button to copy markdown */}
+          {!!markdownString && (
+            <Button
+              variant='outlined'
+              color='neutral'
+              size='sm'
+              onClick={copyMarkdownToClipboard}
+              // endDecorator={<ContentCopyIcon />}
+              sx={tableButtonsSx}
+            >
+              Copy Markdown
+            </Button>
+          )}
+        </Box>
       )}
     </>
   );
 }
 
-function _extractTableData(children: React.JSX.Element) {
-
-  // Function to extract text from a React element or component
-  function extractText(element: any): String {
-    if (element === null)
-      return '';
-    // Base case: if the element is a string, return it
-    if (typeof element === 'string') {
-      return element;
-    }
-    // If the element has children, recursively extract text from them
-    if (element.props?.children) {
-      if (Array.isArray(element.props.children)) {
-        return element.props.children.map(extractText).join('');
-      }
-      return extractText(element.props.children);
-    }
+// Function to extract text from a React element or component
+function extractText(element: any): string {
+  if (element === null)
     return '';
+  // Base case: if the element is a string, return it
+  if (typeof element === 'string') {
+    return element;
   }
-
-  // Function to traverse and extract data from table rows and cells
-  function traverseAndExtract(elements: React.JSX.Element, tableData: any[] = []) {
-    React.Children.forEach(elements, (element) => {
-      if (element.type === 'tr') {
-        const rowData = React.Children.map(element.props?.children, (cell) => {
-          // Extract and return the text content of each cell
-          return extractText(cell);
-        });
-        tableData.push(rowData);
-      } else if (element.props?.children) {
-        traverseAndExtract(element.props.children, tableData);
-      }
-    });
-    return tableData;
+  // If the element has children, recursively extract text from them
+  if (element.props?.children) {
+    if (Array.isArray(element.props.children)) {
+      return element.props.children.map(extractText).join('');
+    }
+    return extractText(element.props.children);
   }
+  return '';
+}
 
+// Function to traverse and extract data from table rows and cells
+function traverseAndExtract(elements: React.JSX.Element, tableData: any[] = []): any[] {
+  React.Children.forEach(elements, (element) => {
+    if (element.type === 'tr') {
+      const rowData = React.Children.map(element.props?.children, (cell) => {
+        // Extract and return the text content of each cell
+        return extractText(cell);
+      });
+      tableData.push(rowData);
+    } else if (element.props?.children) {
+      traverseAndExtract(element.props.children, tableData);
+    }
+  });
+  return tableData;
+}
+
+function _extractTableData(children: React.JSX.Element) {
   return traverseAndExtract(children);
+}
+
+function generateMarkdownTableFromData(tableData: any[]): string {
+  if (tableData.length === 0)
+    return '';
+
+  // Extract header and rows
+  const [header, ...rows] = tableData;
+
+  // Create markdown header
+  const headerMarkdown = `| ${header.join(' | ')} |`;
+  // Create separator
+  const separator = `| ${header.map(() => '---').join(' | ')} |`;
+  // Create markdown rows
+  const rowsMarkdown = rows.map(row => `| ${row.join(' | ')} |`).join('\n');
+
+  // Combine all parts
+  return [headerMarkdown, separator, rowsMarkdown].join('\n');
 }
 
 
@@ -119,7 +170,7 @@ const reactMarkdownComponents = {
   a: LinkRenderer, // override the link renderer to add target="_blank"
   del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
   mark: MarkRenderer, // renders the <mark> tag (==highlight==)
-  table: TableRenderer, // override the table renderer to show the download CSV links
+  table: TableRenderer, // override the table renderer to show the download CSV links and Copy Markdown button
   // math/inlineMath components are not needed, rehype-katex handles this automatically
 } as ReactMarkdownComponents;
 

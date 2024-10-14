@@ -53,7 +53,7 @@ import { DocumentAttachmentFragments } from './fragments-attachment-doc/Document
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
-import { useChatShowTextDiff } from '../../store-app-chat';
+import { setIsNotificationEnabledForModel, useChatShowTextDiff } from '../../store-app-chat';
 import { useFragmentBuckets } from './useFragmentBuckets';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
@@ -316,8 +316,10 @@ export function ChatMessage(props: {
   }, [messageId, onMessageToggleUserFlag]);
 
   const handleOpsToggleNotifyComplete = React.useCallback(() => {
+    // also remember the preference, for auto-setting flags by the persona
+    setIsNotificationEnabledForModel(messageId, !isUserNotifyComplete);
     onMessageToggleUserFlag?.(messageId, MESSAGE_FLAG_NOTIFY_COMPLETE);
-  }, [messageId, onMessageToggleUserFlag]);
+  }, [isUserNotifyComplete, messageId, onMessageToggleUserFlag]);
 
   const handleOpsAssistantFrom = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -543,7 +545,7 @@ export function ChatMessage(props: {
       // borderTopLeftRadius: '0.375rem',
       // borderBottomLeftRadius: '0.375rem',
     }),
-    ...(isVndAndCacheAuto && !isVndAndCacheUser && {
+    ...(uiComplexityMode === 'extra' && isVndAndCacheAuto && !isVndAndCacheUser && {
       position: 'relative',
       '&::before': {
         content: '""',
@@ -555,6 +557,7 @@ export function ChatMessage(props: {
         background: `repeating-linear-gradient( -45deg, transparent, transparent 2px, ${ModelVendorAnthropic.brandColor} 2px, ${ModelVendorAnthropic.brandColor} 12px ) repeat`,
       },
     }),
+    // style: when the user skips the message
     ...(isUserMessageSkipped && messageSkippedSx),
 
     // for: ENABLE_COPY_MESSAGE_OVERLAY

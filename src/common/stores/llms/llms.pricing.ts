@@ -9,21 +9,26 @@ export type DModelPricing = {
   chat?: DChatGeneratePricing,
 }
 
+// NOTE: (!) keep this in sync with ChatGeneratePricing_schema (modules/llms/server/llm.server.types.ts)
 export type DChatGeneratePricing = {
   // unit: 'USD_Mtok',
-  input?: DTieredPrice;
-  output?: DTieredPrice;
+  input?: DTieredPricing;
+  output?: DTieredPricing;
   cache?: {
     cType: 'ant-bp';
-    read: DTieredPrice;
-    write: DTieredPrice;
+    read: DTieredPricing;
+    write: DTieredPricing;
     duration: number; // seconds
+  } | {
+    cType: 'oai-ac';
+    read: DTieredPricing;
+    // write: DTieredPricing; // Not needed, as it's automatic
   };
-  // NOT in AixWire_API_ListModels.PriceChatGenerate_schema
+  // NOT in AixWire_API_ListModels.ChatGeneratePricing_schema
   _isFree?: boolean; // precomputed, so we avoid recalculating it
 }
 
-type DTieredPrice = DPricePerMToken | DPriceUpTo[];
+type DTieredPricing = DPricePerMToken | DPriceUpTo[];
 
 type DPriceUpTo = {
   upTo: number | null,
@@ -35,46 +40,43 @@ type DPricePerMToken = number | 'free';
 
 /// detect Free Pricing
 
-export function isModelPriceFree(priceChatGenerate: DChatGeneratePricing): boolean {
-  if (!priceChatGenerate) return true;
-  return _isPriceFree(priceChatGenerate.input) && _isPriceFree(priceChatGenerate.output);
+export function isModelPricingFree(pricingChatGenerate: DChatGeneratePricing): boolean {
+  if (!pricingChatGenerate) return true;
+  return _isPricingFree(pricingChatGenerate.input) && _isPricingFree(pricingChatGenerate.output);
 }
 
-function _isPriceFree(price: DTieredPrice | undefined): boolean {
-  if (price === 'free') return true;
-  if (price === undefined) return false;
-  if (typeof price === 'number') return price === 0;
-  return price.every(tier => _isPricePerMTokenFree(tier.price));
-}
-
-function _isPricePerMTokenFree(price: DPricePerMToken): boolean {
-  return price === 'free' || price === 0;
+function _isPricingFree(pricing: DTieredPricing | undefined): boolean {
+  if (pricing === 'free') return true;
+  if (pricing === undefined) return false;
+  if (typeof pricing === 'number') return pricing === 0;
+  return pricing.every(tier => tier.price === 'free' || tier.price === 0);
 }
 
 
-/// Human readable price formatting
+/// Human readable cost
 
-export function getLlmPriceForTokens(inputTokens: number, tokens: number, pricing: DTieredPrice | undefined): number | undefined {
+export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing: DTieredPricing | undefined): number | undefined {
   if (!pricing) return undefined;
   if (pricing === 'free') return 0;
+
+  // Cost = tokens * price / 1e6
   if (typeof pricing === 'number') return tokens * pricing / 1e6;
 
   // Find the applicable tier based on input tokens
-  const applicableTier = pricing.find(tier => tier.upTo === null || inputTokens <= tier.upTo);
-
-  // This should not happen if the pricing is well-formed
+  const applicableTier = pricing.find(tier => tier.upTo === null || tierTokens <= tier.upTo);
   if (!applicableTier) {
-    console.log('[DEV] getPriceForTokens: No applicable tier found for input tokens', { inputTokens, pricing });
+    console.log('[DEV] getLlmCostForTokens: No applicable tier found for input tokens', { tierTokens, pricing });
     return undefined;
   }
 
-  // Apply the price of the found tier to all tokens
+  // Cost = tier pricing * tokens / 1e6 (or free)
   if (applicableTier.price === 'free') return 0;
+  // Note: apply the pricing of the found tier to all tokens
   return tokens * applicableTier.price / 1e6;
 }
 
 
-// Compatibiltiy layer for pricing V2 -> V3
+// Compatibility layer for pricing V2 -> V3
 
 interface Was_DModelPricingV2 {
   chatIn?: number
@@ -92,7 +94,7 @@ export function portModelPricingV2toV3(llm: DLLM): void {
       V3.input = pretendIsV2.chatIn;
     if (pretendIsV2.chatOut)
       V3.output = pretendIsV2.chatOut;
-    V3._isFree = isModelPriceFree(V3);
+    V3._isFree = isModelPricingFree(V3);
     llm.pricing = { chat: V3 };
     delete pretendIsV2.chatIn;
     delete pretendIsV2.chatOut;

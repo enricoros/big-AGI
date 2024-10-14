@@ -12,15 +12,23 @@ import type { AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_M
 
 
 // configuration
-export const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
-export const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
+const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
+const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
 
 
 // AIX <> Simple Text API helpers
 
-export function aixChatGenerateRequestSimple(systemMessage: string, messages: { role: AixMessages_ChatMessage['role'], text: string }[]): AixAPIChatGenerate_Request {
+/**
+ * The simplest text-only inputs for aixChatGenerateContent_DMessage.
+ */
+export type AixChatGenerate_TextMessages = {
+  role: AixMessages_ChatMessage['role'];
+  text: string;
+}[];
+
+export function aixCGR_FromSimpleText(systemInstruction: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
   return {
-    systemMessage: aixCGR_SystemMessage(systemMessage),
+    systemMessage: aixCGR_SystemMessage(systemInstruction),
     chatSequence: messages.map(m => {
       switch (m.role) {
         case 'user':
@@ -37,7 +45,7 @@ export function aixCGR_SystemMessage(text: string) {
   return { parts: [aixCGRTextPart(text)] };
 }
 
-function aixCGR_UserMessageText(text: string): AixMessages_UserMessage {
+export function aixCGR_UserMessageText(text: string): AixMessages_UserMessage {
   return { role: 'user', parts: [aixCGRTextPart(text)] };
 }
 
@@ -54,7 +62,7 @@ function aixCGRTextPart(text: string) {
 // AIX <> Chat Messages API helpers
 //
 
-export async function aixChatGenerateRequestFromDMessages(
+export async function aixCGR_FromDMessages(
   messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
   _assemblyMode: 'complete' = 'complete',
 ): Promise<AixAPIChatGenerate_Request> {
@@ -78,7 +86,7 @@ export async function aixChatGenerateRequestFromDMessages(
         if (isContentFragment(systemFragment) && isTextPart(systemFragment.part)) {
           acc.systemMessage.parts.push(systemFragment.part);
         } else {
-          console.warn('conversationMessagesToAixGenerateRequest: unexpected system fragment', systemFragment);
+          console.warn('aixChatGenerateRequestFromDMessages: unexpected system fragment', systemFragment);
         }
       }
       // (on System message) handle the ant-cache-prompt user/auto flags
@@ -118,7 +126,7 @@ export async function aixChatGenerateRequestFromDMessages(
             break;
 
           default:
-            console.warn('conversationMessagesToAixGenerateRequest: unexpected User fragment part type', (uFragment.part as any).pt);
+            console.warn('aixChatGenerateRequestFromDMessages: unexpected User fragment part type', (uFragment.part as any).pt);
         }
         return uMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixMessages_UserMessage));
@@ -157,7 +165,7 @@ export async function aixChatGenerateRequestFromDMessages(
 
           case 'doc':
             // TODO
-            console.warn('conversationMessagesToAixGenerateRequest: doc part not implemented yet');
+            console.warn('aixChatGenerateRequestFromDMessages: doc part not implemented yet');
             // mMsg.parts.push(aFragment.part);
             break;
 
@@ -174,7 +182,7 @@ export async function aixChatGenerateRequestFromDMessages(
 
           case 'tool_response':
             // TODO
-            console.warn('conversationMessagesToAixGenerateRequest: tool_response part not implemented yet');
+            console.warn('aixChatGenerateRequestFromDMessages: tool_response part not implemented yet');
             break;
 
         }

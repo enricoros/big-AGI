@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ColorPaletteProp, IconButton, Typography } from '@mui/joy';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import CodeIcon from '@mui/icons-material/Code';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -10,8 +9,8 @@ import type { ContentScaling } from '~/common/app.theme';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
-import { BLOCK_CODE_VND_AGI_CHARTJS, RenderCodeMemo } from '../code/RenderCode';
 import { EnhancedRenderCodeMenu } from './EnhancedRenderCodeMenu';
+import { RenderCodeMemo } from '../code/RenderCode';
 import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '../code/RenderCodePanelFrame';
 import { getCodeCollapseManager } from './codeCollapseManager';
 import { useLiveFilePatch } from './livefile-patch/useLiveFilePatch';
@@ -117,8 +116,7 @@ export function EnhancedRenderCode(props: {
   ), [props.code, props.semiStableId, props.title]);
 
   const headerRow = React.useMemo(() => {
-    const isChart = props.title === BLOCK_CODE_VND_AGI_CHARTJS;
-    const Icon = (isChart && !isCodeCollapsed) ? BarChartIcon : CodeIcon;
+    const Icon = CodeIcon;
     return <>
       {/* Icon and Title */}
       <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
@@ -127,14 +125,13 @@ export function EnhancedRenderCode(props: {
             aria-hidden
             onClick={handleToggleCodeCollapse}
             sx={{
-              transform: (isCodeCollapsed && !isChart) ? 'rotate(-90deg)' : 'none',
+              transform: isCodeCollapsed ? 'rotate(-90deg)' : 'none',
               transition: 'transform 0.2s cubic-bezier(.17,.84,.44,1)',
               cursor: 'pointer',
             }}
           />
-          <Typography level={!isChart ? 'title-sm' : 'body-sm'}>
-            {isChart ? 'Chart ' + (props.isPartial ? '.'.repeat(Math.round(props.code.length / 100) % 4) : '')
-              : props.title || 'Code'}
+          <Typography level={'title-sm'}>
+            {props.title || 'Code'}
           </Typography>
         </Box>
       </TooltipOutlined>
@@ -153,7 +150,7 @@ export function EnhancedRenderCode(props: {
       </IconButton>
 
     </>;
-  }, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.code.length, props.isPartial, props.title]);
+  }, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -192,7 +189,7 @@ export function EnhancedRenderCode(props: {
       headerRow={headerRow}
       subHeaderInline={liveFileActionBar}
       onHeaderClick={/*props.isMobile ? handleToggleCodeCollapse :*/ undefined}
-      onHeaderContext={handleToggleContextMenu}
+      // onHeaderContext={handleToggleContextMenu} // disabled because ERC got larger, and this will intercept it all
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}

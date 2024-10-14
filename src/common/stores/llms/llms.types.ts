@@ -55,17 +55,23 @@ export type DModelInterfaceV1 =
   | 'oai-chat-fn'
   | 'oai-complete'
   | 'ant-prompt-caching'
-  | 'oai-o1-preview' // only append below this line
+  | 'oai-o1-preview'
+  | 'oai-prompt-caching'
+  | 'oai-realtime'
   ;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
+// FIXME: keep this in sync with the server side on modules/llms/server/llm.server.types.ts
 export const LLM_IF_OAI_Chat: DModelInterfaceV1 = 'oai-chat';
 export const LLM_IF_OAI_Json: DModelInterfaceV1 = 'oai-chat-json';
+// export const LLM_IF_OAI_JsonSchema: ... future?
 export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
 export const LLM_IF_OAI_Fn: DModelInterfaceV1 = 'oai-chat-fn';
 export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
 export const LLM_IF_SPECIAL_OAI_O1Preview: DModelInterfaceV1 = 'oai-o1-preview';
+export const LLM_IF_OAI_PromptCaching: DModelInterfaceV1 = 'oai-prompt-caching';
+export const LLM_IF_OAI_Realtime: DModelInterfaceV1 = 'oai-realtime';
 
 // Future changes?
 // export type DModelPartKind = 'text' | 'image' | 'audio' | 'video' | 'pdf';

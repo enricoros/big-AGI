@@ -66,6 +66,7 @@ export const RenderImageURL = (props: {
   onOpenInNewTab?: (e: React.MouseEvent) => void,
   onImageDelete?: () => void,
   onImageRegenerate?: () => void,
+  onClick?: (e: React.MouseEvent) => void,  // use this generic as a fallback, but should not be needed
   scaledImageSx?: SxProps,
   className?: string,
 }) => {
@@ -134,13 +135,14 @@ export const RenderImageURL = (props: {
         color={isCard ? 'primary' : undefined}
         variant={isCard ? 'outlined' : 'solid'}
         aria-disabled={props.disabled}
+        onClick={props.onClick}
         className={props.className}
         sx={{
           // style
           mx: isOnButton ? undefined : 1.5,  // 1.5 like the other 'Render*' components
           minWidth: isOnButton ? 20 : 256,
           minHeight: isOnButton ? 20 : 128,
-          boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'md',
+          boxShadow: isCard ? undefined : isOnButton ? '0 2px 6px 0 rgba(0, 0, 0, 0.2)' : 'sm',
 
           // enable anchoring
           position: 'relative',

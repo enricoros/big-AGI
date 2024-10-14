@@ -7,7 +7,7 @@ import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/o
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { isModelPriceFree } from '~/common/stores/llms/llms.pricing';
+import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { DOpenAILLMOptions, FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
@@ -116,7 +116,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
       chat: {
         ...d.chatPrice,
         // compute the free status
-        _isFree: isModelPriceFree(d.chatPrice),
+        _isFree: isModelPricingFree(d.chatPrice),
       },
     };
   }
@@ -124,18 +124,6 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   return dllm;
 }
 
-
-export async function llmChatGenerateOrThrow<TServiceSettings extends object = {}, TAccess = unknown, TLLMOptions = unknown>(
-  llmId: DLLMId,
-  messages: VChatMessageIn[],
-  contextName: string,
-  contextRef: string | null,
-  functions: VChatFunctionIn[] | null,
-  forceFunctionName: string | null,
-  maxTokens?: number,
-): Promise<VChatMessageOut | VChatMessageOrFunctionCallOut> {
-  throw new Error(`llmChatGenerateOrThrow: ${contextName} not migrated to AIX yet.`);
-}
 
 export async function llmStreamingChatGenerate<
   TServiceSettings extends object = {},

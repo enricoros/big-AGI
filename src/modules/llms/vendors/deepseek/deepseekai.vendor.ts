@@ -16,7 +16,7 @@ export interface DDeepseekServiceSettings {
 export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'deepseek',
   name: 'Deepseek',
-  rank: 19,
+  displayRank: 16,
   location: 'cloud',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmDeepseek',

@@ -55,7 +55,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
   // execute a command, if the last message has one
   if (lastMessage.role === 'user') {
-    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, cHandler, chatLLMId);
+    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, lastMessage, cHandler, chatLLMId);
     if (cmdRC !== RET_NO_CMD) return cmdRC;
   }
 
@@ -92,7 +92,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
         return false;
       const reactPrompt = firstFragment.part.text;
       cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(reactPrompt)), true);
-      return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId);
+      return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId, lastMessage.id);
 
     default:
       console.log('Chat execute: issue running', chatExecuteMode, conversationId, lastMessage);

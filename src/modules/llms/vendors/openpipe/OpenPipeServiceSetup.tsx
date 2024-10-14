@@ -4,16 +4,17 @@ import { Typography } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOpenPipe } from './openpipe.vendor';
-import { ExternalLink } from '~/common/components/ExternalLink';
 
 
 const OPENPIPE_API_KEY_LINK = 'https://app.openpipe.ai/settings';
@@ -44,6 +45,8 @@ export function OpenPipeServiceSetup(props: { serviceId: DModelsServiceId }) {
 
 
   return <>
+
+    <ApproximateCosts serviceId={service?.id} />
 
     <FormInputKey
       autoCompleteId='openpipe-key' label='OpenPipe Project API Key'

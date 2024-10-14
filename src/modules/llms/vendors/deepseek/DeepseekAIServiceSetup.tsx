@@ -8,6 +8,7 @@ import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -42,6 +43,8 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
 
   return <>
+
+    <ApproximateCosts serviceId={service?.id} />
 
     <FormInputKey
       autoCompleteId='deepseek-key' label='Deepseek Key'

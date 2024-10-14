@@ -17,21 +17,19 @@ export function useLLM(llmId: DLLMId): DLLM | null {
   return useModelsStore(state => state.llms.find(llm => llm.id === llmId) ?? null);
 }
 
-export function useDefaultLLMIDs(): { chatLLMId: DLLMId | null; fastLLMId: DLLMId | null; funcLLMId: DLLMId | null; } {
+export function useDefaultLLMIDs(): { chatLLMId: DLLMId | null; fastLLMId: DLLMId | null; } {
   return useModelsStore(useShallow(state => ({
     chatLLMId: state.chatLLMId,
     fastLLMId: state.fastLLMId,
-    funcLLMId: state.funcLLMId,
   })));
 }
 
-export function useDefaultLLMs(): { chatLLM: DLLM | null; fastLLM: DLLM | null; funcLLM: DLLM | null } {
+export function useDefaultLLMs(): { chatLLM: DLLM | null; fastLLM: DLLM | null } {
   return useModelsStore(useShallow(state => {
-    const { chatLLMId, fastLLMId, funcLLMId } = state;
+    const { chatLLMId, fastLLMId } = state;
     const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
     const fastLLM = fastLLMId ? state.llms.find(llm => llm.id === fastLLMId) ?? null : null;
-    const funcLLM = funcLLMId ? state.llms.find(llm => llm.id === funcLLMId) ?? null : null;
-    return { chatLLM, fastLLM, funcLLM };
+    return { chatLLM, fastLLM };
   }));
 }
 

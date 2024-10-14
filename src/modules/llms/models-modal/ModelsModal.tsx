@@ -65,6 +65,9 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     {/* Services Setup */}
     {showModels && <GoodModal
       title={<>Configure <b>AI Models</b></>}
+      open onClose={optimaActions().closeModels}
+      animateEnter={llmCount === 0}
+      unfilterBackdrop
       startButton={
         multiService ? <Checkbox
           label='All Services'
@@ -72,7 +75,6 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
           checked={showAllServices} onChange={() => setShowAllServices(all => !all)}
         /> : undefined
       }
-      open onClose={optimaActions().closeModels}
       sx={{
         // forces some shrinkage of the contents (ModelsList)
         overflow: 'auto',

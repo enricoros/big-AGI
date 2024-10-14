@@ -36,7 +36,7 @@ interface DAzureServiceSettings {
 export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'azure',
   name: 'Azure',
-  rank: 14,
+  displayRank: 30,
   location: 'cloud',
   instanceLimit: 2,
   hasBackendCapKey: 'hasLlmAzureOpenAI',

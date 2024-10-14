@@ -18,7 +18,7 @@ interface DTogetherAIServiceSettings {
 export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'togetherai',
   name: 'Together AI',
-  rank: 17,
+  displayRank: 34,
   location: 'cloud',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmTogetherAI',

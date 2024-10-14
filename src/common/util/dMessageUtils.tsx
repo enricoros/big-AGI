@@ -257,10 +257,11 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode 
     {metrics?.TIn !== undefined && <div>Tokens:</div>}
     {metrics?.TIn !== undefined && <div>
       {' '}<b>{metrics.TIn?.toLocaleString() || ''}</b> in
-      {metrics.TCacheRead !== undefined && <>{', '}<b>{metrics.TCacheRead?.toLocaleString() || ''}</b> read</>}
-      {metrics.TCacheWrite !== undefined && <>{', '}<b>{metrics.TCacheWrite?.toLocaleString() || ''}</b> wrote</>}
+      {metrics.TCacheRead !== undefined && <>{' · '}<b>{metrics.TCacheRead?.toLocaleString() || ''}</b> read</>}
+      {metrics.TCacheWrite !== undefined && <>{' · '}<b>{metrics.TCacheWrite?.toLocaleString() || ''}</b> wrote</>}
       {', '}<b>{metrics.TOut?.toLocaleString() || ''}</b> out
       {metrics.TOutR !== undefined && <> (<b>{metrics.TOutR?.toLocaleString() || ''}</b> for reasoning)</>}
+      {/*{metrics.TOutA !== undefined && <> (<b>{metrics.TOutA?.toLocaleString() || ''}</b> for audio)</>}*/}
     </div>}
     {metrics?.$c !== undefined && <div>Costs:</div>}
     {metrics?.$c !== undefined && <div>
@@ -298,7 +299,7 @@ function _prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason'], co
   if (!reason) return null;
   switch (reason) {
     case 'client-abort':
-      return complexity === 'extra' ? 'Stopped' : '';
+      return complexity !== 'minimal' ? 'Stopped' : '';
     case 'filter':
       return 'Filtered';
     case 'issue':

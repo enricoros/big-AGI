@@ -1,4 +1,4 @@
-import { suggestUIMixin } from '~/modules/aifn/autosuggestions/autoSuggestions';
+import { autoFollowUpUIMixin } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { BrowserLang, Is } from '~/common/util/pwaUtils';
@@ -83,15 +83,6 @@ export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId |
   // {{Prefer...}}
   mixed = mixed.replace('{{PreferTables}}', 'Data presentation: prefer tables (auto-columns)');
   // {{Render...}}
-  mixed = mixed.replace('{{RenderChartJS}}', `
-When presenting data that would be better visualized as a chart, output a ChartJS configuration JSON in this format:
-\`\`\`chartjs
-{
-  // Valid and complete ChartJS configuration JSON (DO NOT USE FUNCTIONS)
-}
-\`\`\`
-Choose the most suitable chart type based on the data and context. Include only the JSON configuration, without any explanatory text. Ensure the JSON is valid and complete and can be parsed by ChartJS.
-`.trim());
   mixed = mixed.replace('{{RenderMermaid}}', 'Mermaid rendering: Enabled for diagrams and pie charts and no other charts');
   mixed = mixed.replace('{{RenderPlantUML}}', 'PlantUML rendering: Enabled');
   mixed = mixed.replace('{{RenderHTML}}', `HTML in markdown rendering: Sleek HTML5 for ${Is.Desktop ? 'desktop' : 'mobile'} screens (self-contained with CSS/JS, leverage top libraries, external links OK)`);
@@ -100,7 +91,7 @@ Choose the most suitable chart type based on the data and context. Include only 
   mixed = mixed.replace('{{InputImage0}}', 'Image input capabilities: Disabled');
   mixed = mixed.replace('{{ToolBrowser0}}', 'Web browsing capabilities: Disabled');
   // {{AutoSuggest...}}
-  mixed = mixed.replace('{{AutoSuggestHTMLUI}}', suggestUIMixin);
+  mixed = mixed.replace('{{AutoSuggestHTMLUI}}', autoFollowUpUIMixin);
   // mixed = mixed.replace('{{AutoSuggestDiagrams}}', suggestDiagramMixin);
 
   // {{Cutoff}} or remove the line

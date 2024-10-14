@@ -21,7 +21,7 @@ export const aixRouter = createTRPCRouter({
       access: AixWire_API.Access_schema,
       model: AixWire_API.Model_schema,
       chatGenerate: AixWire_API_ChatContentGenerate.Request_schema,
-      context: AixWire_API.Context_schema,
+      context: AixWire_API.ContextChatGenerate_schema,
       streaming: z.boolean(),
       connectionOptions: AixWire_API.ConnectionOptions_schema.optional(),
     }))
@@ -80,7 +80,7 @@ export const aixRouter = createTRPCRouter({
 
         // Handle AI Service connection error
         const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-        const extraDevMessage = process.env.NODE_ENV === 'development' ? `\n[DEV_URL: ${dispatch.request.url}]` : '';
+        const extraDevMessage = process.env.NODE_ENV === 'development' ? ` - [DEV_URL: ${dispatch.request.url}]` : '';
 
         const showOnConsoleForNonCustomServers = access.dialect !== 'openai' || !access.oaiHost;
         chatGenerateTx.setRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);

@@ -9,6 +9,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { ModelVendorGroq } from './groq.vendor';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -39,6 +40,8 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
 
 
   return <>
+
+    <ApproximateCosts serviceId={service?.id} />
 
     <FormInputKey
       autoCompleteId='groq-key' label='Groq API Key'

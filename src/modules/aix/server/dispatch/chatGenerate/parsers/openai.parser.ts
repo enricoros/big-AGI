@@ -88,20 +88,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // -> Stats
     if (json.usage) {
-      if (json.usage.completion_tokens !== undefined) {
-        const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-          TIn: json.usage.prompt_tokens || -1,
-          TOut: json.usage.completion_tokens,
-          // dtInner: openAI is not reporting the time as seen by the servers
-          dtAll: Date.now() - parserCreationTimestamp,
-        };
-        if (json.usage.completion_tokens_details?.reasoning_tokens !== undefined)
-          metricsUpdate.TOutR = json.usage.completion_tokens_details.reasoning_tokens;
-        if (timeToFirstEvent !== undefined)
-          metricsUpdate.dtStart = timeToFirstEvent;
-        pt.updateMetrics(metricsUpdate);
-      }
-
+      const metrics = _fromOpenAIUsage(json.usage, parserCreationTimestamp, timeToFirstEvent);
+      if (metrics)
+        pt.updateMetrics(metrics);
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
       if (!json.choices.length)
         return;
@@ -235,17 +224,9 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
     // -> Stats
     if (json.usage) {
-      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-        TIn: json.usage.prompt_tokens,
-        TOut: json.usage.completion_tokens,
-        // vTOutInner: ...   // we don't have the inner time to compute this
-        // dtStart: ... // not meaningful for non-streaming
-        // dtInner: ... // not measured/reportd by OpenAI
-        dtAll: Date.now() - parserCreationTimestamp,
-      };
-      if (json.usage.completion_tokens_details?.reasoning_tokens !== undefined)
-        metricsUpdate.TOutR = json.usage.completion_tokens_details.reasoning_tokens;
-      pt.updateMetrics(metricsUpdate);
+      const metrics = _fromOpenAIUsage(json.usage, parserCreationTimestamp, undefined);
+      if (metrics)
+        pt.updateMetrics(metrics);
     }
 
     // Assumption/validate: expect 1 completion, or stop
@@ -323,4 +304,55 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
   // Developers: show more finish reasons (not under flag for now, so we can add to the supported set)
   console.log('AIX: OpenAI-dispatch unexpected finish_reason:', finish_reason);
   return null;
+}
+
+function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined) {
+
+  // -> Stats only in some packages
+  if (!usage)
+    return undefined;
+
+  // Require at least the completion tokens, or issue a DEV warning otherwise
+  if (!usage.completion_tokens) {
+    // Warn, so we may adjust this usage parsing for Non-OpenAI APIs
+    console.log('[DEV] AIX: OpenAI-dispatch missing completion tokens in usage', { usage });
+    return undefined;
+  }
+
+  // Create the metrics update object
+  const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
+    TIn: usage.prompt_tokens ?? undefined,
+    TOut: usage.completion_tokens,
+    // dtInner: openAI is not reporting the time as seen by the servers
+    dtAll: Date.now() - parserCreationTimestamp,
+  };
+
+  // Input Metrics
+
+  // Input redistribution: Cache Read
+  if (usage.prompt_tokens_details !== undefined) {
+    const TCacheRead = usage.prompt_tokens_details.cached_tokens;
+    if (TCacheRead !== undefined && TCacheRead > 0) {
+      metricsUpdate.TCacheRead = TCacheRead;
+      if (metricsUpdate.TIn !== undefined)
+        metricsUpdate.TIn -= TCacheRead;
+    }
+  }
+
+  // TODO Input redistribution: Audio tokens
+
+  // Output Metrics
+
+  // Output breakdown: Reasoning
+  if (usage.completion_tokens_details?.reasoning_tokens !== undefined)
+    metricsUpdate.TOutR = usage.completion_tokens_details.reasoning_tokens;
+
+  // TODO: Output breakdown: Audio
+
+  // Time Metrics
+
+  if (timeToFirstEvent !== undefined)
+    metricsUpdate.dtStart = timeToFirstEvent;
+
+  return metricsUpdate;
 }

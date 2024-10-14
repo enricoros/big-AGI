@@ -16,7 +16,7 @@ interface DGroqServiceSettings {
 export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'groq',
   name: 'Groq',
-  rank: 18,
+  displayRank: 32,
   location: 'cloud',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmGroq',

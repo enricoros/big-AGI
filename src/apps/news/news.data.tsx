@@ -85,7 +85,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.6: Groq <B>Llama 3.1</B> support</> },
       { text: <>1.16.7: Gpt-4o <B>2024-08-06</B></> },
       { text: <>1.16.8: <B>ChatGPT-4o</B> latest</> },
-      { text: <>OpenAI <B>o1</B> and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/FDggwwZv?utm_source=github&utm_medium=news116&utm_campaign=ba20'>Sign up here</B></> },
+      { text: <>OpenAI <B>o1</B> and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
     ],
   },
   {
@@ -327,8 +327,10 @@ function B(props: {
   );
   if (!href)
     return boldText;
+  // append UTM details if missing
+  const hrefWithUtm = href.includes('utm_source=') ? href : href + clientUtmSource();
   return (
-    <ExternalLink href={href + clientUtmSource()} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
+    <ExternalLink href={hrefWithUtm} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
       {boldText}
     </ExternalLink>
   );

@@ -5,7 +5,7 @@ import { Box, Container } from '@mui/joy';
 import { themeBgApp } from '~/common/app.theme';
 
 
-export function PlainLayout(props: { children?: React.ReactNode }) {
+export function ContainerLayout(props: { children?: React.ReactNode }) {
   return <>
 
     {/* Headers as needed */}

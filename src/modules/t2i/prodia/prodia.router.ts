@@ -37,7 +37,7 @@ export const prodiaRouter = createTRPCRouter({
     .query(async ({ input }) => {
 
       // timeout, in seconds
-      const timeout = 20;
+      const timeout = 25;
       const tStart = Date.now();
 
       // crate the job, getting back a job ID
@@ -82,8 +82,10 @@ export const prodiaRouter = createTRPCRouter({
 
       // check for success
       const elapsed = Math.round((Date.now() - tStart) / 100) / 10;
-      if (j.status !== 'succeeded' || !j.imageUrl)
+      if (j.status !== 'succeeded' || !j.imageUrl) {
+        console.error('Prodia image generation failed:', j);
         throw new Error(`Prodia image generation failed within ${elapsed}s`);
+      }
 
       // download the image and convert to base64
       const imageResponse = await fetch(j.imageUrl);

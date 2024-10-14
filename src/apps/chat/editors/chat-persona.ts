@@ -1,6 +1,6 @@
 import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
+import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
-import { autoSuggestions } from '~/modules/aifn/autosuggestions/autoSuggestions';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -10,7 +10,7 @@ import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } 
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
-import { getChatAutoAI } from '../store-app-chat';
+import { getChatAutoAI, getIsNotificationEnabledForModel } from '../store-app-chat';
 import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
 
 
@@ -36,26 +36,28 @@ export async function runPersonaOnConversationHead(
 
   const history = cHandler.historyViewHead('runPersonaOnConversationHead') as Readonly<DMessage[]>;
 
-  const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
-
-  // ai follow-up operations (fire/forget)
-  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
-
   // assistant response placeholder
+  const isNotifyEnabled = getIsNotificationEnabledForModel(assistantLlmId);
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     CHATGENERATE_RESPONSE_PLACEHOLDER,
     {
       purposeId: history[0].purposeId,
       generator: { mgt: 'named', name: assistantLlmId },
+      ...(isNotifyEnabled ? { userFlags: [MESSAGE_FLAG_NOTIFY_COMPLETE] } : {}),
     },
   );
+
+  const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
+
+  // ai follow-up operations (fire/forget)
+  const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
 
   // AutoSpeak
   const autoSpeaker: PersonaProcessorInterface | null = autoSpeak !== 'off' ? new PersonaChatMessageSpeak(autoSpeak) : null;
 
   // when an abort controller is set, the UI switches to the "stop" mode
   const abortController = new AbortController();
-  cHandler.setAbortController(abortController);
+  cHandler.setAbortController(abortController, 'chat-persona');
 
   // stream the assistant's messages directly to the state store
   const messageStatus = await aixChatGenerateContent_DMessage_FromHistory(
@@ -96,6 +98,7 @@ export async function runPersonaOnConversationHead(
   // special case: if the last message was aborted and had no content, delete it
   if (messageWasInterruptedAtStart(lastDeepCopy)) {
     cHandler.messagesDelete([assistantMessageId]);
+    // NOTE: ok to exit here, as the abort was already done
     return false;
   }
 
@@ -110,7 +113,7 @@ export async function runPersonaOnConversationHead(
 
   // clear to send, again
   // FIXME: race condition? (for sure!)
-  cHandler.setAbortController(null);
+  cHandler.clearAbortController('chat-persona');
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set
@@ -118,7 +121,7 @@ export async function runPersonaOnConversationHead(
   }
 
   if (!hasBeenAborted && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
-    autoSuggestions(null, conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
+    void autoChatFollowUps(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
   // return true if this succeeded
   return messageStatus.outcome === 'success';

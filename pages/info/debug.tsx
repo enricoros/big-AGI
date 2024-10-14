@@ -160,4 +160,4 @@ function AppDebug() {
 }
 
 
-export default withNextJSPerPageLayout({ type: 'plain' }, () => <AppDebug />);
+export default withNextJSPerPageLayout({ type: 'container' }, () => <AppDebug />);

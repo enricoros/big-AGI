@@ -13,7 +13,7 @@ Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 > 🚀 Big-AGI 2 is launching Q4 2024. Be the first to experience it before the public release.
 >
-> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/FDggwwZv?utm_source=github&utm_medium=readme&utm_campaign=ba20)
+> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=readme&utm_campaign=ea2)
 
 Or fork & run on Vercel
 
@@ -219,6 +219,13 @@ Or bring your API keys and jump straight into our free instance on [big-AGI.com]
 [//]: # ([![GitHub pull requests]&#40;https://img.shields.io/github/issues-pr/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/pulls&#41;)
 
 [//]: # ([![License]&#40;https://img.shields.io/github/license/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/LICENSE&#41;)
+
+## 📜 Licensing
+
+Big-AGI incorporates third-party software components that are subject
+to separate license terms. For detailed information about these
+components and their respective licenses, please refer to
+the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
 
 ---
 

@@ -127,6 +127,12 @@ export function LLMAttachmentMenu(props: {
     copyToClipboard(text, 'Attachment Text');
   }, []);
 
+  const handleCopyLabelToClipboard = React.useCallback((event: React.MouseEvent, text: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    copyToClipboard(text, 'Attachment Name');
+  }, []);
+
   const handleViewImageRefPart = React.useCallback((event: React.MouseEvent, imageRefPart: DMessageImageRefPart) => {
     event.preventDefault();
     event.stopPropagation();
@@ -175,6 +181,11 @@ export function LLMAttachmentMenu(props: {
             : draftSource.media === 'text'
               ? (draftSource.method === 'drop' ? 'drop' : draftSource.method === 'clipboard-read' ? 'clipboard' : draftSource.method === 'paste' ? 'paste' : '')
               : ''} as:
+          {uiComplexityMode === 'extra' && (
+            <Chip component='span' size='sm' color='neutral' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyLabelToClipboard(event, draft.label)} sx={{ ml: 'auto' }}>
+              copy name
+            </Chip>
+          )}
         </ListItem>
       )}
       {!isUnconvertible && draft.converters.map((c, idx) =>
@@ -315,7 +326,7 @@ export function LLMAttachmentMenu(props: {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
                         <span>{part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·&nbsp;</span>
-                        <Chip size='sm' color='primary' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>
+                        <Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>
                           copy
                         </Chip>
                       </Typography>
@@ -326,10 +337,10 @@ export function LLMAttachmentMenu(props: {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
                         <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? (part.dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
-                        <Chip size={isOutputMultiple ? 'sm' : 'md'} color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
+                        <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
                           see
                         </Chip>
-                        {isOutputMultiple && <Chip size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
+                        {isOutputMultiple && <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
                           del
                         </Chip>}
                       </Typography>

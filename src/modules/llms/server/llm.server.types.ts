@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 
 
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
@@ -15,6 +15,7 @@ export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
 /// Interfaces
 
 // TODO: just remove this, and move to a capabilities array (I/O/...)
+// FIXME: keep this in sync with the client side on llms.types.ts
 const Interface_enum = z.enum([
   LLM_IF_OAI_Chat,              // OpenAI Chat
   LLM_IF_OAI_Fn,                // JSON mode?
@@ -23,6 +24,8 @@ const Interface_enum = z.enum([
   LLM_IF_OAI_Complete,          // Complete mode
   LLM_IF_ANT_PromptCaching,     // Anthropic Prompt caching
   LLM_IF_SPECIAL_OAI_O1Preview, // Special OAI O1 Preview
+  LLM_IF_OAI_PromptCaching,     // OpenAI Prompt caching
+  LLM_IF_OAI_Realtime,         // OpenAI Realtime
 ]);
 
 
@@ -45,22 +48,30 @@ const PriceUpTo_schema = z.object({
   price: PricePerMToken_schema,
 });
 
-const TieredPrice_schema = z.union([
+const TieredPricing_schema = z.union([
   PricePerMToken_schema,
   z.array(PriceUpTo_schema),
 ]);
 
+// NOTE: (!) keep this in sync with DChatGeneratePricing (llms.pricing.ts)
 const ChatGeneratePricing_schema = z.object({
-  input: TieredPrice_schema.optional(),
-  output: TieredPrice_schema.optional(),
+  input: TieredPricing_schema.optional(),
+  output: TieredPricing_schema.optional(),
   // Future: Perplexity has a cost per request, consider this for future additions
   // perRequest: z.number().optional(), // New field for fixed per-request pricing
-  cache: z.object({
-    cType: z.literal('ant-bp'),
-    read: TieredPrice_schema,
-    write: TieredPrice_schema,
-    duration: z.number(),
-  }).optional(),
+  cache: z.discriminatedUnion('cType', [
+    z.object({
+      cType: z.literal('ant-bp'), // [Anthropic] Breakpoint-based caching
+      read: TieredPricing_schema,
+      write: TieredPricing_schema,
+      duration: z.number(),
+    }),
+    z.object({
+      cType: z.literal('oai-ac'), // [OpenAI] Automatic Caching
+      read: TieredPricing_schema,
+      // write: TieredPricing_schema, // Not needed, as it's the same as input cost, i.e. = 0
+    }),
+  ]).optional(),
   // Not for the server-side, computed on the client only
   // _isFree: z.boolean().optional(),
 });

@@ -9,6 +9,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
+import { ApproximateCosts } from '../ApproximateCosts';
 import { ModelVendorPerplexity } from './perplexity.vendor';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -39,6 +40,8 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
 
 
   return <>
+
+    <ApproximateCosts serviceId={service?.id} />
 
     <FormInputKey
       autoCompleteId='perplexity-key' label='Perplexity API Key'

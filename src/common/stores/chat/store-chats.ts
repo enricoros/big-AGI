@@ -35,7 +35,7 @@ export interface ChatActions {
   deleteConversations: (cIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
-  setAbortController: (cId: DConversationId, _abortController: AbortController | null) => void;
+  setAbortController: (cId: DConversationId, _abortController: AbortController | null, debugScope: string) => void;
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
   historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
@@ -174,11 +174,20 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           ),
         })),
 
-      setAbortController: (conversationId: DConversationId, _abortController: AbortController | null) =>
-        _get()._editConversation(conversationId, () =>
-          ({
-            _abortController: _abortController,
-          })),
+      setAbortController: (conversationId: DConversationId, _nextController: AbortController | null, debugScope: string) =>
+        _get()._editConversation(conversationId, ({ _abortController: _currentController }) => {
+          // [DEV] Debug state management of controllers - FIXME: migrate away from a per-chat, unless done properly (cascade triggering)
+          if (_nextController !== null && _currentController) {
+            const isAlreadyAborted = _currentController.signal.aborted;
+            if (process.env.NODE_ENV === 'development')
+              console.warn(`[DEV] setAbortController (${debugScope}): race condition (${isAlreadyAborted ? 'Already aborted' : 'Not aborted'}) for conversation ${conversationId}`);
+            if (!isAlreadyAborted)
+              _currentController.abort();
+          }
+          return {
+            _abortController: _nextController,
+          };
+        }),
 
       abortConversationTemp: (conversationId: DConversationId) =>
         _get()._editConversation(conversationId, conversation => {
@@ -371,6 +380,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             userTitle,
+            ...(!userTitle && { autoTitle: undefined }), // clear autotitle when clearing usertitle
           }),
 
       setUserSymbol: (conversationId: DConversationId, userSymbol: string | null) =>

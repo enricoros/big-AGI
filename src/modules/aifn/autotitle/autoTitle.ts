@@ -1,9 +1,7 @@
-import { aixChatGenerateRequestSimple } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { aixChatGenerateContent_DMessage, aixCreateChatGenerateNSContext } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { getFastLLMId } from '~/common/stores/llms/store-llms';
-import { isTextPart } from '~/common/stores/chat/chat.fragments';
+import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 
@@ -14,9 +12,13 @@ import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 export async function autoConversationTitle(conversationId: string, forceReplace: boolean): Promise<boolean> {
 
   // use valid fast model
-  const fastLLMId = getFastLLMId();
-  if (!fastLLMId)
+  let autoTitleLlmId;
+  try {
+    autoTitleLlmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'conversation-titler');
+  } catch (error) {
+    console.log(`autoConversationTitle: ${error}`);
     return false;
+  }
 
   // only operate on valid conversations, without any title
   const conversation = getConversation(conversationId);
@@ -42,32 +44,20 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   try {
 
     // LLM chat-generate call
-    const { fragments, generator } = await aixChatGenerateContent_DMessage(
-      fastLLMId,
-      aixChatGenerateRequestSimple(
-        'You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.',
-        [{
-          role: 'user', text: `
-Analyze the given short conversation (every line is truncated) and extract a concise chat title that summarizes the conversation in as little as a couple of words.
+    let title = await aixChatGenerateText_Simple(
+      autoTitleLlmId,
+      'You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.',
+      `Analyze the given short conversation (every line is truncated) and extract a concise chat title that summarizes the conversation in as little as a couple of words.
 Only respond with the lowercase short title and nothing else.
 
 \`\`\`
 ${historyLines.join('\n')}
-\`\`\``.trim(),
-        }]),
-      aixCreateChatGenerateNSContext('chat-ai-title', conversationId),
-      false,
-      { abortSignal: new AbortController().signal /* we don't abort */ },
+\`\`\``,
+      'chat-ai-title', conversationId,
     );
 
-    // parse response
-    if (fragments.length !== 1 || !isTextPart(fragments[0].part)) {
-      console.log('Failed to auto-title conversation', { id: conversationId, fragments, generator });
-      return false;
-    }
-
     // parse title
-    const title = fragments[0].part.text
+    title = title
       ?.trim()
       ?.replaceAll('"', '')
       ?.replace('Title: ', '')
@@ -79,9 +69,11 @@ ${historyLines.join('\n')}
       return true;
     }
 
-  } catch (err) {
+  } catch (error: any) {
     // not critical at all
-    console.log('Failed to auto-title conversation', conversationId, err);
+    console.log('Failed to auto-title conversation', conversationId, { error });
+    if (forceReplace)
+      setAutoTitle(conversationId, '');
   }
 
   return false;

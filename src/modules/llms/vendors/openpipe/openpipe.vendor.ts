@@ -17,7 +17,7 @@ export interface DOpenPipeServiceSettings {
 export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
   id: 'openpipe',
   name: 'OpenPipe',
-  rank: 16,
+  displayRank: 42,
   location: 'cloud',
   instanceLimit: 1,
   hasBackendCapKey: 'hasLlmOpenPipe',

@@ -182,6 +182,28 @@ export function isTextPart(part: DMessageContentFragment['part']) {
   return part.pt === 'text';
 }
 
+export function isErrorPart(part: DMessageContentFragment['part']) {
+  return part.pt === 'error';
+}
+
+
+export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
+  fragments.forEach((fragment, idx) => {
+    if (isContentFragment(fragment) && isTextPart(fragment.part))
+      fragment.part.text = editText(fragment.part.text, idx);
+  });
+}
+
+export function prependTextPartsInline(fragments: DMessageFragment[], textPrefix: string): void {
+  for (const fragment of fragments) {
+    if (!isContentFragment(fragment) || !isTextPart(fragment.part))
+      continue;
+    fragment.part.text = textPrefix + ' ' + fragment.part.text;
+    return;
+  }
+  fragments.unshift(createTextContentFragment(textPrefix));
+}
+
 
 /// Fragments Creation & Duplication
 

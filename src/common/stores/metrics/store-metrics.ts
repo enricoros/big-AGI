@@ -17,8 +17,8 @@ const useMetricsStore = create<ServiceMetricsSlice>()(persist((...a) => ({
 }));
 
 
-export function metricsStoreAddChatGenerate(costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, llm: DLLM) {
-  useMetricsStore.getState().addChatGenerateCostEntry(costs, inputTokens, outputTokens, llm.sId || null);
+export function metricsStoreAddChatGenerate(costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, llm: DLLM, debugCostSource: string) {
+  useMetricsStore.getState().addChatGenerateCostEntry(costs, inputTokens, outputTokens, llm.sId || null, debugCostSource);
 }
 
 export function useCostMetricsForLLMService(serviceId?: DModelsServiceId) {
