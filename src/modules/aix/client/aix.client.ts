@@ -582,7 +582,8 @@ async function _aixChatGenerateContent_LL(
       if (AIX_CLIENT_DEV_ASSERTS)
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!accumulator_LL.fragments.length;
-      contentReassembler.reassembleClientException('Application error: ' + presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
+      const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error').replace('[TRPCClientError]', '');
+      contentReassembler.reassembleClientException(`An unexpected error occurred: ${errorText} Please retry.`);
     }
 
   }
