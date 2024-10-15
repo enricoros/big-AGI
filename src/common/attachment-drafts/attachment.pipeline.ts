@@ -588,7 +588,11 @@ export async function attachmentPerformConversion(
         const pdfText = await pdfToText(pdfData, (progress: number) => {
           edit(attachment.id, { outputsConversionProgress: progress });
         });
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
+        if (pdfText.trim().length < 2) {
+          // Warn the user if no text is extracted
+          // edit(attachment.id, { inputError: 'No text found in the PDF file.' });
+        } else
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
         break;
 
       // pdf to images
@@ -635,10 +639,15 @@ export async function attachmentPerformConversion(
           const pdfText = await pdfToText(new Uint8Array(input.data.slice(0)), (progress: number) => {
             edit(attachment.id, { outputsConversionProgress: 0.5 + progress / 2 }); // Update progress (50% to 100%)
           });
-          const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' });
+          if (pdfText.trim().length < 2) {
+            // Do not warn the user, as hopefully the images are useful
+          } else {
+            const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' });
+            newFragments.push(textFragment);
+          }
 
           // Add the text fragment first, then the image fragments
-          newFragments.push(textFragment, ...imageFragments);
+          newFragments.push(...imageFragments);
         } catch (error) {
           console.error('Error converting PDF to text and images:', error);
         }

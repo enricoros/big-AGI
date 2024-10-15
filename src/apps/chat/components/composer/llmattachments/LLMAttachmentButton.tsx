@@ -38,7 +38,7 @@ const ATTACHMENT_MIN_STYLE = {
 };
 
 const attachmentConverterSx = { width: 18, height: 18 } as const;
-const attachmentIconSx = { width: 30, height: 30 } as const;
+const attachmentIconSx = { width: 30, maxHeight: 30, overflow: 'hidden' } as const;
 
 
 const ellipsizeLabel = (label?: string) => {
