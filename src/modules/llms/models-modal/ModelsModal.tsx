@@ -1,19 +1,25 @@
 import * as React from 'react';
 
-import { Box, Divider } from '@mui/joy';
+import { Box, Button, Divider } from '@mui/joy';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';
 import { runWhenIdle } from '~/common/util/pwaUtils';
-import { useLLMsCount, useModelsServices } from '~/common/stores/llms/llms.hooks';
+import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useHasLLMs, useModelsServices } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
 import { ModelsServiceSelector } from './ModelsServiceSelector';
+import { ModelsWizard } from './ModelsWizard';
 import { createModelsServiceForDefaultVendor } from '../vendors/vendor.helpers';
 import { findModelVendor } from '../vendors/vendors.registry';
+
+
+// configuration
+const MODELS_WIZARD_ENABLE_INITIALLY = true;
 
 
 function VendorServiceSetup(props: { service: DModelsService }) {
@@ -24,35 +30,40 @@ function VendorServiceSetup(props: { service: DModelsService }) {
 }
 
 
-export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
+/**
+ * Note: the reason for this component separation from the parent state, is delayed state intitialization.
+ */
+function ModelsConfiguratorModal(props: {
+  modelsServices: DModelsService[],
+  confServiceId: string | null,
+  setConfServiceId: (serviceId: string | null) => void,
+  allowAutoTrigger: boolean,
+}) {
 
-  // local state
-  const [_selectedServiceId, setSelectedServiceId] = React.useState<DModelsServiceId | null>(null);
+  const { modelsServices, confServiceId, setConfServiceId } = props;
+
+  // state
   // const [showAllServices, setShowAllServices] = React.useState<boolean>(false);
+  const [showWizard, setShowWizard] = React.useState<boolean>(MODELS_WIZARD_ENABLE_INITIALLY && !modelsServices.length);
   const showAllServices = false;
 
   // external state
-  const { showModels, showModelOptions } = useOptimaModelsModalsState();
-  const modelsServices = useModelsServices();
-  const llmCount = useLLMsCount();
+  const isMobile = useIsMobile();
+  const hasLLMs = useHasLLMs();
 
-  // auto-select the first service - note: we could use a useEffect() here, but this is more efficient
-  // also note that state-persistence is unneeded
-  const selectedServiceId = _selectedServiceId ?? modelsServices[modelsServices.length - 1]?.id ?? null;
 
-  const activeService = modelsServices.find(s => s.id === selectedServiceId);
+  // active service with fallback to the last added service
+  const activeServiceId = confServiceId
+    ?? modelsServices[modelsServices.length - 1]?.id
+    ?? null;
 
-  // const multiService = modelsServices.length > 1;
+  const activeService = modelsServices.find(s => s.id === activeServiceId);
 
-  // Auto-open this dialog - anytime no service is selected
-  const autoOpenTrigger = !selectedServiceId && !props.suspendAutoModelsSetup;
-  React.useEffect(() => {
-    if (autoOpenTrigger)
-      return runWhenIdle(() => optimaOpenModels(), 2000);
-  }, [autoOpenTrigger]);
+  const isMultiServices = modelsServices.length > 1;
+
 
   // Auto-add the default service - at boot, when no service is present
-  const autoAddTrigger = showModels && !props.suspendAutoModelsSetup;
+  const autoAddTrigger = !showWizard && props.allowAutoTrigger;
   React.useEffect(() => {
     // Note: we use the immediate version to not react to deletions
     const { addService, sources: modelsServices } = llmsStoreState();
@@ -61,43 +72,67 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
   }, [autoAddTrigger]);
 
 
-  return <>
+  // handlers
+  const handleShowAdvanced = React.useCallback(() => {
+    setShowWizard(false);
+  }, []);
 
-    {/* Services Setup */}
-    {showModels && <GoodModal
-      title={<>Configure <b>AI Models</b></>}
+  const handleShowWizard = React.useCallback(() => {
+    setShowWizard(true);
+  }, []);
+
+
+  // start button
+  const startButton = React.useMemo(() => {
+    if (showWizard)
+      return <Button variant='outlined' color='neutral' onClick={handleShowAdvanced}>{isMobile ? 'Advanced' : 'Switch to Advanced'}</Button>;
+    // return <Badge size='sm' badgeContent='14 Services' color='neutral' variant='outlined'><Button variant='outlined' color='neutral' onClick={handleShowAdvanced}>{isMobile ? 'Advanced' : 'Switch to Advanced'}</Button></Badge>;
+    if (!isMultiServices)
+      return <Button variant='outlined' color='neutral' onClick={handleShowWizard}>{isMobile ? 'Easy Mode' : 'Easy Mode'}</Button>;
+    return undefined;
+    // if (isMultiServices) {
+    //   return (
+    //     <Checkbox
+    //       label='All Services'
+    //       sx={{ my: 'auto' }}
+    //       checked={showAllServices} onChange={() => setShowAllServices(all => !all)}
+    //     />
+    //   );
+    // }
+  }, [handleShowAdvanced, handleShowWizard, isMobile, isMultiServices, showWizard]);
+
+  return (
+    <GoodModal
+      title={<>{showWizard ? 'Welcome · Setup' : 'Configure'} <b>AI Models</b></>}
       open onClose={optimaActions().closeModels}
       darkBottomClose
-      animateEnter={llmCount === 0}
+      closeText={showWizard ? 'Done' : undefined}
+      animateEnter={!hasLLMs}
       unfilterBackdrop
-      // startButton={
-      //   multiService ? <Checkbox
-      //     label='All Services'
-      //     sx={{ my: 'auto' }}
-      //     checked={showAllServices} onChange={() => setShowAllServices(all => !all)}
-      //   /> : undefined
-      // }
+      startButton={startButton}
       sx={{
         // forces some shrinkage of the contents (ModelsList)
         overflow: 'auto',
       }}
     >
 
-      <ModelsServiceSelector selectedServiceId={selectedServiceId} setSelectedServiceId={setSelectedServiceId} />
+      {!showWizard && <ModelsServiceSelector modelsServices={modelsServices} selectedServiceId={activeServiceId} setSelectedServiceId={setConfServiceId} />}
 
-      {!!activeService && <Divider />}
+      <Divider />
 
-      {!!activeService && (
+      {showWizard && <ModelsWizard isMobile={isMobile} onSkip={optimaActions().closeModels} onSwitchToAdvanced={handleShowAdvanced} />}
+
+      {!showWizard && !!activeService && (
         <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
           <VendorServiceSetup service={activeService} />
         </Box>
       )}
 
-      {!!llmCount && <Divider />}
+      {!showWizard && hasLLMs && <Divider />}
 
-      {!!llmCount && (
+      {!showWizard && hasLLMs && (
         <ModelsList
-          filterServiceId={showAllServices ? null : selectedServiceId}
+          filterServiceId={showAllServices ? null : activeServiceId}
           onOpenLLMOptions={optimaActions().openModelOptions}
           sx={{
             // works in tandem with the parent (GoodModal > Dialog) overflow: 'auto'
@@ -119,9 +154,40 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
         />
       )}
 
-      <Divider sx={{ background: 'transparent'}} />
+      <Divider sx={{ background: 'transparent' }} />
 
-    </GoodModal>}
+    </GoodModal>
+  );
+}
+
+
+export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
+
+  // external state
+  const { showModels, showModelOptions } = useOptimaModelsModalsState();
+  const { modelsServices, confServiceId, setConfServiceId } = useModelsServices();
+
+
+  // [effect] Auto-open the configurator - anytime no service is selected
+  const hasNoServices = !modelsServices.length;
+  const autoOpenTrigger = hasNoServices && !props.suspendAutoModelsSetup;
+  React.useEffect(() => {
+    if (autoOpenTrigger)
+      return runWhenIdle(() => optimaOpenModels(), 2000);
+  }, [autoOpenTrigger]);
+
+
+  return <>
+
+    {/* Services Setup */}
+    {showModels && (
+      <ModelsConfiguratorModal
+        modelsServices={modelsServices}
+        confServiceId={confServiceId}
+        setConfServiceId={setConfServiceId}
+        allowAutoTrigger={!props.suspendAutoModelsSetup}
+      />
+    )}
 
     {/* per-LLM options */}
     {!!showModelOptions && (

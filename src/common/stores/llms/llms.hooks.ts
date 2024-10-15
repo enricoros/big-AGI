@@ -57,5 +57,9 @@ export function useHasLLMs(): boolean {
 }
 
 export function useModelsServices() {
-  return useModelsStore(state => state.sources);
+  return useModelsStore(useShallow(state => ({
+    modelsServices: state.sources,
+    confServiceId: state.confServiceId,
+    setConfServiceId: state.setConfServiceId,
+  })));
 }

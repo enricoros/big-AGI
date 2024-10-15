@@ -10,12 +10,12 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useModelsServices } from '~/common/stores/llms/llms.hooks';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { createModelsServiceForVendor, vendorHasBackendCap } from '../vendors/vendor.helpers';
 import { findAllModelVendors, findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
+// import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
@@ -35,7 +35,9 @@ function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
 
 
 export function ModelsServiceSelector(props: {
-  selectedServiceId: DModelsServiceId | null, setSelectedServiceId: (serviceId: DModelsServiceId | null) => void,
+  modelsServices: DModelsService[],
+  selectedServiceId: DModelsServiceId | null,
+  setSelectedServiceId: (serviceId: DModelsServiceId | null) => void,
 }) {
 
   // state
@@ -44,7 +46,6 @@ export function ModelsServiceSelector(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const modelsServices = useModelsServices();
 
   const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);
 
@@ -53,7 +54,7 @@ export function ModelsServiceSelector(props: {
 
   // handlers
 
-  const { setSelectedServiceId } = props;
+  const { modelsServices, setSelectedServiceId } = props;
 
   const handleAddServiceForVendor = React.useCallback((vendorId: ModelVendorId) => {
     closeVendorsMenu();
@@ -67,7 +68,15 @@ export function ModelsServiceSelector(props: {
 
   const enableDeleteButton = !!props.selectedServiceId && modelsServices.length > 1;
 
-  const handleDeleteService = React.useCallback(async (serviceId: DModelsServiceId) => {
+  const handleDeleteService = React.useCallback(async (serviceId: DModelsServiceId, skipConfirmation: boolean) => {
+    // [shift] to delete without confirmation
+    if (skipConfirmation) {
+      // select the next service
+      setSelectedServiceId(modelsServices.find(s => s.id !== serviceId)?.id ?? null);
+      // remove the service
+      llmsStoreActions().removeService(serviceId);
+      return;
+    }
     showPromisedOverlay('llms-service-remove', {}, ({ onResolve, onUserReject }) =>
       <ConfirmationModal
         open onClose={onUserReject} onPositive={() => onResolve(true)}
@@ -222,7 +231,7 @@ export function ModelsServiceSelector(props: {
 
       <IconButton
         variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
-        onClick={() => props.selectedServiceId && handleDeleteService(props.selectedServiceId)}
+        onClick={(event) => props.selectedServiceId && handleDeleteService(props.selectedServiceId, event.shiftKey)}
       >
         <DeleteOutlineIcon />
       </IconButton>
