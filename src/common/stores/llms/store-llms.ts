@@ -25,6 +25,8 @@ interface LlmsState {
   chatLLMId: DLLMId | null;
   fastLLMId: DLLMId | null;
 
+  confServiceId: DModelsServiceId | null;
+
 }
 
 interface LlmsActions {
@@ -43,6 +45,8 @@ interface LlmsActions {
   setChatLLMId: (id: DLLMId | null) => void;
   setFastLLMId: (id: DLLMId | null) => void;
 
+  setConfServiceId: (id: DModelsServiceId | null) => void;
+
   // special
   setOpenRouterKey: (key: string) => void;
 
@@ -59,6 +63,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
     chatLLMId: null,
     fastLLMId: null,
 
+    confServiceId: null,
 
     // actions
 
@@ -166,6 +171,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
               }
               : s,
           ),
+          confServiceId: state.confServiceId ?? service.id,
         };
       }),
 
@@ -187,6 +193,9 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
             : s,
         ),
       })),
+
+    setConfServiceId: (id: DModelsServiceId | null) =>
+      set({ confServiceId: id }),
 
     setOpenRouterKey: (key: string) =>
       set(state => {

@@ -54,6 +54,9 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   xai: ModelVendorXAI,
 } as Record<string, IModelVendor>;
 
+export function getModelVendorsCount(): number {
+  return Object.keys(MODEL_VENDOR_REGISTRY).length;
+}
 
 export function findAllModelVendors(): IModelVendor[] {
   const modelVendors = Object.values(MODEL_VENDOR_REGISTRY);
