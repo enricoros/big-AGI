@@ -1,7 +1,16 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
+
+
+const noBackdropSlotProps = {
+  backdrop: {
+    sx: {
+      backdropFilter: 'none',
+    },
+  },
+};
 
 
 /**
@@ -13,6 +22,7 @@ export function GoodModal(props: {
   strongerTitle?: boolean,
   noTitleBar?: boolean,
   dividers?: boolean,
+  closeText?: string, // defaults to 'Close'
   animateEnter?: boolean,
   unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
   open: boolean,
@@ -23,27 +33,25 @@ export function GoodModal(props: {
   children: React.ReactNode,
 }) {
   const showBottomClose = !!props.onClose && props.hideBottomClose !== true;
+
+  const dialogSx: SxProps = React.useMemo(() => ({
+    minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
+    maxWidth: 700,
+    display: 'grid',
+    gap: 'var(--Card-padding)',
+    ...props.sx,
+  }), [props.sx]);
+
   return (
     <Modal
       open={props.open}
       onClose={props.onClose}
-      slotProps={!props.unfilterBackdrop ? undefined : {
-        backdrop: {
-          sx: {
-            backdropFilter: 'none',
-          },
-        },
-      }}
+      slotProps={!props.unfilterBackdrop ? undefined : noBackdropSlotProps}
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
           className={props.animateEnter ? 'agi-animate-enter' : ''}
-          sx={{
-            minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
-            maxWidth: 700,
-            display: 'grid', gap: 'var(--Card-padding)',
-            ...props.sx,
-          }}
+          sx={dialogSx}
         >
 
           {!props.noTitleBar && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -64,7 +72,7 @@ export function GoodModal(props: {
           {(!!props.startButton || showBottomClose) && <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
             {props.startButton}
             {showBottomClose && <Button aria-label='Close Dialog' variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
-              Close
+              {props.closeText || 'Close'}
             </Button>}
           </Box>}
 
