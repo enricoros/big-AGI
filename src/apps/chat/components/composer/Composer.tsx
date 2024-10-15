@@ -1016,7 +1016,7 @@ export function Composer(props: {
               {isDesktop && <Box sx={{ mt: 'auto', display: 'grid', gap: 1 }}>
 
                 {/* [desktop] Call secondary button */}
-                {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM} onClick={handleCallClicked} />}
+                {showChatExtras && <ButtonCallMemo disabled={noConversation || noLLM || assistantAbortible} onClick={handleCallClicked} />}
 
                 {/* [desktop] Draw Options secondary button */}
                 {isDraw && <ButtonOptionsDraw onClick={handleDrawOptionsClicked} />}
