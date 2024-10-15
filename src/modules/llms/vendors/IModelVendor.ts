@@ -11,7 +11,7 @@ import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 
 
-export interface IModelVendor<TServiceSettings = unknown, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TLLMOptions>> {
+export interface IModelVendor<TServiceSettings extends Record<string, any> = {}, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TLLMOptions>> {
   readonly id: ModelVendorId;
   readonly name: string;
   readonly displayRank: number; // [10...] Foundation Models, [30...] 3rd party Clouds, [40...] Aggregators, [50...] Local Models

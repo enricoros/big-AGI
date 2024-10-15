@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { IModelVendor } from './IModelVendor';
@@ -27,6 +28,9 @@ export function useServiceSetup<TServiceSettings extends object, TAccess, TLLMOp
   updateSettings: (partialSettings: Partial<TServiceSettings>) => void;
 } {
 
+  // stabilize the transport access
+  const stabilizeTransportAccess = useShallowStabilizer<TAccess>();
+
   // invalidates only when the setup changes
   const { updateServiceSettings, ...rest } = useModelsStore(useShallow(({ llms, sources, updateServiceSettings }) => {
 
@@ -36,7 +40,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess, TLLMOp
     // (safe) service-derived properties
     const serviceSetupValid = (service?.setup && vendor?.validateSetup) ? vendor.validateSetup(service.setup as TServiceSettings) : false;
     const serviceLLms = service ? llms.filter(llm => llm.sId === serviceId) : stableNoLlms;
-    const serviceAccess = vendor.getTransportAccess(service?.setup);
+    const serviceAccess = stabilizeTransportAccess(vendor.getTransportAccess(service?.setup));
 
     return {
       service,
