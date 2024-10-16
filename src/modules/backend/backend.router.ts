@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
-import type { BackendCapabilities } from '~/modules/backend/store-backend-capabilities';
-
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+
+// critical to make sure we `import type` here
+import type { BackendCapabilities } from './store-backend-capabilities';
 
 import { analyticsListCapabilities } from './backend.analytics';
 
