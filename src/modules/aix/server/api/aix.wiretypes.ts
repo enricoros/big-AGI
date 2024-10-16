@@ -23,8 +23,9 @@ export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheCo
 export type AixParts_MetaInReferenceToPart = z.infer<typeof AixWire_Parts.MetaInReferenceToPart_schema>;
 
 export type AixMessages_SystemMessage = z.infer<typeof AixWire_Content.SystemInstruction_schema>;
-export type AixMessages_UserMessage = z.infer<typeof AixWire_Content.UserMessage_schema>;
 export type AixMessages_ModelMessage = z.infer<typeof AixWire_Content.ModelMessage_schema>;
+export type AixMessages_ToolMessage = z.infer<typeof AixWire_Content.ToolMessage_schema>;
+export type AixMessages_UserMessage = z.infer<typeof AixWire_Content.UserMessage_schema>;
 export type AixMessages_ChatMessage = z.infer<typeof AixWire_Content.ChatMessage_schema>;
 
 export type AixTools_ToolDefinition = z.infer<typeof AixWire_Tooling.Tool_schema>;
