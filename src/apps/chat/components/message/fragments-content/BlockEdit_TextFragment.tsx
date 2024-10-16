@@ -34,7 +34,8 @@ const textAreaSlotPropsDone = {
  */
 export function BlockEdit_TextFragment(props: {
   // current value
-  textPartText: string,
+  initialText: string,
+  inputLabel?: string,
   fragmentId: DMessageFragmentId,
   enableRestart?: boolean,
 
@@ -96,8 +97,9 @@ export function BlockEdit_TextFragment(props: {
       size={props.contentScaling !== 'md' ? 'sm' : undefined}
       value={(props.editedText !== undefined)
         ? props.editedText /* self-text */
-        : props.textPartText /* DMessageTextPart text */
+        : props.initialText /* DMessageTextPart text */
       }
+      startDecorator={props.inputLabel ? <small>{props.inputLabel}</small> : undefined}
       placeholder={'Edit the message...'}
       minRows={1.5} // unintuitive
       onFocus={() => setIsFocused(true)}
