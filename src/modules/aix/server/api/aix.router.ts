@@ -44,7 +44,7 @@ export const aixRouter = createTRPCRouter({
       try {
         dispatch = createChatGenerateDispatch(access, model, chatGenerate, streaming);
       } catch (error: any) {
-        chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
+        chatGenerateTx.setRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, false);
         yield* chatGenerateTx.flushParticles();
         return; // exit
       }
