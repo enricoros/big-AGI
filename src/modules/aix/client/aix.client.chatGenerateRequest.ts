@@ -1,12 +1,12 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import { DMessage, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart } from '../server/api/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_ToolMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart } from '../server/api/aix.wiretypes';
 
 // TODO: remove console messages to zero, or replace with throws or something
 
@@ -22,7 +22,7 @@ const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
  * The simplest text-only inputs for aixChatGenerateContent_DMessage.
  */
 export type AixChatGenerate_TextMessages = {
-  role: AixMessages_ChatMessage['role'];
+  role: 'user' | 'model';
   text: string;
 }[];
 
@@ -34,7 +34,6 @@ export function aixCGR_FromSimpleText(systemInstruction: string, messages: AixCh
         case 'user':
           return aixCGR_UserMessageText(m.text);
         case 'model':
-        case 'tool':
           return aixCGR_ModelMessageText(m.text);
       }
     }),
@@ -98,10 +97,10 @@ export async function aixCGR_FromDMessages(
     // map the other parts
     if (m.role === 'user') {
 
-      const dMEssageUserFragments = m.fragments;
-      const aixChatMessageUser = await dMEssageUserFragments.reduce(async (mMsgPromise, uFragment) => {
+      const dMessageUserFragments = m.fragments;
+      const aixChatMessageUser = await dMessageUserFragments.reduce(async (uMsgPromise, uFragment: DMessageFragment) => {
 
-        const uMsg = await mMsgPromise;
+        const uMsg = await uMsgPromise;
         if (!isContentOrAttachmentFragment(uFragment) || uFragment.part.pt === '_pt_sentinel' || uFragment.part.pt === 'ph')
           return uMsg;
 
@@ -123,6 +122,7 @@ export async function aixCGR_FromDMessages(
           case 'error':
           case 'tool_invocation':
           case 'tool_response':
+            console.warn('aixChatGenerateRequestFromDMessages: unexpected Non-User fragment part type', (uFragment.part as any).pt);
             break;
 
           default:
@@ -133,7 +133,7 @@ export async function aixCGR_FromDMessages(
 
       // handle in-reference-to metadata, adding a part right after the user text (or at the beginning)
       if (m.metadata?.inReferenceTo?.length) {
-        // find the index of the tast text part
+        // find the index of the last text part
         const lastTextPartIndex = aixChatMessageUser.parts.findLastIndex(p => p.pt === 'text');
         // insert the meta part after the last text part (and before the first attachment)
         aixChatMessageUser.parts.splice(lastTextPartIndex + 1, 0, _clientCreateAixMetaInReferenceToPart(m.metadata.inReferenceTo));
@@ -148,7 +148,7 @@ export async function aixCGR_FromDMessages(
     } else if (m.role === 'assistant') {
 
       const dMessageAssistantFragments = m.fragments;
-      const aixChatMessageModel = await dMessageAssistantFragments.reduce(async (mMsgPromise, aFragment) => {
+      const aixChatMessageModel = await dMessageAssistantFragments.reduce(async (mMsgPromise, aFragment: DMessageFragment) => {
 
         const mMsg = await mMsgPromise;
         if (!isContentOrAttachmentFragment(aFragment) || aFragment.part.pt === '_pt_sentinel' || aFragment.part.pt === 'ph')
@@ -165,11 +165,12 @@ export async function aixCGR_FromDMessages(
 
           case 'doc':
             // TODO
-            console.warn('aixChatGenerateRequestFromDMessages: doc part not implemented yet');
+            console.warn('aixChatGenerateRequestFromDMessages: doc part from Assistant not implemented yet');
             // mMsg.parts.push(aFragment.part);
             break;
 
           case 'error':
+            // Note: the llm will receive the extra '[ERROR]' text; this could be optimized to handle errors better
             mMsg.parts.push({ pt: 'text', text: `[ERROR] ${aFragment.part.error}` });
             break;
 
@@ -181,6 +182,9 @@ export async function aixCGR_FromDMessages(
             break;
 
           case 'tool_response':
+            // FIXME: the complexity here is that the tool_response (DMessageToolResponsePart) shall be added to a 'tool' message
+            //        (AixWire_Content.ToolMessage_schema), not a Model message, which instead we have.
+            // mMsg.parts.push(aFragment.part); // wouldn't work here
             // TODO
             console.warn('aixChatGenerateRequestFromDMessages: tool_response part not implemented yet');
             break;
@@ -196,8 +200,8 @@ export async function aixCGR_FromDMessages(
       acc.chatSequence.push(aixChatMessageModel);
 
     } else {
-      // TODO: impement mid-chat system messages?
-      console.warn('historyToChatGenerateRequest: unexpected message role', m.role);
+      // TODO: implement mid-chat system messages if needed
+      console.warn('aixCGR_FromDMessages: unexpected message role', m.role);
     }
 
     return acc;
