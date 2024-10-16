@@ -1,6 +1,6 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
-import { DMessage, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageFragment, DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
@@ -73,6 +73,9 @@ export async function aixCGR_FromDMessages(
   return await messageSequence.reduce(async (accPromise, m, index): Promise<AixAPIChatGenerate_Request> => {
     const acc = await accPromise;
 
+    // (on Assistant messages) handle the ant-cache-prompt user/auto flags
+    const mHasAntCacheFlag = messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER);
+
     // extract system
     if (index === 0 && m.role === 'system') {
       // create parts if not exist
@@ -85,17 +88,18 @@ export async function aixCGR_FromDMessages(
         if (isContentFragment(systemFragment) && isTextPart(systemFragment.part)) {
           acc.systemMessage.parts.push(systemFragment.part);
         } else {
-          console.warn('aixChatGenerateRequestFromDMessages: unexpected system fragment', systemFragment);
+          console.warn('aixCGR_FromDMessages: unexpected system fragment', systemFragment);
         }
       }
       // (on System message) handle the ant-cache-prompt user/auto flags
-      if (messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER))
+      if (mHasAntCacheFlag)
         acc.systemMessage.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
       return acc;
     }
 
     // map the other parts
-    if (m.role === 'user') {
+    const dMessageRole: DMessageRole = m.role;
+    if (dMessageRole === 'user') {
 
       const dMessageUserFragments = m.fragments;
       const aixChatMessageUser = await dMessageUserFragments.reduce(async (uMsgPromise, uFragment: DMessageFragment) => {
@@ -122,11 +126,11 @@ export async function aixCGR_FromDMessages(
           case 'error':
           case 'tool_invocation':
           case 'tool_response':
-            console.warn('aixChatGenerateRequestFromDMessages: unexpected Non-User fragment part type', (uFragment.part as any).pt);
+            console.warn('aixCGR_FromDMessages: unexpected Non-User fragment part type', (uFragment.part as any).pt);
             break;
 
           default:
-            console.warn('aixChatGenerateRequestFromDMessages: unexpected User fragment part type', (uFragment.part as any).pt);
+            console.warn('aixCGR_FromDMessages: unexpected User fragment part type', (uFragment.part as any).pt);
         }
         return uMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixMessages_UserMessage));
@@ -140,19 +144,22 @@ export async function aixCGR_FromDMessages(
       }
 
       // (on User messages) handle the ant-cache-prompt user/auto flags
-      if (messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER))
+      if (mHasAntCacheFlag)
         aixChatMessageUser.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
 
       acc.chatSequence.push(aixChatMessageUser);
 
-    } else if (m.role === 'assistant') {
+    } else if (dMessageRole === 'assistant') {
 
-      const dMessageAssistantFragments = m.fragments;
-      const aixChatMessageModel = await dMessageAssistantFragments.reduce(async (mMsgPromise, aFragment: DMessageFragment) => {
+      // Note: even tool invocations and responses were interleaved, we will bucket them in 1 model message and 1 tool message
+      // FIXME: assumption that this is the right way of handling it, rather than interleaving many messages
+      const modelMessage: AixMessages_ModelMessage = { role: 'model', parts: [] };
+      const toolMessage: AixMessages_ToolMessage = { role: 'tool', parts: [] };
 
-        const mMsg = await mMsgPromise;
+      for (const aFragment of m.fragments) {
+
         if (!isContentOrAttachmentFragment(aFragment) || aFragment.part.pt === '_pt_sentinel' || aFragment.part.pt === 'ph')
-          return mMsg;
+          continue;
 
         switch (aFragment.part.pt) {
 
@@ -160,44 +167,49 @@ export async function aixCGR_FromDMessages(
           case 'tool_invocation':
             // Key place where the Aix Zod inferred types are compared to the Typescript defined DMessagePart* types
             // - in case of error, check that the types in `chat.fragments.ts` and `aix.wiretypes.ts` are in sync
-            mMsg.parts.push(aFragment.part);
+            modelMessage.parts.push(aFragment.part);
             break;
 
           case 'doc':
             // TODO
-            console.warn('aixChatGenerateRequestFromDMessages: doc part from Assistant not implemented yet');
+            console.warn('aixCGR_FromDMessages: doc part from Assistant not implemented yet');
             // mMsg.parts.push(aFragment.part);
             break;
 
           case 'error':
             // Note: the llm will receive the extra '[ERROR]' text; this could be optimized to handle errors better
-            mMsg.parts.push({ pt: 'text', text: `[ERROR] ${aFragment.part.error}` });
+            modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aFragment.part.error}` });
             break;
 
           case 'image_ref':
             // TODO: rescale shall be dependent on the LLM here - and be careful with the high-res options, as they can
             //  be really space consuming. how to choose between high and low? global option?
             const resizeMode: LLMImageResizeMode = 'openai-low-res';
-            mMsg.parts.push(await _convertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
+            modelMessage.parts.push(await _convertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
             break;
 
           case 'tool_response':
-            // FIXME: the complexity here is that the tool_response (DMessageToolResponsePart) shall be added to a 'tool' message
-            //        (AixWire_Content.ToolMessage_schema), not a Model message, which instead we have.
-            // mMsg.parts.push(aFragment.part); // wouldn't work here
-            // TODO
-            console.warn('aixChatGenerateRequestFromDMessages: tool_response part not implemented yet');
+            toolMessage.parts.push(aFragment.part);
             break;
 
+          default:
+            console.warn('aixCGR_FromDMessages: unexpected Assistant fragment part', aFragment.part);
+            break;
         }
-        return mMsg;
-      }, Promise.resolve({ role: 'model', parts: [] } as AixMessages_ModelMessage));
+      }
 
-      // (on Assistant messages) handle the ant-cache-prompt user/auto flags
-      if (messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER))
-        aixChatMessageModel.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
+      const assistantMessages: (AixMessages_ModelMessage | AixMessages_ToolMessage)[] = [];
+      if (modelMessage.parts.length > 0)
+        assistantMessages.push(modelMessage);
+      if (toolMessage.parts.length > 0)
+        assistantMessages.push(toolMessage);
 
-      acc.chatSequence.push(aixChatMessageModel);
+      // (on Assistant messages) handle the ant-cache-prompt user/auto flags, on the very last message
+      if (mHasAntCacheFlag && assistantMessages.length > 0)
+        assistantMessages[assistantMessages.length - 1].parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
+
+      // Add the assistant messages to the chatSequence
+      acc.chatSequence.push(...assistantMessages);
 
     } else {
       // TODO: implement mid-chat system messages if needed

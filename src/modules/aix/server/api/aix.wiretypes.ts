@@ -252,6 +252,7 @@ export namespace AixWire_Content {
     role: z.literal('tool'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.ToolResponsePart_schema,
+      AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
 
