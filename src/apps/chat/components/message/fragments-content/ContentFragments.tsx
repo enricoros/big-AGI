@@ -141,16 +141,42 @@ export function ContentFragments(props: {
       if (!isContentFragment(fragment))
         return null;
 
-      // editing for text parts
-      if (props.textEditsState && !!props.setEditedText && (isTextPart(fragment.part) || fragment.part.pt === 'error')) {
+      // simplify
+      const { fId, part } = fragment;
+
+      // Determine the text to edit based on the part type
+      let editText = '';
+      let editLabel;
+      if (isTextPart(part))
+        editText = part.text;
+      else if (part.pt === 'error')
+        editText = part.error;
+      else if (part.pt === 'tool_invocation') {
+        if (part.invocation.type === 'function_call') {
+          editText = part.invocation.args /* string | null */ || '';
+          editLabel = `[Invocation] Function Call: \`${part.invocation.name}\``;
+        } else {
+          editText = part.invocation.code;
+          editLabel = `[Invocation] Code Execution: \`${part.invocation.language}\``;
+        }
+      } else if (part.pt === 'tool_response') {
+        if (!part.error) {
+          editText = part.response.result;
+          editLabel = `[Response]: ${part.response.type === 'function_call' ? 'Function Call' : 'Code Execution'}: \`${part.id}\``;
+        }
+      }
+
+      // editing for text parts, tool invocations, or tool responses
+      if (props.textEditsState && !!props.setEditedText && (isTextPart(part) || part.pt === 'error' || part.pt === 'tool_invocation' || part.pt === 'tool_response')) {
         return (
           <BlockEdit_TextFragment
-            key={'edit-' + fragment.fId}
-            textPartText={isTextPart(fragment.part) ? fragment.part.text : fragment.part.error}
-            fragmentId={fragment.fId}
+            key={'edit-' + fId}
+            initialText={editText}
+            inputLabel={editLabel}
+            fragmentId={fId}
             contentScaling={props.contentScaling}
             enableRestart={enableRestartFromEdit}
-            editedText={props.textEditsState[fragment.fId]}
+            editedText={props.textEditsState[fId]}
             setEditedText={props.setEditedText}
             onSubmit={props.onEditsApply}
             onEscapePressed={props.onEditsCancel}
@@ -159,12 +185,12 @@ export function ContentFragments(props: {
         );
       }
 
-      switch (fragment.part.pt) {
+      switch (part.pt) {
         case 'error':
           return (
             <BlockPartError
-              key={fragment.fId}
-              errorText={fragment.part.error}
+              key={fId}
+              errorText={part.error}
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
             />
@@ -174,9 +200,9 @@ export function ContentFragments(props: {
         case 'image_ref':
           return (
             <BlockPartImageRef
-              key={fragment.fId}
-              imageRefPart={fragment.part}
-              fragmentId={fragment.fId}
+              key={fId}
+              imageRefPart={part}
+              fragmentId={fId}
               contentScaling={props.contentScaling}
               onFragmentDelete={/*isMonoFragment ? undefined :*/ props.onFragmentDelete}
               onFragmentReplace={props.onFragmentReplace}
@@ -187,11 +213,11 @@ export function ContentFragments(props: {
         case 'text':
           return (
             <BlockPartText_AutoBlocks
-              key={fragment.fId}
+              key={fId}
               // ref={blocksRendererRef}
-              textPartText={fragment.part.text}
+              textPartText={part.text}
               setEditedText={props.setEditedText}
-              fragmentId={fragment.fId}
+              fragmentId={fId}
               messageRole={props.messageRole}
               contentScaling={props.contentScaling}
               fitScreen={props.fitScreen}
@@ -208,8 +234,8 @@ export function ContentFragments(props: {
 
         case 'tool_invocation':
           return (
-            <BlocksContainer key={fragment.fId}>
-              {fragment.part.invocation.type === 'function_call' ? (
+            <BlocksContainer key={fId}>
+              {part.invocation.type === 'function_call' ? (
                 <Sheet color='neutral' variant='soft' sx={{
                   flex: 1,
                   border: '1px solid',
@@ -226,11 +252,11 @@ export function ContentFragments(props: {
                   rowGap: 1,
                 }}>
                   <div>Id</div>
-                  <div>{fragment.part.id}</div>
+                  <div>{part.id}</div>
                   <div>Name</div>
-                  <div>{fragment.part.invocation.name}</div>
+                  <div>{part.invocation.name}</div>
                   <div>Args</div>
-                  <div>{fragment.part.invocation.args/*?.replaceAll('{', '').replaceAll('}', '').replaceAll('","', '", "')*/}</div>
+                  <div>{part.invocation.args/*?.replaceAll('{', '').replaceAll('}', '').replaceAll('","', '", "')*/}</div>
                 </Sheet>
               ) : (
                 <Sheet color='neutral' variant='soft' sx={{
@@ -249,13 +275,13 @@ export function ContentFragments(props: {
                   rowGap: 1,
                 }}>
                   <div>Id</div>
-                  <div>{fragment.part.id}</div>
+                  <div>{part.id}</div>
                   <div>Language</div>
-                  <div>{fragment.part.invocation.language}</div>
+                  <div>{part.invocation.language}</div>
                   <div>Code</div>
-                  <div style={{ whiteSpace: 'pre' }}>{fragment.part.invocation.code?.trim()}</div>
+                  <div style={{ whiteSpace: 'pre' }}>{part.invocation.code?.trim()}</div>
                   <div>Author</div>
-                  <div>{fragment.part.invocation.author}</div>
+                  <div>{part.invocation.author}</div>
                 </Sheet>
               )}
             </BlocksContainer>
@@ -263,8 +289,8 @@ export function ContentFragments(props: {
 
         case 'tool_response':
           return (
-            <BlocksContainer key={fragment.fId}>
-              {fragment.part.response.type === 'function_call' ? (
+            <BlocksContainer key={fId}>
+              {part.response.type === 'function_call' ? (
                 <Sheet color='neutral' variant='soft' sx={{
                   flex: 1,
                   border: '1px solid',
@@ -283,15 +309,15 @@ export function ContentFragments(props: {
                   <div>Type</div>
                   <div>Function Call Response</div>
                   <div>Id</div>
-                  <div>{fragment.part.id}</div>
+                  <div>{part.id}</div>
                   <div>Error</div>
-                  <div>{fragment.part.error === null ? 'null' : fragment.part.error === 'false' ? '' : fragment.part.error}</div>
+                  <div>{part.error === null ? 'null' : part.error === 'false' ? '' : part.error}</div>
                   <div>Name</div>
-                  <div style={{ fontWeight: 700 }}>{fragment.part.response.name}</div>
+                  <div style={{ fontWeight: 700 }}>{part.response.name}</div>
                   <div>Result</div>
-                  <div style={{ fontWeight: 700 }}>{fragment.part.response.result}</div>
+                  <div style={{ fontWeight: 700 }}>{part.response.result}</div>
                   <div>Environment</div>
-                  <div>{fragment.part.environment}</div>
+                  <div>{part.environment}</div>
                 </Sheet>
               ) : (
                 <Sheet color='neutral' variant='solid' sx={{
@@ -312,15 +338,15 @@ export function ContentFragments(props: {
                   <div>Type</div>
                   <div>Code Execution Response</div>
                   <div>Id</div>
-                  <div>{fragment.part.id}</div>
+                  <div>{part.id}</div>
                   <div>Error</div>
-                  <div>{fragment.part.error === null ? 'null' : fragment.part.error === 'false' ? '' : fragment.part.error}</div>
+                  <div>{part.error === null ? 'null' : part.error === 'false' ? '' : part.error}</div>
                   <div>Result</div>
-                  <div style={{ fontWeight: 700 }}>{fragment.part.response.result}</div>
+                  <div style={{ fontWeight: 700 }}>{part.response.result}</div>
                   <div>Executor</div>
-                  <div>{fragment.part.response.executor}</div>
+                  <div>{part.response.executor}</div>
                   <div>Environment</div>
-                  <div>{fragment.part.environment}</div>
+                  <div>{part.environment}</div>
                 </Sheet>
               )}
             </BlocksContainer>
@@ -330,8 +356,8 @@ export function ContentFragments(props: {
         default:
           return (
             <ScaledTextBlockRenderer
-              key={fragment.fId}
-              text={`Unknown Content fragment: ${fragment.part.pt}`}
+              key={fId}
+              text={`Unknown Content Fragment: ${part.pt}`}
               contentScaling={props.contentScaling}
               textRenderVariant='text'
               showAsDanger

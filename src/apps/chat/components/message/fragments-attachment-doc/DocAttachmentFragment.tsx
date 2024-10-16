@@ -258,7 +258,7 @@ export function DocAttachmentFragment(props: {
       {isEditing ? (
         // Document Editor
         <BlockEdit_TextFragment
-          textPartText={fragmentDocPart.data.text}
+          initialText={fragmentDocPart.data.text}
           fragmentId={fragmentId}
           contentScaling={props.contentScaling}
           editedText={editedText}
