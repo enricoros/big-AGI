@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixClientFunctionCallToolDefinition, aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
-import { aixCGR_FromDMessages, aixCGR_SystemMessage } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import { aixCGR_FromDMessagesOrThrow, aixCGR_SystemMessage } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
@@ -180,7 +180,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
 
     // Instructions
     const systemMessage = _getSystemMessage(diagramsTool, { personaSystemPrompt }, 'chat-followup-diagram_system');
-    const chatSequence = (await aixCGR_FromDMessages([
+    const chatSequence = (await aixCGR_FromDMessagesOrThrow([
       userMessage,
       assistantMessage,
       createDMessageTextContent('user', processPromptTemplate(diagramsTool.usr, { functionName: diagramsTool.fun.name }, 'chat-followup-diagram_reminder')),
@@ -231,7 +231,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
 
     // Instructions
     const systemMessage = _getSystemMessage(uiTool, { personaSystemPrompt }, 'chat-followup-htmlui_system');
-    const chatSequence = (await aixCGR_FromDMessages([
+    const chatSequence = (await aixCGR_FromDMessagesOrThrow([
       userMessage,
       assistantMessage,
       createDMessageTextContent('user', processPromptTemplate(uiTool.usr, { functionName: uiTool.fun.name }, 'chat-followup-htmlui_reminder')),
