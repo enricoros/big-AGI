@@ -87,8 +87,10 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);
-  if (!validated.success)
-    throw new Error(`Invalid message sequence for Anthropic models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}`);
+  if (!validated.success) {
+    console.error('Anthropic: invalid messageCreate payload. Error:', validated.error.message);
+    throw new Error(`Invalid sequence for Anthropic models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+  }
 
   return validated.data;
 }
