@@ -16,7 +16,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DMessageAttachmentFragment, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
@@ -50,6 +50,7 @@ export function LLMAttachmentMenu(props: {
   isPositionLast: boolean,
   onClose: () => void,
   onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
+  onViewDocPart: (docPart: DMessageDocPart) => void,
   onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
 }) {
 
@@ -96,7 +97,7 @@ export function LLMAttachmentMenu(props: {
 
   // operations
 
-  const { attachmentDraftsStoreApi, onClose, onDraftAction, onViewImageRefPart } = props;
+  const { attachmentDraftsStoreApi, onClose, onDraftAction, onViewDocPart, onViewImageRefPart } = props;
 
   const handleMoveUp = React.useCallback(() => {
     attachmentDraftsStoreApi.getState().moveAttachmentDraft(draftId, -1);
@@ -138,6 +139,12 @@ export function LLMAttachmentMenu(props: {
     event.stopPropagation();
     onViewImageRefPart(imageRefPart);
   }, [onViewImageRefPart]);
+
+  const handleViewDocPart = React.useCallback((event: React.MouseEvent, docPart: DMessageDocPart) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onViewDocPart(docPart);
+  }, [onViewDocPart]);
 
   const canHaveDetails = !!draftInput && !isConverting;
 
@@ -326,7 +333,10 @@ export function LLMAttachmentMenu(props: {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
                         <span>{part.data.mimeType /* part.type: big-agi type, not source mime */} · {part.data.text.length.toLocaleString()} bytes ·&nbsp;</span>
-                        <Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>
+                        <Chip component='span' size='sm' color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewDocPart(event, part)}>
+                          view
+                        </Chip>
+                        <Chip component='span' size='sm' color='success' variant='outlined' startDecorator={<ContentCopyIcon />} onClick={(event) => handleCopyToClipboard(event, part.data.text)}>
                           copy
                         </Chip>
                       </Typography>
@@ -337,8 +347,8 @@ export function LLMAttachmentMenu(props: {
                     return (
                       <Typography key={index} level='body-sm' sx={{ color: 'text.primary' }} startDecorator={<ReadMoreIcon sx={indicatorSx} />}>
                         <span>{mime /*.replace('image/', 'img: ')*/} · {resolution} · {part.dataRef.reftype === 'dblob' ? (part.dataRef.bytesSize?.toLocaleString() || 'no size') : '(remote)'} ·&nbsp;</span>
-                        <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='success' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
-                          see
+                        <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='primary' variant='outlined' startDecorator={<VisibilityIcon />} onClick={(event) => handleViewImageRefPart(event, part)}>
+                          view
                         </Chip>
                         {isOutputMultiple && <Chip component='span' size={isOutputMultiple ? 'sm' : 'md'} color='danger' variant='outlined' startDecorator={<DeleteForeverIcon />} onClick={(event) => handleDeleteOutputFragment(event, index)}>
                           del

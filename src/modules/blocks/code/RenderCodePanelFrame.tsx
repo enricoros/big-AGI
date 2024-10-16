@@ -26,7 +26,7 @@ export function RenderCodePanelFrame(props: {
   gutterBlock?: boolean;
   noOuterShadow?: boolean;
   contentScaling: ContentScaling;
-  headerRow: React.ReactNode;
+  headerRow?: React.ReactNode;
   subHeaderInline?: React.ReactNode;
   toolbarRow?: React.ReactNode;
   onHeaderClick?: () => void;
@@ -118,24 +118,28 @@ export function RenderCodePanelFrame(props: {
     <Box sx={frameSx}>
 
       {/* header(s) */}
-      <Box
-        aria-label={isClickableHeader ? 'Click to expand/collapse' : undefined}
-        role={isClickableHeader ? 'button' : undefined}
-        tabIndex={isClickableHeader ? 0 : undefined}
-        onKeyDown={handleKeyDown}
-        onClick={props.onHeaderClick}
-        onContextMenu={props.onHeaderContext}
-        sx={headersBlockSx}
-      >
-        <Box sx={headerRowSx}>
-          {props.headerRow}
+      {(!!props.headerRow || !!props.subHeaderInline) && (
+        <Box
+          aria-label={isClickableHeader ? 'Click to expand/collapse' : undefined}
+          role={isClickableHeader ? 'button' : undefined}
+          tabIndex={isClickableHeader ? 0 : undefined}
+          onKeyDown={handleKeyDown}
+          onClick={props.onHeaderClick}
+          onContextMenu={props.onHeaderContext}
+          sx={headersBlockSx}
+        >
+          {props.headerRow && (
+            <Box sx={headerRowSx}>
+              {props.headerRow}
+            </Box>
+          )}
+          {props.subHeaderInline && (
+            <Box sx={subHeaderContainedSx}>
+              {props.subHeaderInline}
+            </Box>
+          )}
         </Box>
-        {props.subHeaderInline && (
-          <Box sx={subHeaderContainedSx}>
-            {props.subHeaderInline}
-          </Box>
-        )}
-      </Box>
+      )}
 
       {/* toolbar */}
       {props.toolbarRow && (

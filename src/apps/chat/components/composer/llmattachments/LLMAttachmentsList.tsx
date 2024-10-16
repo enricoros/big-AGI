@@ -15,7 +15,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
-import type { DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageDocPart, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
 
@@ -23,6 +23,7 @@ import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import { LLMAttachmentButtonMemo } from './LLMAttachmentButton';
 import { LLMAttachmentMenu } from './LLMAttachmentMenu';
 import { LLMAttachmentsPromptsButtonMemo } from './LLMAttachmentsPromptsButton';
+import { ViewDocPartModal } from '../../message/fragments-content/ViewDocPartModal';
 
 
 export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
@@ -43,6 +44,7 @@ export function LLMAttachmentsList(props: {
   const { showPromisedOverlay } = useOverlayComponents();
   const [draftMenu, setDraftMenu] = React.useState<{ anchor: HTMLAnchorElement, attachmentDraftId: AttachmentDraftId } | null>(null);
   const [overallMenuAnchor, setOverallMenuAnchor] = React.useState<HTMLAnchorElement | null>(null);
+  const [viewerDocPart, setViewerDocPart] = React.useState<DMessageDocPart | null>(null);
   const [viewerImageRefPart, setViewerImageRefPart] = React.useState<DMessageImageRefPart | null>(null);
 
   // derived state
@@ -118,6 +120,14 @@ export function LLMAttachmentsList(props: {
     setViewerImageRefPart(null);
   }, []);
 
+  const handleViewDocPart = React.useCallback((docPart: DMessageDocPart) => {
+    setViewerDocPart(docPart);
+  }, []);
+
+  const handleCloseDocPartViewer = React.useCallback(() => {
+    setViewerDocPart(null);
+  }, []);
+
 
   // no components without attachments
   if (!hasAttachments)
@@ -167,8 +177,13 @@ export function LLMAttachmentsList(props: {
 
 
     {/* Image Viewer Modal - when opening attachment images */}
-    {viewerImageRefPart && (
+    {!!viewerImageRefPart && (
       <ViewImageRefPartModal imageRefPart={viewerImageRefPart} onClose={handleCloseImageViewer} />
+    )}
+
+    {/* Text Viewer Modal */}
+    {!!viewerDocPart && (
+      <ViewDocPartModal docPart={viewerDocPart} onClose={handleCloseDocPartViewer} />
     )}
 
 
@@ -182,6 +197,7 @@ export function LLMAttachmentsList(props: {
         isPositionLast={itemMenuIndex === llmAttachmentDrafts.length - 1}
         onClose={handleDraftMenuHide}
         onDraftAction={handleDraftAction}
+        onViewDocPart={handleViewDocPart}
         onViewImageRefPart={handleViewImageRefPart}
       />
     )}
