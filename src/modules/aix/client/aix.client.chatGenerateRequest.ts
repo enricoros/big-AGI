@@ -1,7 +1,7 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageFragment, DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -61,7 +61,7 @@ function aixCGRTextPart(text: string) {
 // AIX <> Chat Messages API helpers
 //
 
-export async function aixCGR_FromDMessages(
+export async function aixCGR_FromDMessagesOrThrow(
   messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
   _assemblyMode: 'complete' = 'complete',
 ): Promise<AixAPIChatGenerate_Request> {
@@ -189,6 +189,22 @@ export async function aixCGR_FromDMessages(
             break;
 
           case 'tool_response':
+            // Valiation of DMessageToolResponsePart of response.type: 'function_call'
+            // - NOTE: for now we make the large assumption that responses are JSON objects, not arrays, not strings
+            // - This was done for Gemini as the response needs to be an object; however we will need to decide:
+            // TODO: decide the responses policy: do we allow only objects? if not, then what's the rule to convert objects to Gemini's inputs?
+            if (isToolResponseFunctionCallPart(aFragment.part)) {
+              let resultObject: any;
+              try {
+                resultObject = JSON.parse(aFragment.part.response.result);
+              } catch (error: any) {
+                throw new Error('[AIX validation] expecting `tool_response` to be parseable');
+              }
+              if (!resultObject || typeof resultObject !== 'object')
+                throw new Error('[AIX validation] expecting `tool_response` to be a JSON object');
+              if (Array.isArray(resultObject))
+                throw new Error('[AIX validation] expecting `tool_response` to not be an array');
+            }
             toolMessage.parts.push(aFragment.part);
             break;
 

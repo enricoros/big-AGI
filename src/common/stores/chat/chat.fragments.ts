@@ -186,6 +186,10 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
   return part.pt === 'error';
 }
 
+export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']) {
+  return part.pt === 'tool_response' && part.response.type === 'function_call';
+}
+
 
 export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
   fragments.forEach((fragment, idx) => {

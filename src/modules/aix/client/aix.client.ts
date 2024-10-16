@@ -13,7 +13,7 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
-import { aixCGR_FromDMessages, aixCGR_FromSimpleText, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
+import { aixCGR_FromDMessagesOrThrow, aixCGR_FromSimpleText, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
 
@@ -105,7 +105,7 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
   try {
 
     // Aix ChatGenerate Request
-    const aixChatContentGenerateRequest = await aixCGR_FromDMessages(chatHistory, 'complete');
+    const aixChatContentGenerateRequest = await aixCGR_FromDMessagesOrThrow(chatHistory, 'complete');
 
     await aixChatGenerateContent_DMessage(
       llmId,
