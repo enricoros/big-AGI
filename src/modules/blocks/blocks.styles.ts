@@ -41,7 +41,7 @@ export function useScaledImageSx(contentScaling: ContentScaling): SxProps {
   }), [contentScaling]);
 }
 
-export function useScaledTypographySx(contentScaling: ContentScaling, showAsDanger: boolean, showAsItalic: boolean): SxProps {
+export function useScaledTypographySx(contentScaling: ContentScaling, showAsDanger: boolean, showAsItalic: boolean) {
   return React.useMemo(() => ({
     fontSize: themeScalingMap[contentScaling]?.blockFontSize ?? undefined,
     lineHeight: themeScalingMap[contentScaling]?.blockLineHeight ?? 1.75,
