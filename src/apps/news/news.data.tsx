@@ -14,6 +14,7 @@ import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
+import { Release } from '~/common/app.release';
 import { clientUtmSource } from '~/common/util/pwaUtils';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
@@ -52,8 +53,8 @@ interface NewsItem {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
-    versionCode: '2.0.0-ea1', // 1.91.0
-    versionName: 'Big-AGI V2 EA1',
+    versionCode: Release.App.versionCode,
+    versionName: Release.App.versionName,
     versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
       { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI V2. This version is used by developers to implement long-term breaking features.</> },

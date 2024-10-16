@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { Release } from '~/common/app.release';
+
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
@@ -21,13 +23,17 @@ function sdbmHash(str: string): string {
 }
 
 function generateLlmEnvConfigHash(env: Record<string, unknown>): string {
-  return sdbmHash(Object.keys(env)
-    .filter(key => !!env[key]) // remove empty
-    .filter(key => key.includes('_API_')) // only include API keys
-    .sort() // ignore order
-    .map(key => `${key}=${env[key]}`)
-    .join(';'),
-  );
+  const envAPIKeys = Object.keys(env)     // get all env keys
+    .filter(key => !!env[key])            // minus the empty
+    .filter(key => key.includes('_API_')) // minus the non-API keys
+    .map(key => `${key}=${env[key]}`)     // create key-value pairs
+    .sort();                              // ignore order
+  const hashInputs = [
+    Release.Monotonics.Aix.toString(),  // triggers at every change (large downstream effect, know what you are doing)
+    Release.App.pl.toString(),          // triggers when branch changes
+    ...envAPIKeys,                      // triggers when env keys change
+  ];
+  return sdbmHash(hashInputs.join(';'));
 }
 
 
@@ -44,10 +50,7 @@ export const backendRouter = createTRPCRouter({
     .query(async ({ ctx }): Promise<BackendCapabilities> => {
       analyticsListCapabilities(ctx.hostName);
       return {
-        hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
-        hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
-        hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
-        hasImagingProdia: !!env.PRODIA_API_KEY,
+        // llms
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
         hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
@@ -62,15 +65,25 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
+        // others
+        hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
+        hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
+        hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
+        hasImagingProdia: !!env.PRODIA_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
-        llmConfigHash: generateLlmEnvConfigHash(env),
+        // hashes
+        hashLlmReconfig: generateLlmEnvConfigHash(env),
+        // build data
+        build: Release.buildInfo('backend'),
       };
     }),
 
 
   // The following are used for various OAuth integrations
 
-  /* Exchange the OpenrRouter 'code' (from PKCS) for an OpenRouter API Key */
+  /**
+   * Exchange the OpenrRouter 'code' (from PKCS) for an OpenRouter API Key
+   */
   exchangeOpenRouterKey: publicProcedure
     .input(z.object({ code: z.string() }))
     .query(async ({ input }) => {

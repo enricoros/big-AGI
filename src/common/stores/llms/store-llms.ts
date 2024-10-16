@@ -77,7 +77,11 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
               ...llm,
               label: existing.label, // keep label
               hidden: existing.hidden, // keep hidden
-              options: { ...existing.options, ...llm.options }, // keep custom configurations, but overwrite as the new could have massively improved params
+              options: {
+                // keep custom configurations, but overwrite as the new could have massively improved params
+                ...existing.options,
+                ...llm.options,
+              },
             };
           });
         }
