@@ -15,9 +15,7 @@ import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 // basics
 import { Brand } from '~/common/app.config';
 import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
-
-// apps access
-import { incrementalNewsVersion } from '../../src/apps/news/news.version';
+import { Release } from '~/common/app.release';
 
 // capabilities access
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapabilityTextToImage } from '~/common/components/useCapabilities';
@@ -30,7 +28,7 @@ import { useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 // utils access
-import { BrowserLang, Is, clientHostName, isPwa } from '~/common/util/pwaUtils';
+import { BrowserLang, clientHostName, Is, isPwa } from '~/common/util/pwaUtils';
 import { getGA4MeasurementId } from '~/common/components/GoogleAnalytics';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
@@ -71,6 +69,8 @@ function DebugJsonCard(props: { title: string, data: any }) {
 }
 
 
+const frontendBuild = Release.buildInfo('frontend');
+
 function AppDebug() {
 
   // state
@@ -103,10 +103,14 @@ function AppDebug() {
       chatsCount,
       foldersCount: folders?.length,
       foldersEnabled: enableFolders,
-      newsCurrent: incrementalNewsVersion,
+      newsCurrent: Release.Monotonics.NewsVersion,
       newsSeen: lastSeenNewsVersion,
       labsActive: uxLabsExperiments,
       reloads: usageCount,
+    },
+    release: {
+      app: Release.App,
+      build: frontendBuild,
     },
   };
   const cBackend = {

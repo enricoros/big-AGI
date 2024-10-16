@@ -1,10 +1,18 @@
+import { readFile } from 'node:fs/promises';
+
+// Build information
+process.env.NEXT_PUBLIC_BUILD_HASH = 'big-agi-2-dev';
+process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + await readFile(new URL('./package.json', import.meta.url))).version;
+process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
+console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH})`);
+
 // Non-default build types
 const buildType =
   process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone'
     : process.env.BIG_AGI_BUILD === 'static' ? 'export'
       : undefined;
 
-buildType && console.log(`   🧠 big-AGI: building for ${buildType}...\n`);
+buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {

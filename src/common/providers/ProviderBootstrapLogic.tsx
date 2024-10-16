@@ -4,9 +4,8 @@ import { useRouter } from 'next/router';
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
 import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 
-import { autoConfInitiateConfiguration } from '~/common/logic/store-logic-autoconf_vanilla';
 import { estimatePersistentStorageOrThrow, requestPersistentStorage } from '~/common/util/storageUtils';
-import { markNewsAsSeen, shallRedirectToNews } from '~/common/logic/store-logic-sherpa';
+import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
@@ -27,7 +26,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   // [autoconf] initiate the llm auto-configuration process if on the chat
   const doAutoConf = isOnChat && !doRedirectToNews;
   React.useEffect(() => {
-    doAutoConf && autoConfInitiateConfiguration();
+    doAutoConf && void sherpaReconfigureBackendModels();
   }, [doAutoConf]);
 
   // [gc] garbage collection(s)

@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
-import { incrementalNewsVersion } from '../../apps/news/news.version';
+import { Release } from '~/common/app.release';
+import { reconfigureBackendModels } from '~/common/logic/reconfigureBackendModels';
 
 
 // Sherpa State: navigation thought the app, remembers the counters for progressive disclosure of complex features
@@ -11,6 +12,7 @@ interface SherpaStore {
 
   usageCount: number;
 
+  lastLlmReconfigHash: string;
   lastSeenNewsVersion: number;
 
   chatComposerPrefill: string | null; // if not null, the composer will load this text at startup
@@ -24,6 +26,7 @@ export const useLogicSherpaStore = create<SherpaStore>()(
 
       usageCount: 0,
 
+      lastLlmReconfigHash: '',
       lastSeenNewsVersion: 0,
 
       chatComposerPrefill: null,
@@ -52,12 +55,22 @@ export function shallRedirectToNews() {
   }
 
   // if the news is outdated and the user has used the app a few times, show the news
-  const isNewsOutdated = (lastSeenNewsVersion || 0) < incrementalNewsVersion;
+  const isNewsOutdated = (lastSeenNewsVersion || 0) < Release.Monotonics.NewsVersion;
   return isNewsOutdated && usageCount >= 3;
 }
 
 export function markNewsAsSeen() {
-  useLogicSherpaStore.setState({ lastSeenNewsVersion: incrementalNewsVersion });
+  useLogicSherpaStore.setState({ lastSeenNewsVersion: Release.Monotonics.NewsVersion });
+}
+
+
+// Reconfgure Backend Models
+
+export async function sherpaReconfigureBackendModels() {
+  return reconfigureBackendModels(
+    useLogicSherpaStore.getState().lastLlmReconfigHash,
+    (hash: string) => useLogicSherpaStore.setState({ lastLlmReconfigHash: hash }),
+  );
 }
 
 
