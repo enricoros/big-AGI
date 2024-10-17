@@ -43,7 +43,7 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
@@ -246,11 +246,17 @@ export function ChatMessage(props: {
   const isEditingText = !!textContentEditState;
 
   const handleApplyEdit = React.useCallback((fragmentId: DMessageFragmentId, editedText: string) => {
-    if (editedText.length > 0)
-      handleFragmentReplace(fragmentId, createTextContentFragment(editedText));
-    else
-      handleFragmentDelete(fragmentId);
-  }, [handleFragmentDelete, handleFragmentReplace]);
+    // perform deletion of the fragment if the text is empty
+    if (!editedText.length)
+      return handleFragmentDelete(fragmentId);
+
+    // find the fragment to be replaced
+    const oldFragment = messageFragments.find(f => f.fId === fragmentId);
+    if (!oldFragment) return;
+    const newFragment = updateFragmentWithEditedText(oldFragment, editedText);
+    if (newFragment)
+      handleFragmentReplace(fragmentId, newFragment);
+  }, [handleFragmentDelete, handleFragmentReplace, messageFragments]);
 
   const handleApplyAllEdits = React.useCallback(async (withControl: boolean) => {
     const state = textContentEditState || {};
@@ -502,8 +508,8 @@ export function ChatMessage(props: {
   }, [handleContextMenu]);
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    if (doubleClickToEdit || event.shiftKey)
-      props.onMessageFragmentReplace && handleOpsEditToggle(event);
+    if ((doubleClickToEdit || event.shiftKey) && props.onMessageFragmentReplace)
+      handleOpsEditToggle(event);
   }, [doubleClickToEdit, handleOpsEditToggle, props.onMessageFragmentReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {

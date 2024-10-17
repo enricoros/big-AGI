@@ -14,7 +14,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -69,16 +69,15 @@ export function DocAttachmentFragment(props: {
   // hooks
 
   const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
-    // create a new Doc Attachment Fragment
-    const newData = createDMessageDataInlineText(newText, fragmentDocPart.data.mimeType);
-    const newAttachment = createDocAttachmentFragment(fragmentTitle, fragment.caption, fragmentDocPart.vdt, newData, fragmentDocPart.ref, fragmentDocPart.meta, fragment.liveFileId);
+    // replacement fragment (same fId)
+    const newFragment = updateFragmentWithEditedText(fragment, newText);
 
-    // reuse the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
-    newAttachment.fId = fragmentId;
+    // if not replaced, ignore the change
+    if (!newFragment) return;
 
-    // replace this fragment with the new one
-    onFragmentReplace(fragmentId, newAttachment);
-  }, [fragment.caption, fragment.liveFileId, fragmentDocPart, fragmentId, fragmentTitle, onFragmentReplace]);
+    // Note: this reuses the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
+    onFragmentReplace(fragmentId, newFragment as DMessageAttachmentFragment);
+  }, [fragment, fragmentId, onFragmentReplace]);
 
   const handleReplaceFragmentLiveFileId = React.useCallback((liveFileId: LiveFileId) => {
     onFragmentReplace(fragmentId, { ...fragment, liveFileId: liveFileId });
