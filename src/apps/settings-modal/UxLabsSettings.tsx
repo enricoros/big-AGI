@@ -89,7 +89,7 @@ export function UxLabsSettings() {
     />
 
     {!isMobile && <FormSwitchControl
-      title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Pro Shortcuts</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
+      title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Shortcuts Bar</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
       checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
     />}
 

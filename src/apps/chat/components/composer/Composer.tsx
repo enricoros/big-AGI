@@ -85,6 +85,12 @@ const paddingBoxSx: SxProps = {
 };
 
 
+const minimizedSx: SxProps = {
+  ...paddingBoxSx,
+  display: 'none',
+};
+
+
 /**
  * A React component for composing messages, with attachments and different modes.
  */
@@ -113,6 +119,7 @@ export function Composer(props: {
     chatExecuteModeSendColor, chatExecuteModeSendLabel,
     chatExecuteMenuComponent, chatExecuteMenuShown, showChatExecuteMenu,
   } = useChatExecuteMode(props.capabilityHasT2I, props.isMobile);
+  const [isMinimized, setIsMinimized] = React.useState(false);
   const micCardRef = React.useRef<HTMLDivElement>(null);
 
   // external state
@@ -544,6 +551,11 @@ export function Composer(props: {
   // useMediaSessionCallbacks({ play: toggleRecognition, pause: toggleRecognition });
 
 
+  // Minimize
+
+  const handleToggleMinimized = React.useCallback(() => setIsMinimized(hide => !hide), []);
+
+
   // Attachment Up
 
   const handleAttachCtrlV = React.useCallback(async (event: React.ClipboardEvent) => {
@@ -691,10 +703,10 @@ export function Composer(props: {
   return (
     <Box aria-label='User Message' component='section' sx={props.sx}>
 
-      {!isMobile && labsShowShortcutBar && <StatusBar />}
+      {!isMobile && labsShowShortcutBar && <StatusBar toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
 
       {/* This container is here just to let the potential statusbar fill the whole space, so we moved the padding here and not in the parent */}
-      <Box sx={paddingBoxSx}>
+      <Box sx={(!isMinimized || isMobile || !labsShowShortcutBar) ? paddingBoxSx : minimizedSx}>
 
         <Grid
           container
