@@ -8,7 +8,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isPlaceholderPart, isTextPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
@@ -76,7 +76,7 @@ export function ContentFragments(props: {
   const isEditingText = !!props.textEditsState;
   // const isMonoFragment = props.fragments.length < 2;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
-  const showDataStreamViz = props.uiComplexityMode !== 'minimal' && props.fragments.length === 1 && isContentFragment(props.fragments[0]) && props.fragments[0].part.pt === 'ph';
+  const showDataStreamViz = props.uiComplexityMode !== 'minimal' && props.fragments.length === 1 && isVoidFragment(props.fragments[0]) && isPlaceholderPart(props.fragments[0].part);
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
   if (isEditingText && !props.fragments.length)
@@ -107,7 +107,37 @@ export function ContentFragments(props: {
 
     {props.fragments.map((fragment) => {
 
-      // only proceed with DMessageContentFragment
+      // Render VOID fragments
+      if (isVoidFragment(fragment)) {
+        const { fId, part } = fragment;
+        switch (part.pt) {
+          case 'ph': {
+            return (
+              <BlockPartPlaceholder
+                key={fId}
+                placeholderText={part.pText}
+                messageRole={props.messageRole}
+                contentScaling={props.contentScaling}
+                showAsItalic
+                showAsDataStreamViz={showDataStreamViz}
+              />
+            );
+          }
+
+          case '_pt_sentinel':
+          default:
+            <ScaledTextBlockRenderer
+              key={fId}
+              text={`Unknown Void Fragment: ${part.pt}`}
+              contentScaling={props.contentScaling}
+              textRenderVariant='text'
+              showAsDanger
+            />;
+            break;
+        }
+      }
+
+      // Render CONTENT fragments
       if (!isContentFragment(fragment))
         return null;
 
@@ -150,18 +180,6 @@ export function ContentFragments(props: {
               contentScaling={props.contentScaling}
               onFragmentDelete={/*isMonoFragment ? undefined :*/ props.onFragmentDelete}
               onFragmentReplace={props.onFragmentReplace}
-            />
-          );
-
-        case 'ph':
-          return (
-            <BlockPartPlaceholder
-              key={fragment.fId}
-              placeholderText={fragment.part.pText}
-              messageRole={props.messageRole}
-              contentScaling={props.contentScaling}
-              showAsItalic
-              showAsDataStreamViz={showDataStreamViz}
             />
           );
 

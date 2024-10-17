@@ -105,7 +105,7 @@ export async function aixCGR_FromDMessagesOrThrow(
       const aixChatMessageUser = await dMessageUserFragments.reduce(async (uMsgPromise, uFragment: DMessageFragment) => {
 
         const uMsg = await uMsgPromise;
-        if (!isContentOrAttachmentFragment(uFragment) || uFragment.part.pt === '_pt_sentinel' || uFragment.part.pt === 'ph')
+        if (!isContentOrAttachmentFragment(uFragment) || uFragment.part.pt === '_pt_sentinel')
           return uMsg;
 
         switch (uFragment.part.pt) {
@@ -158,7 +158,7 @@ export async function aixCGR_FromDMessagesOrThrow(
 
       for (const aFragment of m.fragments) {
 
-        if (!isContentOrAttachmentFragment(aFragment) || aFragment.part.pt === '_pt_sentinel' || aFragment.part.pt === 'ph')
+        if (!isContentOrAttachmentFragment(aFragment) || aFragment.part.pt === '_pt_sentinel')
           continue;
 
         switch (aFragment.part.pt) {

@@ -1,6 +1,6 @@
 import { agiUuid } from '~/common/util/idUtils';
 
-import { createPlaceholderMetaFragment, createTextContentFragment, DMessageContentFragment, DMessageFragment, duplicateDMessageFragmentsNoPH, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isTextPart, specialShallowReplaceTextContentFragment } from './chat.fragments';
+import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, duplicateDMessageFragmentsNoVoid, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isVoidFragment } from './chat.fragments';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
@@ -112,7 +112,7 @@ export function createDMessageTextContent(role: DMessageRole, text: string): DMe
 }
 
 export function createDMessagePlaceholderIncomplete(role: DMessageRole, placeholderText: string): DMessage {
-  const placeholderFragment = createPlaceholderMetaFragment(placeholderText);
+  const placeholderFragment = createPlaceholderVoidFragment(placeholderText);
   const message = createDMessageFromFragments(role, [placeholderFragment]);
   message.pendingIncomplete = true;
   return message;
@@ -145,12 +145,12 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
 
 // helpers - duplication
 
-export function duplicateDMessageNoPH(message: Readonly<DMessage>): DMessage {
+export function duplicateDMessageNoVoid(message: Readonly<DMessage>): DMessage {
   return {
     id: agiUuid('chat-dmessage'),
 
     role: message.role,
-    fragments: duplicateDMessageFragmentsNoPH(message.fragments), // [*] full message duplication (see downstream)
+    fragments: duplicateDMessageFragmentsNoVoid(message.fragments), // [*] full message duplication (see downstream)
 
     ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
 
@@ -245,11 +245,9 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
             return fragment.part.error;
           case 'image_ref':
             return '';
-          case 'ph':
-            return '';
-          // ignore tools
           case 'tool_invocation':
           case 'tool_response':
+            // Ignore tools for the text reduction
             return '';
         }
       } else if (isAttachmentFragment(fragment)) {
@@ -259,6 +257,9 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
           case 'image_ref':
             return '';
         }
+      } else if (isVoidFragment(fragment)) {
+        // all void fragments are ignored by definition when doing a text reduction
+        return '';
       }
       console.warn(`DEV: messageFragmentsReduceText: unexpected '${fragment.ft}' fragment with '${(fragment as any)?.part?.pt}' part`);
       return '';
@@ -267,20 +268,6 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
     .join(fragmentSeparator);
 }
 
-export function messageFragmentsReplaceLastContentText(fragments: Readonly<DMessageFragment[]>, newText: string, appendText?: boolean): DMessageFragment[] {
-
-  // if there's no text fragment, create it
-  const lastTextFragment = fragments.findLast(f => isContentFragment(f) && isTextPart(f.part)) as DMessageContentFragment | undefined;
-  if (!lastTextFragment)
-    return [...fragments, createTextContentFragment(newText)];
-
-  // append/replace the last text fragment
-  return fragments.map(fragment =>
-    (fragment === lastTextFragment)
-      ? specialShallowReplaceTextContentFragment(lastTextFragment, (appendText && isTextPart(lastTextFragment.part)) ? lastTextFragment.part.text + newText : newText)
-      : fragment,
-  );
-}
 
 // TODO: remove once the port is fully done - at 2.0.0 ?
 export function messageSingleTextOrThrow(message: DMessage): string {

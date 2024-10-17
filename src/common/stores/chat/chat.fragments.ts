@@ -22,32 +22,47 @@ import { agiId } from '~/common/util/idUtils';
 export type DMessageFragment =
   | DMessageContentFragment
   | DMessageAttachmentFragment
+  | DMessageVoidFragment
   // | DMessageBeamFragment
-  | _DMessageSentinelFragment
+  | _SentinelFragment
   ;
 
-// Content: real signal, needs to be sent to the llm
+/**
+ * Content Fragments: understood by ai and humans, processed by llms and stored
+ */
 export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
   | DMessageTextPart              // plain text or mixed content -> BlockRenderer
   | DMessageImageRefPart          // large image
   | DMessageToolInvocationPart    // shown to dev only, singature of the llm function call
   | DMessageToolResponsePart      // shown to dev only, response of the llm
   | DMessageErrorPart             // red message, e.g. non-content application issues
-  | DMetaPlaceholderPart          // (non submitted) placeholder to be replaced by another part
-  | _DMetaSentinelPart
+  | _SentinelPart
 >;
 
-// Attachments: labeled docs or images, output of Composer > Attachments
+/**
+ * Attachment Fragments: higher level representation of content, usually from attachments,
+ * - image references, documents, etc.
+ * - may still have upstream links for instance
+ */
 export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
   | DMessageDocPart               // document Attachment
   | DMessageImageRefPart          // image Attachment
-  | _DMetaSentinelPart
+  | _SentinelPart
 > & {
   title: string;                  // label of the attachment (filename, named id, content overview, title..)
   caption: string;                // additional information, such as provenance, content preview, etc.
   created: number;
   liveFileId?: LiveFileId;        // [LiveFile] Optional. Relate to a LiveFile; if present, it may still be invalid, hence we cleanup on load
 };
+
+/**
+ * Void Fragments: no meaning, pure cosmetic, not stored, not processed
+ */
+export type DMessageVoidFragment = _DMessageFragmentWrapper<'void',
+  | DVoidPlaceholderPart          // (non submitted) placeholder to be replaced by another part
+  | _SentinelPart
+>;
+
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
 // could not be the data store itself, but only used for save/reload
@@ -58,7 +73,7 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
 // }
 
 // Sentinel: force the typesystem to work, bark, and detect/reveal corner cases - unused aside from revealing fragment type issues
-type _DMessageSentinelFragment = { ft: '_ft_sentinel', fId: DMessageFragmentId };
+type _SentinelFragment = { ft: '_ft_sentinel', fId: DMessageFragmentId };
 
 export type DMessageFragmentId = string; // not unique, 8 bytes
 type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
@@ -135,9 +150,9 @@ export type DMessageToolResponsePart = {
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 
-export type DMetaPlaceholderPart = { pt: 'ph', pText: string };
+type DVoidPlaceholderPart = { pt: 'ph', pText: string };
 
-type _DMetaSentinelPart = { pt: '_pt_sentinel' };
+type _SentinelPart = { pt: '_pt_sentinel' };
 
 
 //
@@ -169,6 +184,10 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
+export function isVoidFragment(fragment: DMessageFragment) {
+  return fragment.ft === 'void';
+}
+
 
 export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'doc';
@@ -188,6 +207,10 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
 
 export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']) {
   return part.pt === 'tool_response' && part.response.type === 'function_call';
+}
+
+export function isPlaceholderPart(part: DMessageVoidFragment['part']) {
+  return part.pt === 'ph';
 }
 
 
@@ -221,11 +244,6 @@ export function create_CodeExecutionResponse_ContentFragment(id: string, error: 
   return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
 }
 
-export function specialShallowReplaceTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
-  // TODO: remove?
-  return { ...copyFragment, part: _create_Text_Part(text) };
-}
-
 function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
   return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
 }
@@ -257,20 +275,26 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
 }
 
 
-/// Meta Fragments - Creation & Duplication
+/// Void Fragments - Creation & Duplication
 
-export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
-  return _createContentFragment(_create_Placeholder_Part(placeholderText));
+export function createPlaceholderVoidFragment(placeholderText: string): DMessageVoidFragment {
+  return _createVoidFragment(_create_Placeholder_Part(placeholderText));
+}
+
+function _createVoidFragment(part: DMessageVoidFragment['part']): DMessageVoidFragment {
+  return { ft: 'void', fId: agiId('chat-dfragment' /* -void */), part };
 }
 
 
-function _createSentinelFragment(): _DMessageSentinelFragment {
+/// Sentinel Fragments - only here to force the typesystem to work
+
+function _createSentinelFragment(): _SentinelFragment {
   return { ft: '_ft_sentinel', fId: agiId('chat-dfragment' /* -_sentinel */) };
 }
 
 
-export function duplicateDMessageFragmentsNoPH(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
-  return fragments.map(_duplicateFragment).filter(f => f.ft !== 'content' || f.part.pt !== 'ph');
+export function duplicateDMessageFragmentsNoVoid(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
+  return fragments.map(_duplicateFragment).filter(f => f.ft !== 'void');
 }
 
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
@@ -280,6 +304,9 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
 
     case 'attachment':
       return _createAttachmentFragment(fragment.title, fragment.caption, _duplicate_Part(fragment.part), fragment.liveFileId);
+
+    case 'void':
+      return _createVoidFragment(_duplicate_Part(fragment.part));
 
     case '_ft_sentinel':
       return _createSentinelFragment();
@@ -324,15 +351,15 @@ function _create_CodeExecutionResponse_Part(id: string, error: boolean | string,
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
-function _create_Placeholder_Part(placeholderText: string): DMetaPlaceholderPart {
+function _create_Placeholder_Part(placeholderText: string): DVoidPlaceholderPart {
   return { pt: 'ph', pText: placeholderText };
 }
 
-function _create_Sentinel_Part(): _DMetaSentinelPart {
+function _create_Sentinel_Part(): _SentinelPart {
   return { pt: '_pt_sentinel' };
 }
 
-function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment)['part']>(part: TPart): TPart {
+function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
     case 'doc':
       return _create_Doc_Part(part.vdt, _duplicate_InlineData(part.data), part.ref, part.l1Title, part.meta ? { ...part.meta } : undefined) as TPart;
@@ -413,7 +440,6 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 
 /// Editor Helpers - Fragment Editing
-
 
 export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
   fragments.forEach((fragment, idx) => {

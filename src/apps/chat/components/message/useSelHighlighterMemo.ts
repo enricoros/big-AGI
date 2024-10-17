@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 import { wrapWithMarkdownSyntax } from '~/modules/blocks/markdown/markdown.wrapper';
 
 import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
@@ -29,7 +29,7 @@ type HighlightTool = 'highlight' | 'strike' | 'strong';
 export function useSelHighlighterMemo(
   messageId: DMessageId,
   selText: string | null,
-  contentFragments: DMessageContentFragment[],
+  fragments: DMessageFragment[],
   fromAssistant: boolean,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
 ): ((tool: HighlightTool) => void) | null {
@@ -40,8 +40,8 @@ export function useSelHighlighterMemo(
       return null;
 
     // Create the highlighter function, if there's 1 and only 1 occurrence of the selection
-    const highlightFunction = contentFragments.reduce((acc: false /* not found */ | ((tool: HighlightTool) => void) | true /* more than one */, fragment) => {
-      if (!acc && isTextPart(fragment.part)) {
+    const highlightFunction = fragments.reduce((acc: false /* not found */ | ((tool: HighlightTool) => void) | true /* more than one */, fragment) => {
+      if (!acc && isContentFragment(fragment) && isTextPart(fragment.part)) {
         const fragmentText = fragment.part.text;
         let index = fragmentText.indexOf(selText);
 
@@ -73,5 +73,5 @@ export function useSelHighlighterMemo(
     }, false);
 
     return typeof highlightFunction === 'function' ? highlightFunction : null;
-  }, [selText, fromAssistant, onMessageFragmentReplace, contentFragments, messageId]);
+  }, [fragments, fromAssistant, messageId, onMessageFragmentReplace, selText]);
 }

@@ -2,7 +2,7 @@ import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
 
 import { agiUuid } from '~/common/util/idUtils';
 
-import { DMessage, DMessageId, duplicateDMessageNoPH } from './chat.message';
+import { DMessage, DMessageId, duplicateDMessageNoVoid } from './chat.message';
 
 
 /// Conversation
@@ -66,7 +66,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
   };
 }
 
-export function duplicateDConversationNoPH(conversation: DConversation, lastMessageId?: DMessageId): DConversation {
+export function duplicateDConversationNoVoid(conversation: DConversation, lastMessageId?: DMessageId): DConversation {
 
   // cut short messages, if requested
   let messagesToKeep = conversation.messages.length; // By default, include all messages if messageId is null
@@ -84,7 +84,7 @@ export function duplicateDConversationNoPH(conversation: DConversation, lastMess
 
     messages: conversation.messages
       .slice(0, messagesToKeep)
-      .map(duplicateDMessageNoPH), // [*] duplicate conversation - see downstream
+      .map(duplicateDMessageNoVoid), // [*] duplicate conversation - see downstream
 
     // userTitle: conversation.userTitle, // undefined
     autoTitle: newTitle,
