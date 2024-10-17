@@ -309,7 +309,6 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
           break;
         case 'tool_invocation':
           throw new Error(`AIX: Unexpected tool invocation ${fragment.part.invocation?.type === 'function_call' ? fragment.part.invocation.name : fragment.part.id} in the Text response.`);
-        case 'ph': // impossible
         case 'image_ref': // impossible
         case 'tool_response': // impossible - stopped at the invocation alrady
         case '_pt_sentinel': // impossible

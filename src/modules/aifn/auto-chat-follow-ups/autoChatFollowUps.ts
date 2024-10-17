@@ -7,7 +7,7 @@ import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, createPlaceholderVoidFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { processPromptTemplate } from '~/common/util/promptUtils';
@@ -175,7 +175,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the diagram
-    const placeholderFragment = createPlaceholderMetaFragment('Auto-Diagram ...');
+    const placeholderFragment = createPlaceholderVoidFragment('Auto-Diagram ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     // Instructions
@@ -226,7 +226,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (suggestHTMLUI && !['<html', '<HTML', '<Html'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the UI
-    const placeholderFragment = createPlaceholderMetaFragment('Auto-UI ...');
+    const placeholderFragment = createPlaceholderVoidFragment('Auto-UI ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     // Instructions

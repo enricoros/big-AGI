@@ -16,7 +16,7 @@ import { workspaceForConversationIdentity } from '~/common/stores/workspace/work
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
 import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
-import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversationNoPH } from './chat.conversation';
+import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversationNoVoid } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 
 
@@ -120,7 +120,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         if (!conversation)
           return null;
 
-        const branched = duplicateDConversationNoPH(conversation, messageId ?? undefined);
+        const branched = duplicateDConversationNoVoid(conversation, messageId ?? undefined);
 
         _set({
           conversations: [branched, ...conversations],

@@ -4,8 +4,8 @@ import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHi
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
-import { createDMessageEmpty, DMessage, duplicateDMessageNoPH, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
+import { createDMessageEmpty, DMessage, duplicateDMessageNoVoid, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
+import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
@@ -93,7 +93,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const newMessage: DMessage = {
     ...ray.message,
-    fragments: [createPlaceholderMetaFragment(SCATTER_PLACEHOLDER)],
+    fragments: [createPlaceholderVoidFragment(SCATTER_PLACEHOLDER)],
     pendingIncomplete: true,
     created: Date.now(),
     updated: null,
@@ -261,7 +261,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       // pre-fill the ray with the imported message
       if (message.fragments.length) {
         emptyRay.status = 'success';
-        emptyRay.message = duplicateDMessageNoPH(message); // [beam] import dmessage copy from chat
+        emptyRay.message = duplicateDMessageNoVoid(message); // [beam] import dmessage copy from chat
         emptyRay.message.updated = Date.now();
         emptyRay.imported = true;
       }
