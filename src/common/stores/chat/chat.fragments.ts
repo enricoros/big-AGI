@@ -176,6 +176,10 @@ export function isContentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content';
 }
 
+export function isTextContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageTextPart } {
+  return fragment.ft === 'content' && fragment.part.pt === 'text';
+}
+
 export function isAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'attachment';
 }
@@ -205,7 +209,7 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
   return part.pt === 'error';
 }
 
-export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']) {
+export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']): part is DMessageToolResponsePart & { response: { type: 'function_call' } } {
   return part.pt === 'tool_response' && part.response.type === 'function_call';
 }
 
@@ -443,14 +447,14 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
   fragments.forEach((fragment, idx) => {
-    if (isContentFragment(fragment) && isTextPart(fragment.part))
+    if (isTextContentFragment(fragment))
       fragment.part.text = editText(fragment.part.text, idx);
   });
 }
 
 export function prependTextPartsInline(fragments: DMessageFragment[], textPrefix: string): void {
   for (const fragment of fragments) {
-    if (!isContentFragment(fragment) || !isTextPart(fragment.part))
+    if (!isTextContentFragment(fragment))
       continue;
     fragment.part.text = textPrefix + ' ' + fragment.part.text;
     return;

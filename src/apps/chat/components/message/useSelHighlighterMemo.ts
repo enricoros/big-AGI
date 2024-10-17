@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { wrapWithMarkdownSyntax } from '~/modules/blocks/markdown/markdown.wrapper';
 
 import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
@@ -41,7 +41,7 @@ export function useSelHighlighterMemo(
 
     // Create the highlighter function, if there's 1 and only 1 occurrence of the selection
     const highlightFunction = fragments.reduce((acc: false /* not found */ | ((tool: HighlightTool) => void) | true /* more than one */, fragment) => {
-      if (!acc && isContentFragment(fragment) && isTextPart(fragment.part)) {
+      if (!acc && isTextContentFragment(fragment)) {
         const fragmentText = fragment.part.text;
         let index = fragmentText.indexOf(selText);
 

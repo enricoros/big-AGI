@@ -1,7 +1,7 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageFragment, DMessageImageRefPart, isContentFragment, isContentOrAttachmentFragment, isTextPart, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, isContentOrAttachmentFragment, isTextContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -85,7 +85,7 @@ export async function aixCGR_FromDMessagesOrThrow(
         };
       }
       for (const systemFragment of m.fragments) {
-        if (isContentFragment(systemFragment) && isTextPart(systemFragment.part)) {
+        if (isTextContentFragment(systemFragment)) {
           acc.systemMessage.parts.push(systemFragment.part);
         } else {
           console.warn('aixCGR_FromDMessages: unexpected system fragment', systemFragment);
