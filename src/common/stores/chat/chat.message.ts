@@ -237,31 +237,34 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
 
   return fragments
     .map(fragment => {
-      if (isContentFragment(fragment)) {
-        switch (fragment.part.pt) {
-          case 'text':
-            return fragment.part.text;
-          case 'error':
-            return fragment.part.error;
-          case 'image_ref':
-            return '';
-          case 'tool_invocation':
-          case 'tool_response':
-            // Ignore tools for the text reduction
-            return '';
-        }
-      } else if (isAttachmentFragment(fragment)) {
-        switch (fragment.part.pt) {
-          case 'doc':
-            return fragment.part.data.text;
-          case 'image_ref':
-            return '';
-        }
-      } else if (isVoidFragment(fragment)) {
-        // all void fragments are ignored by definition when doing a text reduction
-        return '';
+      switch (true) {
+        case isContentFragment(fragment):
+          switch (fragment.part.pt) {
+            case 'text':
+              return fragment.part.text;
+            case 'error':
+              return fragment.part.error;
+            case 'image_ref':
+              return '';
+            case 'tool_invocation':
+            case 'tool_response':
+              // Ignore tools for the text reduction
+              return '';
+          }
+          break;
+        case isAttachmentFragment(fragment):
+          switch (fragment.part.pt) {
+            case 'doc':
+              return fragment.part.data.text;
+            case 'image_ref':
+              return '';
+          }
+          break;
+        case isVoidFragment(fragment):
+          // all void fragments are ignored by definition when doing a text reduction
+          return '';
       }
-      console.warn(`DEV: messageFragmentsReduceText: unexpected '${fragment.ft}' fragment with '${(fragment as any)?.part?.pt}' part`);
+      console.warn(`[DEV] messageFragmentsReduceText: unexpected '${fragment.ft}' fragment with '${(fragment as any)?.part?.pt}' part`);
       return '';
     })
     .filter(text => !!text)
