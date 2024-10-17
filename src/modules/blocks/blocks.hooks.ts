@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 
 import { agiId } from '~/common/util/idUtils';
+import { countLines } from '~/common/util/textUtils';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { RenderBlockInputs } from './blocks.types';
@@ -70,7 +71,7 @@ export function useAutoBlocksMemoSemiStable(text: string, forceCodeWithTitle: st
   return React.useMemo(() => {
     let newBlocks: RenderBlockInputs;
     if (forceCodeWithTitle !== undefined)
-      newBlocks = [{ bkt: 'code-bk', title: forceCodeWithTitle, code: text, isPartial: false }];
+      newBlocks = [{ bkt: 'code-bk', title: forceCodeWithTitle, code: text, lines: countLines(text), isPartial: false }];
     else if (forceMarkdown)
       newBlocks = [{ bkt: 'md-bk', content: text }];
     else if (forceSanityTextDiffs && forceSanityTextDiffs.length >= 1)
