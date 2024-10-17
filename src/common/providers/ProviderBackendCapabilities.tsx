@@ -4,7 +4,6 @@ import { useKnowledgeOfBackendCaps } from '~/modules/backend/store-backend-capab
 
 import { Release } from '~/common/app.release';
 import { apiQuery } from '~/common/util/trpc.client';
-import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
 import { themeFontFamilyCss } from '~/common/app.theme';
 
 
@@ -93,7 +92,7 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
     if (data) {
       storeBackendCapabilities(data);
 
-      // Compare client and server build info
+      // Match frontend and backend versions
       const clientBuildInfo = Release.buildInfo('frontend');
       const serverBuildInfo = data.build || {};
       setVersionVerified(clientBuildInfo.gitSha === serverBuildInfo.gitSha && clientBuildInfo.pkgVersion === serverBuildInfo.pkgVersion);
@@ -101,19 +100,14 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
   }, [data, storeBackendCapabilities]);
 
 
-  // [effect] warn if the backend is not available
+  // [effect] set the timeout flag if waiting too long for the capabilities
   React.useEffect(() => {
-    if (!haveCapabilities) {
-      const timeout = setTimeout(() => setBackendTimeout(true), BACKEND_WARNING_TIMEOUT);
-      return () => clearTimeout(timeout);
-    }
-  }, [haveCapabilities]);
-
-  // [effect] then preload the Tiktoken library right when proceeding to the UI
-  React.useEffect(() => {
-    // large WASM payload, so fire/forget
-    if (haveCapabilities)
-      void preloadTiktokenLibrary();
+    if (!haveCapabilities) return;
+    const timeout = setTimeout(() => setBackendTimeout(true), BACKEND_WARNING_TIMEOUT);
+    return () => {
+      clearTimeout(timeout);
+      setBackendTimeout(false);
+    };
   }, [haveCapabilities]);
 
 
