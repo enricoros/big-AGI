@@ -191,25 +191,7 @@ export function isToolResponseFunctionCallPart(part: DMessageContentFragment['pa
 }
 
 
-export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
-  fragments.forEach((fragment, idx) => {
-    if (isContentFragment(fragment) && isTextPart(fragment.part))
-      fragment.part.text = editText(fragment.part.text, idx);
-  });
-}
-
-export function prependTextPartsInline(fragments: DMessageFragment[], textPrefix: string): void {
-  for (const fragment of fragments) {
-    if (!isContentFragment(fragment) || !isTextPart(fragment.part))
-      continue;
-    fragment.part.text = textPrefix + ' ' + fragment.part.text;
-    return;
-  }
-  fragments.unshift(createTextContentFragment(textPrefix));
-}
-
-
-/// Fragments Creation & Duplication
+/// Content Fragments - Creation & Duplication
 
 export function createTextContentFragment(text: string): DMessageContentFragment {
   return _createContentFragment(_create_Text_Part(text));
@@ -239,10 +221,6 @@ export function create_CodeExecutionResponse_ContentFragment(id: string, error: 
   return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
 }
 
-export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
-  return _createContentFragment(_create_Placeholder_Part(placeholderText));
-}
-
 export function specialShallowReplaceTextContentFragment(copyFragment: DMessageContentFragment, text: string): DMessageContentFragment {
   // TODO: remove?
   return { ...copyFragment, part: _create_Text_Part(text) };
@@ -252,6 +230,8 @@ function _createContentFragment(part: DMessageContentFragment['part']): DMessage
   return { ft: 'content', fId: agiId('chat-dfragment' /* -content */), part };
 }
 
+
+/// Attachment Fragments - Creation & Duplication
 
 export function createDocAttachmentFragment(l1Title: string, caption: string, vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
   return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(vdt, data, ref, l1Title, meta), liveFileId);
@@ -274,6 +254,13 @@ export function specialContentPartToDocAttachmentFragment(title: string, caption
 
 function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFileId: LiveFileId | undefined): DMessageAttachmentFragment {
   return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part, liveFileId };
+}
+
+
+/// Meta Fragments - Creation & Duplication
+
+export function createPlaceholderMetaFragment(placeholderText: string): DMessageContentFragment {
+  return _createContentFragment(_create_Placeholder_Part(placeholderText));
 }
 
 
@@ -380,10 +367,12 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
 
 /// Helpers - Data Reference Creation & Duplication
 
-// Document View Mimetype - 3 uses:
-// - DMessageDocPart.vdt: the visual interpretation of the document (the mimetype of data is in .data.mimeType)
-// - AixWire_Parts.DocPart_schema: gives extra semantic meaning to the Doc part (in conjunction with DMessageDocMeta)
-// - used at rest, and in flight - be very careful not to change anything
+/**
+ * Document View Mimetype - 3 uses:
+ * - DMessageDocPart.vdt: the visual interpretation of the document (the mimetype of data is in .data.mimeType)
+ * - AixWire_Parts.DocPart_schema: gives extra semantic meaning to the Doc part (in conjunction with DMessageDocMeta)
+ * - used at rest, and in flight - be very careful not to change anything
+ */
 export const DVMimeType = {
   VndAgiCode: 'application/vnd.agi.code',
   VndAgiOcr: 'application/vnd.agi.ocr',
@@ -423,8 +412,22 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 }
 
 
-// function _duplicateObjectWarning<T extends Record<string, any>>(obj: T | undefined, devPlace: string): T | undefined {
-//   console.warn('[DEV]: implement deep copy for:', devPlace);
-//   if (!obj) return obj;
-//   return { ...obj };
-// }
+/// Editor Helpers - Fragment Editing
+
+
+export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
+  fragments.forEach((fragment, idx) => {
+    if (isContentFragment(fragment) && isTextPart(fragment.part))
+      fragment.part.text = editText(fragment.part.text, idx);
+  });
+}
+
+export function prependTextPartsInline(fragments: DMessageFragment[], textPrefix: string): void {
+  for (const fragment of fragments) {
+    if (!isContentFragment(fragment) || !isTextPart(fragment.part))
+      continue;
+    fragment.part.text = textPrefix + ' ' + fragment.part.text;
+    return;
+  }
+  fragments.unshift(createTextContentFragment(textPrefix));
+}
