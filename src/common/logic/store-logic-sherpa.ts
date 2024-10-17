@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Release } from '~/common/app.release';
+import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '~/common/util/storageUtils';
+import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
+import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { reconfigureBackendModels } from '~/common/logic/reconfigureBackendModels';
 
 
@@ -71,6 +74,33 @@ export async function sherpaReconfigureBackendModels() {
     useLogicSherpaStore.getState().lastLlmReconfigHash,
     (hash: string) => useLogicSherpaStore.setState({ lastLlmReconfigHash: hash }),
   );
+}
+
+
+// Storage Maintenance & Garbage Collection
+
+export async function sherpaStorageMaintenance() {
+
+  // Request persistent storage for the current origin, so that indexedDB's content is not evicted
+  const persisted = await requestPersistentStorageSafe(); // doesn't throw
+  if (persisted) {
+    try {
+      const usage = await estimatePersistentStorageOrThrow();
+      if (!usage)
+        console.warn('Issue requesting persistent storage');
+      else
+        console.log('Persistent storage statistics:', usage);
+    } catch (error) {
+      console.error('Error estimating persistent storage:', error);
+    }
+  }
+
+  // GC: Remove chat dblobs (not persisted in chat fragments)
+  void gcChatImageAssets(); // fire/forget
+
+  // GC: Remove old attachment drafts (not persisted in chats)
+  void gcAttachmentDBlobs(); // fire/forget
+
 }
 
 

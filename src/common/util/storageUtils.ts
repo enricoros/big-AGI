@@ -6,7 +6,7 @@ const DEBUG_PERSISTENCE = false;
 /**
  * Request persistent storage for the current origin, so that indexedDB's content is not evicted.
  */
-export async function requestPersistentStorage(): Promise<boolean> {
+export async function requestPersistentStorageSafe(): Promise<boolean> {
   try {
     if (isBrowser && navigator.storage && navigator.storage.persist) {
       const isPersisted = await navigator.storage.persisted();

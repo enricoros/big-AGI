@@ -122,5 +122,6 @@ export async function transferAttachmentOwnedDBAsset({ part }: DMessageAttachmen
  * GC Functions for Attachment DBlobs systems: remove leftover drafts
  */
 export async function gcAttachmentDBlobs() {
+  // wipe all objects related to attachment drafts that could have been there from previous sessions
   await gcDBAssetsByScope('global', 'attachment-drafts', null, []);
 }
