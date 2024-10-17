@@ -54,18 +54,22 @@ export function useSelHighlighterMemo(
 
           // Tool application function
           acc = (tool: HighlightTool) => {
+
             // Apply the tool
             const highlighted =
               tool === 'highlight' ? APPLY_HTML_HIGHLIGHT(selText)
                 : tool === 'strike' ? APPLY_HTML_STRIKE(selText)
                   : tool === 'strong' ? APPLY_MD_STRONG(selText)
                     : selText;
+
             // Toggle, if the tooled text is already present
             const newFragmentText =
               fragmentText.includes(highlighted) ? fragmentText.replace(highlighted, selText) // toggles selection
                 : fragmentText.replace(selText, highlighted);
+
             // Replace the whole fragment within the message
             onMessageFragmentReplace(messageId, fragment.fId, createTextContentFragment(newFragmentText));
+
           };
         }
       }

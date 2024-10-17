@@ -445,6 +445,107 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 /// Editor Helpers - Fragment Editing
 
+/**
+ * Updates a fragment with the edited text, ensuring the fragment retains its type and structure.
+ * @returns A new fragment with the edited text applied or null if the fragment type isn't handled.
+ */
+export function updateFragmentWithEditedText(
+  fragment: DMessageFragment,
+  editedText: string,
+): DMessageFragment | null {
+
+  if (editedText.length === 0) {
+    // If the edited text is empty, we may choose to delete the fragment (depending on the caller's logic)
+    return null;
+  }
+
+  if (isContentFragment(fragment)) {
+    const { fId, part } = fragment;
+
+    if (isTextPart(part)) {
+      // Create a new text content fragment with the same fId and the edited text
+      const newFragment = createTextContentFragment(editedText);
+      return { ...newFragment, fId }; // Preserve original fId
+    } else if (part.pt === 'error') {
+      const newFragment = createErrorContentFragment(editedText);
+      return { ...newFragment, fId }; // Preserve original fId
+    } else if (part.pt === 'tool_invocation') {
+      if (part.invocation.type === 'function_call') {
+        // Create a new tool invocation fragment with the edited args
+        const newFragment = create_FunctionCallInvocation_ContentFragment(
+          part.id, // Keep same id
+          part.invocation.name,
+          editedText || null, // args
+        );
+        return { ...newFragment, fId }; // Preserve original fId
+      } else if (part.invocation.type === 'code_execution') {
+        const newFragment = create_CodeExecutionInvocation_ContentFragment(
+          part.id, // Keep same id
+          part.invocation.language,
+          editedText, // code
+          part.invocation.author,
+        );
+        return { ...newFragment, fId };
+      }
+    } else if (part.pt === 'tool_response') {
+      if (part.error) {
+        // Update the error field in 'tool_response' part
+        const newPart = {
+          ...part,
+          error: editedText,
+        };
+        return { ...fragment, part: newPart };
+      } else {
+        // Update the result field in 'tool_response' part
+        const response = part.response;
+        if (response.type === 'function_call') {
+          const newFragment = create_FunctionCallResponse_ContentFragment(
+            part.id,
+            part.error,
+            response.name,
+            editedText, // result
+            part.environment,
+          );
+          return { ...newFragment, fId };
+        } else if (response.type === 'code_execution') {
+          const newFragment = create_CodeExecutionResponse_ContentFragment(
+            part.id,
+            part.error,
+            editedText, // result
+            response.executor,
+            part.environment,
+          );
+          return { ...newFragment, fId };
+        }
+      }
+    }
+  } else if (isAttachmentFragment(fragment)) {
+    const { fId, part, title, caption, liveFileId } = fragment;
+
+    if (isDocPart(part)) {
+      // Create a new doc attachment fragment with the edited text
+      const newDataInline: DMessageDataInline = createDMessageDataInlineText(
+        editedText,
+        part.data.mimeType,
+      );
+      const newFragment = createDocAttachmentFragment(
+        part.l1Title || title,
+        caption,
+        part.vdt,
+        newDataInline,
+        part.ref,
+        part.meta,
+        liveFileId,
+      );
+      return { ...newFragment, fId }; // Preserve original fId
+    }
+    // Handle other attachment parts if needed
+  }
+
+  // Return null if the fragment type is not handled
+  return null;
+}
+
 export function editTextPartsInline(fragments: DMessageFragment[], editText: (text: string, idx: number) => string): void {
   fragments.forEach((fragment, idx) => {
     if (isTextContentFragment(fragment))
