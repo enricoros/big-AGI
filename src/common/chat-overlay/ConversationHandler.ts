@@ -1,7 +1,6 @@
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposes } from '../../data';
-import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 
 import { createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
 
@@ -10,6 +9,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI } from '../../apps/chat/store-app-chat';

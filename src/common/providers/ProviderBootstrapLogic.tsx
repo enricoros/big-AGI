@@ -2,12 +2,12 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
-import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
 
 import { estimatePersistentStorageOrThrow, requestPersistentStorage } from '~/common/util/storageUtils';
 import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
+import { gcChatImageAssets } from '../stores/chat/chat.gc';
 
 
 export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
