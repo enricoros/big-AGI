@@ -4,6 +4,8 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, styled, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import MinimizeIcon from '@mui/icons-material/Minimize';
 
 // import { isMacUser } from '~/common/util/pwaUtils';
 import type { ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -12,6 +14,10 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
+
+
+// configuration
+const COMPOSER_ENABLE_MINIMIZE = false;
 
 
 const hideButtonTooltip = (
@@ -122,7 +128,7 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
 }
 
 
-export function StatusBar() {
+export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: boolean }) {
 
   // state (modifiers pressed/not)
   const { showPromisedOverlay } = useOverlayComponents();
@@ -187,12 +193,19 @@ export function StatusBar() {
   return (
     <StatusBarContainer aria-label='Status bar'>
 
-      {/* Close Button */}
-      <GoodTooltip variantOutlined arrow placement='top' title={hideButtonTooltip}>
-        <IconButton size='sm' sx={hideButtonSx} onClick={handleHideShortcuts}>
-          <CloseRoundedIcon />
+      {(!props.toggleMinimized || !COMPOSER_ENABLE_MINIMIZE) && !props.isMinimized ? (
+        // Close Button
+        <GoodTooltip variantOutlined arrow placement='top' title={hideButtonTooltip}>
+          <IconButton size='sm' sx={hideButtonSx} onClick={handleHideShortcuts}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </GoodTooltip>
+      ) : (
+        // Minimize Button
+        <IconButton size='sm' sx={hideButtonSx} onClick={props.toggleMinimized}>
+          {props.isMinimized ? <ExpandLessIcon /> : <MinimizeIcon />}
         </IconButton>
-      </GoodTooltip>
+      )}
 
       {/* Show all shortcuts */}
       {shortcuts.map((shortcut, idx) => (
