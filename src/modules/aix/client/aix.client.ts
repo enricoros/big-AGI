@@ -559,7 +559,7 @@ async function _aixChatGenerateContent_LL(
     // reassemble the particles
     for await (const particle of particles) {
       contentReassembler.reassembleParticle(particle, abortSignal.aborted);
-      if (onReassemblyUpdate) {
+      if (onReassemblyUpdate && accumulator_LL.fragments.length /* we want the first update to have actual content */) {
         if (throttler)
           throttler.decimate(() => onReassemblyUpdate(accumulator_LL, false));
         else
