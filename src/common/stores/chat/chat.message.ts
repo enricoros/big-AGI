@@ -233,7 +233,7 @@ export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
 
 // helpers during the transition from V3
 
-export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n'): string {
+export function messageFragmentsReduceText(fragments: DMessageFragment[], fragmentSeparator: string = '\n\n', excludeAttachmentFragments?: boolean): string {
 
   return fragments
     .map(fragment => {
@@ -253,6 +253,8 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
           }
           break;
         case isAttachmentFragment(fragment):
+          if (excludeAttachmentFragments)
+            return '';
           switch (fragment.part.pt) {
             case 'doc':
               return fragment.part.data.text;
