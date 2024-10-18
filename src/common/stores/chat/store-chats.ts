@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SystemPurposeId } from '../../../data';
@@ -8,7 +8,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow, getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { agiUuid } from '~/common/util/idUtils';
-import { backupIdbV3, idbStateStorage } from '~/common/util/idbUtils';
+import { backupIdbV3, createIDBPersistStorage } from '~/common/util/idbUtils';
 
 import { workspaceActions } from '~/common/stores/workspace/store-client-workspace';
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
@@ -400,7 +400,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
        *  - 4: [2024-05-14] Convert messages to multi-part, removed the IDB migration
        */
       version: 4,
-      storage: createJSONStorage(() => idbStateStorage),
+      storage: createIDBPersistStorage<ConversationsStore>(),
 
       // Migrations
       migrate: async (state: any, fromVersion: number) => {
