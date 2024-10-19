@@ -47,9 +47,10 @@ const hideButtonSx: SxProps = {
 
 const StatusBarContainer = styled(Box)({
   borderBottom: '1px solid',
-  borderBottomColor: 'var(--joy-palette-divider)',
+  // borderBottomColor: 'var(--joy-palette-divider)',
+  borderBottomColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
   // borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  backgroundColor: 'var(--joy-palette-background-surface)',
+  // backgroundColor: 'var(--joy-palette-background-surface)',
   // paddingBlock: '0.25rem',
   paddingInline: '0.5rem',
   // layout
@@ -58,10 +59,10 @@ const StatusBarContainer = styled(Box)({
   columnGap: '1.5rem', // space between shortcuts
   lineHeight: '1em',
   // animation: `${animateAppear} 0.3s ease-out`,
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    backgroundColor: 'var(--joy-palette-background-level1)',
-  },
+  // transition: 'all 0.2s ease',
+  // '&:hover': {
+  //   backgroundColor: 'var(--joy-palette-background-level1)',
+  // },
 });
 
 const ShortcutContainer = styled(Box)({
@@ -74,6 +75,14 @@ const ShortcutContainer = styled(Box)({
   // '&:hover': {
   //   transform: 'scale(1.05)',
   // },
+  '&:hover > div': {
+    backgroundColor: 'var(--joy-palette-background-level1)',
+  },
+  cursor: 'pointer',
+  [`&[aria-disabled="true"]`]: {
+    opacity: 0.5,
+    pointerEvents: 'none',
+  }
 });
 
 const ShortcutKey = styled(Box)({
@@ -91,6 +100,7 @@ const ShortcutKey = styled(Box)({
   paddingInline: '4px',
   // pointerEvents: 'none',
   cursor: 'pointer',
+  transition: 'background-color 1s ease',
 });
 
 
@@ -116,11 +126,11 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
   }, [props.shortcut]);
 
   return (
-    <ShortcutContainer sx={props.shortcut.disabled ? { opacity: 0.5 } : undefined}>
-      {!!props.shortcut.ctrl && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
-      {!!props.shortcut.shift && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Shift')}</ShortcutKey>}
+    <ShortcutContainer onClick={!props.shortcut.disabled ? handleClicked : undefined} aria-disabled={props.shortcut.disabled}>
+      {!!props.shortcut.ctrl && <ShortcutKey>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
+      {!!props.shortcut.shift && <ShortcutKey>{_platformAwareModifier('Shift')}</ShortcutKey>}
       {/*{!!props.shortcut.altForNonMac && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <ShortcutKey onClick={handleClicked}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</ShortcutKey>
+      <ShortcutKey>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</ShortcutKey>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
       {props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={{ fontSize: 'md' }} />}
     </ShortcutContainer>
@@ -147,8 +157,9 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
       if (a.shift !== b.shift)
         return a.shift ? 1 : -1;
       // (Hack) If the description is 'Beam', it goes last
-      if (a.description === 'Beam')
+      if (a.description === 'Beam Edit')
         return 1;
+      // alphabetical for the rest
       return a.key.localeCompare(b.key);
     });
     return visibleShortcuts;
@@ -201,7 +212,7 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
           </IconButton>
         </GoodTooltip>
       ) : (
-        // Minimize Button
+        // Minimize / Maximize Button - note the Maximize icon would be more correct, but also less discoverable
         <IconButton size='sm' sx={hideButtonSx} onClick={props.toggleMinimized}>
           {props.isMinimized ? <ExpandLessIcon /> : <MinimizeIcon />}
         </IconButton>
