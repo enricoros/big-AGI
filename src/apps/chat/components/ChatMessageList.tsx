@@ -374,7 +374,6 @@ export function ChatMessageList(props: {
           sx={{
             mt: 'auto',
             overflowY: 'auto',
-            minHeight: 64,
           }}
         />
       )}

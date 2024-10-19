@@ -14,12 +14,8 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI } from '../../apps/chat/store-app-chat';
 
-import { createDEphemeral } from './store-perchat_ephemerals_slice';
+import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat_ephemerals_slice';
 import { createPerChatVanillaStore } from './store-perchat_vanilla';
-
-
-// configuration
-const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 
 
 /**
@@ -250,16 +246,15 @@ export class ConversationHandler {
   // Ephemerals
 
   createEphemeralHandler(title: string, initialText: string) {
-    const { ephemeralsAppend, ephemeralsUpdate, ephemeralsDelete, ephemeralsIsPinned } = this.overlayActions;
+    const { ephemeralsAppend, ephemeralsUpdate, ephemeralsDelete, getEphemeral } = this.overlayActions;
 
     // create and append
     const ephemeral = createDEphemeral(title, initialText);
     const eId = ephemeral.id;
     ephemeralsAppend(ephemeral);
 
-    // delete if not pinned
-    const deleteIfNotPinned = () => {
-      if (!ephemeralsIsPinned(eId))
+    const deleteIfMinimized = () => {
+      if (getEphemeral(eId)?.minimized)
         ephemeralsDelete(eId);
     };
 
@@ -269,7 +264,7 @@ export class ConversationHandler {
       updateState: (state: object) => ephemeralsUpdate(eId, { state }),
       markAsDone: () => {
         ephemeralsUpdate(eId, { done: true });
-        setTimeout(deleteIfNotPinned, EPHEMERAL_DELETION_DELAY);
+        setTimeout(deleteIfMinimized, EPHEMERALS_DEFAULT_TIMEOUT);
       },
     };
   }
