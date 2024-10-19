@@ -3,7 +3,8 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Grid, IconButton, Sheet, styled, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import PushPinIcon from '@mui/icons-material/PushPin';
+import MaximizeIcon from '@mui/icons-material/Maximize';
+import MinimizeIcon from '@mui/icons-material/Minimize';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 
@@ -111,107 +112,112 @@ function EphemeralItem(props: {
 
   const { ephemeral, conversationHandler } = props;
 
+  // Event handlers
   const handleDelete = React.useCallback(() => {
     conversationHandler.overlayActions.ephemeralsDelete(ephemeral.id);
   }, [conversationHandler, ephemeral.id]);
 
-  const handleTogglePinned = React.useCallback(() => {
-    conversationHandler.overlayActions.ephemeralsTogglePinned(ephemeral.id);
+  const handleToggleMinimized = React.useCallback(() => {
+    conversationHandler.overlayActions.ephemeralsToggleMinimized(ephemeral.id);
   }, [conversationHandler, ephemeral.id]);
 
   const handleToggleShowState = React.useCallback(() => {
-    conversationHandler.overlayActions.ephemeralsToggleShowState(ephemeral.id);
+    conversationHandler.overlayActions.ephemeralsToggleShowStatePane(ephemeral.id);
   }, [conversationHandler, ephemeral.id]);
 
-  const showStatePane = ephemeral.showState && !!ephemeral.state;
 
-  return <Box
-    sx={{
-      p: { xs: 1, md: 2 },
-      position: 'relative',
+  const showStatePane = ephemeral.showStatePane && !!ephemeral.state;
+
+  return (
+    <Box sx={{
       borderTop: '1px solid',
       borderTopColor: 'divider',
       // border: (i < ephemerals.length - 1) ? `2px solid ${theme.palette.divider}` : undefined,
-    }}>
-
-    {/* Title */}
-    {ephemeral.title && (
-      <Typography level='title-sm' sx={{ mt: -0.25, mb: 2, color: 'success.solidBg' }}>
-        {ephemeral.title} Internal Monologue
-      </Typography>
-    )}
-
-    {/* Vertical | split */}
-    <Grid container spacing={2}>
-
-      {/* Left pane (log) */}
-      <Grid xs={12} md={showStatePane ? 6 : 12}>
-        {/* New renderer, with */}
-        <Box sx={leftPaneSx}>
-          <ScaledTextBlockRenderer
-            text={ephemeral.text}
-            contentScaling={props.contentScaling}
-            textRenderVariant='markdown'
-          />
-        </Box>
-      </Grid>
-
-      {/* Right pane (state) */}
-      {showStatePane && (
-        <Grid xs={12} md={6} sx={rightPaneSx}>
-          <StateRenderer
-            state={ephemeral.state}
-            contentScaling={props.contentScaling}
-          />
-        </Grid>
-      )}
-
-    </Grid>
-
-
-    {/* Buttons */}
-    <Box sx={{
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      m: 1,
       display: 'flex',
-      gap: 1,
+      flexDirection: 'column',
     }}>
 
-      {/* Pin */}
-      <IconButton
-        size='sm'
-        variant={ephemeral.pinned ? 'soft' : 'plain'}
-        onClick={handleTogglePinned}
-        sx={{
-          '& > *': { transition: 'transform 0.2s' },
-        }}
-      >
-        <PushPinIcon sx={ephemeral.pinned ? { transform: 'rotate(45deg)' } : undefined} />
-      </IconButton>
+      {/* Top Line - Title and Buttons */}
+      <Box sx={{
+        py: 1,
+        px: { xs: 1, md: 2 },
+        backgroundColor: 'success.softHoverBg',
+        display: 'flex',
+        gap: 1,
+        alignItems: 'center'
+      }}>
 
-      {/* Show State */}
-      <IconButton
-        size='sm'
-        variant={ephemeral.showState ? 'soft' : 'plain'}
-        onClick={handleToggleShowState}
-      >
-        {ephemeral.showState ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />}
-      </IconButton>
+        <Typography level='title-sm' sx={{ flex: 1, color: 'success.solidBg' }}>
+          {ephemeral.title} Internal Monologue
+        </Typography>
 
-      {/* Close */}
-      <IconButton
-        size='sm'
-        variant={ephemeral.done ? 'solid' : 'outlined'}
-        onClick={handleDelete}
-      >
-        <CloseRoundedIcon />
-      </IconButton>
+        {/* Show State */}
+        {!ephemeral.minimized && (
+          <IconButton
+            size='sm'
+            variant={ephemeral.showStatePane ? 'solid' : 'outlined'}
+            onClick={handleToggleShowState}
+          >
+            {ephemeral.showStatePane ? <VerticalSplitIcon /> : <VerticalSplitOutlinedIcon />}
+          </IconButton>
+        )}
+
+        {/* Minimize/Expand Button */}
+        <IconButton
+          size='sm'
+          variant={'outlined'}
+          onClick={handleToggleMinimized}
+        >
+          {ephemeral.minimized ? <MaximizeIcon /> : <MinimizeIcon />}
+        </IconButton>
+
+        {/* Close */}
+        <IconButton
+          size='sm'
+          variant={ephemeral.done ? 'solid' : 'outlined'}
+          onClick={handleDelete}
+        >
+          <CloseRoundedIcon />
+        </IconButton>
+
+      </Box>
+
+      {/* Content */}
+      {!ephemeral.minimized && <Box sx={{
+        py: 1,
+        px: { xs: 1, md: 2 },
+      }}>
+
+        {/* Content Grid */}
+        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+
+          {/* Left pane (log) */}
+          <Grid xs={12} md={showStatePane ? 6 : 12}>
+            {/* New renderer, with */}
+            <Box sx={leftPaneSx}>
+              <ScaledTextBlockRenderer
+                text={ephemeral.text}
+                contentScaling={props.contentScaling}
+                textRenderVariant='markdown'
+              />
+            </Box>
+          </Grid>
+
+          {/* Right pane (state) */}
+          {showStatePane && (
+            <Grid xs={12} md={6} sx={rightPaneSx}>
+              <StateRenderer
+                state={ephemeral.state}
+                contentScaling={props.contentScaling}
+              />
+            </Grid>
+          )}
+
+        </Grid>
+      </Box>}
 
     </Box>
-
-  </Box>;
+  );
 }
 
 
