@@ -79,6 +79,7 @@ const chatBeamWrapperSx: SxProps = {
 
 const composerOpenSx: SxProps = {
   zIndex: 21, // just to allocate a surface, and potentially have a shadow
+  minWidth: { md: 480 }, // don't get compresses too much on desktop
   backgroundColor: themeBgAppChatComposer,
   borderTop: `1px solid`,
   borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
