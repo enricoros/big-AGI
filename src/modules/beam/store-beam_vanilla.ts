@@ -1,3 +1,4 @@
+import type { StoreApi } from 'zustand';
 import { createStore as createVanillaStore, StateCreator } from 'zustand/vanilla';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -16,7 +17,7 @@ import { createScatterSlice, reInitScatterStateSlice, ScatterStoreSlice } from '
 
 export type BeamStore = RootStoreSlice & GatherStoreSlice & ScatterStoreSlice;
 
-export const createBeamVanillaStore = () => createVanillaStore<BeamStore>()((...a) => ({
+export const createBeamVanillaStore = (): StoreApi<BeamStore> => createVanillaStore<BeamStore>()((...a) => ({
 
   ...createRootSlice(...a),
   ...createScatterSlice(...a),
