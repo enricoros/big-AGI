@@ -1,8 +1,10 @@
+import type { StoreApi } from 'zustand';
+
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { SystemPurposes } from '../../data';
 
-import { createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
+import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -14,8 +16,12 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI } from '../../apps/chat/store-app-chat';
 
-import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat_ephemerals_slice';
-import { createPerChatVanillaStore } from './store-perchat_vanilla';
+import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat-ephemerals_slice';
+import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_vanilla';
+
+
+// optimization: cache the actions
+const _chatStoreActions = useChatStore.getState() as ChatActions;
 
 
 /**
@@ -25,15 +31,13 @@ import { createPerChatVanillaStore } from './store-perchat_vanilla';
  *  - Controller classes will call directly methods in this class.
  */
 export class ConversationHandler {
-  private readonly chatActions: ChatActions;
-  private readonly conversationId: DConversationId;
 
-  private readonly beamStore = createBeamVanillaStore();
-  private readonly overlayStore = createPerChatVanillaStore();
+  private readonly beamStore: StoreApi<BeamStore>;
+  private readonly overlayStore: StoreApi<PerChatOverlayStore>;
 
-  constructor(conversationId: DConversationId) {
-    this.chatActions = useChatStore.getState();
-    this.conversationId = conversationId;
+  constructor(private readonly conversationId: DConversationId) {
+    this.beamStore = createBeamVanillaStore();
+    this.overlayStore = createPerChatVanillaStore();
   }
 
 
@@ -107,11 +111,11 @@ export class ConversationHandler {
   }
 
   setAbortController(abortController: AbortController | null, debugScope: string): void {
-    this.chatActions.setAbortController(this.conversationId, abortController, debugScope);
+    _chatStoreActions.setAbortController(this.conversationId, abortController, debugScope);
   }
 
   clearAbortController(debugScope: string): void {
-    this.chatActions.setAbortController(this.conversationId, null, debugScope);
+    _chatStoreActions.setAbortController(this.conversationId, null, debugScope);
   }
 
 
@@ -136,33 +140,33 @@ export class ConversationHandler {
   }
 
   messageAppend(message: DMessage) {
-    this.chatActions.appendMessage(this.conversationId, message);
+    _chatStoreActions.appendMessage(this.conversationId, message);
   }
 
   messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), messageComplete: boolean, touch: boolean) {
-    this.chatActions.editMessage(this.conversationId, messageId, update, messageComplete, touch);
+    _chatStoreActions.editMessage(this.conversationId, messageId, update, messageComplete, touch);
   }
 
   messagesDelete(messageIds: DMessageId[]): void {
     for (const messageId of messageIds)
-      this.chatActions.deleteMessage(this.conversationId, messageId);
+      _chatStoreActions.deleteMessage(this.conversationId, messageId);
     void gcChatImageAssets(); // fire/forget
   }
 
   messageFragmentAppend(messageId: string, fragment: DMessageFragment, complete: boolean, touch: boolean) {
-    this.chatActions.appendMessageFragment(this.conversationId, messageId, fragment, complete, touch);
+    _chatStoreActions.appendMessageFragment(this.conversationId, messageId, fragment, complete, touch);
   }
 
   messageFragmentDelete(messageId: string, fragmentId: string, complete: boolean, touch: boolean) {
-    this.chatActions.deleteMessageFragment(this.conversationId, messageId, fragmentId, complete, touch);
+    _chatStoreActions.deleteMessageFragment(this.conversationId, messageId, fragmentId, complete, touch);
   }
 
   messageFragmentReplace(messageId: string, fragmentId: string, newFragment: DMessageFragment, messageComplete: boolean) {
-    this.chatActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
+    _chatStoreActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
   }
 
   messageHasUserFlag(messageId: DMessageId, userFlag: DMessageUserFlag): boolean {
-    const message = this.chatActions.historyView(this.conversationId)?.find(m => m.id === messageId);
+    const message = _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
     if (!message) return false;
     return messageHasUserFlag(message, userFlag);
   }
@@ -184,7 +188,7 @@ export class ConversationHandler {
   }
 
   historyReplace(messages: DMessage[]): void {
-    this.chatActions.historyReplace(this.conversationId, messages);
+    _chatStoreActions.historyReplace(this.conversationId, messages);
 
     void gcChatImageAssets(); // fire/forget
 
@@ -194,11 +198,11 @@ export class ConversationHandler {
   }
 
   historyTruncateTo(messageId: DMessageId, offset: number = 0): void {
-    this.chatActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
+    _chatStoreActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
   }
 
   historyViewHead(scope: string): Readonly<DMessage[]> {
-    const messages = this.chatActions.historyView(this.conversationId);
+    const messages = _chatStoreActions.historyView(this.conversationId);
     if (messages === undefined)
       throw new Error(`allMessages: Conversation not found, ${scope}`);
     return messages;

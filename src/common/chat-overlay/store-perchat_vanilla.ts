@@ -2,8 +2,9 @@ import { StoreApi, useStore } from 'zustand';
 import { createStore as createVanillaStore } from 'zustand/vanilla';
 
 import { AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
-import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-perchat_composer_slice';
-import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './store-perchat_ephemerals_slice';
+import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-perchat-composer_slice';
+import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './store-perchat-ephemerals_slice';
+import { createVariformOverlayStoreSlice, VariformOverlayStore } from './store-perchat-variform_slice';
 
 
 /* Per-chat overlay store, combining all the slices.
@@ -12,7 +13,7 @@ import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './sto
  * This is for now, but if performance is an issue, we can split it back into independent
  * vanilla stores, and just instantiate many of them per each ConversationHandler.
  */
-type PerChatOverlayStore = AttachmentsDraftsStore & ComposerOverlayStore & EphemeralsOverlayStore;
+export type PerChatOverlayStore = AttachmentsDraftsStore & ComposerOverlayStore & EphemeralsOverlayStore & VariformOverlayStore;
 
 /* Note: at this time there is another overlay stores, beam (vanilla).
  * - EphemeralsStore was based on EventTarget and subscription/unsubscription to it (inside useEffect),
@@ -20,9 +21,14 @@ type PerChatOverlayStore = AttachmentsDraftsStore & ComposerOverlayStore & Ephem
  */
 export const createPerChatVanillaStore = (): StoreApi<PerChatOverlayStore> => createVanillaStore<PerChatOverlayStore>()((...a) => ({
 
+  // Attachments: attachment drafts
   ...createAttachmentDraftsStoreSlice(...a),
+  // Composer: in-reference-to
   ...createComposerOverlayStoreSlice(...a),
+  // Ephemerals: ephemeral messages (ReAct sidebars)
   ...createEphemeralsOverlayStoreSlice(...a),
+  // VariForm: form values
+  ...createVariformOverlayStoreSlice(...a),
 
 }));
 
