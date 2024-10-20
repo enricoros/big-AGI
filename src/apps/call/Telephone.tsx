@@ -21,6 +21,7 @@ import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVo
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
+import { OptimaPanelGroup } from '~/common/layout/optima/panel/OptimaPanelGroup';
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
@@ -55,7 +56,7 @@ function CallMenuItems(props: {
 
   const handleChangeVoiceToggle = () => props.setOverride(!props.override);
 
-  return <>
+  return <OptimaPanelGroup title='Call'>
 
     <MenuItem onClick={handlePushToTalkToggle}>
       <ListItemDecorator>{props.pushToTalk ? <MicNoneIcon /> : <MicIcon />}</ListItemDecorator>
@@ -85,7 +86,7 @@ function CallMenuItems(props: {
       Voice Calls Feedback
     </MenuItem>
 
-  </>;
+  </OptimaPanelGroup>;
 }
 
 

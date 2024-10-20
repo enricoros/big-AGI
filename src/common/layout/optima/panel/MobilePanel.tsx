@@ -28,7 +28,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
   // external state
   const isPanelOpen = useOptimaPanelOpen();
 
-  // NOTE on `disableEnforceFocus`: see MobileDrawer
+  // NOTE on `disableEnforceFocus` (Joy UI): see MobileDrawer
   return (
     <Drawer
       id='mobile-panel'

@@ -5,6 +5,7 @@ import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, List
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
+import { OptimaPanelGroup } from '~/common/layout/optima/panel/OptimaPanelGroup';
 import { animationShadowRingLimey } from '~/common/util/animUtils';
 import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -223,7 +224,12 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
   // pluggable UI
 
-  const menuItems = React.useMemo(() => <>
+  const menuItems = React.useMemo(() => <OptimaPanelGroup title='Contacts Settings'>
+
+    <MenuItem onClick={toggleGrayUI}>
+      Grayed UI
+      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
+    </MenuItem>
 
     <MenuItem onClick={toggleShowConversations}>
       Conversations
@@ -231,16 +237,11 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
     </MenuItem>
 
     <MenuItem onClick={toggleShowSupport}>
-      Support
+      Show Support
       <Switch checked={showSupport} sx={{ ml: 'auto' }} />
     </MenuItem>
 
-    <MenuItem onClick={toggleGrayUI}>
-      Grayed UI
-      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-  </>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
+  </OptimaPanelGroup>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
 
   useSetOptimaAppMenu(menuItems, 'CallUI-Contacts');
 

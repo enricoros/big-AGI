@@ -24,7 +24,7 @@ const DesktopPanelFixRoot = styled(Box)({
 });
 
 const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
-  // layouting
+  // layout
   width: '100%',
   height: '100dvh',
 
@@ -86,11 +86,11 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
   // }, [isPanelOpen]);
 
   // Desktop-only?: close the drawer if the current app doesn't use it
-  const currentAppUsesPanel = !!props.currentApp?.appMenuToPanel;
+  const appPanelAsMenu = !!props.currentApp?.panelAsMenu;
   React.useEffect(() => {
-    if (!currentAppUsesPanel)
+    if (appPanelAsMenu)
       optimaClosePanel();
-  }, [currentAppUsesPanel]);
+  }, [appPanelAsMenu]);
 
   return (
     <DesktopPanelFixRoot

@@ -174,7 +174,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     >
 
       <InvertedBarCornerItem>
-        <Tooltip title={isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer'}>
+        <Tooltip disableInteractive title={isDrawerOpen ? 'Close Drawer' /* for Aria reasons */ : 'Open Drawer'}>
           <DesktopNavIcon
             disabled={!logoButtonTogglesPane}
             onPointerDown={logoButtonTogglesPane ? optimaToggleDrawer : undefined}

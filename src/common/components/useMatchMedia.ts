@@ -12,8 +12,8 @@ export function useIsMobile(): boolean {
 }
 
 export function useIsTallScreen(): boolean {
-  // Adjust the aspect ratio value as needed (e.g., 10/9 for a slightly taller than square ratio)
-  return useMatchMedia('(max-aspect-ratio: 10/9)', false);
+  // Adjust the aspect ratio value as needed (e.g., 1 or 10/9 for a slightly taller than square ratio)
+  return useMatchMedia('(max-aspect-ratio: 1)', false);
 }
 
 
