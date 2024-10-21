@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, IconButton, SvgIconProps, Typography } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -40,11 +41,31 @@ import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
   textAlign: 'center',
 };*/
 
+const rayControlsSx: SxProps = {
+  // layout
+  display: 'flex', alignItems: 'center', gap: 1,
+};
+
+const rayControlsMobileSx: SxProps = {
+  ...rayControlsSx,
+
+  // anchor top
+  position: 'sticky', top: 0, bottom: 64,
+
+  // looks (absorb parent padding, and overwrite with color and zIndex to stay on top)
+  zIndex: 1,
+  backgroundColor: 'inherit',
+  mx: 'calc(-1 * var(--Card-padding))',
+  px: 'var(--Card-padding)',
+  my: -1,
+  py: 1,
+};
 
 const RayControlsMemo = React.memo(RayControls);
 
 function RayControls(props: {
   isEmpty: boolean,
+  isMobile: boolean,
   isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
@@ -56,7 +77,7 @@ function RayControls(props: {
   // isLlmLinked: boolean,
   // onLink: () => void,
 }) {
-  return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+  return <Box sx={props.isMobile ? rayControlsMobileSx : rayControlsSx}>
 
     {/* Drag Handle */}
     {SCATTER_RAY_SHOW_DRAG_HANDLE && (
@@ -67,7 +88,7 @@ function RayControls(props: {
 
     {/* Letter / LLM Icon (default) */}
     <TooltipOutlined asLargePane enableInteractive title={props.rayAvatarTooltip} placement='top-start'>
-      <Box sx={{ display: 'flex'}}>
+      <Box sx={{ display: 'flex' }}>
         {props.rayLetter ? (
           <Typography level='title-sm' color={SCATTER_COLOR !== 'neutral' ? SCATTER_COLOR : undefined}>
             {props.rayLetter}
@@ -195,6 +216,7 @@ export function BeamRay(props: {
       {/* Controls Row */}
       <RayControlsMemo
         isEmpty={!isSelectable}
+        isMobile={props.isMobile}
         isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
