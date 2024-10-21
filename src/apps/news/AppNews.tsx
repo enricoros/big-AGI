@@ -169,10 +169,23 @@ export function AppNews() {
                   )}
 
                   {idx === 0 && (
-                    <Sheet variant='soft' invertedColors sx={{ mt: 1, fontSize: 'xs', color: 'text.tertiary', p: 1, borderRadius: 'sm' }}>
-                      PL: {Release.App.pl} · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
-                      Frontend: {_frontendBuild.gitSha} - deployed {_frontendBuild.timestamp ? <TimeAgo date={_frontendBuild.timestamp} /> : 'unknown'}, and
-                      backend {backendBuild?.gitSha}, {backendBuild?.timestamp === _frontendBuild.timestamp ? 'same time' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown'}.
+                    <Sheet variant='soft' invertedColors sx={{
+                      fontSize: 'xs',
+                      // fontFamily: 'code',
+                      color: 'text.secondary',
+                      // border: '1px solid',
+                      // borderColor: 'divider',
+                      borderRadius: 'sm',
+                      boxShadow: 'inset 1px 1px 4px -2px rgba(0,0,0,0.1)',
+                      p: 2,
+                      mb: -1,
+                      mx: -1,
+                    }}>
+                      PL: <strong>{Release.App.pl}</strong> · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
+                      Frontend: {_frontendBuild.gitSha} - deployed {_frontendBuild.timestamp ? <strong><TimeAgo date={_frontendBuild.timestamp} /></strong> : 'unknown'}, and
+                      backend {backendBuild?.gitSha}{backendBuild?.timestamp === _frontendBuild.timestamp ? '.' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown.'}<br />
+                      Ships with -modal/-model: {Object.entries(Release.TechLevels).map(([name, version], idx, arr) => <><strong>{name}</strong> v{version}{idx < arr.length - 1 ? ', ' : ''}</>)}.<br />
+                      Ships with intelligent functions: {Release.AiFunctions.map((name, idx, arr) => <><i>{name}</i>{idx < arr.length - 1 ? ', ' : ''}</>)}.
                     </Sheet>
                   )}
 
