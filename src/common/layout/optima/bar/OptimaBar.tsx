@@ -16,6 +16,7 @@ import { ROUTE_INDEX } from '~/common/app.routes';
 import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
+import { OPTIMA_PANEL_GROUPS_SPACING } from '../panel/OptimaPanelGroup';
 import { OptimaPanelIn } from '../portals/OptimaPortalsIn';
 import { OptimaPreferencesMenuItem } from '../panel/OptimaPreferencesMenuItem';
 import { optimaCloseAppMenu, optimaClosePanel, optimaOpenAppMenu, optimaOpenDrawer, optimaOpenPanel, optimaTogglePanel, useOptimaAppMenu, useOptimaAppMenuOpen, useOptimaPanelOpen } from '../useOptima';
@@ -76,7 +77,7 @@ const panelMenuListSx: SxProps = {
   pt: 0, // disableTopGutter or similar
   // gap: 'var(--ListDivider-gap)',
   // overflow: 'hidden',
-  gap: 3,
+  gap: OPTIMA_PANEL_GROUPS_SPACING,
 };
 
 function RenderAsPanel(props: {
