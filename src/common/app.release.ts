@@ -31,6 +31,20 @@ export const Release = {
     NewsVersion: 192,
   },
 
+  // Frontend: pretty features
+  TechLevels: {
+    AIX: '1.1', Apply: '0.8', Beam: '2.0', LFS: '0.5', /*Precog: '0.1',*/ React: '1.5',
+  },
+  AiFunctions: [
+    // from `ContextChatGenerate_schema`
+    'auto-chart', 'auto-diagram', 'auto-ui',
+    'chat-call', 'chat-compress', 'chat-persona', 'chat-summary', 'chat-title',
+    'create-attach-prompts', 'create-image-prompt', 'create-persona',
+    'diff-whole',
+    'fixup',
+    'reason-beam', 'reason-merge', 'reason-react',
+  ],
+
   /**
    * We force explicit declaration of the caller.
    */
