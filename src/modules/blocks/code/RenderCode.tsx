@@ -17,7 +17,7 @@ import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import { BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx, StyledOverlayButton } from '../OverlayButton';
+import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx, StyledOverlayButton } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
 import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
@@ -81,7 +81,7 @@ const renderCodecontainerSx: SxProps = {
   position: 'relative',
 
   // style
-  '--IconButton-radius': BUTTON_RADIUS,
+  '--IconButton-radius': OVERLAY_BUTTON_RADIUS,
 
   // fade in children buttons
   [`&:hover > .${overlayButtonsClassName}`]: overlayButtonsActiveSx,
