@@ -7,6 +7,10 @@ import { overlayButtonsActiveSx } from '~/modules/blocks/OverlayButton';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
 
+// configuration
+export const OPTIMA_PANEL_GROUPS_SPACING = 2.5;
+
+
 const gutterSx: SxProps = {
   px: 'var(--ListItem-paddingX)',
   py: 'var(--ListItem-paddingY)',
@@ -48,7 +52,7 @@ const headerSx: SxProps = {
     transition: 'background-color 0.2s',
     '&:hover': {
       backgroundColor: 'background.level2',
-    }
+    },
   },
 };
 
@@ -81,11 +85,12 @@ export function OptimaPanelGroup(props: {
   endDecorator?: React.ReactNode;
   children?: React.ReactNode;
   persistentCollapsibleId?: string;
+  startExpanded?: boolean;
 }) {
 
   // state
   // TODO: persist by id
-  const [_expanded, setExpanded] = React.useState(false);
+  const [_expanded, setExpanded] = React.useState(props.startExpanded === true);
 
   // derived state
   const isCollapsible = !!props.persistentCollapsibleId;
@@ -99,7 +104,7 @@ export function OptimaPanelGroup(props: {
 
   const endDecorator = React.useMemo(() => {
     if (isCollapsible)
-      return <Checkbox size='md' checked={isExpanded} />;
+      return <Checkbox size='sm' checked={isExpanded} />;
     return props.endDecorator;
   }, [isCollapsible, isExpanded, props.endDecorator]);
 

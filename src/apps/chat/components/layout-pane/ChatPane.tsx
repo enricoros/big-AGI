@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItemDecorator, MenuItem, Switch, Tooltip } from '@mui/joy';
+import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 
@@ -17,8 +18,9 @@ import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHo
 import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconSplitHorizontalRemove';
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { OptimaPanelGroup } from '~/common/layout/optima/panel/OptimaPanelGroup';
+import { OptimaPanelGroup, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroup';
 import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
@@ -26,7 +28,18 @@ import { useChatShowSystemMessages } from '../../store-app-chat';
 import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
 
 
-export function ChatAppMenuItems(props: {
+function VariformPaneFrame() {
+  return (
+    <OptimaPanelGroupGutter>
+      <Typography level='body-sm'>
+        To add variables within messages, please use the <Box component='span' sx={{ fontWeight: 600 }}>{'{{'}variable_name{'}}'}</Box> syntax.
+      </Typography>
+    </OptimaPanelGroupGutter>
+  );
+}
+
+
+export function ChatPane(props: {
   conversationId: DConversationId | null,
   disableItems: boolean,
   hasConversations: boolean,
@@ -37,13 +50,23 @@ export function ChatAppMenuItems(props: {
   onConversationFlatten: (conversationId: DConversationId) => void,
   // onConversationNew: (forceNoRecycle: boolean) => void,
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
-}) {
+}): React.ReactNode {
 
   // external state
   const { canAddPane, isMultiPane, duplicateFocusedPane, removeOtherPanes } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
 
+
+  // handlers
+
+  const closeMenu = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    optimaCloseAppMenu();
+  }, []);
+
+
+  // Window
 
   const handleIncreaseMultiPane = React.useCallback((event?: React.MouseEvent) => {
     event?.stopPropagation();
@@ -64,10 +87,7 @@ export function ChatAppMenuItems(props: {
   }, [handleIncreaseMultiPane, isMultiPane, removeOtherPanes]);
 
 
-  const closeMenu = React.useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    optimaCloseAppMenu();
-  }, []);
+  // Actions
 
   const handleConversationRestart = (event: React.MouseEvent<HTMLDivElement>) => {
     closeMenu(event);
@@ -134,7 +154,7 @@ export function ChatAppMenuItems(props: {
 
   return <>
 
-    {/* Window: Split / Unsplit */}
+    {/* Window group */}
     <OptimaPanelGroup title='Window'>
 
       <MenuItem onClick={handleToggleMultiPane}>
@@ -165,9 +185,8 @@ export function ChatAppMenuItems(props: {
 
     </OptimaPanelGroup>
 
-    {/* Chat Actions */}
+    {/* Chat Actions group */}
     <OptimaPanelGroup title='Actions'>
-
 
       <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
         <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
@@ -207,7 +226,6 @@ export function ChatAppMenuItems(props: {
         <Switch size='md' checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
       </MenuItem>
     </OptimaPanelGroup>
-
 
     {/* [DEV] Development */}
     {labsDevMode && (
