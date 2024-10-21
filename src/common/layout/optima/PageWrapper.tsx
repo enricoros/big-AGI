@@ -19,7 +19,7 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
 
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
-  const isPanelOpen = useOptimaPanelOpen();
+  const { panelShownAsPanel } = useOptimaPanelOpen(props.isMobile, props.currentApp);
   const amplitude = useUIPreferencesStore(state =>
     (isPwa() || props.isMobile || props.currentApp?.fullWidth) ? 'full' : state.centerMode,
   );
@@ -51,7 +51,7 @@ export function PageWrapper(props: { component: React.ElementType, currentApp?: 
         marginLeft: !isDrawerOpen
           ? 'calc(-1 * var(--AGI-Desktop-Drawer-width))'
           : 0,
-        marginRight: !isPanelOpen
+        marginRight: !panelShownAsPanel
           ? 'calc(-1 * var(--AGI-Desktop-Panel-width))'
           : 0,
         transition: 'margin-left 0.42s cubic-bezier(.17,.84,.44,1), margin-right 0.42s cubic-bezier(.17,.84,.44,1)',

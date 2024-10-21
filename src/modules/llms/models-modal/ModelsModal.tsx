@@ -5,7 +5,7 @@ import { Box, Button, Divider } from '@mui/joy';
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaOpenModels, useOptimaModals } from '~/common/layout/optima/useOptima';
 import { runWhenIdle } from '~/common/util/pwaUtils';
 import { useHasLLMs, useModelsServices } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -192,7 +192,7 @@ function ModelsConfiguratorModal(props: {
 export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
-  const { showModels, showModelOptions } = useOptimaModelsModalsState();
+  const { showModels, showModelOptions } = useOptimaModals();
   const { modelsServices, confServiceId, setConfServiceId } = useModelsServices();
 
 

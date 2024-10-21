@@ -14,20 +14,15 @@ export function AppPersonas() {
   // state
   const [selectedSimplePersonaId, setSelectedSimplePersonaId] = React.useState<string | null>(null);
 
+  return <>
 
-  // pluggable UI
-
-  const drawerContent = React.useMemo(() => {
-    return (
+    {/* -> Drawer */}
+    <OptimaDrawerIn>
       <CreatorDrawer
         selectedSimplePersonaId={selectedSimplePersonaId}
         setSelectedSimplePersonaId={setSelectedSimplePersonaId}
       />
-    );
-  }, [selectedSimplePersonaId]);
-
-  return <>
-    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
+    </OptimaDrawerIn>
 
     <Box sx={{
       flexGrow: 1,

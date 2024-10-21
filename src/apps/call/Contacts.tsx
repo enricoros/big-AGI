@@ -5,11 +5,11 @@ import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, List
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
-import { OptimaPanelGroup } from '~/common/layout/optima/panel/OptimaPanelGroup';
+import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
+import { OptimaPanelIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { animationShadowRingLimey } from '~/common/util/animUtils';
 import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 
 import type { AppCallIntent } from './AppCall';
 import { MockPersona, useMockPersonas } from './state/useMockPersonas';
@@ -210,7 +210,7 @@ function useConversationsByPersona() {
 }
 
 
-export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void }) {
+function ContactsMenuItems() {
 
   // external state
   const {
@@ -218,35 +218,42 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
     showConversations, toggleShowConversations,
     showSupport, toggleShowSupport,
   } = useAppCallStore();
+
+  return (
+    <OptimaPanelGroupedList title='Contacts Settings'>
+
+      <MenuItem onClick={toggleGrayUI}>
+        Grayed UI
+        <Switch checked={grayUI} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+      <MenuItem onClick={toggleShowConversations}>
+        Conversations
+        <Switch checked={showConversations} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+      <MenuItem onClick={toggleShowSupport}>
+        Show Support
+        <Switch checked={showSupport} sx={{ ml: 'auto' }} />
+      </MenuItem>
+
+    </OptimaPanelGroupedList>
+  );
+}
+
+
+export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void }) {
+
+  // external state
   const { personas } = useMockPersonas();
+  const { grayUI, showConversations, showSupport } = useAppCallStore();
   const conversationsByPersona = useConversationsByPersona();
 
 
-  // pluggable UI
-
-  const menuItems = React.useMemo(() => <OptimaPanelGroup title='Contacts Settings'>
-
-    <MenuItem onClick={toggleGrayUI}>
-      Grayed UI
-      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-    <MenuItem onClick={toggleShowConversations}>
-      Conversations
-      <Switch checked={showConversations} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-    <MenuItem onClick={toggleShowSupport}>
-      Show Support
-      <Switch checked={showSupport} sx={{ ml: 'auto' }} />
-    </MenuItem>
-
-  </OptimaPanelGroup>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
-
-  useSetOptimaAppMenu(menuItems, 'CallUI-Contacts');
-
-
   return <>
+
+    {/* -> Panel */}
+    <OptimaPanelIn><ContactsMenuItems /></OptimaPanelIn>
 
     {/* Header "Call AGI" */}
     <Box sx={{

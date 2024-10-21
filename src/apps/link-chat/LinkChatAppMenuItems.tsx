@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import { OptimaPanelGroup } from '~/common/layout/optima/panel/OptimaPanelGroup';
+import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 
 import { SettingUIComplexity } from '../settings-modal/settings-ui/SettingUIComplexity';
 import { SettingUIContentScaling } from '../settings-modal/settings-ui/SettingUIContentScaling';
@@ -31,7 +31,7 @@ export function LinkChatAppMenuItems(props: {
   }, [activeLinkId, onDeleteLink]);
 
 
-  return <OptimaPanelGroup title='Conversation'>
+  return <OptimaPanelGroupedList title='Conversation'>
 
     <MenuItem onClick={() => setShowSystemMessages(!showSystemMessages)} sx={{ justifyContent: 'space-between' }}>
       <Typography>
@@ -57,5 +57,5 @@ export function LinkChatAppMenuItems(props: {
       </ListItemDecorator>
     </MenuItem>
 
-  </OptimaPanelGroup>;
+  </OptimaPanelGroupedList>;
 }

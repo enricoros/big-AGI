@@ -13,14 +13,13 @@ import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { LogoProgress } from '~/common/components/LogoProgress';
-import { OptimaDrawerIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
+import { OptimaDrawerIn, OptimaPanelIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { apiAsyncNode } from '~/common/util/trpc.client';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { navigateToChatLinkList } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
-import { useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 
 import { LinkChatAppMenuItems } from './LinkChatAppMenuItems';
 import { LinkChatDrawer } from './LinkChatDrawer';
@@ -184,29 +183,29 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
   }, [deleteConfirmId, deleteConfirmKey, handleDelete]);
 
 
-  // pluggable UI
-
-  const drawerContent = React.useMemo(() => <LinkChatDrawer
-    activeLinkId={linkId}
-    sharedChatLinkItems={sharedChatLinkItems}
-    onDeleteLink={handleConfirmDeletion}
-  />, [handleConfirmDeletion, linkId, sharedChatLinkItems]);
-
-  const appMenuItems = React.useMemo(() => <LinkChatAppMenuItems
-    activeLinkId={linkId}
-    onDeleteLink={handleConfirmDeletion}
-  />, [handleConfirmDeletion, linkId]);
-
-  useSetOptimaAppMenu(appMenuItems, 'AppChatLink');
-
-
   return <>
 
     <Head>
       <title>{capitalizeFirstLetter(pageTitle)} · {Brand.Title.Base} 🚀</title>
     </Head>
 
-    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
+    {/* -> Drawer */}
+    <OptimaDrawerIn>
+      <LinkChatDrawer
+        activeLinkId={linkId}
+        sharedChatLinkItems={sharedChatLinkItems}
+        onDeleteLink={handleConfirmDeletion}
+      />
+    </OptimaDrawerIn>
+
+    {/* -> Panel */}
+    <OptimaPanelIn>
+      <LinkChatAppMenuItems
+        activeLinkId={linkId}
+        onDeleteLink={handleConfirmDeletion}
+      />
+    </OptimaPanelIn>
+
 
     {isListPage
       ? <ListPlaceholder hasLinks={hasLinks} />

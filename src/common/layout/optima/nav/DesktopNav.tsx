@@ -14,7 +14,7 @@ import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { BringTheLove } from './BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
-import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModelsModalsState } from '../useOptima';
+import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModals } from '../useOptima';
 
 
 const desktopNavBarSx: SxProps = {
@@ -36,7 +36,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
 
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
-  const { showModels, showPreferences } = useOptimaModelsModalsState();
+  const { showModels, showPreferences } = useOptimaModals();
   const noLLMs = !useHasLLMs();
 
 

@@ -2,22 +2,11 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { OptimaActions, PreferencesTabId, useLayoutOptimaStore } from './store-layout-optima';
+import { NavItemApp } from '~/common/app.nav';
+import { useOptimaPortalHasInputs } from '~/common/layout/optima/portals/useOptimaPortalHasInputs';
 
 
-// configuration
-export const DEBUG_OPTIMA_PLUGGING = false;
-
-
-/// Perform UI Actions
-
-export function optimaActions(): Omit<OptimaActions,
-  | 'closeAppMenu' | 'openAppMenu' | 'openModels'
-  | 'closeDrawer' | 'openDrawer' | 'toggleDrawer'
-  | 'closePanel' | 'openPanel' | 'togglePanel'
-  | 'openPreferences'
-> {
-  return useLayoutOptimaStore.getState();
-}
+// Drawer
 
 export function optimaCloseDrawer() {
   useLayoutOptimaStore.getState().closeDrawer();
@@ -33,14 +22,12 @@ export function optimaToggleDrawer(event?: React.MouseEvent) {
   useLayoutOptimaStore.getState().toggleDrawer();
 }
 
-export function optimaCloseAppMenu() {
-  useLayoutOptimaStore.getState().closeAppMenu();
+export function useOptimaDrawerOpen() {
+  return useLayoutOptimaStore(({ drawerIsOpen }) => drawerIsOpen);
 }
 
-export function optimaOpenAppMenu(event?: React.MouseEvent) {
-  _eatMouseEvent(event);
-  useLayoutOptimaStore.getState().openAppMenu();
-}
+
+// Panel
 
 export function optimaClosePanel() {
   useLayoutOptimaStore.getState().closePanel();
@@ -56,6 +43,32 @@ export function optimaTogglePanel(event?: React.MouseEvent) {
   useLayoutOptimaStore.getState().togglePanel();
 }
 
+export function useOptimaPanelOpen(isMobile: boolean, currentApp?: NavItemApp) {
+  const panelIsOpen = useLayoutOptimaStore(state => state.panelIsOpen);
+  const panelAsPopup = !isMobile && currentApp?.panelAsMenu === true;
+  const panelHasContent = useOptimaPortalHasInputs('optima-portal-panel') || isMobile;
+
+  return {
+    panelIsOpen,
+    panelAsPopup,
+    panelHasContent,
+    panelShownAsPanel: panelIsOpen && panelHasContent && !panelAsPopup,
+    panelShownAsPopup: panelIsOpen && panelHasContent && panelAsPopup,
+  };
+}
+
+
+// Modals
+
+export function optimaActions(): Omit<OptimaActions,
+  | 'closeDrawer' | 'openDrawer' | 'toggleDrawer'
+  | 'closePanel' | 'openPanel' | 'togglePanel'
+  | 'openModels'
+  | 'openPreferences'
+> {
+  return useLayoutOptimaStore.getState();
+}
+
 export function optimaOpenModels() {
   useLayoutOptimaStore.getState().openModels();
 }
@@ -64,68 +77,22 @@ export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
   useLayoutOptimaStore.getState().openPreferences(changeTab);
 }
 
-function _eatMouseEvent(event?: (React.MouseEvent | React.TouchEvent)) {
-  if (event) {
-    if ('preventDefault' in event) event.preventDefault();
-    // if ('stopPropagation' in event) event.stopPropagation();
-  }
-}
-
-
-/// React to UI State (mainly within the Optima Layout itself)
-
-export function useOptimaDrawerOpen() {
-  return useLayoutOptimaStore(({ drawerIsOpen }) => drawerIsOpen);
-}
-
-export function useOptimaAppMenuOpen() {
-  return useLayoutOptimaStore(({ appMenuIsOpen }) => appMenuIsOpen);
-}
-
-export function useOptimaPanelOpen() {
-  return useLayoutOptimaStore(({ panelIsOpen }) => panelIsOpen);
-}
-
-export function useOptimaModalsState() {
+export function useOptimaModals() {
   return useLayoutOptimaStore(useShallow(state => ({
     showKeyboardShortcuts: state.showKeyboardShortcuts,
+    showModelOptions: state.showModelOptions,
+    showModels: state.showModels,
     showPreferences: state.showPreferences,
     preferencesTab: state.preferencesTab,
   })));
 }
 
-export function useOptimaModelsModalsState() {
-  return useLayoutOptimaStore(useShallow(state => ({
-    showModelOptions: state.showModelOptions,
-    showModels: state.showModels,
-    showPreferences: state.showPreferences,
-  })));
-}
 
+// helpers
 
-/// Pluggable UI - Note: Portals are handled differently
-
-/**
- * Reacts the App Menu component
- */
-export function useOptimaAppMenu() {
-  return useLayoutOptimaStore(state => state.menuComponent);
-}
-
-/**
- * Registers the Application Menu, to be displayed in the PageBar - used by the active UI application (auto-unregisters on cleanup)
- */
-export function useSetOptimaAppMenu(menu: React.ReactNode, debugCallerName: string) {
-  React.useEffect(() => {
-    if (DEBUG_OPTIMA_PLUGGING) console.log(' +PLUG layout', debugCallerName);
-    useLayoutOptimaStore.setState({
-      menuComponent: menu,
-    });
-    return () => {
-      if (DEBUG_OPTIMA_PLUGGING) console.log(' -UNplug layout', debugCallerName);
-      useLayoutOptimaStore.setState({
-        menuComponent: null,
-      });
-    };
-  }, [debugCallerName, menu]);
+function _eatMouseEvent(event?: (React.MouseEvent | React.TouchEvent)) {
+  if (event) {
+    if ('preventDefault' in event) event.preventDefault();
+    // if ('stopPropagation' in event) event.stopPropagation();
+  }
 }
