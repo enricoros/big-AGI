@@ -51,7 +51,8 @@ export function BringTheLove(props: { text: string, link: string, asIcon?: boole
             ...props.sx,
           }}
         >
-          {icon}
+          {props.text}
+          {/*{icon}*/}
         </Button>
       )}
     </Tooltip>

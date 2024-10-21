@@ -4,9 +4,9 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
+import { MobileNavItems } from '../nav/MobileNavItems';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
-import { MobileNavListItem } from '~/common/layout/optima/nav/MobileNavListItem';
 
 
 function MobilePanelContentPortal() {
@@ -65,7 +65,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       <MobilePanelContentPortal />
 
       {/*<ListDivider sx={{ mb: 0 }} />*/}
-      <MobileNavListItem variant='solid' currentApp={props.currentApp} />
+      <MobileNavItems currentApp={props.currentApp} />
 
     </Drawer>
   );
