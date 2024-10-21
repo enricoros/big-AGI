@@ -9,7 +9,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
@@ -203,11 +203,12 @@ export function FolderListItem(props: {
         </IconButton>
 
         {!!menuAnchorEl && (
-          <CloseableMenu
-            dense placement='top'
-            open anchorEl={menuAnchorEl} onClose={handleMenuClose}
+          <CloseablePopup
+            menu anchorEl={menuAnchorEl} onClose={handleMenuClose}
+            dense
+            minWidth={200}
+            placement='top'
             zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
-            sx={{ minWidth: 200 }}
           >
 
             <MenuItem
@@ -316,7 +317,7 @@ export function FolderListItem(props: {
               </RadioGroup>
             </MenuItem>
 
-          </CloseableMenu>
+          </CloseablePopup>
         )}
 
       </ListItemButton>

@@ -9,7 +9,7 @@ import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import SaveAsOutlinedIcon from '@mui/icons-material/SaveAsOutlined';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { reverseLookupMdTitle, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
@@ -110,11 +110,11 @@ export function EnhancedRenderCodeMenu(props: {
 
 
   return (
-    <CloseableMenu
-      open={true} dense
-      anchorEl={props.anchor} onClose={props.onClose}
+    <CloseablePopup
+      menu anchorEl={props.anchor} onClose={props.onClose}
+      dense
+      minWidth={250}
       placement='bottom-end'
-      sx={{ minWidth: 250 }}
     >
 
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -155,6 +155,6 @@ export function EnhancedRenderCodeMenu(props: {
       {/*  </MenuItem>*/}
       {/*)}*/}
 
-    </CloseableMenu>
+    </CloseablePopup>
   );
 }

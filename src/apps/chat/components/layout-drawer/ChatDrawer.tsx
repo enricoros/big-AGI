@@ -15,7 +15,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
@@ -410,12 +410,12 @@ function ChatDrawer(props: {
 
     {/* [Menu] Chat Item Folder Change */}
     {!!folderChangeRequest?.anchorEl && (
-      <CloseableMenu
+      <CloseablePopup
+        menu anchorEl={folderChangeRequest.anchorEl} onClose={handleConversationFolderCancel}
         bigIcons
-        open anchorEl={folderChangeRequest.anchorEl} onClose={handleConversationFolderCancel}
+        minWidth={200}
         placement='bottom-start'
         zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
-        sx={{ minWidth: 200 }}
       >
 
         {/* Folder Assignment Buttons */}
@@ -449,7 +449,7 @@ function ChatDrawer(props: {
           </ListItem>
         )}
 
-      </CloseableMenu>
+      </CloseablePopup>
     )}
 
   </>;

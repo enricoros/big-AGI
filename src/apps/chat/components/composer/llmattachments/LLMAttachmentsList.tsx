@@ -9,7 +9,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -205,11 +205,11 @@ export function LLMAttachmentsList(props: {
 
     {/* All Drafts Menu */}
     {!!overallMenuAnchor && (
-      <CloseableMenu
-        open
-        dense placement='top-start'
-        anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
-        sx={{ minWidth: 200 }}
+      <CloseablePopup
+        menu anchorEl={overallMenuAnchor} onClose={handleOverallMenuHide}
+        dense
+        minWidth={200}
+        placement='top-start'
       >
         {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
         <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
@@ -234,7 +234,7 @@ export function LLMAttachmentsList(props: {
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
           Remove All{llmAttachmentDrafts.length > 5 ? <span style={{ opacity: 0.5 }}> {llmAttachmentDrafts.length} attachments</span> : null}
         </MenuItem>
-      </CloseableMenu>
+      </CloseablePopup>
     )}
 
   </>;
