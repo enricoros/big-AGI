@@ -12,8 +12,7 @@ export function OptimaPreferencesMenuItem(props: { onCloseMenu: () => void }) {
 
   const { onCloseMenu } = props;
 
-  const handleShowPreferences = React.useCallback(
-  (event: React.MouseEvent) => {
+  const handleShowPreferences = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     optimaOpenPreferences();
     onCloseMenu();
@@ -22,7 +21,7 @@ export function OptimaPreferencesMenuItem(props: { onCloseMenu: () => void }) {
   return (
     <MenuItem onClick={handleShowPreferences}>
       <ListItemDecorator><SettingsIcon /></ListItemDecorator>
-      Preferences{/*<KeyStroke combo='Ctrl + ,' />*/}
+      Big-AGI Preferences{/*<KeyStroke combo='Ctrl + ,' />*/}
       <DarkModeToggleButton />
     </MenuItem>
   );

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, ListDivider, MenuList, Typography } from '@mui/joy';
+import { Box, IconButton, MenuList, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -92,16 +92,16 @@ function RenderAsPanel(props: {
     <OptimaPanelIn>
       <MenuList variant='plain' sx={panelMenuListSx}>
 
-        {/* App Menu Items */}
-        {props.appMenuItems}
-
         {/* [Mobile] Preferences */}
         {props.isMobile && (
-          <Box sx={{ mt: 'auto' }}>
-            <ListDivider />
+          <Box sx={{ mt: 2.25, mb: OPTIMA_PANEL_GROUPS_SPACING - 2.75 }}>
             <OptimaPreferencesMenuItem onCloseMenu={optimaClosePanel} />
+            {/*<ListDivider />*/}
           </Box>
         )}
+
+        {/* App Menu Items */}
+        {props.appMenuItems}
 
       </MenuList>
     </OptimaPanelIn>
