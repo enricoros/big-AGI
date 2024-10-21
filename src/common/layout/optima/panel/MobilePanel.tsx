@@ -9,7 +9,7 @@ import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 import { MobileNavListItem } from '~/common/layout/optima/nav/MobileNavListItem';
 
 
-function PanelContentPortal() {
+function MobilePanelContentPortal() {
   const panelPortalRef = useOptimaPortalOutRef('optima-portal-panel', 'MobilePanel');
   return (
     <Box
@@ -62,7 +62,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       }}
     >
 
-      <PanelContentPortal />
+      <MobilePanelContentPortal />
 
       {/*<ListDivider sx={{ mb: 0 }} />*/}
       <MobileNavListItem variant='solid' currentApp={props.currentApp} />
