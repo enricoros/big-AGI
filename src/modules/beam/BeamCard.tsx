@@ -3,7 +3,7 @@ import { Box, styled } from '@mui/joy';
 
 import { animationShadowLimey } from '~/common/util/animUtils';
 
-import { BEAM_INVERT_BACKGROUND } from './beam.config';
+import { BEAM_INVERT_BACKGROUND, BEAM_PANE_ZINDEX } from './beam.config';
 
 
 export const beamCardClasses = {
@@ -97,7 +97,7 @@ export const beamPaneSx: SxProps = {
   // style
   p: 'var(--Pad)',
   py: 'calc(3 * var(--Pad) / 4)',
-  zIndex: 1, // cast shadow on the rays/fusion
+  zIndex: BEAM_PANE_ZINDEX, // cast shadow on the rays/fusion, and be on top of the overlay pane
 
   // layout
   display: 'flex',

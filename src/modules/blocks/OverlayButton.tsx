@@ -4,7 +4,9 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { IconButton, IconButtonProps, styled, Tooltip, TooltipProps } from '@mui/joy';
 
 
-export const BUTTON_RADIUS = '4px'; // note: can't use 'sm', 'md', etc.
+// configuration
+export const OVERLAY_BUTTON_RADIUS = '4px';   // note: can't use 'sm', 'md', etc.
+export const OVERLAY_BUTTON_ZINDEX = 2;       // top of message and its chips
 
 export const overlayButtonsClassName = 'overlay-buttons';
 
@@ -13,7 +15,7 @@ export const overlayButtonsTopRightSx: SxProps = {
   position: 'absolute',
   top: 0,
   right: 0,
-  zIndex: 2, // top of message and its chips
+  zIndex: OVERLAY_BUTTON_ZINDEX, // top of message and its chips
 
   // stype
   p: 0.5,
@@ -55,7 +57,7 @@ export const overlayButtonShadowSx: SxProps = {
 
 export const overlayGroupWithShadowSx: SxProps = {
   ...overlayButtonShadowSx,
-  '--ButtonGroup-radius': BUTTON_RADIUS,
+  '--ButtonGroup-radius': OVERLAY_BUTTON_RADIUS,
 };
 
 

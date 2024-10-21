@@ -5,6 +5,8 @@ import { Alert, Box, CircularProgress } from '@mui/joy';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
+import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useUICounter } from '~/common/state/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
@@ -67,6 +69,22 @@ export function BeamView(props: {
   const handleRaySetCount = React.useCallback((n: number) => setRayCount(n), [setRayCount]);
 
   const handleRayIncreaseCount = React.useCallback(() => setRayCount(raysCount + 1), [setRayCount, raysCount]);
+
+  const handleRaysOperation = React.useCallback((operation: 'copy' | 'use') => {
+    const { rays, onSuccessCallback } = props.beamStore.getState();
+    const allFragments = rays.flatMap(ray => ray.message.fragments);
+    if (allFragments.length) {
+      switch (operation) {
+        case 'copy':
+          const combinedText = messageFragmentsReduceText(allFragments, '\n\n\n---\n\n\n');
+          copyToClipboard(combinedText, 'All Beams');
+          break;
+        case 'use':
+          onSuccessCallback?.({ fragments: allFragments });
+          break;
+      }
+    }
+  }, [props.beamStore]);
 
   const handleScatterStart = React.useCallback(() => {
     setHasAutoMerged(false);
@@ -176,8 +194,10 @@ export function BeamView(props: {
         isMobile={props.isMobile}
         rayIds={rayIds}
         showRayAdd={cardAdd}
+        showRaysOps={(isScattering || raysReady < 2) ? undefined : raysReady}
         hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
+        onRaysOperation={handleRaysOperation}
         // linkedLlmId={currentGatherLlmId}
       />
 
