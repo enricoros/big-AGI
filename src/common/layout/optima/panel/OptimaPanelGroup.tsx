@@ -104,7 +104,7 @@ export function OptimaPanelGroup(props: {
 
   const endDecorator = React.useMemo(() => {
     if (isCollapsible)
-      return <Checkbox size='sm' checked={isExpanded} />;
+      return <Checkbox size='md' color='neutral' checked={isExpanded} />;
     return props.endDecorator;
   }, [isCollapsible, isExpanded, props.endDecorator]);
 
