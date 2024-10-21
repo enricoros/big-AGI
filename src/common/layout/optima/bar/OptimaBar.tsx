@@ -9,7 +9,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { Brand } from '~/common/app.config';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { LayoutSidebarRight } from '~/common/components/icons/LayoutSidebarRight';
 import { Link } from '~/common/components/Link';
 import { ROUTE_INDEX } from '~/common/app.routes';
@@ -124,18 +124,18 @@ function RenderAsPopupDesktopOnly(props: {
     return null;
 
   return (
-    <CloseableMenu
-      open={true} anchorEl={props.menuAnchor.current} onClose={optimaCloseAppMenu}
+    <CloseablePopup
+      menu anchorEl={props.menuAnchor.current} onClose={optimaCloseAppMenu}
       dense
       maxHeightGapPx={56 + 24}
+      minWidth={280}
       placement='bottom-end'
-      sx={{ minWidth: 280 }}
     >
 
       {/* contents rendered in a desktop popup menu */}
       {props.menuContent}
 
-    </CloseableMenu>
+    </CloseablePopup>
   );
 }
 
