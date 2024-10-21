@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Option, Select, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 
@@ -17,9 +18,9 @@ import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHo
 import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconSplitHorizontalRemove';
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { OptimaPanelGroup, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroup';
-import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
+import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
@@ -56,14 +57,6 @@ export function ChatPane(props: {
   const labsDevMode = useLabsDevMode();
 
 
-  // handlers
-
-  const closeMenu = React.useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    optimaCloseAppMenu();
-  }, []);
-
-
   // Window
 
   const handleIncreaseMultiPane = React.useCallback((event?: React.MouseEvent) => {
@@ -91,22 +84,18 @@ export function ChatPane(props: {
   // Actions
 
   const handleConversationRestart = (event: React.MouseEvent<HTMLDivElement>) => {
-    closeMenu(event);
     props.conversationId && props.onConversationClear(props.conversationId);
   };
 
   const handleConversationBranch = (event: React.MouseEvent<HTMLDivElement>) => {
-    closeMenu(event);
     props.conversationId && props.onConversationBranch(props.conversationId, null, true);
   };
 
   const handleConversationFlatten = (event: React.MouseEvent<HTMLElement>) => {
-    closeMenu(event);
     props.conversationId && props.onConversationFlatten(props.conversationId);
   };
 
   const handleToggleMessageSelectionMode = (event: React.MouseEvent) => {
-    closeMenu(event);
     props.setIsMessageSelectionMode(!props.isMessageSelectionMode);
   };
 
@@ -156,20 +145,10 @@ export function ChatPane(props: {
   return <>
 
     {/* Window group */}
-    <OptimaPanelGroup title='Window'>
+    <OptimaPanelGroupedList title='Window'>
 
-      <MenuItem onClick={handleToggleMultiPane}>
-        <ListItemDecorator>{props.isVerticalSplit
-          ? (isMultiPane ? <CodiconSplitVerticalRemove /> : <CodiconSplitVertical />)
-          : (isMultiPane ? <CodiconSplitHorizontalRemove /> : <CodiconSplitHorizontal />)
-        }</ListItemDecorator>
-        {/* Unsplit / Split text*/}
-        {props.isVerticalSplit
-          ? (isMultiPane ? 'Unsplit' : 'Split Down')
-          : (isMultiPane ? 'Unsplit' : 'Split Right')
-        }
-        {/* '+' */}
-        {isMultiPane && (
+      <ListItem
+        endAction={!isMultiPane ? undefined : (
           <Tooltip title='Add Another Split'>
             <IconButton
               size='sm'
@@ -182,12 +161,22 @@ export function ChatPane(props: {
             </IconButton>
           </Tooltip>
         )}
-      </MenuItem>
+      >
+        <ListItemButton onClick={handleToggleMultiPane}>
+          <ListItemDecorator>{props.isVerticalSplit
+            ? (isMultiPane ? <CodiconSplitVerticalRemove /> : <CodiconSplitVertical />)
+            : (isMultiPane ? <CodiconSplitHorizontalRemove /> : <CodiconSplitHorizontal />)
+          }</ListItemDecorator>
+          {props.isVerticalSplit
+            ? (isMultiPane ? 'Unsplit' : 'Split Down')
+            : (isMultiPane ? 'Unsplit' : 'Split Right')}
+        </ListItemButton>
+      </ListItem>
 
-    </OptimaPanelGroup>
+    </OptimaPanelGroupedList>
 
     {/* Chat Actions group */}
-    <OptimaPanelGroup title='Actions'>
+    <OptimaPanelGroupedList title='Actions'>
 
       <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
         <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
@@ -217,25 +206,84 @@ export function ChatPane(props: {
           {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
         </Box>
       </MenuItem>
-    </OptimaPanelGroup>
+    </OptimaPanelGroupedList>
+
+    <OptimaPanelGroupedList title='Controls' persistentCollapsibleId='chat-controls'>
+
+      <ListItem sx={{ mb: 0.25 }}>
+        <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
+          <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
+          System Instruction
+          {/*<FormLabelStart title='View System Instruction' />*/}
+          <Switch size='sm' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
+          {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
+        </ListItemButton>
+      </ListItem>
+
+      <OptimaPanelGroupGutter>
+
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr',
+          columnGap: 2,
+          rowGap: 1,
+          alignItems: 'center',
+        }}>
+
+          <FormLabelStart title='Reasoning:' />
+          <Select value='off' indicator={<KeyboardArrowDownIcon />} slotProps={{
+            indicator: { sx: { opacity: 0.5 } },
+            // root: { sx: { backgroundColor: 'background.popup', '&:hover': { backgroundColor: 'background.popup' } } },
+          }}>
+            <Option value='off'>Model</Option>
+            <Option value='react'>ReAct</Option>
+            <Option value='beam'>Beam</Option>
+            <Option value='prolog'>Prolog</Option>
+            <Option value='pna'>Plan & Answer</Option>
+          </Select>
+
+          <FormLabelStart title='Memory:' />
+          <Select value='off' indicator={<KeyboardArrowDownIcon />} slotProps={{
+            indicator: { sx: { opacity: 0.5 } },
+          }}>
+            <Option value='off'>Chat Contents</Option>
+            <Option value='prag'>Project RAG</Option>
+            <Option value='wrag'>Workspace RAG</Option>
+            <Option value='mgpt'>MemGPT</Option>
+          </Select>
+
+          {/*<FormLabelStart title='Data Link:' sx={{ ml: 'auto' }} />*/}
+          {/*<Checkbox size='sm' checked={false} label='Active (not true :)' />*/}
+
+        </Box>
+      </OptimaPanelGroupGutter>
+    </OptimaPanelGroupedList>
+
 
     {/* ... how do we name this? ... */}
-    <OptimaPanelGroup title='Persona'>
-      <MenuItem onClick={handleToggleSystemMessages}>
-        <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
-        System Instruction
-        <Switch size='md' checked={showSystemMessages} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
-      </MenuItem>
-    </OptimaPanelGroup>
+    {/*<OptimaPanelGroupedList title='Tinker' persistentCollapsibleId='chat-extra'>*/}
+    {/*  <MenuItem disabled={props.disableItems} onClick={handleToggleSystemMessages}>*/}
+    {/*    <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>*/}
+    {/*    System Instruction*/}
+    {/*    <Switch size='md' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />*/}
+    {/*  </MenuItem>*/}
+    {/*</OptimaPanelGroupedList>*/}
+
+    {/* Variform group */}
+    {labsDevMode && (
+      <OptimaPanelGroupedList title='Chat Variables' persistentCollapsibleId='chat-variform'>
+        <VariformPaneFrame />
+      </OptimaPanelGroupedList>
+    )}
 
     {/* [DEV] Development */}
     {labsDevMode && (
-      <OptimaPanelGroup title='[Developers]'>
+      <OptimaPanelGroupedList title='[Developers]'>
         <MenuItem onClick={handleAixShowLastRequest}>
           <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
           AIX: Show Last Request...
         </MenuItem>
-      </OptimaPanelGroup>
+      </OptimaPanelGroupedList>
     )}
 
     {/* [DEV MODE] Show any dialog, if present */}

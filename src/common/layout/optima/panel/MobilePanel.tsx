@@ -1,32 +1,20 @@
 import * as React from 'react';
 
-import { Box, Drawer } from '@mui/joy';
+import { Box, Drawer, List } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
 import { MobileNavItems } from '../nav/MobileNavItems';
+import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
-import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
+import { MobilePreferencesListItem } from '~/common/layout/optima/panel/MobilePreferencesListItem';
+import { OPTIMA_PANEL_GROUPS_SPACING } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 
-
-function MobilePanelContentPortal() {
-  const panelPortalRef = useOptimaPortalOutRef('optima-portal-panel', 'MobilePanel');
-  return (
-    <Box
-      ref={panelPortalRef}
-      sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    />
-  );
-}
 
 export function MobilePanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const isPanelOpen = useOptimaPanelOpen();
+  const { panelShownAsPanel } = useOptimaPanelOpen(true, props.currentApp);
 
   // NOTE on `disableEnforceFocus` (Joy UI): see MobileDrawer
   return (
@@ -35,7 +23,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       component={props.component}
       disableEnforceFocus
       anchor='right'
-      open={isPanelOpen}
+      open={panelShownAsPanel}
       onClose={optimaClosePanel}
       sx={{
         '--Drawer-horizontalSize': 'clamp(var(--AGI-Panel-width), 30%, 100%)',
@@ -62,9 +50,17 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       }}
     >
 
-      <MobilePanelContentPortal />
+      {/* Preferences */}
+      <Box sx={{ py: 0.25, mb: OPTIMA_PANEL_GROUPS_SPACING }}>
+        <List variant='plain'>
+          <MobilePreferencesListItem />
+        </List>
+      </Box>
 
-      {/*<ListDivider sx={{ mb: 0 }} />*/}
+      {/* [Mobile] Panel within the Drawer -- includes the Preferences Item */}
+      <PanelContentPortal />
+
+      {/* [Mobile] Nav Items */}
       <MobileNavItems currentApp={props.currentApp} />
 
     </Drawer>

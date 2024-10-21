@@ -288,7 +288,7 @@ export function ChatMessage(props: {
 
   const handleOpsMenuToggle = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    setOpsMenuAnchor(anchor => anchor ? null : event.currentTarget);
+    !!event.currentTarget && setOpsMenuAnchor(event.currentTarget);
   }, []);
 
   const handleCloseOpsMenu = React.useCallback(() => setOpsMenuAnchor(null), []);

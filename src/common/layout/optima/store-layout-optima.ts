@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { create } from 'zustand';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -15,15 +14,11 @@ interface OptimaState {
   // modes
   // isFocusedMode: boolean; // when active, the Mobile App menu is not displayed
 
-  // pluggable UI components
-  menuComponent: React.ReactNode;
-
   // panes
-  appMenuIsOpen: boolean;
   drawerIsOpen: boolean;
   panelIsOpen: boolean;
 
-  // modals that can overlay anything
+  // modals
   showKeyboardShortcuts: boolean;
   showModelOptions: DLLMId | false;
   showModels: boolean;
@@ -50,11 +45,7 @@ const initialState: OptimaState = {
   // modes
   // isFocusedMode: false,
 
-  // pluggable UI components
-  menuComponent: null,
-
   // panes
-  appMenuIsOpen: false,
   drawerIsOpen: initialDrawerOpen(),
   panelIsOpen: false,
 
@@ -73,10 +64,6 @@ const initialState: OptimaState = {
 export interface OptimaActions {
 
   // setIsFocusedMode: (isFocusedMode: boolean) => void;
-
-  closeAppMenu: () => void;
-  openAppMenu: () => void;
-  toggleAppMenu: () => void;
 
   closeDrawer: () => void;
   openDrawer: () => void;
@@ -106,10 +93,6 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
   ...initialState,
 
   // setIsFocusedMode: (isFocusedMode) => _set({ isFocusedMode }),
-
-  closeAppMenu: () => _set({ appMenuIsOpen: false }),
-  openAppMenu: () => _set({ appMenuIsOpen: true }),
-  toggleAppMenu: () => _set((state) => ({ appMenuIsOpen: !state.appMenuIsOpen })),
 
   closeDrawer: () => {
     // close the drawer, but only if it's been open for 100ms
