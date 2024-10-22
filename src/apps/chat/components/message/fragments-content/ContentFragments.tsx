@@ -60,8 +60,8 @@ export function ContentFragments(props: {
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
-  onFragmentBlank: () => void
-  onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
+  onFragmentAddBlank?: () => void,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
   onMessageDelete?: () => void,
 
@@ -78,8 +78,8 @@ export function ContentFragments(props: {
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
   if (isEditingText && isEmpty)
-    return (
-      <Button aria-label='message body empty' variant='plain' color='neutral' onClick={props.onFragmentBlank} sx={{ justifyContent: 'flex-start' }}>
+    return !props.onFragmentAddBlank ? null : (
+      <Button aria-label='message body empty' variant='plain' color='neutral' onClick={props.onFragmentAddBlank} sx={{ justifyContent: 'flex-start' }}>
         add text ...
       </Button>
     );
@@ -179,7 +179,7 @@ export function ContentFragments(props: {
               imageRefPart={part}
               fragmentId={fId}
               contentScaling={props.contentScaling}
-              onFragmentDelete={/*isMonoFragment ? undefined :*/ props.onFragmentDelete}
+              onFragmentDelete={props.onFragmentDelete}
               onFragmentReplace={props.onFragmentReplace}
             />
           );

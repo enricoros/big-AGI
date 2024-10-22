@@ -23,8 +23,8 @@ export function DocumentAttachmentFragments(props: {
   zenMode: boolean,
   allowSelection: boolean,
   disableMarkdownText: boolean,
-  onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
-  onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
 }) {
 
   // state
@@ -138,7 +138,7 @@ export function DocumentAttachmentFragments(props: {
           zenMode={props.zenMode}
           disableMarkdownText={props.disableMarkdownText}
           onFragmentDelete={props.onFragmentDelete}
-          onFragmentReplace={handleFragmentReplace}
+          onFragmentReplace={!props.onFragmentReplace ? undefined : handleFragmentReplace}
         />
       )}
 

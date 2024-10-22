@@ -63,7 +63,7 @@ export function DocAttachmentFragment(props: {
   isMobile: boolean,
   zenMode: boolean,
   disableMarkdownText: boolean,
-  onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newContent: DMessageAttachmentFragment) => void,
 }) {
 
@@ -101,7 +101,7 @@ export function DocAttachmentFragment(props: {
     if (!newFragment) return;
 
     // Note: this reuses the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
-    onFragmentReplace(fragmentId, newFragment as DMessageAttachmentFragment);
+    onFragmentReplace?.(fragmentId, newFragment as DMessageAttachmentFragment);
   }, [fragment, fragmentId, onFragmentReplace]);
 
   const handleReplaceFragmentLiveFileId = React.useCallback((liveFileId: LiveFileId) => {
@@ -149,7 +149,7 @@ export function DocAttachmentFragment(props: {
   // delete
 
   const handleFragmentDelete = React.useCallback(() => {
-    onFragmentDelete(fragmentId);
+    onFragmentDelete?.(fragmentId);
   }, [fragmentId, onFragmentDelete]);
 
   const handleToggleDeleteArmed = React.useCallback((event: React.MouseEvent) => {
@@ -172,7 +172,7 @@ export function DocAttachmentFragment(props: {
     if (editedText === undefined)
       return;
 
-    if (editedText.length > 0) {
+    if (editedText.length > 0 || !onFragmentDelete) {
       handleReplaceDocFragmentText(editedText);
       setIsEditing(false);
       setIsEditingTitle(false); // just in case
@@ -180,7 +180,7 @@ export function DocAttachmentFragment(props: {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
     }
-  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText]);
+  }, [editedText, handleFragmentDelete, handleReplaceDocFragmentText, onFragmentDelete]);
 
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
@@ -280,7 +280,7 @@ export function DocAttachmentFragment(props: {
   }, [fragmentDocPart, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditSave, headerTooltipContents, isEditing, isEditingTitle, liveFileControlButton, onFragmentReplace]);
 
 
-  const toolbarRow = React.useMemo(() => (
+  const toolbarRow = React.useMemo(() => (!onFragmentDelete && !onFragmentReplace) ? null : (
     <Box sx={{
       display: 'flex',
       flexDirection: !reverseToolbar ? 'row' : 'row-reverse',
@@ -290,44 +290,45 @@ export function DocAttachmentFragment(props: {
     }}>
 
       {/* Delete / Confirm */}
-      <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
-        {!isEditing && <Button
+      {!!onFragmentDelete && (
+        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse',gap: 1 }}>
+          {!isEditing && <Button
           variant='soft'
           color={DocSelColor}
           size='sm'
           onClick={handleToggleDeleteArmed}
           startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-          sx={_styles.button}
-        >
-          {isDeleteArmed ? 'Cancel' : 'Delete'}
-        </Button>}
-        {isDeleteArmed && (
-          <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
-            Delete
-          </Button>
-        )}
-      </Box>
+          sx={_styles.button}>
+            {isDeleteArmed ? 'Cancel' : 'Delete'}
+          </Button>}
+          {isDeleteArmed && (
+            <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
+              Delete
+            </Button>
+          )}
+        </Box>
+      )}
 
       {/* Edit / Save */}
-      <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
-        <Button
-          variant='soft'
+      {!!onFragmentReplace && (
+        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1, ml: 'auto' }}>
+          <Button variant='soft'
           color={DocSelColor}
           size='sm'
           onClick={handleToggleEdit}
           startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}
-          sx={_styles.button}
-        >
-          {isEditing ? 'Cancel' : 'Edit'}
-        </Button>
-        {isEditing && (
-          <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={_styles.button}>
-            Save
+            sx={_styles.button}
+        >{isEditing ? 'Cancel' : 'Edit'}
           </Button>
-        )}
-      </Box>
+          {isEditing && (
+            <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={_styles.button}>
+              Save
+            </Button>
+          )}
+        </Box>
+      )}
     </Box>
-  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, reverseToolbar]);
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, reverseToolbar]);
 
 
   return (
