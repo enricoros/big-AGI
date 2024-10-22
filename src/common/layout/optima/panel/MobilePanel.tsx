@@ -5,10 +5,10 @@ import { Box, Drawer, List } from '@mui/joy';
 import type { NavItemApp } from '~/common/app.nav';
 
 import { MobileNavItems } from '../nav/MobileNavItems';
+import { MobilePreferencesListItem } from './MobilePreferencesListItem';
+import { OPTIMA_DRAWER_MOBILE_RADIUS, OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
-import { MobilePreferencesListItem } from '~/common/layout/optima/panel/MobilePreferencesListItem';
-import { OPTIMA_PANEL_GROUPS_SPACING } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 
 
 export function MobilePanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
@@ -43,8 +43,8 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
           sx: {
             // style: round the right drawer corners
             // backgroundColor: 'transparent',
-            borderTopLeftRadius: 'var(--AGI-Optima-Radius)',
-            borderBottomLeftRadius: 'var(--AGI-Optima-Radius)',
+            borderTopLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+            borderBottomLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
           },
         },
       }}

@@ -5,6 +5,7 @@ import { Box, Sheet, styled } from '@mui/joy';
 import { checkVisibleNav, NavItemApp } from '~/common/app.nav';
 import { themeZIndexDesktopDrawer } from '~/common/app.theme';
 
+import { OPTIMA_DRAWER_BACKGROUND } from '../optima.config';
 import { optimaCloseDrawer, optimaOpenDrawer, useOptimaDrawerOpen } from '../useOptima';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
@@ -32,15 +33,15 @@ const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
   zIndex: themeZIndexDesktopDrawer,
 
   // styling
-  backgroundColor: 'transparent',
+  backgroundColor: OPTIMA_DRAWER_BACKGROUND,
   borderRight: '1px solid',
   // the border right color is from: theme.palette.divider, which is this /0.2 (light) and /0.16 (dark)
   borderRightColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
-  // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+  // borderTopRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+  // borderBottomRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
   // contain: 'strict',
   // boxShadow: theme.shadow.md, // too thin and complex; also tried 40px blurs
-  boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`,
+  boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`, // shadow of the Drawer on the Page
 
   // content layout
   display: 'flex',

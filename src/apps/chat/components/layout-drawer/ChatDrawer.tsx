@@ -20,6 +20,7 @@ import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-fold
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
+import { OPTIMA_DRAWER_BACKGROUND } from '~/common/layout/optima/optima.config';
 import { OptimaDrawerHeader } from '~/common/layout/optima/drawer/OptimaDrawerHeader';
 import { OptimaDrawerList } from '~/common/layout/optima/drawer/OptimaDrawerList';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
@@ -356,7 +357,7 @@ function ChatDrawer(props: {
               // keeps the group header sticky to the top
               position: 'sticky',
               top: 0,
-              backgroundColor: 'background.popup',
+              backgroundColor: OPTIMA_DRAWER_BACKGROUND,
               zIndex: 1,
             }}>
               {item.title}

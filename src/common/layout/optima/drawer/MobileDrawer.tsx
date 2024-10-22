@@ -4,6 +4,7 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
+import { OPTIMA_DRAWER_BACKGROUND, OPTIMA_DRAWER_MOBILE_RADIUS } from '../optima.config';
 import { optimaCloseDrawer, useOptimaDrawerOpen } from '../useOptima';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
@@ -60,9 +61,9 @@ export function MobileDrawer(props: { component: React.ElementType, currentApp?:
         content: {
           sx: {
             // style: round the right drawer corners
-            backgroundColor: 'transparent',
-            borderTopRightRadius: 'var(--AGI-Optima-Radius)',
-            borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+            backgroundColor: OPTIMA_DRAWER_BACKGROUND,
+            borderTopRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+            borderBottomRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
           },
         },
       }}

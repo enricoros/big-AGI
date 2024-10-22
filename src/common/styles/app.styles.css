@@ -4,7 +4,6 @@
     --AGI-Panel-width: 320px;
     --AGI-Desktop-Drawer-width: clamp(260px, 18vw, 350px);
     --AGI-Desktop-Panel-width: clamp(260px, 18vw, 350px);
-    --AGI-Optima-Radius: 0.75rem; /* var(--joy-radius-lg) */
     --AGI-overlay-start-opacity: 0;
 }
 
