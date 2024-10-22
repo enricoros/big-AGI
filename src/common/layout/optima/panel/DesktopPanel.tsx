@@ -33,8 +33,8 @@ const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   borderLeft: '1px solid',
   // the border left color is from: theme.palette.divider, which is this /0.2 (light) and /0.16 (dark)
   borderLeftColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  // borderTopLeftRadius: 'var(--AGI-Optima-Radius)',
-  // borderBottomLeftRadius: 'var(--AGI-Optima-Radius)',
+  // borderTopLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+  // borderBottomLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
   // contain: 'strict',
   // boxShadow: theme.shadow.md, // too thin and complex; also tried 40px blurs
   boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`,

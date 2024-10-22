@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
-import { OPTIMA_PANEL_GROUPS_SPACING } from './OptimaPanelGroupedList';
+import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
 

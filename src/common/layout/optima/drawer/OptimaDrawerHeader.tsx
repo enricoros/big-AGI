@@ -26,7 +26,7 @@ export const OptimaDrawerHeader = (props: {
       // borderLeft: 'none',
       // borderRight: 'none',
       // borderTop: 'none',
-      // borderTopRightRadius: 'var(--AGI-Optima-Radius)',
+      // borderTopRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
 
       // layout
       display: 'flex',

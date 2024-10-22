@@ -6,10 +6,6 @@ import { Box, Checkbox, MenuList } from '@mui/joy';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
 
-// configuration
-export const OPTIMA_PANEL_GROUPS_SPACING = 2.5;
-
-
 const gutterSx: SxProps = {
   px: 'var(--ListItem-paddingX)',
   py: 'var(--ListItem-paddingY)',
