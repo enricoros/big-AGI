@@ -76,7 +76,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
             return !existing ? llm : {
               ...llm,
               label: existing.label, // keep label
-              hidden: existing.hidden, // keep hidden
+              hidden: existing.hidden, // keep hidden - FIXME: this must go, as we don't know if the underlying changed or the user changed it
               options: {
                 // keep custom configurations, but overwrite as the new could have massively improved params
                 ...existing.options,
