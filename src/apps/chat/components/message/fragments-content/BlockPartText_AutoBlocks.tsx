@@ -80,7 +80,7 @@ export function BlockPartText_AutoBlocks(props: {
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
-      setText={props.setEditedText ? handleSetText : undefined}
+      setText={!props.setEditedText ? undefined : handleSetText}
     />
   );
 }

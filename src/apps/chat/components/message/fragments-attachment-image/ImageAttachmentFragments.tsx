@@ -63,7 +63,7 @@ export function ImageAttachmentFragments(props: {
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
   disabled?: boolean,
-  onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
 
   const layoutSxMemo = React.useMemo((): SxProps => ({
@@ -102,7 +102,7 @@ export function ImageAttachmentFragments(props: {
               imageHeight={imageRefPart.height}
               disabled={props.disabled}
               onOpenInNewTab={() => showImageDataRefInNewTab(dataRef)}
-              onDeleteFragment={() => props.onFragmentDelete(attachmentFragment.fId)}
+              onDeleteFragment={!props.onFragmentDelete ? undefined : () => props.onFragmentDelete?.(attachmentFragment.fId)}
               scaledImageSx={cardStyleSxMemo}
               variant='attachment-card'
             />

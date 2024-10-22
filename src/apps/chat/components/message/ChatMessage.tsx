@@ -752,7 +752,7 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               messageRole={messageRole}
               disabled={isEditingText}
-              onFragmentDelete={handleFragmentDelete}
+              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
             />
           )}
 
@@ -787,10 +787,10 @@ export function ChatMessage(props: {
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
-            onFragmentBlank={handleFragmentNew}
-            onFragmentDelete={handleFragmentDelete}
+            onFragmentAddBlank={!props.onMessageFragmentAppend ? undefined : handleFragmentNew}
+            onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
             onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
-            onMessageDelete={props.onMessageDelete ? handleOpsDelete : undefined}
+            onMessageDelete={!props.onMessageDelete ? undefined : handleOpsDelete}
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}
             onDoubleClick={(props.onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
@@ -806,8 +806,8 @@ export function ChatMessage(props: {
               zenMode={zenMode}
               allowSelection={!isEditingText}
               disableMarkdownText={disableMarkdown}
-              onFragmentDelete={handleFragmentDelete}
-              onFragmentReplace={handleFragmentReplace}
+              onFragmentDelete={!props.onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
             />
           )}
 
