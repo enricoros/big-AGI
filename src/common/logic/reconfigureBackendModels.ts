@@ -79,6 +79,14 @@ export async function reconfigureBackendModels(newLlmReconfigHash: string, setRe
   // Re-rank the LLMs based on the order of configured services
   llmsStoreActions().rerankLLMsByServices(configuredServiceIds);
 
+  // if the current global Chat LLM is now hidden, auto-pick one that's not
+  const { llms: updatedLLMs, chatLLMId: newChatLLMId } = llmsStoreState();
+  if (newChatLLMId) {
+    const currentChatLLM = updatedLLMs.find(llm => llm.id === newChatLLMId);
+    if (!currentChatLLM || currentChatLLM.hidden)
+      llmsStoreActions().setChatLLMId(null);
+  }
+
   // end configuration
   _isConfiguring = false;
   _isConfigurationDone = true;
