@@ -89,16 +89,20 @@ export function EnhancedRenderCode(props: {
       {/* This is what we have */}
       <div><strong>Code Block</strong></div>
       <div></div>
+      <div>{props.isPartial ? 'Partial ' : 'Complete'}</div>
+      <div></div>
       <div>Title</div>
       <div>{props.title || '(empty)'}</div>
+      <div>Version</div>
+      <div>{/* TODO props.version ||*/ '(none)'}</div>
       {/*<div>Language</div>*/}
       {/*<div>{props.language}</div>*/}
       <div>Code Lines</div>
       <div>{props.code.split('\n').length} lines</div>
-      <div>Code Length</div>
-      <div>{props.code.length} characters</div>
-      <div>semiStableId</div>
-      <div>{props.semiStableId || '(none)'}</div>
+      <div>Characters</div>
+      <div>{props.code.length}</div>
+      <div>tempId</div>
+      <div><small>{props.semiStableId || '(none)'}</small></div>
       {/* This is what attachments carry */}
       {/*<div>Attachment Title</div>*/}
       {/*<div>{fragment.title}</div>*/}

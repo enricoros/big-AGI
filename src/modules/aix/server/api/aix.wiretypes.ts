@@ -135,6 +135,9 @@ export namespace AixWire_Parts {
     // optional title of the document
     l1Title: z.string().optional(),
 
+    // version of the document - optional because it's not guaranteed, but strongly suggested
+    version: z.number().optional(),
+
     // inlined for now as it's only used here; in the TypeScript definition this is DMessageDataInline
     data: z.object({
       idt: z.literal('text'),

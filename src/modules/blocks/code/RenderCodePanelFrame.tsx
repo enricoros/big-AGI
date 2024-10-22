@@ -9,7 +9,7 @@ import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 export const enhancedCodePanelTitleTooltipSx: SxProps = {
   p: 1,
   display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
+  gridTemplateColumns: 'auto 1fr auto 1fr',
   alignItems: 'center',
   columnGap: 2,
   rowGap: 1,
