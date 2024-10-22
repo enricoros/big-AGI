@@ -156,14 +156,16 @@ export function DocAttachmentFragment(props: {
     <Box sx={enhancedCodePanelTitleTooltipSx}>
       <div>Attachment Title</div>
       <div>{fragment.title}</div>
-      <div>Doc Title</div>
-      <div>{fragmentDocPart.l1Title}</div>
       <div>Identifier</div>
       <div>{fragmentDocPart.ref}</div>
-      <div>Render type</div>
-      <div>{fragmentDocPart.vdt}</div>
+      <div>Doc Title</div>
+      <div>{fragmentDocPart.l1Title}</div>
+      <div>Doc Version</div>
+      <div>{fragmentDocPart.version || '(none)'}</div>
       <div>Text Mime type</div>
       <div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>
+      <div>Render type</div>
+      <div>{fragmentDocPart.vdt}</div>
       <div>Text Buffer Id</div>
       <div>{fragmentId}</div>
     </Box>

@@ -25,6 +25,7 @@ export const DEFAULT_ADRAFT_IMAGE_QUALITY = 0.96;
 const PDF_IMAGE_PAGE_SCALE = 1.5;
 const PDF_IMAGE_QUALITY = 0.5;
 const ENABLE_TEXT_AND_IMAGES = false; // 2.0
+const DOCPART_DEFAULT_VERSION = 1;
 
 
 // internal mimes, only used to route data within us (source -> input -> converters)
@@ -466,7 +467,7 @@ export async function attachmentPerformConversion(
       case 'text':
         const possibleLiveFileId = await attachmentGetLiveFileId(source);
         const textualInlineData = createDMessageDataInlineText(_inputDataToString(input.data), input.mimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, docMeta, possibleLiveFileId));
+        newFragments.push(createDocAttachmentFragment(title, caption, _guessDocVDT(input.mimeType), textualInlineData, refString, DOCPART_DEFAULT_VERSION, docMeta, possibleLiveFileId));
         break;
 
       // html as-is
@@ -474,7 +475,7 @@ export async function attachmentPerformConversion(
         // NOTE: before we had the following: createTextAttachmentFragment(ref || '\n<!DOCTYPE html>', input.altData!), which
         //       was used to wrap the HTML in a code block to facilitate AutoRenderBlocks's parser. Historic note, for future debugging.
         const richTextData = createDMessageDataInlineText(input.altData || '', input.altMimeType);
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, richTextData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, richTextData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
       // html cleaned
@@ -487,7 +488,7 @@ export async function attachmentPerformConversion(
           // remove svg elements
           .replace(/<svg[^>]*>.*?<\/svg>/g, '');
         const cleanedHtmlData = createDMessageDataInlineText(cleanerHtml, 'text/html');
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, cleanedHtmlData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, cleanedHtmlData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
       // html to markdown table
@@ -500,7 +501,7 @@ export async function attachmentPerformConversion(
           // fallback to text/plain
           tableData = createDMessageDataInlineText(_inputDataToString(input.data), input.mimeType);
         }
-        newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? DVMimeType.TextPlain : DVMimeType.TextPlain, tableData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, tableData.mimeType === 'text/markdown' ? DVMimeType.TextPlain : DVMimeType.TextPlain, tableData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
 
@@ -570,7 +571,7 @@ export async function attachmentPerformConversion(
             },
           });
           const imageText = result.data.text;
-          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(imageText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'image' }));
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(imageText, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'image' }));
         } catch (error) {
           console.error(error);
         }
@@ -592,7 +593,7 @@ export async function attachmentPerformConversion(
           // Warn the user if no text is extracted
           // edit(attachment.id, { inputError: 'No text found in the PDF file.' });
         } else
-          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'pdf' }));
         break;
 
       // pdf to images
@@ -642,7 +643,7 @@ export async function attachmentPerformConversion(
           if (pdfText.trim().length < 2) {
             // Do not warn the user, as hopefully the images are useful
           } else {
-            const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' });
+            const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, DOCPART_DEFAULT_VERSION, { ...docMeta, srcOcrFrom: 'pdf' });
             newFragments.push(textFragment);
           }
 
@@ -663,7 +664,7 @@ export async function attachmentPerformConversion(
         try {
           const { convertDocxToHTML } = await import('./file-converters/DocxToMarkdown');
           const { html } = await convertDocxToHTML(input.data);
-          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, createDMessageDataInlineText(html, 'text/html'), refString, docMeta));
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, createDMessageDataInlineText(html, 'text/html'), refString, DOCPART_DEFAULT_VERSION, docMeta));
         } catch (error) {
           console.error('Error in DOCX to Markdown conversion:', error);
         }
@@ -677,7 +678,7 @@ export async function attachmentPerformConversion(
           break;
         }
         const pageTextData = createDMessageDataInlineText((input.data as DraftWebInputData).pageText!, 'text/plain');
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, pageTextData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, pageTextData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
       // url page markdown
@@ -687,7 +688,7 @@ export async function attachmentPerformConversion(
           break;
         }
         const pageMarkdownData = createDMessageDataInlineText((input.data as DraftWebInputData).pageMarkdown!, 'text/markdown');
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, pageMarkdownData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, pageMarkdownData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
       // url page html
@@ -697,7 +698,7 @@ export async function attachmentPerformConversion(
           break;
         }
         const pageHtmlData = createDMessageDataInlineText((input.data as DraftWebInputData).pageCleanedHtml!, 'text/html');
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, pageHtmlData, refString, docMeta));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.VndAgiCode, pageHtmlData, refString, DOCPART_DEFAULT_VERSION, docMeta));
         break;
 
       // url page null
@@ -739,7 +740,7 @@ export async function attachmentPerformConversion(
           converter.id === 'youtube-transcript-simple' ? youtubeData.videoTranscript
             : `**YouTube Title**: ${youtubeData.videoTitle}\n\n**YouTube Description**: ${youtubeData.videoDescription}\n\n**YouTube Transcript**:\n${youtubeData.videoTranscript}\n`;
         const transcriptTextData = createDMessageDataInlineText(transcriptText, 'text/plain');
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, transcriptTextData, refString, docMeta, undefined));
+        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, transcriptTextData, refString, DOCPART_DEFAULT_VERSION, docMeta, undefined));
         break;
 
 

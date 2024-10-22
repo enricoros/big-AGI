@@ -73,12 +73,14 @@ export function ViewDocPartModal(props: {
             <div>{docPart.l1Title}</div>
             <div>Identifier</div>
             <div>{docPart.ref}</div>
-            <div>Mime type</div>
+            <div>Mime Type</div>
             <div>{docPart.data?.mimeType || '(unknown)'}</div>
-            <div>Render type</div>
+            <div>Render Type</div>
             <div>{docPart.vdt}</div>
-            <div>Rendering as</div>
+            <div>Rendering As</div>
             <div>{renderAsMarkdown ? 'Markdown' : /*renderAsCode ? 'Code' :*/ 'Text'} (auto)</div>
+            <div>Doc Version</div>
+            <div>{docPart.version || '(none)'}</div>
           </Box>
         </Box>
 
