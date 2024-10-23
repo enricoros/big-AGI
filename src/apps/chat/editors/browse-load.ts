@@ -1,4 +1,4 @@
-import { callBrowseFetchPage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
@@ -18,7 +18,7 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
   );
 
   try {
-    const page = await callBrowseFetchPage(url);
+    const page = await callBrowseFetchPageOrThrow(url);
 
     const pageContent = page.content.markdown || page.content.text || page.content.html || 'Issue: Browsing did not produce a page content.';
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(pageContent), true);
