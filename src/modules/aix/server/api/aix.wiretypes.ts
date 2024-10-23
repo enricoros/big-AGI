@@ -338,6 +338,23 @@ export namespace AixWire_Tooling {
     variant: z.enum(['gemini_auto_inline']),
   });
 
+  /// [Anthropic] Vendor-specific Tooling
+
+  const _VndAntComputer20241022 = z.object({
+    type: z.literal('vnd.ant.tools.computer_20241022'),
+    display_width: z.number().int(),
+    display_height: z.number().int(),
+    display_number: z.number().int().optional(),
+  });
+
+  const _VndAntTextEditor20241022 = z.object({
+    type: z.literal('vnd.ant.tools.text_editor_20241022'),
+  });
+
+  const _VndAntBash20241022 = z.object({
+    type: z.literal('vnd.ant.tools.bash_20241022'),
+  });
+
   /// Tool Definition
 
   /**
@@ -365,6 +382,9 @@ export namespace AixWire_Tooling {
   export const Tool_schema = z.discriminatedUnion('type', [
     _FunctionCallTool_schema,
     _CodeExecutionTool_schema,
+    _VndAntComputer20241022,
+    _VndAntTextEditor20241022,
+    _VndAntBash20241022,
   ]);
 
   /// Tools Policy
