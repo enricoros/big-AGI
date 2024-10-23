@@ -5,10 +5,11 @@ import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wi
 
 
 // configuration
-const hackyHotFixStartWithUser = true; // "Bad Request - messages: first message must use the "user" role"
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
-const hotFixMissingTokens = 4096; // [2024-07-12] max from https://docs.anthropic.com/en/docs/about-claude/models
+
+// former fixes, now removed
+// const hackyHotFixStartWithUser = false; // 2024-10-22: no longer required
 
 
 type TRequest = AnthropicWire_API_Message_Create.Request;
@@ -63,15 +64,17 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     chatMessages.push(currentMessage);
 
   // If the first (user) message is missing, copy the first line of the system message
-  if (hackyHotFixStartWithUser && chatMessages.length && chatMessages[0].role !== 'user' && systemMessage?.length) {
-    const hackSystemMessageFirstLine = (systemMessage[0]?.text || '').split('\n')[0];
-    chatMessages.unshift({ role: 'user', content: [AnthropicWire_Blocks.TextBlock(hackSystemMessageFirstLine)] });
-    console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
-  }
+  // [Anthropic] October 8th, 2024 release notes: "...we no longer require the first input message to be a user message."
+  // if (hackyHotFixStartWithUser && chatMessages.length && chatMessages[0].role !== 'user' && systemMessage?.length) {
+  //   const hackSystemMessageFirstLine = (systemMessage[0]?.text || '').split('\n')[0];
+  //   chatMessages.unshift({ role: 'user', content: [AnthropicWire_Blocks.TextBlock(hackSystemMessageFirstLine)] });
+  //   console.log(`Anthropic: hotFixStartWithUser (${chatMessages.length} messages) - ${hackSystemMessageFirstLine}`);
+  // }
 
   // Construct the request payload
   const payload: TRequest = {
-    max_tokens: model.maxTokens !== undefined ? model.maxTokens : hotFixMissingTokens,
+    max_tokens: model.maxTokens !== undefined ? model.maxTokens
+      : (model.id.includes('3-5-sonnet') ? 8192 : 4096), // see `max-tokens-3-5-sonnet-2024-07-15`, and [2024-10-22] max from https://docs.anthropic.com/en/docs/about-claude/models
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
@@ -155,7 +158,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           case 'inline_image':
-            // Example of mapping a model-generated image to a user message
+            // Example of mapping a model-generated image (even from other vendors, not just Anthropic) to a user message
             if (hotFixMapModelImagesToUser) {
               yield { role: 'user', content: AnthropicWire_Blocks.ImageBlock(part.mimeType, part.base64) };
             } else
@@ -222,6 +225,7 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TReques
       case 'function_call':
         const { name, description, input_schema } = itd.function_call;
         return {
+          type: 'custom', // we could not set it, but it helps our typesystem with discrimination
           name,
           description,
           input_schema: {

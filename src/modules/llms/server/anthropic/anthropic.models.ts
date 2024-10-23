@@ -75,6 +75,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
 
   // Legacy models - https://docs.anthropic.com/en/docs/about-claude/models#legacy-models
+  // Addd deprecated as per https://docs.anthropic.com/en/docs/resources/model-deprecations
   {
     id: 'claude-2.1',
     label: 'Claude 2.1',

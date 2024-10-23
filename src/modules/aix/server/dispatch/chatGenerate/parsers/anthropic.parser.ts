@@ -290,6 +290,7 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
       return 'out-of-tokens';
 
     default:
+      console.warn(`_fromAnthropicStopReason: unknown stop reason: ${stopReason}`);
       return null;
   }
 }
