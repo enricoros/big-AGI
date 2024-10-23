@@ -21,9 +21,8 @@ const DEFAULT_API_VERSION_HEADERS = {
   // - prompt-caching-2024-07-31: to use the prompt caching feature; adds to any API invocation:
   //   - message_start.message.usage.cache_creation_input_tokens: number
   //   - message_start.message.usage.cache_read_input_tokens: number
-  'anthropic-beta': 'prompt-caching-2024-07-31,max-tokens-3-5-sonnet-2024-07-15',
+  'anthropic-beta': 'computer-use-2024-10-22,prompt-caching-2024-07-31,max-tokens-3-5-sonnet-2024-07-15',
 };
-const DEFAULT_MAX_TOKENS = 2048;
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
@@ -54,6 +53,9 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
       throw new Error(`The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.`);
     anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
   }
+
+  // 2024-10-22: we don't support this yet, but the Anthropic SDK has `dangerouslyAllowBrowser: true`
+  // to use the API from Browsers via CORS
 
   return {
     headers: {

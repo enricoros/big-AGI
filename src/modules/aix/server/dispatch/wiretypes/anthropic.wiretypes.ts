@@ -1,15 +1,23 @@
 import { z } from 'zod';
 
 
-// See the latest Anthropic Typescript definitions on:
-// https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages.ts
-
-
+/**
+ * See the latest Anthropic Typescript definitions on:
+ * https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages.ts
+ *
+ * ## Updates
+ *
+ * ### 2024-10-22
+ * - ToolDefinition: added 'cache_control' and 'type' fields
+ * - Request.tool_choice: added 'disable_parallel_tool_use'
+ * - Request.messages: removed refine() as the sequence can now be not-alternating and starting from non-user
+ *
+ */
 export namespace AnthropicWire_Blocks {
 
   /// Content parts - Input and Output
 
-  const _CacheControl_schema = z.object({
+  export const _CacheControl_schema = z.object({
     type: z.literal('ephemeral'),
   });
 
@@ -35,7 +43,7 @@ export namespace AnthropicWire_Blocks {
     type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(),
-    input: z.any(),
+    input: z.any(), // NOTE: formally an 'object', not any, probably relaxed for parsing
   });
 
   export const ToolResultBlock_schema = _CommonBlock_schema.extend({
@@ -91,10 +99,21 @@ export namespace AnthropicWire_Messages {
 
 export namespace AnthropicWire_Tools {
 
-  /// Tool definitions - Input
-
-  export const ToolDefinition_schema = z.object({
+  const _ToolDefinitionBase_schema = z.object({
+    /** This is how the tool will be called by the model and in tool_use blocks. */
     name: z.string(),
+
+    /** 2024-10-22: cache-control can be set on the Tools block as well. We could make use of this instead of the System Instruction blocks for prompts with longer tools. */
+    cache_control: AnthropicWire_Blocks._CacheControl_schema.optional(),
+  });
+
+  const _CustomToolDefinition_schema = _ToolDefinitionBase_schema.extend({
+    /**
+     * Client defined tool (non-built-in).
+     * Note: we force the value to be 'custom' although the API would allow for undefined or null as well. For ease
+     *       of development, we force the value to be 'custom' to use a discriminating union.
+     */
+    type: z.literal('custom'),  // .nullable().optional() // see note above
 
     /**
      * Description of what this tool does. Tool descriptions should be as detailed as possible.
@@ -114,6 +133,33 @@ export namespace AnthropicWire_Tools {
       required: z.array(z.string()).optional(),
     }).and(z.record(z.unknown())),
   });
+
+  const _ComputerUseTool_20241022_schema = _ToolDefinitionBase_schema.extend({
+    type: z.enum(['computer_20241022']),
+    name: z.literal('computer'),
+
+    // tool configuration
+    display_height_px: z.number().int(),
+    display_width_px: z.number().int(),
+    display_number: z.number().int().nullable().optional(),
+  });
+
+  const _BashTool_20241022_schema = _ToolDefinitionBase_schema.extend({
+    type: z.enum(['bash_20241022']),
+    name: z.literal('bash'),
+  });
+
+  const _TextEditor_20241022_schema = _ToolDefinitionBase_schema.extend({
+    type: z.enum(['text_editor_20241022']),
+    name: z.literal('str_replace_editor'),
+  });
+
+  export const ToolDefinition_schema = z.discriminatedUnion('type', [
+    _CustomToolDefinition_schema,
+    _ComputerUseTool_20241022_schema,
+    _BashTool_20241022_schema,
+    _TextEditor_20241022_schema,
+  ]);
 
 }
 
@@ -148,30 +194,32 @@ export namespace AnthropicWire_API_Message_Create {
      * If the final message uses the assistant role, the response content will continue immediately from the content in that message.
      * This can be used to constrain part of the model's response.
      */
-    messages: z.array(AnthropicWire_Messages.MessageInput_schema).refine(
-      (messages) => {
-
-        // Ensure the first message uses the user role
-        if (messages.length === 0 || messages[0].role !== 'user')
-          return false;
-
-        // Ensure messages alternate between user and assistant roles
-        for (let i = 1; i < messages.length; i++)
-          if (messages[i].role === messages[i - 1].role)
-            return false;
-
-        return true;
-      },
-      { message: `messages must alternate between User and Assistant roles, starting with the User role` },
-    ),
+    messages: z.array(AnthropicWire_Messages.MessageInput_schema),
+    // 2024-10-22: Removed the refine() method, as this is not a requirement anymore for the API, since October 8th, 2024
+    // .refine(
+    //   (messages) => {
+    //
+    //     // Ensure the first message uses the user role
+    //     if (messages.length === 0 || messages[0].role !== 'user')
+    //       return false;
+    //
+    //     // Ensure messages alternate between user and assistant roles
+    //     for (let i = 1; i < messages.length; i++)
+    //       if (messages[i].role === messages[i - 1].role)
+    //         return false;
+    //
+    //     return true;
+    //   },
+    //   { message: `messages must alternate between User and Assistant roles, starting with the User role` },
+    // ),
 
     /**
      * How the model should use the provided tools. The model can use a specific tool, any available tool, or decide by itself.
      */
     tool_choice: z.union([
-      z.object({ type: z.literal('auto') }),
-      z.object({ type: z.literal('any') }), // use one at least
-      z.object({ type: z.literal('tool'), name: z.string() }),
+      z.object({ type: z.literal('auto'), disable_parallel_tool_use: z.boolean().optional() }),
+      z.object({ type: z.literal('any'), disable_parallel_tool_use: z.boolean().optional() }),
+      z.object({ type: z.literal('tool'), name: z.string(), disable_parallel_tool_use: z.boolean().optional() }),
     ]).optional(),
 
     /**
