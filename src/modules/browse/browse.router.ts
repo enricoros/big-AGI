@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
 
 import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer-core';
 import { default as TurndownService } from 'turndown';
@@ -7,25 +6,24 @@ import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
+import { TRPCError } from '@trpc/server';
 
 
 // change the page load and scrape timeout
-const WORKER_TIMEOUT = 10 * 1000; // 10 seconds
+const WORKER_TIMEOUT = 20 * 1000; // 20 seconds
 
 
 // Input schemas
 
-const browseAccessSchema = z.object({
-  dialect: z.enum(['browse-wss']),
-  wssEndpoint: z.string().trim().optional(),
-});
-// type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
-
 const pageTransformSchema = z.enum(['html', 'text', 'markdown']);
+
 type PageTransformSchema = z.infer<typeof pageTransformSchema>;
 
 const fetchPageInputSchema = z.object({
-  access: browseAccessSchema,
+  access: z.object({
+    dialect: z.enum(['browse-wss']),
+    wssEndpoint: z.string().trim().optional(),
+  }),
   requests: z.array(z.object({
     url: z.string().url(),
     transforms: z.array(pageTransformSchema),
@@ -53,49 +51,48 @@ const fetchPageWorkerOutputSchema = z.object({
     height: z.number(),
   }).optional(),
 });
-type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
-
-
-const fetchPagesOutputSchema = z.object({
-  pages: z.array(fetchPageWorkerOutputSchema),
-  workerHost: z.string(),
-});
+export type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
 
 
 export const browseRouter = createTRPCRouter({
 
-  fetchPages: publicProcedure
+  fetchPagesStreaming: publicProcedure
     .input(fetchPageInputSchema)
-    .output(fetchPagesOutputSchema)
-    .mutation(async ({ input: { access, requests } }) => {
+    .mutation(async function* ({ input: { access, requests } }) {
 
       // get endpoint
       const endpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
       if (!endpoint || (!endpoint.startsWith('wss://') && !endpoint.startsWith('ws://')))
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Invalid wss:// endpoint',
-        });
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Invalid WSS browser endpoint' });
       const workerHost = new URL(endpoint).host;
 
-      const pagePromises = requests.map(request => workerPuppeteer(endpoint, request.url, request.transforms, request.screenshot));
+      yield { type: 'ack-start' as const };
 
-      const results = await Promise.allSettled(pagePromises);
+      // start all requests in parallel, intercepting erros too
+      const results = await Promise.allSettled(requests.map(request =>
+        workerPuppeteer(endpoint, request.url, request.transforms, request.screenshot),
+      ));
 
-      const pages: FetchPageWorkerOutputSchema[] = results.map((result, index) =>
-        result.status === 'fulfilled'
-          ? result.value
-          : {
-            url: requests[index].url,
-            title: '',
-            content: {},
-            error: result.reason?.message || 'Unknown fetch error',
-            stopReason: 'error',
-            workerHost,
-          },
-      );
+      // return all pages trapping errors
+      const pages: FetchPageWorkerOutputSchema[] = results.map((result, index) => {
+        switch (result.status) {
+          case 'fulfilled':
+            return result.value;
+          case 'rejected':
+            return {
+              url: requests[index].url,
+              title: '',
+              content: {},
+              error: result.reason?.message || 'Unknown fetch error',
+              stopReason: 'error',
+              screenshot: undefined,
+            } satisfies FetchPageWorkerOutputSchema;
+        }
+      });
 
-      return {
+      // final result
+      yield {
+        type: 'result' as const,
         pages,
         workerHost,
       };

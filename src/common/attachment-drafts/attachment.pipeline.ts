@@ -1,6 +1,6 @@
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { callBrowseFetchPage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
@@ -98,7 +98,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
 
       try {
         // fetch the web page
-        const { title, content: { html, markdown, text }, screenshot } = await callBrowseFetchPage(
+        const { title, content: { html, markdown, text }, screenshot } = await callBrowseFetchPageOrThrow(
           source.url, ['text', 'markdown', 'html'], { width: 512, height: 512, quality: 98 },
         );
         if (html || markdown || text)
