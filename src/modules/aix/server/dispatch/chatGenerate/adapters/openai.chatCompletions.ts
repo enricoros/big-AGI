@@ -602,6 +602,11 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
       case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
 
+      case 'vnd.ant.tools.bash_20241022':
+      case 'vnd.ant.tools.computer_20241022':
+      case 'vnd.ant.tools.text_editor_20241022':
+        throw new Error('Different Vendor Tools are not supported by OpenAI');
+
       default:
         // const _exhaustiveCheck: never = itdType;
         throw new Error(`OpenAI (classic API) unsupported tool: ${itdType}`);

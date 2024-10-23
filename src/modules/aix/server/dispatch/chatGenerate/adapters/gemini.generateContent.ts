@@ -335,6 +335,12 @@ function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
         });
         break;
 
+      case 'vnd.ant.tools.bash_20241022':
+      case 'vnd.ant.tools.computer_20241022':
+      case 'vnd.ant.tools.text_editor_20241022':
+      default: // Note: Gemini's tool function doesn't break on unknown tools, so we need the default case here
+        throw new Error('Tool ${itd.type} is not supported by Gemini');
+
     }
   });
 

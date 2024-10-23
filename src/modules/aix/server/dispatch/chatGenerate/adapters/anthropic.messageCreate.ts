@@ -305,6 +305,27 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TReques
       case 'code_execution':
         throw new Error('Gemini code interpreter is not supported');
 
+      case 'vnd.ant.tools.computer_20241022':
+        return {
+          type: 'computer_20241022',
+          name: 'computer',
+          display_width_px: itd.display_width,
+          display_height_px: itd.display_height,
+          ...(itd.display_number !== undefined && { display_number: itd.display_number }),
+        };
+
+      case 'vnd.ant.tools.text_editor_20241022':
+        return {
+          type: 'text_editor_20241022',
+          name: 'str_replace_editor',
+        };
+
+      case 'vnd.ant.tools.bash_20241022':
+        return {
+          type: 'bash_20241022',
+          name: 'bash',
+        };
+
     }
   });
 }
