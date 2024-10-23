@@ -15,6 +15,7 @@ export const Release = {
     versionCode: '2.0.0-ea1',       // 1.91.0 sequentially...
     versionName: 'Big-AGI V2 EA1',
   },
+  DevBuild: process.env.NODE_ENV === 'development',
 
   // Future compatibility
   Features: {
@@ -38,4 +39,4 @@ export const Release = {
     pkgVersion: process.env.NEXT_PUBLIC_BUILD_PKGVER,
     timestamp: process.env.NEXT_PUBLIC_BUILD_TIMESTAMP,
   }),
-};
+} as const;
