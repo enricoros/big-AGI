@@ -22,7 +22,7 @@ import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaB
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
-import { SpeechResult, useSpeechRecognition } from '~/common/components/useSpeechRecognition';
+import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
@@ -130,7 +130,7 @@ export function Telephone(props: {
         setCallMessages(messages => [...messages, createDMessageTextContent('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
-  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition(onSpeechResultCallback, 1000);
+  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition('webSpeechApi', onSpeechResultCallback, 1000);
 
   // derived state
   const isRinging = stage === 'ring';
@@ -159,7 +159,7 @@ export function Telephone(props: {
   /// CONNECTED
 
   const handleCallStop = () => {
-    stopRecognition();
+    stopRecognition(false);
     setStage('ended');
   };
 
