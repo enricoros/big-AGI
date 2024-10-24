@@ -19,6 +19,7 @@ export const Release = {
   // Future compatibility
   Features: {
     // ...
+    BACKEND_REVALIDATE_INTERVAL: 6 * 60 * 60 * 1000, // 6 hours
   },
 
   // this is here to trigger revalidation of data, e.g. models refresh
