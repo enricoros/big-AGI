@@ -1,6 +1,6 @@
 import type { SystemPurposeId } from '../../../data';
 
-import type { DFolder } from '~/common/state/store-folders';
+import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
@@ -8,7 +8,7 @@ import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
-import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isTextPart } from './chat.fragments';
+import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isPlaceholderPart, isTextContentFragment, isTextPart, isVoidFragment } from './chat.fragments';
 
 
 // configuration
@@ -56,13 +56,15 @@ export namespace V4ToHeadConverters {
           delete fragment.liveFileId;
 
       // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
-      if (isContentFragment(fragment) && fragment.part.pt === 'ph')
-        m.fragments[i] = createErrorContentFragment(`${fragment.part.pText} (did not complete)`);
+      if ((isVoidFragment(fragment) && isPlaceholderPart(fragment.part))
+        || (isContentFragment(fragment) && (fragment.part as any)?.pt === 'ph') /* NOTE: REMOVE FOR 2.0: helper during the 'void' fragment transition */)
+        m.fragments[i] = createErrorContentFragment(`${(fragment.part as any).pText} (did not complete)`);
 
       // [Emergency] validate part types, can mess up in development
       if (EMERGENCY_CLEANUP_PARTS) {
         // If a text part has 'object' in place of 'string' for pText: remove the part altogether
-        if (isContentFragment(fragment) && isTextPart(fragment.part)) {
+        if (isTextContentFragment(fragment)) {
+          // noinspection SuspiciousTypeOfGuard
           if (typeof fragment.part.text !== 'string') {
             // Remove this fragment
             m.fragments.splice(i, 1);

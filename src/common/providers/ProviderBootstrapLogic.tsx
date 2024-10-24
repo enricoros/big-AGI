@@ -1,13 +1,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
-import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
-import { gcChatImageAssets } from '../../apps/chat/editors/image-generate';
-import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
-
-import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
+import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenance } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
-import { estimatePersistentStorageOrThrow, requestPersistentStorage } from '~/common/util/storageUtils';
+import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
@@ -20,35 +16,14 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   useNextLoadProgress(route, events);
 
 
-  // [bootup] logic
+  // [boot-up] logic
   const isOnChat = route === ROUTE_APP_CHAT;
   const doRedirectToNews = isOnChat && shallRedirectToNews();
 
-  // [autoconf] initiate the llm auto-configuration process if on the chat
-  const doAutoConf = isOnChat && !doRedirectToNews;
-  React.useEffect(() => {
-    doAutoConf && autoConfInitiateConfiguration();
-  }, [doAutoConf]);
-
-  // [gc] garbage collection(s)
-  React.useEffect(() => {
-    // Request persistent storage for the current origin, so that indexedDB's content is not evicted.
-    requestPersistentStorage()
-      .then((persisted: boolean) => persisted ? null : estimatePersistentStorageOrThrow())
-      .then((usage) => usage ? console.warn('Issue requesting persistent storage; usage:', usage) : null)
-      .finally(() => {
-        // GC: Remove chat dblobs (not persisted in chat fragments)
-        void gcChatImageAssets(); // fire/forget
-        // GC: Remove old attachment drafts (not persisted in chats)
-        void gcAttachmentDBlobs(); // fire/forget
-      });
-  }, []);
-
 
   // redirect Chat -> News if fresh news
-  const isRedirecting = React.useMemo(() => {
+  const isRedirectingToNews = React.useMemo(() => {
     if (doRedirectToNews) {
-      // the async is important (esp. on strict mode second pass)
       navigateToNews().then(() => markNewsAsSeen()).catch(console.error);
       return true;
     }
@@ -56,5 +31,43 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   }, [doRedirectToNews]);
 
 
-  return isRedirecting ? null : props.children;
+  // decide what to launch
+  const launchPreload = isOnChat && !isRedirectingToNews;
+  const launchAutoConf = isOnChat && !isRedirectingToNews;
+  const launchStorageGC = true;
+
+
+  // [preload] kick-off a preload of the Tiktoken library right when proceeding to the UI
+  React.useEffect(() => {
+    if (!launchPreload) return;
+
+    void preloadTiktokenLibrary(); // fire/forget (large WASM payload)
+
+  }, [launchPreload]);
+
+  // [autoconf] initiate the llm auto-configuration process if on the chat
+  React.useEffect(() => {
+    if (!launchAutoConf) return;
+
+    void sherpaReconfigureBackendModels(); // fire/forget (background server-driven model reconfiguration)
+
+  }, [launchAutoConf]);
+
+  // storage maintenance and garbage collection
+  React.useEffect(() => {
+    if (!launchStorageGC) return;
+
+    const timeout = setTimeout(sherpaStorageMaintenance, 0);
+    return () => clearTimeout(timeout);
+
+  }, [launchStorageGC]);
+
+  //
+  // Render Gates
+  //
+
+  if (isRedirectingToNews)
+    return null;
+
+  return props.children;
 }

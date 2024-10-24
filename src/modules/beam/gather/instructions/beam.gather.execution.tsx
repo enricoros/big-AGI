@@ -3,7 +3,7 @@ import { Typography } from '@mui/joy';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { createDMessageEmpty, DMessage } from '~/common/stores/chat/chat.message';
-import { createPlaceholderMetaFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
 import { executeGatherInstruction, GatherInstruction } from './GatherInstruction';
@@ -110,7 +110,7 @@ export function gatherStartFusion(
       );
 
       // reset the intermediate message
-      inputState.intermediateDMessage.fragments = [createPlaceholderMetaFragment(GATHER_PLACEHOLDER)];
+      inputState.intermediateDMessage.fragments = [createPlaceholderVoidFragment(GATHER_PLACEHOLDER)];
       inputState.intermediateDMessage.pendingIncomplete = true;
       inputState.intermediateDMessage.updated = null;
 

@@ -9,16 +9,29 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // Claude 3.5 models - https://docs.anthropic.com/en/docs/about-claude/models
   // Note: Claude 3.5 Opus and Claude 3.5 Haiku are scheduled for release later this year.
   {
-    id: 'claude-3-5-sonnet-20240620',
+    id: 'claude-3-5-sonnet-20241022',
     label: 'Claude 3.5 Sonnet',
-    created: roundTime('2024-06-20 06:00'),
-    description: 'The most intelligent Claude model to date',
+    created: roundTime('2024-10-22 06:00'),
+    description: 'Most intelligent Claude model to date',
     contextWindow: 200000, // Characters
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1269, cbaMmlu: 88.7 },
+    benchmark: { cbaElo: 1269, cbaMmlu: 88.7 }, // moved from 3.5 Sonnet (Previous Version), TO UPDATE!!
+  },
+  {
+    id: 'claude-3-5-sonnet-20240620',
+    label: 'Claude 3.5 Sonnet (Previous)',
+    created: roundTime('2024-06-20 06:00'),
+    description: 'Previous version of Claude 3.5 Sonnet',
+    contextWindow: 200000, // Characters
+    maxCompletionTokens: 8192,
+    trainingDataCutoff: 'Apr 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
+    benchmark: { cbaElo: 1269 - 0.1, cbaMmlu: 88.7 - 0.1 },
+    hidden: true,
   },
 
   // Claude 3 models
@@ -46,7 +59,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     chatPrice: { input: 3, output: 15 },
     benchmark: { cbaElo: 1201, cbaMmlu: 79 },
     hidden: true,
-    isLegacy: true, // Marked as legacy per the latest information
+    isLegacy: true,
   },
   {
     id: 'claude-3-haiku-20240307',
@@ -103,30 +116,4 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     hidden: true,
     isLegacy: true,
   },
-
-  // Uncomment and update when new versions are released
-  // {
-  //   id: 'claude-instant-1.1',
-  //   label: 'Claude Instant 1.1',
-  //   created: roundTime('2023-03-14'),
-  //   description: 'Precise and fast',
-  //   contextWindow: 100000,
-  //   maxCompletionTokens: 2048,
-  //   trainingDataCutoff: 'Early 2023',
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  //   isLegacy: true,
-  // },
-  // {
-  //   id: 'claude-1.3',
-  //   label: 'Claude 1.3',
-  //   created: roundTime('2023-03-14'),
-  //   description: 'Claude 1.3 is the latest version of Claude v1',
-  //   contextWindow: 100000,
-  //   maxCompletionTokens: 4096,
-  //   trainingDataCutoff: 'Early 2023',
-  //   interfaces: [LLM_IF_OAI_Chat],
-  //   hidden: true,
-  //   isLegacy: true,
-  // },
 ];

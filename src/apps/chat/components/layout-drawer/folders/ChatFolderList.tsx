@@ -6,7 +6,7 @@ import { List, ListItem, ListItemButton, ListItemDecorator, Sheet } from '@mui/j
 import FolderIcon from '@mui/icons-material/Folder';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { StrictModeDroppable } from '~/common/components/StrictModeDroppable';
 
 import { AddFolderButton } from './AddFolderButton';

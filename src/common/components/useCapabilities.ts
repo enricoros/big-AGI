@@ -19,7 +19,7 @@ export interface CapabilityBrowserSpeechRecognition {
   warnings: string[];
 }
 
-export { browserSpeechRecognitionCapability as useCapabilityBrowserSpeechRecognition } from './useSpeechRecognition';
+export { browserSpeechRecognitionCapability as useCapabilityBrowserSpeechRecognition } from './speechrecognition/useSpeechRecognition';
 
 
 /// Speech Synthesis

@@ -13,7 +13,7 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
-import { aixCGR_FromDMessages, aixCGR_FromSimpleText, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
+import { aixCGR_FromDMessagesOrThrow, aixCGR_FromSimpleText, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
 
@@ -105,7 +105,7 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
   try {
 
     // Aix ChatGenerate Request
-    const aixChatContentGenerateRequest = await aixCGR_FromDMessages(chatHistory, 'complete');
+    const aixChatContentGenerateRequest = await aixCGR_FromDMessagesOrThrow(chatHistory, 'complete');
 
     await aixChatGenerateContent_DMessage(
       llmId,
@@ -244,13 +244,11 @@ export async function aixChatGenerateText_Simple(
     aixContext,
     aixStreaming,
     abortSignal,
-    !aixStreaming ? undefined : (ll: AixChatGenerateContent_LL, isDone: boolean) => {
-      if (isDone) return; // optimization
+    clientOptions?.throttleParallelThreads ?? 0,
+    !aixStreaming ? undefined : (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
       _llToText(ll, state);
-      if (onTextStreamUpdate && state.text !== null) {
-        // TODO: throttler? or push it down to the lower level
+      if (onTextStreamUpdate && state.text !== null)
         onTextStreamUpdate(state.text, false, state.generator);
-      }
     },
   );
 
@@ -311,7 +309,6 @@ function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Sim
           break;
         case 'tool_invocation':
           throw new Error(`AIX: Unexpected tool invocation ${fragment.part.invocation?.type === 'function_call' ? fragment.part.invocation.name : fragment.part.id} in the Text response.`);
-        case 'ph': // impossible
         case 'image_ref': // impossible
         case 'tool_response': // impossible - stopped at the invocation alrady
         case '_pt_sentinel': // impossible
@@ -403,9 +400,6 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   // apply any vendor-specific rate limit
   await llmVendor.rateLimitChatGenerate?.(llm, llmServiceSettings);
 
-  // decimator for the updates
-  const throttler = (onStreamingUpdate && clientOptions.throttleParallelThreads) ? new ThrottleFunctionCall(clientOptions.throttleParallelThreads) : null;
-
   // Abort: if the operation is non-abortable, we can't use the AbortSignal
   if (clientOptions.abortSignal === 'NON_ABORTABLE') {
     // [DEV] UGLY: here we have non-abortable operations -- we silence the warning, but something may be done in the future
@@ -414,15 +408,12 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   }
 
   // Aix Low-Level Chat Generation
-  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal,
+  const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
     (ll: AixChatGenerateContent_LL, isDone: boolean) => {
-      if (isDone) return;
-      _llToDMessage(ll, dMessage);
+      if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
-        if (throttler)
-          throttler.decimate(() => onStreamingUpdate(dMessage, false));
-        else
-          onStreamingUpdate(dMessage, false);
+        _llToDMessage(ll, dMessage);
+        onStreamingUpdate(dMessage, false);
       }
     },
   );
@@ -512,6 +503,7 @@ export interface AixChatGenerateContent_LL {
  * @param aixContext specifies the scope of the caller, such as what's the high level objective of this call
  * @param aixStreaming requests the source to provide incremental updates
  * @param abortSignal allows the caller to stop the operation
+ * @param throttleParallelThreads allows the caller to limit the number of parallel threads
  *
  * The output is an accumulator object with the fragments, and the generator
  * pieces (metrics, model name, token stop reason)
@@ -529,6 +521,7 @@ async function _aixChatGenerateContent_LL(
   aixStreaming: boolean,
   // others
   abortSignal: AbortSignal,
+  throttleParallelThreads: number | undefined,
   // optional streaming callback
   onReassemblyUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => void,
 ): Promise<AixChatGenerateContent_LL> {
@@ -539,6 +532,11 @@ async function _aixChatGenerateContent_LL(
     /* rest start as undefined (missing in reality) */
   };
   const contentReassembler = new ContentReassembler(accumulator_LL);
+
+  // Initialize throttler if throttling is enabled
+  const throttler = (onReassemblyUpdate && throttleParallelThreads)
+    ? new ThrottleFunctionCall(throttleParallelThreads)
+    : null;
 
   try {
 
@@ -561,7 +559,12 @@ async function _aixChatGenerateContent_LL(
     // reassemble the particles
     for await (const particle of particles) {
       contentReassembler.reassembleParticle(particle, abortSignal.aborted);
-      onReassemblyUpdate?.(accumulator_LL, false);
+      if (onReassemblyUpdate && accumulator_LL.fragments.length /* we want the first update to have actual content */) {
+        if (throttler)
+          throttler.decimate(() => onReassemblyUpdate(accumulator_LL, false));
+        else
+          onReassemblyUpdate(accumulator_LL, false);
+      }
     }
 
   } catch (error: any) {
@@ -578,7 +581,8 @@ async function _aixChatGenerateContent_LL(
       if (AIX_CLIENT_DEV_ASSERTS)
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!accumulator_LL.fragments.length;
-      contentReassembler.reassembleClientException('Application error: ' + presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
+      const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error').replace('[TRPCClientError]', '');
+      contentReassembler.reassembleClientException(`An unexpected error occurred: ${errorText} Please retry.`);
     }
 
   }

@@ -17,7 +17,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DFolder } from '~/common/state/store-folders';
+import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { ANIM_BUSY_TYPING } from '~/common/util/dMessageUtils';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';

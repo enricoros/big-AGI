@@ -13,7 +13,7 @@ import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
 import { createDMessageDataInlineText, createDocAttachmentFragment, DMessageAttachmentFragment, DMessageDataInline, DMessageDocPart, DVMimeType, isContentOrAttachmentFragment, isDocPart, specialContentPartToDocAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AttachmentCreationOptions, AttachmentDraft, AttachmentDraftConverter, AttachmentDraftId, AttachmentDraftInput, AttachmentDraftSource, AttachmentDraftSourceOriginFile, DraftEgoFragmentsInputData, DraftWebInputData, DraftYouTubeInputData } from './attachment.types';
-import type { AttachmentsDraftsStore } from './store-attachment-drafts-slice';
+import type { AttachmentsDraftsStore } from './store-perchat-attachment-drafts_slice';
 import { attachmentGetLiveFileId, attachmentSourceSupportsLiveFile } from './attachment.livefile';
 import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
@@ -588,7 +588,11 @@ export async function attachmentPerformConversion(
         const pdfText = await pdfToText(pdfData, (progress: number) => {
           edit(attachment.id, { outputsConversionProgress: progress });
         });
-        newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
+        if (pdfText.trim().length < 2) {
+          // Warn the user if no text is extracted
+          // edit(attachment.id, { inputError: 'No text found in the PDF file.' });
+        } else
+          newFragments.push(createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' }));
         break;
 
       // pdf to images
@@ -620,7 +624,7 @@ export async function attachmentPerformConversion(
           break;
         }
         try {
-          // duplicated from from 'pdf-images' (different progress update)
+          // duplicated from 'pdf-images' (different progress update)
           const imageFragments: DMessageAttachmentFragment[] = [];
           const imageDataURLs = await pdfToImageDataURLs(new Uint8Array(input.data.slice(0)), DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress / 2 }); // Update progress (0% to 50%)
@@ -635,10 +639,15 @@ export async function attachmentPerformConversion(
           const pdfText = await pdfToText(new Uint8Array(input.data.slice(0)), (progress: number) => {
             edit(attachment.id, { outputsConversionProgress: 0.5 + progress / 2 }); // Update progress (50% to 100%)
           });
-          const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' });
+          if (pdfText.trim().length < 2) {
+            // Do not warn the user, as hopefully the images are useful
+          } else {
+            const textFragment = createDocAttachmentFragment(title, caption, DVMimeType.TextPlain, createDMessageDataInlineText(pdfText, 'text/plain'), refString, { ...docMeta, srcOcrFrom: 'pdf' });
+            newFragments.push(textFragment);
+          }
 
           // Add the text fragment first, then the image fragments
-          newFragments.push(textFragment, ...imageFragments);
+          newFragments.push(...imageFragments);
         } catch (error) {
           console.error('Error converting PDF to text and images:', error);
         }

@@ -3,7 +3,7 @@ import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
 import type { DMessageRole } from './chat.message';
-import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart } from './chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isVoidFragment } from './chat.fragments';
 
 
 export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragments: DMessageFragment[], addTopGlue: boolean, debugFrom: string) {
@@ -54,8 +54,6 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
       case 'image_ref':
         const forcedSize = role === 'assistant' ? 512 : undefined;
         return estimateImageTokens(forcedSize || cPart.width, forcedSize || cPart.height, debugFrom, llm);
-      case 'ph':
-        return 0;
       case 'text':
         return estimateTextTokens(cPart.text, llm, debugFrom);
       case 'tool_invocation':
@@ -63,6 +61,10 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         console.warn('Unhandled token preview for content type:', cPart.pt);
         return 0;
     }
+  } else if (isVoidFragment(fragment)) {
+    // all void fragments are ignored by definition and never sent to the llm
+    // NOTE: make sure you collapse/don't account for the containing message as well, if left empty
+    return 0;
   } else {
     console.warn('Unhandled token preview for fragment type:', (fragment as any).ft);
     return 0;

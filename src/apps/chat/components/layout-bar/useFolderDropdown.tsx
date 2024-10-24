@@ -5,7 +5,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
-import { useFolderStore } from '~/common/state/store-folders';
+import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
 
 export const ClearFolderText = 'No Folder';

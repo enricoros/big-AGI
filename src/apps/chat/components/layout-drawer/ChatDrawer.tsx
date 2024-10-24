@@ -16,7 +16,7 @@ import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CloseableMenu } from '~/common/components/CloseableMenu';
-import { DFolder, useFolderStore } from '~/common/state/store-folders';
+import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
@@ -30,7 +30,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
-import { ChatNavGrouping, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
+import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from '../layout-bar/useFolderDropdown';
 import { useChatDrawerFilters } from '../../store-app-chat';
 
@@ -78,6 +78,7 @@ function ChatDrawer(props: {
   // local state
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
   const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
+  const [searchDepth, setSearchDepth] = React.useState<ChatSearchDepth>('attachments'); // default: full search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
 
@@ -92,7 +93,7 @@ function ChatDrawer(props: {
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, filterHasDocFragments, navGrouping, searchSorting, showRelativeSize,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasStars, filterHasImageAssets, filterHasDocFragments, navGrouping, searchSorting, showRelativeSize, searchDepth,
   );
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
@@ -210,7 +211,7 @@ function ChatDrawer(props: {
           </MenuItem>
         </Menu>
       ) : (
-        // While searching, show the sorting options
+        // While searching, show the sorting and depth options
         <Menu placement='bottom-start' sx={{ minWidth: 180, zIndex: themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */ }}>
           <ListItem>
             <Typography level='body-sm'>Sort By</Typography>
@@ -223,11 +224,27 @@ function ChatDrawer(props: {
             <ListItemDecorator>{searchSorting === 'date' && <CheckRoundedIcon />}</ListItemDecorator>
             Date
           </MenuItem>
+          <ListDivider />
+          <ListItem>
+            <Typography level='body-sm'>Search In</Typography>
+          </ListItem>
+          <MenuItem selected={searchDepth === 'titles'} onClick={() => setSearchDepth('titles')}>
+            <ListItemDecorator>{searchDepth === 'titles' && <CheckRoundedIcon />}</ListItemDecorator>
+            Titles
+          </MenuItem>
+          <MenuItem selected={searchDepth === 'content'} onClick={() => setSearchDepth('content')}>
+            <ListItemDecorator>{searchDepth === 'content' && <CheckRoundedIcon />}</ListItemDecorator>
+            Titles + Content
+          </MenuItem>
+          <MenuItem selected={searchDepth === 'attachments'} onClick={() => setSearchDepth('attachments')}>
+            <ListItemDecorator>{searchDepth === 'attachments' && <CheckRoundedIcon />}</ListItemDecorator>
+            Full
+          </MenuItem>
         </Menu>
       )}
     </Dropdown>
   ), [
-    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, showPersonaIcons, showRelativeSize,
+    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, showPersonaIcons, showRelativeSize,
     toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleShowPersonaIcons, toggleShowRelativeSize,
   ]);
 

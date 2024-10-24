@@ -4,7 +4,7 @@ import TimeAgo from 'react-timeago';
 import { Box, ListDivider, ListItem, ListItemButton, ListItemDecorator, Switch, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import type { SharedChatLinkItem } from '~/modules/trade/link/store-link';
+import type { SharedChatLinkItem } from '~/modules/trade/link/store-share-link';
 
 import { Link } from '~/common/components/Link';
 import { OptimaDrawerHeader } from '~/common/layout/optima/drawer/OptimaDrawerHeader';

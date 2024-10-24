@@ -9,6 +9,11 @@ export function countWords(text: string) {
   return trimmedText.split(/\s+/).length;
 }
 
+export function countLines(text?: string) {
+  if (!text) return 0;
+  return text.split('\n').length;
+}
+
 /**
  * Convert a string (e.g., a web URL or file name) to a human-readable hyphenated format.
  * This function:

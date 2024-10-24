@@ -9,15 +9,14 @@ import { useClientWorkspaceStore } from './store-client-workspace';
 
 
 export interface WorkspaceContents {
-  workspaceId: DWorkspaceId;
+  workspaceId: DWorkspaceId | null;
   liveFilesMetadata: LiveFileMetadata[];
 }
 
 export function useWorkspaceContentsMetadata(workspaceId: DWorkspaceId | null): WorkspaceContents {
 
   // stable reference to the LiveFileIds
-  // - w/out useShallow as updates to the array contents are real
-  const workspaceLiveFileIds: LiveFileId[] | null = useClientWorkspaceStore(state => {
+  const workspaceLiveFileIds: LiveFileId[] | null = useClientWorkspaceStore(useShallow(state => {
     if (!workspaceId) return null;
 
     // as we only have LiveFiles, stop if we don't have any
@@ -26,27 +25,26 @@ export function useWorkspaceContentsMetadata(workspaceId: DWorkspaceId | null): 
 
     // re-renders if the array changes at all
     return state.liveFilesByWorkspace[workspaceId].toReversed();
-  });
+  }));
 
-  // reactive stable reference to the LiveFiles
-  // - with useShallow as map recreates the array every time
+  // reactive stable reference to the Workspace (only) LiveFiles
+  // stability note: exposes on any liveFileStore change, but only re-renders if any Workspace LiveFile changes or is added/removed
   const workspaceLiveFiles: LiveFile[] | null = useLiveFileStore(useShallow(state => {
-    // stop if we are not referencing any LiveFiles
-    if (!workspaceLiveFileIds?.length)
-      return null;
+    if (!workspaceLiveFileIds?.length) return null;
 
     // re-render if any LiveFile changes, is added or removed
-    // upcast liveFile.id -> liveFile, skipping missing, with a stable array check
     return workspaceLiveFileIds.map(id => state.liveFiles[id]).filter(Boolean);
   }));
 
   // re-renders (returns a new object) every time a dependency changes
   return React.useMemo(() => {
-    // creation of the woekspace contents (stabilized thought the memo inputs)
+    // NOTE: we could go further and stabilize individual LiveFileMetadata objects, to improve re-renders
+
+    // creation of the workspace contents (stabilized thought the memo inputs)
     const { metadataGet } = useLiveFileStore.getState();
     const liveFilesMetadata = (workspaceLiveFiles || []).map(lf => metadataGet(lf.id)).filter(Boolean) as LiveFileMetadata[];
     return {
-      workspaceId: workspaceId!,
+      workspaceId,
       liveFilesMetadata,
     };
   }, [workspaceId, workspaceLiveFiles]);

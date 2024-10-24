@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { DFolder } from '~/common/state/store-folders';
+import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
 import { getLocalMidnightInUTCTimestamp, getTimeBucketEn } from '~/common/util/timeUtils';
@@ -38,6 +38,7 @@ export type ChatNavGrouping = false | 'date' | 'persona' | 'dimension';
 
 export type ChatSearchSorting = 'frequency' | 'date';
 
+export type ChatSearchDepth = 'titles' | 'content' | 'attachments';
 
 
 function messageHasDocAttachmentFragments(message: DMessage): boolean {
@@ -87,6 +88,7 @@ export function useChatDrawerRenderItems(
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
+  searchDepth: ChatSearchDepth,
 ): ChatDrawerRenderItems {
 
   const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>();
@@ -111,8 +113,8 @@ export function useChatDrawerRenderItems(
           let hasStars = false, hasImages = false, hasDocs = false;
           for (const _m of _c.messages) {
             _m.userFlags?.forEach(flag => messageFlags.add(flag));
-            if (isSearching) {
-              const messageText = messageFragmentsReduceText(_m.fragments, '\n');
+            if (isSearching && searchDepth !== 'titles') {
+              const messageText = messageFragmentsReduceText(_m.fragments, '\n', searchDepth !== 'attachments');
               if (messageText) lcMessageSearchText += messageText.toLowerCase() + '\n';
             }
             if (!hasStars && messageHasStarredFragments(_m)) hasStars = true;
@@ -134,6 +136,7 @@ export function useChatDrawerRenderItems(
             const titleFrequency = title.toLowerCase().split(lcTextQuery).length - 1;
             const messageFrequency = lcMessageSearchText.split(lcTextQuery).length - 1;
             searchFrequency = titleFrequency + messageFrequency;
+            if (searchFrequency === 0) return null;
           }
 
           // union of message flags -> emoji string
@@ -164,7 +167,7 @@ export function useChatDrawerRenderItems(
             searchFrequency,
           };
         })
-        .filter(item => !!item && (!isSearching || item.searchFrequency > 0)) as ChatNavigationItemData[];
+        .filter(item => !!item) as ChatNavigationItemData[];
 
       // check if the active conversation has an item in the list
       const filteredChatsIncludeActive = chatNavItems.some(_c => _c.conversationId === activeConversationId);
@@ -181,7 +184,7 @@ export function useChatDrawerRenderItems(
       if (isSearching) {
 
         // start growing the render array from the nav array
-        renderNavItems = [...chatNavItems]
+        renderNavItems = [...chatNavItems];
 
         // only prepend a 'Results' group if there are results
         if (chatNavItems.length)

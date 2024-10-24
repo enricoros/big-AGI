@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixClientFunctionCallToolDefinition, aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
-import { aixCGR_FromDMessages, aixCGR_SystemMessage } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import { aixCGR_FromDMessagesOrThrow, aixCGR_SystemMessage } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { createErrorContentFragment, createPlaceholderMetaFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, createPlaceholderVoidFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { processPromptTemplate } from '~/common/util/promptUtils';
@@ -175,12 +175,12 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (suggestDiagrams && !['@startuml', '@startmindmap', '```plantuml', '```mermaid'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the diagram
-    const placeholderFragment = createPlaceholderMetaFragment('Auto-Diagram ...');
+    const placeholderFragment = createPlaceholderVoidFragment('Auto-Diagram ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     // Instructions
     const systemMessage = _getSystemMessage(diagramsTool, { personaSystemPrompt }, 'chat-followup-diagram_system');
-    const chatSequence = (await aixCGR_FromDMessages([
+    const chatSequence = (await aixCGR_FromDMessagesOrThrow([
       userMessage,
       assistantMessage,
       createDMessageTextContent('user', processPromptTemplate(diagramsTool.usr, { functionName: diagramsTool.fun.name }, 'chat-followup-diagram_reminder')),
@@ -226,12 +226,12 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (suggestHTMLUI && !['<html', '<HTML', '<Html'].some(s => assistantMessageText.includes(s))) {
 
     // Placeholder for the UI
-    const placeholderFragment = createPlaceholderMetaFragment('Auto-UI ...');
+    const placeholderFragment = createPlaceholderVoidFragment('Auto-UI ...');
     cHandler.messageFragmentAppend(assistantMessageId, placeholderFragment, false, false);
 
     // Instructions
     const systemMessage = _getSystemMessage(uiTool, { personaSystemPrompt }, 'chat-followup-htmlui_system');
-    const chatSequence = (await aixCGR_FromDMessages([
+    const chatSequence = (await aixCGR_FromDMessagesOrThrow([
       userMessage,
       assistantMessage,
       createDMessageTextContent('user', processPromptTemplate(uiTool.usr, { functionName: uiTool.fun.name }, 'chat-followup-htmlui_reminder')),

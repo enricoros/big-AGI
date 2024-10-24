@@ -322,7 +322,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (2024-01-25)',
     description: 'The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls.',
-    contextWindow: 4096,
+    contextWindow: 16385,
     maxCompletionTokens: 4096,
     trainingDataCutoff: 'Sep 2021',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],

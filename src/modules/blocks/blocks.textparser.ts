@@ -1,6 +1,7 @@
 import type { RenderBlockInputs } from './blocks.types';
 import { heuristicAllMarkdownImageReferences } from './image/RenderImageURL';
 import { heuristicIsBlockPureHTML } from './danger-html/RenderDangerousHtml';
+import { countLines } from '~/common/util/textUtils';
 
 
 export function parseBlocksFromText(text: string): RenderBlockInputs {
@@ -60,16 +61,16 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
         // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
         const blockCode: string = match[2].replace(/[\t ]+$/, '');
         const blockEnd: string = match[3];
-        blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, isPartial: !blockEnd.startsWith('```') });
+        blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
         break;
 
       case 'htmlCodeBlock':
         const preMatchHtml: string = `<!DOCTYPE html>${match[1]}</html>`;
-        blocks.push({ bkt: 'code-bk', title: 'html', code: preMatchHtml, isPartial: false });
+        blocks.push({ bkt: 'code-bk', title: 'html', code: preMatchHtml, lines: countLines(preMatchHtml), isPartial: false });
         break;
 
       case 'svgBlock':
-        blocks.push({ bkt: 'code-bk', title: 'svg', code: match[0], isPartial: false });
+        blocks.push({ bkt: 'code-bk', title: 'svg', code: match[0], lines: countLines(match[0]), isPartial: false });
         break;
     }
 

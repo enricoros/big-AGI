@@ -22,7 +22,7 @@ import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob'
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import { DMessageDataRef, DMessageImageRefPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageDataRef, DMessageImageRefPart, DMessageTextPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';
@@ -38,7 +38,14 @@ const ATTACHMENT_MIN_STYLE = {
 };
 
 const attachmentConverterSx = { width: 18, height: 18 } as const;
-const attachmentIconSx = { width: 30, height: 30 } as const;
+const attachmentIconSx = { width: 30, maxHeight: 30, overflow: 'hidden' } as const;
+
+const webPreviewImageSx = {
+  ...attachmentIconSx,
+  // transform: 'perspective(100px) rotateX(60deg)',
+  // transform: 'perspective(100px) rotateY(-20deg) rotateX(30deg)',
+  // transformStyle: 'preserve-3d',
+} as const;
 
 
 const ellipsizeLabel = (label?: string) => {
@@ -124,7 +131,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
       outputSingleImageRefDBlobs = [fragment.part.dataRef];
   }
 
-  const handleViewImage = (e: React.MouseEvent) => {
+  const handleViewFirstImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (attachmentDraft.outputFragments[0] && isImageRefPart(attachmentDraft.outputFragments[0].part))
@@ -148,7 +155,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
           <RenderImageURL
             imageURL={urlImageData}
             variant='attachment-button'
-            scaledImageSx={attachmentIconSx}
+            scaledImageSx={webPreviewImageSx}
           />
         </div>
       </TooltipOutlined>
@@ -163,7 +170,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
             dataRefMimeType={dataRef.mimeType}
             variant='attachment-button'
             scaledImageSx={attachmentIconSx}
-            onClick={handleViewImage}
+            onClick={handleViewFirstImage}
           />
         </div>
       </TooltipOutlined>
@@ -202,7 +209,7 @@ function LLMAttachmentButton(props: {
   llmAttachment: LLMAttachmentDraft,
   menuShown: boolean,
   onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
-  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
+  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void,
 }) {
 
   // derived state

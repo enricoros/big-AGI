@@ -38,7 +38,7 @@ interface OverlayActions {
   // removeOverlaysBy: (predicate: (item: OverlayItem) => boolean) => void;
 }
 
-export const useOverlayStore = create<OverlayState & OverlayActions>((set, get) => ({
+export const useLayoutOverlaysStore = create<OverlayState & OverlayActions>((set, get) => ({
 
   // state
   overlays: [],

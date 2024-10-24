@@ -17,6 +17,7 @@ type BlockInput = {
   bkt: 'code-bk';
   title: string;
   code: string;
+  lines: number;
   isPartial: boolean;
 } | {
   /* Rendered as HTML (dangerous) */

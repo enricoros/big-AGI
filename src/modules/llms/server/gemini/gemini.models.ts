@@ -38,9 +38,14 @@ const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   output: [{ upTo: 128000, price: 0.30 }, { upTo: null, price: 0.60 }],
 };
 
+const gemini15Flash8BPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: [{ upTo: 128000, price: 0.0375 }, { upTo: null, price: 0.075 }],
+  output: [{ upTo: 128000, price: 0.15 }, { upTo: null, price: 0.30 }],
+};
+
 const gemini15ProPricing: ModelDescriptionSchema['chatPrice'] = {
-  input: [{ upTo: 128000, price: 3.50 }, { upTo: null, price: 7.00 }],
-  output: [{ upTo: 128000, price: 10.50 }, { upTo: null, price: 21.00 }],
+  input: [{ upTo: 128000, price: 1.25 }, { upTo: null, price: 2.50 }],
+  output: [{ upTo: 128000, price: 5.00 }, { upTo: null, price: 10.00 }],
 };
 
 const gemini10ProPricing: ModelDescriptionSchema['chatPrice'] = {
@@ -69,7 +74,7 @@ const _knownGeminiModels: ({
   {
     id: 'models/gemini-1.5-flash',
     // Defaults to version 002 on Oct 8, 2024
-    symLink: 'models/gemini-1.5-flash-001',
+    symLink: 'models/gemini-1.5-flash-002',
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     benchmark: { cbaElo: 1227 },
@@ -90,6 +95,27 @@ const _knownGeminiModels: ({
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /* Tuning ... */],
     hidden: true,
+  },
+
+  // Gemini 1.5 Flash-8B Models
+  {
+    id: 'models/gemini-1.5-flash-8b-latest',
+    isPreview: false,
+    chatPrice: gemini15Flash8BPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+  },
+  {
+    id: 'models/gemini-1.5-flash-8b',
+    symLink: 'models/gemini-1.5-flash-8b-001',
+    chatPrice: gemini15Flash8BPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    // benchmark: { cbaElo: value if known },
+  },
+  {
+    id: 'models/gemini-1.5-flash-8b-001',
+    chatPrice: gemini15Flash8BPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    // benchmark: { cbaElo: value if known },
   },
 
   // Experimental Gemini 1.5 Flash Models
@@ -123,8 +149,7 @@ const _knownGeminiModels: ({
   },
   {
     id: 'models/gemini-1.5-pro',
-    // Defaults to version 002 on Oct 8, 2024
-    symLink: 'models/gemini-1.5-pro-001',
+    symLink: 'models/gemini-1.5-pro-002',
     chatPrice: gemini15ProPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
   },
@@ -273,3 +298,4 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     hidden,
   };
 }
+

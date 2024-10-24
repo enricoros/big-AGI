@@ -1,6 +1,6 @@
 {
   "name": "big-agi",
-  "version": "1.16.0",
+  "version": "1.91.0",
   "private": true,
   "author": "Enrico Ros <enrico.ros@gmail.com>",
   "repository": "https://github.com/enricoros/big-agi",
@@ -71,7 +71,7 @@
     "turndown": "^7.2.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3",
-    "zustand": "^4.5.5"
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "0.0.11",

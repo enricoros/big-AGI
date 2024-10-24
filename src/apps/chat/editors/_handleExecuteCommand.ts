@@ -1,7 +1,7 @@
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import { createTextContentFragment, DMessageFragment, isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import { extractChatCommand, helpPrettyChatCommands } from '../commands/commands.registry';
 import { runBrowseGetPageUpdatingState } from './browse-load';
@@ -15,7 +15,7 @@ export const RET_NO_CMD = 'no-cmd';
 export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessageFirstFragment: DMessageFragment, lastMessage: Readonly<DMessage>, cHandler: ConversationHandler, chatLLMId: DLLMId) {
 
   // commands must have a first Content DMessageTextPart
-  if (!isContentFragment(lastMessageFirstFragment) || !isTextPart(lastMessageFirstFragment.part))
+  if (!isTextContentFragment(lastMessageFirstFragment))
     return RET_NO_CMD;
 
   // check if we have a command

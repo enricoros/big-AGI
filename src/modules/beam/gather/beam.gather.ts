@@ -6,7 +6,7 @@ import type { DMessage } from '~/common/stores/chat/chat.message';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
-import { RootStoreSlice } from '../store-beam-vanilla';
+import { RootStoreSlice } from '../store-beam_vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
 import { updateBeamLastConfig } from '../store-module-beam';

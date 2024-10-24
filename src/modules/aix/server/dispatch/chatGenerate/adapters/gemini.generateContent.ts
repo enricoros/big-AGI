@@ -53,8 +53,10 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
-  if (!validated.success)
-    throw new Error(`Invalid message sequence for Gemini models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}`);
+  if (!validated.success) {
+    console.warn('Gemini: invalid generateContent payload. Error:', validated.error.message);
+    throw new Error(`Invalid sequence for Gemini models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+  }
 
   return validated.data;
 }
@@ -158,6 +160,10 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
                   } catch (e) {
                     console.warn('Gemini: failed to parse (string -> JSON) function response result', e);
                     functionResponseResponse = { output: toolErrorPrefix + part.response.result };
+                  }
+                  if (Array.isArray(functionResponseResponse)) {
+                    console.warn('toGeminiContents: Gemini requires results of function calls to be objects', { result: functionResponseResponse });
+                    throw new Error('Gemini: unexpected array as function response');
                   }
                 } else {
                   functionResponseResponse = part.response.result;

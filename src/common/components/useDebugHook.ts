@@ -1,7 +1,7 @@
+// noinspection JSUnusedGlobalSymbols
 import * as React from 'react';
 
 
-// noinspection JSUnusedGlobalSymbols
 /**
  * Useful for debugging React hooks.
  * - will show a stable unique Id, consistent during the lifetime of the component
@@ -45,3 +45,32 @@ function _getRandom1000() {
   return number;
 }
 
+/**
+ * Detects what changes within an array of dependencies between renders.
+ */
+export function useDebugHookChanges(deps: React.DependencyList, debugLocation: string) {
+  const prevDeps = React.useRef<React.DependencyList>(deps);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  React.useEffect(() => {
+    const changedDeps = deps
+      .map((dep, i) => {
+        if (dep !== prevDeps.current[i]) {
+          return {
+            index: i,
+            from: prevDeps.current[i],
+            to: dep,
+          };
+        }
+        return null;
+      })
+      .filter(
+        (change): change is { index: number; from: any; to: any } => change !== null,
+      );
+
+    if (changedDeps.length > 0)
+      console.log(debugLocation, 'deps changed:', changedDeps);
+
+    prevDeps.current = deps;
+  }, deps);
+}

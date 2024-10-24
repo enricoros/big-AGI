@@ -79,3 +79,25 @@ export function useShallowStable<T>(value: T): StableType<T> {
 }
 
 type StableType<T> = T extends any[] ? T : T extends object ? T : never;
+
+
+/**
+ * Returns a `function` that will stabilize the object reference
+ * when the value has not 'shallow' changed.
+ *
+ * Example:
+ *   ...
+ *   const stabilizePrinter = useShallowStabilizer<PrinterObjectType>();
+ *   ...
+ *   const printer = stabilizePrinter({...printerValue});
+ *   ...
+ */
+export function useShallowStabilizer<T>(): (value: T) => T {
+  const ref = React.useRef<T | null>(null);
+
+  return React.useCallback((value: T) => {
+    if (ref.current === null || !shallowEquals<T>(ref.current, value))
+      ref.current = value;
+    return ref.current;
+  }, []);
+}

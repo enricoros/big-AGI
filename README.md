@@ -229,4 +229,4 @@ the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
 
 ---
 
-2023-2024 · Enrico Ros x [big-AGI](https://big-agi.com) · License: [MIT](LICENSE) · Made with 💙
+2023-2024 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐

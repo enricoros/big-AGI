@@ -87,8 +87,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = OpenAIWire_API_Chat_Completions.Request_schema.safeParse(payload);
-  if (!validated.success)
-    throw new Error(`Invalid message sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}`);
+  if (!validated.success) {
+    console.warn('OpenAI: invalid chatCompletions payload. Error:', validated.error);
+    throw new Error(`Invalid sequence for OpenAI models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+  }
 
   // if (hotFixUseDeprecatedFunctionCalls)
   //   validated.data = _fixUseDeprecatedFunctionCalls(validated.data);

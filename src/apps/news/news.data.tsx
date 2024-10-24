@@ -14,6 +14,7 @@ import { PerplexityIcon } from '~/common/components/icons/vendors/PerplexityIcon
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
+import { Release } from '~/common/app.release';
 import { clientUtmSource } from '~/common/util/pwaUtils';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
@@ -51,15 +52,18 @@ interface NewsItem {
 
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
-  /*{
-    versionCode: '1.17.0',
+  {
+    versionCode: Release.App.versionCode,
+    versionName: Release.App.versionName,
+    versionDate: new Date('2024-10-15T01:00:00Z'),
     items: [
-      Screen Capture (when removed from labs)
-      Auto-Merge
-      Draw
-      ...
-    ]
-  }*/
+      { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI V2. This version is used by developers to implement long-term breaking features.</> },
+      { text: <>This branch previews experimental features that are subject to change and may break without notice.</> },
+      { text: <>Please report screenshots of breakages and console error messages.</> },
+      { text: <>Please note that this is not the official release.</> },
+      { text: <>For stable releases: <ExternalLink href='https://big-agi.com'>big-agi.com</ExternalLink>.</> },
+    ],
+  },
   {
     versionCode: '1.16.8',
     versionName: 'Crystal Clear',

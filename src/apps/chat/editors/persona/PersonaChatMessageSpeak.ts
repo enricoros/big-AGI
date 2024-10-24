@@ -1,6 +1,6 @@
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 
-import { isContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AixChatGenerateContent_DMessage } from '~/modules/aix/client/aix.client';
 
@@ -20,7 +20,7 @@ export class PersonaChatMessageSpeak implements PersonaProcessorInterface {
     if (this.autoSpeakType === 'off' || this.spokenLine) return;
 
     // Require a Content.Text first fragment
-    if (!accumulatedMessage.fragments?.length || !isContentFragment(accumulatedMessage.fragments[0]) || !isTextPart(accumulatedMessage.fragments[0].part))
+    if (!accumulatedMessage.fragments?.length || !isTextContentFragment(accumulatedMessage.fragments[0]))
       return;
     const text = accumulatedMessage.fragments[0].part.text;
 
