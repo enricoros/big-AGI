@@ -7,10 +7,10 @@ import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 import type { BFusion } from './beam.gather';
 import type { FusionFactorySpec } from './instructions/beam.gather.factories';
-import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 
 export const FusionControlsMemo = React.memo(FusionControls);
@@ -30,7 +30,7 @@ function FusionControls(props: {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
-      {/* LLM Icon */}
+      {/* LLM Icon with Tooltip */}
       {!!props.llmVendorIcon && (
         <TooltipOutlined asLargePane enableInteractive title={props.fusionAvatarTooltip || props.llmLabel} placement='top-start'>
           <Box sx={{ display: 'flex' }}>
@@ -74,6 +74,7 @@ function FusionControls(props: {
           )}
       </Sheet>
 
+      {/* Generate / Stop Button */}
       {!props.isFusing ? (
         <GoodTooltip title={!props.isUsable ? 'Start Merge' : 'Retry'}>
           <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
@@ -88,6 +89,7 @@ function FusionControls(props: {
         </GoodTooltip>
       )}
 
+      {/* Remove Button */}
       <GoodTooltip title='Remove'>
         <IconButton size='sm' variant='plain' color='neutral' onClick={props.onRemove}>
           <RemoveCircleOutlineRoundedIcon />
