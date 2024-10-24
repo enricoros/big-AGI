@@ -21,6 +21,7 @@ import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager
 import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
+import { Release } from '~/common/app.release';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
@@ -201,8 +202,10 @@ export function AppChat() {
 
   // [effect] Handle the initial conversation intent
   React.useEffect(() => {
-    intent.initialConversationId && handleOpenConversationInFocusedPane(intent.initialConversationId);
-  }, [handleOpenConversationInFocusedPane, intent.initialConversationId]);
+    if (Release.DevBuild && intent.initialConversationId === 'null')
+      return openConversationInFocusedPane(null! /* for debugging purporse */);
+    intent.initialConversationId && openConversationInFocusedPane(intent.initialConversationId);
+  }, [intent.initialConversationId, openConversationInFocusedPane]);
 
   // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
   React.useEffect(() => {
