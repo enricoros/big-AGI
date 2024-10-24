@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import { ASREngineList, TTSEngineList } from '~/common/components/useVoiceCapabilities';
+import { ASREngineKey, ASREngineList, TTSEngineKey, TTSEngineList } from '~/common/components/useVoiceCapabilities';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 
@@ -52,11 +52,11 @@ interface AppChatStore {
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
-  TTSEngine: string;
-  setTTSEngine: (TTSEngine: string) => void;
+  TTSEngine: TTSEngineKey;
+  setTTSEngine: (TTSEngine: TTSEngineKey) => void;
 
-  ASREngine: string;
-  setASREngine: (ASREngine: string) => void;
+  ASREngine: ASREngineKey;
+  setASREngine: (ASREngine: ASREngineKey) => void;
 
   showPersonaIcons: boolean;
   setShowPersonaIcons: (showPersonaIcons: boolean) => void;
@@ -121,11 +121,11 @@ const useAppChatStore = create<AppChatStore>()(persist(
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
 
-    TTSEngine: TTSEngineList[0],
-    setTTSEngine: (TTSEngine: string) => _set({ TTSEngine }),
+    TTSEngine: TTSEngineList[0].key,
+    setTTSEngine: (TTSEngine: TTSEngineKey) => _set({ TTSEngine }),
 
-    ASREngine: ASREngineList[0],
-    setASREngine: (ASREngine: string) => _set({ ASREngine }),
+    ASREngine: ASREngineList[0].key,
+    setASREngine: (ASREngine: ASREngineKey) => _set({ ASREngine }),
 
     showPersonaIcons: true,
     setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons }),
@@ -211,11 +211,11 @@ export const useChatMicTimeoutMsValue = (): number =>
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(useShallow(state => [state.micTimeoutMs, state.setMicTimeoutMs]));
 
-export const useTTSEngine = (): [string, (micTimeoutMs: string) => void] =>
+export const useTTSEngine = (): [TTSEngineKey, (TTSEngine: TTSEngineKey) => void] =>
   useAppChatStore(useShallow(state => [state.TTSEngine, state.setTTSEngine]));
 export const getTTSEngine = () => useAppChatStore.getState().TTSEngine;
 
-export const useASREngine = (): [string, (micTimeoutMs: string) => void] =>
+export const useASREngine = (): [ASREngineKey, (ASREngine: ASREngineKey) => void] =>
   useAppChatStore(useShallow(state => [state.ASREngine, state.setASREngine]));
 
 export const useChatDrawerFilters = () => {

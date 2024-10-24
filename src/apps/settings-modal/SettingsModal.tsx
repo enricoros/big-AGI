@@ -198,10 +198,10 @@ export function SettingsModal(props: {
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
             </Topic>
-            {TTSEngine === 'Elevenlabs' && <Topic icon='📢' title='ElevenLabs API'>
+            {TTSEngine === 'elevenlabs' && <Topic icon='📢' title='ElevenLabs API'>
               <ElevenlabsSettings />
             </Topic>}
-            {TTSEngine === 'Web Speech API' && <Topic icon='📢' title='Web Speech API'>
+            {TTSEngine === 'webspeech' && <Topic icon='📢' title='Web Speech API'>
               <BrowserSpeechSettings />
             </Topic>}
           </Topics>
