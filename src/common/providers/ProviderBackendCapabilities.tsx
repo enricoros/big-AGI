@@ -83,7 +83,8 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
 
   // fetch capabilities
   const { data } = apiQuery.backend.listCapabilities.useQuery(undefined, {
-    staleTime: 1000 * 60 * 60 * 24, // 1 day
+    staleTime: Release.Features.BACKEND_REVALIDATE_INTERVAL,
+    refetchOnWindowFocus: true, // refetch after a long idle
   });
 
 
