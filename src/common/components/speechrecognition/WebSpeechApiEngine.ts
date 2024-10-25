@@ -142,9 +142,9 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
           chunk += '.';
 
         if (result.isFinal)
-          this.results.transcript += _chunkExpressionReplaceEN(this.results.transcript + chunk + ' ');
+          this.results.transcript = _chunkExpressionReplaceEN(this.results.transcript + chunk + ' ');
         else
-          this.results.interimTranscript += _chunkExpressionReplaceEN(this.results.interimTranscript + chunk + ' ');
+          this.results.interimTranscript = _chunkExpressionReplaceEN(this.results.interimTranscript + chunk + ' ');
       }
       this.onResultCallback(this.results);
 
