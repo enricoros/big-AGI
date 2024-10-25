@@ -50,7 +50,7 @@ export function GoodModal(props: {
       backdrop: {
         sx: {
           backgroundColor: `rgba(var(--joy-palette-${props.themedColor}-darkChannel) / 0.3)`,
-          backdropFilter: 'blur(32px)',
+          backdropFilter: props.unfilterBackdrop ? 'none' : 'blur(32px)',
         },
       },
     } : props.unfilterBackdrop ? noBackdropSlotProps : undefined;
