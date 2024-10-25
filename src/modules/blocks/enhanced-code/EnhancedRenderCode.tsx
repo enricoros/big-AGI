@@ -117,7 +117,7 @@ export function EnhancedRenderCode(props: {
       {/*<div>Text Buffer Id</div>*/}
       {/*<div>{fragmentId}</div>*/}
     </Box>
-  ), [props.code, props.semiStableId, props.title]);
+  ), [props.code, props.isPartial, props.semiStableId, props.title]);
 
   const headerRow = React.useMemo(() => {
     const Icon = CodeIcon;
