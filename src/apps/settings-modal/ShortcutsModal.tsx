@@ -28,8 +28,8 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + Shift + N | **New** chat                            |
 | Ctrl + Shift + X | **Reset** chat                          |
 | Ctrl + Shift + D | **Delete** chat                         |
-| Ctrl + Up        | Previous message                        |
-| Ctrl + Down      | Next message                            |
+| Ctrl + Up        | Previous message (hold shift for top)   |
+| Ctrl + Down      | Next message (hold shift to bottom)     |
 | Ctrl + [         | **Previous** chat (in history)          |
 | Ctrl + ]         | **Next** chat (in history)              |
 | **Settings**     |                                         |

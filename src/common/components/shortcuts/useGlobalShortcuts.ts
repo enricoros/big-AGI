@@ -14,6 +14,8 @@ export const ShortcutKey = {
   Right: 'ArrowRight',
   Up: 'ArrowUp',
   Down: 'ArrowDown',
+  PageUp: 'PageUp',
+  PageDown: 'PageDown',
 };
 
 export interface ShortcutObject {
