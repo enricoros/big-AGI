@@ -10,7 +10,7 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
-import { VideoPlayer } from '~/common/components/VideoPlayer';
+import { VideoPlayerYouTube } from '~/common/components/VideoPlayerYouTube';
 
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -44,7 +44,7 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
       expandedVariant='solid'
       startCollapsed
     >
-      <VideoPlayer width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
+      <VideoPlayerYouTube width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
     </ExpanderAccordion>
 
     <Typography level='body-sm'>
