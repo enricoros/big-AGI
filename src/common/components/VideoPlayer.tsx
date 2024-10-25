@@ -7,18 +7,21 @@ type VideoPlayerProps = YouTubePlayerProps & {
   // make the player responsive
   responsive?: boolean;
   // set this to not set the full URL
+  vimeoVideoId?: string;
+  // set this to not set the full URL
   youTubeVideoId?: string;
 };
 
 const VideoPlayerDynamic = React.lazy(async () => {
 
   // dynamically import react-player (saves 7kb but still..)
+  const { default: ReactPlayerVimeo } = await import('react-player/vimeo');
   const { default: ReactPlayerYouTube } = await import('react-player/youtube');
 
   return {
     default: (props: YouTubePlayerProps) => {
 
-      const { responsive, youTubeVideoId, ...baseProps } = props;
+      const { responsive, youTubeVideoId, vimeoVideoId, ...baseProps } = props;
 
       // responsive patch
       if (responsive) {
@@ -26,11 +29,17 @@ const VideoPlayerDynamic = React.lazy(async () => {
         baseProps.height = '100%';
       }
 
-      // fill in the URL if we have a YouTube video ID
-      if (youTubeVideoId) {
-        baseProps.url = `https://www.youtube.com/watch?v=${youTubeVideoId}`;
-      }
+      // Vimeo Video ID
+      if (props.vimeoVideoId)
+        baseProps.url = `https://vimeo.com/${props.vimeoVideoId}`;
+      if (baseProps.url?.indexOf('vimeo.') > 0)
+        return <ReactPlayerVimeo {...baseProps} />;
 
+      // YouTube video ID
+      if (youTubeVideoId)
+        baseProps.url = `https://www.youtube.com/watch?v=${youTubeVideoId}`;
+
+      // fallback to YouTube
       return <ReactPlayerYouTube {...baseProps} />;
     },
   };
