@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
 
 
 const noBackdropSlotProps = {
@@ -22,6 +22,7 @@ export function GoodModal(props: {
   strongerTitle?: boolean,
   noTitleBar?: boolean,
   dividers?: boolean,
+  themedColor?: ColorPaletteProp,
   closeText?: string, // defaults to 'Close'
   animateEnter?: boolean,
   unfilterBackdrop?: boolean, // this should be left to the theme, but we're gonna use it for the models
@@ -50,6 +51,9 @@ export function GoodModal(props: {
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
+          color={props.themedColor}
+          variant={props.themedColor ? 'soft' : undefined}
+          invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
           sx={dialogSx}
         >
