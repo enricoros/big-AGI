@@ -36,18 +36,31 @@ export function GoodModal(props: {
   const showBottomClose = !!props.onClose && props.hideBottomClose !== true;
 
   const dialogSx: SxProps = React.useMemo(() => ({
+    borderRadius: 'xl',
+    boxShadow: props.themedColor ? 'none' : undefined,
     minWidth: { xs: 360, sm: 500, md: 600, lg: 700 },
     maxWidth: 700,
     display: 'grid',
     gap: 'var(--Card-padding)',
     ...props.sx,
-  }), [props.sx]);
+  }), [props.sx, props.themedColor]);
+
+  const backdropSx = React.useMemo(() => {
+    return props.themedColor ? {
+      backdrop: {
+        sx: {
+          backgroundColor: `rgba(var(--joy-palette-${props.themedColor}-darkChannel) / 0.3)`,
+          backdropFilter: 'blur(32px)',
+        },
+      },
+    } : props.unfilterBackdrop ? noBackdropSlotProps : undefined;
+  }, [props.themedColor, props.unfilterBackdrop]);
 
   return (
     <Modal
       open={props.open}
       onClose={props.onClose}
-      slotProps={!props.unfilterBackdrop ? undefined : noBackdropSlotProps}
+      slotProps={backdropSx}
     >
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
