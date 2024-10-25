@@ -71,7 +71,7 @@ export function GoodModal(props: {
           {props.children}
           {/*</Box>*/}
 
-          {props.dividers === true && <Divider />}
+          {props.dividers === true && (!!props.startButton || showBottomClose) && <Divider />}
 
           {(!!props.startButton || showBottomClose) && <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
             {props.startButton}
