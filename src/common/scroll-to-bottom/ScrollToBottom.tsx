@@ -296,7 +296,7 @@ export function ScrollToBottom(props: {
       skipNextAutoScroll,
     }}>
       {/* Scrollable v-maxed */}
-      <Box ref={scrollableElementRef} role='scrollable' sx={!props.sx ? scrollableBoxSx : ({
+      <Box ref={scrollableElementRef} role={'scrollable' /* hardcoded, important */} sx={!props.sx ? scrollableBoxSx : ({
         ...scrollableBoxSx,
         ...props.sx,
       } as SxProps)}>
