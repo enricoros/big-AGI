@@ -2,7 +2,7 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
-import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
+import { CapabilitySpeechSynthesis } from '~/common/components/useCapabilities';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
@@ -17,7 +17,7 @@ export const isElevenLabsEnabled = (apiKey?: string) => apiKey
   : getBackendCapabilities().hasVoiceElevenLabs;
 
 
-export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
+export function useCapability(): CapabilitySpeechSynthesis {
   const [clientApiKey, voiceId] = useElevenLabsData();
   const isConfiguredServerSide = getBackendCapabilities().hasVoiceElevenLabs;
   const isConfiguredClientSide = clientApiKey ? isValidElevenLabsApiKey(clientApiKey) : false;

@@ -18,7 +18,7 @@ import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
 import { Release } from '~/common/app.release';
 
 // capabilities access
-import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapabilityTextToImage } from '~/common/components/useCapabilities';
+import { useCapabilityBrowserSpeechRecognition, useVoiceCapability, useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
 // stores access
 import { getLLMsDebugInfo } from '~/common/stores/llms/store-llms';
@@ -95,7 +95,7 @@ function AppDebug() {
   const cProduct = {
     capabilities: {
       mic: useCapabilityBrowserSpeechRecognition(),
-      elevenLabs: useCapabilityElevenLabs(),
+      elevenLabs: useVoiceCapability(),
       textToImage: useCapabilityTextToImage(),
     },
     models: getLLMsDebugInfo(),
