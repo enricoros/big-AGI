@@ -12,7 +12,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "vercel:env:pull": "npx vercel env pull .env.development.local"
+    "vercel:env:pull": "npx vercel env pull .env.development.local",
+    "test": "vitest run"
   },
   "prisma": {
     "schema": "src/server/prisma/schema.prisma"
@@ -86,7 +87,8 @@
     "eslint-config-next": "^14.2.3",
     "prettier": "^3.2.5",
     "prisma": "^5.13.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.2"
   },
   "engines": {
     "node": "^20.0.0 || ^18.0.0"
