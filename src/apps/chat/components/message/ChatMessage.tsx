@@ -594,6 +594,7 @@ export function ChatMessage(props: {
     <Box
       component='li'
       role='chat-message'
+      tabIndex={-1 /* for shortcuts navigation */}
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
       sx={listItemSx}
       // className={messagePendingIncomplete ? 'agi-border-4' /* CSS Effect while in progress */ : undefined}
