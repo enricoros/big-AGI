@@ -24,6 +24,7 @@ import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandl
 import { Release } from '~/common/app.release';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
+import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
@@ -35,7 +36,6 @@ import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaApp
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useChatLLM } from '~/common/stores/llms/llms.hooks';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
-import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
@@ -489,6 +489,22 @@ export function AppChat() {
     optimaActions().openModelOptions(chatLLMId);
   }, []);
 
+  const handleMoveFocus = React.useCallback((direction: number) => {
+    const messageElements = Array.from(document.querySelectorAll('[role=chat-message]'));
+    const activeElement = document.activeElement;
+    const currentIndex = messageElements.findIndex(el => el.contains(activeElement));
+
+    // If no element is focused, start from the beginning/end
+    const nextIndex = currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1)
+      : currentIndex + direction;
+
+    if (nextIndex >= 0 && nextIndex < messageElements.length) {
+      const targetElement = messageElements[nextIndex];
+      if ('focus' in targetElement) (targetElement as any).focus();
+      // targetElement?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
   useGlobalShortcuts('AppChat', React.useMemo(() => [
     // focused conversation
     { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
@@ -500,12 +516,15 @@ export function AppChat() {
     { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
     { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
     { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
+    // change active message (in any possible panel)
+    { key: ShortcutKey.Up, ctrl: true, action: () => handleMoveFocus(-1) },
+    { key: ShortcutKey.Down, ctrl: true, action: () => handleMoveFocus(1) },
     // open the dropdowns
     { key: 'l', ctrl: true, action: () => llmDropdownRef.current?.openListbox() /*, description: 'Open Models Dropdown'*/ },
     { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
-  ], [focusedPaneConversationId, handleConversationReset, handleConversationNewInFocusedPane, handleDeleteConversations, handleConversationsImportFormFilePicker, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   return <>
