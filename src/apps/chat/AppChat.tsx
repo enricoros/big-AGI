@@ -499,16 +499,27 @@ export function AppChat() {
       messageListElement = document.querySelector('[role=chat-messages-list]') as HTMLElement;
     if (!messageListElement) return;
 
+    // find the scrollable container and if we're at the bottom
+    const scrollContainer = messageListElement.closest('[role=scrollable]') as HTMLElement;
+    if (!scrollContainer) return;
+    const isAtBottom = Math.abs(scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight) < 1;
+
     // determine the current message and next index
     const messageElements = Array.from(messageListElement.querySelectorAll('[role=chat-message]')) as HTMLElement[];
     const currentIndex = messageElements.findIndex(el => el.contains(activeElement));
-    const nextIndex = currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1) : currentIndex + direction;
+
+    // if going down and we're at/past the last message, scroll to bottom
+    const snapToBottom = direction > 0 && (currentIndex === -1 || currentIndex >= messageElements.length - 1);
+    const nextIndex = snapToBottom ? messageElements.length - 1
+      : (isAtBottom && direction < 0) ? currentIndex
+        : currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1)
+          : currentIndex + direction;
     if (nextIndex < 0 || nextIndex >= messageElements.length) return;
 
     // perform the smooth scroll and focus
     const targetElement = messageElements[nextIndex];
     targetElement.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
-    targetElement.scrollIntoView({ behavior: 'smooth' });
+    targetElement.scrollIntoView({ behavior: 'smooth', block: snapToBottom ? 'end' : 'start' });
   }, []);
 
   useGlobalShortcuts('AppChat', React.useMemo(() => [
