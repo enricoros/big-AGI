@@ -1,14 +1,17 @@
 import * as React from 'react';
 
-import { FormControl } from '@mui/joy';
+import { FormControl, Option, Select } from '@mui/joy';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-import { useASREngine, useChatAutoAI, useChatMicTimeoutMs, useTTSEngine } from '../chat/store-app-chat';
+import { useASREngine, useChatAutoAI, useChatMicTimeoutMs } from '../chat/store-app-chat';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { LanguageSelect } from '~/common/components/LanguageSelect';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { hasVoices, ASREngineList, TTSEngineList, TTSEngineKey } from '~/common/components/useVoiceCapabilities';
+import { ASREngineKey, ASREngineList } from '~/modules/asr/asr.client';
+import { TTSEngineKey, TTSEngineList, useTTSEngine } from '~/modules/tts/useTTSStore';
+import { useTTSCapability } from '~/modules/tts/tts.client.hooks';
 
 export function VoiceSettings() {
   // external state
@@ -22,6 +25,18 @@ export function VoiceSettings() {
   // this converts from string keys to numbers and vice versa
   const chatTimeoutValue: string = '' + chatTimeoutMs;
   const setChatTimeoutValue = (value: string) => value && setChatTimeoutMs(parseInt(value));
+
+  const { mayWork: hasVoices } = useTTSCapability();
+
+  const handleTTSChanged = (_event: any, newValue: TTSEngineKey | null) => {
+    if (!newValue) return;
+    setTTSEngine(newValue);
+  };
+
+  const handleASRChanged = (_event: any, newValue: ASREngineKey | null) => {
+    if (!newValue) return;
+    setASREngine(newValue);
+  };
 
   return (
     <>
@@ -63,23 +78,44 @@ export function VoiceSettings() {
         onChange={setAutoSpeak}
       />
 
-      <FormRadioControl
-        title="TTS engine"
-        description="Text to speech"
-        tooltip=""
-        options={TTSEngineList.map((i) => ({ value: i.key, label: i.label }))}
-        value={TTSEngine}
-        onChange={setTTSEngine}
-      />
+      <FormControl orientation="horizontal" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormLabelStart title="TTS engine" description="Text to speech / voice synthesis" tooltip="" />
 
-      <FormRadioControl
-        title="ASR engine"
-        description="Automatic Speech Recognition"
-        tooltip=""
-        options={ASREngineList.map((i) => ({ value: i.key, label: i.label }))}
-        value={ASREngine}
-        onChange={setASREngine}
-      />
+        <Select
+          value={TTSEngine}
+          onChange={handleTTSChanged}
+          indicator={<KeyboardArrowDownIcon />}
+          slotProps={{
+            root: { sx: { minWidth: 200 } },
+            indicator: { sx: { opacity: 0.5 } },
+          }}
+        >
+          {TTSEngineList.map((i) => (
+            <Option key={i.key} value={i.key}>
+              {i.label}
+            </Option>
+          ))}
+        </Select>
+      </FormControl>
+
+      <FormControl orientation="horizontal" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormLabelStart title="ASR engine" description="Automatic Speech Recognition" tooltip="" />
+        <Select
+          value={ASREngine}
+          onChange={handleASRChanged}
+          indicator={<KeyboardArrowDownIcon />}
+          slotProps={{
+            root: { sx: { minWidth: 200 } },
+            indicator: { sx: { opacity: 0.5 } },
+          }}
+        >
+          {ASREngineList.map((i) => (
+            <Option key={i.key} value={i.key}>
+              {i.label}
+            </Option>
+          ))}
+        </Select>
+      </FormControl>
     </>
   );
 }

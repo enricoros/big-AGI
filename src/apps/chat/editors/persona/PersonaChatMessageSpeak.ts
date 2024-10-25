@@ -1,4 +1,4 @@
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { speakText } from '~/modules/tts/tts.client';
 
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 

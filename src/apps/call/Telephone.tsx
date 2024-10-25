@@ -13,10 +13,10 @@ import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown';
 
-import { EXPERIMENTAL_speakTextStream } from '~/common/components/useVoiceCapabilities';
+import { EXPERIMENTAL_speakTextStream } from '~/modules/tts/tts.client';
 import { SystemPurposeId, SystemPurposes } from '../../data';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
-import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
+import { TTSSetting } from '~/modules/tts/tts.setting';
 
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
@@ -39,6 +39,7 @@ import { CallStatus } from './components/CallStatus';
 import { useAppCallStore } from './state/store-app-call';
 
 
+
 function CallMenuItems(props: {
   pushToTalk: boolean,
   setPushToTalk: (pushToTalk: boolean) => void,
@@ -48,8 +49,7 @@ function CallMenuItems(props: {
 
   // external state
   const { grayUI, toggleGrayUI } = useAppCallStore();
-  const { voicesDropdown } = useElevenLabsVoiceDropdown(false, !props.override);
-
+  
   const handlePushToTalkToggle = () => props.setPushToTalk(!props.pushToTalk);
 
   const handleChangeVoiceToggle = () => props.setOverride(!props.override);
@@ -68,10 +68,10 @@ function CallMenuItems(props: {
       <Switch checked={props.override} onChange={handleChangeVoiceToggle} sx={{ ml: 'auto' }} />
     </MenuItem>
 
-    <MenuItem>
-      <ListItemDecorator>{' '}</ListItemDecorator>
-      {voicesDropdown}
+    <MenuItem sx={{flexWrap: 'wrap'}}>
+      <TTSSetting />
     </MenuItem>
+    
 
     <ListDivider />
 

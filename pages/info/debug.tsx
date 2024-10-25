@@ -18,7 +18,8 @@ import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
 import { Release } from '~/common/app.release';
 
 // capabilities access
-import { useCapabilityBrowserSpeechRecognition, useVoiceCapability, useCapabilityTextToImage } from '~/common/components/useCapabilities';
+import { useCapabilityBrowserSpeechRecognition, useCapabilityTextToImage } from '~/common/components/useCapabilities';
+import { useTTSCapability } from '~/modules/tts/tts.client.hooks';
 
 // stores access
 import { getLLMsDebugInfo } from '~/common/stores/llms/store-llms';
@@ -95,7 +96,7 @@ function AppDebug() {
   const cProduct = {
     capabilities: {
       mic: useCapabilityBrowserSpeechRecognition(),
-      elevenLabs: useVoiceCapability(),
+      elevenLabs: useTTSCapability(),
       textToImage: useCapabilityTextToImage(),
     },
     models: getLLMsDebugInfo(),

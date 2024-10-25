@@ -21,18 +21,6 @@ export interface CapabilityBrowserSpeechRecognition {
 
 export { browserSpeechRecognitionCapability as useCapabilityBrowserSpeechRecognition } from './speechrecognition/useSpeechRecognition';
 
-
-/// Speech Synthesis
-
-export interface CapabilitySpeechSynthesis {
-  mayWork: boolean;
-  isConfiguredServerSide: boolean;
-  isConfiguredClientSide: boolean;
-}
-
-export { useCapability as useVoiceCapability } from '~/common/components/useVoiceCapabilities';
-
-
 /// Image Generation
 
 export interface TextToImageProvider {

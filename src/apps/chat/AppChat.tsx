@@ -10,7 +10,7 @@ import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { speakText } from '~/common/components/useVoiceCapabilities';
+import { speakText } from '~/modules/tts/tts.client';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 

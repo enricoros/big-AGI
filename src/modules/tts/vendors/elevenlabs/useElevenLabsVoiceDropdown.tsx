@@ -8,7 +8,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { apiQuery } from '~/common/util/trpc.client';
 
 import { VoiceSchema } from './elevenlabs.router';
-import { isElevenLabsEnabled } from './elevenlabs.client';
+import { isElevenLabsEnabled } from './elevenlabs.vendor';
 import { useElevenLabsApiKey, useElevenLabsVoiceId } from './store-module-elevenlabs';
 
 

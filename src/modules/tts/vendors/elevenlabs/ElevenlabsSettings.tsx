@@ -5,9 +5,8 @@ import { FormControl } from '@mui/joy';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { useVoiceCapability } from '~/common/components/useCapabilities';
 
-import { isElevenLabsEnabled } from './elevenlabs.client';
+import { elevenlabs, isElevenLabsEnabled } from './elevenlabs.vendor';
 import { useElevenLabsVoiceDropdown } from './useElevenLabsVoiceDropdown';
 import { useElevenLabsApiKey } from './store-module-elevenlabs';
 
@@ -16,7 +15,7 @@ export function ElevenlabsSettings() {
 
   // external state
   const [apiKey, setApiKey] = useElevenLabsApiKey();
-  const { isConfiguredServerSide } = useVoiceCapability();
+  const { isConfiguredServerSide } = elevenlabs.getCapabilityInfo();
   const { voicesDropdown } = useElevenLabsVoiceDropdown(true);
 
 

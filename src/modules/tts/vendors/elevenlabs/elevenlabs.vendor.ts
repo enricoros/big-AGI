@@ -1,0 +1,107 @@
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+
+import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
+import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
+import { frontendSideFetch } from '~/common/util/clientFetchers';
+import { useUIPreferencesStore } from '~/common/state/store-ui';
+
+import type { SpeechInputSchema } from './elevenlabs.router';
+import { getElevenLabsData, useElevenLabsData } from './store-module-elevenlabs';
+import { ElevenlabsSettings } from './ElevenlabsSettings';
+import { CapabilitySpeechSynthesis, ISpeechSynthesis } from '../ISpeechSynthesis';
+
+const isValidElevenLabsApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 32;
+
+export const isElevenLabsEnabled = (apiKey?: string) => (apiKey ? isValidElevenLabsApiKey(apiKey) : getBackendCapabilities().hasVoiceElevenLabs);
+
+/**
+ * Note: we have to use this client-side API instead of TRPC because of ArrayBuffers..
+ */
+async function frontendFetchAPIElevenLabsSpeech(
+  text: string,
+  elevenLabsApiKey: string,
+  elevenLabsVoiceId: string,
+  nonEnglish: boolean,
+  streaming: boolean,
+): Promise<Response> {
+  // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
+  const speechInput: SpeechInputSchema = {
+    elevenKey: elevenLabsApiKey,
+    text: text.slice(0, 1000),
+    voiceId: elevenLabsVoiceId,
+    nonEnglish,
+    ...(streaming && { streaming: true, streamOptimization: 4 }),
+  };
+
+  const response = await frontendSideFetch('/api/elevenlabs/speech', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(speechInput),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || errorData.message || 'Unknown error');
+  }
+
+  return response;
+}
+
+export const elevenlabs: ISpeechSynthesis = {
+  id: 'webspeech',
+  name: 'Web Speech API',
+  location: 'cloud',
+
+  // components
+  TTSSettingsComponent: ElevenlabsSettings,
+
+  // functions
+  getCapabilityInfo(): CapabilitySpeechSynthesis {
+    const {elevenLabsApiKey:clientApiKey, elevenLabsVoiceId:voiceId} = getElevenLabsData();
+    const isConfiguredServerSide = getBackendCapabilities().hasVoiceElevenLabs;
+    const isConfiguredClientSide = clientApiKey ? isValidElevenLabsApiKey(clientApiKey) : false;
+    const mayWork = isConfiguredServerSide || isConfiguredClientSide || !!voiceId;
+    return { mayWork, isConfiguredServerSide, isConfiguredClientSide };
+  },
+
+  async speakText(text: string, voiceId?: string) {
+    if (!text?.trim()) return;
+
+    const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
+    if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
+
+    const { preferredLanguage } = useUIPreferencesStore.getState();
+    const nonEnglish = !preferredLanguage?.toLowerCase()?.startsWith('en');
+
+    try {
+      const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, false);
+      const audioBuffer = await edgeResponse.arrayBuffer();
+      await AudioPlayer.playBuffer(audioBuffer);
+    } catch (error) {
+      console.error('Error playing first text:', error);
+    }
+  },
+
+  // let liveAudioPlayer: LiveAudioPlayer | undefined = undefined;
+  async EXPERIMENTAL_speakTextStream(text: string, voiceId?: string) {
+    if (!text?.trim()) return;
+
+    const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
+    if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
+
+    const { preferredLanguage } = useUIPreferencesStore.getState();
+    const nonEnglish = !preferredLanguage?.toLowerCase()?.startsWith('en');
+
+    try {
+      const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
+
+      // if (!liveAudioPlayer)
+      const liveAudioPlayer = new AudioLivePlayer();
+      // fire/forget
+      void liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse);
+    } catch (error) {
+      // has happened once in months of testing, not sure what was the cause
+      console.error('EXPERIMENTAL_speakTextStream:', error);
+    }
+  },
+};

@@ -12,9 +12,11 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
-import { useCapabilityBrowserSpeechRecognition, useVoiceCapability } from '~/common/components/useCapabilities';
+import { useCapabilityBrowserSpeechRecognition } from '~/common/components/useCapabilities';
+import { useTTSCapability } from '~/modules/tts/tts.client.hooks';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
+
 
 
 function StatusCard(props: { icon: React.JSX.Element, hasIssue: boolean, text: string, button?: React.JSX.Element }) {
@@ -45,7 +47,7 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
 
   // external state
   const recognition = useCapabilityBrowserSpeechRecognition();
-  const synthesis = useVoiceCapability();
+  const synthesis = useTTSCapability();
   const chatIsEmpty = useChatStore(state => {
     if (!props.conversationId)
       return false;

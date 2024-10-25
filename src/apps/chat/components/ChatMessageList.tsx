@@ -19,7 +19,7 @@ import { getConversation, useChatStore } from '~/common/stores/chat/store-chats'
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
-import { useVoiceCapability } from '~/common/components/useCapabilities';
+import { useTTSCapability } from '~/modules/tts/tts.client.hooks';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -28,6 +28,7 @@ import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessag
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
+
 
 
 const stableNoMessages: DMessage[] = [];
@@ -75,7 +76,7 @@ export function ChatMessageList(props: {
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
   })));
-  const { mayWork: isSpeakable } = useVoiceCapability();
+  const { mayWork: isSpeakable } = useTTSCapability();
 
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine, onTextSpeak } = props;

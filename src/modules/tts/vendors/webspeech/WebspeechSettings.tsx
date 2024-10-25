@@ -6,13 +6,13 @@ import CloseRounded from '@mui/icons-material/CloseRounded';
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { useBrowserSpeechVoiceDropdown } from './useBrowserSpeechVoiceDropdown';
-import { useLanguageCodeForFilter } from './store-module-browser';
+import { useBrowserSpeechVoiceDropdown } from './useWebspeechVoiceDropdown';
+import { useLanguageCodeForFilter } from './store-module-webspeech';
 
 // languages are defined as a JSON file
 import languages from './preSelect/Languages.json';
 
-export function BrowserSpeechSettings() {
+export function WebspeechSettings() {
   // state
   const [testUtterance, setTestUtterance] = React.useState<string | null>(null);
   const [voiceNameFilters, setVoiceNameFilters] = React.useState<string[] | null>(null);

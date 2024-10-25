@@ -4,8 +4,8 @@ import { CircularProgress, Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 
-import { useBrowseVoiceId } from './store-module-browser';
-import { speakText, cancel } from './browser.speechSynthesis.client';
+import { useBrowseVoiceId } from './store-module-webspeech';
+import { speakText, cancel } from '../../tts.client';
 
 function VoicesDropdown(props: {
   isValidKey: boolean;
