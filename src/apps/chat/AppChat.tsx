@@ -490,19 +490,25 @@ export function AppChat() {
   }, []);
 
   const handleMoveFocus = React.useCallback((direction: number) => {
-    const messageElements = Array.from(document.querySelectorAll('[role=chat-message]'));
-    const activeElement = document.activeElement;
+    // find the parent list
+    let messageListElement: HTMLElement | null;
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement)
+      messageListElement = activeElement.closest('[role=chat-messages-list]') as HTMLElement;
+    else
+      messageListElement = document.querySelector('[role=chat-messages-list]') as HTMLElement;
+    if (!messageListElement) return;
+
+    // determine the current message and next index
+    const messageElements = Array.from(messageListElement.querySelectorAll('[role=chat-message]')) as HTMLElement[];
     const currentIndex = messageElements.findIndex(el => el.contains(activeElement));
+    const nextIndex = currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1) : currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= messageElements.length) return;
 
-    // If no element is focused, start from the beginning/end
-    const nextIndex = currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1)
-      : currentIndex + direction;
-
-    if (nextIndex >= 0 && nextIndex < messageElements.length) {
-      const targetElement = messageElements[nextIndex];
-      if ('focus' in targetElement) (targetElement as any).focus();
-      // targetElement?.scrollIntoView({ behavior: 'smooth' });
-    }
+    // perform the smooth scroll and focus
+    const targetElement = messageElements[nextIndex];
+    targetElement.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
+    targetElement.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   useGlobalShortcuts('AppChat', React.useMemo(() => [
