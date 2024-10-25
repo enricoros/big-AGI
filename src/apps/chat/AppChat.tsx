@@ -489,7 +489,7 @@ export function AppChat() {
     optimaActions().openModelOptions(chatLLMId);
   }, []);
 
-  const handleMoveFocus = React.useCallback((direction: number) => {
+  const handleMoveFocus = React.useCallback((direction: number, wholeList?: boolean) => {
     // find the parent list
     let messageListElement: HTMLElement | null;
     const activeElement = document.activeElement as HTMLElement;
@@ -509,11 +509,12 @@ export function AppChat() {
     const currentIndex = messageElements.findIndex(el => el.contains(activeElement));
 
     // if going down and we're at/past the last message, scroll to bottom
-    const snapToBottom = direction > 0 && (currentIndex === -1 || currentIndex >= messageElements.length - 1);
-    const nextIndex = snapToBottom ? messageElements.length - 1
-      : (isAtBottom && direction < 0) ? currentIndex
-        : currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1)
-          : currentIndex + direction;
+    const snapToBottom = direction > 0 && (wholeList || (currentIndex === -1 || currentIndex >= messageElements.length - 1));
+    const nextIndex = (wholeList && direction < 0) ? 0
+      : snapToBottom ? messageElements.length - 1
+        : (isAtBottom && direction < 0) ? currentIndex
+          : currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1)
+            : currentIndex + direction;
     if (nextIndex < 0 || nextIndex >= messageElements.length) return;
 
     // perform the smooth scroll and focus
@@ -536,6 +537,8 @@ export function AppChat() {
     // change active message (in any possible panel)
     { key: ShortcutKey.Up, ctrl: true, action: () => handleMoveFocus(-1) },
     { key: ShortcutKey.Down, ctrl: true, action: () => handleMoveFocus(1) },
+    { key: ShortcutKey.Up, ctrl: true, shift: true, action: () => handleMoveFocus(-1, true) },
+    { key: ShortcutKey.Down, ctrl: true, shift: true, action: () => handleMoveFocus(1, true) },
     // open the dropdowns
     { key: 'l', ctrl: true, action: () => llmDropdownRef.current?.openListbox() /*, description: 'Open Models Dropdown'*/ },
     { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
