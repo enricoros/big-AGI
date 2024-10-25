@@ -65,7 +65,7 @@ export function GoodModal(props: {
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
           color={props.themedColor}
-          variant={props.themedColor ? 'soft' : undefined}
+          variant={props.themedColor ? 'soft' : 'plain' /* switched from bordered (undefined) to borderless (plain) */}
           invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
           sx={dialogSx}
