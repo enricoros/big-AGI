@@ -315,8 +315,9 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
     case '_ft_sentinel':
       return _createSentinelFragment();
 
-    // default:
-    //   throw new Error('Invalid fragment');
+    default:
+      console.warn('[DEV] _duplicateFragment: Unknown fragment type, will duplicate as Error', { fragment });
+      return createErrorContentFragment(`Unknown fragment type '${(fragment as any)?.ft || '(undefined)'}'`);
   }
 }
 
