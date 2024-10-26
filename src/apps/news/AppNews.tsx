@@ -1,7 +1,6 @@
 import * as React from 'react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
-
 import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Sheet, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -57,12 +56,46 @@ export const newsRoadmapCallout =
     </CardContent>
   </Card>;
 
+export function BuildInfoCard(props: { noMargin?: boolean }) {
+  return (
+    <Card variant='solid' color='neutral' invertedColors sx={props.noMargin ? undefined : { mb: 3 }}>
+      <Typography level='title-md' sx={{ my: -1 }}>
+        Development Build Information
+      </Typography>
+      <BuildInfoSheet />
+    </Card>
+  );
+}
+
+function BuildInfoSheet() {
+  const backendBuild = React.useMemo(() => getBackendCapabilities().build, []);
+  const frontendBuild = React.useMemo(() => Release.buildInfo('frontend'), []);
+  return (
+    <Sheet variant='soft' invertedColors sx={{
+      fontSize: 'xs',
+      // fontFamily: 'code',
+      color: 'text.secondary',
+      backgroundColor: 'background.popup',
+      // border: '1px solid',
+      // borderColor: 'divider',
+      borderRadius: 'sm',
+      // boxShadow: 'inset 1px 1px 4px -2px rgba(0,0,0,0.1)',
+      p: 1,
+      mb: -1,
+      mx: -1,
+    }}>
+      PL: <strong>{Release.TenantSlug}</strong> · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
+      Frontend: {frontendBuild.gitSha} - deployed {frontendBuild.timestamp ? <strong><TimeAgo date={frontendBuild.timestamp} /></strong> : 'unknown'}, and
+      backend {backendBuild?.gitSha}{backendBuild?.timestamp === frontendBuild.timestamp ? '.' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown.'}<br />
+      Ships with -modal/-model: {Object.entries(Release.TechLevels).map(([name, version], idx, arr) => <><strong>{name}</strong> v{version}{idx < arr.length - 1 ? ', ' : ''}</>)}.<br />
+      Ships with intelligent functions: {Release.AiFunctions.map((name, idx, arr) => <><i>{name}</i>{idx < arr.length - 1 ? ', ' : ''}</>)}.
+    </Sheet>
+  );
+}
 
 export function AppNews() {
   // state
   const [lastNewsIdx, setLastNewsIdx] = React.useState<number>(NEWS_INITIAL_COUNT - 1);
-
-  const backendBuild = getBackendCapabilities().build;
 
   // news selection
   const news = NewsItems.filter((_, idx) => idx <= lastNewsIdx);
@@ -117,6 +150,9 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
+              {/* Inject the Build Info Sheet */}
+              {idx === 0 && <BuildInfoCard />}
+
               {/* Inject the Big-AGI 2.0 item here*/}
               {/*{idx === 1 && (*/}
               {/*  <Box sx={{ mb: 3 }}>*/}
@@ -168,26 +204,7 @@ export function AppNews() {
                     </ul>
                   )}
 
-                  {idx === 0 && (
-                    <Sheet variant='soft' invertedColors sx={{
-                      fontSize: 'xs',
-                      // fontFamily: 'code',
-                      color: 'text.secondary',
-                      // border: '1px solid',
-                      // borderColor: 'divider',
-                      borderRadius: 'sm',
-                      boxShadow: 'inset 1px 1px 4px -2px rgba(0,0,0,0.1)',
-                      p: 2,
-                      mb: -1,
-                      mx: -1,
-                    }}>
-                      PL: <strong>{Release.App.pl}</strong> · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
-                      Frontend: {_frontendBuild.gitSha} - deployed {_frontendBuild.timestamp ? <strong><TimeAgo date={_frontendBuild.timestamp} /></strong> : 'unknown'}, and
-                      backend {backendBuild?.gitSha}{backendBuild?.timestamp === _frontendBuild.timestamp ? '.' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown.'}<br />
-                      Ships with -modal/-model: {Object.entries(Release.TechLevels).map(([name, version], idx, arr) => <><strong>{name}</strong> v{version}{idx < arr.length - 1 ? ', ' : ''}</>)}.<br />
-                      Ships with intelligent functions: {Release.AiFunctions.map((name, idx, arr) => <><i>{name}</i>{idx < arr.length - 1 ? ', ' : ''}</>)}.
-                    </Sheet>
-                  )}
+                  {/*{idx === 0 && <BuildInfoSheet />}*/}
 
                 </CardContent>
 
