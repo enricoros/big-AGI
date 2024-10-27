@@ -136,5 +136,4 @@ export class ConversationHandler {
   // Overlay Store
 
   getOverlayStore = () => this.overlayStore;
-
 }
