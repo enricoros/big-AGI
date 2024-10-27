@@ -12,20 +12,19 @@ import { wireTogetherAIListOutputSchema } from './togetherai.wiretypes';
 // https://platform.openai.com/docs/models
 const _knownOpenAIChatModels: ManualMappings = [
 
-  // GPT-4o -> 2024-05-13 (Starting October 2nd, 2024, gpt-4o will point to the gpt-4o-2024-08-06 snapshot)
   {
     idPrefix: 'gpt-4o',
     label: 'GPT-4o',
-    description: 'Currently points to gpt-4o-2024-05-13.',
-    symLink: 'gpt-4o-2024-05-13',
+    description: 'Currently points to gpt-4o-2024-08-06.',
+    symLink: 'gpt-4o-2024-08-06',
     hidden: true,
     // copied from symlinked
     contextWindow: 128000,
-    maxCompletionTokens: 4096,
+    maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    pricing: { chatIn: 5, chatOut: 15 },
-    benchmark: { cbaElo: 1286 },
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json], // + Structured Outputs?
+    pricing: { chatIn: 2.5, chatOut: 10 },
+    benchmark: { cbaElo: 1286 + 1 },
   },
   {
     isLatest: true,
