@@ -23,7 +23,7 @@ import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
-import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
+import { usePaneDuplicateOrClose } from '../panes/store-panes-manager';
 
 
 function VariformPaneFrame() {

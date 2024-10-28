@@ -11,7 +11,7 @@ import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
 import { getChatAutoAI, getIsNotificationEnabledForModel } from '../store-app-chat';
-import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
+import { getInstantAppChatPanesCount } from '../components/panes/store-panes-manager';
 
 
 // configuration
