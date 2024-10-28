@@ -31,9 +31,8 @@ let nextConfig = {
   },
 
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
-  experimental: {
-    serverComponentsExternalPackages: ['puppeteer-core'],
-  },
+  // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
+  serverExternalPackages: ['puppeteer-core'],
 
   webpack: (config, { isServer }) => {
     // @mui/joy: anything material gets redirected to Joy
