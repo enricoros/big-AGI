@@ -8,7 +8,7 @@ import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
-import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isPlaceholderPart, isTextContentFragment, isTextPart, isVoidFragment } from './chat.fragments';
+import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isPlaceholderPart, isTextContentFragment, isVoidFragment } from './chat.fragments';
 
 
 // configuration
@@ -49,6 +49,13 @@ export namespace V4ToHeadConverters {
     // fixup .fragments[]
     for (let i = 0; i < m.fragments.length; i++) {
       const fragment = m.fragments[i];
+
+      // [SANITIZE] If the fragment is damaged (e.g. null or missing the 'ft' property), remove it
+      if (!fragment || !fragment.ft) {
+        m.fragments.splice(i, 1);
+        i--; // Adjust index since we modified the array
+        continue;
+      }
 
       // [GC][LiveFile] remove LiveFile references to invalid objects (also done in store-client-workspace)
       if (isAttachmentFragment(fragment) && fragment.liveFileId)
