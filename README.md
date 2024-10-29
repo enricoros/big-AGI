@@ -23,11 +23,11 @@ Or fork & run on Vercel
 
 This repository contains two main versions:
 
-- Big-AGI Stable: as deployed on big-agi.com
-  - `v1/stable`: Current stable version
-  - `v1/dev`: V1 development branch (this branch)
 - Big-AGI 2: next-generation, bringing the most advanced AI experience
-  - `v2/dev`: V2 development branch, the exciting one, future default
+  - `v2-dev`: V2 development branch, the exciting one, future default
+- Big-AGI Stable: as deployed on big-agi.com
+  - `v1-dev`: V1 development branch (this branch)
+  - `v1-stable`: Current stable version
 
 Note: After the V2 release in Q4, `v2/dev` will become the default branch and `v1/dev` will reach EOL.
 
