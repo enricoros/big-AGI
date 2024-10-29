@@ -41,6 +41,7 @@ export function VoiceSettings() {
       options={[
         { value: '600', label: '.6s' },
         { value: '2000', label: '2s' },
+        { value: '5000', label: '5s' },
         { value: '15000', label: '15s' },
       ]}
       value={chatTimeoutValue} onChange={setChatTimeoutValue}
