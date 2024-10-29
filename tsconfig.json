@@ -35,13 +35,9 @@
       "~/server/*": ["src/server/*"]
     }
   },
-  "include": [
-    // defaults
-    "next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts",
-    // declarations for vitest
-    "src/common/types/*.d.ts",
-    // prevents update to this file by the standalone build process
-    "dist/types/**/*.ts",
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts",
+    // this is here only because otherwise, during standalone build the process would update this file
+    "dist/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", "electron", "vitest.config.ts"]
+  "exclude": ["node_modules", "dist", "electron"]
 }
