@@ -29,7 +29,7 @@ interface ChatState {
 export interface ChatActions {
 
   // CRUD conversations
-  prependNewConversation: (personaId: SystemPurposeId | undefined) => DConversationId;
+  prependNewConversation: (personaId: SystemPurposeId | undefined, isIncognito: boolean) => DConversationId;
   importConversation: (c: DConversation, preventClash: boolean) => DConversationId;
   branchConversation: (cId: DConversationId, mId: DMessageId | null) => DConversationId | null;
   deleteConversations: (cIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
@@ -67,8 +67,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       // default state
       conversations: defaultConversations,
 
-      prependNewConversation: (personaId: SystemPurposeId | undefined): DConversationId => {
+      prependNewConversation: (personaId: SystemPurposeId | undefined, isIncognito: boolean): DConversationId => {
         const newConversation = createDConversation(personaId);
+        if (isIncognito) newConversation._isIncognito = true;
 
         _set(state => ({
           conversations: [newConversation, ...state.conversations],
@@ -420,11 +421,13 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       // Pre-Saving: remove transient properties
       partialize: (state) => ({
         ...state,
-        conversations: state.conversations.map((conversation: DConversation) => {
-          // remove the converation AbortController (current data structure version)
-          const { _abortController, ...rest } = conversation;
-          return rest;
-        }),
+        conversations: state.conversations
+          .filter(c => !c._isIncognito)
+          .map((conversation: DConversation) => {
+            // remove the converation AbortController (current data structure version)
+            const { _abortController, ...rest } = conversation;
+            return rest;
+          }),
       }),
 
       // Post-Loading: re-add transient properties and cleanup state

@@ -66,7 +66,7 @@ function ChatDrawer(props: {
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
-  onConversationNew: (forceNoRecycle: boolean) => void,
+  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
   onConversationsDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
   onConversationsExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationsImportDialog: () => void,
@@ -106,8 +106,9 @@ function ChatDrawer(props: {
   const disableNewButton = props.disableNewButton && filteredChatsIncludeActive;
   const newButtonDontRecycle = isMultiPane || !filteredChatsIncludeActive;
 
-  const handleButtonNew = React.useCallback(() => {
-    onConversationNew(newButtonDontRecycle);
+  const handleButtonNew = React.useCallback((event: React.MouseEvent) => {
+    // FIXME: undocumented: shift+click to force incognito mode
+    onConversationNew(newButtonDontRecycle, event.shiftKey);
     if (getIsMobile())
       optimaCloseDrawer();
   }, [newButtonDontRecycle, onConversationNew]);
