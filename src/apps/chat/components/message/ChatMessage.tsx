@@ -716,7 +716,7 @@ export function ChatMessage(props: {
             enhanceCodeBlocks={labsEnhanceCodeBlocks}
 
             textEditsState={textContentEditState}
-            setEditedText={!messagePendingIncomplete ? handleEditSetText : undefined}
+            setEditedText={(!props.onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
