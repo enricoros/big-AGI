@@ -1,4 +1,4 @@
-import { createParser as createEventsourceParser } from 'eventsource-parser';
+import { createParser as createEventsourceParser, type EventSourceMessage, ParseError } from 'eventsource-parser';
 
 /**
  * The format of the stream: 'sse' or 'json-nl'
@@ -44,15 +44,19 @@ type StreamDemuxer = {
  */
 function _createEventSourceDemuxer(): StreamDemuxer {
   let buffer: DemuxedEvent[] = [];
-  const parser = createEventsourceParser((event) => {
-    switch (event.type) {
-      case 'event':
-        buffer.push({ type: 'event', name: event.event || undefined, data: event.data });
-        break;
-      case 'reconnect-interval':
-        buffer.push({ type: 'reconnect-interval', data: '' + event.value });
-        break;
-    }
+  const parser = createEventsourceParser({
+    onEvent: (event: EventSourceMessage) => {
+      buffer.push({ type: 'event', name: event.event || undefined, data: event.data });
+    },
+    onRetry: (interval: number) => {
+      buffer.push({ type: 'reconnect-interval', data: '' + interval });
+    },
+    onError: (error: ParseError) => {
+      console.warn(`stream.demuxers: parser error (${error.type}):`, error.field, error.value, error.line);
+    },
+    onComment: (comment: string) => {
+      console.log('stream.demuxers: parser comment (safe to ignore):', comment);
+    },
   });
 
   return {
