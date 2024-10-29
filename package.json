@@ -43,7 +43,7 @@
     "dexie": "^4.0.9",
     "dexie-react-hooks": "^1.1.7",
     "diff": "^7.0.0",
-    "eventsource-parser": "^2.0.1",
+    "eventsource-parser": "^3.0.0",
     "idb-keyval": "^6.2.1",
     "mammoth": "^1.8.0",
     "nanoid": "^5.0.8",
