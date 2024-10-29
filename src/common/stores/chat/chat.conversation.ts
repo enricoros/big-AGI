@@ -15,6 +15,9 @@ export interface DConversation {
   // editable
   userTitle?: string;
   autoTitle?: string;
+
+  // temp flags
+  _isIncognito?: boolean;             // simple implementation: won't store this conversation (note: side effects should be evaluated, images seem to be gc'd correctly, but not sure if this is really incognito)
   userSymbol?: string;                // TODO: let the user customize this - there may be a mapping elsewhere, but this is small enough and will do for now
 
   // TODO: [x Head] - this should be the system purpose of current head of the conversation

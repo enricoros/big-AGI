@@ -149,6 +149,7 @@ export function useChatDrawerRenderItems(
             conversationId: _c.id,
             isActive: _c.id === activeConversationId,
             isAlsoOpen,
+            isIncognito: !!_c._isIncognito,
             isEmpty: !messageCount && !_c.userTitle,
             title,
             userSymbol: _c.userSymbol || undefined,

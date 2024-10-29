@@ -319,12 +319,12 @@ export function AppChat() {
 
   // Chat actions
 
-  const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle?: boolean) => {
+  const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle: boolean, isIncognito: boolean) => {
 
     // create conversation (or recycle the existing top-of-stack empty conversation)
-    const conversationId = (recycleNewConversationId && !forceNoRecycle)
+    const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito)
       ? recycleNewConversationId
-      : prependNewConversation(getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined);
+      : prependNewConversation(getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
 
     // switch the focused pane to the new conversation
     handleOpenConversationInFocusedPane(conversationId);
@@ -529,7 +529,7 @@ export function AppChat() {
     { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam Edit' },
     { key: 'o', ctrl: true, action: handleConversationsImportFormFilePicker },
     { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
-    { key: 'n', ctrl: true, shift: true, action: handleConversationNewInFocusedPane },
+    { key: 'n', ctrl: true, shift: true, action: () => handleConversationNewInFocusedPane(false, false) },
     { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
     { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
     { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
