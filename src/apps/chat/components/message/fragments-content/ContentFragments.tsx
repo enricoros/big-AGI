@@ -73,15 +73,16 @@ export function ContentFragments(props: {
 
 }) {
 
+  const fragmentsCount = props.fragments.length;
   const fromAssistant = props.messageRole === 'assistant';
   const fromUser = props.messageRole === 'user';
   const isEditingText = !!props.textEditsState;
-  // const isMonoFragment = props.fragments.length < 2;
+  // const isMonoFragment = fragmentsCount < 2;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
-  const showDataStreamViz = props.uiComplexityMode !== 'minimal' && props.fragments.length === 1 && isVoidFragment(props.fragments[0]) && isPlaceholderPart(props.fragments[0].part);
+  const showDataStreamViz = props.uiComplexityMode !== 'minimal' && fragmentsCount === 1 && isVoidFragment(props.fragments[0]) && isPlaceholderPart(props.fragments[0].part);
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
-  if (isEditingText && !props.fragments.length)
+  if (isEditingText && !fragmentsCount)
     return (
       <Button variant='plain' color='neutral' onClick={props.onFragmentBlank} sx={{ justifyContent: 'flex-start' }}>
         add text ...
@@ -93,7 +94,7 @@ export function ContentFragments(props: {
     return null;
 
   // if no fragments, don't box them
-  if (!props.showEmptyNotice && !props.fragments.length)
+  if (!props.showEmptyNotice && !fragmentsCount)
     return null;
 
   return <Box aria-label='message body' sx={(isEditingText || showDataStreamViz) ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>

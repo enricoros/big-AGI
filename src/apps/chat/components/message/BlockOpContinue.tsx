@@ -6,7 +6,7 @@ import { Box, Chip, ColorPaletteProp } from '@mui/joy';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageId, DMessageRole } from '~/common/stores/chat/chat.message';
+import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
 
 // configuration
@@ -33,16 +33,9 @@ const chipSx: SxProps = {
 
 export function BlockOpContinue(props: {
   contentScaling: ContentScaling,
-  messageId: DMessageId,
   messageRole: DMessageRole,
-  onContinue: (messageId: DMessageId) => void,
+  onContinue: (continueText: null | string) => void,
 }) {
-
-  // handlers
-  const { onContinue } = props;
-  const handleContinue = React.useCallback(() => {
-    onContinue(props.messageId);
-  }, [onContinue, props.messageId]);
 
   return (
     <Box sx={containerSx}>
@@ -58,7 +51,7 @@ export function BlockOpContinue(props: {
         color={ACTIVE_COLOR}
         variant='outlined'
         size={props.contentScaling === 'md' ? 'lg' : 'md'}
-        onClick={handleContinue}
+        onClick={() => props.onContinue(null)}
         sx={chipSx}
       >
         Continue...

@@ -34,6 +34,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
+import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
@@ -49,6 +50,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { BlockOpContinue } from './BlockOpContinue';
+import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
@@ -149,7 +151,7 @@ export function ChatMessage(props: {
   onMessageAssistantFrom?: (messageId: string, offset: number) => Promise<void>,
   onMessageBeam?: (messageId: string) => Promise<void>,
   onMessageBranch?: (messageId: string) => void,
-  onMessageContinue?: (messageId: string) => void,
+  onMessageContinue?: (messageId: string, continueText: null | string) => void,
   onMessageDelete?: (messageId: string) => void,
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
@@ -226,7 +228,7 @@ export function ChatMessage(props: {
   // const wordsDiff = useWordsDifference(textSubject, props.diffPreviousText, showDiff);
 
 
-  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;
+  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageContinue } = props;
 
   const handleFragmentNew = React.useCallback(() => {
     onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
@@ -239,6 +241,10 @@ export function ChatMessage(props: {
   const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
     onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
   }, [messageId, onMessageFragmentReplace]);
+
+  const handleMessageContinue = React.useCallback((continueText: null | string) => {
+    onMessageContinue?.(messageId, continueText);
+  }, [messageId, onMessageContinue]);
 
 
   // Text Editing
@@ -517,6 +523,15 @@ export function ChatMessage(props: {
   }, [handleOpenBubble]);
 
 
+  // Options interceptor
+
+  const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && messageGenerator?.tokenStopReason !== 'out-of-tokens' && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
+
+  const { fragments: renderFragments, options: continuationOptions } = React.useMemo(() => {
+    return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, contentOrVoidFragments);
+  }, [contentOrVoidFragments, lookForOptions]);
+
+
   // style
   const backgroundColor = messageBackground(messageRole, messageHasBeenEdited, false /*isAssistantError && !errorMessage*/);
 
@@ -707,7 +722,7 @@ export function ChatMessage(props: {
 
           {/* Content Fragments */}
           <ContentFragments
-            fragments={contentOrVoidFragments}
+            fragments={renderFragments}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={adjContentScaling}
@@ -753,9 +768,17 @@ export function ChatMessage(props: {
           {props.isBottom && messageGenerator?.tokenStopReason === 'out-of-tokens' && !!props.onMessageContinue && (
             <BlockOpContinue
               contentScaling={adjContentScaling}
-              messageId={messageId}
               messageRole={messageRole}
-              onContinue={props.onMessageContinue}
+              onContinue={handleMessageContinue}
+            />
+          )}
+
+          {/* Continue Options... */}
+          {continuationOptions.length >= 1 && !!props.onMessageContinue && (
+            <BlockOpOptions
+              contentScaling={adjContentScaling}
+              options={continuationOptions}
+              onContinue={handleMessageContinue}
             />
           )}
 
