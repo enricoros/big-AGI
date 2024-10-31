@@ -11,7 +11,8 @@ Welcome to the advanced tips and tricks guide for Big-AGI. This document will he
 
 - **Shift + Double-Click** on a chat message to **edit** it.
 - **Shift + Trash Icon** to **delete** a chats and messages without confirmation.
-  - also applies elsewhere: delete Attachments, etc. 
+  - also applies elsewhere: delete Attachments, etc.
+- **Shift + Click** on **New Chat** to create an incognito chat.
 - Drag a big-AGI saved chat into Big-AGI to load (or attach) it.
 
 ## Not-so-obvious Shortcuts

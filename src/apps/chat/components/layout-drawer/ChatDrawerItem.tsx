@@ -434,6 +434,10 @@ function ChatDrawerItem(props: {
         sx={{
           border: 'none', // there's a default border of 1px and invisible.. hmm
           position: 'relative', // for the progress bar
+          borderRadius: 'sm', // OPTIMA_NAV_RADIUS, // sync with the optima radius, because they need to match
+          ...isIncognito && {
+            filter: 'contrast(0)',
+          },
         }}
       >
 
