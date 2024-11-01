@@ -29,7 +29,7 @@ This repository contains two main versions:
   - `v1-dev`: V1 development branch (this branch)
   - `v1-stable`: Current stable version
 
-Note: After the V2 release in Q4, `v2/dev` will become the default branch and `v1/dev` will reach EOL.
+Note: After the V2 release in Q4, `v2-dev` will become the default branch and `v1-dev` will reach EOL.
 
 ### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
