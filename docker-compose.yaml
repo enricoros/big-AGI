@@ -1,14 +1,21 @@
-# Very simple docker-compose file to run the app on http://localhost:3000 (or http://127.0.0.1:3000).
-#
-# For more examples, such runnin big-AGI alongside a web browsing service, see the `docs/docker` folder.
-
-version: '3.9'
-
 services:
   big-agi:
-    image: ghcr.io/enricoros/big-agi:latest
+    build:
+      context: .
     ports:
       - "3000:3000"
     env_file:
       - .env
     command: [ "next", "start", "-p", "3000" ]
+    environment:
+      - PUPPETEER_WSS_ENDPOINT=ws://browserless:3000
+      - PAGE_PASSWORD=R87uZmr!
+    depends_on:
+      - browserless
+
+  browserless:
+    image: browserless/chrome:latest
+    ports:
+      - "9222:3000"  # Map host's port 9222 to container's port 3000.
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10
