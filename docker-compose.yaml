@@ -9,7 +9,6 @@ services:
     command: [ "next", "start", "-p", "3000" ]
     environment:
       - PUPPETEER_WSS_ENDPOINT=ws://browserless:3000
-      - PAGE_PASSWORD=R87uZmr!
     depends_on:
       - browserless
 
