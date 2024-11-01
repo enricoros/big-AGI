@@ -19,6 +19,7 @@ export const ROUTE_APP_CALL = '/call';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/[chatLinkId]';
 export const ROUTE_APP_NEWS = '/news';
 export const ROUTE_APP_PERSONAS = '/personas';
+export const ROUTE_LOGIN = '/login'; // Neue Route für die Login-Seite
 const ROUTE_CALLBACK_OPENROUTER = '/link/callback_openrouter';
 
 
@@ -59,6 +60,8 @@ export const navigateToNews = navigateFn(ROUTE_APP_NEWS);
 export const navigateToPersonas = navigateFn(ROUTE_APP_PERSONAS);
 
 export const navigateToChatLinkList = navigateFn(ROUTE_APP_LINK_CHAT.replace('[chatLinkId]', 'list'));
+
+export const navigateToLogin = navigateFn(ROUTE_LOGIN); // Navigation zur Login-Seite
 
 export const navigateBack = Router.back;
 
