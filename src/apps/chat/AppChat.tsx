@@ -202,7 +202,7 @@ export function AppChat() {
 
   // [effect] Handle the initial conversation intent
   React.useEffect(() => {
-    if (Release.DevBuild && intent.initialConversationId === 'null')
+    if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
       return openConversationInFocusedPane(null! /* for debugging purporse */);
     intent.initialConversationId && openConversationInFocusedPane(intent.initialConversationId);
   }, [intent.initialConversationId, openConversationInFocusedPane]);

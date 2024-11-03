@@ -10,12 +10,14 @@
  * We centralize here the version information of the app, to have a uniform configuration surface.
  */
 export const Release = {
+  // CHANGE ME - this is the tenant ID, 'open' reserved for GitHub
+  TenantId: 'open',
+
   App: {
-    pl: 'gh-2', // do now use slashes here
+    pl: 'v2-dev',
     versionCode: '2.0.0-ea1',       // 1.91.0 sequentially...
     versionName: 'Big-AGI V2 EA1',
   },
-  DevBuild: process.env.NODE_ENV === 'development',
 
   // Future compatibility
   Features: {
@@ -39,4 +41,7 @@ export const Release = {
     pkgVersion: process.env.NEXT_PUBLIC_BUILD_PKGVER,
     timestamp: process.env.NEXT_PUBLIC_BUILD_TIMESTAMP,
   }),
+
+  IsNodeDevBuild: process.env.NODE_ENV === 'development',
+
 } as const;
