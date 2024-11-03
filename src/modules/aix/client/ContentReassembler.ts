@@ -143,7 +143,7 @@ export class ContentReassembler {
     const fragment = create_FunctionCallInvocation_ContentFragment(
       fci.id,
       fci.name,
-      fci.i_args || null,
+      fci.i_args || '', // if i_args is undefined, use an empty string, which means 'no args' in DParticle/AixTools (for now at least)
     );
     // TODO: add _description from the Spec
     // TODO: add _args_schema from the Spec

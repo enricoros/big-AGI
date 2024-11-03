@@ -63,7 +63,11 @@ export namespace AnthropicWire_Blocks {
   }
 
   export function ToolUseBlock(id: string, name: string, input: string | null): z.infer<typeof ToolUseBlock_schema> {
-    return { type: 'tool_use', id, name, input: input ? JSON.parse(input) : null };
+    // Anthropic Tool Invocations want the input as object, and will reject 'null' inputs for instance.
+    // - ".input: Input should be a valid dictionary" - Anthropic
+    // - ".input: Field required" - Anthropic
+    // -> we replace 'null' and '', with {}
+    return { type: 'tool_use', id, name, input: !input ? {} : JSON.parse(input) /* 2024-11-03: Anthropic requires an object in 'input' */ };
   }
 
   export function ToolResultBlock(tool_use_id: string, content: z.infer<typeof ToolResultBlock_schema>['content'], is_error?: boolean): z.infer<typeof ToolResultBlock_schema> {
