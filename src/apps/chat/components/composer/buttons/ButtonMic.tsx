@@ -33,9 +33,18 @@ function ButtonMic(props: {
   noBackground?: boolean,
   onClick: () => void,
 }) {
+
+  // Mobile: don't blur the textarea when clicking the mic button
+  const handleDontBlurTextArea = React.useCallback((event: React.MouseEvent) => {
+    const isTextAreaFocused = document.activeElement?.tagName === 'TEXTAREA';
+    // If a textarea is focused, prevent the default blur behavior
+    if (isTextAreaFocused)
+      event.preventDefault();
+  }, []);
+
   return (
     <GoodTooltip placement='top' arrow enableInteractive title={micLegend(props.errorMessage)}>
-      <IconButton variant={props.variant} color={props.color} onClick={props.onClick} sx={props.noBackground ? { background: 'none' } : {}}>
+      <IconButton variant={props.variant} color={props.color} onMouseDown={handleDontBlurTextArea} onClick={props.onClick} sx={props.noBackground ? { background: 'none' } : {}}>
         <MicIcon />
       </IconButton>
     </GoodTooltip>
