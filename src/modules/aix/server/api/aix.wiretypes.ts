@@ -153,7 +153,7 @@ export namespace AixWire_Parts {
   const _FunctionCallInvocation_schema = z.object({
     type: z.literal('function_call'),
     name: z.string(),
-    args: z.string().nullable(),
+    args: z.string(), //.nullable(), // 2024-11-03: disabled .nullable(), as we'll use '' for no args (which some APIs weirdly don't support so we'll mock downstream as '{}')
     // _description: z.string().optional(),
     // _args_schema: z.object({}).optional(),
   });

@@ -121,7 +121,7 @@ export type DMessageToolInvocationPart = {
   invocation: {
     type: 'function_call'
     name: string;             // Name of the function as passed from the definition
-    args: string | null;      // JSON-encoded, if null there are no args
+    args: string /*| null*/;  // JSON-encoded object (only objects are supported), if null there are no args and it's just a plain invocation
     // temporary, not stored
     _description?: string;    // Description from the definition
     _args_schema?: object;    // JSON Schema { type: 'object', properties: { ... } } from the definition
@@ -232,7 +232,7 @@ export function createImageContentFragment(dataRef: DMessageDataRef, altText?: s
   return _createContentFragment(_create_ImageRef_Part(dataRef, altText, width, height));
 }
 
-export function create_FunctionCallInvocation_ContentFragment(id: string, functionName: string, args: string | null): DMessageContentFragment {
+export function create_FunctionCallInvocation_ContentFragment(id: string, functionName: string, args: string /*| null*/): DMessageContentFragment {
   return _createContentFragment(_create_FunctionCallInvocation_Part(id, functionName, args));
 }
 
@@ -340,7 +340,7 @@ function _create_ImageRef_Part(dataRef: DMessageDataRef, altText?: string, width
   return { pt: 'image_ref', dataRef, altText, width, height };
 }
 
-function _create_FunctionCallInvocation_Part(id: string, functionName: string, args: string | null): DMessageToolInvocationPart {
+function _create_FunctionCallInvocation_Part(id: string, functionName: string, args: string /*| null*/): DMessageToolInvocationPart {
   return { pt: 'tool_invocation', id, invocation: { type: 'function_call', name: functionName, args } };
 }
 
@@ -477,7 +477,7 @@ export function updateFragmentWithEditedText(
         const newFragment = create_FunctionCallInvocation_ContentFragment(
           part.id, // Keep same id
           part.invocation.name,
-          editedText || null, // args
+          editedText, // args (if empty, it calls the funciton without params)
         );
         return { ...newFragment, fId }; // Preserve original fId
       } else if (part.invocation.type === 'code_execution') {
