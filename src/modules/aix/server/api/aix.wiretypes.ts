@@ -269,7 +269,7 @@ export namespace AixWire_Content {
 
 export namespace AixWire_Tooling {
 
-  /// Function Call Tool
+  /// Function Call Tool Definition
 
   const _FunctionCall_schema = z.object({
     /**
@@ -286,6 +286,7 @@ export namespace AixWire_Tooling {
     description: z.string(),
     /**
      *  A JSON Schema object defining the expected parameters for the function call.
+     *  - Optional. If not provided, it means the Function Tool does not require any input and will be invoked without any arguments.
      *  (OpenAI + Google: parameters, Anthropic: input_schema)
      */
     input_schema: z.object({

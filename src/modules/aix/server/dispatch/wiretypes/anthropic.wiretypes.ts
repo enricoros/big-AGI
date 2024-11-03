@@ -129,7 +129,7 @@ export namespace AnthropicWire_Tools {
      */
     input_schema: z.object({
       type: z.literal('object'),
-      properties: z.record(z.unknown()).optional(),
+      properties: z.record(z.unknown()).nullable(),
       required: z.array(z.string()).optional(),
     }).and(z.record(z.unknown())),
   });

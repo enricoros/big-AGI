@@ -1,5 +1,5 @@
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
-import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
+import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
 import { inReferenceTo_To_XMLString } from './anthropic.messageCreate';
 
@@ -201,16 +201,32 @@ function _toGeminiTools(itds: AixTools_ToolDefinition[]): NonNullable<TRequest['
       // a single tool with multiple function calls - which one to choose?
       case 'function_call':
         const { name, description, input_schema } = itd.function_call;
+
+        // create the function declaration
+        const functionDeclaration: GeminiWire_ToolDeclarations.FunctionDeclaration = {
+          name,
+          description,
+        };
+
+        // handle no-params function call definitions for Gemini (no input_schema, or empty properties)
+        if (input_schema?.properties && Object.keys(input_schema.properties).length) {
+          functionDeclaration.parameters = {
+            type: 'object',
+            properties: input_schema?.properties,
+            required: input_schema?.required,
+          };
+        }
+
+        // coalesce the function declaration into the last tool, if of the right type
+        const lastTool = tools[tools.length - 1];
+        if (lastTool && 'functionDeclarations' in lastTool && lastTool.functionDeclarations?.length) {
+          lastTool.functionDeclarations.push(functionDeclaration);
+          break;
+        }
+
+        // create a new tool with the function declaration
         tools.push({
-          functionDeclarations: [{
-            name,
-            description,
-            parameters: {
-              type: 'object',
-              properties: input_schema?.properties,
-              required: input_schema?.required,
-            },
-          }],
+          functionDeclarations: [functionDeclaration],
         });
         break;
 

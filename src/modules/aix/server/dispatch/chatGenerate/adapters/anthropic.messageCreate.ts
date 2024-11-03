@@ -230,7 +230,7 @@ function _toAnthropicTools(itds: AixTools_ToolDefinition[]): NonNullable<TReques
           description,
           input_schema: {
             type: 'object',
-            properties: input_schema?.properties,
+            properties: input_schema?.properties || null, // Anthropic valid values for input_schema.properties are 'object' or 'null' (null is used to declare functions with no inputs)
             required: input_schema?.required,
           },
         };

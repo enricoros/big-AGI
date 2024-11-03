@@ -1,4 +1,4 @@
-import type { ZodObject } from 'zod';
+import { ZodSchema } from 'zod';
 import { JsonSchema7ObjectType, zodToJsonSchema } from 'zod-to-json-schema';
 
 import type { AixTools_FunctionCallDefinition } from '../server/api/aix.wiretypes';
@@ -12,7 +12,12 @@ const AIX_DEBUG_CLIENT_TOOLS = process.env.NODE_ENV === 'development';
 export type AixClientFunctionCallToolDefinition = {
   name: string;
   description: string;
-  inputSchema: ZodObject<any>;
+  /**
+   * The input schema for the function call.
+   * We only accept objects, not arrays - as downstream APIs have spotty implementation for non-object.
+   * If the function does not take any inputs, use `Zod.object({})` or Zod.void().
+   */
+  inputSchema: ZodSchema<object | void>;
 }
 
 
@@ -22,15 +27,18 @@ export type AixClientFunctionCallToolDefinition = {
  */
 export function aixFunctionCallTool(functionCall: AixClientFunctionCallToolDefinition): AixTools_FunctionCallDefinition {
   const { properties, required } = zodToJsonSchema(functionCall.inputSchema, { $refStrategy: 'none' }) as JsonSchema7ObjectType;
+  const takesNoInputs = !Object.keys(properties || {}).length;
   return {
     type: 'function_call',
     function_call: {
       name: functionCall.name,
       description: functionCall.description,
-      input_schema: {
-        properties: _recursiveObjectSchemaCleanup(properties),
-        required,
-      },
+      ...(!takesNoInputs && {
+        input_schema: {
+          properties: _recursiveObjectSchemaCleanup(properties),
+          ...(required && { required }),
+        },
+      }),
     },
   };
 }

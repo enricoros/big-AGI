@@ -233,6 +233,7 @@ export namespace GeminiWire_ToolDeclarations {
     // See also ExecutableCode and CodeExecutionResult which are only generated when using this tool.
   });
 
+  export type FunctionDeclaration = z.infer<typeof FunctionDeclaration_schema>;
   export const FunctionDeclaration_schema = z.object({
     name: z.string(),
     description: z.string(),
@@ -248,7 +249,7 @@ export namespace GeminiWire_ToolDeclarations {
        */
       properties: z.record(z.any()).optional(),
       required: z.array(z.string()).optional(),
-    }),
+    }).optional(),
   });
 
   export const Tool_schema = z.object({
