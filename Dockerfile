@@ -33,7 +33,7 @@ ENV NODE_ENV production
 RUN npm run build
 
 # Reduce installed packages to production-only
-RUN npm prune --production
+RUN npm prune --omit=dev
 
 
 # Runner
@@ -46,7 +46,7 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copy Built app
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/dist ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/prisma ./src/server/prisma
 
