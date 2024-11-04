@@ -2,13 +2,17 @@ import * as React from 'react';
 
 import { FormControl, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import CodeIcon from '@mui/icons-material/Code';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
+import ShortcutIcon from '@mui/icons-material/Shortcut';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TitleIcon from '@mui/icons-material/Title';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
+import { Is } from '~/common/util/pwaUtils';
 import { Link } from '~/common/components/Link';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
@@ -26,13 +30,38 @@ export function UxLabsSettings() {
     labsAttachScreenCapture, setLabsAttachScreenCapture,
     labsCameraDesktop, setLabsCameraDesktop,
     labsChatBarAlt, setLabsChatBarAlt,
+    labsEnhanceCodeBlocks, setLabsEnhanceCodeBlocks,
     labsHighPerformance, setLabsHighPerformance,
     labsShowCost, setLabsShowCost,
+    labsShowShortcutBar, setLabsShowShortcutBar,
+    labsDevMode, setLabsDevMode,
+    labsDevNoStreaming, setLabsDevNoStreaming,
   } = useUXLabsStore();
 
   return <>
 
-    {/* 'v1.15 · ' + .. */}
+    {/* [DEV MODE] Settings */}
+
+    {(Is.Deployment.Localhost || labsDevMode) && (
+      <FormSwitchControl
+        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Developer Mode</>} description={labsDevMode ? 'Enabled' : 'Disabled'}
+        checked={labsDevMode} onChange={setLabsDevMode}
+      />
+    )}
+
+    {labsDevMode && (
+      <FormSwitchControl
+        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Disable Streaming</>} description={labsDevNoStreaming ? 'Enabled' : 'Disabled'}
+        checked={labsDevNoStreaming} onChange={setLabsDevNoStreaming}
+      />
+    )}
+
+    {/* Non-Graduated Settings */}
+
+    <FormSwitchControl
+      title={<><CodeIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Enhance Legacy Code</>} description={labsEnhanceCodeBlocks ? 'Auto-Enhance' : 'Disabled'}
+      checked={labsEnhanceCodeBlocks} onChange={setLabsEnhanceCodeBlocks}
+    />
 
     <FormSwitchControl
       title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Performance</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
@@ -58,6 +87,11 @@ export function UxLabsSettings() {
       title={<><LocalAtmOutlinedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Cost of messages</>} description={labsShowCost ? 'Show when available' : 'Disabled'}
       checked={labsShowCost} onChange={setLabsShowCost}
     />
+
+    {!isMobile && <FormSwitchControl
+      title={<><ShortcutIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Shortcuts Bar</>} description={labsShowShortcutBar ? 'Status Bar' : 'Disabled'}
+      checked={labsShowShortcutBar} onChange={setLabsShowShortcutBar}
+    />}
 
     {/*
       Other Graduated (removed or backlog):

@@ -1,17 +1,16 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import { Alert, Box, Button, CircularProgress, Divider, FormControl, Option, Select, Slider, Stack, Textarea, Typography } from '@mui/joy';
 
-import { DLLM, DLLMId, useModelsStore } from '~/modules/llms/store-llms';
+import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 
-import { TokenBadgeMemo } from '../../../apps/chat/components/composer/TokenBadge';
+import { TokenBadgeMemo } from '../../../apps/chat/components/composer/tokens/TokenBadge';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/GoodModal';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { Section } from '~/common/components/Section';
-import { countModelTokens } from '~/common/util/token-counter';
 import { lineHeightTextareaMd } from '~/common/app.theme';
+import { useDefaultLLMIDs, useNonHiddenLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { summerizeToFitContextBudget } from './summerize';
 
@@ -39,7 +38,8 @@ export function ContentReducer(props: {
 }) {
 
   // external state
-  const { llms, fastLLMId } = useModelsStore(state => ({ llms: state.llms, fastLLMId: state.fastLLMId }), shallow);
+  const llms = useNonHiddenLLMs();
+  const { fastLLMId } = useDefaultLLMIDs();
 
   // state
   const [reducerModelId, setReducerModelId] = React.useState<DLLMId | null>(fastLLMId);
@@ -48,7 +48,8 @@ export function ContentReducer(props: {
   const [processing, setProcessing] = React.useState(false);
 
   // derived state
-  const reducedTokens = reducerModelId ? countModelTokens(reducedText, reducerModelId, 'content reducer reduce') ?? 0 : 0;
+  // const reducedTokens = reducerModelId ? estimateTextTokens(reducedText, reducerModel, 'content reducer reduce') ?? 0 : 0;
+  const reducedTokens = 0; // DISABLED the line above, not ported to estimateTextTokens yet
   const remainingTokens = props.tokenLimit - reducedTokens;
 
 

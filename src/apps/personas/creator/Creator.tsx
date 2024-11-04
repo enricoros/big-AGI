@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Divider, FormLabel, Grid, IconButton, LinearProgress, Tab, tabClasses, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -10,10 +9,11 @@ import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
 import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { agiUuid } from '~/common/util/idUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormEditTextArray } from '~/common/components/forms/useFormEditTextArray';
 import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
-import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { FromText } from './FromText';
 import { FromYouTube } from './FromYouTube';
@@ -82,7 +82,7 @@ export const PersonaPromptCard = (props: { content: string }) =>
       <Alert variant='soft' color='success' sx={{ mb: 1 }}>
         You may now copy the text below and use it as Custom prompt!
       </Alert>
-      <RenderMarkdownMemo textBlock={{ type: 'text', content: props.content }} />
+      <RenderMarkdownMemo content={props.content} />
     </CardContent>
   </Card>;
 
@@ -111,7 +111,7 @@ export function Creator(props: { display: boolean }) {
   const { steps: creationChainSteps, id: chainId } = React.useMemo(() => {
     return {
       steps: createChain(editedInstructions, promptTitles),
-      id: uuidv4(),
+      id: agiUuid('persona-creator-chain'),
     };
   }, [editedInstructions, promptTitles]);
 

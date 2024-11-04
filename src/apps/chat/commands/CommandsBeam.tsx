@@ -3,7 +3,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import type { ICommandsProvider } from './ICommandsProvider';
 
 export const CommandsBeam: ICommandsProvider = {
-  id: 'mode-beam',
+  id: 'cmd-mode-beam',
   rank: 9,
 
   getCommands: () => [{

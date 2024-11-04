@@ -1,0 +1,45 @@
+/* Used for rendering line numbers in code blocks */
+/* adapted from: prismjs/plugins/line-numbers/prism-line-numbers.css */
+
+code.line-numbers {
+    --ln-padding: 4.5em;
+    padding-left: var(--ln-padding);
+
+    > .code-container {
+        position: relative;
+        counter-reset: linenumber;
+        /*white-space: inherit;*/
+    }
+
+    .line-numbers-rows {
+        position: absolute;
+        top: 0;
+        left: calc(-1 * var(--ln-padding));
+        width: calc(var(--ln-padding) - 0.8em);
+        font-size: 100%;
+        letter-spacing: -1px;
+        /*noinspection CssUnresolvedCustomProperty*/
+        border-right: 1px solid var(--joy-palette-primary-solidDisabledColor);
+
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        pointer-events: none;
+
+        > span {
+            display: block;
+            counter-increment: linenumber;
+        }
+
+        > span:before {
+            content: counter(linenumber);
+            /*noinspection CssUnresolvedCustomProperty*/
+            color: var(--joy-palette-primary-solidDisabledColor);
+            display: block;
+            padding-right: 0.8em;
+            font-weight: 400;
+            text-align: right;
+        }
+    }
+}

@@ -7,7 +7,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import { Link } from '~/common/components/Link';
 
 
-const bigAgi2SurveyUrl = 'https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-main&utm_medium=news&utm_campaign=ea2';
+const bigAgi2SurveyUrl = 'https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2';
 
 export const bigAgi2NewsCallout =
   <Card variant='solid' invertedColors>

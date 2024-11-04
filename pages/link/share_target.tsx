@@ -3,14 +3,14 @@ import * as React from 'react';
 import { Alert, Box, Button, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { setComposerStartupText } from '../../src/apps/chat/components/composer/store-composer';
+import { setComposerStartupText } from '~/common/logic/store-logic-sherpa';
 
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
 
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
 import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
-import { withLayout } from '~/common/layout/withLayout';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
 /**
@@ -135,6 +135,4 @@ function AppShareTarget() {
  * This page will be invoked on mobile when sharing Text/URLs/Files from other APPs
  * Example URL: https://localhost:3000/link/share_target?title=This+Title&text=https%3A%2F%2Fexample.com%2Fapp%2Fpath
  */
-export default function ShareTargetPage() {
-  return withLayout({ type: 'plain' }, <AppShareTarget />);
-}
+export default withNextJSPerPageLayout({ type: 'container' }, () => <AppShareTarget />);

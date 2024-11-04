@@ -2,12 +2,12 @@
  * porting of implementation from here: https://til.simonwillison.net/llms/python-react-pattern
  */
 
-import type { DLLMId } from '~/modules/llms/store-llms';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPage } from '~/modules/browse/browse.client';
-import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
 
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
 
@@ -36,11 +36,11 @@ ALWAYS look up on google when the question is related to live events or factual 
 e.g. loadUrl: https://arxiv.org/abs/1706.03762
 Opens the given URL and displays it
 
-` : '') + `calculate:
+` : '') + /*`calculate:
 e.g. calculate: 4 * 7 / 3
 Runs a simple javascript calculation and returns the number, the input must be javascript 
 
-wikipedia:
+` + */ `wikipedia:
 e.g. wikipedia: Django
 Returns a summary from searching Wikipedia
 
@@ -72,13 +72,19 @@ const actionRe = /^Action: (\w+): (.*)$/;
  *   - loop() is a function that will update the state (in place)
  */
 interface State {
-  messages: VChatMessageIn[];
+  instruction: string;
+  llm: string;
+  messages: { role: 'user' | 'model', text: string }[];
   nextPrompt: string;
   lastObservation: string;
   result: string | undefined;
 }
 
 export class Agent {
+
+  constructor(readonly contextRef: string, readonly abortSignal: AbortSignal) {
+    // this is here only to memo `contextRef` for later use
+  }
 
   // NOTE: this is here for demo, but the whole loop could be moved to the caller's event loop
   async reAct(question: string, llmId: DLLMId, maxTurns = 5, enableBrowse = false,
@@ -104,16 +110,17 @@ export class Agent {
   }
 
   initialize(question: string, assistantLLMId: DLLMId, enableBrowse: boolean, log: (...data: any[]) => void = console.log): State {
-    const state: State = {
-      messages: [{ role: 'system', content: bareBonesPromptMixer(reActPrompt(enableBrowse), assistantLLMId) }],
+    const systemPrompt = bareBonesPromptMixer(reActPrompt(enableBrowse), assistantLLMId);
+    log('## Prepare Buffer');
+    log('→ instruction [' + 1 + ']: "' + systemPrompt.slice(0, 86).replaceAll('\n', ' ') + ' ..."');
+    return {
+      instruction: systemPrompt,
+      messages: [],
       nextPrompt: question,
       lastObservation: '',
       result: undefined,
+      llm: assistantLLMId,
     };
-    log('## Prepare Buffer');
-    for (let i = 0; i < state.messages.length; i++)
-      log('→ ' + state.messages[i].role + ' [' + (i + 1) + ']: "' + state.messages[i].content.slice(0, 86).replaceAll('\n', ' ') + ' ..."');
-    return state;
   }
 
   truncateStringAfterPause(input: string): string {
@@ -128,23 +135,18 @@ export class Agent {
     return input.slice(0, endIndex);
   }
 
-  async chat(S: State, prompt: string, llmId: DLLMId): Promise<string> {
-    S.messages.push({ role: 'user', content: prompt });
-    let content: string;
-    try {
-      content = (await llmChatGenerateOrThrow(llmId, S.messages, 'chat-react-turn', null, null, null, 500)).content;
-    } catch (error: any) {
-      content = `Error in llmChatGenerateOrThrow: ${error}`;
-    }
+  async llmChat(S: State, prompt: string, llmId: DLLMId): Promise<string> {
+    S.messages.push({ role: 'user', text: prompt });
+    let response = await aixChatGenerateText_Simple(llmId, S.instruction, S.messages, 'chat-react-turn', this.contextRef, { abortSignal: this.abortSignal });
     // process response, strip out potential hallucinated response after PAUSE is detected
-    content = this.truncateStringAfterPause(content);
-    S.messages.push({ role: 'assistant', content });
-    return content;
+    response = this.truncateStringAfterPause(response);
+    S.messages.push({ role: 'model', text: response });
+    return response;
   }
 
   async step(S: State, llmId: DLLMId, log: (...data: any[]) => void = console.log) {
     log('→ ' + (S.lastObservation ? 'action' : 'user') + ' [' + (S.messages.length + 1) + ']: "' + S.nextPrompt + '"');
-    const result = await this.chat(S, S.nextPrompt, llmId);
+    const result = await this.llmChat(S, S.nextPrompt, llmId);
     log('← reAct [' + (S.messages.length) + ']: "' + result + '"');
     const actions = result
       .split('\n')
@@ -202,11 +204,14 @@ async function browse(url: string): Promise<string> {
   }
 }
 
-const calculate = async (what: string): Promise<string> => String(eval(what));
+// Disable, as it allows for arbitrary code execution
+// async function calculate(what: string): Promise<string> {
+//   return String(eval(what));
+// }
 
 const knownActions: { [key: string]: ActionFunction } = {
   wikipedia: wikipedia,
   google: search,
   loadUrl: browse,
-  calculate: calculate,
+  // calculate: calculate, // DISABLED: security
 };

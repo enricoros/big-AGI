@@ -8,39 +8,50 @@ import { DEV_MODE_SETTINGS } from '../settings-modal/UxLabsSettings';
 import { DiagramConfig, DiagramsModal } from '~/modules/aifn/digrams/DiagramsModal';
 import { FlattenerModal } from '~/modules/aifn/flatten/FlattenerModal';
 import { TradeConfig, TradeModal } from '~/modules/trade/TradeModal';
-import { downloadConversation, openAndLoadConversations } from '~/modules/trade/trade.client';
-import { getChatLLMId, useChatLLM } from '~/modules/llms/store-llms';
-import { imaginePromptFromText } from '~/modules/aifn/imagine/imaginePromptFromText';
+import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
+import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import { ConfirmationModal } from '~/common/components/ConfirmationModal';
-import { ConversationsManager } from '~/common/chats/ConversationsManager';
-import { GlobalShortcutDefinition, useGlobalShortcuts } from '~/common/components/useGlobalShortcuts';
+import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { OptimaDrawerIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
-import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { Release } from '~/common/app.release';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
-import { addSnackbar, removeSnackbar } from '~/common/components/useSnackbarsStore';
-import { createDMessage, DConversationId, DMessage, DMessageMetadata, getConversation, getConversationSystemPurposeId, useConversation } from '~/common/state/store-chats';
+import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
+import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
+import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
+import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
+import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 import { themeBgAppChatComposer } from '~/common/app.theme';
-import { useFolderStore } from '~/common/state/store-folders';
-import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useChatLLM } from '~/common/stores/llms/llms.hooks';
+import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import type { ComposerOutputMultiPart } from './components/composer/composer.types';
-import { ChatBarAltBeam } from './components/ChatBarAltBeam';
-import { ChatBarAltTitle } from './components/ChatBarAltTitle';
-import { ChatBarDropdowns } from './components/ChatBarDropdowns';
+import { ChatAppMenuItems } from './components/layout-menu/ChatAppMenuItems';
+import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
+import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
+import { ChatBarDropdowns } from './components/layout-bar/ChatBarDropdowns';
 import { ChatBeamWrapper } from './components/ChatBeamWrapper';
-import { ChatDrawerMemo } from './components/ChatDrawer';
+import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
-import { ChatPageMenuItems } from './components/ChatPageMenuItems';
 import { Composer } from './components/composer/Composer';
 import { usePanesManager } from './components/panes/usePanesManager';
+
+import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
 
 import { _handleExecute } from './editors/_handleExecute';
 
@@ -49,28 +60,32 @@ import { _handleExecute } from './editors/_handleExecute';
 export const CHAT_NOVEL_TITLE = 'Chat';
 
 
-/**
- * Mode: how to treat the input from the Composer
- */
-export type ChatModeId =
-  | 'generate-text'
-  | 'generate-text-beam'
-  | 'append-user'
-  | 'generate-image'
-  | 'generate-react';
-
-
 export interface AppChatIntent {
   initialConversationId: string | null;
 }
 
+const scrollToBottomSx = {
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const chatMessageListSx: SxProps = {
+  flexGrow: 1,
+};
+
+const chatBeamWrapperSx: SxProps = {
+  flexGrow: 1,
+  // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
+};
 
 const composerOpenSx: SxProps = {
   zIndex: 21, // just to allocate a surface, and potentially have a shadow
+  minWidth: { md: 480 }, // don't get compresses too much on desktop
   backgroundColor: themeBgAppChatComposer,
   borderTop: `1px solid`,
-  borderTopColor: 'divider',
-  p: { xs: 1, md: 2 },
+  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+  // hack: eats the bottom of the last message (as it has a 1px divider)
+  mt: '-1px',
 };
 
 const composerClosedSx: SxProps = {
@@ -81,14 +96,15 @@ const composerClosedSx: SxProps = {
 export function AppChat() {
 
   // state
+  const { showPromisedOverlay } = useOverlayComponents();
   const [isComposerMulticast, setIsComposerMulticast] = React.useState(false);
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
-  const [clearConversationId, setClearConversationId] = React.useState<DConversationId | null>(null);
-  const [deleteConversationIds, setDeleteConversationIds] = React.useState<DConversationId[] | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
   const showNextTitleChange = React.useRef(false);
+  const llmDropdownRef = React.useRef<OptimaBarControlMethods>(null);
+  const personaDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
 
@@ -96,12 +112,11 @@ export function AppChat() {
   const theme = useTheme();
 
   const isMobile = useIsMobile();
+  const isTallScreen = useIsTallScreen();
 
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
   const showAltTitleBar = useUXLabsStore(state => DEV_MODE_SETTINGS && state.labsChatBarAlt === 'title');
-
-  const { openLlmOptions, openModelsSetup, openPreferencesTab } = useOptimaLayout();
 
   const { chatLLM } = useChatLLM();
 
@@ -118,19 +133,23 @@ export function AppChat() {
     setFocusedPaneIndex,
   } = usePanesManager();
 
-  const chatHandlers = React.useMemo(() => chatPanes.map(pane => {
-    return pane.conversationId ? ConversationsManager.getHandler(pane.conversationId) : null;
-  }), [chatPanes]);
+  const { paneUniqueConversationIds, paneHandlers, paneBeamStores } = React.useMemo(() => {
+    const paneConversationIds: (DConversationId | null)[] = chatPanes.map(pane => pane.conversationId || null);
+    const paneHandlers = paneConversationIds.map(cId => cId ? ConversationsManager.getHandler(cId) : null);
+    const paneBeamStores = paneHandlers.map(handler => handler?.getBeamStore() ?? null);
+    const paneUniqueConversationIds = Array.from(new Set(paneConversationIds.filter(Boolean))) as DConversationId[];
+    return {
+      paneHandlers: paneHandlers,
+      paneBeamStores: paneBeamStores,
+      paneUniqueConversationIds: paneUniqueConversationIds,
+    };
+  }, [chatPanes]);
 
-  const beamsStores = React.useMemo(() => chatHandlers.map(handler => {
-    return handler?.getBeamStore() ?? null;
-  }), [chatHandlers]);
-
-  const beamsOpens = useAreBeamsOpen(beamsStores);
+  const beamsOpens = useAreBeamsOpen(paneBeamStores);
   const beamOpenStoreInFocusedPane = React.useMemo(() => {
     const open = focusedPaneIndex !== null ? (beamsOpens?.[focusedPaneIndex] ?? false) : false;
-    return open ? beamsStores?.[focusedPaneIndex!] ?? null : null;
-  }, [beamsOpens, beamsStores, focusedPaneIndex]);
+    return open ? paneBeamStores?.[focusedPaneIndex!] ?? null : null;
+  }, [beamsOpens, focusedPaneIndex, paneBeamStores]);
 
   const {
     // focused
@@ -147,14 +166,16 @@ export function AppChat() {
     deleteConversations,
   } = useConversation(focusedPaneConversationId);
 
+  // this will be used for the side panel
+  // const focusedConversationWorkspaceId = workspaceForConversationIdentity(focusedPaneConversationId);
+  //// const focusedConversationWorkspace = useWorkspaceIdForConversation(focusedPaneConversationId);
+
   const { mayWork: capabilityHasT2I } = useCapabilityTextToImage();
 
-  const { activeFolderId } = useFolderStore(({ enableFolders, folders }) => {
+  const activeFolderId = useFolderStore(({ enableFolders, folders }) => {
     const activeFolderId = enableFolders ? _activeFolderId : null;
     const activeFolder = activeFolderId ? folders.find(folder => folder.id === activeFolderId) : null;
-    return {
-      activeFolderId: activeFolder?.id ?? null,
-    };
+    return activeFolder?.id ?? null;
   });
 
 
@@ -162,7 +183,7 @@ export function AppChat() {
 
   const isMultiPane = chatPanes.length >= 2;
   const isMultiAddable = chatPanes.length < 4;
-  const isMultiConversationId = isMultiPane && new Set(chatPanes.map((pane) => pane.conversationId)).size >= 2;
+  const isMultiConversationId = paneUniqueConversationIds.length >= 2;
   const willMulticast = isComposerMulticast && isMultiConversationId;
   const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
@@ -181,15 +202,17 @@ export function AppChat() {
 
   // [effect] Handle the initial conversation intent
   React.useEffect(() => {
-    intent.initialConversationId && handleOpenConversationInFocusedPane(intent.initialConversationId);
-  }, [handleOpenConversationInFocusedPane, intent.initialConversationId]);
+    if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
+      return openConversationInFocusedPane(null! /* for debugging purporse */);
+    intent.initialConversationId && openConversationInFocusedPane(intent.initialConversationId);
+  }, [intent.initialConversationId, openConversationInFocusedPane]);
 
   // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
   React.useEffect(() => {
     if (showNextTitleChange.current) {
       showNextTitleChange.current = false;
       const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
-      const id = addSnackbar({ key: 'focused-title', message: title, type: 'title' });
+      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
       return () => removeSnackbar(id);
     }
   }, [focusedChatNumber, focusedChatTitle]);
@@ -197,65 +220,62 @@ export function AppChat() {
 
   // Execution
 
-  const handleExecuteAndOutcome = React.useCallback(async (chatModeId: ChatModeId, conversationId: DConversationId, history: DMessage[]) => {
-    const outcome = await _handleExecute(chatModeId, conversationId, history);
+  const handleExecuteAndOutcome = React.useCallback(async (chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, callerNameDebug: string) => {
+    const outcome = await _handleExecute(chatExecuteMode, conversationId, callerNameDebug);
     if (outcome === 'err-no-chatllm')
-      openModelsSetup();
+      optimaOpenModels();
     else if (outcome === 'err-t2i-unconfigured')
-      openPreferencesTab(PreferencesTab.Draw);
+      optimaOpenPreferences('draw');
     else if (outcome === 'err-no-persona')
       addSnackbar({ key: 'chat-no-persona', message: 'No persona selected.', type: 'issue' });
     else if (outcome === 'err-no-conversation')
       addSnackbar({ key: 'chat-no-conversation', message: 'No active conversation.', type: 'issue' });
+    else if (outcome === 'err-no-last-message')
+      addSnackbar({ key: 'chat-no-conversation', message: 'No conversation history.', type: 'issue' });
     return outcome === true;
-  }, [openModelsSetup, openPreferencesTab]);
+  }, []);
 
-  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatModeId: ChatModeId, multiPartMessage: ComposerOutputMultiPart, metadata?: DMessageMetadata): boolean => {
-    // validate inputs
-    if (multiPartMessage.length !== 1 || multiPartMessage[0].type !== 'text-block') {
-      addSnackbar({
-        key: 'chat-composer-action-invalid',
-        message: 'Only a single text part is supported for now.',
-        type: 'issue',
-        overrides: {
-          autoHideDuration: 2000,
-        },
-      });
+  const handleComposerAction = React.useCallback((conversationId: DConversationId, chatExecuteMode: ChatExecuteMode, fragments: (DMessageContentFragment | DMessageAttachmentFragment)[], metadata?: DMessageMetadata): boolean => {
+
+    // [multicast] send the message to all the panes
+    const uniqueConversationIds = willMulticast
+      ? Array.from(new Set([conversationId, ...paneUniqueConversationIds]))
+      : [conversationId];
+
+    // validate conversation existence
+    const uniqueConverations = uniqueConversationIds.map(cId => getConversation(cId)).filter(Boolean) as DConversation[];
+    if (!uniqueConverations.length)
       return false;
-    }
-    const userText = multiPartMessage[0].text;
-
-    // multicast: send the message to all the panes
-    const uniqueConversationIds = new Set([conversationId]);
-    if (willMulticast)
-      chatPanes.forEach(pane => pane.conversationId && uniqueConversationIds.add(pane.conversationId));
 
     // we loop to handle both the normal and multicast modes
-    let enqueuedAny = false;
-    for (const _cId of uniqueConversationIds) {
-      const history = getConversation(_cId)?.messages;
-      if (!history) continue;
+    for (const conversation of uniqueConverations) {
 
-      const newUserMessage = createDMessage('user', userText);
-      if (metadata) newUserMessage.metadata = metadata;
+      // create the user:message
+      // NOTE: this can lead to multiple chat messages with data refs that are referring to the same dblobs,
+      //       however, we already got transferred ownership of the dblobs at this point.
+      const userMessage = createDMessageFromFragments('user', duplicateDMessageFragmentsNoVoid(fragments)); // [chat] create user:message to send per-chat
+      if (metadata) userMessage.metadata = duplicateDMessageMetadata(metadata);
+
+      ConversationsManager.getHandler(conversation.id).messageAppend(userMessage); // [chat] append user message in each conversation
 
       // fire/forget
-      void handleExecuteAndOutcome(chatModeId, _cId, [...history, newUserMessage]);
-      enqueuedAny = true;
+      void handleExecuteAndOutcome(chatExecuteMode /* various */, conversation.id, 'chat-composer-action'); // append user message, then '*-*'
     }
-    return enqueuedAny;
-  }, [chatPanes, handleExecuteAndOutcome, willMulticast]);
 
-  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId, history: DMessage[]) => {
-    await handleExecuteAndOutcome('generate-text', conversationId, history);
+    return true;
+  }, [paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
+
+  const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
+    await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-content'
   }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
     const focusedConversation = getConversation(focusedPaneConversationId);
-    if (focusedConversation?.messages?.length) {
+    if (focusedPaneConversationId && focusedConversation?.messages?.length) {
       const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      const history = lastMessage.role === 'assistant' ? focusedConversation.messages.slice(0, -1) : [...focusedConversation.messages];
-      await handleExecuteAndOutcome('generate-text', focusedConversation.id, history);
+      if (lastMessage.role === 'assistant')
+        ConversationsManager.getHandler(focusedPaneConversationId).historyTruncateTo(lastMessage.id, -1);
+      await handleExecuteAndOutcome('generate-content', focusedConversation.id, 'chat-regenerate-last'); // truncate if assistant, then gen-text
     }
   }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
@@ -273,15 +293,23 @@ export function AppChat() {
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
-  const handleTextImagine = React.useCallback(async (conversationId: DConversationId, messageText: string) => {
+  const handleImagineFromText = React.useCallback(async (conversationId: DConversationId, subjectText: string) => {
     const conversation = getConversation(conversationId);
     if (!conversation)
       return;
-    const imaginedPrompt = await imaginePromptFromText(messageText, conversationId) || 'An error sign.';
-    await handleExecuteAndOutcome('generate-image', conversationId, [
-      ...conversation.messages,
-      createDMessage('user', imaginedPrompt),
-    ]);
+    const cHandler = ConversationsManager.getHandler(conversationId);
+    const userImagineMessage = createDMessagePlaceholderIncomplete('user', `Thinking at the subject...`); // [chat] append user:imagine prompt
+    cHandler.messageAppend(userImagineMessage);
+    await imaginePromptFromTextOrThrow(subjectText, conversationId)
+      .then(imaginedPrompt => {
+        // Replace the placeholder with the message to draw, then execute the draw
+        cHandler.messageFragmentReplace(userImagineMessage.id, userImagineMessage.fragments[0].fId, createTextContentFragment(imaginedPrompt), true);
+        return handleExecuteAndOutcome('generate-image', conversationId, 'chat-imagine-from-text'); // append message for 'imagine', then generate-image
+      })
+      .catch((error: any) => {
+        // Replace the placeholder with the error message
+        cHandler.messageFragmentReplace(userImagineMessage.id, userImagineMessage.fragments[0].fId, createErrorContentFragment(`Issue requesting an Image prompt. ${error?.message || ''}`), true);
+      });
   }, [handleExecuteAndOutcome]);
 
   const handleTextSpeak = React.useCallback(async (text: string): Promise<void> => {
@@ -291,12 +319,12 @@ export function AppChat() {
 
   // Chat actions
 
-  const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle?: boolean) => {
+  const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle: boolean, isIncognito: boolean) => {
 
     // create conversation (or recycle the existing top-of-stack empty conversation)
-    const conversationId = (recycleNewConversationId && !forceNoRecycle)
+    const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito)
       ? recycleNewConversationId
-      : prependNewConversation(getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined);
+      : prependNewConversation(getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
 
     // switch the focused pane to the new conversation
     handleOpenConversationInFocusedPane(conversationId);
@@ -316,23 +344,30 @@ export function AppChat() {
     setTradeConfig({ dir: 'export', conversationId, exportAll });
   }, []);
 
-  const handleFileOpenConversation = React.useCallback(() => {
-    openAndLoadConversations(true)
-      .then((outcome) => {
-        // activate the last (most recent) imported conversation
-        if (outcome?.activateConversationId) {
-          showNextTitleChange.current = true;
-          handleOpenConversationInFocusedPane(outcome.activateConversationId);
-        }
-      })
-      .catch(() => {
-        addSnackbar({ key: 'chat-import-fail', message: 'Could not open the file.', type: 'issue' });
-      });
-  }, [handleOpenConversationInFocusedPane]);
+  const handleConversationsImportFromFiles = React.useCallback(
+    (files: File[] | null): Promise<void> =>
+      importConversationsFromFilesAtRest(files, true)
+        .then((outcome) => {
+          // activate the last (most recent) imported conversation
+          if (outcome.activateConversationId) {
+            showNextTitleChange.current = true;
+            handleOpenConversationInFocusedPane(outcome.activateConversationId);
+          }
+        })
+        .catch(() => {
+          addSnackbar({ key: 'chat-import-fail', message: 'Could not open file.', type: 'issue' });
+        }),
+    [handleOpenConversationInFocusedPane],
+  );
+
+  const handleConversationsImportFormFilePicker = React.useCallback(
+    () => openConversationsAtRestPicker().then(handleConversationsImportFromFiles),
+    [handleConversationsImportFromFiles],
+  );
 
   const handleFileSaveConversation = React.useCallback((conversationId: DConversationId | null) => {
     const conversation = getConversation(conversationId);
-    conversation && downloadConversation(conversation, 'json')
+    conversation && downloadSingleChat(conversation, 'json')
       .then(() => {
         addSnackbar({ key: 'chat-save-as-ok', message: 'File saved.', type: 'success' });
       })
@@ -342,7 +377,7 @@ export function AppChat() {
       });
   }, []);
 
-  const handleConversationBranch = React.useCallback((srcConversationId: DConversationId, messageId: string | null): DConversationId | null => {
+  const handleConversationBranch = React.useCallback((srcConversationId: DConversationId, messageId: string | null, addSplitPane: boolean): DConversationId | null => {
     // clone data
     const branchedConversationId = branchConversation(srcConversationId, messageId);
 
@@ -352,28 +387,39 @@ export function AppChat() {
 
     // replace/open a new pane with this
     showNextTitleChange.current = true;
-    if (!isMultiAddable)
-      handleOpenConversationInFocusedPane(branchedConversationId);
-    else
+    if (addSplitPane && isMultiAddable)
       handleOpenConversationInSplitPane(branchedConversationId);
+    else
+      handleOpenConversationInFocusedPane(branchedConversationId);
 
     return branchedConversationId;
   }, [activeFolderId, branchConversation, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
-  const handleConfirmedClearConversation = React.useCallback(() => {
-    if (clearConversationId) {
-      ConversationsManager.getHandler(clearConversationId).messagesReplace([]);
-      setClearConversationId(null);
+  const handleConversationReset = React.useCallback(async (conversationId: DConversationId) => {
+    if (await showPromisedOverlay('chat-reset-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText='This will clear all messages while keeping the current chat settings, model, and persona. Do you want to continue?'
+        positiveActionText='Restart Chat'
+        title='Restart Chat'
+      />,
+    )) {
+      ConversationsManager.getHandler(conversationId).historyClear();
     }
-  }, [clearConversationId]);
+  }, [showPromisedOverlay]);
 
-  const handleConversationClear = React.useCallback((conversationId: DConversationId) => setClearConversationId(conversationId), []);
+  const handleDeleteConversations = React.useCallback(async (conversationIds: DConversationId[], bypassConfirmation: boolean) => {
 
-  const handleDeleteConversations = React.useCallback((conversationIds: DConversationId[], bypassConfirmation: boolean) => {
-    if (!bypassConfirmation)
-      return setDeleteConversationIds(conversationIds);
+    // show confirmation dialog
+    if (!bypassConfirmation && !await showPromisedOverlay('chat-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={`Are you absolutely sure you want to delete ${conversationIds.length === 1 ? 'this conversation' : 'these conversations'}? This action cannot be undone.`}
+        positiveActionText={conversationIds.length === 1 ? 'Delete conversation' : `Yes, delete all ${conversationIds.length} conversations`}
+      />,
+    )) return;
 
     // perform deletion, and return the next (or a new) conversation
     const nextConversationId = deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
@@ -381,39 +427,9 @@ export function AppChat() {
     // switch the focused pane to the new conversation - NOTE: this makes the assumption that deletion had impact on the focused pane
     handleOpenConversationInFocusedPane(nextConversationId);
 
-    setDeleteConversationIds(null);
-  }, [deleteConversations, handleOpenConversationInFocusedPane]);
-
-  const handleConfirmedDeleteConversations = React.useCallback(() => {
-    !!deleteConversationIds?.length && handleDeleteConversations(deleteConversationIds, true);
-  }, [deleteConversationIds, handleDeleteConversations]);
-
-
-  // Shortcuts
-
-  const handleOpenChatLlmOptions = React.useCallback(() => {
-    const chatLLMId = getChatLLMId();
-    if (!chatLLMId) return;
-    openLlmOptions(chatLLMId);
-  }, [openLlmOptions]);
-
-  const shortcuts = React.useMemo((): GlobalShortcutDefinition[] => [
-    // focused conversation
-    ['b', true, true, false, handleMessageBeamLastInFocusedPane],
-    ['g', true, true, false, handleMessageRegenerateLastInFocusedPane],
-    ['o', true, false, false, handleFileOpenConversation],
-    ['s', true, false, false, () => handleFileSaveConversation(focusedPaneConversationId)],
-    ['n', true, true, false, handleConversationNewInFocusedPane],
-    ['x', true, true, false, () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationClear(focusedPaneConversationId))],
-    ['d', true, true, false, () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false)],
-    ['[', true, false, false, () => handleNavigateHistoryInFocusedPane('back')],
-    [']', true, false, false, () => handleNavigateHistoryInFocusedPane('forward')],
-    // global
-    ['o', true, true, false, handleOpenChatLlmOptions],
-    ['+', true, true, false, useUIPreferencesStore.getState().increaseContentScaling],
-    ['-', true, true, false, useUIPreferencesStore.getState().decreaseContentScaling],
-  ], [focusedPaneConversationId, handleConversationClear, handleConversationNewInFocusedPane, handleFileOpenConversation, handleFileSaveConversation, handleDeleteConversations, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]);
-  useGlobalShortcuts(shortcuts);
+    // run GC for dblobs in this conversation
+    void gcChatImageAssets(); // fire/forget
+  }, [showPromisedOverlay, deleteConversations, handleOpenConversationInFocusedPane]);
 
 
   // Pluggable Optima components
@@ -423,17 +439,17 @@ export function AppChat() {
   const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
       ? <ChatBarAltBeam beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
       : (barAltTitle === null)
-        ? <ChatBarDropdowns conversationId={focusedPaneConversationId} />
+        ? <ChatBarDropdowns conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} />
         : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
     , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId, isMobile],
   );
 
   const drawerContent = React.useMemo(() =>
       <ChatDrawerMemo
-        isMobile={isMobile}
+        // isMobile={isMobile /* expensive as it undoes the memo; not passed anymore */}
         activeConversationId={focusedPaneConversationId}
         activeFolderId={activeFolderId}
-        chatPanesConversationIds={chatPanes.map(pane => pane.conversationId).filter(Boolean) as DConversationId[]}
+        chatPanesConversationIds={paneUniqueConversationIds}
         disableNewButton={disableNewButton}
         onConversationActivate={handleOpenConversationInFocusedPane}
         onConversationBranch={handleConversationBranch}
@@ -443,45 +459,113 @@ export function AppChat() {
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, chatPanes, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isMobile],
+    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, paneUniqueConversationIds],
   );
 
   const focusedMenuItems = React.useMemo(() =>
-      <ChatPageMenuItems
+      <ChatAppMenuItems
         isMobile={isMobile}
         conversationId={focusedPaneConversationId}
         disableItems={!focusedPaneConversationId || isFocusedChatEmpty}
         hasConversations={hasConversations}
         isMessageSelectionMode={isMessageSelectionMode}
         onConversationBranch={handleConversationBranch}
-        onConversationClear={handleConversationClear}
+        onConversationClear={handleConversationReset}
         onConversationFlatten={handleConversationFlatten}
         // onConversationNew={handleConversationNewInFocusedPane}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [focusedPaneConversationId, handleConversationBranch, handleConversationClear, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
+    [focusedPaneConversationId, handleConversationBranch, handleConversationReset, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
   );
 
-  usePluggableOptimaLayout(drawerContent, focusedBarContent, focusedMenuItems, 'AppChat');
+  useSetOptimaAppMenu(focusedMenuItems, 'AppChat');
+
+
+  // Shortcuts
+
+  const handleOpenChatLlmOptions = React.useCallback(() => {
+    const chatLLMId = getChatLLMId();
+    if (!chatLLMId) return;
+    optimaActions().openModelOptions(chatLLMId);
+  }, []);
+
+  const handleMoveFocus = React.useCallback((direction: number, wholeList?: boolean) => {
+    // find the parent list
+    let messageListElement: HTMLElement | null;
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement)
+      messageListElement = activeElement.closest('[role=chat-messages-list]') as HTMLElement;
+    else
+      messageListElement = document.querySelector('[role=chat-messages-list]') as HTMLElement;
+    if (!messageListElement) return;
+
+    // find the scrollable container and if we're at the bottom
+    const scrollContainer = messageListElement.closest('[role=scrollable]') as HTMLElement;
+    if (!scrollContainer) return;
+    const isAtBottom = Math.abs(scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight) < 1;
+
+    // determine the current message and next index
+    const messageElements = Array.from(messageListElement.querySelectorAll('[role=chat-message]')) as HTMLElement[];
+    const currentIndex = messageElements.findIndex(el => el.contains(activeElement));
+
+    // if going down and we're at/past the last message, scroll to bottom
+    const snapToBottom = direction > 0 && (wholeList || (currentIndex === -1 || currentIndex >= messageElements.length - 1));
+    const nextIndex = (wholeList && direction < 0) ? 0
+      : snapToBottom ? messageElements.length - 1
+        : (isAtBottom && direction < 0) ? currentIndex
+          : currentIndex === -1 ? (direction < 0 ? 0 : messageElements.length - 1)
+            : currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= messageElements.length) return;
+
+    // perform the smooth scroll and focus
+    const targetElement = messageElements[nextIndex];
+    targetElement.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
+    targetElement.scrollIntoView({ behavior: 'smooth', block: snapToBottom ? 'end' : 'start' });
+  }, []);
+
+  useGlobalShortcuts('AppChat', React.useMemo(() => [
+    // focused conversation
+    { key: 'z', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
+    { key: 'b', ctrl: true, shift: true, disabled: isFocusedChatEmpty, action: handleMessageBeamLastInFocusedPane, description: 'Beam Edit' },
+    { key: 'o', ctrl: true, action: handleConversationsImportFormFilePicker },
+    { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
+    { key: 'n', ctrl: true, shift: true, action: () => handleConversationNewInFocusedPane(false, false) },
+    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
+    { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
+    { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
+    { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
+    // change active message (in any possible panel)
+    { key: ShortcutKey.Up, ctrl: true, action: () => handleMoveFocus(-1) },
+    { key: ShortcutKey.Down, ctrl: true, action: () => handleMoveFocus(1) },
+    { key: ShortcutKey.Up, ctrl: true, shift: true, action: () => handleMoveFocus(-1, true) },
+    { key: ShortcutKey.Down, ctrl: true, shift: true, action: () => handleMoveFocus(1, true) },
+    // open the dropdowns
+    { key: 'l', ctrl: true, action: () => llmDropdownRef.current?.openListbox() /*, description: 'Open Models Dropdown'*/ },
+    { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
+    // focused conversation llm
+    { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
+  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
 
 
   return <>
+    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
+    <OptimaToolbarIn>{focusedBarContent}</OptimaToolbarIn>
 
     <PanelGroup
-      direction={isMobile ? 'vertical' : 'horizontal'}
+      direction={(isMobile || isTallScreen) ? 'vertical' : 'horizontal'}
       id='app-chat-panels'
     >
 
       {chatPanes.map((pane, idx) => {
         const _paneIsFocused = idx === focusedPaneIndex;
         const _paneConversationId = pane.conversationId;
-        const _paneChatHandler = chatHandlers[idx] ?? null;
-        const _paneBeamStore = beamsStores[idx] ?? null;
-        const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStore;
+        const _paneChatHandler = paneHandlers[idx] ?? null;
+        const _paneBeamStoreApi = paneBeamStores[idx] ?? null;
+        const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStoreApi;
         const _panesCount = chatPanes.length;
         const _keyAndId = `chat-pane-${pane.paneId}`;
         const _sepId = `sep-pane-${idx}`;
-        return <React.Fragment key={_keyAndId}>
+        return <WorkspaceIdProvider conversationId={_paneIsFocused ? _paneConversationId : null} key={_keyAndId}>
 
           <Panel
             id={_keyAndId}
@@ -525,7 +609,7 @@ export function AppChat() {
             <ScrollToBottom
               bootToBottom
               stickToBottomInitial
-              sx={{ display: 'flex', flexDirection: 'column' }}
+              sx={scrollToBottomSx}
             >
 
               {!_paneBeamIsOpen && (
@@ -533,29 +617,27 @@ export function AppChat() {
                   conversationId={_paneConversationId}
                   conversationHandler={_paneChatHandler}
                   capabilityHasT2I={capabilityHasT2I}
+                  chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
                   chatLLMContextTokens={chatLLM?.contextTokens ?? null}
+                  chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
                   fitScreen={isMobile || isMultiPane}
+                  isMobile={isMobile}
                   isMessageSelectionMode={isMessageSelectionMode}
                   setIsMessageSelectionMode={setIsMessageSelectionMode}
                   onConversationBranch={handleConversationBranch}
                   onConversationExecuteHistory={handleConversationExecuteHistory}
                   onTextDiagram={handleTextDiagram}
-                  onTextImagine={handleTextImagine}
+                  onTextImagine={handleImagineFromText}
                   onTextSpeak={handleTextSpeak}
-                  sx={{
-                    flexGrow: 1,
-                  }}
+                  sx={chatMessageListSx}
                 />
               )}
 
               {_paneBeamIsOpen && (
                 <ChatBeamWrapper
-                  beamStore={_paneBeamStore}
+                  beamStore={_paneBeamStoreApi}
                   isMobile={isMobile}
-                  inlineSx={{
-                    flexGrow: 1,
-                    // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
-                  }}
+                  inlineSx={chatBeamWrapperSx}
                 />
               )}
 
@@ -573,7 +655,7 @@ export function AppChat() {
             </PanelResizeHandle>
           )}
 
-        </React.Fragment>;
+        </WorkspaceIdProvider>;
       })}
 
     </PanelGroup>
@@ -582,18 +664,24 @@ export function AppChat() {
       isMobile={isMobile}
       chatLLM={chatLLM}
       composerTextAreaRef={composerTextAreaRef}
-      conversationId={focusedPaneConversationId}
+      targetConversationId={focusedPaneConversationId}
       capabilityHasT2I={capabilityHasT2I}
       isMulticast={!isMultiConversationId ? null : isComposerMulticast}
       isDeveloperMode={isFocusedChatDeveloper}
       onAction={handleComposerAction}
-      onTextImagine={handleTextImagine}
+      onConversationsImportFromFiles={handleConversationsImportFromFiles}
+      onTextImagine={handleImagineFromText}
       setIsMulticast={setIsComposerMulticast}
       sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
     />
 
     {/* Diagrams */}
-    {!!diagramConfig && <DiagramsModal config={diagramConfig} onClose={() => setDiagramConfig(null)} />}
+    {!!diagramConfig && (
+      <DiagramsModal
+        config={diagramConfig}
+        onClose={() => setDiagramConfig(null)}
+      />
+    )}
 
     {/* Flatten */}
     {!!flattenConversationId && (
@@ -610,24 +698,6 @@ export function AppChat() {
         config={tradeConfig}
         onConversationActivate={handleOpenConversationInFocusedPane}
         onClose={() => setTradeConfig(null)}
-      />
-    )}
-
-    {/* [confirmation] Reset Conversation */}
-    {!!clearConversationId && (
-      <ConfirmationModal
-        open onClose={() => setClearConversationId(null)} onPositive={handleConfirmedClearConversation}
-        confirmationText='Are you sure you want to discard all messages?'
-        positiveActionText='Clear conversation'
-      />
-    )}
-
-    {/* [confirmation] Delete All */}
-    {!!deleteConversationIds?.length && (
-      <ConfirmationModal
-        open onClose={() => setDeleteConversationIds(null)} onPositive={handleConfirmedDeleteConversations}
-        confirmationText={`Are you absolutely sure you want to delete ${deleteConversationIds.length === 1 ? 'this conversation' : 'these conversations'}? This action cannot be undone.`}
-        positiveActionText={deleteConversationIds.length === 1 ? 'Delete conversation' : `Yes, delete all ${deleteConversationIds.length} conversations`}
       />
     )}
 

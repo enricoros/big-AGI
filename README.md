@@ -13,7 +13,7 @@ Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 > 🚀 Big-AGI 2 is launching Q4 2024. Be the first to experience it before the public release.
 >
-> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-main&utm_medium=readme&utm_campaign=ea2)
+> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=readme&utm_campaign=ea2)
 
 Or fork & run on Vercel
 
@@ -29,7 +29,7 @@ This repository contains two main versions:
   - `v1-dev`: V1 development branch (this branch)
   - `v1-stable`: Current stable version
 
-Note: After the V2 release in Q4, `v2/dev` will become the default branch and `v1/dev` will reach EOL.
+Note: After the V2 release in Q4, `v2-dev` will become the default branch and `v1-dev` will reach EOL.
 
 ### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
@@ -41,7 +41,7 @@ Note: After the V2 release in Q4, `v2/dev` will become the default branch and `v
 - 1.16.5: GPT-4o Mini support
 - 1.16.4: 8192 tokens support for Claude 3.5 Sonnet
 - 1.16.3: Anthropic Claude 3.5 Sonnet model support
-- 1.16.2: Improve web downloads, as text, markdwon, or HTML
+- 1.16.2: Improve web downloads, as text, markdown, or HTML
 - 1.16.2: Proper support for Gemini models
 - 1.16.2: Added the latest Mistral model
 - 1.16.2: Tokenizer support for gpt-4o
@@ -160,7 +160,7 @@ You can easily configure 100s of AI models in big-AGI:
 
 | **AI models**       | _supported vendors_                                                                                                                                                                                                             |
 |:--------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/) · [Oobabooga](https://github.com/oobabooga/text-generation-webui)                                                                                   |
+| Opensource Servers  | [LocalAI](https://localai.io/) (multimodal) · [Ollama](https://ollama.com/)                                                                                                                                                     |
 | Local Servers       | [LM Studio](https://lmstudio.ai/)                                                                                                                                                                                               |
 | Multimodal services | [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) · [Google Gemini](https://ai.google.dev/) · [OpenAI](https://platform.openai.com/docs/overview)                                                  |
 | Language services   | [Anthropic](https://anthropic.com) · [Groq](https://wow.groq.com/) · [Mistral](https://mistral.ai/) · [OpenRouter](https://openrouter.ai/) · [Perplexity](https://www.perplexity.ai/) · [Together AI](https://www.together.ai/) | 
@@ -232,6 +232,13 @@ Or bring your API keys and jump straight into our free instance on [big-AGI.com]
 
 [//]: # ([![License]&#40;https://img.shields.io/github/license/enricoros/big-agi&#41;]&#40;https://github.com/enricoros/big-agi/LICENSE&#41;)
 
+## 📜 Licensing
+
+Big-AGI incorporates third-party software components that are subject
+to separate license terms. For detailed information about these
+components and their respective licenses, please refer to
+the [Third-Party Notices](src/modules/3rdparty/THIRD_PARTY_NOTICES.md).
+
 ---
 
-2023-2024 · Enrico Ros x [big-AGI](https://big-agi.com) · License: [MIT](LICENSE) · Made with 💙
+2023-2024 · Enrico Ros x [Big-AGI](https://big-agi.com) · Like this project? Leave a star! 💫⭐

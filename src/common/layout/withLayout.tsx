@@ -1,30 +1,72 @@
 import * as React from 'react';
 
+import type { NextPageWithLayout } from '~/common/types/next.page';
+
+import { ContainerLayout } from '~/common/layout/container/ContainerLayout';
 import { OptimaLayout } from './optima/OptimaLayout';
-import { PlainLayout } from './plain/PlainLayout';
 
 
-type WithLayout = {
+type PerPageLayoutOptions = {
+  // Center in a container at 100dvh
+  type: 'container';
+} | {
+  // No layout, just the page
+  type: 'noop';
+} | {
+  // Flexible layout with pluggable components
   type: 'optima';
   suspendAutoModelsSetup?: boolean;
-} | {
-  type: 'plain';
 };
 
 
 /**
- * Dynamic page-level layouting: a wrapper that adds the layout around the children.
+ * Next.js page-level layouting: a wrapper that adds the layout around the page as a layout function.
  */
-export function withLayout(layoutOptions: WithLayout, children: React.ReactNode): React.ReactElement {
+export function withNextJSPerPageLayout(options: PerPageLayoutOptions, page: NextPageWithLayout): NextPageWithLayout {
 
-  // Optima layout: also wrap it in the OptimaLayoutProvider
-  if (layoutOptions.type === 'optima')
-    return <OptimaLayout {...layoutOptions}>{children}</OptimaLayout>;
+  const { type, ...rest } = options;
 
-  else if (layoutOptions.type === 'plain')
-    return <PlainLayout {...layoutOptions}>{children}</PlainLayout>;
+  switch (type) {
 
-  // if no layout is specified, return the children as-is
-  console.error('No layout specified for this top-level page');
-  return <>{children}</>;
+    case 'container':
+      page.getLayout = (page: React.ReactElement) => <ContainerLayout {...rest}>{page}</ContainerLayout>;
+      return page;
+
+    case 'noop':
+      page.getLayout = (page: React.ReactElement) => page;
+      return page;
+
+    case 'optima':
+      page.getLayout = (page: React.ReactElement) => <OptimaLayout {...rest}>{page}</OptimaLayout>;
+      return page;
+
+    default:
+      console.error('No layout specified for this top-level page');
+      return page;
+
+  }
 }
+
+
+// /**
+//  * Dynamic page-level layouting: a wrapper that adds the layout around the children.
+//  */
+// export function withLayout(layoutOptions: LayoutOptions, children: React.ReactNode): React.ReactElement {
+//
+//   const { type, ...rest } = layoutOptions;
+//
+//   switch (type) {
+//
+//     case 'optima':
+//       return <OptimaLayout {...rest}>{children}</OptimaLayout>;
+//
+//     case 'plain':
+//       return <PlainLayout {...rest}>{children}</PlainLayout>;
+//
+//     default:
+//       console.error('No layout specified for this top-level page');
+//       return <>{children}</>;
+//
+//   }
+// }
+//

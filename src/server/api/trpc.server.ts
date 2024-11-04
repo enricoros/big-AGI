@@ -6,9 +6,9 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from '@trpc/server';
-import superjson from 'superjson';
 import { ZodError } from 'zod';
+import { initTRPC } from '@trpc/server';
+import { transformer } from '~/server/api/trpc.transformer';
 
 /**
  * 1. CONTEXT
@@ -23,19 +23,22 @@ export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request;
   return {
     // only used by Backend Analytics
     hostName: req.headers?.get('host') ?? 'localhost',
+    // enables cancelling upstream requests when the downstream request is aborted
+    reqSignal: req.signal,
   };
 };
 
 
 /**
- * 2. INITIALIZATION
+ * 2. SERVER-SIDE INITIALIZATION
  *
  * This is where the tRPC API is initialized, connecting the context and transformer. We also parse
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCFetchContext>().create({
-  transformer: superjson,
+  // server transformer - serialize: -> client, deserialize: <- client
+  transformer: transformer,
   errorFormatter({ shape, error }) {
     return {
       ...shape,
@@ -58,15 +61,23 @@ const t = initTRPC.context<typeof createTRPCFetchContext>().create({
 /**
  * This is how you create new routers and sub-routers in your tRPC API.
  *
- * @see https://trpc.io/docs/router
+ * @link https://trpc.io/docs/v11/router
  */
 export const createTRPCRouter = t.router;
 
 /**
- * Public (unauthenticated) procedure
+ * Public (unprotected) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
+ *
+ * @link https://trpc.io/docs/v11/procedures
  */
 export const publicProcedure = t.procedure;
+
+// /**
+//  * Create a server-side caller
+//  * @link https://trpc.io/docs/v11/server/server-side-calls
+//  */
+// export const createCallerFactory = t.createCallerFactory;

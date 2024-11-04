@@ -1,7 +1,7 @@
-import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
-
-import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+
+import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
+import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';
 
 
 export interface UserInputChecklistInstruction extends BaseInstruction {
@@ -16,18 +16,18 @@ export interface UserChecklistOption {
 }
 
 
-export async function executeUserInputChecklist(
+export async function executeUserInputChecklistInstruction(
   _i: UserInputChecklistInstruction,
   inputs: ExecutionInputState,
-  previousResult: string,
+  prevStepOutput: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
 
     // initial text to options
-    let options = parseTextToChecklist(previousResult, false);
+    let options = parseTextToChecklist(prevStepOutput, false);
     const relaxMatch = options.length < 2;
     if (relaxMatch)
-      options = parseTextToChecklist(previousResult, true);
+      options = parseTextToChecklist(prevStepOutput, true);
 
     // if no options, there's an error
     if (options.length < 2) {
@@ -36,7 +36,9 @@ export async function executeUserInputChecklist(
     }
 
     // react to aborts
-    const abortHandler = () => reject(new Error('Checklist Selection Stopped.'));
+    const abortHandler = () => {
+      reject(new Error('Checklist Selection Stopped.'));
+    };
     inputs.chainAbortController.signal.addEventListener('abort', abortHandler);
 
     const clearState = () => {
@@ -67,7 +69,13 @@ export async function executeUserInputChecklist(
     inputs.updateProgressComponent(null);
 
     // Update the instruction component to render the checklist
-    inputs.updateInstructionComponent(<UserInputChecklistComponent options={options} onConfirm={onConfirm} onCancel={onCancel} />);
+    inputs.updateInstructionComponent(
+      <UserInputChecklistComponent
+        options={options}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
 
   });
 }

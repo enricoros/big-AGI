@@ -3,15 +3,16 @@ import * as React from 'react';
 import { IconButton, Tooltip } from '@mui/joy';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
+import type { DLLM } from '~/common/stores/llms/llms.types';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { InlineError } from '~/common/components/InlineError';
 
-import { DLLM, useModelsStore } from '../../store-llms';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
-import { FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE, LLMOptionsOpenAI } from './openai.vendor';
+import { DOpenAILLMOptions, FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from './openai.vendor';
 
 
-function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
+function normalizeOpenAIOptions(partialOptions?: Partial<DOpenAILLMOptions>) {
   return {
     llmRef: 'unknown_id',
     llmTemperature: FALLBACK_LLM_TEMPERATURE,
@@ -21,12 +22,12 @@ function normalizeOpenAIOptions(partialOptions?: Partial<LLMOptionsOpenAI>) {
 }
 
 
-export function OpenAILLMOptions(props: { llm: DLLM<unknown, LLMOptionsOpenAI> }) {
+export function OpenAILLMOptions(props: { llm: DLLM<DOpenAILLMOptions> }) {
 
   // derived state
   const { id: llmId, maxOutputTokens, options } = props.llm;
   const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
-  const { updateLLMOptions } = useModelsStore.getState();
+  const { updateLLMOptions } = llmsStoreActions();
 
   // state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(llmTemperature > 1);

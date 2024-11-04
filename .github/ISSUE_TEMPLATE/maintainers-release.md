@@ -51,7 +51,7 @@ To familiarize yourself with the application, the following are the Website and 
 ```
 
 - paste the URL: https://big-agi.com
-- drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/main/README.md)
+- drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/v2-dev/README.md)
 
 ```markdown
 I am announcing a new version, 1.2.3.

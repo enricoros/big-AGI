@@ -2,9 +2,7 @@ import * as React from 'react';
 
 import { AppPersonas } from '../src/apps/personas/AppPersonas';
 
-import { withLayout } from '~/common/layout/withLayout';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
-export default function PersonasPage() {
-  return withLayout({ type: 'optima' }, <AppPersonas />);
-}
+export default withNextJSPerPageLayout({ type: 'optima' }, () => <AppPersonas />);

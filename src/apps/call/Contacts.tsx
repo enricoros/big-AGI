@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
@@ -7,8 +6,9 @@ import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
 import { animationShadowRingLimey } from '~/common/util/animUtils';
-import { conversationTitle, DConversation, DConversationId, useChatStore } from '~/common/state/store-chats';
-import { usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
+import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 
 import type { AppCallIntent } from './AppCall';
 import { MockPersona, useMockPersonas } from './state/useMockPersonas';
@@ -60,7 +60,7 @@ const ContactCardConversationCall = (props: { conversation: DConversation, onCon
 function CallContactCard(props: {
   persona: MockPersona,
   callGrayUI: boolean,
-  conversations: DConversation[],
+  conversations: Readonly<DConversation[]>,
   setCallIntent: (intent: AppCallIntent) => void,
 }) {
 
@@ -189,7 +189,7 @@ function CallContactCard(props: {
 
 
 function useConversationsByPersona() {
-  const conversations = useChatStore(state => state.conversations, shallow);
+  const conversations = useChatStore(state => state.conversations);
 
   return React.useMemo(() => {
     // group by personaId
@@ -242,7 +242,7 @@ export function Contacts(props: { setCallIntent: (intent: AppCallIntent) => void
 
   </>, [grayUI, showConversations, showSupport, toggleGrayUI, toggleShowConversations, toggleShowSupport]);
 
-  usePluggableOptimaLayout(null, null, menuItems, 'CallUI');
+  useSetOptimaAppMenu(menuItems, 'CallUI-Contacts');
 
 
   return <>

@@ -1,38 +1,33 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Input } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import type { SxProps } from '@mui/joy/styles/types';
+import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
 
 
 interface YouTubeURLInputProps {
   onSubmit: (transcript: string) => void;
-  isFetching: boolean;
   sx?: SxProps;
 }
 
-export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFetching, sx }) => {
+export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, sx }) => {
+
+  // state
   const [url, setUrl] = React.useState('');
   const [submitFlag, setSubmitFlag] = React.useState(false);
 
-  // Function to extract video ID from URL
-  function extractVideoID(videoURL: string): string | null {
-    const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^#&?]*).*/;
-    const match = videoURL.match(regExp);
-    return (match && match[1]?.length == 11) ? match[1] : null;
-  }
-
-  const videoID = extractVideoID(url);
+  const videoID = extractYoutubeVideoIDFromURL(url);
 
   // Callback function to handle new transcript
-  const handleNewTranscript = (newTranscript: YTVideoTranscript) => {
+  const handleNewTranscript = React.useCallback((newTranscript: YTVideoTranscript) => {
     onSubmit(newTranscript.transcript); // Pass the transcript text to the onSubmit handler
     setSubmitFlag(false); // Reset submit flag after handling
-  };
+  }, [onSubmit]);
 
-  const { transcript, isFetching: isTranscriptFetching, isError, error } = useYouTubeTranscript(videoID && submitFlag ? videoID : null, handleNewTranscript);
+  const { isFetching: isTranscriptFetching, isError, error } = useYouTubeTranscript(videoID && submitFlag ? videoID : null, handleNewTranscript);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -50,7 +45,7 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFe
           required
           type='url'
           fullWidth
-          disabled={isFetching || isTranscriptFetching}
+          disabled={isTranscriptFetching}
           variant='outlined'
           placeholder='Enter YouTube Video URL'
           value={url}
@@ -61,13 +56,13 @@ export const YouTubeURLInput: React.FC<YouTubeURLInputProps> = ({ onSubmit, isFe
         <Button
           type='submit'
           variant='solid'
-          disabled={isFetching || isTranscriptFetching || !url}
-          loading={isFetching || isTranscriptFetching}
+          disabled={isTranscriptFetching || !url}
+          loading={isTranscriptFetching}
           sx={{ minWidth: 140 }}
         >
           Get Transcript
         </Button>
-        {isError && <div>Error fetching transcript. Please try again.</div>}
+        {isError && <div>Error fetching transcript. Please try again. ${JSON.stringify(error)}</div>}
       </form>
     </Box>
   );

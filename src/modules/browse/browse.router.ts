@@ -19,7 +19,7 @@ const browseAccessSchema = z.object({
   dialect: z.enum(['browse-wss']),
   wssEndpoint: z.string().trim().optional(),
 });
-type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
+// type BrowseAccessSchema = z.infer<typeof browseAccessSchema>;
 
 const pageTransformSchema = z.enum(['html', 'text', 'markdown']);
 type PageTransformSchema = z.infer<typeof pageTransformSchema>;
@@ -42,11 +42,12 @@ const fetchPageInputSchema = z.object({
 
 const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
+  title: z.string(),
   content: z.record(pageTransformSchema, z.string()),
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
   screenshot: z.object({
-    webpDataUrl: z.string().startsWith('data:image/webp'),
+    imgDataUrl: z.string().startsWith('data:image/webp'),
     mimeType: z.string().startsWith('image/'),
     width: z.number(),
     height: z.number(),
@@ -57,6 +58,7 @@ type FetchPageWorkerOutputSchema = z.infer<typeof fetchPageWorkerOutputSchema>;
 
 const fetchPagesOutputSchema = z.object({
   pages: z.array(fetchPageWorkerOutputSchema),
+  workerHost: z.string(),
 });
 
 
@@ -67,8 +69,16 @@ export const browseRouter = createTRPCRouter({
     .output(fetchPagesOutputSchema)
     .mutation(async ({ input: { access, requests } }) => {
 
-      const pagePromises = requests.map(request =>
-        workerPuppeteer(access, request.url, request.transforms, request.screenshot));
+      // get endpoint
+      const endpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
+      if (!endpoint || (!endpoint.startsWith('wss://') && !endpoint.startsWith('ws://')))
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invalid wss:// endpoint',
+        });
+      const workerHost = new URL(endpoint).host;
+
+      const pagePromises = requests.map(request => workerPuppeteer(endpoint, request.url, request.transforms, request.screenshot));
 
       const results = await Promise.allSettled(pagePromises);
 
@@ -77,35 +87,33 @@ export const browseRouter = createTRPCRouter({
           ? result.value
           : {
             url: requests[index].url,
+            title: '',
             content: {},
             error: result.reason?.message || 'Unknown fetch error',
             stopReason: 'error',
+            workerHost,
           },
       );
 
-      return { pages };
+      return {
+        pages,
+        workerHost,
+      };
     }),
 
 });
 
 
 async function workerPuppeteer(
-  access: BrowseAccessSchema,
+  browserWSEndpoint: string,
   targetUrl: string,
   transforms: PageTransformSchema[],
   screenshotOptions?: { width: number, height: number, quality?: number },
 ): Promise<FetchPageWorkerOutputSchema> {
 
-  const browserWSEndpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
-  const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
-  if (!browserWSEndpoint || (!browserWSEndpoint.startsWith('wss://') && !isLocalBrowser))
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'Invalid wss:// endpoint',
-    });
-
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
+    title: '',
     content: {},
     error: undefined,
     stopReason: 'error',
@@ -117,6 +125,7 @@ async function workerPuppeteer(
 
   // for local testing, open an incognito context, to seaparate cookies
   let incognitoContext: BrowserContext | null = null;
+  const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
   if (isLocalBrowser)
     incognitoContext = await browser.createIncognitoBrowserContext();
   const page = incognitoContext ? await incognitoContext.newPage() : await browser.newPage();
@@ -139,6 +148,15 @@ async function workerPuppeteer(
     result.stopReason = isTimeout ? 'timeout' : 'error';
     if (!isTimeout) {
       result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown goto error');
+    }
+  }
+
+  // Get the page title after successful navigation
+  if (result.stopReason !== 'error') {
+    try {
+      result.title = await page.title();
+    } catch (error: any) {
+      // result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown title error');
     }
   }
 
@@ -186,7 +204,12 @@ async function workerPuppeteer(
         ...(quality && { quality }),
       }) as string;
 
-      result.screenshot = { webpDataUrl: `data:${mimeType};base64,${dataString}`, mimeType, width, height };
+      result.screenshot = {
+        imgDataUrl: `data:${mimeType};base64,${dataString}`,
+        mimeType,
+        width,
+        height,
+      };
     }
   } catch (error: any) {
     console.error('workerPuppeteer: page.screenshot', error);

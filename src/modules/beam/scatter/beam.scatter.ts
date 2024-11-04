@@ -1,15 +1,15 @@
-import { v4 as uuidv4 } from 'uuid';
 import type { StateCreator } from 'zustand/vanilla';
 
-import { streamAssistantMessage } from '../../../apps/chat/editors/chat-stream';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
 
-import type { DLLMId } from '~/modules/llms/store-llms';
-import type { VChatMessageIn } from '~/modules/llms/llm.client';
-
-import { createDMessage, DMessage } from '~/common/state/store-chats';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { agiUuid } from '~/common/util/idUtils';
+import { createDMessageEmpty, DMessage, duplicateDMessageNoVoid, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
+import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
 
-import type { RootStoreSlice } from '../store-beam-vanilla';
+import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
 import { updateBeamLastConfig } from '../store-module-beam';
 
@@ -28,11 +28,11 @@ export interface BRay {
 }
 
 
-export function createBRay(llmId: DLLMId | null): BRay {
+export function createBRayEmpty(llmId: DLLMId | null): BRay {
   return {
-    rayId: uuidv4(),
+    rayId: agiUuid('beam-ray'),
     status: 'empty',
-    message: createDMessage('assistant', ''),
+    message: createDMessageEmpty('assistant'), // [state] assistant:Ray_empty
     rayLlmId: llmId,
     userSelected: false,
     imported: false,
@@ -55,21 +55,31 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const abortController = new AbortController();
 
-  const updateMessage = (update: Partial<DMessage>) => _rayUpdate(ray.rayId, (ray) => ({
-    ...ray,
-    message: {
-      ...ray.message,
-      ...update,
-      // only update the timestamp when the text changes
-      ...(update.text ? { updated: Date.now() } : {}),
-    },
-  }));
+  const onMessageUpdated = (incrementalMessage: AixChatGenerateContent_DMessage, completed: boolean) => {
+    const { fragments: incrementalFragments, ...incrementalRest } = incrementalMessage;
+    _rayUpdate(ray.rayId, (ray) => ({
+      message: {
+        ...ray.message,
+        ...(incrementalFragments?.length ? { fragments: incrementalFragments } : {}),
+        ...incrementalRest,
+        ...(completed ? { pendingIncomplete: undefined } : {}), // clear the pending flag once the message is complete
+        ...(incrementalFragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
+      },
+    }));
+  };
 
-  // stream the assistant's messages
-  const messagesHistory: VChatMessageIn[] = inputHistory.map(({ role, text }) => ({ role, content: text }));
-  streamAssistantMessage(llmId, messagesHistory, 'beam-scatter', ray.rayId, getUXLabsHighPerformance() ? 0 : rays.length, 'off', updateMessage, abortController.signal)
+  // stream the ray's messages directly to the state store
+  aixChatGenerateContent_DMessage_FromHistory(
+    llmId,
+    inputHistory,
+    'beam-scatter', ray.rayId,
+    { abortSignal: abortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : rays.length },
+    onMessageUpdated,
+  )
     .then((status) => {
+      const clearFragments = messageWasInterruptedAtStart(status.lastDMessage);
       _rayUpdate(ray.rayId, {
+        ...(clearFragments && { message: createDMessageEmpty('assistant') }),
         status: (status.outcome === 'success') ? 'success'
           : (status.outcome === 'aborted') ? 'stopped'
             : (status.outcome === 'errored') ? 'error' : 'empty',
@@ -81,15 +91,18 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
       _syncRaysStateToScatter();
     });
 
+  const newMessage: DMessage = {
+    ...ray.message,
+    fragments: [createPlaceholderVoidFragment(SCATTER_PLACEHOLDER)],
+    pendingIncomplete: true,
+    created: Date.now(),
+    updated: null,
+  };
+
   return {
     rayId: ray.rayId,
     status: 'scattering',
-    message: {
-      ...ray.message,
-      text: SCATTER_PLACEHOLDER,
-      created: Date.now(),
-      updated: null,
-    },
+    message: newMessage,
     rayLlmId: llmId,
     scatterIssue: undefined,
     genAbortController: abortController,
@@ -117,7 +130,11 @@ export function rayIsScattering(ray: BRay | null): boolean {
 }
 
 export function rayIsSelectable(ray: BRay | null): boolean {
-  return !!ray?.message && !!ray.message.updated && !!ray.message.text && ray.message.text !== SCATTER_PLACEHOLDER;
+  // NOTE: this was here before, but prob not needed anymore after the MP refactor
+  //        && !!ray.message.text && ray.message.text !== SCATTER_PLACEHOLDER
+  // any ray is selectable once it's 'updated' (message started flowing in)
+  // return !!ray?.message?.updated /*&& !ray.message.pendingIncomplete*/;
+  return !!ray?.message.fragments.length;
 }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {
@@ -147,8 +164,8 @@ export const reInitScatterStateSlice = (prevRays: BRay[]): ScatterStateSlice => 
   prevRays.forEach(rayScatterStop);
 
   return {
-    // (remember) keep the same quantity of rays and same llms
-    rays: prevRays.map(prevRay => createBRay(prevRay.rayLlmId)),
+    // recreate empty rays to match the previous count, with the same llms too
+    rays: prevRays.map(prevRay => createBRayEmpty(prevRay.rayLlmId)),
     hadImportedRays: false,
 
     isScattering: false,
@@ -161,7 +178,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   // ray actions
   setRayCount: (count: number) => void;
   removeRay: (rayId: BRayId) => void;
-  importRays: (messages: DMessage[], raysLlmId: DLLMId | null) => void;
+  importRays: (messages: DMessage[], raysLlmIdFallback: DLLMId | null) => void;
   setRayLlmIds: (rayLlmIds: DLLMId[]) => void;
   startScatteringAll: () => void;
   stopScatteringAll: () => void;
@@ -191,9 +208,12 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       });
     } else if (count > rays.length) {
       _set({
-        rays: [...rays, ...Array(count - rays.length).fill(null)
-          // Create missing rays, copying the llmId of the former Ray, or using the fallback
-          .map(() => createBRay(rays[rays.length - 1]?.rayLlmId || null)),
+        rays: [
+          ...rays,
+          // add missing empties, carrying forward the last llm
+          ...Array(count - rays.length)
+            .fill(null)
+            .map(() => createBRayEmpty(rays[rays.length - 1]?.rayLlmId || null)),
         ],
       });
     }
@@ -215,29 +235,48 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     _syncRaysStateToScatter();
   },
 
-  importRays: (messages: DMessage[], raysLlmId: DLLMId | null) => {
+  importRays: (messages: DMessage[], raysLlmIdFallback: DLLMId | null) => {
     const { rays, _storeLastScatterConfig, _syncRaysStateToScatter } = _get();
 
-    // remove the empty rays that will be replaced by the imported messages
-    const raysToRemove = rays.filter((ray) => ray.status === 'empty' && ray.rayLlmId === raysLlmId).slice(0, messages.length);
+    // create new rays for the imported messages
+    const importedRays = messages.map((message) => {
+
+      // if present, use the model from the imported message
+      let raysLlmId = raysLlmIdFallback;
+      if (message.generator?.mgt === 'aix') {
+        const aixLlmId = message.generator?.aix?.mId;
+        if (aixLlmId) {
+          try {
+            findLLMOrThrow(aixLlmId);
+            raysLlmId = aixLlmId;
+          } catch (e) {
+            // not found (can happen, could have been removed), keep the fallback
+            // console.error('importRays: LLM not found', aixLlmId);
+          }
+        }
+      }
+
+      const emptyRay = createBRayEmpty(raysLlmId);
+
+      // pre-fill the ray with the imported message
+      if (message.fragments.length) {
+        emptyRay.status = 'success';
+        emptyRay.message = duplicateDMessageNoVoid(message); // [beam] import dmessage copy from chat
+        emptyRay.message.updated = Date.now();
+        emptyRay.imported = true;
+      }
+
+      return emptyRay;
+    });
+
+    // remove the empty rays that have the same models as the imported messages
+    const raysToRemove = rays
+      .filter(_r => _r.status === 'empty' && importedRays.some((importedRay) => importedRay.rayLlmId === _r.rayLlmId))
+      .slice(0, importedRays.length);
 
     _set({
       rays: [
-        // prepend the imported rays
-        ...messages.map((message) => {
-            // Note: message.originLLM misss the prefix (e.g. gpt-4-0125 wihtout 'openai-..') so it won't match here
-            const ray = createBRay(raysLlmId);
-            // pre-fill the ray status with the message and to a successful state
-            if (message.text.trim()) {
-              ray.status = 'success';
-              ray.message.text = message.text;
-              ray.message.updated = Date.now();
-              ray.imported = true;
-            }
-            return ray;
-          },
-        ),
-        // append the other rays (excluding the ones to remove)
+        ...importedRays,
         ...rays.filter((ray) => !raysToRemove.includes(ray)),
       ],
       hadImportedRays: messages.length > 0,

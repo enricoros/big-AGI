@@ -2,9 +2,10 @@ import * as React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import { v4 as uuidv4 } from 'uuid';
 
-import { DConversationId, useChatStore } from '~/common/state/store-chats';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { agiUuid } from '~/common/util/idUtils';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 
 
 // change this to increase/decrease the number history steps per pane
@@ -54,7 +55,7 @@ interface AppChatPanesStore extends AppChatPanesState {
 
 function createPane(conversationId: DConversationId | null = null): ChatPane {
   return {
-    paneId: uuidv4(),
+    paneId: agiUuid('chat-pane'),
     conversationId,
     history: conversationId ? [conversationId] : [],
     historyIndex: conversationId ? 0 : -1,
@@ -63,7 +64,7 @@ function createPane(conversationId: DConversationId | null = null): ChatPane {
 
 function duplicatePane(pane: ChatPane): ChatPane {
   return {
-    paneId: uuidv4(),
+    paneId: agiUuid('chat-pane'),
     conversationId: pane.conversationId,
     history: [...pane.history],
     historyIndex: pane.historyIndex,
@@ -343,7 +344,7 @@ export function usePanesManager() {
     _onConversationsChanged: state._onConversationsChanged,
   })));
 
-  // use Conversation IDs[]
+  // use changes in Conversation IDs[] to trigger the existence check
   const conversationIDs: DConversationId[] = useChatStore(useShallow(state =>
     state.conversations.map(_c => _c.id),
   ));

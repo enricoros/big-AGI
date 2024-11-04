@@ -1,10 +1,11 @@
-import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { LinkStorageDataType, LinkStorageVisibility } from '@prisma/client';
 
 import { prismaDb } from '~/server/prisma/prismaDb';
 import { publicProcedure } from '~/server/api/trpc.server';
+
+import { agiUuid } from '~/common/util/idUtils';
 
 
 // configuration
@@ -112,7 +113,8 @@ export const storagePutProcedure =
           deletionKey: true,
         },
         data: {
-          ownerId: ownerId || uuidv4(),
+          id: agiUuid('server-storage-id'),
+          ownerId: ownerId || agiUuid('server-storage-owner'),
           visibility: LinkStorageVisibility.UNLISTED,
           dataType,
           dataTitle,
@@ -121,7 +123,7 @@ export const storagePutProcedure =
           expiresAt: expiresSeconds === 0
             ? undefined // never expires
             : new Date(Date.now() + 1000 * (expiresSeconds || DEFAULT_EXPIRES_SECONDS)), // default
-          deletionKey: uuidv4(),
+          deletionKey: agiUuid('server-storage-deletion-key'),
           isDeleted: false,
         },
       });

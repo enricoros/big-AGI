@@ -1,14 +1,14 @@
 import * as React from 'react';
 
+import type { SxProps, VariantProp } from '@mui/joy/styles/types';
 import { Chip } from '@mui/joy';
-import { SxProps } from '@mui/joy/styles/types';
 
+import { Is } from '~/common/util/pwaUtils';
 import { hideOnMobile } from '~/common/app.theme';
-import { isMacUser } from '~/common/util/pwaUtils';
 
 
 export function platformAwareKeystrokes(text: string) {
-  return isMacUser
+  return Is.OS.MacOS
     ? text
       .replaceAll('Ctrl', '⌃' /* Control */)
       .replaceAll('Alt', '⌥' /* Option */)
@@ -21,9 +21,18 @@ export function platformAwareKeystrokes(text: string) {
 /**
  * Shows a shortcut combo in a nicely presented dark box.
  */
-export function KeyStroke(props: { combo: string, dark?: boolean, sx?: SxProps }) {
+export function KeyStroke(props: {
+  combo: string,
+  variant?: VariantProp,
+  sx?: SxProps,
+}) {
   return (
-    <Chip variant={props.dark ? 'solid' : 'outlined'} color='neutral' sx={{ ...hideOnMobile, ...props.sx }}>
+    <Chip
+      size='md'
+      variant={props.variant}
+      color='neutral'
+      sx={props.sx ? { ...hideOnMobile, ...props.sx } : hideOnMobile}
+    >
       {platformAwareKeystrokes(props.combo)}
     </Chip>
     // <Box sx={{

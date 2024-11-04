@@ -2,9 +2,7 @@ import * as React from 'react';
 
 import { AppTokens } from '../src/apps/tokens/AppTokens';
 
-import { withLayout } from '~/common/layout/withLayout';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
-export default function PersonasPage() {
-  return withLayout({ type: 'optima' }, <AppTokens />);
-}
+export default withNextJSPerPageLayout({ type: 'optima' }, () => <AppTokens />);

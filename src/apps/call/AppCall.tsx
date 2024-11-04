@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Container, Sheet } from '@mui/joy';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { useRouterQuery } from '~/common/app.routes';
 
 import { CallWizard } from './CallWizard';

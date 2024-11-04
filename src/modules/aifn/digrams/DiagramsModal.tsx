@@ -9,17 +9,18 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { BlocksRenderer } from '~/modules/blocks/BlocksRenderer';
-import { llmStreamingChatGenerate } from '~/modules/llms/llm.client';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
-import { GoodModal } from '~/common/components/GoodModal';
+import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
+import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { adjustContentScaling } from '~/common/app.theme';
-import { createDMessage, useChatStore } from '~/common/state/store-chats';
+import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
 
@@ -28,10 +29,10 @@ import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagr
 const DIAGRAM_ACTOR_PREFIX = 'diagram';
 
 
-// Used by the callers to setup the diagam session
+// Used by the callers to setup the diagram session
 export interface DiagramConfig {
   conversationId: string;
-  messageId: string,
+  messageId: string;
   text: string;
 }
 
@@ -64,13 +65,15 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
   // external state
   const isMobile = useIsMobile();
-  const contentScaling = useUIPreferencesStore(state => state.contentScaling);
+  const contentScaling = useUIContentScaling();
   const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
 
   // derived state
-  const { conversationId, messageId, text: subject } = props.config;
+  const { messageId, text: subject } = props.config;
   const diagramLlmId = diagramLlm?.id;
 
+  // conversation handler (to view history and eventually append the message)
+  const cHandler = ConversationsManager.getHandler(props.config.conversationId);
 
   /**
    * Core Diagram Generation function, with Streaming, custom prompt, etc.
@@ -79,13 +82,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     if (abortController)
       return;
 
-    const conversation = useChatStore.getState().conversations.find(c => c.id === conversationId);
-    if (!diagramType || !diagramLanguage || !diagramLlm || !conversation)
-      return setErrorMessage('Invalid diagram Type, Language, Generator, or conversation.');
-
-    const systemMessage = conversation?.messages?.length ? conversation.messages[0] : null;
-    if (systemMessage?.role !== 'system')
-      return setErrorMessage('No System message in this conversation');
+    if (!diagramType || !diagramLanguage || !diagramLlm)
+      return setErrorMessage(`Invalid diagram Type, Language, or Model (${diagramLlm}).`);
 
     setErrorMessage(null);
 
@@ -94,12 +92,28 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
     const stepAbortController = new AbortController();
     setAbortController(stepAbortController);
+    // cHandler.setAbortController(stepAbortController);
 
-    const diagramPrompt = bigDiagramPrompt(diagramType, diagramLanguage, systemMessage.text, subject, customInstruction);
+    const history = cHandler.historyViewHead('diagrams-modal');
+    const systemMessage = history.length > 0 ? history[0] : null;
+    if (!systemMessage || systemMessage?.role !== 'system')
+      return setErrorMessage('No System instruction in this conversation');
 
     try {
-      await llmStreamingChatGenerate(diagramLlm.id, diagramPrompt, 'ai-diagram', messageId, null, null, stepAbortController.signal,
-        ({ textSoFar }) => textSoFar && setDiagramCode(diagramCode = textSoFar),
+      const { systemInstruction, messages } = bigDiagramPrompt(
+        diagramType,
+        diagramLanguage,
+        messageFragmentsReduceText(systemMessage.fragments),
+        subject,
+        customInstruction,
+      );
+      await aixChatGenerateText_Simple(
+        diagramLlm.id,
+        systemInstruction,
+        messages,
+        'ai-diagram', messageId,
+        { abortSignal: stepAbortController.signal },
+        (text) => !!text && setDiagramCode(diagramCode = text.trim()),
       );
     } catch (error: any) {
       setDiagramCode(null);
@@ -109,18 +123,18 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       setAbortController(null);
     }
 
-  }, [abortController, conversationId, customInstruction, diagramLanguage, diagramLlm, diagramType, messageId, subject]);
-
+  }, [abortController, cHandler, customInstruction, diagramLanguage, diagramLlm, diagramType, messageId, subject]);
 
   // [Effect] Auto-abort on unmount
   React.useEffect(() => {
     return () => {
       if (abortController) {
         abortController.abort();
+        // cHandler.setAbortController(null);
         setAbortController(null);
       }
     };
-  }, [abortController]);
+  }, [abortController, cHandler]);
 
 
   // custom instruction
@@ -143,13 +157,13 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     if (!diagramCode)
       return setErrorMessage('Nothing to add to the conversation.');
 
-    const diagramMessage = createDMessage('assistant', diagramCode);
+    const diagramMessage = createDMessageTextContent('assistant', diagramCode); // [chat] append assistant:diagram
     // diagramMessage.purposeId = conversation.systemPurposeId;
-    diagramMessage.originLLM = DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '');
+    diagramMessage.generator = { mgt: 'named', name: DIAGRAM_ACTOR_PREFIX + (diagramLlmId ? `-${diagramLlmId}` : '') };
 
-    useChatStore.getState().appendMessage(conversationId, diagramMessage);
+    cHandler.messageAppend(diagramMessage);
     props.onClose();
-  }, [conversationId, diagramCode, diagramLlmId, props]);
+  }, [cHandler, diagramCode, diagramLlmId, props]);
 
 
   // [effect] Auto-switch language to match diagram type
@@ -220,13 +234,16 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           p: { xs: 1, md: 2 },
           overflow: 'hidden',
         }}>
-          <BlocksRenderer
+          <AutoBlocksRenderer
             text={diagramCode}
             fromRole='assistant'
-            fitScreen={isMobile}
             contentScaling={adjustContentScaling(contentScaling, -1)}
-            renderTextAsMarkdown={false}
-            specialDiagramMode
+            fitScreen={isMobile}
+            isMobile={isMobile}
+            blocksProcessor='diagram'
+            codeRenderVariant='plain'
+            textRenderVariant='text'
+            // Edit is moved from the BlocksRenderer to the ContentPartText
             // onMessageEdit={(text) => setMessage({ ...message, text })}
           />
         </Box>
@@ -253,7 +270,11 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           <Button
             variant={abortController ? 'soft' : 'solid'} color='primary'
             disabled={!diagramLlm}
-            onClick={abortController ? () => abortController.abort() : handleGenerateNew}
+            onClick={abortController ? () => {
+              abortController.abort();
+              // cHandler.setAbortController(null);
+              setAbortController(null);
+            } : handleGenerateNew}
             endDecorator={abortController ? <StopOutlinedIcon /> : diagramCode ? <ReplayIcon /> : <AccountTreeTwoToneIcon />}
             sx={{ minWidth: isMobile ? 160 : 220 }}
           >

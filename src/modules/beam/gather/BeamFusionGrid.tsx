@@ -6,13 +6,14 @@ import { Alert, Box, Button, Typography, useTheme } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import LanguageIcon from '@mui/icons-material/Language';
 
+import { BrowserLang } from '~/common/util/pwaUtils';
+
 import { Fusion } from './Fusion';
 import { findFusionFactory, FusionFactorySpec } from './instructions/beam.gather.factories';
 
 import { BeamCard, beamCardClasses } from '../BeamCard';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_COLOR } from '../beam.config';
-import { browserLangNotUS } from '~/common/util/pwaUtils';
 
 
 const fusionGridDesktopSx: SxProps = {
@@ -111,6 +112,7 @@ export function BeamFusionGrid(props: {
           key={'fusion-' + fusionId}
           beamStore={props.beamStore}
           fusionId={fusionId}
+          isMobile={props.isMobile}
         />
       ))}
 
@@ -154,7 +156,7 @@ export function BeamFusionGrid(props: {
       )}
 
       {/* Full-width warning if not */}
-      {browserLangNotUS && (
+      {BrowserLang.notUS && (
         <Alert color='warning' sx={{
           // full row of the grid
           gridColumn: '1 / -1',

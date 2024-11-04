@@ -86,6 +86,10 @@ export function ScrollToBottom(props: {
   // track programmatic scrolls
   const isProgrammaticScroll = React.useRef(false);
 
+  // skip the next scroll event (when we want to stay where we are)
+  const skipNextScrollCounter = React.useRef(0);
+  const skipResetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
 
   // derived state
 
@@ -104,7 +108,14 @@ export function ScrollToBottom(props: {
     const scrollable = scrollableElementRef.current;
     if (scrollable) {
       if (DEBUG_SCROLL_TO_BOTTOM)
-        console.log('  -> doScrollToBottom()', { scrollHeight: scrollable.scrollHeight, offsetHeight: scrollable.offsetHeight });
+        console.log('  -> doScrollToBottom()', { scrollHeight: scrollable.scrollHeight, offsetHeight: scrollable.offsetHeight, skipCounter: skipNextScrollCounter.current });
+
+      if (skipNextScrollCounter.current > 0) {
+        skipNextScrollCounter.current--;
+        if (DEBUG_SCROLL_TO_BOTTOM)
+          console.log('  -> Skipping scroll, counter now:', skipNextScrollCounter.current);
+        return;
+      }
 
       // eat the next scroll event
       isProgrammaticScroll.current = true;
@@ -216,6 +227,18 @@ export function ScrollToBottom(props: {
 
   }, [props.disableAutoStick, state.booting]);
 
+  /**
+   * Cleanup the skipNextScrollCounter
+   */
+  React.useEffect(() => {
+    return () => {
+      if (skipResetTimeoutRef.current) {
+        clearTimeout(skipResetTimeoutRef.current);
+        skipResetTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
 
   // actions for this context
 
@@ -245,15 +268,35 @@ export function ScrollToBottom(props: {
       doScrollToBottom();
   }, [doScrollToBottom]);
 
+  const skipNextAutoScroll = React.useCallback(() => {
+    skipNextScrollCounter.current += 2;
+    if (DEBUG_SCROLL_TO_BOTTOM)
+      console.log('  -> Skip next scroll requested, counter now:', skipNextScrollCounter.current);
+
+    // Clear any existing timeout
+    if (skipResetTimeoutRef.current)
+      clearTimeout(skipResetTimeoutRef.current);
+
+    // Set a new timeout to reset the counter if not used
+    skipResetTimeoutRef.current = setTimeout(() => {
+      if (skipNextScrollCounter.current > 0) {
+        if (DEBUG_SCROLL_TO_BOTTOM)
+          console.log('  -> Resetting unused skip counter');
+        skipNextScrollCounter.current = 0;
+      }
+    }, 200); // Reset after 0.25 seconds if not used
+  }, []);
+
 
   return (
     <UseScrollToBottomProvider value={{
       ...state,
       notifyBooting,
       setStickToBottom,
+      skipNextAutoScroll,
     }}>
       {/* Scrollable v-maxed */}
-      <Box ref={scrollableElementRef} sx={!props.sx ? scrollableBoxSx : ({
+      <Box ref={scrollableElementRef} role={'scrollable' /* hardcoded, important */} sx={!props.sx ? scrollableBoxSx : ({
         ...scrollableBoxSx,
         ...props.sx,
       } as SxProps)}>

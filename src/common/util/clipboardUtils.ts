@@ -1,5 +1,5 @@
-import { addSnackbar } from '../components/useSnackbarsStore';
-import { isBrowser, isFirefox } from './pwaUtils';
+import { addSnackbar } from '../components/snackbar/useSnackbarsStore';
+import { Is, isBrowser } from './pwaUtils';
 
 export function copyToClipboard(text: string, typeLabel: string) {
   if (!isBrowser)
@@ -16,17 +16,46 @@ export function copyToClipboard(text: string, typeLabel: string) {
         type: 'success',
         closeButton: false,
         overrides: {
-          autoHideDuration: 1400,
+          autoHideDuration: 2000,
         },
       });
     })
     .catch((err) => {
-      console.error('Failed to copy message: ', err);
+      alert(`Failed to message to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
+    });
+}
+
+export function copyBlobPromiseToClipboard(mimeType: string, blobPromise: Promise<Blob>, typeLabel: string) {
+  if (!isBrowser)
+    return;
+  if (!navigator.clipboard || !navigator.clipboard.write) {
+    alert('Clipboard access is blocked or not supported in this browser.');
+    return;
+  }
+  // Create a ClipboardItem with the Blob
+  const clipboardItem = new ClipboardItem({ [mimeType]: blobPromise });
+
+  // Write the ClipboardItem to the clipboard
+  navigator.clipboard.write([clipboardItem])
+    .then(() => {
+      addSnackbar({
+        key: 'copy-blob-to-clipboard',
+        message: `${typeLabel} copied to clipboard`,
+        type: 'success',
+        closeButton: false,
+        overrides: {
+          autoHideDuration: 2000,
+        },
+      });
+    })
+    .catch((err) => {
+      const [media, type] = mimeType.split('/');
+      alert(`Failed to copy ${type?.toUpperCase()} ${media} to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
     });
 }
 
 // NOTE: this could be implemented in a platform-agnostic manner with !!.read, but we call it out here for clarity
-export const supportsClipboardRead = !isFirefox;
+export const supportsClipboardRead = !Is.Browser.Firefox;
 
 export async function getClipboardItems(): Promise<ClipboardItem[] | null> {
   if (!isBrowser || !window.navigator.clipboard?.read)

@@ -557,6 +557,13 @@
   margin-bottom: 0;
 }
 
+/* big-AGI: even the margins if there are no siblings */
+.markdown-body ul:first-child:last-child,
+.markdown-body ol:first-child:last-child {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 .markdown-body h1 .octicon-link,
 .markdown-body h2 .octicon-link,
 .markdown-body h3 .octicon-link,
@@ -1085,7 +1092,7 @@
 .markdown-body g-emoji {
   display: inline-block;
   min-width: 1ch;
-  font-family: "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", serif;
   font-size: 1em;
   font-style: normal !important;
   font-weight: 400;

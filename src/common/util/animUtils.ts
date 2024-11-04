@@ -1,6 +1,8 @@
 import { keyframes } from '@emotion/react';
 
 
+// Color
+
 export const animationColorBeamScatterINV = keyframes`
     100%, 0% {
         color: rgb(219, 255, 77);
@@ -57,21 +59,6 @@ export const animationColorBlues = keyframes`
         color: #083e75; /* Primary lighter shade (300) */
     }`;
 
-/*export const animationColorLimey = keyframes`
-    100%, 0% {
-        color: rgb(183, 255, 0);
-    }
-    25% {
-        color: rgb(255, 251, 0);
-    }
-    50% {
-        color: rgba(0, 255, 81);
-    }
-    75% {
-        color: rgb(255, 153, 0);
-    }`;
-*/
-
 export const animationColorRainbow = keyframes`
     100%, 0% {
         color: rgb(255, 0, 0);
@@ -110,6 +97,23 @@ export const animationColorRainbow = keyframes`
         color: rgb(204, 0, 102);
     }`;
 
+/*export const animationColorLimey = keyframes`
+    100%, 0% {
+        color: rgb(183, 255, 0);
+    }
+    25% {
+        color: rgb(255, 251, 0);
+    }
+    50% {
+        color: rgba(0, 255, 81);
+    }
+    75% {
+        color: rgb(255, 153, 0);
+    }`;
+*/
+
+
+// Background-Color
 
 export const animationBackgroundBeamGather = keyframes`
     100%, 0% {
@@ -124,6 +128,18 @@ export const animationBackgroundBeamGather = keyframes`
     75% {
         background-color: rgb(0, 0, 128);
     }`;
+
+export const animationBackgroundCameraFlash = keyframes`
+    15% {
+        background-color: rgba(0, 0, 0, 1);
+    }
+    35% {
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    100% {
+        background-color: transparent;
+    }
+`;
 
 /*export const animationBackgroundDarkerRainbow = keyframes`
     100%, 0% {
@@ -164,6 +180,8 @@ export const animationBackgroundBeamGather = keyframes`
     }`;*/
 
 
+// Transform
+
 export const animationEnterBelow = keyframes`
     from {
         opacity: 0;
@@ -174,6 +192,31 @@ export const animationEnterBelow = keyframes`
         transform: translateY(0)
     }
 `;
+
+export const animationEnterModal = keyframes`
+    from, 50%, to {
+        animation-timing-function: cubic-bezier(.215, .61, .355, 1) // ease-out
+    }
+    0% {
+        opacity: .91;
+        transform: scale3d(.98, .98, .98)
+    }
+    70% {
+        opacity: 1;
+        transform: scale3d(1.04, 1.04, 1.04)
+    }
+    to {
+        transform: none;
+    }
+`;
+
+export const animationScalePulse = keyframes`
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }`;
 
 export const animationEnterScaleUp = keyframes`
     0% {
@@ -189,22 +232,8 @@ export const animationEnterScaleUp = keyframes`
         //rotate: 0;
     }`;
 
-export const animationScalePulse = keyframes`
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2);
-    }`;
 
-/* // noinspection CssUnresolvedCustomProperty
-const cssBackgroundFadeIn = keyframes`
-    0% {
-        background-color: transparent
-    }
-    100% {
-        background-color: var(--joy-palette-background-backdrop)
-    }`;*/
+// Box/Text Shadow
 
 export const animationShadowRingLimey = keyframes`
     100%, 0% {

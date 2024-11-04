@@ -1,5 +1,7 @@
-import { DLLMId, findLLMOrThrow } from '~/modules/llms/store-llms';
-import { llmChatGenerateOrThrow, VChatMessageIn } from '~/modules/llms/llm.client';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
+
+import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
 // prompt to be tried when doing recursive summerization.
@@ -79,16 +81,12 @@ async function cleanUpContent(chunk: string, llmId: DLLMId, _ignored_was_targetW
   const { contextTokens } = findLLMOrThrow(llmId);
   const autoResponseTokensSize = contextTokens ? Math.floor(contextTokens * outputTokenShare) : null;
 
-  try {
-    const instructions: VChatMessageIn[] = [
-      { role: 'system', content: cleanupPrompt },
-      { role: 'user', content: chunk },
-    ];
-    const chatResponse = await llmChatGenerateOrThrow(llmId, instructions, 'chat-ai-summarize', null, null, null, autoResponseTokensSize ?? undefined);
-    return chatResponse?.content ?? '';
-  } catch (error: any) {
-    return '';
-  }
+  return await aixChatGenerateText_Simple(
+    llmId,
+    cleanupPrompt,
+    chunk,
+    'chat-ai-summarize', 'DEV',
+  ).catch(() => '').then((response: string) => response.trim());
 }
 
 async function recursiveSummerize(text: string, llmId: DLLMId, targetWordCount: number, depth: number = 0): Promise<string> {

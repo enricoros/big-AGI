@@ -48,6 +48,9 @@ export const env = createEnv({
     // LLM: Ollama
     OLLAMA_API_HOST: z.string().url().optional(),
 
+    // LLM: OpenPipe
+    OPENPIPE_API_KEY: z.string().optional(),
+
     // LLM: OpenRouter
     OPENROUTER_API_KEY: z.string().optional(),
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 
 interface ModuleElevenlabsStore {
@@ -33,14 +33,18 @@ const useElevenlabsStore = create<ModuleElevenlabsStore>()(
     }),
 );
 
-export const useElevenLabsApiKey = (): [string, (apiKey: string) => void] =>
-  useElevenlabsStore(state => [state.elevenLabsApiKey, state.setElevenLabsApiKey], shallow);
+export const useElevenLabsApiKey = (): [string, (apiKey: string) => void] => {
+  const apiKey = useElevenlabsStore(state => state.elevenLabsApiKey);
+  return [apiKey, useElevenlabsStore.getState().setElevenLabsApiKey];
+};
 
-export const useElevenLabsVoiceId = (): [string, (voiceId: string) => void] =>
-  useElevenlabsStore(state => [state.elevenLabsVoiceId, state.setElevenLabsVoiceId], shallow);
+export const useElevenLabsVoiceId = (): [string, (voiceId: string) => void] => {
+  const voiceId = useElevenlabsStore(state => state.elevenLabsVoiceId);
+  return [voiceId, useElevenlabsStore.getState().setElevenLabsVoiceId];
+};
 
 export const useElevenLabsData = (): [string, string] =>
-  useElevenlabsStore(state => [state.elevenLabsApiKey, state.elevenLabsVoiceId], shallow);
+  useElevenlabsStore(useShallow(state => [state.elevenLabsApiKey, state.elevenLabsVoiceId]));
 
 export const getElevenLabsData = (): { elevenLabsApiKey: string, elevenLabsVoiceId: string } =>
   useElevenlabsStore.getState();

@@ -1,19 +1,22 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
+import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SdCardOutlinedIcon from '@mui/icons-material/SdCardOutlined';
 import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
-
+import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import { DLLM, DLLMId, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useDefaultLLMIDs, useFilteredLLMs } from '~/common/stores/llms/llms.hooks';
 
-import { DLLM, DLLMId, DModelSourceId, useModelsStore } from '../store-llms';
-import { IModelVendor } from '../vendors/IModelVendor';
-import { findVendorById } from '../vendors/vendors.registry';
+import type { IModelVendor } from '../vendors/IModelVendor';
+import { findModelVendor } from '../vendors/vendors.registry';
 
 
 // configuration
@@ -24,10 +27,10 @@ const absorbListPadding: SxProps = { my: 'calc(var(--ListItem-paddingY) / -2)' }
 
 function ModelItem(props: {
   llm: DLLM,
+  serviceLabel: string,
   vendor: IModelVendor,
   chipChat: boolean,
   chipFast: boolean,
-  chipFunc: boolean,
   onModelClicked: (llmId: DLLMId) => void,
   onModelSetHidden: (llmId: DLLMId, hidden: boolean) => void,
 }) {
@@ -37,8 +40,12 @@ function ModelItem(props: {
 
   const handleLLMConfigure = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
+    if (event.shiftKey) {
+      console.log('llm', llm);
+      return;
+    }
     onModelClicked(llm.id);
-  }, [llm.id, onModelClicked]);
+  }, [llm, onModelClicked]);
 
   const handleLLMHide = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
@@ -53,7 +60,7 @@ function ModelItem(props: {
 
   const label = llm.label;
 
-  let tooltip = llm._source.label;
+  let tooltip = props.serviceLabel;
   if (llm.description)
     tooltip += ' · ' + llm.description;
   tooltip += ' · ';
@@ -69,19 +76,24 @@ function ModelItem(props: {
       return null;
     return llm.interfaces.map((iface, i) => {
       switch (iface) {
-        case 'oai-chat':
+        case LLM_IF_OAI_Chat:
           return <Chip key={i} size='sm' variant={props.chipChat ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}><TextsmsOutlinedIcon /></Chip>;
-        case 'oai-chat-fn':
-          return <Chip key={i} size='sm' variant={props.chipFunc ? 'solid' : 'plain'} sx={{ boxShadow: 'xs' }}>{'{}'}</Chip>;
-        case 'oai-chat-vision':
+        case LLM_IF_OAI_Vision:
           return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><VisibilityOutlinedIcon />️</Chip>;
-        case 'oai-chat-json':
-          return null;
-        case 'oai-complete':
+        case LLM_IF_ANT_PromptCaching:
+        case LLM_IF_OAI_PromptCaching:
+          return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><SdCardOutlinedIcon /></Chip>;
+        case LLM_IF_SPECIAL_OAI_O1Preview:
+          return <Chip key={i} size='sm' variant='plain' sx={{ boxShadow: 'xs' }}><PsychologyOutlinedIcon /></Chip>;
+        // Ignored
+        case LLM_IF_OAI_Json:
+        case LLM_IF_OAI_Fn:
+        case LLM_IF_OAI_Complete:
+        case LLM_IF_OAI_Realtime:
           return null;
       }
     }).reverse();
-  }, [llm.interfaces, props.chipChat, props.chipFunc]);
+  }, [llm.interfaces, props.chipChat]);
 
   return (
     <ListItem>
@@ -119,7 +131,6 @@ function ModelItem(props: {
         )) : <>
           {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
           {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
-          {props.chipFunc && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>𝑓n</Chip>}
         </>}
 
         {/* Action Buttons */}
@@ -142,59 +153,56 @@ function ModelItem(props: {
 }
 
 export function ModelsList(props: {
-  filterSourceId: DModelSourceId | null,
+  filterServiceId: DModelsServiceId | null,
   onOpenLLMOptions: (id: DLLMId) => void,
   sx?: SxProps,
 }) {
 
   // external state
-  const { chatLLMId, fastLLMId, funcLLMId, llms, updateLLM } = useModelsStore(state => ({
-    chatLLMId: state.chatLLMId,
-    fastLLMId: state.fastLLMId,
-    funcLLMId: state.funcLLMId,
-    llms: state.llms.filter(llm => !props.filterSourceId || llm.sId === props.filterSourceId),
-    updateLLM: state.updateLLM,
-  }), (a, b) => a.chatLLMId === b.chatLLMId && a.fastLLMId === b.fastLLMId && a.funcLLMId === b.funcLLMId && shallow(a.llms, b.llms));
-
+  const { chatLLMId, fastLLMId } = useDefaultLLMIDs();
+  const llms = useFilteredLLMs(props.filterServiceId === null ? false : props.filterServiceId);
 
   const { onOpenLLMOptions } = props;
 
   const handleModelClicked = React.useCallback((llmId: DLLMId) => onOpenLLMOptions(llmId), [onOpenLLMOptions]);
 
-  const handleModelSetHidden = React.useCallback((llmId: DLLMId, hidden: boolean) => updateLLM(llmId, { hidden }), [updateLLM]);
+  const handleModelSetHidden = React.useCallback((llmId: DLLMId, hidden: boolean) => llmsStoreActions().updateLLM(llmId, { hidden }), []);
 
 
-  // find out if there's more than 1 sourceLabel in the llms array
-  const multiSources = llms.length >= 2 && llms.find(llm => llm._source !== llms[0]._source);
-  const showAllSources = !props.filterSourceId;
+  // are we showing multiple services
+  const showAllServices = !props.filterServiceId;
+  const hasManyServices = llms.length >= 2 && llms.some(llm => llm.sId !== llms[0].sId);
   let lastGroupLabel = '';
 
   // generate the list items, prepending headers when necessary
   const items: React.JSX.Element[] = [];
   for (const llm of llms) {
 
-    // prepend label if changing source
-    const groupLabel = llm._source.label;
-    if ((multiSources || showAllSources) && groupLabel !== lastGroupLabel) {
-      lastGroupLabel = groupLabel;
+    // get the service label
+    const serviceLabel = findModelsServiceOrNull(llm.sId)?.label ?? llm.sId;
+
+    // prepend label when switching services
+    if ((hasManyServices || showAllServices) && serviceLabel !== lastGroupLabel) {
       items.push(
-        <ListItem key={'lab-' + llm._source.id} sx={{ justifyContent: 'center' }}>
+        <ListItem key={'lab-' + llm.sId} sx={{ justifyContent: 'center' }}>
           <Typography>
-            {groupLabel}
+            {serviceLabel}
           </Typography>
         </ListItem>,
       );
+      lastGroupLabel = serviceLabel;
     }
 
     // for safety, ensure the vendor exists
-    const vendor = findVendorById(llm._source.vId);
+    const vendor = findModelVendor(llm.vId);
     !!vendor && items.push(
       <ModelItem
         key={'llm-' + llm.id}
-        llm={llm} vendor={vendor}
+        llm={llm}
+        serviceLabel={serviceLabel}
+        vendor={vendor}
         chipChat={llm.id === chatLLMId}
         chipFast={llm.id === fastLLMId}
-        chipFunc={llm.id === funcLLMId}
         onModelClicked={handleModelClicked}
         onModelSetHidden={handleModelSetHidden}
       />,

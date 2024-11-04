@@ -1,14 +1,15 @@
 import * as React from 'react';
 
 import { AppNews } from '../src/apps/news/AppNews';
-import { markNewsAsSeen } from '../src/apps/news/news.version';
 
-import { withLayout } from '~/common/layout/withLayout';
+import { markNewsAsSeen } from '~/common/logic/store-logic-sherpa';
+import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
 
 
-export default function NewsPage() {
+export default withNextJSPerPageLayout({ type: 'optima', suspendAutoModelsSetup: true }, () => {
+
   // 'touch' the last seen news version
   React.useEffect(() => markNewsAsSeen(), []);
 
-  return withLayout({ type: 'optima', suspendAutoModelsSetup: true }, <AppNews />);
-}
+  return <AppNews />;
+});

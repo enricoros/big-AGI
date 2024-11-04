@@ -9,11 +9,11 @@ import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverTwoToneIcon from '@mui/icons-material/RecordVoiceOverTwoTone';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { PreferencesTab, useOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { navigateBack } from '~/common/app.routes';
+import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs } from '~/common/components/useCapabilities';
-import { useChatStore } from '~/common/state/store-chats';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useUICounter } from '~/common/state/store-ui';
 
 
@@ -44,7 +44,6 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
   const [recognitionOverride, setRecognitionOverride] = React.useState(false);
 
   // external state
-  const { openPreferencesTab } = useOptimaLayout();
   const recognition = useCapabilityBrowserSpeechRecognition();
   const synthesis = useCapabilityElevenLabs();
   const chatIsEmpty = useChatStore(state => {
@@ -62,22 +61,22 @@ export function CallWizard(props: { strict?: boolean, conversationId: string | n
   const allGood = overriddenEmptyChat && overriddenRecognition && synthesis.mayWork;
   const fatalGood = overriddenRecognition && synthesis.mayWork;
 
-  if (!novel && fatalGood)
-    return props.children;
 
-  const handleOverrideChatEmpty = () => setChatEmptyOverride(true);
+  const handleOverrideChatEmpty = React.useCallback(() => setChatEmptyOverride(true), []);
 
-  const handleOverrideRecognition = () => setRecognitionOverride(true);
+  const handleOverrideRecognition = React.useCallback(() => setRecognitionOverride(true), []);
 
-  const handleConfigureElevenLabs = () => {
-    openPreferencesTab(PreferencesTab.Voice);
-  };
+  const handleConfigureElevenLabs = React.useCallback(() => optimaOpenPreferences('voice'), []);
 
-  const handleFinishButton = () => {
+  const handleFinishButton = React.useCallback(() => {
     if (!allGood)
       return navigateBack();
     touch();
-  };
+  }, [allGood, touch]);
+
+
+  if (!novel && fatalGood)
+    return props.children;
 
 
   return <>

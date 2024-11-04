@@ -3,13 +3,15 @@
 //
 // We will centralize them here, for UI and routing purposes.
 //
+// noinspection Annotator
 
 import Router, { useRouter } from 'next/router';
 
 import type { AppCallIntent } from '../apps/call/AppCall';
 import type { AppChatIntent } from '../apps/chat/AppChat';
 
-import type { DConversationId } from '~/common/state/store-chats';
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+
 import { isBrowser } from './util/pwaUtils';
 
 

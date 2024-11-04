@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
+
+import { agiUuid } from '~/common/util/idUtils';
+
 
 /**
  * Pure async function that operates on an item, can monitor the abort signal, and return or throw
  * optionally it can update progress using the given updateProgress function
  */
-export type ItemWorkerFunction<T> =
+export type ItemAsyncWorker<T> =
   (item: T, updateProgress: (progress: number) => void, signal: AbortSignal) => Promise<T>;
 
 
@@ -21,14 +23,14 @@ export class ProcessingQueue<TItem> extends EventTarget {
   constructor(
     private maxConcurrent: number,
     private rateLimit: number, // Tasks per second
-    private itemWorker: ItemWorkerFunction<TItem>,
+    private itemWorker: ItemAsyncWorker<TItem>,
   ) {
     super();
   }
 
   // returns a promise that resolves after processing
   enqueueItem(item: TItem, priority: number = 0): Promise<TItem> {
-    const taskId = uuidv4();
+    const taskId = agiUuid('processing-queue-task');
     const enqueuedAt = Date.now();
 
     // Create a new AbortController for each task
@@ -64,6 +66,13 @@ export class ProcessingQueue<TItem> extends EventTarget {
     this.dispatchEvent(new QueueUpdatedEvent(this.getQueueState()));
   }
 
+  // cancel all tasks
+  cancelAll(): void {
+    this.queue = [];
+    this.inProgress.forEach(task => task.abortController.abort());
+    this.inProgress.clear();
+    this.dispatchEvent(new QueueUpdatedEvent(this.getQueueState()));
+  }
 
   private sortQueue(): void {
     this.queue.sort((a, b) =>
@@ -95,6 +104,9 @@ export class ProcessingQueue<TItem> extends EventTarget {
 
       this.itemWorker(task.item, updateProgress, task.abortController.signal)
         .then(result => {
+          // if (task.abortController.signal.aborted) {
+          //   return task.reject(new Error('Task was aborted and worker did not throw'));
+          // }
           task.resolve(result);
           task.progress = 100;
           this.inProgress.delete(task.taskId);
@@ -113,13 +125,18 @@ export class ProcessingQueue<TItem> extends EventTarget {
   }
 
   getQueueState() {
-    return { queueSize: this.queue.length, inProgressSize: this.inProgress.size };
+    return {
+      totalSize: this.queue.length + this.inProgress.size,
+      queueSize: this.queue.length,
+      inProgressSize: this.inProgress.size,
+      items: [...this.inProgress.values(), ...this.queue],
+    };
   }
 
 }
 
 
-type QueuedItem<TItem> = {
+export type QueuedItem<TItem> = {
   item: TItem;
   priority: number;
   resolve: (value: TItem) => void; // Function to resolve the promise returned by enqueue
@@ -133,13 +150,16 @@ type QueuedItem<TItem> = {
 
 // Mechanisms for Hooks
 
-class QueueUpdatedEvent extends CustomEvent<{ queueSize: number; inProgressSize: number }> {
-  constructor(detail: { queueSize: number; inProgressSize: number }) {
+type QueueState<TItem> = ReturnType<typeof ProcessingQueue<TItem>['prototype']['getQueueState']>;
+
+// set to the return type of the getQueueState method of ProcessingQueue
+class QueueUpdatedEvent<TItem> extends CustomEvent<QueueState<TItem>> {
+  constructor(detail: QueueState<TItem>) {
     super('queueUpdated', { detail });
   }
 }
 
-export function useProcessingQueueState<TItem>(myItemQueue: ProcessingQueue<TItem>) {
+export function useProcessingQueue<TItem>(myItemQueue: ProcessingQueue<TItem>) {
 
   // initial state
   const [queueState, setQueueState] = React.useState(myItemQueue.getQueueState());
@@ -147,7 +167,7 @@ export function useProcessingQueueState<TItem>(myItemQueue: ProcessingQueue<TIte
   // state updates
   React.useEffect(() => {
     const handleQueueUpdated = (event: Event) => {
-      const queueUpdatedEvent = event as QueueUpdatedEvent;
+      const queueUpdatedEvent = event as QueueUpdatedEvent<QueueState<TItem>>;
       setQueueState(queueUpdatedEvent.detail);
     };
 
@@ -155,7 +175,11 @@ export function useProcessingQueueState<TItem>(myItemQueue: ProcessingQueue<TIte
     return () => myItemQueue.removeEventListener('queueUpdated', handleQueueUpdated);
   }, [myItemQueue]);
 
-  return queueState;
+  // stabilize callbacks
+  const queueAddItem = React.useCallback((item: TItem, priority: number = 0) => myItemQueue.enqueueItem(item, priority), [myItemQueue]);
+  const queueCancelAll = React.useCallback(() => myItemQueue.cancelAll(), [myItemQueue]);
+
+  return { queueState, queueAddItem, queueCancelAll };
 }
 
 

@@ -1,52 +1,67 @@
 import { Agent } from '~/modules/aifn/react/react';
-import { DLLMId } from '~/modules/llms/store-llms';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
-import type { ConversationHandler } from '~/common/chats/ConversationHandler';
+import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
+import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
-import { STREAM_TEXT_INDICATOR } from './chat-stream';
-
+// configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
 
 
 /**
  * Synchronous ReAct chat function - TODO: event loop, auto-ui, cleanups, etc.
  */
-export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId) {
+export async function runReActUpdatingState(cHandler: ConversationHandler, question: string | undefined, assistantLlmId: DLLMId, contextRef: string) {
   if (!question) {
-    cHandler.messageAppendAssistant('Issue: no question provided.', undefined, 'issue', false);
+    cHandler.messageAppendAssistantText('Issue: no question provided.', 'issue');
     return false;
   }
 
-  // create a blank and 'typing' message for the assistant - to be filled when we're done
+  // create an assistant placeholder message - to be filled when we're done
   const assistantModelLabel = 'react-' + assistantLlmId; //.slice(4, 7); // HACK: this is used to change the Avatar animation
-  const assistantMessageId = cHandler.messageAppendAssistant(STREAM_TEXT_INDICATOR, undefined, assistantModelLabel, true);
+  const { assistantMessageId, placeholderFragmentId } = cHandler.messageAppendAssistantPlaceholder(
+    '...',
+    { generator: { mgt: 'named', name: assistantModelLabel } },
+  );
   const { enableReactTool: enableBrowse } = useBrowseStore.getState();
 
-  // create an ephemeral space
-  const eHandler = cHandler.createEphemeral(`Reason+Act`, 'Initializing ReAct..');
+  // Abort controller for the ReAct loop
+  const abortController = new AbortController();
+  cHandler.setAbortController(abortController, 'react-tangent');
+
+  // Ephemeral: the space of Status and Logs, auto-plugged to the UI
+  const hEphemeral = cHandler.createEphemeralHandler(`Reason+Act`, 'Initializing ReAct..');
   let ephemeralText = '';
   const logToEphemeral = (text: string) => {
     console.log(text);
     ephemeralText += (text.length > 300 ? text.slice(0, 300) + '...' : text) + '\n';
-    eHandler.updateText(ephemeralText);
+    hEphemeral.updateText(ephemeralText);
   };
-  const showStateInEphemeral = (state: object) => eHandler.updateState(state);
+  const showStateInEphemeral = (state: object) => hEphemeral.updateState(state);
 
   try {
 
     // react loop
-    const agent = new Agent();
+    const agent = new Agent(contextRef, abortController.signal);
     const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
-    cHandler.messageEdit(assistantMessageId, { text: reactResult, typing: false }, false);
-    setTimeout(() => eHandler.delete(), EPHEMERAL_DELETION_DELAY);
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(reactResult), true);
+
+    hEphemeral.markAsDone();
 
     return true;
   } catch (error: any) {
-    console.error(error);
-    logToEphemeral(ephemeralText + `\nIssue: ${error || 'unknown'}`);
-    cHandler.messageEdit(assistantMessageId, { text: 'Issue: ReAct did not produce an answer.', typing: false }, false);
+    console.error('ReAct error', error);
+
+    logToEphemeral(ephemeralText + `\n${error || 'unknown'}`);
+
+    const reactError = `Issue: ReAct couldn't answer your question. ${error?.message || error?.toString() || 'Unknown error'}`;
+    cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment(reactError), true);
+
     return false;
+  } finally {
+    // FIXME: Massive race condition here
+    cHandler.clearAbortController('react-tangent');
   }
 }

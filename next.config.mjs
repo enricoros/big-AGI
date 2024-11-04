@@ -1,10 +1,18 @@
+import { readFile } from 'node:fs/promises';
+
+// Build information
+process.env.NEXT_PUBLIC_BUILD_HASH = 'big-agi-2-dev';
+process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + await readFile(new URL('./package.json', import.meta.url))).version;
+process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
+console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH})`);
+
 // Non-default build types
 const buildType =
   process.env.BIG_AGI_BUILD === 'standalone' ? 'standalone'
     : process.env.BIG_AGI_BUILD === 'static' ? 'export'
       : undefined;
 
-buildType && console.log(`   🧠 big-AGI: building for ${buildType}...\n`);
+buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
@@ -23,11 +31,10 @@ let nextConfig = {
   },
 
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
-  experimental: {
-    serverComponentsExternalPackages: ['puppeteer-core'],
-  },
+  // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
+  serverExternalPackages: ['puppeteer-core'],
 
-  webpack: (config, _options) => {
+  webpack: (config, { isServer }) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
@@ -37,9 +44,17 @@ let nextConfig = {
       layers: true,
     };
 
+    // fix warnings for async functions in the browser (https://github.com/vercel/next.js/issues/64792)
+    if (!isServer) {
+      config.output.environment = { ...config.output.environment, asyncFunction: true };
+    }
+
     // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
-    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize)
+    // noinspection JSUnresolvedReference
+    if (typeof config.optimization.splitChunks === 'object' && config.optimization.splitChunks.minSize) {
+      // noinspection JSUnresolvedReference
       config.optimization.splitChunks.minSize = 40 * 1024;
+    }
 
     return config;
   },

@@ -6,7 +6,7 @@ import { Box, Divider, Typography } from '@mui/joy';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
-import type { ChatGenerateInstruction } from './instructions/ChatGenerateInstruction';
+import type { GatherInstruction } from './instructions/GatherInstruction';
 import type { FusionFactorySpec } from './instructions/beam.gather.factories';
 import type { Instruction } from './instructions/beam.gather.execution';
 import { useModuleBeamStore } from '../store-module-beam';
@@ -15,10 +15,10 @@ import { useModuleBeamStore } from '../store-module-beam';
 // Editor for a ChatInstruction
 function EditableChatInstructionPrompt(props: {
   isEditable: boolean,
-  itemKey: keyof ChatGenerateInstruction,
-  itemValue: ChatGenerateInstruction['systemPrompt'],
+  itemKey: keyof GatherInstruction,
+  itemValue: GatherInstruction['systemPrompt'],
   label: string,
-  onEdit: (update: Partial<ChatGenerateInstruction>) => void,
+  onEdit: (update: Partial<GatherInstruction>) => void,
 }) {
 
   // state
@@ -99,7 +99,7 @@ function EditableInstruction(props: {
   }, [instructionIndex, onInstructionEdit]);
 
 
-  return (instruction.type === 'chat-generate') ? (
+  return (instruction.type === 'gather') ? (
     <>
       {gatherShowAllPrompts && (
         <EditableChatInstructionPrompt

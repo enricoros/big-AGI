@@ -10,11 +10,13 @@ import { InlineError } from '~/common/components/InlineError';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { apiAsyncNode } from '~/common/util/trpc.client';
-import { createDConversation, createDMessage, DConversationId, DMessage, useChatStore } from '~/common/state/store-chats';
+import { createDConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { createDMessageTextContent, DMessage } from '~/common/stores/chat/chat.message';
+import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 
 import type { ChatGptSharedChatSchema } from './server/chatgpt';
-import { openAndLoadConversations } from './trade.client';
+import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } from './trade.client';
 
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
 
@@ -44,11 +46,11 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
   // derived state
   const isUrl = importMedia === 'link';
   const isSource = importMedia === 'source';
-  const chatGptUrlValid = chatGptUrl.startsWith('https://chat.openai.com/share/') && chatGptUrl.length > 40;
+  const chatGptUrlValid = (chatGptUrl.startsWith('https://chat.openai.com/share/') || chatGptUrl.startsWith('https://chatgpt.com/share/')) && chatGptUrl.length > 40;
 
 
   const handleImportFromFiles = async () => {
-    const outcome = await openAndLoadConversations(true);
+    const outcome = await openConversationsAtRestPicker().then(importConversationsFromFilesAtRest);
 
     // activate the last (most recent) imported conversation
     if (outcome?.activateConversationId)
@@ -93,7 +95,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         const role = message.author.role;
         const joinedText = message.content.parts.join('\n');
         if ((role === 'user' || role === 'assistant') && joinedText.length >= 1) {
-          const dMessage = createDMessage(role, joinedText);
+          const dMessage = createDMessageTextContent(role, joinedText); // [state] import role:text from ChatGPT
           dMessage.id = message.id;
           if (message.create_time)
             dMessage.created = Math.round(message.create_time * 1000);
@@ -128,7 +130,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         Select where to <strong>import from</strong>:
       </Typography>
 
-      <GoodTooltip title={<KeyStroke dark combo='Ctrl + O' />}>
+      <GoodTooltip title={<KeyStroke variant='solid' combo='Ctrl + O' />}>
         <Button
           variant='soft' endDecorator={<FileUploadIcon />} sx={{ minWidth: 240, justifyContent: 'space-between' }}
           onClick={handleImportFromFiles}
@@ -157,12 +159,10 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
         <OpenAIIcon sx={{ ml: 'auto', my: 1 }} />
       </Box>
 
-      {isUrl && <InlineError error='Note: this operation may be unreliable as OpenAI is often blocking imports.' severity='warning' sx={{ mt: 0 }} />}
-
       <FormControl>
         {isUrl && <Input
-          variant='outlined' placeholder='https://chat.openai.com/share/...'
-          required error={!chatGptUrlValid}
+          variant='outlined' placeholder='https://chatgpt.com/share/...'
+          required error={!chatGptUrlValid && chatGptUrl.length > 0}
           value={chatGptUrl} onChange={event => setChatGptUrl(event.target.value)}
         />}
         {isSource && <Textarea
@@ -172,6 +172,8 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
           value={chatGptSource} onChange={event => setChatGptSource(event.target.value)}
         />}
       </FormControl>
+
+      {isUrl && chatGptUrlValid && <InlineError error='Note: OpenAI may be blocking imports. Try anyways.' severity='warning' sx={{ mt: 0, boxShadow: 'sm' }} />}
 
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button variant='soft' color='primary' onClick={handleChatGptToggleShown} sx={{ mr: 'auto' }}>

@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
 
-import { createBase36Uid } from '~/common/util/textUtils';
+import { agiUuid } from '~/common/util/idUtils';
+import { useShallow } from 'zustand/react/shallow';
+
 
 // constraint the max number of saved prompts, to stay below localStorage quota
 const MAX_SAVED_PROMPTS = 100;
@@ -60,7 +61,7 @@ const useAppPersonasStore = create<AppPersonasStore>()(persist(
     prependSimplePersona: (systemPrompt: string, inputText: string, inputProvenance?: SimplePersonaProvenance, llmLabel?: string) =>
       _set(state => {
         const newPersona: SimplePersona = {
-          id: createBase36Uid(state.simplePersonas.map(persona => persona.id)),
+          id: agiUuid('persona-simple'),
           systemPrompt,
           creationDate: new Date().toISOString(),
           inputProvenance,
@@ -94,14 +95,14 @@ const useAppPersonasStore = create<AppPersonasStore>()(persist(
 ));
 
 export function useSimplePersonas() {
-  const simplePersonas = useAppPersonasStore(state => state.simplePersonas, shallow);
+  const simplePersonas = useAppPersonasStore(useShallow(state => state.simplePersonas));
   return { simplePersonas };
 }
 
 export function useSimplePersona(simplePersonaId: string) {
-  const simplePersona = useAppPersonasStore(state => {
+  const simplePersona = useAppPersonasStore(useShallow(state => {
     return state.simplePersonas.find(persona => persona.id === simplePersonaId) ?? null;
-  }, shallow);
+  }));
   return { simplePersona };
 }
 

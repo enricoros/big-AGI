@@ -18,7 +18,7 @@ by release.
 - 1.16.5: GPT-4o Mini support
 - 1.16.4: 8192 tokens support for Claude 3.5 Sonnet
 - 1.16.3: Anthropic Claude 3.5 Sonnet model support
-- 1.16.2: Improve web downloads, as text, markdwon, or HTML
+- 1.16.2: Improve web downloads, as text, markdown, or HTML
 - 1.16.2: Proper support for Gemini models
 - 1.16.2: Added the latest Mistral model
 - 1.16.2: Tokenizer support for gpt-4o
@@ -138,7 +138,7 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 - **Overheat LLMs**: Push the creativity with higher LLM temperatures. [#256](https://github.com/enricoros/big-agi/issues/256)
 - **Model Options Shortcut**: Quick adjust with `Ctrl+Shift+O`
 - Optimized Voice Input and Performance
-- Latest Ollama and Oobabooga models
+- Latest Ollama models
 - For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
 
 ### What's New in 1.6.0 - Nov 28, 2023 · Surf's Up
@@ -187,7 +187,6 @@ For Developers:
 - **Camera OCR** - real-world AI - take a picture of a text, and chat with it
 - **Anthropic models** support, e.g. Claude
 - **Backup/Restore** - save chats, and restore them later
-- **[Local model support with Oobabooga server](../docs/config-local-oobabooga)** - run your own LLMs!
 - **Flatten conversations** - conversations summarizer with 4 modes
 - **Fork conversations** - create a new chat, to try with different endings
 - New commands: /s to add a System message, and /a for an Assistant message

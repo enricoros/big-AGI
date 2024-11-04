@@ -27,4 +27,7 @@ export const Brand = {
     // Twitter: 'https://www.twitter.com/enricoros',
     PrivacyPolicy: 'https://big-agi.com/privacy',
   },
+  Docs: {
+    Public: (docPage: string) => `https://big-agi.com/docs/${docPage}`,
+  }
 } as const;

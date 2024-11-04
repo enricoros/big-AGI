@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Chip, CircularProgress, FormControl, Input, Option, Select, Slider, Switch } from '@mui/joy';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
@@ -16,7 +16,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
-import { useToggleableBoolean } from '~/common/util/useToggleableBoolean';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { DEFAULT_PRODIA_RESOLUTION, HARDCODED_PRODIA_RESOLUTIONS, useProdiaStore } from './store-module-prodia';
 
@@ -31,7 +31,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
 
   // external state
   const backendHasProdia = getBackendCapabilities().hasImagingProdia;
-  const { apiKey, setApiKey, modelId, setModelId, modelGen, setModelGen, negativePrompt, setNegativePrompt, steps, setSteps, cfgScale, setCfgScale, prodiaAspectRatio, setProdiaAspectRatio, upscale, setUpscale, prodiaResolution, setProdiaResolution, seed, setSeed } = useProdiaStore(state => ({
+  const { apiKey, setApiKey, modelId, setModelId, modelGen, setModelGen, negativePrompt, setNegativePrompt, steps, setSteps, cfgScale, setCfgScale, prodiaAspectRatio, setProdiaAspectRatio, upscale, setUpscale, prodiaResolution, setProdiaResolution, seed, setSeed } = useProdiaStore(useShallow(state => ({
     apiKey: state.prodiaApiKey, setApiKey: state.setProdiaApiKey,
     modelId: state.prodiaModelId, setModelId: state.setProdiaModelId,
     modelGen: state.prodiaModelGen, setModelGen: state.setProdiaModelGen,
@@ -42,7 +42,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
     upscale: state.prodiaUpscale, setUpscale: state.setProdiaUpscale,
     prodiaResolution: state.prodiaResolution, setProdiaResolution: state.setProdiaResolution,
     seed: state.prodiaSeed, setSeed: state.setProdiaSeed,
-  }), shallow);
+  })));
 
 
   // derived state
@@ -50,7 +50,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
   const selectedIsXL = modelGen === 'sdxl';
 
   // load models, if the server has a key, or the user provided one
-  const { data: modelsData, isLoading: loadingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
+  const { data: modelsData, isFetching: fetchingModels, isError, error } = apiQuery.prodia.listModels.useQuery({ prodiaKey: apiKey }, {
     enabled: isValidKey,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -94,7 +94,7 @@ export function ProdiaSettings(props: { noSkipKey?: boolean }) {
         variant='outlined' placeholder={isValidKey ? 'Select a model' : 'Enter API Key'}
         value={modelId} onChange={handleModelChange}
         startDecorator={<FormatPaintTwoToneIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
-        endDecorator={isValidKey && loadingModels && <CircularProgress size='sm' />}
+        endDecorator={isValidKey && fetchingModels && <CircularProgress size='sm' />}
         indicator={<KeyboardArrowDownIcon />}
         slotProps={{
           root: { sx: { width: '100%' } },
