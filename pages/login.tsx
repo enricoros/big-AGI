@@ -10,7 +10,9 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    document.cookie = `page-password=${password}; path=/`;
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + 6);
+    document.cookie = `page-password=${password}; expires=${expires.toUTCString()}; path=/`;
     router.push('/');
   };
 
