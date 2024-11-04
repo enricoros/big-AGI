@@ -88,7 +88,7 @@ async function _fetchFromTRPC<TJsonBody extends object | undefined, TOut>(
       message: (throwWithoutName ? '' : `[${moduleName} network issue]: `)
         + (safeErrorString(error) || 'unknown fetch error')
         + (errorCause
-          ? ` - ${errorCause?.toString()}`
+          ? ` - ${safeErrorString(errorCause)}`
           : '')
         + ((errorCause && (errorCause as any)?.code === 'ECONNREFUSED')
           ? ` - is "${url}" accessible by the server?`
