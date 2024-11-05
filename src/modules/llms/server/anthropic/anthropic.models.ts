@@ -7,13 +7,12 @@ const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
 
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
   // Claude 3.5 models - https://docs.anthropic.com/en/docs/about-claude/models
-  // Note: Claude 3.5 Opus and Claude 3.5 Haiku are scheduled for release later this year.
   {
     id: 'claude-3-5-sonnet-20241022',
     label: 'Claude 3.5 Sonnet',
     created: roundTime('2024-10-22 06:00'),
     description: 'Most intelligent Claude model to date',
-    contextWindow: 200000, // Characters
+    contextWindow: 200000,
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
@@ -21,11 +20,23 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     benchmark: { cbaElo: 1269, cbaMmlu: 88.7 }, // moved from 3.5 Sonnet (Previous Version), TO UPDATE!!
   },
   {
+    id: 'claude-3-5-haiku-20241022',
+    label: 'Claude 3.5 Haiku',
+    created: roundTime('2024-10-22 06:00'),
+    description: 'Our fastest model',
+    contextWindow: 200000,
+    maxCompletionTokens: 8192,
+    trainingDataCutoff: 'Jul 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
+    benchmark: { cbaElo: 1179, cbaMmlu: 75.2 }, // moved from 3.5 Haiku (Previous Version), TO UPDATE!!
+  },
+  {
     id: 'claude-3-5-sonnet-20240620',
     label: 'Claude 3.5 Sonnet (Previous)',
     created: roundTime('2024-06-20 06:00'),
     description: 'Previous version of Claude 3.5 Sonnet',
-    contextWindow: 200000, // Characters
+    contextWindow: 200000,
     maxCompletionTokens: 8192,
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
@@ -71,11 +82,11 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 0.25, output: 1.25, cache: { cType: 'ant-bp', read: 0.03, write: 0.30, duration: 300 } },
-    benchmark: { cbaElo: 1179, cbaMmlu: 75.2 },
+    benchmark: { cbaElo: 1179 - 0.1, cbaMmlu: 75.2 - 0.1 },
   },
 
   // Legacy models - https://docs.anthropic.com/en/docs/about-claude/models#legacy-models
-  // Addd deprecated as per https://docs.anthropic.com/en/docs/resources/model-deprecations
+  // Add deprecated as per https://docs.anthropic.com/en/docs/resources/model-deprecations
   {
     id: 'claude-2.1',
     label: 'Claude 2.1',
