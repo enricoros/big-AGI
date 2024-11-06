@@ -41,7 +41,7 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
     <ProviderTheming emotionCache={emotionCache}>
       <ProviderSingleTab>
         <ProviderBackendCapabilities>
-          {/* ^ SSR boundary */}
+          {/* ^ Backend capabilities & SSR boundary */}
           <ProviderBootstrapLogic>
             <SnackbarInsert />
             {getLayout(<Component {...pageProps} />)}

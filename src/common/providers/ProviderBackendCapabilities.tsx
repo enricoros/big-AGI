@@ -173,5 +173,5 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
   }
 
   // Render the children when ready
-  return versionVerified ? props.children : null;
+  return props.children;
 }
