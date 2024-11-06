@@ -171,6 +171,12 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       break;
 
     case 'text':
+      // Obsidian URLs, for dragging: we won't be able to open them, so we'll show the input error instead
+      if (source.textPlain?.startsWith('obsidian://open?vault=')) {
+        edit({ label: 'Obsidian Issue', inputError: 'Drag and drop does not work with Obsidian URLs. Please open/attach the file, or drag it from finder/explorer, or paste the content.' });
+        break;
+      }
+
       if (source.textHtml && source.textPlain) {
         edit({
           label: 'Rich Text',
