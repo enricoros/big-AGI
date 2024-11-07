@@ -28,10 +28,10 @@
     "@mui/material": "^5.16.7",
     "@next/bundle-analyzer": "^15.0.2",
     "@next/third-parties": "^15.0.2",
-    "@prisma/client": "^5.21.1",
+    "@prisma/client": "^5.22.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "@tanstack/react-query": "^5.59.17",
+    "@tanstack/react-query": "^5.59.20",
     "@trpc/client": "11.0.0-rc.608",
     "@trpc/next": "11.0.0-rc.608",
     "@trpc/react-query": "11.0.0-rc.608",
@@ -49,7 +49,7 @@
     "nanoid": "^5.0.8",
     "next": "~15.0.2",
     "nprogress": "^0.2.0",
-    "pdfjs-dist": "4.7.76",
+    "pdfjs-dist": "4.8.69",
     "plantuml-encoder": "^1.4.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
@@ -72,12 +72,12 @@
     "turndown": "^7.2.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.5",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "0.0.11",
-    "@types/diff": "^5.2.3",
-    "@types/node": "^22.8.6",
+    "@types/diff": "^6.0.0",
+    "@types/node": "^22.9.0",
     "@types/nprogress": "^0.2.3",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.5",
@@ -91,7 +91,7 @@
     "eslint": "^9.14.0",
     "eslint-config-next": "^15.0.2",
     "prettier": "^3.3.3",
-    "prisma": "^5.21.1",
+    "prisma": "^5.22.0",
     "typescript": "^5.6.3"
   },
   "engines": {
