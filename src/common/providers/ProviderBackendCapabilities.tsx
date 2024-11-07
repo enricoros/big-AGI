@@ -85,6 +85,7 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
   const { data } = apiQuery.backend.listCapabilities.useQuery(undefined, {
     staleTime: Release.Features.BACKEND_REVALIDATE_INTERVAL,
     refetchOnWindowFocus: true, // refetch after a long idle
+    refetchOnReconnect: true, // refetch after a network change
   });
 
 
