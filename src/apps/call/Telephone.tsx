@@ -13,8 +13,8 @@ import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown';
 
-import { EXPERIMENTAL_speakTextStream } from '~/modules/elevenlabs/elevenlabs.client';
 import { SystemPurposeId, SystemPurposes } from '../../data';
+import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
 import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
@@ -185,7 +185,7 @@ export function Telephone(props: {
     setCallMessages([createDMessageTextContent('assistant', firstMessage)]); // [state] set assistant:hello message
 
     // fire/forget
-    void EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId);
+    void elevenLabsSpeakText(firstMessage, personaVoiceId, true, true);
 
     return () => clearInterval(interval);
   }, [isConnected, personaCallStarters, personaVoiceId]);
@@ -262,7 +262,7 @@ export function Telephone(props: {
         setCallMessages(messages => [...messages, createDMessageTextContent('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]); // [state] append assistant:call_response
       // fire/forget
       if (finalText?.length >= 1)
-        void EXPERIMENTAL_speakTextStream(finalText, personaVoiceId);
+        void elevenLabsSpeakText(finalText, personaVoiceId, true, true);
     });
 
     return () => {

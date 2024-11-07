@@ -3,10 +3,10 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 import { AudioLivePlayer } from '~/common/util/audio/AudioLivePlayer';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
-import { frontendSideFetch } from '~/common/util/clientFetchers';
+import { apiStream } from '~/common/util/trpc.client';
+import { base64ToArrayBuffer } from '~/common/util/urlUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
-import type { SpeechInputSchema } from './elevenlabs.router';
 import { getElevenLabsData, useElevenLabsData } from './store-module-elevenlabs';
 
 
@@ -26,7 +26,7 @@ export function useCapability(): CapabilityElevenLabsSpeechSynthesis {
 }
 
 
-export async function speakText(text: string, voiceId?: string) {
+export async function elevenLabsSpeakText(text: string, voiceId: string | undefined, audioStreaming: boolean, audioTurbo: boolean) {
   if (!(text?.trim())) return;
 
   const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
@@ -35,64 +35,47 @@ export async function speakText(text: string, voiceId?: string) {
   const { preferredLanguage } = useUIPreferencesStore.getState();
   const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
 
+  // audio live player instance, if needed
+  let liveAudioPlayer: AudioLivePlayer | undefined;
+
   try {
-    const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, false);
-    const audioBuffer = await edgeResponse.arrayBuffer();
-    await AudioPlayer.playBuffer(audioBuffer);
+
+    const stream = await apiStream.elevenlabs.speech.mutate({
+      xiKey: elevenLabsApiKey,
+      voiceId: voiceId || elevenLabsVoiceId,
+      text: text,
+      nonEnglish,
+      audioStreaming,
+      audioTurbo,
+    });
+
+    for await (const piece of stream) {
+      if (piece.audioChunk) {
+
+        // create the live audio player as needed
+        // NOTE: in the future we can have a centralized audio playing system
+        if (!liveAudioPlayer)
+          liveAudioPlayer = new AudioLivePlayer();
+
+        const chunkBuffer = base64ToArrayBuffer(piece.audioChunk.base64);
+        liveAudioPlayer.enqueueChunk(chunkBuffer);
+
+      } else if (piece.audio) {
+
+        // also consieder mergin LiveAudioPlayer into AudioPlayer
+        void AudioPlayer.playBuffer(base64ToArrayBuffer(piece.audio.base64)); // fire/forget - it's a single piece of audio (could be long tho)
+
+      } else if (piece.errorMessage)
+        console.log('ElevenLabs issue:', piece.errorMessage);
+      else if (piece.warningMessage)
+        console.log('ElevenLabs warning:', piece.errorMessage);
+      else if (piece.control === 'start' || piece.control === 'end') {
+        // ignore..
+      } else
+        console.log('piece:', piece);
+    }
+
   } catch (error) {
     console.error('Error playing first text:', error);
   }
-}
-
-// let liveAudioPlayer: LiveAudioPlayer | undefined = undefined;
-
-export async function EXPERIMENTAL_speakTextStream(text: string, voiceId?: string) {
-  if (!(text?.trim())) return;
-
-  const { elevenLabsApiKey, elevenLabsVoiceId } = getElevenLabsData();
-  if (!isElevenLabsEnabled(elevenLabsApiKey)) return;
-
-  const { preferredLanguage } = useUIPreferencesStore.getState();
-  const nonEnglish = !(preferredLanguage?.toLowerCase()?.startsWith('en'));
-
-  try {
-    const edgeResponse = await frontendFetchAPIElevenLabsSpeech(text, elevenLabsApiKey, voiceId || elevenLabsVoiceId, nonEnglish, true);
-
-    // if (!liveAudioPlayer)
-    const liveAudioPlayer = new AudioLivePlayer();
-    // fire/forget
-    void liveAudioPlayer.EXPERIMENTAL_playStream(edgeResponse);
-
-  } catch (error) {
-    // has happened once in months of testing, not sure what was the cause
-    console.error('EXPERIMENTAL_speakTextStream:', error);
-  }
-}
-
-
-/**
- * Note: we have to use this client-side API instead of TRPC because of ArrayBuffers..
- */
-async function frontendFetchAPIElevenLabsSpeech(text: string, elevenLabsApiKey: string, elevenLabsVoiceId: string, nonEnglish: boolean, streaming: boolean): Promise<Response> {
-  // NOTE: hardcoded 1000 as a failsafe, since the API will take very long and consume lots of credits for longer texts
-  const speechInput: SpeechInputSchema = {
-    elevenKey: elevenLabsApiKey,
-    text: text.slice(0, 1000),
-    voiceId: elevenLabsVoiceId,
-    nonEnglish,
-    ...(streaming && { streaming: true, streamOptimization: 4 }),
-  };
-
-  const response = await frontendSideFetch('/api/elevenlabs/speech', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(speechInput),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || errorData.message || 'Unknown error');
-  }
-
-  return response;
 }
