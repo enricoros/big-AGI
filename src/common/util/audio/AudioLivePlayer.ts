@@ -1,117 +1,136 @@
-/**
- * TBA
- */
 export class AudioLivePlayer {
+  private readonly mimeType: string = 'audio/mpeg';
+
   private readonly audioContext: AudioContext;
   private readonly audioElement: HTMLAudioElement;
   private readonly mediaSource: MediaSource;
-  private readonly bufferSizeLimit: number;
-  private readonly onStart: (() => void) | null;
-  private readonly onStop: (() => void) | null;
-  private reader: ReadableStreamDefaultReader<Uint8Array> | null;
+  private sourceBuffer: SourceBuffer | null = null;
+
+  private chunkQueue: ArrayBuffer[] = [];
+  private isSourceBufferUpdating: boolean = false;
+  private isMediaSourceEnded: boolean = false;
+  private isMediaSourceOpen: boolean = false;
+
 
   constructor() {
     this.audioContext = new AudioContext();
     this.audioElement = new Audio();
     this.mediaSource = new MediaSource();
-    this.bufferSizeLimit = 5; // in seconds
-    this.onStart = null;
-    this.onStop = null;
-    this.reader = null;
-  }
+    this.audioElement.src = URL.createObjectURL(this.mediaSource);
+    this.audioElement.autoplay = true;
 
-  async EXPERIMENTAL_playStream(edgeResponse: Response) {
-    if (this.reader) {
-      await this.stop();
-    }
-
-    if (!edgeResponse.body) {
-      return;
-    }
-    const esgeReadableStream = edgeResponse.body;
-
+    // Connect the audio element to the audio context
     const sourceNode = this.audioContext.createMediaElementSource(this.audioElement);
     sourceNode.connect(this.audioContext.destination);
 
-    const mimeType = 'audio/mpeg';
-    this.mediaSource.addEventListener('sourceopen', async () => {
-      const sourceBuffer: SourceBuffer = this.mediaSource.addSourceBuffer(mimeType);
-      this.reader = esgeReadableStream.getReader();
-
-      if (this.onStart) {
-        this.onStart();
-      }
-
-      while (true) {
-        const { done, value } = await this.reader.read();
-        if (done) {
-          sourceBuffer.onupdateend = () => this.mediaSource.endOfStream();
-          break;
-        }
-
-        await new Promise((resolve) => {
-          if (!sourceBuffer.updating) {
-            resolve(null);
-          } else {
-            sourceBuffer.addEventListener('updateend', () => resolve(null), { once: true });
-          }
-        });
-
-        if (this.audioElement.buffered.length > 0) {
-          const currentTime = this.audioElement.currentTime;
-          const bufferedEnd = this.audioElement.buffered.end(this.audioElement.buffered.length - 1);
-          const remainingBuffer = bufferedEnd - currentTime;
-
-          if (remainingBuffer > this.bufferSizeLimit) {
-            // E: just made this a bit more resilient, but not much
-            try {
-              // Remove old data from the buffer
-              sourceBuffer.remove(0, currentTime - 1);
-              await new Promise((resolve) => {
-                sourceBuffer.addEventListener('updateend', () => resolve(null), { once: true });
-              });
-            } catch (e) {
-              console.warn('Error removing old data from the buffer:', e);
-            }
-          }
-        }
-
-        // Wait for the sourceBuffer to finish updating before appending new data
-        await new Promise((resolve) => {
-          if (!sourceBuffer.updating) {
-            resolve(null);
-          } else {
-            sourceBuffer.addEventListener('updateend', () => resolve(null), { once: true });
-          }
-        });
-
-        // Append new data to the buffer
-        sourceBuffer.appendBuffer(value);
-      }
-
-      if (this.onStop) {
-        this.onStop();
-      }
-    });
-
-    this.audioElement.src = URL.createObjectURL(this.mediaSource);
-    this.audioElement.autoplay = true;
+    // Set up MediaSource events
+    this.mediaSource.addEventListener('sourceopen', this.onMediaSourceOpen);
+    this.mediaSource.addEventListener('error', this.onMediaSourceError);
+    this.mediaSource.addEventListener('sourceended', this.onMediaSourceEnded);
+    this.mediaSource.addEventListener('sourceclose', this.onMediaSourceClosed);
   }
 
-  async stop() {
-    if (this.reader) {
-      await this.reader.cancel();
-      this.reader = null;
-      this.mediaSource.endOfStream();
-      this.audioElement.pause();
+  private onMediaSourceOpen = () => {
+    this.isMediaSourceOpen = true;
+    this.sourceBuffer = this.mediaSource.addSourceBuffer(this.mimeType);
+    this.sourceBuffer.mode = 'sequence'; // Ensure data is appended in order
+    this.sourceBuffer.addEventListener('updateend', this.onSourceBufferUpdateEnd);
+    this.sourceBuffer.addEventListener('error', this.onSourceBufferError);
+
+    // Start appending data if any is queued
+    this.appendNextChunk();
+  };
+
+  private onMediaSourceError = (e: Event) => {
+    console.error('MediaSource error:', e);
+  };
+
+  private onMediaSourceEnded = () => {
+    console.log('MediaSource ended');
+  };
+
+  private onMediaSourceClosed = () => {
+    console.log('MediaSource closed');
+  };
+
+  private onSourceBufferError = (e: Event) => {
+    console.error('SourceBuffer error:', e);
+  };
+
+  private onSourceBufferUpdateEnd = () => {
+    this.isSourceBufferUpdating = false;
+
+    // Continue appending if there's more data
+    if (!this.isMediaSourceEnded) {
+      this.appendNextChunk();
+    } else {
+      // End the stream if all data has been appended
+      if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0) {
+        this.mediaSource.endOfStream();
+      }
+    }
+  };
+
+  private appendNextChunk() {
+    if (!this.sourceBuffer || this.isSourceBufferUpdating || !this.isMediaSourceOpen) return;
+
+    if (this.chunkQueue.length > 0) {
+      const chunk = this.chunkQueue.shift();
+      if (chunk) {
+        try {
+          this.isSourceBufferUpdating = true;
+          this.sourceBuffer.appendBuffer(chunk);
+        } catch (e) {
+          console.error('Error appending buffer:', e);
+          this.isSourceBufferUpdating = false;
+        }
+      }
+    } else if (this.isMediaSourceEnded) {
+      if (this.sourceBuffer && !this.sourceBuffer.updating) {
+        this.mediaSource.endOfStream();
+      }
     }
   }
 
-  // setOnStart(callback) {
-  //   this.onStart = callback;
-  // }
-  //
-  // setOnStop(callback) {
-  //   this.onStop = callback;
-  // }
+  /**
+   * Enqueue an ArrayBuffer chunk to be played
+   */
+  public enqueueChunk(chunk: ArrayBuffer) {
+    this.chunkQueue.push(chunk);
+    this.appendNextChunk();
+  }
+
+  /**
+   * Signal that no more chunks will be enqueued
+   */
+  public endPlayback() {
+    this.isMediaSourceEnded = true;
+    // If the sourceBuffer is not updating, we can end the stream
+    if (this.sourceBuffer && !this.sourceBuffer.updating && this.chunkQueue.length === 0) {
+      this.mediaSource.endOfStream();
+    }
+  }
+
+  /**
+   * Stop playback and clean up resources
+   */
+  public async stop() {
+    this.audioElement.pause();
+    this.chunkQueue = [];
+    this.isMediaSourceEnded = true;
+
+    if (this.sourceBuffer) {
+      try {
+        if (this.mediaSource.readyState === 'open') {
+          this.mediaSource.endOfStream();
+        }
+        this.sourceBuffer.abort();
+      } catch (e) {
+        console.warn('Error stopping playback:', e);
+      }
+    }
+
+    this.audioContext.close();
+    this.audioElement.src = '';
+  }
 }
