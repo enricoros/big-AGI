@@ -86,9 +86,6 @@ export const env = createEnv({
     HTTP_BASIC_AUTH_USERNAME: z.string().optional(),
     HTTP_BASIC_AUTH_PASSWORD: z.string().optional(),
 
-    // Backend: Analytics flags (e.g. which hostname responds) for managed installs
-    BACKEND_ANALYTICS: z.string().optional().transform(list => (list || '').split(';').filter(flag => !!flag)),
-
     // Build-time configuration (ignore)
     BIG_AGI_BUILD: z.enum(['standalone', 'static']).optional(),
 

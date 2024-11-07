@@ -9,8 +9,6 @@ import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
 // critical to make sure we `import type` here
 import type { BackendCapabilities } from './store-backend-capabilities';
 
-import { analyticsListCapabilities } from './backend.analytics';
-
 
 function sdbmHash(str: string): string {
   let hash = 0;
@@ -48,8 +46,7 @@ export const backendRouter = createTRPCRouter({
 
   /* List server-side capabilities (pre-configured by the deployer) */
   listCapabilities: publicProcedure
-    .query(async ({ ctx }): Promise<BackendCapabilities> => {
-      analyticsListCapabilities(ctx.hostName);
+    .query(async ({ ctx: _unused }): Promise<BackendCapabilities> => {
       return {
         // llms
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
