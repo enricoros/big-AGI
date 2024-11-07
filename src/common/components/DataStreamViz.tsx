@@ -103,7 +103,7 @@ export function DataStreamViz(props: { height: number, speed?: number }) {
       // opacity: useSpecialColor ? 1 : shapeOpacity.min + Math.random() * (shapeOpacity.max - shapeOpacity.min),
       entryProgress: 0,
     });
-  }, []);
+  }, [props.speed]);
 
 
   const drawGrid = React.useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
