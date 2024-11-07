@@ -172,7 +172,7 @@ export const geminiGeneratedContentResponseSchema = z.object({
   // either all requested candidates are returned or no candidates at all
   // no candidates are returned only if there was something wrong with the prompt (see promptFeedback)
   candidates: z.array(z.object({
-    index: z.number(),
+    index: z.number().optional(),
     content: geminiContentSchema.optional(), // this can be missing if the finishReason is not 'MAX_TOKENS'
     finishReason: geminiFinishReasonSchema.optional(),
     safetyRatings: z.array(geminiSafetyRatingSchema).optional(), // undefined when finishReason is 'RECITATION'
