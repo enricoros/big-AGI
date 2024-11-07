@@ -60,9 +60,6 @@ PRODIA_API_KEY=
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 
-# Backend Analytics Flags
-BACKEND_ANALYTICS=
-
 
 # Frontend variables
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
@@ -136,7 +133,6 @@ Enable the app to Talk, Draw, and Google things up.
 | **Browse**                 |                                                                                                                         |
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                              |
 | **Backend**                |                                                                                                                         |
-| `BACKEND_ANALYTICS`        | Semicolon-separated list of analytics flags (see backend.analytics.ts). Flags: `domain` logs the responding domain.     |
 | `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
 
