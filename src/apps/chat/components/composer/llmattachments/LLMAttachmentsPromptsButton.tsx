@@ -6,7 +6,7 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 
-import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 
 import { AGI_SUGGESTIONS_COLOR } from '../textarea/ComposerTextAreaActions';
@@ -43,7 +43,7 @@ function LLMAttachmentsPromptsButton({ data }: { data: AgiAttachmentPromptsData 
   const tooltipTitle =
     data.error ? (data.error.message || 'Error guessing actions')
       : data.isFetching ? null
-        : data.isPending ? <Box sx={{ display: 'flex', gap: 1 }}><AgiSquircleIcon inverted sx={{ color: 'white', borderRadius: '1rem' }} /> What can I do?</Box>
+        : data.isPending ? <Box sx={{ display: 'flex', gap: 1 }}><BigAgiSquircleIcon inverted sx={{ color: 'white', borderRadius: '1rem' }} /> What can I do?</Box>
           : 'Give me more ideas';
 
   const button = (

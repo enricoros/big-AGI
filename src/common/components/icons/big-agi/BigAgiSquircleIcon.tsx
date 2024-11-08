@@ -5,7 +5,7 @@ import { SvgIcon, SvgIconProps } from '@mui/joy';
 import { Brand } from '~/common/app.config';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
-export function AgiSquircleIcon(props: { inverted?: boolean, altColor?: string } & SvgIconProps) {
+export function BigAgiSquircleIcon(props: { inverted?: boolean, altColor?: string } & SvgIconProps) {
   const { inverted, altColor, ...rest } = props;
   return <SvgIcon
     titleAccess={`${capitalizeFirstLetter(Brand.Title.Base)} logo mark`}
