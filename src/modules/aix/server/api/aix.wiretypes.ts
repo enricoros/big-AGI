@@ -375,7 +375,7 @@ export namespace AixWire_API {
   export const Model_schema = z.object({
     id: z.string(),
     temperature: z.number().min(0).max(2).optional(),
-    maxTokens: z.number().min(1).max(1000000).optional(),
+    maxTokens: z.number().min(1).optional(),
   });
 
   /// Context
