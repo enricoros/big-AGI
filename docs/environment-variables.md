@@ -38,6 +38,7 @@ OPENPIPE_API_KEY=
 OPENROUTER_API_KEY=
 PERPLEXITY_API_KEY=
 TOGETHERAI_API_KEY=
+XAI_API_KEY=
 
 # Model Observability: Helicone
 HELICONE_API_KEY=
@@ -102,6 +103,7 @@ requiring the user to enter an API key
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                     | Optional                                                          |
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                     | Optional                                                          |
 | `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                    | Optional                                                          |
+| `XAI_API_KEY`               | The API key for xAI                                                                                            | Optional                                                          |
 
 ### LLM Observability: Helicone
 

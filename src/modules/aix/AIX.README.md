@@ -35,6 +35,7 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 | OpenRouter | ✅          | ❌ (inconsistent) |                   | ✅         | Yes + 📦  |               |
 | Perplexity | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
 | TogetherAI | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
+| xAI        |            |                  |                   |           |           |               |
 | Ollama (2) | ❌ (broken) | ?                |                   |           |           |               |
 
 Notes:

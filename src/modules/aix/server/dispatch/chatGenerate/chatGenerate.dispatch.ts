@@ -75,6 +75,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
     case 'openrouter':
     case 'perplexity':
     case 'togetherai':
+    case 'xai':
       return {
         request: {
           ...openAIAccess(access, model.id, '/v1/chat/completions'),

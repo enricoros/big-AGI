@@ -579,13 +579,25 @@ export function fromManualMapping(mappings: ManualMappings, id: string, created?
   // check whether this is a partial map, which indicates an unknown/new variant
   const suffix = id.slice(known.idPrefix.length).trim();
 
+  // full label
+  label = label
+    + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : '')
+    + (known.isLatest ? ' 🌟' : '')
+    + (known.isLegacy ? /*' 💩'*/ ' [legacy]' : '');
+
+  // set the date in YYYY-MM-DD format if available and requested
+  // if (label.indexOf('{{Created}}') !== -1) {
+  //   const targetDate = updated || created;
+  //   if (targetDate)
+  //     label = label.replace('{{Created}}', `(${new Date(targetDate * 1000).toISOString().slice(0, 10)})`);
+  //   else
+  //     label = label.replace('{{Created}}', '');
+  // }
+
   // create the model description
   const md: ModelDescriptionSchema = {
     id,
-    label: label
-      + (suffix ? ` [${suffix.replaceAll('-', ' ').trim()}]` : '')
-      + (known.isLatest ? ' 🌟' : '')
-      + (known.isLegacy ? /*' 💩'*/ ' [legacy]' : ''),
+    label,
     created: created || 0,
     updated: updated || created || 0,
     description: known.description,
