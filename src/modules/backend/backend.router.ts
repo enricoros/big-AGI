@@ -63,6 +63,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
+        hasLlmXAI: !!env.XAI_API_KEY,
         // others
         hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,

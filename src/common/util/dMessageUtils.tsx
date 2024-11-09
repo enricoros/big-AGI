@@ -354,6 +354,8 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Ollama]
   if (model.includes(':'))
     return model.replace(':latest', '').replaceAll(':', ' ');
+  // [xAI]
+  if (model.includes('grok-beta')) return 'Grok Beta';
   return model;
 }
 
