@@ -560,6 +560,7 @@ export function AppChat() {
         const _paneIsFocused = idx === focusedPaneIndex;
         const _paneConversationId = pane.conversationId;
         const _paneChatHandler = paneHandlers[idx] ?? null;
+        const _paneIsIncognito = _paneChatHandler?.isIncognito() ?? false;
         const _paneBeamStoreApi = paneBeamStores[idx] ?? null;
         const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStoreApi;
         const _panesCount = chatPanes.length;
@@ -603,6 +604,9 @@ export function AppChat() {
                 // it was optional before: https://github.com/bvaughn/react-resizable-panels/issues/241
                 pointerEvents: 'auto',
               }),
+              ...((_paneIsIncognito && {
+                backgroundColor: theme.palette.background.level3,
+              })),
             }}
           >
 

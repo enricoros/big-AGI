@@ -35,6 +35,7 @@ export interface ChatActions {
   deleteConversations: (cIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
+  isIncognito: (cId: DConversationId) => boolean | undefined;
   setAbortController: (cId: DConversationId, _abortController: AbortController | null, debugScope: string) => void;
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
@@ -174,6 +175,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
               : conversation,
           ),
         })),
+
+      isIncognito: (conversationId: DConversationId): boolean | undefined =>
+        _get().conversations.find(_c => _c.id === conversationId)?._isIncognito ?? undefined,
 
       setAbortController: (conversationId: DConversationId, _nextController: AbortController | null, debugScope: string) =>
         _get()._editConversation(conversationId, ({ _abortController: _currentController }) => {

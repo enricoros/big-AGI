@@ -11,6 +11,7 @@ import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { SystemPurposeId, SystemPurposes } from '../../../../data';
 
@@ -207,9 +208,11 @@ function ChatDrawerItem(props: {
   const titleRowComponent = React.useMemo(() => <>
 
     {/* Symbol, if globally enabled */}
-    {props.showSymbols && (
+    {(props.showSymbols || isIncognito) && (
       <ListItemDecorator>
-        {(beingGenerated && props.showSymbols === 'gif') ? (
+        {isIncognito ? (
+          <VisibilityOffIcon sx={{ fontSize: 'xl' }} />
+        ) : (beingGenerated && props.showSymbols === 'gif') ? (
           <Avatar
             alt='chat activity'
             variant='plain'
