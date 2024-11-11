@@ -6,7 +6,7 @@
   "repository": "https://github.com/enricoros/big-agi",
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev-no-turbo": "next dev",
+    "dev-debug": "cross-env NODE_OPTIONS='--inspect' next dev",
     "dev-https": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
@@ -88,6 +88,7 @@
     "@types/react-katex": "^3.0.4",
     "@types/react-timeago": "^4.1.7",
     "@types/turndown": "^5.0.5",
+    "cross-env": "^7.0.3",
     "eslint": "^9.14.0",
     "eslint-config-next": "^15.0.3",
     "prettier": "^3.3.3",
