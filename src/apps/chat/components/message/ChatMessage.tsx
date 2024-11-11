@@ -223,7 +223,7 @@ export function ChatMessage(props: {
 
 
   // TODO: fix the diffing
-  // const textDiffs = useSanityTextDiffs(messageText, props.diffPreviousText, showDiff);
+  // const wordsDiff = useWordsDifference(textSubject, props.diffPreviousText, showDiff);
 
 
   const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = props;

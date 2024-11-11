@@ -52,7 +52,7 @@ export function imageTokensForLLM(width: number | undefined, height: number | un
       return 258;
 
     default:
-      console.warn('Unhandled token preview for image with llm:', llm.vId);
+      console.log(`[DEV] Unhandled token preview for image with llm: ${llm.vId}`);
       return 0;
   }
 }

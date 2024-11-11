@@ -54,8 +54,9 @@ export function copyBlobPromiseToClipboard(mimeType: string, blobPromise: Promis
     });
 }
 
-// NOTE: this could be implemented in a platform-agnostic manner with !!.read, but we call it out here for clarity
-export const supportsClipboardRead = !Is.Browser.Firefox;
+export function supportsClipboardRead() {
+  return !Is.Browser.Firefox;
+}
 
 export async function getClipboardItems(): Promise<ClipboardItem[] | null> {
   if (!isBrowser || !window.navigator.clipboard?.read)
