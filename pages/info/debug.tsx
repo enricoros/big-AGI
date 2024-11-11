@@ -89,7 +89,7 @@ function AppDebug() {
     Is,
     BrowserLang,
     isPWA: isPwa(),
-    supportsClipboardPaste: supportsClipboardRead,
+    supportsClipboardPaste: supportsClipboardRead(),
     supportsScreenCapture,
   };
   const cProduct = {
