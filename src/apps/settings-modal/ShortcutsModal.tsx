@@ -15,6 +15,7 @@ const shortcutsMd = platformAwareKeystrokes(`
 | **Edit**         |                                         |
 | Shift + Enter    | Newline                                 |
 | Alt + Enter      | Append (no response)                    |
+| Ctrl + Enter     | Beam (and start all Beams)              |
 | Ctrl + Shift + Z | **Regenerate** last message             |
 | Ctrl + Shift + B | **Beam** last message                   |
 | Ctrl + Shift + F | Attach file                             |
@@ -28,8 +29,8 @@ const shortcutsMd = platformAwareKeystrokes(`
 | Ctrl + Shift + N | **New** chat                            |
 | Ctrl + Shift + X | **Reset** chat                          |
 | Ctrl + Shift + D | **Delete** chat                         |
-| Ctrl + Up        | Previous message (hold shift for top)   |
-| Ctrl + Down      | Next message (hold shift to bottom)     |
+| Ctrl + Up        | Previous message/Beam (shift for top)   |
+| Ctrl + Down      | Next message/Beam (shift to bottom)     |
 | Ctrl + [         | **Previous** chat (in history)          |
 | Ctrl + ]         | **Next** chat (in history)              |
 | **Settings**     |                                         |
