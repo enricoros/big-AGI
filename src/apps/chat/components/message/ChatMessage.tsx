@@ -792,7 +792,7 @@ export function ChatMessage(props: {
       {/* Message Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
         <CloseableMenu
-          dense placement='bottom-end'
+          dense placement='auto-end'
           open={true} anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
           sx={{ minWidth: 280 }}
         >
