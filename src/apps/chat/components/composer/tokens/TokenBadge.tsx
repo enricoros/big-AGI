@@ -22,6 +22,7 @@ function TokenBadge(props: {
   limit: number,
 
   enableHover?: boolean,
+  hideBelowDollars?: number,
   showCost?: boolean
   showExcess?: boolean,
   absoluteBottomRight?: boolean,
@@ -62,6 +63,9 @@ function TokenBadge(props: {
   const shallHide = !props.direct && remainingTokens >= 0 && !showAltCosts;
   if (shallHide) return null;
 
+  // invisible will be revealed on mouse hover, it's a "weaker" hidden state
+  const shallInvisible = showAltCosts && !!props.hideBelowDollars && typeof costMin === 'number' && costMin < props.hideBelowDollars;
+
   return (
     <TokenTooltip color={color} message={message} placement='top-end'>
       <Badge
@@ -75,6 +79,10 @@ function TokenBadge(props: {
             sx: {
               ...((props.absoluteBottomRight) && { position: 'absolute', bottom: 8, right: 8 }),
               cursor: 'help',
+              ...(shallInvisible && {
+                opacity: 0,
+                '&:hover': { opacity: 1 },
+              }),
             },
           },
           badge: {
