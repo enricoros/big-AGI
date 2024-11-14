@@ -171,7 +171,7 @@ Add extra functionality with these integrations:
 
 | **More**     | _integrations_                                                                                                 |
 |:-------------|:---------------------------------------------------------------------------------------------------------------| 
-| Web Browse   | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
+| Web Browser  | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
 | Web Search   | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
 | Code Editors | [CodePen](https://codepen.io/pen/) · [StackBlitz](https://stackblitz.com/) · [JSFiddle](https://jsfiddle.net/) |
 | Sharing      | [Paste.gg](https://paste.gg/) (Paste chats)                                                                    | 
