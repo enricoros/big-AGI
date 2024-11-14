@@ -100,6 +100,8 @@ export function Fusion(props: {
 
   return (
     <BeamCard
+      role='beam-card'
+      tabIndex={-1}
       className={
         // (isIdle ? beamCardClasses.fusionIdle : '')
         (isError ? beamCardClasses.errored + ' ' : '')

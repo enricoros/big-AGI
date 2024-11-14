@@ -492,10 +492,15 @@ export function AppChat() {
   const handleMoveFocus = React.useCallback((direction: number, wholeList?: boolean) => {
     // find the parent list
     let messageListElement: HTMLElement | null;
+    let withinBeam = false;
     const activeElement = document.activeElement as HTMLElement;
-    if (activeElement)
-      messageListElement = activeElement.closest('[role=chat-messages-list]') as HTMLElement;
-    else
+    if (activeElement) {
+      messageListElement = document.querySelector('[role=beam-list]') as HTMLElement;
+      if (!messageListElement)
+        messageListElement = activeElement.closest('[role=chat-messages-list]') as HTMLElement;
+      else
+        withinBeam = true;
+    } else
       messageListElement = document.querySelector('[role=chat-messages-list]') as HTMLElement;
     if (!messageListElement) return;
 
@@ -505,7 +510,7 @@ export function AppChat() {
     const isAtBottom = Math.abs(scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight) < 1;
 
     // determine the current message and next index
-    const messageElements = Array.from(messageListElement.querySelectorAll('[role=chat-message]')) as HTMLElement[];
+    const messageElements = Array.from(messageListElement.querySelectorAll(withinBeam ? '[role=beam-card]' : '[role=chat-message]')) as HTMLElement[];
     const currentIndex = messageElements.findIndex(el => el.contains(activeElement));
 
     // if going down and we're at/past the last message, scroll to bottom

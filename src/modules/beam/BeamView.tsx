@@ -144,7 +144,7 @@ export function BeamView(props: {
 
   return <>
 
-    <Box sx={{
+    <Box role='beam-list' sx={{
       // scroller fill
       minHeight: '100%',
       // ...props.sx,
