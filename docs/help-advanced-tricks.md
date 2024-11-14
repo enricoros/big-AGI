@@ -25,7 +25,9 @@ Welcome to the advanced tips and tricks guide for Big-AGI. This document will he
 - When editing a message:
   - **Ctrl + Enter** to **Save** the changes.
   - **Shift + Ctrl + Enter** to **Save & Regenerate**.
-
+- Scroll between messages:
+  - **Ctrl + Up/Down** to scroll between **messages** and/or **Beams**.
+  
 ## Worth the Effort:
 
 - [LiveFile](help-feature-livefile.md) works on **Chrome**: Pair and synchronize your documents and code blocks with files on your local system: refresh, save, update them.
