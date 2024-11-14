@@ -43,7 +43,7 @@ export function XAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormInputKey
       autoCompleteId='xai-key'
       label='API Key'
-      rightLabel={<>{!needsUserKey
+      rightLabel={<>{needsUserKey
         ? !xaiKey && <ExternalLink level='body-sm' href={EXTERNAL_LINK_XAI_API_KEYS}>get a key</ExternalLink>
         : <AlreadySet />}
       </>}
