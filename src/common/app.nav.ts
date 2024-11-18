@@ -158,7 +158,7 @@ export const navItems: {
       icon: () => null,
     },
     {
-      name: 'Personas',
+      name: 'Create Personas',
       icon: Diversity2Icon, // was: Outlined.. but they look the same
       // iconActive: Diversity2Icon,
       type: 'app',
@@ -200,7 +200,8 @@ export const navItems: {
       _delete: true,
     },
     {
-      name: 'Shared Chat',
+      name: 'Shared Chats',
+      barTitle: 'Shared Chat',
       icon: IosShareOutlinedIcon,
       iconActive: IosShareIcon,
       type: 'app',
