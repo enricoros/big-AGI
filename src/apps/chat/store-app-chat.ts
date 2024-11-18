@@ -51,7 +51,7 @@ interface AppChatStore {
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
-  showPersonaIcons: boolean;
+  showPersonaIcons2: boolean;
   setShowPersonaIcons: (showPersonaIcons: boolean) => void;
 
   showRelativeSize: boolean;
@@ -114,8 +114,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
 
-    showPersonaIcons: true,
-    setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons }),
+    // new default on 2024-11-18: disable icons by default, too confusing
+    showPersonaIcons2: false,
+    setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons2: showPersonaIcons }),
 
     showRelativeSize: false,
     setShowRelativeSize: (showRelativeSize: boolean) => _set({ showRelativeSize }),
@@ -203,7 +204,7 @@ export const useChatDrawerFilters = () => {
     filterHasDocFragments: state.filterHasDocFragments,
     filterHasImageAssets: state.filterHasImageAssets,
     filterHasStars: state.filterHasStars,
-    showPersonaIcons: state.showPersonaIcons,
+    showPersonaIcons: state.showPersonaIcons2,
     showRelativeSize: state.showRelativeSize,
   })));
   const chatStoreState = useAppChatStore.getState();
