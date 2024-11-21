@@ -1,7 +1,7 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
-import { appRouterCloud } from '~/server/api/trpc.router-node';
-import { createTRPCFetchContext } from '~/server/api/trpc.server';
+import { appRouterCloud } from '~/server/trpc/trpc.router-cloud';
+import { createTRPCFetchContext } from '~/server/trpc/trpc.server';
 
 const handlerNodeRoutes = (req: Request) => fetchRequestHandler({
   endpoint: '/api/cloud',

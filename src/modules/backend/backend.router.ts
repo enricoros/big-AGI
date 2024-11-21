@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 import { Release } from '~/common/app.release';
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 // critical to make sure we `import type` here
 import type { BackendCapabilities } from './store-backend-capabilities';

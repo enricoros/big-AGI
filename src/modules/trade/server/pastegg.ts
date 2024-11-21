@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 
 export const publishToInputSchema = z.object({

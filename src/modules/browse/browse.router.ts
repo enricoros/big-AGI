@@ -5,7 +5,7 @@ import { BrowserContext, connect, ScreenshotOptions } from '@cloudflare/puppetee
 import { default as TurndownService } from 'turndown';
 import { load as cheerioLoad } from 'cheerio';
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
 
 

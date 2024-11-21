@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { LinkStorageDataType, LinkStorageVisibility } from '@prisma/client';
 
 import { prismaDb } from '~/server/prisma/prismaDb';
-import { publicProcedure } from '~/server/api/trpc.server';
+import { publicProcedure } from '~/server/trpc/trpc.server';
 
 import { agiUuid } from '~/common/util/idUtils';
 
