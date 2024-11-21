@@ -170,7 +170,7 @@ For Developers:
   first request to get the configuration. See
   https://github.com/enricoros/big-agi/blob/main/src/modules/backend/backend.router.ts.
 - CloudFlare developers: please change the deployment command to
-  `rm app/api/trpc-node/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`,
+  `rm app/api/cloud/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`,
   as we transitioned to the App router in NextJS 14. The documentation in
   [docs/deploy-cloudflare.md](../docs/deploy-cloudflare.md) is updated
 
