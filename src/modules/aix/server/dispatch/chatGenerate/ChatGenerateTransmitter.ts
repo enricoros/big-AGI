@@ -1,5 +1,5 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
-import { serverSideId } from '~/server/api/trpc.nanoid';
+import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 

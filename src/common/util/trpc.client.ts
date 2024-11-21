@@ -9,9 +9,9 @@
 import { createTRPCClient, httpLink, loggerLink, unstable_httpBatchStreamLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 
-import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
-import type { AppRouterCloud } from '~/server/api/trpc.router-node';
-import { transformer } from '~/server/api/trpc.transformer';
+import type { AppRouterEdge } from '~/server/trpc/trpc.router-edge';
+import type { AppRouterCloud } from '~/server/trpc/trpc.router-cloud';
+import { transformer } from '~/server/trpc/trpc.transformer';
 
 import { getBaseUrl } from './urlUtils';
 import { reactQueryClientSingleton } from '../app.queryclient';

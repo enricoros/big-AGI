@@ -4,8 +4,8 @@
 
 import { z } from 'zod';
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchTextOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { downloadYouTubeVideoData } from './youtube.server';
 

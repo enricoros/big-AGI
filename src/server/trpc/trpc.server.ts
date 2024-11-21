@@ -9,7 +9,7 @@
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import { ZodError } from 'zod';
 import { initTRPC } from '@trpc/server';
-import { transformer } from '~/server/api/trpc.transformer';
+import { transformer } from '~/server/trpc/trpc.transformer';
 
 /**
  * 1. CONTEXT
