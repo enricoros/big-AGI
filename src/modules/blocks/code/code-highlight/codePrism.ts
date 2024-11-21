@@ -17,7 +17,7 @@ import 'prismjs/components/prism-typescript';
 const hPrismLanguages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'mermaid', 'plant-uml', 'python', 'sql', 'typescript'];
 
 const hFileExtensionsMap: { [key: string]: string } = {
-  cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
+  bash: 'bash', cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
   md: 'markdown', mmd: 'mermaid', py: 'python', sh: 'bash', sql: 'sql', ts: 'typescript', tsx: 'typescript', xml: 'xml',
 };
 
@@ -29,6 +29,7 @@ const hCodeIncipitMap: { starts: string[], language: string }[] = [
   { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
   { starts: ['package '], language: 'java' },
   { starts: ['using '], language: 'csharp' },
+  { starts: ['#!/bin/'], language: 'bash' },
   { starts: ['@startuml', '@startmindmap', '@startsalt', '@startwbs', '@startgantt'], language: 'plant-uml' },
 ];
 
