@@ -31,14 +31,11 @@ At time of writing, big-AGI has only 2 operations that run on Node.js Functions:
 browsing (fetching web pages) and sharing. They both can exceed 10 seconds, especially
 when fetching large pages or waiting for websites to be completed.
 
-We provide `vercel_PRODUCTION.json` to raise the duration to 25 seconds (from a default of 10), to use it,
-make sure to rename it to `vercel.json` before build.
-
 From the Vercel Project > Settings > General > Build & Development Settings,
 you can for instance set the build command to:
 
 ```bash
-mv vercel_PRODUCTION.json vercel.json; next build
+next build
 ```
 
 ### Change the Personas (v1.x only)

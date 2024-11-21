@@ -16,9 +16,8 @@ const handlerNodeRoutes = (req: Request) => fetchRequestHandler({
 
 
 // NOTE: the following statement breaks the build on non-pro deployments, and conditionals don't work either
-//       so we resorted to raising the timeout from 10s to 25s in the vercel.json file instead
-// export const maxDuration = 25;
-
+//       so we resorted to raising the timeout from 10s to 60s in the vercel.json file instead
+export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export { handlerNodeRoutes as GET, handlerNodeRoutes as POST };
