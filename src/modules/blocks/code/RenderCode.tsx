@@ -247,12 +247,17 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           </Sheet>
         )}
 
-        {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-        {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
-          : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
-            : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
-              : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} presenterMode={isFullscreen} />}
+        {/* NOTE: this 'div' is only here to avoid some sort of collapse of the RenderCodeSyntax,
+            which box disappears for some reason and the parent flex layout ends up lining up
+            chars in a non-proper way */}
+        <Box>
+          {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
+          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
+            : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
+              : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
+                : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
+                  : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} presenterMode={isFullscreen} />}
+        </Box>
 
       </Box>
 
