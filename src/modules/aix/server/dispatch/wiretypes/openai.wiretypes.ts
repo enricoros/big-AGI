@@ -359,7 +359,11 @@ export namespace OpenAIWire_API_Chat_Completions {
     message: z.string().optional(),
     type: z.string().optional(),
     param: z.string().nullable().optional(),
-    code: z.string().nullable().optional(),
+    code: z.string().nullable().optional()
+      .or(z.number()), // [OpenRouter, 2024-11-21] code can be a number too
+
+    // [OpenRouter, 2024-11-21] OpenRouter can have an additional 'metadata' field
+    metadata: z.record(z.any()).optional(),
   });
 
   const _UndocumentedWarning_schema = z.string();
