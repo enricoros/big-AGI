@@ -16,7 +16,7 @@ const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
     sx: {
       backgroundColor: 'transparent',
       // minWidth: selectMinWidth, // 160
-      maxWidth: 'calc(100dvw - 4.5rem)', /* 36px * 2 buttons */
+      maxWidth: 'calc(100dvw - 4.5rem)', /* 36px * 2 buttons (2 * var(--Bar)) */
       // disappear when the 'agi-gone' class is set
       '&.agi-gone': {
         display: 'none',
