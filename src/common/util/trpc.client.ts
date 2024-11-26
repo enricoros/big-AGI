@@ -9,9 +9,9 @@
 import { createTRPCClient, httpLink, loggerLink, unstable_httpBatchStreamLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 
-import type { AppRouterEdge } from '~/server/api/trpc.router-edge';
-import type { AppRouterNode } from '~/server/api/trpc.router-node';
-import { transformer } from '~/server/api/trpc.transformer';
+import type { AppRouterEdge } from '~/server/trpc/trpc.router-edge';
+import type { AppRouterCloud } from '~/server/trpc/trpc.router-cloud';
+import { transformer } from '~/server/trpc/trpc.transformer';
 
 import { getBaseUrl } from './urlUtils';
 import { reactQueryClientSingleton } from '../app.queryclient';
@@ -43,7 +43,7 @@ export const apiQuery = createTRPCNext<AppRouterEdge>({
       links: [
         loggerLink({ enabled: enableLoggerLink }),
         httpLink({
-          url: `${getBaseUrl()}/api/trpc-edge`,
+          url: `${getBaseUrl()}/api/edge`,
           transformer: transformer,
           // You can pass any HTTP headers you wish here
           // async headers() {
@@ -75,7 +75,7 @@ export const apiAsync = createTRPCClient<AppRouterEdge>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
     httpLink({
-      url: `${getBaseUrl()}/api/trpc-edge`,
+      url: `${getBaseUrl()}/api/edge`,
       transformer: transformer,
     }),
   ],
@@ -89,7 +89,7 @@ export const apiStream = createTRPCClient<AppRouterEdge>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
     unstable_httpBatchStreamLink({
-      url: `${getBaseUrl()}/api/trpc-edge`,
+      url: `${getBaseUrl()}/api/edge`,
       transformer: transformer,
       /**
        * WORKAROUND:
@@ -106,11 +106,11 @@ export const apiStream = createTRPCClient<AppRouterEdge>({
 /**
  * Node/Immediate API: Typesafe async/await hooks for the the Node functions API
  */
-export const apiAsyncNode = createTRPCClient<AppRouterNode>({
+export const apiAsyncNode = createTRPCClient<AppRouterCloud>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
     httpLink({
-      url: `${getBaseUrl()}/api/trpc-node`,
+      url: `${getBaseUrl()}/api/cloud`,
       transformer: transformer,
     }),
   ],

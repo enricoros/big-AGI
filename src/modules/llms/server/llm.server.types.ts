@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 
 
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
@@ -25,7 +25,8 @@ const Interface_enum = z.enum([
   LLM_IF_ANT_PromptCaching,     // Anthropic Prompt caching
   LLM_IF_SPECIAL_OAI_O1Preview, // Special OAI O1 Preview
   LLM_IF_OAI_PromptCaching,     // OpenAI Prompt caching
-  LLM_IF_OAI_Realtime,         // OpenAI Realtime
+  LLM_IF_OAI_Realtime,          // OpenAI Realtime
+  LLM_IF_GEM_CodeExecution,     // Gemini Code Execution
 ]);
 
 

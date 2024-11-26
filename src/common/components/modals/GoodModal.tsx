@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
 
 
-const noBackdropSlotProps = {
+export const noBackdropSlotProps = {
   backdrop: {
     sx: {
       backdropFilter: 'none',

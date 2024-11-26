@@ -1,4 +1,4 @@
-import { speakText } from '~/modules/elevenlabs/elevenlabs.client';
+import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
 
 import { isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
@@ -59,6 +59,6 @@ export class PersonaChatMessageSpeak implements PersonaProcessorInterface {
     console.log('📢 TTS:', text);
     this.spokenLine = true;
     // fire/forget: we don't want to stall this loop
-    void speakText(text);
+    void elevenLabsSpeakText(text, undefined, false, true);
   }
 }

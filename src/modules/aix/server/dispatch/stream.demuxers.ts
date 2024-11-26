@@ -55,7 +55,8 @@ function _createEventSourceDemuxer(): StreamDemuxer {
       console.warn(`stream.demuxers: parser error (${error.type}):`, error.field, error.value, error.line);
     },
     onComment: (comment: string) => {
-      console.log('stream.demuxers: parser comment (safe to ignore):', comment);
+      if (process.env.NODE_ENV === 'development')
+        console.log('stream.demuxers: parser comment (safe to ignore):', comment);
     },
   });
 

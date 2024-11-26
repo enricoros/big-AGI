@@ -203,7 +203,7 @@ export async function aixCGR_FromDMessagesOrThrow(
               if (!resultObject || typeof resultObject !== 'object')
                 throw new Error('[AIX validation] expecting `tool_response` to be a JSON object');
               if (Array.isArray(resultObject))
-                throw new Error('[AIX validation] expecting `tool_response` to not be an array');
+                throw new Error('[AIX validation for Gemini] expecting `tool_response` to not be an array');
             }
             toolMessage.parts.push(aFragment.part);
             break;

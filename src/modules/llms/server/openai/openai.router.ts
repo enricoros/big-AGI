@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server';
 
@@ -18,10 +18,11 @@ import { mistralModelsSort, mistralModelToModelDescription } from './models/mist
 import { openAIModelFilter, openAIModelToModelDescription } from './models/openai.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
+import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
 
 
 const openAIDialects = z.enum([
-  'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'openai', 'openpipe', 'openrouter', 'perplexity', 'togetherai',
+  'azure', 'deepseek', 'groq', 'lmstudio', 'localai', 'mistral', 'openai', 'openpipe', 'openrouter', 'perplexity', 'togetherai', 'xai',
 ]);
 export type OpenAIDialects = z.infer<typeof openAIDialects>;
 
@@ -38,7 +39,7 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIModelSchema = z.object({
   id: z.string(),
   temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).max(1000000).optional(),
+  maxTokens: z.number().min(1).optional(),
 });
 export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
 
@@ -124,6 +125,9 @@ export const llmOpenAIRouter = createTRPCRouter({
       if (access.dialect === 'perplexity')
         return { models: perplexityAIModelDescriptions().sort(perplexityAIModelSort) };
 
+      // [xAI]: custom models listing
+      if (access.dialect === 'xai')
+        return { models: (await xaiModelDescriptions(access)).sort(xaiModelSort) };
 
       // [OpenAI-dialects]: fetch openAI-style for all but Azure (will be then used in each dialect)
       const openAIWireModelsResponse = await openaiGETOrThrow<OpenAIWire_API_Models_List.Response>(access, '/v1/models');
@@ -373,6 +377,7 @@ const DEFAULT_OPENPIPE_HOST = 'https://app.openpipe.ai/api';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
+const DEFAULT_XAI_HOST = 'https://api.x.ai';
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
   switch (access.dialect) {
@@ -575,6 +580,19 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Accept': 'application/json',
         },
         url: togetherHost + apiPath,
+      };
+
+
+    case 'xai':
+      const xaiKey = access.oaiKey || env.XAI_API_KEY || '';
+      if (!xaiKey)
+        throw new Error('Missing xAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${xaiKey}`,
+        },
+        url: DEFAULT_XAI_HOST + apiPath,
       };
 
   }

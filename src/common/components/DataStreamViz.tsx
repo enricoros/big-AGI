@@ -45,7 +45,7 @@ type Token = {
 };
 
 
-export function DataStreamViz(props: { height: number }) {
+export function DataStreamViz(props: { height: number, speed?: number }) {
 
   // state
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -88,9 +88,10 @@ export function DataStreamViz(props: { height: number }) {
 
     const isFast = Math.random() > 0.7 || useSpecialColor; // 30% chance to be fast
     const speed =
-      (isFast
-        ? speedVariation.fast.min + Math.random() * (speedVariation.fast.max - speedVariation.fast.min)
-        : speedVariation.slow.min + Math.random() * (speedVariation.slow.max - speedVariation.slow.min)) / 1000;
+      (props.speed || 1) * (
+        isFast ? speedVariation.fast.min + Math.random() * (speedVariation.fast.max - speedVariation.fast.min)
+          : speedVariation.slow.min + Math.random() * (speedVariation.slow.max - speedVariation.slow.min)
+      ) / 1000;
 
     tokensRef.current.push({
       x: width + size, // Start off-screen
@@ -102,7 +103,7 @@ export function DataStreamViz(props: { height: number }) {
       // opacity: useSpecialColor ? 1 : shapeOpacity.min + Math.random() * (shapeOpacity.max - shapeOpacity.min),
       entryProgress: 0,
     });
-  }, []);
+  }, [props.speed]);
 
 
   const drawGrid = React.useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {

@@ -17,7 +17,7 @@ export type AixClientFunctionCallToolDefinition = {
    * We only accept objects, not arrays - as downstream APIs have spotty implementation for non-object.
    * If the function does not take any inputs, use `Zod.object({})` or Zod.void().
    */
-  inputSchema: ZodSchema<object | void>;
+  inputSchema: ZodSchema<object /*| void*/>;
 }
 
 

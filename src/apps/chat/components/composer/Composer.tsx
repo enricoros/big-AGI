@@ -524,8 +524,10 @@ export function Composer(props: {
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
+        if (await handleSendAction('beam-content', composeText)) { // 'ctrl+enter' -> beam
           touchCtrlEnter();
+          e.stopPropagation();
+        }
         return e.preventDefault();
       }
 
@@ -609,7 +611,7 @@ export function Composer(props: {
     const composerShortcuts: ShortcutObject[] = [];
     if (showChatAttachments) {
       composerShortcuts.push({ key: 'f', ctrl: true, shift: true, action: () => openFileForAttaching(true, handleAttachFiles), description: 'Attach File' });
-      if (supportsClipboardRead)
+      if (supportsClipboardRead())
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
     }
     if (recognitionState.isActive) {
@@ -743,7 +745,7 @@ export function Composer(props: {
                       </MenuItem>
 
                       {/* Responsive Paste button */}
-                      {supportsClipboardRead && <MenuItem>
+                      {supportsClipboardRead() && <MenuItem>
                         <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
                       </MenuItem>}
 
@@ -769,7 +771,7 @@ export function Composer(props: {
                 <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
 
                 {/* Responsive Paste button */}
-                {supportsClipboardRead && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
+                {supportsClipboardRead() && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
 
                 {/* Responsive Screen Capture button */}
                 {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}
@@ -838,7 +840,7 @@ export function Composer(props: {
                   )}
 
                   {!showChatInReferenceTo && tokenLimit > 0 && (
-                    <TokenBadgeMemo chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                    <TokenBadgeMemo hideBelowDollars={0.0001} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 
                 </Box>
