@@ -6,7 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import type { DChatGeneratePricing } from '~/common/stores/llms/llms.pricing';
+import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
@@ -31,10 +31,10 @@ function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
 }
 
 
-function prettyPricingComponent(chatPricing: DChatGeneratePricing): React.ReactNode {
-  if (!chatPricing) return 'Pricing not available';
+function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): React.ReactNode {
+  if (!pricingChatGenerate) return 'Pricing not available';
 
-  const formatPrice = (price: DChatGeneratePricing['input']): string => {
+  const formatPrice = (price: DPricingChatGenerate['input']): string => {
     if (!price) return 'N/A';
     if (price === 'free') return 'Free';
     if (typeof price === 'number') return `$${price.toFixed(2)}`;
@@ -43,19 +43,19 @@ function prettyPricingComponent(chatPricing: DChatGeneratePricing): React.ReactN
     return 'Unknown';
   };
 
-  const inputPrice = formatPrice(chatPricing.input);
-  const outputPrice = formatPrice(chatPricing.output);
+  const inputPrice = formatPrice(pricingChatGenerate.input);
+  const outputPrice = formatPrice(pricingChatGenerate.output);
 
   let cacheInfo = '';
-  if (chatPricing.cache) {
-    switch (chatPricing.cache.cType) {
+  if (pricingChatGenerate.cache) {
+    switch (pricingChatGenerate.cache.cType) {
       case 'ant-bp': {
-        const { read, write, duration } = chatPricing.cache;
+        const { read, write, duration } = pricingChatGenerate.cache;
         cacheInfo = `Cache: Read ${formatPrice(read)}, Write ${formatPrice(write)}, Duration: ${duration}s`;
         break;
       }
       case 'oai-ac': {
-        const { read } = chatPricing.cache;
+        const { read } = pricingChatGenerate.cache;
         cacheInfo = `Cache: Read ${formatPrice(read)}`;
         break;
       }

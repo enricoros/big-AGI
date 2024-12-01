@@ -54,8 +54,8 @@ const TieredPricing_schema = z.union([
   z.array(PriceUpTo_schema),
 ]);
 
-// NOTE: (!) keep this in sync with DChatGeneratePricing (llms.pricing.ts)
-const ChatGeneratePricing_schema = z.object({
+// NOTE: (!) keep this in sync with DPricingChatGenerate (llms.pricing.ts)
+const PricingChatGenerate_schema = z.object({
   input: TieredPricing_schema.optional(),
   output: TieredPricing_schema.optional(),
   // Future: Perplexity has a cost per request, consider this for future additions
@@ -92,7 +92,7 @@ export const ModelDescription_schema = z.object({
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
   benchmark: BenchmarksScores_schema.optional(),
-  chatPrice: ChatGeneratePricing_schema.optional(),
+  chatPrice: PricingChatGenerate_schema.optional(),
   hidden: z.boolean().optional(),
   // TODO: add inputTypes/Kinds..
 });
