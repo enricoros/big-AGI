@@ -39,6 +39,8 @@ export function getTimeBucketEn(itemTimeStamp: number, midnightTimestamp: number
     return 'Today';
   } else if (diff < oneDay * 2) {
     return 'Yesterday';
+  } else if (diff < oneDay * 3) {
+    return 'Two Days Ago';
   } else if (diff < oneWeek) {
     return 'This Week';
   } else if (diff < oneWeek * 2) {
