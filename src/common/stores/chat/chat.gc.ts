@@ -1,18 +1,21 @@
 import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
 import { gcDBImageAssets } from '~/modules/dblobs/dblobs.images';
 
+import type { DConversation } from './chat.conversation';
 import { isContentOrAttachmentFragment, isImageRefPart } from './chat.fragments';
 import { useChatStore } from './store-chats';
 
 /**
  * Garbage collect unreferenced dblobs in global chats
+ * - This is ran as a side effect of the chat store rehydration
+ * - This is also ran when a conversation or message is deleted, or when a conversation messages history is replaced
  */
-export async function gcChatImageAssets() {
+export async function gcChatImageAssets(conversations?: DConversation[]) {
 
   // find all the dblob references in all chats
   const chatsAssetIDs: Set<DBlobAssetId> = new Set();
-  const chatStore = useChatStore.getState();
-  for (const chat of chatStore.conversations) {
+  const _conversations = conversations || useChatStore.getState().conversations;
+  for (const chat of _conversations) {
     for (const message of chat.messages) {
       for (const fragment of message.fragments) {
         if (!isContentOrAttachmentFragment(fragment) || !isImageRefPart(fragment.part))

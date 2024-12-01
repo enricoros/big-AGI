@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
-import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenance } from '~/common/logic/store-logic-sherpa';
+import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
@@ -57,7 +57,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!launchStorageGC) return;
 
-    const timeout = setTimeout(sherpaStorageMaintenance, 0);
+    const timeout = setTimeout(sherpaStorageMaintenanceNoChats_delayed, 1000);
     return () => clearTimeout(timeout);
 
   }, [launchStorageGC]);

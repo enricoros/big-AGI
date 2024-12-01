@@ -5,7 +5,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { Release } from '~/common/app.release';
 import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '~/common/util/storageUtils';
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
-import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { reconfigureBackendModels } from '~/common/logic/reconfigureBackendModels';
 
 
@@ -79,7 +78,7 @@ export async function sherpaReconfigureBackendModels() {
 
 // Storage Maintenance & Garbage Collection
 
-export async function sherpaStorageMaintenance() {
+export async function sherpaStorageMaintenanceNoChats_delayed() {
 
   // Request persistent storage for the current origin, so that indexedDB's content is not evicted
   const persisted = await requestPersistentStorageSafe(); // doesn't throw
@@ -96,7 +95,9 @@ export async function sherpaStorageMaintenance() {
   }
 
   // GC: Remove chat dblobs (not persisted in chat fragments)
-  void gcChatImageAssets(); // fire/forget
+  // NOTE: DISABLED! THIS WAS LOADING THE FULL DB TOO EARLY
+  //       we moved this to the rehydration phase of the chat store
+  // void gcChatImageAssets(); // fire/forget
 
   // GC: Remove old attachment drafts (not persisted in chats)
   void gcAttachmentDBlobs(); // fire/forget
