@@ -140,9 +140,10 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
       styleOverrides: {
         root: ({ ownerState }) => ({
           ...(ownerState.size === 'md' && {
-            '--Switch-trackWidth': '36px',
-            '--Switch-trackHeight': '22px',
-            '--Switch-thumbSize': '17px',
+            // '--Switch-trackWidth': '36px',
+            // '--Switch-trackHeight': '22px',
+            // '--Switch-thumbSize': '17px',
+            '--Switch-thumbSize': '16px',
           }),
         }),
       },
