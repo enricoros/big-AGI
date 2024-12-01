@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 
-import type { ChatGenerateCostMetricsMd } from './metrics.chatgenerate';
+import type { MetricsChatGenerateCost_Md } from './metrics.chatgenerate';
 
 
 interface ServiceMetricsAggregate {
@@ -55,7 +55,7 @@ interface ServiceMetricsState {
 }
 
 interface ServiceMetricsActions {
-  addChatGenerateCostEntry: (costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, serviceId: DModelsServiceId | null, debugCostSource: string) => void;
+  addChatGenerateCostEntry: (costs: MetricsChatGenerateCost_Md, inputTokens: number, outputTokens: number, serviceId: DModelsServiceId | null, debugCostSource: string) => void;
   getAggregateMetricsForService: (serviceId: DModelsServiceId) => ServiceMetricsAggregate | undefined;
 }
 
@@ -90,7 +90,7 @@ export const createServiceMetricsSlice: StateCreator<ServiceMetricsSlice, [], []
 
 const CENTS_TO_DOLLARS = 0.01;
 
-function updateServiceMetrics(currentMetrics: ServiceMetricsAggregate, costs: ChatGenerateCostMetricsMd, inputTokens: number, outputTokens: number, timestamp: number): ServiceMetricsAggregate {
+function updateServiceMetrics(currentMetrics: ServiceMetricsAggregate, costs: MetricsChatGenerateCost_Md, inputTokens: number, outputTokens: number, timestamp: number): ServiceMetricsAggregate {
   const newMetrics = { ...currentMetrics };
 
   // Update cost accumulators

@@ -3,7 +3,7 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { DLLM, DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 import { apiStream } from '~/common/util/trpc.client';
-import { chatGenerateMetricsLgToMd, computeChatGenerationCosts, DChatGenerateMetricsLg } from '~/common/stores/metrics/metrics.chatgenerate';
+import { metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, DMetricsChatGenerate_Lg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
@@ -290,7 +290,7 @@ export async function aixChatGenerateText_Simple(
 function _llToText(src: AixChatGenerateContent_LL, dest: AixChatGenerateText_Simple) {
   // copy over Generator's
   if (src.genMetricsLg)
-    dest.generator.metrics = chatGenerateMetricsLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
+    dest.generator.metrics = metricsChatGenerateLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
   if (src.genModelName)
     dest.generator.name = src.genModelName;
   if (src.genTokenStopReason)
@@ -435,7 +435,7 @@ function _llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateCont
   if (src.fragments.length)
     dest.fragments = src.fragments; // Note: this gets replaced once, and then it's the same from that point on
   if (src.genMetricsLg)
-    dest.generator.metrics = chatGenerateMetricsLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
+    dest.generator.metrics = metricsChatGenerateLgToMd(src.genMetricsLg); // reduce the size to store in DMessage
   if (src.genModelName)
     dest.generator.name = src.genModelName;
   if (src.genTokenStopReason)
@@ -444,7 +444,7 @@ function _llToDMessage(src: AixChatGenerateContent_LL, dest: AixChatGenerateCont
 
 function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, debugCostSource: string) {
   // Compute costs
-  const costs = computeChatGenerationCosts(generator.metrics, llm.pricing?.chat, llm.options?.llmRef || llm.id);
+  const costs = metricsComputeChatGenerateCostsMd(generator.metrics, llm.pricing?.chat, llm.options?.llmRef || llm.id);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices
     return;
@@ -472,7 +472,7 @@ export interface AixChatGenerateContent_LL {
   fragments: DMessageContentFragment[];
 
   // pieces of generator
-  genMetricsLg?: DChatGenerateMetricsLg;
+  genMetricsLg?: DMetricsChatGenerate_Lg;
   genModelName?: string;
   genTokenStopReason?: DMessageGenerator['tokenStopReason'];
 }

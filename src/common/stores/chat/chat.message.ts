@@ -4,8 +4,8 @@ import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragm
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DChatGenerateMetricsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 
 
 // Message
@@ -92,7 +92,7 @@ export type DMessageGenerator = ({
     mId: DLLMId;                      // Models Id
   },
 }) & {
-  metrics?: DChatGenerateMetricsMd;   // medium-sized metrics stored in the message
+  metrics?: DMetricsChatGenerate_Md;   // medium-sized metrics stored in the message
   tokenStopReason?:
     | 'client-abort'                  // if the generator stopped due to a client abort signal
     | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter

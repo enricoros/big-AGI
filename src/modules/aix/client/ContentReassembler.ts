@@ -1,4 +1,4 @@
-import { finishChatGenerateTokenMetrics, pendChatGenerateTokenMetrics } from '~/common/stores/metrics/metrics.chatgenerate';
+import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createTextContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
@@ -112,7 +112,7 @@ export class ContentReassembler {
 
     // Perform all the latest operations
     const hasAborted = !!this.accumulator.genTokenStopReason;
-    finishChatGenerateTokenMetrics(this.accumulator.genMetricsLg, hasAborted);
+    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
 
   }
 
@@ -232,9 +232,9 @@ export class ContentReassembler {
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {
-    // type check point for AixWire_Particles.CGSelectMetrics -> DChatGenerateMetricsLg
+    // type check point for AixWire_Particles.CGSelectMetrics -> DMetricsChatGenerate_Lg
     this.accumulator.genMetricsLg = metrics;
-    pendChatGenerateTokenMetrics(this.accumulator.genMetricsLg);
+    metricsPendChatGenerateLg(this.accumulator.genMetricsLg);
   }
 
   private onModelName({ name }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-model' }>): void {
