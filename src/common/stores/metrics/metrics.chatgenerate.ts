@@ -1,4 +1,4 @@
-import { DChatGeneratePricing, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
+import { DPricingChatGenerate, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 
 /**
  * This is a stored type - IMPORTANT: do not break.
@@ -88,7 +88,7 @@ export function finishChatGenerateTokenMetrics(metrics: DChatGenerateMetricsLg |
 
 const USD_TO_CENTS = 100;
 
-export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetricsMd>, pricing?: DChatGeneratePricing | undefined, logLlmRefId?: string): ChatGenerateCostMetricsMd | undefined {
+export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetricsMd>, pricing?: DPricingChatGenerate | undefined, logLlmRefId?: string): ChatGenerateCostMetricsMd | undefined {
   if (!metrics)
     return undefined;
 
