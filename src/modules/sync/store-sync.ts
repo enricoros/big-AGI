@@ -4,50 +4,30 @@ import { persist } from 'zustand/middleware';
 import { agiId } from '~/common/util/idUtils';
 import { isBrowser } from '~/common/util/pwaUtils';
 
-
-type VectorClientDeviceId = string;
-
-interface VectorClient {
-
-  // The critical ID used in vector clocks
-  vectorId: VectorClientDeviceId;
-
-  // Basic device fingerprint stored once at creation
-  createdAt: number;
-  userAgent: string;
-
-}
+import type { VectorClockNodeId } from './vectorclock.types';
 
 
-interface StoreSync {
+interface SyncStore {
 
-  client: VectorClient | null;
+  vectorClockNode: null | {
 
-  getVectorDeviceId: () => string;
+    // unique id for this device, used to track changes, only statistically unique within the user space
+    nodeId: VectorClockNodeId;
+
+    // basic device fingerprint stored once at creation
+    createdAt: number;
+    userAgent: string;
+
+  };
 
 }
 
 
-const useSyncStore = create<StoreSync>()(persist(
+const useSyncStore = create<SyncStore>()(persist(
   (_set, _get) => ({
 
-    client: null,
-
-    getVectorDeviceId: () => {
-      const exClient = _get().client;
-      if (exClient) return exClient.vectorId;
-
-      // this will be created once per browser
-      const client = {
-        vectorId: agiId('vector-device-id10'),
-        createdAt: Date.now(),
-        userAgent: isBrowser ? window.navigator?.userAgent || '' : '',
-      };
-
-      _set({ client });
-
-      return client.vectorId;
-    },
+    // initial state
+    vectorClockNode: null,
 
   }),
   {
@@ -56,7 +36,19 @@ const useSyncStore = create<StoreSync>()(persist(
   },
 ));
 
-// Quick access for vector clocks
-export const getVectorDeviceId = () => {
-  return useSyncStore.getState().getVectorDeviceId();
-};
+
+export function getVectorClockNodeId() {
+  const exClient = useSyncStore.getState().vectorClockNode;
+  if (exClient) return exClient.nodeId;
+
+  // this will be created once per browser
+  const vectorClockNode = {
+    nodeId: agiId('vector-device-id10'),
+    createdAt: Date.now(),
+    userAgent: isBrowser ? window.navigator?.userAgent || '' : '',
+  };
+
+  useSyncStore.setState({ vectorClockNode });
+
+  return vectorClockNode.nodeId;
+}
