@@ -56,6 +56,40 @@ export function agiCustomId(digits: number) {
   return nanoid(digits);
 }
 
+
+// UUID v4 generation - because in DBs the lookup is faster, although it takes more bytes as a string
+
+type UuidV4Scope =
+  | 'persona-2'
+  ;
+
+
+/**
+ * Generates a UUID v4 using the Web Crypto API
+ * @returns A standard UUID v4 string (e.g., '123e4567-e89b-12d3-a456-426614174000')
+ */
+export function agiUuidV4(_scope: UuidV4Scope): string {
+  // for modern browsers and Node.js
+  if (typeof crypto !== 'undefined' && crypto.randomUUID)
+    return crypto.randomUUID();
+
+  // fallback for missing crypto.randomUUID
+  const randomValues = new Uint8Array(16);
+  crypto.getRandomValues(randomValues);
+
+  // Set version (4) and variant (RFC4122)
+  randomValues[6] = (randomValues[6] & 0x0f) | 0x40;
+  randomValues[8] = (randomValues[8] & 0x3f) | 0x80;
+
+  // Convert to hex string and format as UUID
+  const hex = Array.from(randomValues)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+
 /*
 // Similar to the above but makes sure there's no collision with the given list of IDs
 export function agiUuidUncollided(scope: Extract<UidScope, 'chat-dfragment'>, existingIds: string[]) {
