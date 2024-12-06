@@ -188,6 +188,13 @@ const _knownGeminiModels: ({
 
   // New Experimental Models
   {
+    id: 'models/gemini-exp-1206',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    // hidden: true,
+    // description: 'Quality improvements',
+  },
+  {
     id: 'models/gemini-exp-1121',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
@@ -198,7 +205,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-exp-1114',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    // hidden: true,
+    hidden: true,
     // description: 'Quality improvements',
   },
 
@@ -294,9 +301,13 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     return null;
 
   // handle symlinks
-  const label = knownModel?.symLink
+  let label = knownModel?.symLink
     ? `🔗 ${displayName.replace('1.0', '')} → ${knownModel.symLink}`
     : displayName;
+
+  // FIX: the Gemini 1114 model now returns 1121 as the version.. highlight the issue
+  if (geminiModel.name.endsWith('1114') && label.endsWith('1121'))
+    label += ' (really: 1114)';
 
   // handle hidden models
   const hasChatInterfaces = supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
