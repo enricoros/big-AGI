@@ -23,6 +23,8 @@ type UidScope =
   | 'server-storage-id'
   | 'server-storage-owner'
   | 'snackbar-item'
+  | 'variform-variable'
+  | 'vector-device-id10'
   ;
 
 /**
@@ -36,10 +38,15 @@ export function agiUuid(_scope: Exclude<UidScope, 'chat-dfragment'>) {
 /*
  * Smaller version of the above, without claims of uniqueness
  */
-export function agiId(scope: Extract<UidScope, 'chat-dfragment' | 'chat-block'>) {
-  // if (scope === 'chat-dfragment')
-  //   return 'f-' + nanoid(8);
-  return nanoid(scope === 'chat-dfragment' ? 8 : 16);
+export function agiId(scope: Extract<UidScope, 'chat-dfragment' | 'chat-block' | 'vector-device-id10'>) {
+  switch (scope) {
+    case 'chat-block':
+      return nanoid(16);
+    case 'chat-dfragment':
+      return nanoid(8);
+    case 'vector-device-id10':
+      return nanoid(10);
+  }
 }
 
 /*

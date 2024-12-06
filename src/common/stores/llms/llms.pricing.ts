@@ -6,11 +6,11 @@ import type { DLLM } from './llms.types';
  * Pricing is denominated in $/MegaTokens.
  */
 export type DModelPricing = {
-  chat?: DChatGeneratePricing,
+  chat?: DPricingChatGenerate,
 }
 
-// NOTE: (!) keep this in sync with ChatGeneratePricing_schema (modules/llms/server/llm.server.types.ts)
-export type DChatGeneratePricing = {
+// NOTE: (!) keep this in sync with PricingChatGenerate_schema (modules/llms/server/llm.server.types.ts)
+export type DPricingChatGenerate = {
   // unit: 'USD_Mtok',
   input?: DTieredPricing;
   output?: DTieredPricing;
@@ -24,7 +24,7 @@ export type DChatGeneratePricing = {
     read: DTieredPricing;
     // write: DTieredPricing; // Not needed, as it's automatic
   };
-  // NOT in AixWire_API_ListModels.ChatGeneratePricing_schema
+  // NOT in AixWire_API_ListModels.PricingChatGenerate_schema
   _isFree?: boolean; // precomputed, so we avoid recalculating it
 }
 
@@ -40,7 +40,7 @@ type DPricePerMToken = number | 'free';
 
 /// detect Free Pricing
 
-export function isModelPricingFree(pricingChatGenerate: DChatGeneratePricing): boolean {
+export function isModelPricingFree(pricingChatGenerate: DPricingChatGenerate): boolean {
   if (!pricingChatGenerate) return true;
   return _isPricingFree(pricingChatGenerate.input) && _isPricingFree(pricingChatGenerate.output);
 }
@@ -89,13 +89,13 @@ export function portModelPricingV2toV3(llm: DLLM): void {
 
   const pretendIsV2 = llm.pricing as Was_DModelPricingV2;
   if (pretendIsV2.chatIn || pretendIsV2.chatOut) {
-    const V3: DChatGeneratePricing = {};
+    const V3pcg: DPricingChatGenerate = {};
     if (pretendIsV2.chatIn)
-      V3.input = pretendIsV2.chatIn;
+      V3pcg.input = pretendIsV2.chatIn;
     if (pretendIsV2.chatOut)
-      V3.output = pretendIsV2.chatOut;
-    V3._isFree = isModelPricingFree(V3);
-    llm.pricing = { chat: V3 };
+      V3pcg.output = pretendIsV2.chatOut;
+    V3pcg._isFree = isModelPricingFree(V3pcg);
+    llm.pricing = { chat: V3pcg };
     delete pretendIsV2.chatIn;
     delete pretendIsV2.chatOut;
   }
