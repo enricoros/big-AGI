@@ -199,15 +199,13 @@ export async function aixChatGenerateText_Simple(
   const aixContext = aixCreateChatGenerateContext(aixContextName, aixContextRef);
 
   // Aix Streaming - implicit if the callback is provided
-  let aixStreaming = !!onTextStreamUpdate;
+  const aixStreaming = !!onTextStreamUpdate;
 
 
   // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
-  if (isO1Preview) {
+  if (isO1Preview)
     clientHotFixGenerateRequestForO1Preview(aixChatGenerate);
-    aixStreaming = false;
-  }
 
 
   // Variable to store the final text
@@ -366,10 +364,8 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
 
   // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
-  if (isO1Preview) {
+  if (isO1Preview)
     clientHotFixGenerateRequestForO1Preview(aixChatGenerate);
-    aixStreaming = false;
-  }
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
   // if (aixAccess.dialect === 'openai' && aixAccess.moderationCheck) {
