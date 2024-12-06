@@ -137,7 +137,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat /* Assuming audio interface */],
+    interfaces: [ /* Assuming audio interface */],
     chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 /* TODO: AUDIO 100/200 */ },
     isPreview: true,
   },
@@ -148,7 +148,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat /* Assuming audio interface */],
+    interfaces: [ /* Assuming audio interface */],
     chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 /* TODO: AUDIO 100/200 */ },
     isPreview: true,
     hidden: true,
@@ -458,6 +458,9 @@ const openAIModelsDenyList: string[] = [
 
   // Image models: /v1/images/generations
   'dall-e-3', 'dall-e-2',
+
+  // Moderation models
+  'omni-moderation-latest', 'omni-moderation-2024-09-26'
 ];
 
 export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
@@ -466,4 +469,49 @@ export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
 
 export function openAIModelToModelDescription(modelId: string, modelCreated: number | undefined, modelUpdated?: number): ModelDescriptionSchema {
   return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated);
+}
+
+export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionSchema) {
+  // bottom: links
+  const aLink = a.label.startsWith('🔗');
+  const bLink = b.label.startsWith('🔗');
+  if (aLink !== bLink) return aLink ? 1 : -1;
+
+  // bottom: non-chatGenerate
+  const aChat = a.interfaces.includes(LLM_IF_OAI_Chat);
+  const bChat = b.interfaces.includes(LLM_IF_OAI_Chat);
+  if (aChat !== bChat) return aChat ? -1 : 1;
+
+  // fix the OpenAI model names to be chronologically sorted
+  function remapReleaseDate(id: string): string {
+    return id
+      .replace('0314', '2023-03-14')
+      .replace('0613', '2023-06-13')
+      .replace('1106', '2023-11-06')
+      .replace('0125', '2024-01-25');
+  }
+
+  // due to using by-label, sorting doesn't require special cases anymore
+  return remapReleaseDate(b.label).localeCompare(remapReleaseDate(a.label));
+
+  // move models with the link emoji (🔗) to the bottom
+  // const aLink = a.label.includes('🔗');
+  // const bLink = b.label.includes('🔗');
+  // if (aLink !== bLink)
+  //   return aLink ? 1 : -1;
+
+  // sort by model name
+  // return b.label.replace('🌟 ', '').localeCompare(a.label.replace('🌟 ', ''));
+
+  // sort by model ID~ish
+  // const aId = a.id.slice(0, 5);
+  // const bId = b.id.slice(0, 5);
+  // if (aId === bId) {
+  //   const aCount = a.id.split('-').length;
+  //   const bCount = b.id.split('-').length;
+  //   if (aCount === bCount)
+  //     return a.id.localeCompare(b.id);
+  //   return aCount - bCount;
+  // }
+  // return bId.localeCompare(aId);
 }
