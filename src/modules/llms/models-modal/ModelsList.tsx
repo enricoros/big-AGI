@@ -17,6 +17,7 @@ import { useDefaultLLMIDs, useFilteredLLMs } from '~/common/stores/llms/llms.hoo
 
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { findModelVendor } from '../vendors/vendors.registry';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 // configuration
@@ -58,7 +59,11 @@ function ModelItem(props: {
   }, [llm.id, onModelSetHidden]);
 
 
+  // label will be of the form "Model Name (Date)" - here we extract the date
   const label = llm.label;
+  // const dateMatch = _label.match(/^(.*?)\s*\(([^)]+)\)$/);
+  // const labelWithoutDate = dateMatch ? dateMatch[1].trim() : _label;
+  // const labelDate = dateMatch ? dateMatch[2] : '';
 
   let tooltip = props.serviceLabel;
   if (llm.description)
@@ -110,13 +115,14 @@ function ModelItem(props: {
 
         {/* Model Name */}
         <GoodTooltip title={tooltip}>
-          <Typography sx={{
+          <Box sx={{
             flex: 1,
             color: llm.hidden ? 'neutral.plainDisabledColor' : 'text.primary',
             wordBreak: 'break-all',
           }}>
             {label}
-          </Typography>
+            {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: llm.hidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
+          </Box>
         </GoodTooltip>
 
         {/* Chips */}
@@ -160,6 +166,7 @@ export function ModelsList(props: {
 }) {
 
   // external state
+  const isMobile = useIsMobile();
   const { chatLLMId, fastLLMId } = useDefaultLLMIDs();
   const llms = useFilteredLLMs(props.filterServiceId === null ? false : props.filterServiceId);
 
@@ -211,7 +218,7 @@ export function ModelsList(props: {
   }
 
   return (
-    <List variant='outlined' sx={props.sx}>
+    <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
       {items.length > 0 ? items : (
         <ListItem>
           <Typography level='body-sm'>
