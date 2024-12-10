@@ -666,9 +666,9 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
-  // stable randomization of the /verb, between '/draw', '/react', '/beam', '/browse'
+  // stable randomization of the /verb, between '/draw', '/react', '/browse'
   const placeholderAction = React.useMemo(() => {
-    const actions = ['/react', '/beam'];
+    const actions: string[] = ['/react'];
     if (props.capabilityHasT2I) actions.push('/draw');
     if (hasComposerBrowseCapability) actions.push('/browse');
     return actions[Math.floor(Math.random() * actions.length)];
