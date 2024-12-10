@@ -427,11 +427,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       partialize: (state) => ({
         ...state,
         conversations: state.conversations
-          .filter(c => {
+          .filter((c, _ignoreIdx, all) => {
             // do not save incognito conversations
             if (c._isIncognito) return false;
             // do not save empty conversations, begin saving them when they have content
-            return !(!c.messages?.length && !c.autoTitle && !c.userTitle);
+            return c.messages?.length || c.userTitle || c.autoTitle || all.length <= 1;
           })
           .map((conversation: DConversation) => {
             // remove the converation AbortController (current data structure version)
