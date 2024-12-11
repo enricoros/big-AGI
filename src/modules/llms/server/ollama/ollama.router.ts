@@ -232,6 +232,7 @@ export const llmOllamaRouter = createTRPCRouter({
             updated: Date.parse(model.modified_at) ?? undefined,
             description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
             contextWindow,
+            ...(contextWindow ? { maxCompletionTokens: Math.round(contextWindow / 2) } : {}),
             interfaces: [LLM_IF_OAI_Chat],
           };
         }),
