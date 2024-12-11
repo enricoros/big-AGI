@@ -228,8 +228,11 @@ export async function aixCGR_FromDMessagesOrThrow(
       acc.chatSequence.push(...assistantMessages);
 
     } else {
+
       // TODO: implement mid-chat system messages if needed
-      console.warn('aixCGR_FromDMessages: unexpected message role', m.role);
+      // NOTE: the API should just disallow 'system' messages in the middle of the chat
+      console.warn('[DEV] aixCGR_FromDMessages: unexpected message role', m.role);
+
     }
 
     return acc;
