@@ -4,6 +4,7 @@ import TimeAgo from 'react-timeago';
 import { Typography } from '@mui/joy';
 
 import { Link } from '~/common/components/Link';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { PersonaPromptCard } from './Creator';
 import { useSimplePersona } from '../store-app-personas';
@@ -12,6 +13,7 @@ import { useSimplePersona } from '../store-app-personas';
 export function Viewer(props: { selectedSimplePersonaId: string }) {
 
   // external state
+  const contentScaling = useUIContentScaling();
   const { simplePersona } = useSimplePersona(props.selectedSimplePersonaId);
 
   if (!simplePersona)
@@ -24,7 +26,10 @@ export function Viewer(props: { selectedSimplePersonaId: string }) {
       using the <strong>{simplePersona.llmLabel}</strong> model.
     </Typography>
 
-    <PersonaPromptCard content={simplePersona.systemPrompt || ''} />
+    <PersonaPromptCard
+      content={simplePersona.systemPrompt || ''}
+      contentScaling={contentScaling}
+    />
 
     {/* tell about the Provenances */}
     <Typography level='body-sm' sx={{ mt: 3 }}>
