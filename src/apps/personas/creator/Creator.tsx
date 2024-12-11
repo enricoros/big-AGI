@@ -47,18 +47,18 @@ function createChain(instructions: string[], titles: string[]): LLMChainStep[] {
     {
       name: titles[1],
       setSystem: instructions[0],
-      addUserInput: true,
-      addUser: instructions[1],
+      addUserChainInput: true,
+      addUserText: instructions[1],
     },
     {
       name: titles[2],
-      addPrevAssistant: true,
-      addUser: instructions[2],
+      addModelPrevOutput: true,
+      addUserText: instructions[2],
     },
     {
       name: titles[3],
-      addPrevAssistant: true,
-      addUser: instructions[3],
+      addModelPrevOutput: true,
+      addUserText: instructions[3],
     },
   ];
 }
@@ -127,11 +127,18 @@ export function Creator(props: { display: boolean }) {
     chainIntermediates,
     chainStepName,
     chainStepInterimChars,
-    chainOutput,
-    chainError,
+    chainOutputText,
+    chainErrorMessage,
     userCancelChain,
     restartChain,
-  } = useLLMChain(creationChainSteps, personaLlm?.id, chainInputText ?? undefined, savePersona, 'persona-extract', chainId);
+  } = useLLMChain(
+    creationChainSteps,
+    personaLlm?.id,
+    chainInputText ?? undefined,
+    savePersona,
+    'persona-extract',
+    chainId,
+  );
 
 
   // Reset the relevant state when the selected tab changes
@@ -141,7 +148,7 @@ export function Creator(props: { display: boolean }) {
 
 
   // [debug] Restart the chain when complete after a delay
-  const debugRestart = !!CONTINUE_DELAY && !isTransforming && (chainProgress === 1 || !!chainError);
+  const debugRestart = !!CONTINUE_DELAY && !isTransforming && (chainProgress === 1 || !!chainErrorMessage);
   React.useEffect(() => {
     if (debugRestart) {
       const timeout = setTimeout(restartChain, CONTINUE_DELAY);
@@ -263,15 +270,15 @@ export function Creator(props: { display: boolean }) {
 
 
     {/* Errors */}
-    {!!chainError && (
+    {!!chainErrorMessage && (
       <Alert color='warning' sx={{ mt: 1 }}>
-        <Typography component='div'>{chainError}</Typography>
+        <Typography component='div'>{chainErrorMessage}</Typography>
       </Alert>
     )}
 
     {/* The Persona (Output) */}
-    {chainOutput && <>
-      <PersonaPromptCard content={chainOutput} />
+    {chainOutputText && <>
+      <PersonaPromptCard content={chainOutputText} />
     </>}
 
 
