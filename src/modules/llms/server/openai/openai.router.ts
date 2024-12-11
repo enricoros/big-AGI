@@ -36,18 +36,18 @@ export const openAIAccessSchema = z.object({
 });
 export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 
-export const openAIModelSchema = z.object({
-  id: z.string(),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).optional(),
-});
-export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
+// export const openAIModelSchema = z.object({
+//   id: z.string(),
+//   temperature: z.number().min(0).max(2).optional(),
+//   maxTokens: z.number().min(1).optional(),
+// });
+// export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
 
-export const openAIHistorySchema = z.array(z.object({
-  role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
-  content: z.string(),
-}));
-export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
+// export const openAIHistorySchema = z.array(z.object({
+//   role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
+//   content: z.string(),
+// }));
+// export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
 
 
 // Router Input Schemas
