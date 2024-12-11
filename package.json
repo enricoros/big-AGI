@@ -81,10 +81,10 @@
     "@types/nprogress": "^0.2.3",
     "@types/plantuml-encoder": "^1.4.2",
     "@types/prismjs": "^1.26.5",
-    "@types/react": "^18.3.12",
+    "@types/react": "^18.3.16",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-csv": "^1.1.10",
-    "@types/react-dom": "^18.3.1",
+    "@types/react-dom": "^18.3.5",
     "@types/react-katex": "^3.0.4",
     "@types/react-timeago": "^4.1.7",
     "@types/turndown": "^5.0.5",
@@ -99,7 +99,7 @@
     "node": "^22.0.0 || ^20.0.0 || ^18.0.0"
   },
   "overrides": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1"
+    "@types/react": "^18.3.16",
+    "@types/react-dom": "^18.3.5"
   }
 }
