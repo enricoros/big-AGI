@@ -3,13 +3,13 @@ import * as React from 'react';
 import { Chip, ColorPaletteProp, VariantProp } from '@mui/joy';
 import { SxProps } from '@mui/joy/styles/types';
 
-import type { VChatMessageIn } from '~/modules/llms/llm.client';
+import type { DMessage } from '~/common/stores/chat/chat.message';
 
 
 export function CallMessage(props: {
   text?: string | React.JSX.Element,
   variant?: VariantProp, color?: ColorPaletteProp,
-  role: VChatMessageIn['role'],
+  role: DMessage['role'],
   sx?: SxProps,
 }) {
   const isUserMessage = props.role === 'user';
