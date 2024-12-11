@@ -118,10 +118,13 @@ export function FlattenerModal(props: {
     setErrorMessage(null);
 
     // start (auto-abort previous and at unmount)
-    await startStreaming(llm.id, [
-      { role: 'system', content: flattenProfile.systemPrompt },
-      { role: 'user', content: encodeConversationAsUserMessage(flattenProfile.userPrompt, messages) },
-    ], 'ai-flattener', messages[0].id);
+    await startStreaming(
+      llm.id,
+      flattenProfile.systemPrompt,
+      [{ role: 'user', text: encodeConversationAsUserMessage(flattenProfile.userPrompt, messages) }],
+      'ai-flattener',
+      messages[0].id,
+    );
 
   }, [llm, props.conversationId, startStreaming]);
 
