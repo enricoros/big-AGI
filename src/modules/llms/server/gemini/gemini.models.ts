@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_GEM_CodeExecution } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -14,7 +14,17 @@ const geminiChatInterfaces: GeminiWire_API_Models_List.Model['supportedGeneratio
 
 // unsupported interfaces
 const filterUnallowedNames = ['Legacy'];
-const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = ['generateAnswer', 'embedContent', 'embedText'];
+const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = [
+  'generateAnswer',   // e.g. removes "models/aqa"
+  'embedContent',     // e.g. removes "models/embedding-001"
+  'embedText',        // e.g. removes "models/text-embedding-004"
+];
+const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
+  // name of models that are not what they say they are (e.g. 1114 is actually 1121 as of 2024-12-10)
+  'models/gemini-1.5-flash-exp-0827',
+  'models/gemini-1.5-pro-exp-0827',
+  'models/gemini-exp-1114',
+];
 
 
 /* Manual models details
@@ -128,13 +138,6 @@ const _knownGeminiModels: ({
     hidden: true,
   },
   {
-    id: 'models/gemini-1.5-flash-exp-0827',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-    benchmark: { cbaElo: 1269 },
-  },
-  {
     id: 'models/gemini-1.5-flash-8b-exp-0827',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
@@ -176,16 +179,6 @@ const _knownGeminiModels: ({
     hidden: true,
   },
 
-  // Experimental Gemini 1.5 Pro Models
-  {
-    id: 'models/gemini-1.5-pro-exp-0827',
-    isPreview: true,
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-    benchmark: { cbaElo: 1299 },
-  },
-
   // New Experimental Models
   {
     id: 'models/gemini-exp-1206',
@@ -199,13 +192,6 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     // hidden: true,
-    // description: 'Quality improvements',
-  },
-  {
-    id: 'models/gemini-exp-1114',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    hidden: true,
     // description: 'Quality improvements',
   },
 
@@ -271,7 +257,8 @@ const _knownGeminiModels: ({
 export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model): boolean {
   const isAllowed = !filterUnallowedNames.some(name => geminiModel.displayName.includes(name));
   const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
-  return isAllowed && isSupported;
+  const isWhatItSaysItIs = !filterLyingModelNames.includes(geminiModel.name);
+  return isAllowed && isSupported && isWhatItSaysItIs;
 }
 
 export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
