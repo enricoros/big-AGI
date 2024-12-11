@@ -147,7 +147,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'nowrap' }}>
         <FormLabelStart title='Details' sx={{ minWidth: 80 }} onClick={() => setShowDetails(!showDetails)} />
-        {showDetails && <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {showDetails && <Box sx={{ display: 'flex', flexDirection: 'column', wordBreak: 'break-word', gap: 1 }}>
           {!!llm.description && <Typography level='body-sm'>
             {llm.description}
           </Typography>}
