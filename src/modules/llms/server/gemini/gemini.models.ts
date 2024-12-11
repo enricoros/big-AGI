@@ -43,6 +43,11 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
    - [great] Code execution
 */
 
+// Experimental Gemini models are Free of charge
+const geminiExpPricingFree: ModelDescriptionSchema['chatPrice'] = {
+  input: 'free', output: 'free',
+};
+
 const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 0.075 }, { upTo: null, price: 0.15 }],
   output: [{ upTo: 128000, price: 0.30 }, { upTo: null, price: 0.60 }],
@@ -73,7 +78,37 @@ const _knownGeminiModels: ({
   _delete?: boolean, // some gemini models are not acknowledged by Google Docs anymore, and leaving them in the list will confuse users
 } & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
-  // Generation 1.5
+  // New Experimental Models
+  {
+    id: 'models/gemini-exp-1206',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    // hidden: true,
+    // description: 'Quality improvements',
+  },
+  {
+    id: 'models/gemini-exp-1121',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    // hidden: true,
+    // description: 'Quality improvements',
+  },
+
+
+  /// Generation 2.0
+
+  // Gemini 2.0 Flash models
+  {
+    id: 'models/gemini-2.0-flash-exp',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+  },
+
+
+  /// Generation 1.5
 
   // Gemini 1.5 Flash Models
   {
@@ -111,6 +146,21 @@ const _knownGeminiModels: ({
 
   // Gemini 1.5 Flash-8B Models
   {
+    id: 'models/gemini-1.5-flash-8b-exp-0924',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
+  {
+    id: 'models/gemini-1.5-flash-8b-exp-0827',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+    benchmark: { cbaElo: 1205 },
+  },
+  {
     id: 'models/gemini-1.5-flash-8b-latest',
     isPreview: false,
     chatPrice: gemini15Flash8BPricing,
@@ -130,22 +180,15 @@ const _knownGeminiModels: ({
     // benchmark: { cbaElo: value if known },
   },
 
-  // Experimental Gemini 1.5 Flash Models
-  {
-    id: 'models/gemini-1.5-flash-8b-exp-0924',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-flash-8b-exp-0827',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-    benchmark: { cbaElo: 1205 },
-  },
 
   // Gemini 1.5 Pro Models
+  {
+    id: 'models/gemini-1.5-pro-exp-0801',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
   {
     id: 'models/gemini-1.5-pro-latest', // updated to latest stable version
     chatPrice: gemini15ProPricing,
@@ -170,30 +213,6 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1260 },
   },
 
-  // Added missing experimental model
-  {
-    id: 'models/gemini-1.5-pro-exp-0801',
-    isPreview: true,
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-  },
-
-  // New Experimental Models
-  {
-    id: 'models/gemini-exp-1206',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    // hidden: true,
-    // description: 'Quality improvements',
-  },
-  {
-    id: 'models/gemini-exp-1121',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    // hidden: true,
-    // description: 'Quality improvements',
-  },
 
   // LearnLM Experimental Model
   {
