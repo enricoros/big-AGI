@@ -61,16 +61,18 @@ function aixCGRTextPart(text: string) {
 // AIX <> Chat Messages API helpers
 //
 
+type AixCGR_FromDmessages = Pick<AixAPIChatGenerate_Request, 'systemMessage' | 'chatSequence'>;
+
 export async function aixCGR_FromDMessagesOrThrow(
   messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
   _assemblyMode: 'complete' = 'complete',
-): Promise<AixAPIChatGenerate_Request> {
+): Promise<AixCGR_FromDmessages> {
 
   // if the user has marked messages for exclusion, we skip them
   messageSequence = messageSequence.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
 
   // reduce history
-  return await messageSequence.reduce(async (accPromise, m, index): Promise<AixAPIChatGenerate_Request> => {
+  return await messageSequence.reduce(async (accPromise, m, index): Promise<AixCGR_FromDmessages> => {
     const acc = await accPromise;
 
     // (on Assistant messages) handle the ant-cache-prompt user/auto flags
@@ -236,7 +238,7 @@ export async function aixCGR_FromDMessagesOrThrow(
     }
 
     return acc;
-  }, Promise.resolve({ chatSequence: [] } as AixAPIChatGenerate_Request));
+  }, Promise.resolve({ chatSequence: [] } as AixCGR_FromDmessages));
 }
 
 
