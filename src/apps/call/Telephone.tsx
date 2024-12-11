@@ -15,7 +15,7 @@ import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
@@ -24,7 +24,8 @@ import { Link } from '~/common/components/Link';
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { conversationTitle } from '~/common/stores/chat/chat.conversation';
-import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText, messageSingleTextOrThrow } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -226,43 +227,58 @@ export function Telephone(props: {
     // bail if no llm selected
     if (!chatLLMId) return;
 
-    // temp fix: when the chat has no messages, only assume a single system message
-    const chatMessages: { role: VChatMessageIn['role'], text: string }[] = (reMessages && reMessages.length > 0)
-      ? reMessages.map(message => ({ role: message.role, text: messageSingleTextOrThrow(message) }))
-      : personaSystemMessage
-        ? [{ role: 'system', text: personaSystemMessage }]
-        : [];
 
-    // 'prompt' for a "telephone call"
-    // FIXME: can easily run ouf of tokens - if this gets traction, we'll fix it
-    const callPrompt: VChatMessageIn[] = [
-      { role: 'system', content: 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.' },
-      ...chatMessages.map(message => ({ role: message.role, content: message.text })),
-      { role: 'system', content: 'You are now on the phone call related to the chat above. Respect your personality and answer with short, friendly and accurate thoughtful lines.' },
-      ...callMessages.map(message => ({ role: message.role, content: messageSingleTextOrThrow(message) })),
+    // Call Message Generation Prompt
+    const callGenerationInputHistory: DMessage[] = [
+      // Call system prompt
+      createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.'),
+      // Chat messages, including the system prompt
+      ...((reMessages && reMessages?.length > 0)
+          ? reMessages
+          : [createDMessageTextContent('system', personaSystemMessage)]
+      ),
+      // Call system prompt 2, to indicate the call has started
+      createDMessageTextContent('system', 'You are now on the phone call related to the chat above. Respect your personality and answer with short, friendly and accurate thoughtful lines.'),
+      // Call history
+      ...callMessages,
     ];
+
 
     // perform completion
     responseAbortController.current = new AbortController();
     let finalText = '';
-    let error: any | null = null;
     setPersonaTextInterim('💭...');
-    llmStreamingChatGenerate(chatLLMId, callPrompt, 'call', callMessages[0].id, null, null, responseAbortController.current.signal, ({ textSoFar }) => {
-      const text = textSoFar?.trim();
-      if (text) {
-        finalText = text;
-        setPersonaTextInterim(text);
-      }
+
+    aixChatGenerateContent_DMessage_FromHistory(
+      chatLLMId,
+      callGenerationInputHistory,
+      'call',
+      callMessages[0].id,
+      { abortSignal: responseAbortController.current.signal },
+      (update: AixChatGenerateContent_DMessage, isDone: boolean) => {
+        const updatedText = messageFragmentsReduceText(update.fragments).trim();
+        if (updatedText)
+          setPersonaTextInterim(finalText = updatedText);
+      },
+    ).then((status) => {
+
+      // whether status.outcome === 'success' or not, we get a valid DMessage, eventually with Error Fragments inside
+      const fullMessage = createDMessageFromFragments('assistant', status.lastDMessage.fragments);
+      fullMessage.generator = status.lastDMessage.generator;
+      setCallMessages(messages => [...messages, fullMessage]); // [state] append assistant:call_response
+
+      // fire/forget
+      if (status.outcome === 'success' && finalText?.length >= 1)
+        void elevenLabsSpeakText(finalText, personaVoiceId, true, true);
+
     }).catch((err: DOMException) => {
-      if (err?.name !== 'AbortError')
-        error = err;
+      if (err?.name !== 'AbortError') {
+        // create an error message to explain the exception
+        const errorMesage = createDMessageFromFragments('assistant', [createErrorContentFragment(err.message || err.toString())]);
+        setCallMessages(messages => [...messages, errorMesage]); // [state] append assistant:call_response-ERROR
+      }
     }).finally(() => {
       setPersonaTextInterim(null);
-      if (finalText || error)
-        setCallMessages(messages => [...messages, createDMessageTextContent('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]); // [state] append assistant:call_response
-      // fire/forget
-      if (finalText?.length >= 1)
-        void elevenLabsSpeakText(finalText, personaVoiceId, true, true);
     });
 
     return () => {
