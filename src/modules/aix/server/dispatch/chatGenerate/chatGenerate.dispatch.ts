@@ -1,5 +1,6 @@
 import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.router';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.router';
+import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
@@ -53,16 +54,25 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         chatGenerateParse: createGeminiGenerateContentResponseParser(model.id, streaming),
       };
 
+    /**
+     * Ollama has now an OpenAI compability layer for `chatGenerate` API, but still its own protocol for models listing.
+     * - as such, we 'cast' here to the dispatch to an OpenAI dispatch, while using Ollama access
+     * - we still use the ollama.router for the models listing and aministration APIs
+     *
+     * For reference we show the old code for body/demuxerFormat/chatGenerateParse also below
+     */
     case 'ollama':
-      throw new Error('Ollama is not supported in this context');
-    // return {
-    //   request: {
-    //     ...ollamaAccess(access, OLLAMA_PATH_CHAT),
-    //     body: ollamaChatCompletionPayload(model, _hist, access.ollamaJson, streaming),
-    //   },
-    //   demuxerFormat: streaming ? 'json-nl' : null,
-    //   chatGenerateParse: createDispatchParserOllama(),
-    // };
+      return {
+        request: {
+          ...ollamaAccess(access, '/v1/chat/completions'), // use the OpenAI-compatible endpoint
+          // body: ollamaChatCompletionPayload(model, _hist, access.ollamaJson, streaming),
+          body: aixToOpenAIChatCompletions('openai', model, chatGenerate, access.ollamaJson, streaming),
+        },
+        // demuxerFormat: streaming ? 'json-nl' : null,
+        demuxerFormat: streaming ? 'sse' : null,
+        // chatGenerateParse: createDispatchParserOllama(),
+        chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
+      };
 
     case 'azure':
     case 'deepseek':
