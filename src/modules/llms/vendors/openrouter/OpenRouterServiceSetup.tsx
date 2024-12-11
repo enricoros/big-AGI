@@ -90,8 +90,13 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <Typography level='body-sm'>
       🎁 A selection of <Link href='https://openrouter.ai/docs#models' target='_blank'>OpenRouter models</Link> are
-      made available without charge. You can get an API key by using the Login button below.
+      made available free of charge. You can get an API key by using the Login button below.
     </Typography>
+
+    {/*<Typography level='body-sm'>*/}
+    {/*  🔓 Some models are available free of moderation by OpenRouter.*/}
+    {/*  These are usually moderated by the upstream provider (e.g. OpenAI).*/}
+    {/*</Typography>*/}
 
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
