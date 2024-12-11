@@ -68,13 +68,14 @@ function ModelItem(props: {
   let tooltip = props.serviceLabel;
   if (llm.description)
     tooltip += ' · ' + llm.description;
-  tooltip += ' · ';
   if (llm.contextTokens) {
-    tooltip += llm.contextTokens.toLocaleString() + ' tokens';
+    tooltip += '\n\n' + llm.contextTokens.toLocaleString() + ' tokens';
     if (llm.maxOutputTokens)
       tooltip += ' / ' + llm.maxOutputTokens.toLocaleString() + ' max output tokens';
   } else
-    tooltip += 'token count not provided';
+    tooltip += ' · token count not provided';
+  if (llm.pricing?.chat?._isFree)
+    tooltip += '\n\n🎁 Free model - refresh to check for pricing updates';
 
   const chipsComponentsMemo = React.useMemo(() => {
     if (!SHOW_LLM_INTERFACES)
