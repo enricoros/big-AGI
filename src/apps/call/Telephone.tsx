@@ -234,11 +234,11 @@ export function Telephone(props: {
       createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.'),
       // Chat messages, including the system prompt
       ...((reMessages && reMessages?.length > 0)
-          ? reMessages
-          : [createDMessageTextContent('system', personaSystemMessage)]
+          ? reMessages.map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
+          : [createDMessageTextContent('user', personaSystemMessage)]
       ),
       // Call system prompt 2, to indicate the call has started
-      createDMessageTextContent('system', 'You are now on the phone call related to the chat above. Respect your personality and answer with short, friendly and accurate thoughtful lines.'),
+      createDMessageTextContent('user', '**You are now on the phone call related to the chat above**.\nRespect your personality and answer with short, friendly and accurate thoughtful brief lines.'),
       // Call history
       ...callMessages,
     ];
