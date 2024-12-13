@@ -14,7 +14,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
-import type { ChatGenerateCostMetricsMd } from '~/common/stores/metrics/metrics.chatgenerate';
+import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DMessage, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
 import type { UIComplexityMode } from '~/common/app.theme';
 import { animationColorRainbow } from '~/common/util/animUtils';
@@ -279,7 +279,7 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode 
   </Box>;
 }
 
-function _prettyCostCode(code: ChatGenerateCostMetricsMd['$code']): string | null {
+function _prettyCostCode(code: MetricsChatGenerateCost_Md['$code']): string | null {
   if (!code) return null;
   switch (code) {
     case 'free':
@@ -354,6 +354,8 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Ollama]
   if (model.includes(':'))
     return model.replace(':latest', '').replaceAll(':', ' ');
+  // [xAI]
+  if (model.includes('grok-beta')) return 'Grok Beta';
   return model;
 }
 

@@ -10,14 +10,15 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-mermaid';
 import 'prismjs/components/prism-plant-uml';
 import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-typescript';
 
 // NOTE: must match Prism components imports
-const hPrismLanguages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'mermaid', 'plant-uml', 'python', 'typescript'];
+const hPrismLanguages = ['bash', 'css', 'java', 'javascript', 'json', 'markdown', 'mermaid', 'plant-uml', 'python', 'sql', 'typescript'];
 
 const hFileExtensionsMap: { [key: string]: string } = {
-  cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
-  md: 'markdown', mmd: 'mermaid', py: 'python', sh: 'bash', ts: 'typescript', tsx: 'typescript', xml: 'xml',
+  bash: 'bash', cs: 'csharp', html: 'html', java: 'java', js: 'javascript', json: 'json', jsx: 'javascript',
+  md: 'markdown', mmd: 'mermaid', py: 'python', sh: 'bash', sql: 'sql', ts: 'typescript', tsx: 'typescript', xml: 'xml',
 };
 
 const hCodeIncipitMap: { starts: string[], language: string }[] = [
@@ -28,6 +29,7 @@ const hCodeIncipitMap: { starts: string[], language: string }[] = [
   { starts: ['interface ', 'function '], language: 'typescript' }, // ambiguous
   { starts: ['package '], language: 'java' },
   { starts: ['using '], language: 'csharp' },
+  { starts: ['#!/bin/'], language: 'bash' },
   { starts: ['@startuml', '@startmindmap', '@startsalt', '@startwbs', '@startgantt'], language: 'plant-uml' },
 ];
 

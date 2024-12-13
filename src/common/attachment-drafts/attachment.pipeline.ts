@@ -171,6 +171,12 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       break;
 
     case 'text':
+      // Obsidian URLs, for dragging: we won't be able to open them, so we'll show the input error instead
+      if (source.textPlain?.startsWith('obsidian://open?vault=')) {
+        edit({ label: 'Obsidian Issue', inputError: 'Drag and drop does not work with Obsidian URLs. Please open/attach the file, or drag it from finder/explorer, or paste the content.' });
+        break;
+      }
+
       if (source.textHtml && source.textPlain) {
         edit({
           label: 'Rich Text',
@@ -585,7 +591,7 @@ export async function attachmentPerformConversion(
           break;
         }
         // duplicate the ArrayBuffer to avoid mutation
-        const pdfData = new Uint8Array(input.data.slice(0));
+        const pdfData = new Uint8Array(input.data.slice(0)).buffer;
         const pdfText = await pdfToText(pdfData, (progress: number) => {
           edit(attachment.id, { outputsConversionProgress: progress });
         });
@@ -603,7 +609,7 @@ export async function attachmentPerformConversion(
           break;
         }
         // duplicate the ArrayBuffer to avoid mutation
-        const pdfData2 = new Uint8Array(input.data.slice(0));
+        const pdfData2 = new Uint8Array(input.data.slice(0)).buffer;
         try {
           const imageDataURLs = await pdfToImageDataURLs(pdfData2, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress });
@@ -627,7 +633,7 @@ export async function attachmentPerformConversion(
         try {
           // duplicated from 'pdf-images' (different progress update)
           const imageFragments: DMessageAttachmentFragment[] = [];
-          const imageDataURLs = await pdfToImageDataURLs(new Uint8Array(input.data.slice(0)), DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
+          const imageDataURLs = await pdfToImageDataURLs(new Uint8Array(input.data.slice(0)).buffer, DEFAULT_ADRAFT_IMAGE_MIMETYPE, PDF_IMAGE_QUALITY, PDF_IMAGE_PAGE_SCALE, (progress) => {
             edit(attachment.id, { outputsConversionProgress: progress / 2 }); // Update progress (0% to 50%)
           });
           for (const pdfPageImage of imageDataURLs) {
@@ -637,7 +643,7 @@ export async function attachmentPerformConversion(
           }
 
           // duplicated from 'pdf-text'
-          const pdfText = await pdfToText(new Uint8Array(input.data.slice(0)), (progress: number) => {
+          const pdfText = await pdfToText(new Uint8Array(input.data.slice(0)).buffer, (progress: number) => {
             edit(attachment.id, { outputsConversionProgress: 0.5 + progress / 2 }); // Update progress (50% to 100%)
           });
           if (pdfText.trim().length < 2) {

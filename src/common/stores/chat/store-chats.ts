@@ -18,6 +18,7 @@ import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversationNoVoid } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
+import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 
 
 /// Conversations Store
@@ -35,6 +36,7 @@ export interface ChatActions {
   deleteConversations: (cIds: DConversationId[], newConversationPersonaId?: SystemPurposeId) => DConversationId;
 
   // within a conversation
+  isIncognito: (cId: DConversationId) => boolean | undefined;
   setAbortController: (cId: DConversationId, _abortController: AbortController | null, debugScope: string) => void;
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
@@ -174,6 +176,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
               : conversation,
           ),
         })),
+
+      isIncognito: (conversationId: DConversationId): boolean | undefined =>
+        _get().conversations.find(_c => _c.id === conversationId)?._isIncognito ?? undefined,
 
       setAbortController: (conversationId: DConversationId, _nextController: AbortController | null, debugScope: string) =>
         _get()._editConversation(conversationId, ({ _abortController: _currentController }) => {
@@ -422,7 +427,12 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       partialize: (state) => ({
         ...state,
         conversations: state.conversations
-          .filter(c => !c._isIncognito)
+          .filter((c, _ignoreIdx, all) => {
+            // do not save incognito conversations
+            if (c._isIncognito) return false;
+            // do not save empty conversations, begin saving them when they have content
+            return c.messages?.length || c.userTitle || c.autoTitle || all.length <= 1;
+          })
           .map((conversation: DConversation) => {
             // remove the converation AbortController (current data structure version)
             const { _abortController, ...rest } = conversation;
@@ -436,6 +446,12 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
         // fixup conversations in-memory
         V4ToHeadConverters.inMemHeadCleanDConversations(state.conversations || []);
+
+        // [GC] Chat Image Assets
+        // NOTE: this used to be in 'sherpa', but that caused the storage to be read too early, so we do it here post hydration
+        //       and synchronously, as it's a rather quick operation (most of the times there won't be any effect).
+        void gcChatImageAssets(state.conversations);
+
       },
 
     }),

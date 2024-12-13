@@ -206,6 +206,8 @@ export function BeamRay(props: {
 
   return (
     <BeamCard
+      role='beam-card'
+      tabIndex={-1}
       // onClick={isSelectable ? handleRayToggleSelect : undefined}
       className={
         (isError ? beamCardClasses.errored : '')

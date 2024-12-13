@@ -12,6 +12,7 @@ import { ModelVendorOpenPipe } from './openpipe/openpipe.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
+import { ModelVendorXAI } from './xai/xai.vendor';
 
 import type { IModelVendor } from './IModelVendor';
 
@@ -31,6 +32,7 @@ export type ModelVendorId =
   | 'openrouter'
   | 'perplexity'
   | 'togetherai'
+  | 'xai'
   ;
 
 /** Global: Vendor Instances Registry **/
@@ -49,6 +51,7 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
   togetherai: ModelVendorTogetherAI,
+  xai: ModelVendorXAI,
 } as Record<string, IModelVendor>;
 
 

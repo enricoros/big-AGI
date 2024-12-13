@@ -6,9 +6,10 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
+import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import { ZodError } from 'zod';
 import { initTRPC } from '@trpc/server';
-import { transformer } from '~/server/api/trpc.transformer';
+import { transformer } from '~/server/trpc/trpc.transformer';
 
 /**
  * 1. CONTEXT
@@ -17,7 +18,7 @@ import { transformer } from '~/server/api/trpc.transformer';
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
-export const createTRPCFetchContext = ({ req /*, resHeaders*/ }: { req: Request; resHeaders: Headers; }) => {
+export const createTRPCFetchContext = async ({ req }: FetchCreateContextFnOptions) => {
   // const user = { name: req.headers.get('username') ?? 'anonymous' };
   // return { req, resHeaders };
   return {

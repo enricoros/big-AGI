@@ -2,14 +2,12 @@ import { z } from 'zod';
 
 import { Release } from '~/common/app.release';
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
-import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 // critical to make sure we `import type` here
 import type { BackendCapabilities } from './store-backend-capabilities';
-
-import { analyticsListCapabilities } from './backend.analytics';
 
 
 function sdbmHash(str: string): string {
@@ -48,8 +46,7 @@ export const backendRouter = createTRPCRouter({
 
   /* List server-side capabilities (pre-configured by the deployer) */
   listCapabilities: publicProcedure
-    .query(async ({ ctx }): Promise<BackendCapabilities> => {
-      analyticsListCapabilities(ctx.hostName);
+    .query(async ({ ctx: _unused }): Promise<BackendCapabilities> => {
       return {
         // llms
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
@@ -66,6 +63,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
+        hasLlmXAI: !!env.XAI_API_KEY,
         // others
         hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,

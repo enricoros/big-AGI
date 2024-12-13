@@ -1,5 +1,4 @@
 import * as React from 'react';
-import type { Diff as SanityTextDiff } from '@sanity/diff-match-patch';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
@@ -10,7 +9,7 @@ import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
-import { RenderTextDiff } from './textdiff/RenderTextDiff';
+import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { renderCodeMemoOrNot } from './code/RenderCode';
 import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
@@ -43,7 +42,7 @@ export function AutoBlocksRenderer(props: {
   showUnsafeHtmlCode?: boolean;
 
   renderAsCodeWithTitle?: string;
-  renderSanityTextDiffs?: SanityTextDiff[];
+  renderAsWordsDiff?: WordsDiff;
 
   blocksProcessor?: 'diagram',
   codeRenderVariant?: AutoBlocksCodeRenderVariant /* default: outlined */,
@@ -79,7 +78,7 @@ export function AutoBlocksRenderer(props: {
     text,
     props.renderAsCodeWithTitle,
     fromSystem,
-    props.renderSanityTextDiffs,
+    props.renderAsWordsDiff,
     props.blocksProcessor === 'diagram',
   );
 
@@ -199,9 +198,9 @@ export function AutoBlocksRenderer(props: {
 
           case 'txt-diffs-bk':
             return (
-              <RenderTextDiff
+              <RenderWordsDiff
                 key={'txt-diffs-bk-' + index}
-                sanityTextDiffs={bkInput.sanityTextDiffs}
+                wordsDiff={bkInput.wordsDiff}
                 sx={scaledTypographySx}
               />
             );

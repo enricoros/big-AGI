@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp, Divider, Modal, ModalClose, ModalDialog, ModalOverflow, Typography } from '@mui/joy';
 
 
-const noBackdropSlotProps = {
+export const noBackdropSlotProps = {
   backdrop: {
     sx: {
       backdropFilter: 'none',
@@ -65,7 +65,7 @@ export function GoodModal(props: {
       <ModalOverflow sx={{ p: 1 }}>
         <ModalDialog
           color={props.themedColor}
-          variant={props.themedColor ? 'soft' : undefined}
+          variant={props.themedColor ? 'soft' : 'plain' /* switched from bordered (undefined) to borderless (plain) */}
           invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
           sx={dialogSx}

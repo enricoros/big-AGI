@@ -118,6 +118,10 @@ export class ConversationHandler {
     _chatStoreActions.setAbortController(this.conversationId, null, debugScope);
   }
 
+  isIncognito(): boolean | undefined {
+    return _chatStoreActions.isIncognito(this.conversationId);
+  }
+
 
   // Message Management
 

@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -14,7 +14,17 @@ const geminiChatInterfaces: GeminiWire_API_Models_List.Model['supportedGeneratio
 
 // unsupported interfaces
 const filterUnallowedNames = ['Legacy'];
-const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = ['generateAnswer', 'embedContent', 'embedText'];
+const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = [
+  'generateAnswer',   // e.g. removes "models/aqa"
+  'embedContent',     // e.g. removes "models/embedding-001"
+  'embedText',        // e.g. removes "models/text-embedding-004"
+];
+const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
+  // name of models that are not what they say they are (e.g. 1114 is actually 1121 as of 2024-12-10)
+  'models/gemini-1.5-flash-exp-0827',
+  'models/gemini-1.5-pro-exp-0827',
+  'models/gemini-exp-1114',
+];
 
 
 /* Manual models details
@@ -32,6 +42,11 @@ const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGene
    - [good] Function calling, with configuration
    - [great] Code execution
 */
+
+// Experimental Gemini models are Free of charge
+const geminiExpPricingFree: ModelDescriptionSchema['chatPrice'] = {
+  input: 'free', output: 'free',
+};
 
 const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 0.075 }, { upTo: null, price: 0.15 }],
@@ -58,10 +73,42 @@ const _knownGeminiModels: ({
   isNewest?: boolean,
   isPreview?: boolean,
   symLink?: string,
+  description?: string,
+  deprecated?: string, // Gemini may provide deprecation dates
   _delete?: boolean, // some gemini models are not acknowledged by Google Docs anymore, and leaving them in the list will confuse users
 } & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
-  // Generation 1.5
+  // New Experimental Models
+  {
+    id: 'models/gemini-exp-1206',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    // hidden: true,
+    // description: 'Quality improvements',
+  },
+  {
+    id: 'models/gemini-exp-1121',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    // hidden: true,
+    // description: 'Quality improvements',
+  },
+
+
+  /// Generation 2.0
+
+  // Gemini 2.0 Flash models
+  {
+    id: 'models/gemini-2.0-flash-exp',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+  },
+
+
+  /// Generation 1.5
 
   // Gemini 1.5 Flash Models
   {
@@ -69,148 +116,144 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini15FlashPricing,
     // symLink: '-002 or newer',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /*, Code Execution */],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
   },
   {
     id: 'models/gemini-1.5-flash',
     // Defaults to version 002 on Oct 8, 2024
     symLink: 'models/gemini-1.5-flash-002',
     chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1227 },
   },
   {
     id: 'models/gemini-1.5-flash-002', // new stable version
     chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
   },
   {
     id: 'models/gemini-1.5-flash-001', // previous stable version
     chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1227 },
   },
   {
     id: 'models/gemini-1.5-flash-001-tuning', // supports model tuning
     chatPrice: gemini15FlashPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json /* Tuning ... */],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution /* Tuning ... */],
     hidden: true,
   },
 
   // Gemini 1.5 Flash-8B Models
   {
+    id: 'models/gemini-1.5-flash-8b-exp-0924',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
+  {
+    id: 'models/gemini-1.5-flash-8b-exp-0827',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+    benchmark: { cbaElo: 1205 },
+  },
+  {
     id: 'models/gemini-1.5-flash-8b-latest',
     isPreview: false,
     chatPrice: gemini15Flash8BPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
   },
   {
     id: 'models/gemini-1.5-flash-8b',
     symLink: 'models/gemini-1.5-flash-8b-001',
     chatPrice: gemini15Flash8BPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     // benchmark: { cbaElo: value if known },
   },
   {
     id: 'models/gemini-1.5-flash-8b-001',
     chatPrice: gemini15Flash8BPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     // benchmark: { cbaElo: value if known },
   },
 
-  // Experimental Gemini 1.5 Flash Models
-  {
-    id: 'models/gemini-1.5-flash-8b-exp-0924',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-1.5-flash-exp-0827',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-    benchmark: { cbaElo: 1269 },
-  },
-  {
-    id: 'models/gemini-1.5-flash-8b-exp-0827',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-    benchmark: { cbaElo: 1205 },
-  },
 
   // Gemini 1.5 Pro Models
+  {
+    id: 'models/gemini-1.5-pro-exp-0801',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+  },
   {
     id: 'models/gemini-1.5-pro-latest', // updated to latest stable version
     chatPrice: gemini15ProPricing,
     // symLink: '-002 or newer',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
   },
   {
     id: 'models/gemini-1.5-pro',
     symLink: 'models/gemini-1.5-pro-002',
     chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
   },
   {
     id: 'models/gemini-1.5-pro-002',
     chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
   },
   {
     id: 'models/gemini-1.5-pro-001',
     chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1260 },
   },
 
-  // Added missing experimental model
-  {
-    id: 'models/gemini-1.5-pro-exp-0801',
-    isPreview: true,
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-  },
 
-  // Experimental Gemini 1.5 Pro Models
+  // LearnLM Experimental Model
   {
-    id: 'models/gemini-1.5-pro-exp-0827',
+    id: 'models/learnlm-1.5-pro-experimental',
     isPreview: true,
-    chatPrice: gemini15ProPricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    hidden: true,
-    benchmark: { cbaElo: 1299 },
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    description: 'LearnLM is an experimental task-specific model aligned with learning science principles.',
+    // hidden: true,
   },
 
   // Generation 1.0
 
-  // Gemini 1.0 Pro Models
+  // Gemini 1.0 Pro Models (Deprecated)
   {
     id: 'models/gemini-1.0-pro-latest',
     symLink: 'models/gemini-1.0-pro-001+',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
     _delete: true, // confusing
+    deprecated: '2025-02-15',
   },
   {
     id: 'models/gemini-1.0-pro-001',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
     benchmark: { cbaElo: 1132 },
+    deprecated: '2025-02-15',
   },
   {
     id: 'models/gemini-1.0-pro',
     symLink: 'models/gemini-1.0-pro-001',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
+    deprecated: '2025-02-15',
   },
   {
     id: 'models/gemini-pro',
     symLink: 'models/gemini-1.0-pro',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
+    deprecated: '2025-02-15',
   },
 
 
@@ -233,13 +276,18 @@ const _knownGeminiModels: ({
 export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model): boolean {
   const isAllowed = !filterUnallowedNames.some(name => geminiModel.displayName.includes(name));
   const isSupported = !filterUnallowedInterfaces.some(iface => geminiModel.supportedGenerationMethods.includes(iface));
-  return isAllowed && isSupported;
+  const isWhatItSaysItIs = !filterLyingModelNames.includes(geminiModel.name);
+  return isAllowed && isSupported && isWhatItSaysItIs;
 }
 
 export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
   // hidden to the bottom, then names descending
   if (a.hidden && !b.hidden) return 1;
   if (!a.hidden && b.hidden) return -1;
+  // models beginning with 'gemini-' to the top
+  if (a.label.startsWith('Gemini') && !b.label.startsWith('Gemini')) return -1;
+  if (!a.label.startsWith('Gemini') && b.label.startsWith('Gemini')) return 1;
+  // sort by label descending
   return b.label.localeCompare(a.label);
 }
 
@@ -259,9 +307,13 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     return null;
 
   // handle symlinks
-  const label = knownModel?.symLink
+  let label = knownModel?.symLink
     ? `🔗 ${displayName.replace('1.0', '')} → ${knownModel.symLink}`
     : displayName;
+
+  // FIX: the Gemini 1114 model now returns 1121 as the version.. highlight the issue
+  if (geminiModel.name.endsWith('1114') && label.endsWith('1121'))
+    label += ' (really: 1114)';
 
   // handle hidden models
   const hasChatInterfaces = supportedGenerationMethods.some(iface => geminiChatInterfaces.includes(iface));
@@ -273,7 +325,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 
   // description
   const { version, topK, topP, temperature } = geminiModel;
-  const descriptionLong = description + ` (Version: ${version}, Defaults: temperature=${temperature}, topP=${topP}, topK=${topK}, interfaces=[${supportedGenerationMethods.join(',')}])`;
+  const descriptionLong = (knownModel?.description || description) + ` (Version: ${version}, Defaults: temperature=${temperature}, topP=${topP}, topK=${topK}, interfaces=[${supportedGenerationMethods.join(',')}])`;
 
   // use known interfaces, or add chat if this is a generateContent model
   const interfaces: ModelDescriptionSchema['interfaces'] = knownModel?.interfaces || [];
@@ -296,6 +348,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     benchmark: knownModel?.benchmark,
     chatPrice: knownModel?.chatPrice,
     hidden,
+    // deprecated: knownModel?.deprecated,
   };
 }
 

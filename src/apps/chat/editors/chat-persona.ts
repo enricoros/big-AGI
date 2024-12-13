@@ -1,4 +1,4 @@
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
@@ -34,14 +34,21 @@ export async function runPersonaOnConversationHead(
 
   const cHandler = ConversationsManager.getHandler(conversationId);
 
-  const history = cHandler.historyViewHead('runPersonaOnConversationHead') as Readonly<DMessage[]>;
+  const _history = cHandler.historyViewHead('runPersonaOnConversationHead') as Readonly<DMessage[]>;
+  if (_history.length === 0)
+    return false;
+
+  // split pre dynamic-personas
+  const chatSystemInstruction = _history[0].role === 'system' ? _history[0] : null;
+  const chatHistory = (chatSystemInstruction ? _history.slice(1) : _history);
+    // .map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
 
   // assistant response placeholder
   const isNotifyEnabled = getIsNotificationEnabledForModel(assistantLlmId);
   const { assistantMessageId } = cHandler.messageAppendAssistantPlaceholder(
     CHATGENERATE_RESPONSE_PLACEHOLDER,
     {
-      purposeId: history[0].purposeId,
+      purposeId: chatSystemInstruction?.purposeId,
       generator: { mgt: 'named', name: assistantLlmId },
       ...(isNotifyEnabled ? { userFlags: [MESSAGE_FLAG_NOTIFY_COMPLETE] } : {}),
     },
@@ -60,9 +67,10 @@ export async function runPersonaOnConversationHead(
   cHandler.setAbortController(abortController, 'chat-persona');
 
   // stream the assistant's messages directly to the state store
-  const messageStatus = await aixChatGenerateContent_DMessage_FromHistory(
+  const messageStatus = await aixChatGenerateContent_DMessage_FromConversation(
     assistantLlmId,
-    history,
+    chatSystemInstruction,
+    chatHistory,
     'conversation',
     conversationId,
     { abortSignal: abortController.signal, throttleParallelThreads: parallelViewCount },

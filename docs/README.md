@@ -18,7 +18,7 @@ Detailed guides to configure AI models and advanced features in big-AGI.
 - **Cloud AI Services**:
   - **[Azure OpenAI](config-azure-openai.md)**
   - **[OpenRouter](config-openrouter.md)**
-  - Easy API key setup: **Anthropic**, **Deepseek**, **Google AI**, **Groq**, **Mistral**, **OpenAI**, **OpenPipe**, **Perplexity**, **TogetherAI**
+  - Easy API key setup: **Anthropic**, **Deepseek**, **Google AI**, **Groq**, **Mistral**, **OpenAI**, **OpenPipe**, **Perplexity**, **TogetherAI**, **xAI**
 
 
 - **Local AI Integrations**:

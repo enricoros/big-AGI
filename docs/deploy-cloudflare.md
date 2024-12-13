@@ -34,7 +34,7 @@ Fork the repository to your personal GitHub account.
 2. On this page, set your **Project name**, **Production branch** (e.g., main), and your Build settings
 3. Choose `Next.js` from the **Framework preset** dropdown menu
 4. Set a custom **Build Command**:
-    - `rm app/api/trpc-node/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`
+    - `rm app/api/cloud/[trpc]/route.ts && npx @cloudflare/next-on-pages@1`
     - see the tradeoffs for this deletion on the notice at the top
 5. Keep the **Build output directory** as default
 6. Click the **Save and Deploy** button

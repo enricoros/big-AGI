@@ -1,11 +1,11 @@
 import { agiUuid } from '~/common/util/idUtils';
 
-import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, duplicateDMessageFragmentsNoVoid, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isVoidFragment } from './chat.fragments';
+import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, duplicateDMessageFragmentsNoVoid, isAttachmentFragment, isContentFragment, isVoidFragment } from './chat.fragments';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DChatGenerateMetricsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 
 
 // Message
@@ -92,7 +92,7 @@ export type DMessageGenerator = ({
     mId: DLLMId;                      // Models Id
   },
 }) & {
-  metrics?: DChatGenerateMetricsMd;   // medium-sized metrics stored in the message
+  metrics?: DMetricsChatGenerate_Md;   // medium-sized metrics stored in the message
   tokenStopReason?:
     | 'client-abort'                  // if the generator stopped due to a client abort signal
     | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter
@@ -271,16 +271,4 @@ export function messageFragmentsReduceText(fragments: DMessageFragment[], fragme
     })
     .filter(text => !!text)
     .join(fragmentSeparator);
-}
-
-
-// TODO: remove once the port is fully done - at 2.0.0 ?
-export function messageSingleTextOrThrow(message: DMessage): string {
-  if (message.fragments.length !== 1)
-    throw new Error('Expected single fragment');
-  if (!isContentOrAttachmentFragment(message.fragments[0]))
-    throw new Error('Expected a content or attachment fragment');
-  if (message.fragments[0].part.pt !== 'text')
-    throw new Error('Expected a text part');
-  return message.fragments[0].part.text;
 }

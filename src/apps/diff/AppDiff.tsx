@@ -5,7 +5,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Card, Divider, FormControl, IconButton, Textarea, Tooltip, Typography } from '@mui/joy';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
-import { RenderTextDiff, useSanityTextDiffs } from '~/modules/blocks/textdiff/RenderTextDiff';
+import { RenderWordsDiff, useWordsDifference } from '~/modules/blocks/wordsdiff/RenderWordsDiff';
 
 import { ButtonAttachFilesMemo } from '~/common/components/ButtonAttachFiles';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -28,7 +28,7 @@ export function AppDiff() {
   // external state
   const isMobile = useIsMobile();
   const contentScaling = useUIContentScaling();
-  const diffs = useSanityTextDiffs(text2 || '', text1 || '', true);
+  const diffs = useWordsDifference(text2 || '', text1 || '', true);
 
   // memos
   const handleSwap = React.useCallback(() => {
@@ -165,8 +165,8 @@ export function AppDiff() {
               backgroundColor: 'background.popup',
               p: 1,
             }}>
-              <RenderTextDiff
-                sanityTextDiffs={diffs}
+              <RenderWordsDiff
+                wordsDiff={diffs}
                 sx={scaledTypographySx}
               />
             </Card>
