@@ -15,7 +15,7 @@ import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 import { elevenLabsSpeakText } from '~/modules/elevenlabs/elevenlabs.client';
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { useElevenLabsVoiceDropdown } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
 
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
@@ -229,13 +229,13 @@ export function Telephone(props: {
 
 
     // Call Message Generation Prompt
+    const callSystemInstruction = createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.');
     const callGenerationInputHistory: DMessage[] = [
-      // Call system prompt
-      createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.'),
-      // Chat messages, including the system prompt
+      // Chat messages, including the system prompt which is casted to a user message
+      // TODO: when upgrading to dynamic personas, we need to inject the persona message instead - not rely on reMessages, as messages[0] !== 'system'
       ...((reMessages && reMessages?.length > 0)
-          ? reMessages.map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
-          : [createDMessageTextContent('user', personaSystemMessage)]
+          ? reMessages.map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // (MUST: [0] is the system message of the original chat) cast system chat messages to the user role
+          : [createDMessageTextContent('user', personaSystemMessage)] // see TO-DO ^
       ),
       // Call system prompt 2, to indicate the call has started
       createDMessageTextContent('user', '**You are now on the phone call related to the chat above**.\nRespect your personality and answer with short, friendly and accurate thoughtful brief lines.'),
@@ -249,13 +249,14 @@ export function Telephone(props: {
     let finalText = '';
     setPersonaTextInterim('💭...');
 
-    aixChatGenerateContent_DMessage_FromHistory(
+    aixChatGenerateContent_DMessage_FromConversation(
       chatLLMId,
+      callSystemInstruction,
       callGenerationInputHistory,
       'call',
       callMessages[0].id,
       { abortSignal: responseAbortController.current.signal },
-      (update: AixChatGenerateContent_DMessage, isDone: boolean) => {
+      (update: AixChatGenerateContent_DMessage, _isDone: boolean) => {
         const updatedText = messageFragmentsReduceText(update.fragments).trim();
         if (updatedText)
           setPersonaTextInterim(finalText = updatedText);

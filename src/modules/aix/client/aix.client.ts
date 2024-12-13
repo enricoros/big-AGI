@@ -3,7 +3,7 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { DLLM, DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
 import { apiStream } from '~/common/util/trpc.client';
-import { metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, DMetricsChatGenerate_Lg } from '~/common/stores/metrics/metrics.chatgenerate';
+import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
@@ -13,7 +13,7 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
-import { aixCGR_FromDMessagesOrThrow, aixCGR_FromSimpleText, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
+import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
 
@@ -79,10 +79,11 @@ interface AixClientOptions {
 /**
  * Level 3 Generation from an LLM Id + Chat History.
  */
-export async function aixChatGenerateContent_DMessage_FromHistory(
+export async function aixChatGenerateContent_DMessage_FromConversation(
   // chat-inputs -> Partial<DMessage> outputs
   llmId: DLLMId,
-  chatHistory: Readonly<DMessage[]>,
+  chatSystemInstruction: null | Pick<DMessage, 'fragments' | 'metadata' | 'userFlags'>,
+  chatHistoryWithoutSystemMessages: Readonly<DMessage[]>,
   // aix inputs
   aixContextName: AixAPI_Context_ChatGenerate['name'],
   aixContextRef: AixAPI_Context_ChatGenerate['ref'],
@@ -105,7 +106,10 @@ export async function aixChatGenerateContent_DMessage_FromHistory(
   try {
 
     // Aix ChatGenerate Request
-    const aixChatContentGenerateRequest = await aixCGR_FromDMessagesOrThrow(chatHistory, 'complete');
+    const aixChatContentGenerateRequest: AixAPIChatGenerate_Request = {
+      systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
+      chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
+    };
 
     await aixChatGenerateContent_DMessage(
       llmId,
