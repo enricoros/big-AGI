@@ -3,8 +3,8 @@ import { env } from '~/server/env.mjs';
 
 import packageJson from '../../../../../package.json';
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchJsonOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString, serverCapitalizeFirstLetter } from '~/server/wire';
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
-import { fetchResponseOrTRPCThrow } from '~/server/api/trpc.router.fetchers';
+import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';

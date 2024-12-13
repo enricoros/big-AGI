@@ -1,8 +1,11 @@
 import * as React from 'react';
 
-import { llmStreamingChatGenerate, VChatMessageIn } from '~/modules/llms/llm.client';
+import type { AixAPI_Context_ChatGenerate } from '~/modules/aix/server/api/aix.wiretypes';
+import type { AixChatGenerate_TextMessages } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
@@ -13,20 +16,27 @@ const DEBUG_CHAIN = false;
 export interface LLMChainStep {
   name: string;
   setSystem?: string;
-  addPrevAssistant?: boolean;
-  addUserInput?: boolean;
-  addUser?: string;
+  addUserChainInput?: boolean;
+  addModelPrevOutput?: boolean;
+  addUserText?: string;
 }
 
 
 /**
  * React hook to manage a chain of LLM transformations.
  */
-export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, chainInput: string | undefined, onSuccess: (output: string, input: string) => void, contextName: string, contextRef: string) {
+export function useLLMChain(
+  steps: LLMChainStep[],
+  llmId: DLLMId | undefined,
+  chainInput: string | undefined,
+  onSuccess: (output: string, input: string) => void,
+  aixContextName: AixAPI_Context_ChatGenerate['name'],
+  aixContextRef: AixAPI_Context_ChatGenerate['ref'],
+) {
 
   // state
   const [chain, setChain] = React.useState<ChainState | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [chainStepInterimText, setChainStepInterimText] = React.useState<string | null>(null);
   const chainAbortController = React.useRef(new AbortController());
 
@@ -40,7 +50,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
 
   const userCancelChain = React.useCallback(() => {
     abortChain('user canceled');
-    setError('Canceled');
+    setErrorMessage('Canceled');
   }, [abortChain]);
 
   // starts a chain with the given inputs
@@ -51,9 +61,9 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     abortChain('restart');
 
     // init state
-    setError(!llmId ? 'LLM not provided' : null);
+    setErrorMessage(!llmId ? 'LLM not provided' : null);
     setChain((inputText && llmId)
-      ? initChainState(llmId, inputText, steps)
+      ? _initChainState(llmId, inputText, steps)
       : null,
     );
     setChainStepInterimText(null);
@@ -66,7 +76,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
   }, [chainInput, llmId, startChain, steps]);
 
 
-  // lifecycle: Start on inputs change + Abort on unmounts
+  // [effect] Start on inputs change + Abort on unmounts
   React.useEffect(() => {
     restartChain();
     return () => abortChain('unmount');
@@ -75,6 +85,7 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
 
   // stepper: perform Step on Chain updates
   React.useEffect(() => {
+
     // skip step if the chain has been aborted
     const _chainAbortController = chainAbortController.current;
     if (_chainAbortController.signal.aborted) return;
@@ -83,27 +94,41 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     if (!chain || !llmId) return;
 
     // skip if no next unprocessed step
-    const stepIdx = chain.steps.findIndex((step) => !step.isComplete);
-    if (stepIdx === -1) return;
+    const nextStepIdx = chain.stepStates.findIndex((step) => !step.isComplete);
+    if (nextStepIdx === -1) return;
 
     // safety check (re-processing the same step shall never happen)
-    const chainStep = chain.steps[stepIdx];
-    if (chainStep.output)
-      return console.log('WARNING - Output overlap - FIXME', chainStep);
+    const nextStepState = chain.stepStates[nextStepIdx];
+    if (nextStepState.output)
+      return console.log('WARNING - Output overlap - FIXME', nextStepState);
+    const nextStep = nextStepState.def;
+
 
     // execute step instructions
-    let llmChatInput: VChatMessageIn[] = [...chain.chatHistory];
-    const instruction = chainStep.ref;
-    if (instruction.setSystem) {
-      llmChatInput = llmChatInput.filter((msg) => msg.role !== 'system');
-      llmChatInput.unshift({ role: 'system', content: instruction.setSystem });
-    }
-    if (instruction.addUserInput)
-      llmChatInput.push({ role: 'user', content: implodeText(chain.input, chain.safeInputLength) });
-    if (instruction.addPrevAssistant && stepIdx > 0)
-      llmChatInput.push({ role: 'assistant', content: implodeText(chain.steps[stepIdx - 1].output!, chain.safeInputLength) });
-    if (instruction.addUser)
-      llmChatInput.push({ role: 'user', content: instruction.addUser });
+
+    const stepSystemInstruction = nextStep.setSystem || chain.lastSystemInstruction || '';
+
+    const stepChatHistory: AixChatGenerate_TextMessages = [...chain.lastChatHistory];
+
+    if (nextStep.addUserChainInput)
+      stepChatHistory.push({
+        role: 'user',
+        text: !chain.safeInputLength ? chain.chainInputText : ellipsizeMiddle(chain.chainInputText, chain.safeInputLength, '\n...\n'),
+      });
+
+    if (nextStep.addModelPrevOutput && nextStepIdx > 0)
+      stepChatHistory.push({
+        role: 'model',
+        text: chain.safeInputLength
+          ? ellipsizeMiddle(chain.stepStates[nextStepIdx - 1].output!, chain.safeInputLength, '\n...\n')
+          : (chain.stepStates[nextStepIdx - 1].output || ''),
+      });
+
+    if (nextStep.addUserText)
+      stepChatHistory.push({
+        role: 'user',
+        text: nextStep.addUserText,
+      });
 
     // monitor for cleanup before the result
     let stepDone = false;
@@ -112,25 +137,29 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
     _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
     // interim text
-    let interimText = '';
     setChainStepInterimText(null);
 
     // LLM call (streaming, cancelable)
-    llmStreamingChatGenerate(llmId, llmChatInput, contextName, contextRef, null, null, stepAbortController.signal,
-      ({ textSoFar }) => {
-        textSoFar && setChainStepInterimText(interimText = textSoFar);
-      })
-      .then(() => {
+    aixChatGenerateText_Simple(
+      llmId,
+      stepSystemInstruction,
+      stepChatHistory,
+      aixContextName,
+      aixContextRef,
+      { abortSignal: stepAbortController.signal },
+      setChainStepInterimText,
+    )
+      .then((stepOutputText) => {
         if (stepAbortController.signal.aborted)
           return;
-        const chainState = updateChainState(chain, llmChatInput, stepIdx, interimText);
-        if (chainState.output && onSuccess)
-          onSuccess(chainState.output, chainState.input);
+        const chainState = _updateChainState_pure(chain, nextStepIdx, stepSystemInstruction, stepChatHistory, stepOutputText);
+        if (chainState.outputText && onSuccess)
+          onSuccess(chainState.outputText, chainState.chainInputText);
         setChain(chainState);
       })
       .catch((err) => {
         if (!stepAbortController.signal.aborted)
-          setError(`Transformation error: ${err?.message || err?.toString() || err || 'unknown'}`);
+          setErrorMessage(`Transformation error: ${err?.message || err?.toString() || err || 'unknown'}`);
       })
       .finally(() => {
         stepDone = true;
@@ -143,18 +172,19 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
         stepAbortController.abort('step aborted');
       _chainAbortController.signal.removeEventListener('abort', globalToStepListener);
     };
-  }, [chain, contextRef, contextName, llmId, onSuccess]);
-
+  }, [aixContextName, aixContextRef, chain, llmId, onSuccess]);
 
   return {
-    isFinished: !!chain?.output,
-    isTransforming: !!chain?.steps?.length && !chain?.output && !error,
-    chainOutput: chain?.output ?? null,
+    isFinished: !!chain?.outputText,
+    isTransforming: !!chain?.stepStates?.length && !chain?.outputText && !errorMessage,
+    chainOutputText: chain?.outputText ?? null,
     chainProgress: chain?.progress ?? 0,
-    chainStepName: chain?.steps?.find((step) => !step.isComplete)?.ref.name ?? null,
+    chainStepName: chain?.stepStates?.find((step) => !step.isComplete)?.def.name ?? null,
     chainStepInterimChars: chainStepInterimText?.length ?? null,
-    chainIntermediates: chain?.steps?.map((step) => ({ name: step.ref.name, output: step.output ?? null })).filter(i => !!i.output) ?? [],
-    chainError: error,
+    chainIntermediates: chain?.stepStates
+      ?.map((step) => ({ name: step.def.name, output: step.output ?? null }))
+      .filter(i => !!i.output) ?? [],
+    chainErrorMessage: errorMessage,
     userCancelChain,
     restartChain,
   };
@@ -162,23 +192,27 @@ export function useLLMChain(steps: LLMChainStep[], llmId: DLLMId | undefined, ch
 
 
 interface ChainState {
-  steps: StepState[];
-  chatHistory: VChatMessageIn[];
-  progress: number;
-  safeInputLength: number | null;
+  chainInputText: string;
   overrideResponseTokens: number | null;
-  input: string;
-  output: string | null;
+  safeInputLength: number | null;
+
+  stepStates: StepState[];
+
+  lastSystemInstruction: string | null;
+  lastChatHistory: AixChatGenerate_TextMessages;
+
+  progress: number;
+  outputText: string | null;
 }
 
 interface StepState {
-  ref: LLMChainStep;
-  output?: string;
-  isComplete: boolean;
+  def: LLMChainStep;
   isLast: boolean;
+  isComplete: boolean;
+  output?: string;
 }
 
-function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): ChainState {
+function _initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): ChainState {
   // max token allocation fo the job
   const llm = findLLMOrThrow(llmId);
 
@@ -188,39 +222,44 @@ function initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): Ch
     : null;
 
   return {
-    steps: steps.map((step, i) => ({
-      ref: step,
-      output: undefined,
-      isComplete: false,
-      isLast: i === steps.length - 1,
-    })),
-    chatHistory: [],
+    // consts
+    chainInputText: input,
     overrideResponseTokens,
     safeInputLength,
+
+    // each step state
+    stepStates: steps.map((step, i) => ({
+      def: step,
+      isLast: i === steps.length - 1,
+      isComplete: false,
+      output: undefined,
+    })),
+
+    // variables updated by the state machinery
+    lastSystemInstruction: null,
+    lastChatHistory: [],
+
+    // input/output
     progress: 0,
-    input: input,
-    output: null,
+    outputText: null,
   };
 }
 
-function updateChainState(chain: ChainState, history: VChatMessageIn[], stepIdx: number, output: string): ChainState {
-  const stepsCount = chain.steps.length;
+function _updateChainState_pure(chain: ChainState, stepIdx: number, stepSystemInstruction: string, stepChatHistory: AixChatGenerate_TextMessages, stepOutputText: string): ChainState {
+  const stepsCount = chain.stepStates.length;
   return {
     ...chain,
-    steps: chain.steps.map((step, i) =>
+    stepStates: chain.stepStates.map((step, i) =>
       (i === stepIdx) ? {
         ...step,
-        output: output,
+        // def // do not change
+        // isLast // do not change
         isComplete: true,
+        output: stepOutputText,
       } : step),
-    chatHistory: history,
+    lastSystemInstruction: stepSystemInstruction,
+    lastChatHistory: stepChatHistory,
     progress: Math.round(100 * (stepIdx + 1) / stepsCount) / 100,
-    output: (stepIdx === stepsCount - 1) ? output : null,
+    outputText: (stepIdx === stepsCount - 1) ? stepOutputText : null,
   };
-}
-
-function implodeText(text: string, maxLength: number | null) {
-  if (!maxLength || text.length <= maxLength) return text;
-  const halfLength = Math.floor(maxLength / 2);
-  return `${text.substring(0, halfLength)}\n...\n${text.substring(text.length - halfLength)}`;
 }

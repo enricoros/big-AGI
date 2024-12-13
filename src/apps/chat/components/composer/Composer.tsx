@@ -524,8 +524,10 @@ export function Composer(props: {
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
+        if (await handleSendAction('beam-content', composeText)) { // 'ctrl+enter' -> beam
           touchCtrlEnter();
+          e.stopPropagation();
+        }
         return e.preventDefault();
       }
 
@@ -664,9 +666,9 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
-  // stable randomization of the /verb, between '/draw', '/react', '/beam', '/browse'
+  // stable randomization of the /verb, between '/draw', '/react', '/browse'
   const placeholderAction = React.useMemo(() => {
-    const actions = ['/react', '/beam'];
+    const actions: string[] = ['/react'];
     if (props.capabilityHasT2I) actions.push('/draw');
     if (hasComposerBrowseCapability) actions.push('/browse');
     return actions[Math.floor(Math.random() * actions.length)];
@@ -838,7 +840,7 @@ export function Composer(props: {
                   )}
 
                   {!showChatInReferenceTo && tokenLimit > 0 && (
-                    <TokenBadgeMemo chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
+                    <TokenBadgeMemo hideBelowDollars={0.0001} chatPricing={tokenChatPricing} direct={tokensComposer} history={tokensHistory} responseMax={tokensResponseMax} limit={tokenLimit} showCost={labsShowCost} enableHover={!isMobile} showExcess absoluteBottomRight />
                   )}
 
                 </Box>

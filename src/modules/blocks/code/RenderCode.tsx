@@ -20,7 +20,7 @@ import { useUIPreferencesStore } from '~/common/state/store-ui';
 import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx, StyledOverlayButton } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
-import { RenderCodeSVG } from './code-renderers/RenderCodeSVG';
+import { heuristicIsSVGCode, RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
@@ -163,7 +163,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, code);
   renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
 
-  const isSVGCode = (code.startsWith('<svg') || code.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')) && code.endsWith('</svg>');
+  const isSVGCode = heuristicIsSVGCode(code);
   const renderSVG = isSVGCode && showSVG;
   const canScaleSVG = renderSVG && code.includes('viewBox="');
 
@@ -247,12 +247,17 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           </Sheet>
         )}
 
-        {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-        {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
-          : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
-            : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
-              : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} presenterMode={isFullscreen} />}
+        {/* NOTE: this 'div' is only here to avoid some sort of collapse of the RenderCodeSyntax,
+            which box disappears for some reason and the parent flex layout ends up lining up
+            chars in a non-proper way */}
+        <Box>
+          {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
+          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
+            : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
+              : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
+                : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
+                  : <RenderCodeSyntax highlightedSyntaxAsHtml={highlightedCode} presenterMode={isFullscreen} />}
+        </Box>
 
       </Box>
 

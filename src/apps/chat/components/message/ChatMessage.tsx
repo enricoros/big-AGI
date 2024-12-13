@@ -792,7 +792,7 @@ export function ChatMessage(props: {
       {/* Message Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
         <CloseableMenu
-          dense placement='bottom-end'
+          dense placement='auto-end'
           open={true} anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
           sx={{ minWidth: 280 }}
         >
@@ -960,7 +960,7 @@ export function ChatMessage(props: {
                 backgroundColor: 'background.popup',
                 border: '1px solid',
                 borderColor: 'primary.outlinedBorder',
-                boxShadow: '0px 4px 24px -4px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
+                boxShadow: '0px 4px 24px -8px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
                 mb: 1.5,
                 ml: -1.5,
                 alignItems: 'center',

@@ -1,23 +1,23 @@
-import { DChatGeneratePricing, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
+import { DPricingChatGenerate, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 
 /**
  * This is a stored type - IMPORTANT: do not break.
  * - stored by DMessage > DMessageGenerator
  */
-export type DChatGenerateMetricsMd =
-  Omit<ChatGenerateTokenMetrics, 'T'> &
-  ChatGenerateCostMetricsMd;
+export type DMetricsChatGenerate_Md =
+  Omit<MetricsChatGenerateTokens, 'T'> &
+  MetricsChatGenerateCost_Md;
 
 /**
  * In particular this is used 'as' AixWire_Particles.CGSelectMetrics
  */
-export type DChatGenerateMetricsLg =
-  ChatGenerateTokenMetrics &
-  ChatGenerateTimeMetrics &
-  ChatGenerateCostMetricsMd;
+export type DMetricsChatGenerate_Lg =
+  MetricsChatGenerateTokens &
+  MetricsChatGenerateTime &
+  MetricsChatGenerateCost_Md;
 
 
-type ChatGenerateTokenMetrics = {
+type MetricsChatGenerateTokens = {
   // T = Tokens
   T?: number,
   TIn?: number,         // Portion of Input tokens which is new (not cached)
@@ -34,7 +34,7 @@ type ChatGenerateTokenMetrics = {
 }
 
 
-type ChatGenerateTimeMetrics = {
+type MetricsChatGenerateTime = {
   // dt = milliseconds
   dtStart?: number,
   dtInner?: number,
@@ -46,7 +46,7 @@ type ChatGenerateTimeMetrics = {
 }
 
 
-export type ChatGenerateCostMetricsMd = {
+export type MetricsChatGenerateCost_Md = {
   // $c = Cents of USD - NOTE: we chose to use cents to reduce floating point errors
   $c?: number,
   $cdCache?: number,
@@ -61,12 +61,12 @@ export type ChatGenerateCostMetricsMd = {
 
 // ChatGenerate token metrics
 
-export function pendChatGenerateTokenMetrics(metrics: DChatGenerateMetricsLg | undefined): void {
+export function metricsPendChatGenerateLg(metrics: DMetricsChatGenerate_Lg | undefined): void {
   if (metrics)
     metrics.TsR = 'pending';
 }
 
-export function finishChatGenerateTokenMetrics(metrics: DChatGenerateMetricsLg | undefined, isAborted: boolean): void {
+export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | undefined, isAborted: boolean): void {
   if (!metrics) return;
 
   // remove the previous TsR if it was 'pending'
@@ -88,7 +88,7 @@ export function finishChatGenerateTokenMetrics(metrics: DChatGenerateMetricsLg |
 
 const USD_TO_CENTS = 100;
 
-export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetricsMd>, pricing?: DChatGeneratePricing | undefined, logLlmRefId?: string): ChatGenerateCostMetricsMd | undefined {
+export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsChatGenerate_Md>, pricing?: DPricingChatGenerate | undefined, logLlmRefId?: string): MetricsChatGenerateCost_Md | undefined {
   if (!metrics)
     return undefined;
 
@@ -186,9 +186,9 @@ export function computeChatGenerationCosts(metrics?: Readonly<DChatGenerateMetri
 
 // ChatGenerate extraction for DMessage's smaller metrics
 
-export function chatGenerateMetricsLgToMd(metrics: DChatGenerateMetricsLg): DChatGenerateMetricsMd {
-  const keys: (keyof DChatGenerateMetricsMd)[] = ['$c', '$cdCache', '$code', 'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', /*TOutA,*/ 'TsR'] as const;
-  const extracted: DChatGenerateMetricsMd = {};
+export function metricsChatGenerateLgToMd(metrics: DMetricsChatGenerate_Lg): DMetricsChatGenerate_Md {
+  const keys: (keyof DMetricsChatGenerate_Md)[] = ['$c', '$cdCache', '$code', 'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', /*TOutA,*/ 'TsR'] as const;
+  const extracted: DMetricsChatGenerate_Md = {};
 
   for (const key of keys) {
 
