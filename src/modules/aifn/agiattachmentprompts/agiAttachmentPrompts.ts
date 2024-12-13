@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
-import { aixCGR_FromDMessagesOrThrow, aixCGR_SystemMessage } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessageText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
@@ -41,11 +41,11 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
   });
 
   const aixChatGenerate: AixAPIChatGenerate_Request = {
-    systemMessage: aixCGR_SystemMessage(
+    systemMessage: aixCGR_SystemMessageText(
       `You are an AI assistant skilled in content analysis and task inference within a chat application. 
 Your function is to examine the attachments provided by the user, understand their nature and potential relationships, guess the user intention, and suggest the most likely and valuable actions the user intends to perform.
 Respond only by calling the propose_user_actions_for_attachments function.`),
-    chatSequence: (await aixCGR_FromDMessagesOrThrow([{
+    chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow([{
       role: 'user',
       fragments: [createTextContentFragment(`The user wants to perform an action for which is attaching ${docs_count} related pieces of content.
 Analyze the provided content to determine its nature, identify any relationships between the pieces, and infer the most probable high-value task or action the user wants to perform.`)],
@@ -55,7 +55,7 @@ Analyze the provided content to determine its nature, identify any relationships
     }, {
       role: 'user',
       fragments: [createTextContentFragment(`Call the function once, filling in order the attachments, the relationships between them, the top ${num_suggestions} orthogonal actions you inferred and the single most valuable action.`)],
-    }])).chatSequence,
+    }]),
     tools: [
       aixFunctionCallTool({
         name: 'propose_user_actions_for_attachments',
