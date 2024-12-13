@@ -69,7 +69,8 @@ export function usePersonaIdDropdown(conversationId: DConversationId | null, dro
   }, [conversationId]);
 
   const personaDropdown = React.useMemo(() => {
-      if (!systemPurposeId) return null;
+      // Note: commented the following as chats with 'null' personas are allowed, and this prevents the control from showing
+      // if (!systemPurposeId) return null;
       return (
         <PersonaDropdown
           dropdownRef={dropdownRef}
