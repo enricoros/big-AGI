@@ -2,6 +2,8 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 
+import { splitSystemMessageFromHistory } from '../../../apps/chat/editors/chat-persona';
+
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessageNoVoid, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
@@ -54,9 +56,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
     return { ...ray, scatterIssue: `Invalid conversation history (${inputHistory?.length})` };
 
   // split pre dynamic-personas
-  const scatterSystemInstruction = inputHistory[0].role === 'system' ? inputHistory[0] : null;
-  const scatterInputHistory = (scatterSystemInstruction ? inputHistory.slice(1) : inputHistory);
-  // .map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
+  const { chatSystemInstruction: scatterSystemInstruction, chatHistory: scatterInputHistory } = splitSystemMessageFromHistory(inputHistory);
 
 
   const abortController = new AbortController();
