@@ -182,7 +182,7 @@ function _fixSquashMultiPartText(chatMessages: TRequestMessages): TRequestMessag
 }*/
 
 
-function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | undefined, chatSequence: AixMessages_ChatMessage[], hotFixOpenAIO1Preview: boolean): TRequestMessages {
+function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], hotFixOpenAIO1Preview: boolean): TRequestMessages {
 
   // Transform the chat messages into OpenAI's format (an array of 'system', 'user', 'assistant', and 'tool' messages)
   const chatMessages: TRequestMessages = [];

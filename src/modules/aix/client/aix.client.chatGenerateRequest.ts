@@ -26,9 +26,9 @@ export type AixChatGenerate_TextMessages = {
   text: string;
 }[];
 
-export function aixCGR_FromSimpleText(systemInstruction: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
+export function aixCGR_FromSimpleText(systemInstruction: null | string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
   return {
-    systemMessage: aixCGR_SystemMessageText(systemInstruction),
+    systemMessage: systemInstruction === null ? null : aixCGR_SystemMessageText(systemInstruction),
     chatSequence: messages.map(m => {
       switch (m.role) {
         case 'user':
@@ -68,7 +68,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
 
   // quick bypass for no message
   if (!systemInstruction)
-    return undefined;
+    return null;
 
   // create the system instruction
   const sm: AixAPIChatGenerate_Request['systemMessage'] = {
@@ -259,8 +259,9 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
     return acc;
   }, Promise.resolve({
+    systemMessage: null,
     chatSequence: [],
-  } as Pick<AixAPIChatGenerate_Request, 'chatSequence'>) /* this is the key to the new version of this function which doesn't extract system messages anymore */);
+  } as Pick<AixAPIChatGenerate_Request, 'systemMessage' | 'chatSequence'>) /* this is the key to the new version of this function which doesn't extract system messages anymore */);
 
   // as promised we only return this as we only built this, and not the full CGR.
   return cgr.chatSequence;
@@ -331,11 +332,12 @@ export function clientHotFixGenerateRequestForO1Preview(aixChatGenerate: AixAPIC
       parts: aixChatGenerate.systemMessage.parts,
     };
 
-    // Insert the converted system message at the beginning of the chat sequence
+    // Insert the converted system message at the beginning of the chat sequence (recreating the array to not alter the original)
+    aixChatGenerate.chatSequence = [...aixChatGenerate.chatSequence];
     aixChatGenerate.chatSequence.unshift(systemAsUser);
 
     // Remove the original system message
-    delete aixChatGenerate.systemMessage;
+    aixChatGenerate.systemMessage = null;
   }
 
   // Note: other conversions that would translate to system inside the AIX Dispatch will be handled there, as we have a
