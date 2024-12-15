@@ -51,10 +51,10 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
       throw new Error('Invalid response role');
 
   const gatherSystemInstruction = createDMessageTextContent('system', _mixChatGeneratePrompt(_i.systemPrompt, inputs.rayMessages.length, prevStepOutput));
+  const chatMessagesWithoutSystem = inputs.chatMessages.filter(_m => (_m.role === 'user' || _m.role === 'assistant'));
   const gatherHistory: DMessage[] = [
-    // s0-h0-u0: remove the system messages
-    ...inputs.chatMessages
-      .filter(_m => (_m.role === 'user' || _m.role === 'assistant')),
+    // s0-h0-u0
+    ...chatMessagesWithoutSystem,
     // aN: every proposal is an assistant message
     // FIXME: there could be an issue with aix.dispatch fusion of assistant messages, and in the future, this should require a
     //        re-encoding or structuring of sorts, e.g.: .map(_m => ({ ..._m, metadata: { ..._m.metadata, asAttachment: true } }))

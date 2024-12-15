@@ -230,13 +230,13 @@ export function Telephone(props: {
 
     // Call Message Generation Prompt
     const callSystemInstruction = createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.');
+    const reMessagesRemapSysToUsr = (reMessages && reMessages?.length > 0)
+      ? reMessages.map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // (MUST: [0] is the system message of the original chat) cast system chat messages to the user role
+      : null;
     const callGenerationInputHistory: DMessage[] = [
       // Chat messages, including the system prompt which is casted to a user message
       // TODO: when upgrading to dynamic personas, we need to inject the persona message instead - not rely on reMessages, as messages[0] !== 'system'
-      ...((reMessages && reMessages?.length > 0)
-          ? reMessages.map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // (MUST: [0] is the system message of the original chat) cast system chat messages to the user role
-          : [createDMessageTextContent('user', personaSystemMessage)] // see TO-DO ^
-      ),
+      ...(reMessagesRemapSysToUsr ? reMessagesRemapSysToUsr : [createDMessageTextContent('user', personaSystemMessage)]),
       // Call system prompt 2, to indicate the call has started
       createDMessageTextContent('user', '**You are now on the phone call related to the chat above**.\nRespect your personality and answer with short, friendly and accurate thoughtful brief lines.'),
       // Call history
