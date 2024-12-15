@@ -175,7 +175,7 @@ interface AixChatGenerateText_Simple {
 export async function aixChatGenerateText_Simple(
   // [V1-like text-only API] text inputs -> string output
   llmId: DLLMId,
-  systemInstruction: string,
+  systemInstruction: null | string,
   aixTextMessages: AixChatGenerate_TextMessages | string, // if string, it's a single user message - maximum simplicity
   // aix inputs
   aixContextName: AixAPI_Context_ChatGenerate['name'],
