@@ -27,7 +27,7 @@ export function splitSystemMessageFromHistory(chatHistory: Readonly<DMessage[]>)
   chatSystemInstruction: DMessage | null,
   chatHistory: Readonly<DMessage[]>,
 } {
-  const chatSystemInstruction = chatHistory[0].role === 'system' ? chatHistory[0] : null;
+  const chatSystemInstruction = (chatHistory?.length && chatHistory[0].role === 'system') ? chatHistory[0] : null;
   return {
     chatSystemInstruction,
     chatHistory: (chatSystemInstruction ? chatHistory.slice(1) : chatHistory),
