@@ -720,7 +720,7 @@ export function Composer(props: {
         >
 
           {/* [Mobile: top, Desktop: left] */}
-          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
+          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'stretch' }}>
 
             {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
             {isMobile && (
@@ -762,7 +762,7 @@ export function Composer(props: {
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
             {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1 }}>
 
                 {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
                 {/*  Attach*/}
