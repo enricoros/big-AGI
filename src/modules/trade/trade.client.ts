@@ -5,7 +5,7 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
+import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
@@ -193,7 +193,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
   const mdTitle = exportTitle
     ? `# ${capitalizeFirstLetter(conversationTitle(conversation, Brand.Title.Common + ' Chat'))}\nA ${Brand.Title.Common} conversation, updated on ${(new Date(conversation.updated || conversation.created)).toLocaleString()}.\n\n`
     : '';
-  return mdTitle + conversation.messages.filter(message => !hideSystemMessage || message.role !== 'system').map(message => {
+  return mdTitle + excludeSystemMessages(conversation.messages, !hideSystemMessage).map(message => {
     let senderName: string = message.role === 'user' ? 'You' : 'Bot'; // from role
     let text = messageFragmentsReduceText(message.fragments);
     switch (message.role) {

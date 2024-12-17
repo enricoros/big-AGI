@@ -13,7 +13,7 @@ import { Brand } from '~/common/app.config';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { conversationTitle, DConversation } from '~/common/stores/chat/chat.conversation';
+import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { launchAppChat } from '~/common/app.routes';
 import { themeBgAppDarker } from '~/common/app.theme';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -36,7 +36,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
 
   // derived state
   const messages = props.conversation.messages;
-  const filteredMessages = messages.filter(m => m.role !== 'system' || showSystemMessages);
+  const filteredMessages = excludeSystemMessages(messages, showSystemMessages);
   const hasMessages = filteredMessages.length > 0;
 
   // Effect: Scroll to bottom of list when messages change

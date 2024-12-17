@@ -140,6 +140,14 @@ export function splitSystemMessageFromHistory(chatHistory: Readonly<DMessage[]>)
   return {
     chatSystemInstruction,
     chatHistory: chatSystemInstruction ? chatHistory.slice(1) : chatHistory,
-    // .map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
   };
+}
+
+export function excludeSystemMessages(messages: Readonly<DMessage[]>, showAll?: boolean): Readonly<DMessage[]> {
+  if (showAll) return messages;
+  return messages.filter(_m => _m.role !== 'system');
+}
+
+export function remapMessagesSysToUsr(messages: Readonly<DMessage[]> | null): DMessage[] {
+  return (messages || []).map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m); // (MUST: [0] is the system message of the original chat) cast system chat messages to the user role
 }

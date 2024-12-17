@@ -7,6 +7,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { hasSystemMessageInHistory } from '~/common/stores/chat/chat.conversation';
 
 import { BEAM_INVERT_BACKGROUND } from '../beam.config';
 import { useModuleBeamStore } from '../store-module-beam';
@@ -63,7 +64,7 @@ export function BeamScatterInput(props: {
 
   const lastHistoryMessage = props.history?.slice(-1)[0] || null;
 
-  const isFirstMessageSystem = props.history?.[0]?.role === 'system';
+  const isFirstMessageSystem = hasSystemMessageInHistory(props.history || []);
 
   const otherHistoryCount = Math.max(0, (props.history?.length || 0) - 1);
 
