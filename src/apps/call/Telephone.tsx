@@ -23,7 +23,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { Link } from '~/common/components/Link';
 import { OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
-import { conversationTitle } from '~/common/stores/chat/chat.conversation';
+import { conversationTitle, remapMessagesSysToUsr } from '~/common/stores/chat/chat.conversation';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment } from '~/common/stores/chat/chat.fragments';
 import { launchAppChat, navigateToIndex } from '~/common/app.routes';
@@ -230,9 +230,7 @@ export function Telephone(props: {
 
     // Call Message Generation Prompt
     const callSystemInstruction = createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.');
-    const reMessagesRemapSysToUsr = (reMessages && reMessages?.length > 0)
-      ? reMessages.map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // (MUST: [0] is the system message of the original chat) cast system chat messages to the user role
-      : null;
+    const reMessagesRemapSysToUsr = remapMessagesSysToUsr(reMessages);
     const callGenerationInputHistory: DMessage[] = [
       // Chat messages, including the system prompt which is casted to a user message
       // TODO: when upgrading to dynamic personas, we need to inject the persona message instead - not rely on reMessages, as messages[0] !== 'system'

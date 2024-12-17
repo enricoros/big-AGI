@@ -9,7 +9,7 @@ import type { SystemPurposeExample } from '../../../data';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP } from '~/common/stores/chat/chat.message';
@@ -295,8 +295,7 @@ export function ChatMessageList(props: {
 
   // no content: show the persona selector
 
-  const filteredMessages = conversationMessages
-    .filter(m => m.role !== 'system' || showSystemMessages); // hide the System message if the user choses to
+  const filteredMessages = excludeSystemMessages(conversationMessages, showSystemMessages);
 
 
   if (!filteredMessages.length)
