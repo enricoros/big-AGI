@@ -2,7 +2,7 @@ import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromCo
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
-import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DConversationId, splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
@@ -20,28 +20,6 @@ export const CHATGENERATE_RESPONSE_PLACEHOLDER = '...'; // 💫 ..., 🖊️ ...
 
 export interface PersonaProcessorInterface {
   handleMessage(accumulatedMessage: AixChatGenerateContent_DMessage, messageComplete: boolean): void;
-}
-
-
-export function hasSystemMessageInHistory(chatHistory: Readonly<DMessage[]>): boolean {
-  return !!chatHistory?.length && chatHistory[0].role === 'system';
-}
-
-export function isSystemMessageUserEdited(message: DMessage): boolean {
-  // make it explicit that '.updated' is the key to check for
-  return message.role === 'system' && !!message.updated;
-}
-
-export function splitSystemMessageFromHistory(chatHistory: Readonly<DMessage[]>): {
-  chatSystemInstruction: DMessage | null,
-  chatHistory: Readonly<DMessage[]>,
-} {
-  const chatSystemInstruction = hasSystemMessageInHistory(chatHistory) ? chatHistory[0] : null;
-  return {
-    chatSystemInstruction,
-    chatHistory: chatSystemInstruction ? chatHistory.slice(1) : chatHistory,
-    // .map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
-  };
 }
 
 

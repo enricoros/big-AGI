@@ -119,3 +119,27 @@ function getNextBranchTitle(currentTitle: string): string {
   } else
     return `(1) ${currentTitle}`;
 }
+
+
+// helpers - System Instruction
+
+export function hasSystemMessageInHistory(chatHistory: Readonly<DMessage[]>): boolean {
+  return !!chatHistory?.length && chatHistory[0].role === 'system';
+}
+
+export function isSystemMessageUserEdited(message: DMessage): boolean {
+  // make it explicit that '.updated' is the key to check for
+  return message.role === 'system' && !!message.updated;
+}
+
+export function splitSystemMessageFromHistory(chatHistory: Readonly<DMessage[]>): {
+  chatSystemInstruction: DMessage | null,
+  chatHistory: Readonly<DMessage[]>,
+} {
+  const chatSystemInstruction = hasSystemMessageInHistory(chatHistory) ? chatHistory[0] : null;
+  return {
+    chatSystemInstruction,
+    chatHistory: chatSystemInstruction ? chatHistory.slice(1) : chatHistory,
+    // .map(_m => _m.role === 'system' ? { ..._m, role: 'user' as const } : _m) // cast system chat messages to the user role
+  };
+}
