@@ -15,7 +15,7 @@ import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWi
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
-import { openAIModelFilter, openAIModelToModelDescription } from './models/openai.models';
+import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
@@ -36,18 +36,18 @@ export const openAIAccessSchema = z.object({
 });
 export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 
-export const openAIModelSchema = z.object({
-  id: z.string(),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).optional(),
-});
-export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
+// export const openAIModelSchema = z.object({
+//   id: z.string(),
+//   temperature: z.number().min(0).max(2).optional(),
+//   maxTokens: z.number().min(1).optional(),
+// });
+// export type OpenAIModelSchema = z.infer<typeof openAIModelSchema>;
 
-export const openAIHistorySchema = z.array(z.object({
-  role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
-  content: z.string(),
-}));
-export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
+// export const openAIHistorySchema = z.array(z.object({
+//   role: z.enum(['assistant', 'system', 'user'/*, 'function'*/]),
+//   content: z.string(),
+// }));
+// export type OpenAIHistorySchema = z.infer<typeof openAIHistorySchema>;
 
 
 // Router Input Schemas
@@ -189,47 +189,7 @@ export const llmOpenAIRouter = createTRPCRouter({
             .map((model): ModelDescriptionSchema => openAIModelToModelDescription(model.id, model.created))
 
             // custom OpenAI sort
-            .sort((a, b) => {
-
-              // fix the OpenAI model names to be chronologically sorted
-              function remapReleaseDate(id: string): string {
-                return id
-                  .replace('0314', '2023-03-14')
-                  .replace('0613', '2023-06-13')
-                  .replace('1106', '2023-11-06')
-                  .replace('0125', '2024-01-25');
-              }
-
-              // stuff with '[legacy]' at the bottom
-              const aLegacy = a.label.includes('[legacy]');
-              const bLegacy = b.label.includes('[legacy]');
-              if (aLegacy !== bLegacy)
-                return aLegacy ? 1 : -1;
-
-              // due to using by-label, sorting doesn't require special cases anymore
-              return remapReleaseDate(b.label).localeCompare(remapReleaseDate(a.label));
-
-              // move models with the link emoji (🔗) to the bottom
-              // const aLink = a.label.includes('🔗');
-              // const bLink = b.label.includes('🔗');
-              // if (aLink !== bLink)
-              //   return aLink ? 1 : -1;
-
-              // sort by model name
-              // return b.label.replace('🌟 ', '').localeCompare(a.label.replace('🌟 ', ''));
-
-              // sort by model ID~ish
-              // const aId = a.id.slice(0, 5);
-              // const bId = b.id.slice(0, 5);
-              // if (aId === bId) {
-              //   const aCount = a.id.split('-').length;
-              //   const bCount = b.id.split('-').length;
-              //   if (aCount === bCount)
-              //     return a.id.localeCompare(b.id);
-              //   return aCount - bCount;
-              // }
-              // return bId.localeCompare(aId);
-            });
+            .sort(openAISortModels);
           break;
 
         case 'openpipe':

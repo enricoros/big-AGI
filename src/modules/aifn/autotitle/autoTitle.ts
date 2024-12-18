@@ -1,5 +1,6 @@
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
+import { excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
@@ -32,7 +33,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   }
 
   // first line of the last 5 messages
-  const historyLines: string[] = conversation.messages.filter(m => m.role !== 'system').slice(-5).map(m => {
+  const historyLines: string[] = excludeSystemMessages(conversation.messages).slice(-5).map(m => {
     const messageText = messageFragmentsReduceText(m.fragments);
     let text = messageText.split('\n')[0];
     text = text.length > 100 ? text.substring(0, 100) + '...' : text;

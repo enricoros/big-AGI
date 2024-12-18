@@ -6,14 +6,16 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SettingsAccessibilityIcon from '@mui/icons-material/SettingsAccessibility';
 
 import { LLMChainStep, useLLMChain } from '~/modules/aifn/useLLMChain';
-import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
+import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
+import type { ContentScaling } from '~/common/app.theme';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { agiUuid } from '~/common/util/idUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFormEditTextArray } from '~/common/components/forms/useFormEditTextArray';
 import { useLLMSelect, useLLMSelectLocalState } from '~/common/components/forms/useLLMSelect';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { FromText } from './FromText';
 import { FromYouTube } from './FromYouTube';
@@ -47,24 +49,27 @@ function createChain(instructions: string[], titles: string[]): LLMChainStep[] {
     {
       name: titles[1],
       setSystem: instructions[0],
-      addUserInput: true,
-      addUser: instructions[1],
+      addUserChainInput: true,
+      addUserText: instructions[1],
     },
     {
       name: titles[2],
-      addPrevAssistant: true,
-      addUser: instructions[2],
+      addModelPrevOutput: true,
+      addUserText: instructions[2],
     },
     {
       name: titles[3],
-      addPrevAssistant: true,
-      addUser: instructions[3],
+      addModelPrevOutput: true,
+      addUserText: instructions[3],
     },
   ];
 }
 
 
-export const PersonaPromptCard = (props: { content: string }) =>
+export const PersonaPromptCard = (props: {
+  content: string,
+  contentScaling: ContentScaling,
+}) =>
   <Card sx={{ boxShadow: 'md', mt: 3 }}>
 
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -82,7 +87,11 @@ export const PersonaPromptCard = (props: { content: string }) =>
       <Alert variant='soft' color='success' sx={{ mb: 1 }}>
         You may now copy the text below and use it as Custom prompt!
       </Alert>
-      <RenderMarkdownMemo content={props.content} />
+      <ScaledTextBlockRenderer
+        text={props.content}
+        contentScaling={props.contentScaling}
+        textRenderVariant='markdown'
+      />
     </CardContent>
   </Card>;
 
@@ -97,6 +106,7 @@ export function Creator(props: { display: boolean }) {
   const [showIntermediates, setShowIntermediates] = React.useState(false);
 
   // external state
+  const contentScaling = useUIContentScaling();
   const [personaLlmId, setPersonaLlmId] = useLLMSelectLocalState(true);
   const [personaLlm, llmComponent] = useLLMSelect(personaLlmId, setPersonaLlmId, 'Persona Creation Model');
 
@@ -127,11 +137,18 @@ export function Creator(props: { display: boolean }) {
     chainIntermediates,
     chainStepName,
     chainStepInterimChars,
-    chainOutput,
-    chainError,
+    chainOutputText,
+    chainErrorMessage,
     userCancelChain,
     restartChain,
-  } = useLLMChain(creationChainSteps, personaLlm?.id, chainInputText ?? undefined, savePersona, 'persona-extract', chainId);
+  } = useLLMChain(
+    creationChainSteps,
+    personaLlm?.id,
+    chainInputText ?? undefined,
+    savePersona,
+    'persona-extract',
+    chainId,
+  );
 
 
   // Reset the relevant state when the selected tab changes
@@ -141,7 +158,7 @@ export function Creator(props: { display: boolean }) {
 
 
   // [debug] Restart the chain when complete after a delay
-  const debugRestart = !!CONTINUE_DELAY && !isTransforming && (chainProgress === 1 || !!chainError);
+  const debugRestart = !!CONTINUE_DELAY && !isTransforming && (chainProgress === 1 || !!chainErrorMessage);
   React.useEffect(() => {
     if (debugRestart) {
       const timeout = setTimeout(restartChain, CONTINUE_DELAY);
@@ -263,15 +280,18 @@ export function Creator(props: { display: boolean }) {
 
 
     {/* Errors */}
-    {!!chainError && (
+    {!!chainErrorMessage && (
       <Alert color='warning' sx={{ mt: 1 }}>
-        <Typography component='div'>{chainError}</Typography>
+        <Typography component='div'>{chainErrorMessage}</Typography>
       </Alert>
     )}
 
     {/* The Persona (Output) */}
-    {chainOutput && <>
-      <PersonaPromptCard content={chainOutput} />
+    {chainOutputText && <>
+      <PersonaPromptCard
+        content={chainOutputText}
+        contentScaling={contentScaling}
+      />
     </>}
 
 

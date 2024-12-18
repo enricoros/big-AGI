@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, IconButton, Tooltip } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 
 import { CameraCaptureModal } from '../CameraCaptureModal';
 
@@ -22,7 +23,7 @@ function ButtonAttachCamera(props: { isMobile?: boolean, onOpenCamera: () => voi
     </IconButton>
   ) : (
     <Tooltip disableInteractive variant='solid' placement='top-start' title={attachCameraLegend(!!props.isMobile)}>
-      <Button fullWidth variant='plain' color='neutral' onClick={props.onOpenCamera} startDecorator={<AddAPhotoIcon />}
+      <Button fullWidth variant='plain' color='neutral' onClick={props.onOpenCamera} startDecorator={<CameraAltOutlinedIcon />}
               sx={{ justifyContent: 'flex-start' }}>
         Camera
       </Button>

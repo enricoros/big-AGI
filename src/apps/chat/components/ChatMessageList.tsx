@@ -9,8 +9,7 @@ import type { SystemPurposeExample } from '../../../data';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { InlineError } from '~/common/components/InlineError';
+import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP } from '~/common/stores/chat/chat.message';
@@ -23,6 +22,7 @@ import { useCapabilityElevenLabs } from '~/common/components/useCapabilities';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
+import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
 import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
@@ -47,6 +47,7 @@ export function ChatMessageList(props: {
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string, addSplitPane: boolean) => void,
   onConversationExecuteHistory: (conversationId: DConversationId) => Promise<void>,
+  onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
   onTextDiagram: (diagramConfig: DiagramConfig | null) => void,
   onTextImagine: (conversationId: DConversationId, selectedText: string) => Promise<void>,
   onTextSpeak: (selectedText: string) => Promise<void>,
@@ -287,18 +288,20 @@ export function ChatMessageList(props: {
   }), [props.sx]);
 
 
+  // no conversation: sine qua non
+  if (!conversationId)
+    return <CMLZeroConversation onConversationNew={props.onConversationNew} />;
+
+
   // no content: show the persona selector
 
-  const filteredMessages = conversationMessages
-    .filter(m => m.role !== 'system' || showSystemMessages); // hide the System message if the user choses to
+  const filteredMessages = excludeSystemMessages(conversationMessages, showSystemMessages);
 
 
   if (!filteredMessages.length)
     return (
       <Box sx={{ ...props.sx }}>
-        {conversationId
-          ? <PersonaSelector conversationId={conversationId} isMobile={props.isMobile} runExample={handleRunExample} />
-          : <InlineError severity='info' error='Select a conversation' sx={{ m: 2 }} />}
+        <PersonaSelector conversationId={conversationId} isMobile={props.isMobile} runExample={handleRunExample} />
       </Box>
     );
 

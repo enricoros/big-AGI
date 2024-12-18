@@ -16,7 +16,7 @@ export function processPromptTemplate(
   template: string,
   variables: Record<string, string | boolean>,
   templateName: string
-) {
+): string {
 
   // match ternary expressions and simple variables
   const regex = /{{\s*(\w+)\s*\?\s*'(.*?)'\s*:\s*'(.*?)'\s*}}|{{\s*(\w+)\s*}}/g;

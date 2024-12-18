@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button } from '@mui/joy';
+import { Button, FormControl, Typography } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -15,6 +15,7 @@ import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOllama } from './ollama.vendor';
 import { OllamaAdministration } from './OllamaAdministration';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 
 export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
@@ -58,6 +59,14 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
         refetch();
       }}
     />
+
+    <FormControl orientation='horizontal'>
+      <FormLabelStart title='Image Input' description='Information' />
+      <Typography level='body-xs'>
+        Images are well supported (e.g. try Llama3.2-vision). However only the PNG format is accepted by the Ollama API.
+        For attachments, use the &quot;Original&quot; format option.
+      </Typography>
+    </FormControl>
 
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}

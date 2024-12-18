@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 
 //
-// Implementation notes:
+// Implementation notes (see https://platform.openai.com/docs/changelog for upstream changes):
+// - 2024-11-05: "Predicted Outputs" - not fully added yet - TBA
+// - 2024-10-17: "gpt-4o-audio-preview" - not fully added: "Audio inputs and outputs are now available in the Chat Completions API" - TBA
 // - 2024-10-01: "DevDay" - added prompt_tokens_details, audio_tokens, and refusal messages
 // - 2024-09-12: "o1" - max_tokens is deprecated in favor of max_completion_tokens, added completion_tokens_details
 // - 2024-08-06: "Structured Outputs" - added JSON Schema and strict schema adherence
@@ -313,6 +315,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     completion_tokens_details: z.object({
       reasoning_tokens: z.number(),
       audio_tokens: z.number().optional(), // [OpenAI, 2024-10-01] audio tokens used in the completion (charged at a different rate)
+      accepted_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
+      rejected_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
     }).optional(), // not present in other APIs yet
   }).nullable();
 

@@ -49,8 +49,9 @@ import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ActileItem } from './actile/ActileProvider';
+import { providerAttachmentLabels } from './actile/providerAttachmentLabels';
 import { providerCommands } from './actile/providerCommands';
-import { providerStarredMessage, StarredMessageItem } from './actile/providerStarredMessage';
+import { providerStarredMessages, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -457,24 +458,21 @@ export function Composer(props: {
 
   // Actiles
 
-  const onActileCommandPaste = React.useCallback((item: ActileItem) => {
+  const onActileCommandPaste = React.useCallback(({ label }: ActileItem, searchPrefix: string) => {
     if (composerTextAreaRef.current) {
       const textArea = composerTextAreaRef.current;
       const currentText = textArea.value;
       const cursorPos = textArea.selectionStart;
 
       // Find the position where the command starts
-      const commandStart = currentText.lastIndexOf('/', cursorPos);
+      const commandStart = currentText.lastIndexOf(searchPrefix, cursorPos);
 
       // Construct the new text with the autocompleted command
-      const newText = currentText.substring(0, commandStart) + item.label + ' ' + currentText.substring(cursorPos);
+      setComposeText((prevText) => prevText.substring(0, commandStart) + label + ' ' + prevText.substring(cursorPos));
 
-      // Update the text area with the new text
-      setComposeText(newText);
-
-      // Move the cursor to the end of the autocompleted command
-      const newCursorPos = commandStart + item.label.length + 1;
-      textArea.setSelectionRange(newCursorPos, newCursorPos);
+      // Schedule setting the cursor position after the state update
+      const newCursorPos = commandStart + label.length + 1;
+      setTimeout(() => composerTextAreaRef.current?.setSelectionRange(newCursorPos, newCursorPos), 0);
     }
   }, [composerTextAreaRef, setComposeText]);
 
@@ -493,9 +491,12 @@ export function Composer(props: {
     }
   }, [attachAppendEgoFragments]);
 
-  const actileProviders = React.useMemo(() => {
-    return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileEmbedMessage)];
-  }, [onActileCommandPaste, onActileEmbedMessage]);
+
+  const actileProviders = React.useMemo(() => [
+    providerAttachmentLabels(conversationOverlayStore, onActileCommandPaste),
+    providerCommands(onActileCommandPaste),
+    providerStarredMessages(onActileEmbedMessage),
+  ], [conversationOverlayStore, onActileCommandPaste, onActileEmbedMessage]);
 
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, composerTextAreaRef);
 
@@ -666,9 +667,9 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
-  // stable randomization of the /verb, between '/draw', '/react', '/beam', '/browse'
+  // stable randomization of the /verb, between '/draw', '/react', '/browse'
   const placeholderAction = React.useMemo(() => {
-    const actions = ['/react', '/beam'];
+    const actions: string[] = ['/react'];
     if (props.capabilityHasT2I) actions.push('/draw');
     if (hasComposerBrowseCapability) actions.push('/browse');
     return actions[Math.floor(Math.random() * actions.length)];
@@ -719,7 +720,7 @@ export function Composer(props: {
         >
 
           {/* [Mobile: top, Desktop: left] */}
-          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
+          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'stretch' }}>
 
             {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
             {isMobile && (
@@ -761,7 +762,7 @@ export function Composer(props: {
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
             {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1 }}>
 
                 {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
                 {/*  Attach*/}

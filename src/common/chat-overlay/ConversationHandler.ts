@@ -97,7 +97,7 @@ export class ConversationHandler {
       }
 
       // when enabled: set the auto flag on the last two user messages
-      const isSystemInstruction = history[i].role === 'system' && i === 0;
+      const isSystemInstruction = i === 0 && history[i].role === 'system';
       if (!isSystemInstruction && history[i].role !== 'user')
         continue;
 

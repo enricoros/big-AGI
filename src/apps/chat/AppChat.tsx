@@ -444,7 +444,11 @@ export function AppChat() {
     , [barAltTitle, beamOpenStoreInFocusedPane, focusedPaneConversationId, isMobile],
   );
 
-  const drawerContent = React.useMemo(() =>
+
+  // Disabled by default, as it lags the opening of the drawer and immediatly vanishes during the closing animation
+  const isDrawerOpen = true; // useOptimaDrawerOpen();
+
+  const drawerContent = React.useMemo(() => !isDrawerOpen ? null :
       <ChatDrawerMemo
         // isMobile={isMobile /* expensive as it undoes the memo; not passed anymore */}
         activeConversationId={focusedPaneConversationId}
@@ -459,7 +463,7 @@ export function AppChat() {
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, paneUniqueConversationIds],
+    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, paneUniqueConversationIds],
   );
 
   const focusedMenuItems = React.useMemo(() =>
@@ -635,6 +639,7 @@ export function AppChat() {
                   setIsMessageSelectionMode={setIsMessageSelectionMode}
                   onConversationBranch={handleConversationBranch}
                   onConversationExecuteHistory={handleConversationExecuteHistory}
+                  onConversationNew={handleConversationNewInFocusedPane}
                   onTextDiagram={handleTextDiagram}
                   onTextImagine={handleImagineFromText}
                   onTextSpeak={handleTextSpeak}
