@@ -9,6 +9,21 @@ export const geminiModelsStreamGenerateContentPath = '/v1beta/{model=models/*}:s
 
 
 // models.list = /v1beta/models
+const Methods_enum = z.enum([
+  'bidiGenerateContent', // appeared on 2024-12, see https://github.com/enricoros/big-AGI/issues/700
+  'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
+  'countMessageTokens',
+  'countTextTokens',
+  'countTokens',
+  'createTunedModel',
+  'createTunedTextModel',
+  'embedContent',
+  'embedText',
+  'generateAnswer',
+  'generateContent',
+  'generateMessage',
+  'generateText',
+]);
 
 const geminiModelSchema = z.object({
   name: z.string(),
@@ -17,20 +32,7 @@ const geminiModelSchema = z.object({
   description: z.string(),
   inputTokenLimit: z.number().int().min(1),
   outputTokenLimit: z.number().int().min(1),
-  supportedGenerationMethods: z.array(z.enum([
-    'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
-    'countMessageTokens',
-    'countTextTokens',
-    'countTokens',
-    'createTunedModel',
-    'createTunedTextModel',
-    'embedContent',
-    'embedText',
-    'generateAnswer',
-    'generateContent',
-    'generateMessage',
-    'generateText',
-  ])),
+  supportedGenerationMethods: z.array(z.union([Methods_enum, z.string()])), // relaxed with z.union to not break on expansion
   temperature: z.number().optional(),
   topP: z.number().optional(),
   topK: z.number().optional(),
