@@ -5,7 +5,7 @@ import { Box, ListDivider, Typography } from '@mui/joy';
 
 export function OptimaAppPageHeading(props: {
   title: React.ReactNode;
-  tagline: React.ReactNode;
+  tagline?: React.ReactNode;
   accentedTagline?: boolean;
   startDecorator?: React.ReactNode;
   noDivider?: boolean;
