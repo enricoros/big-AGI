@@ -503,6 +503,7 @@ export namespace GeminiWire_API_Models_List {
   export const getPath = '/v1beta/models?pageSize=1000';
 
   const Methods_enum = z.enum([
+    'bidiGenerateContent', // appeared on 2024-12, see https://github.com/enricoros/big-AGI/issues/700
     'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
     'countMessageTokens',
     'countTextTokens',
