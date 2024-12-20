@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -154,6 +154,33 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true,
   },
 
+  // o1
+  {
+    idPrefix: 'o1',
+    label: 'o1',
+    description: 'Points to the most recent snapshot of the o1 model: o1-2024-12-17',
+    symLink: 'o1-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoStream],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1335 + 1 },
+  },
+  {
+    idPrefix: 'o1-2024-12-17',
+    label: 'o1 (2024-12-17)',
+    description: 'Latest o1 model.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoStream],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1335 + 1 },
+  },
+
   // o1-preview
   {
     idPrefix: 'o1-preview',
@@ -165,9 +192,9 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1339 },
+    benchmark: { cbaElo: 1335 },
     isPreview: true,
   },
   {
@@ -177,9 +204,9 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1339 },
+    benchmark: { cbaElo: 1335 },
     isPreview: true,
   },
 
@@ -194,7 +221,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 3, cache: { cType: 'oai-ac', read: 1.5 }, output: 12 },
     benchmark: { cbaElo: 1314 },
     isPreview: true,
@@ -206,7 +233,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 3, cache: { cType: 'oai-ac', read: 1.5 }, output: 12 },
     benchmark: { cbaElo: 1314 },
     isPreview: true,
@@ -460,7 +487,7 @@ const openAIModelsDenyList: string[] = [
   'dall-e-3', 'dall-e-2',
 
   // Moderation models
-  'omni-moderation-latest', 'omni-moderation-2024-09-26'
+  'omni-moderation-latest', 'omni-moderation-2024-09-26',
 ];
 
 export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
