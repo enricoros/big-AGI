@@ -56,7 +56,7 @@ function _createEventSourceDemuxer(): StreamDemuxer {
     },
     onComment: (comment: string) => {
       if (process.env.NODE_ENV === 'development')
-        console.log('stream.demuxers: parser comment (safe to ignore):', comment);
+        console.log('[DEV] stream.demuxers: parser comment (safe to ignore):', comment);
     },
   });
 
