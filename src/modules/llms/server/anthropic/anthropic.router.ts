@@ -4,9 +4,10 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { fixupHost } from '~/common/util/urlUtils';
 
-import { ListModelsResponse_schema } from '../llm.server.types';
+import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 
 import { hardcodedAnthropicModels } from './anthropic.models';
 
@@ -29,10 +30,15 @@ const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
 // Mappers
 
-async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = anthropicAccess(access, apiPath);
-  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Anthropic' });
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic' });
 }
+
+// async function anthropicPOST<TOut extends object, TPostBody extends object>(access: AnthropicAccessSchema, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+//   const { headers, url } = anthropicAccess(access, apiPath);
+//   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Anthropic' });
+// }
 
 export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
@@ -93,6 +99,82 @@ export const llmAnthropicRouter = createTRPCRouter({
   listModels: publicProcedure
     .input(listModelsInputSchema)
     .output(ListModelsResponse_schema)
-    .query(() => ({ models: hardcodedAnthropicModels })),
+    .query(async ({ input: { access } }) => {
+
+      // get the models
+      const wireModels = await anthropicGETOrThrow(access, '/v1/models?limit=1000');
+      const { data: availableModels } = AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
+
+      // cast the models to the common schema
+      const models = availableModels.map((model): ModelDescriptionSchema => {
+
+        // use an hardcoded model definition if available
+        const hardcodedModel = hardcodedAnthropicModels.find(m => m.id === model.id);
+        if (hardcodedModel)
+          return hardcodedModel;
+
+        // for day-0 support of new models, create a placeholder model using sensible defaults
+        const novelModel = _createPlaceholderModel(model);
+        console.log('[DEV] anthropic.router: new model found, please configure it:', novelModel.id);
+        return novelModel;
+      });
+
+      // developers warning for obsoleted models
+      const apiModelIds = new Set(availableModels.map(m => m.id));
+      const additionalModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
+      if (additionalModels.length > 0)
+        console.log('[DEV] anthropic.router: obsoleted models:', additionalModels.map(m => m.id).join(', '));
+      // additionalModels.forEach(m => {
+      //   m.label += ' (Removed)';
+      //   m.isLegacy = true;
+      // });
+      // models.push(...additionalModels);
+
+      return { models };
+    }),
 
 });
+
+
+/**
+ * Create a placeholder ModelDescriptionSchema for models not in the hardcoded list,
+ * using sensible defaults with the newest available interfaces.
+ */
+function _createPlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
+  return {
+    id: model.id,
+    label: model.display_name,
+    created: Math.round(new Date(model.created_at).getTime() / 1000),
+    description: 'Newest model, description not available yet.',
+    contextWindow: 200000,
+    maxCompletionTokens: 8192,
+    trainingDataCutoff: 'Latest',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
+    // chatPrice: ...
+    // benchmark: ...
+  };
+}
+
+/**
+ * Namespace for the Anthropic API Models List response schema.
+ * NOTE: not merged into AIX because of possible circular dependency issues - future work.
+ */
+namespace AnthropicWire_API_Models_List {
+
+  export type ModelObject = z.infer<typeof ModelObject_schema>;
+  const ModelObject_schema = z.object({
+    type: z.literal('model'),
+    id: z.string(),
+    display_name: z.string(),
+    created_at: z.string(),
+  });
+
+  export type Response = z.infer<typeof Response_schema>;
+  export const Response_schema = z.object({
+    data: z.array(ModelObject_schema),
+    has_more: z.boolean(),
+    first_id: z.string().nullable(),
+    last_id: z.string().nullable(),
+  });
+
+}
