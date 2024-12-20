@@ -1,7 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
-import { DLLM, DLLMId, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
 import { apiStream } from '~/common/util/trpc.client';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, isErrorPart } from '~/common/stores/chat/chat.fragments';
@@ -13,7 +13,7 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
 
-import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequestForO1Preview } from './aix.client.chatGenerateRequest';
+import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
 import { ThrottleFunctionCall } from './ThrottleFunctionCall';
 
@@ -203,13 +203,13 @@ export async function aixChatGenerateText_Simple(
   const aixContext = aixCreateChatGenerateContext(aixContextName, aixContextRef);
 
   // Aix Streaming - implicit if the callback is provided
-  const aixStreaming = !!onTextStreamUpdate;
+  let aixStreaming = !!onTextStreamUpdate;
 
 
-  // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
-  const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
-  if (isO1Preview)
-    clientHotFixGenerateRequestForO1Preview(aixChatGenerate);
+  // Client-side late stage model HotFixes
+  const { shallDisableStreaming } = clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llm.options?.llmRef || llm.id);
+  if (shallDisableStreaming)
+    aixStreaming = false;
 
 
   // Variable to store the final text
@@ -366,10 +366,11 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   // Aix Model
   const aixModel = aixCreateModelFromLLMOptions(llm.options, clientOptions?.llmOptionsOverride, llmId);
 
-  // [OpenAI] Apply the hot fix for O1 Preview models; however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
-  const isO1Preview = llm.interfaces.includes(LLM_IF_SPECIAL_OAI_O1Preview);
-  if (isO1Preview)
-    clientHotFixGenerateRequestForO1Preview(aixChatGenerate);
+  // Client-side late stage model HotFixes
+  const { shallDisableStreaming } = clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llm.options?.llmRef || llm.id);
+  if (shallDisableStreaming)
+    aixStreaming = false;
+
 
   // [OpenAI-only] check for harmful content with the free 'moderation' API, if the user requests so
   // if (aixAccess.dialect === 'openai' && aixAccess.moderationCheck) {
