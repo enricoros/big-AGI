@@ -185,7 +185,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
       </Box>}
 
       {/* Appender */}
-      {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ mt: 0 }} />}
+      {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ my: 0 }} />}
       {props.appendOption}
       {/*{!!props.appendOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}*/}
 
