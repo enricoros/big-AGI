@@ -115,17 +115,4 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     hidden: true,
     isLegacy: true,
   },
-  {
-    id: 'claude-instant-1.2',
-    label: 'Claude Instant 1.2',
-    created: roundTime('2023-08-09'),
-    description: 'Our cheapest small and fast model, a predecessor of Claude Haiku',
-    contextWindow: 100000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Early 2023',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.8, output: 2.4 },
-    hidden: true,
-    isLegacy: true,
-  },
 ];
