@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLMS_ALL_INTERFACES } from '~/common/stores/llms/llms.types';
 
 
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
@@ -11,23 +11,6 @@ export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
  * Note: this needs to be moved to the AixWire_API_ListModels namespace
  * HOWEVER if we did it now there will be some circular dependency issue
  */
-
-/// Interfaces
-
-// TODO: just remove this, and move to a capabilities array (I/O/...)
-// FIXME: keep this in sync with the client side on llms.types.ts
-const Interface_enum = z.enum([
-  LLM_IF_OAI_Chat,              // OpenAI Chat
-  LLM_IF_OAI_Fn,                // JSON mode?
-  LLM_IF_OAI_Vision,            // Vision mode?
-  LLM_IF_OAI_Json,              // Function calling
-  LLM_IF_OAI_Complete,          // Complete mode
-  LLM_IF_ANT_PromptCaching,     // Anthropic Prompt caching
-  LLM_IF_SPECIAL_OAI_O1Preview, // Special OAI O1 Preview
-  LLM_IF_OAI_PromptCaching,     // OpenAI Prompt caching
-  LLM_IF_OAI_Realtime,          // OpenAI Realtime
-  LLM_IF_GEM_CodeExecution,     // Gemini Code Execution
-]);
 
 
 /// Benchmark
@@ -87,7 +70,7 @@ export const ModelDescription_schema = z.object({
   updated: z.number().optional(),
   description: z.string(),
   contextWindow: z.number().nullable(),
-  interfaces: z.array(Interface_enum),
+  interfaces: z.array(z.enum(LLMS_ALL_INTERFACES)),
   maxCompletionTokens: z.number().optional(),
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),
