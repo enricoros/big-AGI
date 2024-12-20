@@ -50,30 +50,54 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
 // do not change anything below! those will be persisted in data
 export type DModelInterfaceV1 =
   | 'oai-chat'
+  | 'oai-chat-fn'
   | 'oai-chat-json'
   | 'oai-chat-vision'
-  | 'oai-chat-fn'
+  | 'oai-chat-reasoning'
   | 'oai-complete'
   | 'ant-prompt-caching'
-  | 'oai-o1-preview'
   | 'oai-prompt-caching'
   | 'oai-realtime'
   | 'gem-code-execution'
+  | 'hotfix-no-stream'         // disable streaming for o1-preview (old) and o1 (20241217)
+  | 'hotfix-strip-images'      // strip images from the input
+  | 'hotfix-sys0-to-usr0'      // cast sys0 to usr0
   ;
 
 // Model interfaces (chat, and function calls) - here as a preview, will be used more broadly in the future
 // FIXME: keep this in sync with the server side on modules/llms/server/llm.server.types.ts
 export const LLM_IF_OAI_Chat: DModelInterfaceV1 = 'oai-chat';
+export const LLM_IF_OAI_Fn: DModelInterfaceV1 = 'oai-chat-fn';
 export const LLM_IF_OAI_Json: DModelInterfaceV1 = 'oai-chat-json';
 // export const LLM_IF_OAI_JsonSchema: ... future?
 export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
-export const LLM_IF_OAI_Fn: DModelInterfaceV1 = 'oai-chat-fn';
+export const LLM_IF_OAI_Reasoning: DModelInterfaceV1 = 'oai-chat-reasoning';
 export const LLM_IF_OAI_Complete: DModelInterfaceV1 = 'oai-complete';
 export const LLM_IF_ANT_PromptCaching: DModelInterfaceV1 = 'ant-prompt-caching';
-export const LLM_IF_SPECIAL_OAI_O1Preview: DModelInterfaceV1 = 'oai-o1-preview';
 export const LLM_IF_OAI_PromptCaching: DModelInterfaceV1 = 'oai-prompt-caching';
 export const LLM_IF_OAI_Realtime: DModelInterfaceV1 = 'oai-realtime';
 export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
+export const LLM_IF_HOTFIX_NoStream: DModelInterfaceV1 = 'hotfix-no-stream';
+export const LLM_IF_HOTFIX_StripImages: DModelInterfaceV1 = 'hotfix-strip-images';
+export const LLM_IF_HOTFIX_Sys0ToUsr0: DModelInterfaceV1 = 'hotfix-sys0-to-usr0';
+
+// TODO: just remove this, and move to a capabilities array (I/O/...)
+// FIXME: keep this in sync with the client side on llms.types.ts
+export const LLMS_ALL_INTERFACES = [
+  LLM_IF_OAI_Chat,
+  LLM_IF_OAI_Fn,
+  LLM_IF_OAI_Json,
+  LLM_IF_OAI_Vision,
+  LLM_IF_OAI_Reasoning,
+  LLM_IF_OAI_Complete,
+  LLM_IF_ANT_PromptCaching,
+  LLM_IF_OAI_PromptCaching,
+  LLM_IF_OAI_Realtime,
+  LLM_IF_GEM_CodeExecution,
+  LLM_IF_HOTFIX_NoStream,
+  LLM_IF_HOTFIX_StripImages,
+  LLM_IF_HOTFIX_Sys0ToUsr0,
+] as const;
 
 // Future changes?
 // export type DModelPartKind = 'text' | 'image' | 'audio' | 'video' | 'pdf';
