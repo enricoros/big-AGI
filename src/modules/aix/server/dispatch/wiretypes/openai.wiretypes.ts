@@ -89,6 +89,13 @@ export namespace OpenAIWire_Messages {
     // name: _optionalParticipantName,
   });
 
+  const OpenAI_DeveloperMessage_schema = z.object({
+    // [OpenAI, 2024-12-17] The developer message
+    role: z.literal('developer'),
+    content: z.string(), // Note: content could be an unspecified 'array' according to the docs, but we constrain it to string here
+    // name: _optionalParticipantName,
+  });
+
   const UserMessage_schema = z.object({
     role: z.literal('user'),
     content: z.union([z.string(), z.array(OpenAIWire_ContentParts.ContentPart_schema)]),
@@ -128,6 +135,7 @@ export namespace OpenAIWire_Messages {
 
   export const Message_schema = z.discriminatedUnion('role', [
     SystemMessage_schema,
+    OpenAI_DeveloperMessage_schema,
     UserMessage_schema,
     AssistantMessage_schema,
     ToolMessage_schema,
