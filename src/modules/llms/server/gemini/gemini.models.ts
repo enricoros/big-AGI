@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -24,6 +24,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   'models/gemini-1.5-flash-exp-0827',
   'models/gemini-1.5-pro-exp-0827',
   'models/gemini-exp-1114',
+  'models/gemini-exp-1121',
 ];
 
 
@@ -70,6 +71,7 @@ const gemini10ProPricing: ModelDescriptionSchema['chatPrice'] = {
 
 const _knownGeminiModels: ({
   id: string,
+  labelOverride?: string,
   isNewest?: boolean,
   isPreview?: boolean,
   symLink?: string,
@@ -98,6 +100,24 @@ const _knownGeminiModels: ({
 
 
   /// Generation 2.0
+
+  // Gemini 2.0 Flash Thinking models
+  {
+    id: 'models/gemini-2.0-flash-thinking-exp',
+    symLink: 'models/gemini-2.0-flash-thinking-exp-1219',
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    benchmark: { cbaElo: 1369 },
+  },
+  {
+    id: 'models/gemini-2.0-flash-thinking-exp-1219',
+    labelOverride: 'Gemini 2.0 Flash Thinking Experimental 1219',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    benchmark: { cbaElo: 1369 },
+  },
+
 
   // Gemini 2.0 Flash models
   {
@@ -309,7 +329,8 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   // handle symlinks
   let label = knownModel?.symLink
     ? `🔗 ${displayName.replace('1.0', '')} → ${knownModel.symLink}`
-    : displayName;
+    : knownModel?.labelOverride ? knownModel.labelOverride
+      : displayName;
 
   // FIX: the Gemini 1114 model now returns 1121 as the version.. highlight the issue
   if (geminiModel.name.endsWith('1114') && label.endsWith('1121'))
