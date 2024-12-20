@@ -22,6 +22,7 @@ const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGene
 const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   // name of models that are not what they say they are (e.g. 1114 is actually 1121 as of 2024-12-10)
   'models/gemini-1.5-flash-exp-0827',
+  'models/gemini-1.5-pro-exp-0801',
   'models/gemini-1.5-pro-exp-0827',
   'models/gemini-exp-1114',
   'models/gemini-exp-1121',
