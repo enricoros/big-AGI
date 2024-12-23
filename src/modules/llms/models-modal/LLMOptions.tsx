@@ -4,30 +4,52 @@ import { IconButton, Tooltip } from '@mui/joy';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
+import { DModelParameterSpec, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
+import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { InlineError } from '~/common/components/InlineError';
-
-import { FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+
+
+const reasoningEffortOptions = [
+  { value: 'high', label: 'High', description: 'Deep, thorough analysis' },
+  { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' },
+  { value: 'low', label: 'Low', description: 'Quick, concise responses' },
+] as const;
 
 
 export function LLMOptions(props: { llm: DLLM }) {
 
-  // derived state
-  const { id: llmId, maxOutputTokens, initialParameters, userParameters /*, parameterSpecs*/ } = props.llm;
-  const { llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE } = getAllModelParameterValues(initialParameters, userParameters);
-  const { updateLLMUserParameters } = llmsStoreActions();
+  // input state
+  const { id: llmId, maxOutputTokens, initialParameters, userParameters, parameterSpecs } = props.llm;
 
-  // state (here because the initial state depends on props)
+  // external state
+  const { updateLLMUserParameters } = llmsStoreActions();
+  const allParameters = getAllModelParameterValues(initialParameters, userParameters);
+
+  // derived state
+  const llmTemperature = allParameters?.llmTemperature ?? FALLBACK_LLM_PARAM_TEMPERATURE;
+  const llmResponseTokens = allParameters?.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
+  const llmVndOaiReasoningEffort = allParameters?.['vnd.oai.reasoning_effort'];
+  const tempAboveOne = llmTemperature > 1;
+
+  // more state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(llmTemperature > 1);
 
-  const showOverheatButton = overheat || llmTemperature >= 1;
+
+  // handlers
 
   const handleOverheatToggle = React.useCallback(() => {
-    if (overheat && llmTemperature > 1)
+    if (overheat && tempAboveOne)
       updateLLMUserParameters(llmId, { llmTemperature: 1 });
     setOverheat(!overheat);
-  }, [llmId, llmTemperature, overheat, updateLLMUserParameters]);
+  }, [llmId, overheat, tempAboveOne, updateLLMUserParameters]);
+
+
+  // find the reasoning effort parameter spec
+  const paramVndOaiReasoningEffort = parameterSpecs?.find(p => p.paramId === 'vnd.oai.reasoning_effort') as DModelParameterSpec<'vnd.oai.reasoning_effort'> | undefined;
+
+  const showOverheatButton = overheat || tempAboveOne;
 
 
   return <>
@@ -61,6 +83,17 @@ export function LLMOptions(props: { llm: DLLM }) {
       />
     ) : (
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
+    )}
+
+    {paramVndOaiReasoningEffort && (
+      <FormSelectControl
+        disabled
+        title='Reasoning Effort'
+        tooltip='Controls how much effort the model spends on reasoning'
+        value={llmVndOaiReasoningEffort ?? 'medium'}
+        onChange={(value) => updateLLMUserParameters(llmId, { 'vnd.oai.reasoning_effort': value })}
+        options={reasoningEffortOptions}
+      />
     )}
 
   </>;
