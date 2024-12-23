@@ -3,8 +3,7 @@ import { XAIIcon } from '~/common/components/icons/vendors/XAIIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 import { XAIServiceSetup } from './XAIServiceSetup';
 
@@ -13,7 +12,7 @@ export interface DXAIServiceSettings {
   xaiKey: string;
 }
 
-export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
+export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchema> = {
   id: 'xai',
   name: 'xAI',
   displayRank: 15,
@@ -24,7 +23,6 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
   // Components
   Icon: XAIIcon,
   ServiceSetupComponent: XAIServiceSetup,
-  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
   initializeSetup: () => ({ xaiKey: '' }),

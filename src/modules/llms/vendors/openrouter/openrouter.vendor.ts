@@ -3,8 +3,7 @@ import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 import { OpenRouterServiceSetup } from './OpenRouterServiceSetup';
 
@@ -29,7 +28,7 @@ export interface DOpenRouterServiceSettings {
  *  [x] decide whether to do UI work to improve the appearance - prioritized models
  *  [x] works!
  */
-export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
+export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, OpenAIAccessSchema> = {
   id: 'openrouter',
   name: 'OpenRouter',
   displayRank: 40,
@@ -41,7 +40,6 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   // components
   Icon: OpenRouterIcon,
   ServiceSetupComponent: OpenRouterServiceSetup,
-  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
   initializeSetup: (): DOpenRouterServiceSettings => ({

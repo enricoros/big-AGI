@@ -11,7 +11,7 @@ import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 
 
-export interface IModelVendor<TServiceSettings extends Record<string, any> = {}, TAccess = unknown, TLLMOptions = unknown, TDLLM = DLLM<TLLMOptions>> {
+export interface IModelVendor<TServiceSettings extends Record<string, any> = {}, TAccess = unknown> {
   readonly id: ModelVendorId;
   readonly name: string;
   readonly displayRank: number; // [10...] Foundation Models, [30...] 3rd party Clouds, [40...] Aggregators, [50...] Local Models
@@ -25,7 +25,6 @@ export interface IModelVendor<TServiceSettings extends Record<string, any> = {},
   // components
   readonly Icon: React.FunctionComponent<SvgIconProps>;
   readonly ServiceSetupComponent: React.ComponentType<{ serviceId: DModelsServiceId }>;
-  readonly LLMOptionsComponent: React.ComponentType<{ llm: TDLLM }>;
 
   /// abstraction interface ///
 
@@ -35,7 +34,7 @@ export interface IModelVendor<TServiceSettings extends Record<string, any> = {},
 
   getTransportAccess(setup?: Partial<TServiceSettings>): TAccess;
 
-  rateLimitChatGenerate?(llm: TDLLM, setup: Partial<TServiceSettings>): Promise<void>;
+  rateLimitChatGenerate?(llm: DLLM, setup: Partial<TServiceSettings>): Promise<void>;
 
   rpcUpdateModelsOrThrow(
     access: TAccess,

@@ -15,7 +15,6 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '../../store-app-chat';
 
-import type { DOpenAILLMOptions } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
@@ -36,6 +35,7 @@ import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardU
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
 import { launchAppCall } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -221,7 +221,7 @@ export function Composer(props: {
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
-  const tokensResponseMax = (props.chatLLM?.options as DOpenAILLMOptions /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
+  const tokensResponseMax = getModelParameterValueOrThrow('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
   const tokenChatPricing = props.chatLLM?.pricing?.chat;
 
