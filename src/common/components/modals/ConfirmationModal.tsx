@@ -12,10 +12,10 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
  */
 export function ConfirmationModal(props: {
   open?: boolean, onClose?: () => void, onPositive: () => void,
-  title?: string | React.JSX.Element,
+  title?: React.ReactNode,
   noTitleBar?: boolean,
   lowStakes?: boolean,
-  confirmationText: string | React.JSX.Element,
+  confirmationText: React.ReactNode,
   positiveActionText: React.ReactNode,
   negativeActionText?: React.ReactNode,
   negativeActionStartDecorator?: React.ReactNode,
