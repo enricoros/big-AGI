@@ -73,7 +73,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // pricing: undefined, // set below, since it needs some adaptation
 
     // parameters system (spec and initial values)
-    parameterSpecs: [], // TODO: get from the ModelDescription
+    parameterSpecs: d.parameterSpecs?.length ? d.parameterSpecs : [],
     initialParameters: {
       llmRef: d.id,
       llmTemperature: FALLBACK_LLM_PARAM_TEMPERATURE,

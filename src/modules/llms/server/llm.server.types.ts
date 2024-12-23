@@ -62,6 +62,20 @@ const PricingChatGenerate_schema = z.object({
 
 
 /// Model Description (out)
+const ModelParameterSpec_schema = z.object({
+  /**
+   * Uncommon idiosyncratic parameters for this model
+   * - we have only the 'extra' params here, as `llmRef`, `llmResponseTokens` and `llmTemperature` are common
+   * - see `llms.parameters.ts` for the full list
+   */
+  paramId: z.enum([
+    'llmTopP',
+    'vnd.oai.reasoning_effort',  // vendor-specific
+  ]),
+  required: z.boolean().optional(),
+  hidden: z.boolean().optional(),
+  upstreamDefault: z.any().optional(),
+});
 
 export const ModelDescription_schema = z.object({
   id: z.string(),
@@ -71,6 +85,7 @@ export const ModelDescription_schema = z.object({
   description: z.string(),
   contextWindow: z.number().nullable(),
   interfaces: z.array(z.enum(LLMS_ALL_INTERFACES)),
+  parameterSpecs: z.array(ModelParameterSpec_schema).optional(),
   maxCompletionTokens: z.number().optional(),
   // rateLimits: rateLimitsSchema.optional(),
   trainingDataCutoff: z.string().optional(),

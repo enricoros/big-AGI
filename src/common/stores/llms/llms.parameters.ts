@@ -63,11 +63,11 @@ export const DModelParameterRegistry = {
     incompatibleWith: ['temperature'] as const,
   } as const,
 
-  'vnd.oai.reasoning_quantity': {
-    label: 'Reasoning Quantity',
+  'vnd.oai.reasoning_effort': {
+    label: 'Reasoning Effort',
     type: 'enum' as const,
-    description: 'Controls reasoning depth (OpenAI specific)',
-    values: ['low', 'med', 'high'] as const,
+    description: 'Constrains effort on reasoning for OpenAI reasoning models',
+    values: ['low', 'medium', 'high'] as const,
     requiredFallback: 'med',
   } as const,
 
@@ -87,8 +87,10 @@ export type DModelParameterValues = {
   [K in DModelParameterId]?: DModelParameterValue<K>;
 }
 
-export type DModelParameterId = keyof typeof DModelParameterRegistry; // max_tokens, temperature, top_p, vnd.oai.reasoning_quantity, ...
+export type DModelParameterId = keyof typeof DModelParameterRegistry; // max_tokens, temperature, top_p, vnd.oai.reasoning_effort, ...
 // type _ExtendedParameterId = keyof typeof _ExtendedParameterRegistry;
+
+type _EnumValues<T> = T extends { type: 'enum', values: readonly (infer U)[] } ? U : never;
 
 type DModelParameterValue<T extends DModelParameterId> =
   typeof DModelParameterRegistry[T]['type'] extends 'integer' ? number | null :
@@ -96,7 +98,7 @@ type DModelParameterValue<T extends DModelParameterId> =
       typeof DModelParameterRegistry[T]['type'] extends 'string' ? string :
         typeof DModelParameterRegistry[T]['type'] extends 'boolean' ? boolean :
           typeof DModelParameterRegistry[T]['type'] extends 'enum'
-            ? (T extends { type: 'enum', values: readonly (infer U)[] } ? U : never)
+            ? _EnumValues<typeof DModelParameterRegistry[T]>
             : never;
 
 
