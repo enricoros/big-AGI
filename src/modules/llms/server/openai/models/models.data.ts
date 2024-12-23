@@ -619,6 +619,8 @@ export function fromManualMapping(mappings: ManualMappings, id: string, created?
     md.maxCompletionTokens = known.maxCompletionTokens;
   if (known.trainingDataCutoff)
     md.trainingDataCutoff = known.trainingDataCutoff;
+  if (known.parameterSpecs)
+    md.parameterSpecs = known.parameterSpecs;
   if (known.benchmark)
     md.benchmark = known.benchmark;
   if (known.chatPrice)
