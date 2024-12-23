@@ -36,7 +36,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // fetch models
   const { isFetching, refetch, isError, error } =
-    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service, true);
+    useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
 
   const handleOpenRouterLogin = () => {

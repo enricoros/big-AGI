@@ -77,7 +77,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
               ...llm,
               ...(existing.userLabel !== undefined ? { userLabel: existing.userLabel } : {}),
               ...(existing.userHidden !== undefined ? { userHidden: existing.userHidden } : {}),
-              ...(existing.userParameters !== undefined ? { userParameters: existing.userParameters } : {}),
+              ...(existing.userParameters !== undefined ? { userParameters: { ...existing.userParameters } } : {}),
             };
           });
         }

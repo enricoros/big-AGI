@@ -14,7 +14,7 @@ import { llmsUpdateModelsForServiceOrThrow } from './llm.client';
 export function useLlmUpdateModels<TServiceSettings extends object>(
   enabled: boolean,
   service: DModelsService<TServiceSettings> | null,
-  keepUserEdits?: boolean,
+  discardUserEdits?: boolean,
 ): {
   isFetching: boolean,
   refetch: () => void,
@@ -27,7 +27,7 @@ export function useLlmUpdateModels<TServiceSettings extends object>(
     queryFn: async () => {
       if (!service)
         throw new Error('No service provided to fetch models for');
-      return await llmsUpdateModelsForServiceOrThrow(service.id, keepUserEdits === true);
+      return await llmsUpdateModelsForServiceOrThrow(service.id, !discardUserEdits);
     },
     staleTime: Infinity,
   });
