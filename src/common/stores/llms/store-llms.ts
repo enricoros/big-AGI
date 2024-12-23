@@ -17,7 +17,7 @@ import { getLlmCostForTokens, portModelPricingV2toV3 } from './llms.pricing';
 
 interface LlmsState {
 
-  llms: DLLM<any>[];
+  llms: DLLM[];
 
   sources: DModelsService<any>[];
 
@@ -32,7 +32,7 @@ interface LlmsActions {
   removeLLM: (id: DLLMId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
-  updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) => void;
+  updateLLMUserParameters: (id: DLLMId, partial: Partial<DLLM['userParameters']>) => void;
 
   addService: (service: DModelsService) => void;
   removeService: (id: DModelsServiceId) => void;
@@ -75,13 +75,9 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
             const existing = state.llms.find(m => m.id === llm.id);
             return !existing ? llm : {
               ...llm,
-              label: existing.label, // keep label
-              hidden: existing.hidden, // keep hidden - FIXME: this must go, as we don't know if the underlying changed or the user changed it
-              options: {
-                // keep custom configurations, but overwrite as the new could have massively improved params
-                ...existing.options,
-                ...llm.options,
-              },
+              ...(existing.userLabel !== undefined ? { userLabel: existing.userLabel } : {}),
+              ...(existing.userHidden !== undefined ? { userHidden: existing.userHidden } : {}),
+              ...(existing.userParameters !== undefined ? { userParameters: existing.userParameters } : {}),
             };
           });
         }
@@ -136,11 +132,11 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         ),
       })),
 
-    updateLLMOptions: <TLLMOptions>(id: DLLMId, partialOptions: Partial<TLLMOptions>) =>
+    updateLLMUserParameters: (id: DLLMId, partialUserParameters: Partial<DLLM['userParameters']>) =>
       set(state => ({
         llms: state.llms.map((llm: DLLM): DLLM =>
           llm.id === id
-            ? { ...llm, options: { ...llm.options, ...partialOptions } }
+            ? { ...llm, userParameters: { ...llm.userParameters, ...partialUserParameters } }
             : llm,
         ),
       })),
@@ -202,8 +198,9 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
      *  1: adds maxOutputTokens (default to half of contextTokens)
      *  2: large changes on all LLMs, and reset chat/fast/func LLMs
      *  3: big-AGI v2
+     *  4: migrate .options to .initialParameters/.userParameters
      */
-    version: 3,
+    version: 4,
     migrate: (_state: any, fromVersion: number): LlmsState => {
 
       if (!_state) return _state;
@@ -227,8 +224,22 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
       }
 
       // 2 -> 3: big-AGI v2: update all models for pricing info
-      if (fromVersion < 3)
-        state.llms.forEach(portModelPricingV2toV3);
+      if (fromVersion < 3) {
+        try {
+          state.llms.forEach(portModelPricingV2toV3);
+        } catch (error) {
+          // ... if there's any error, ignore - shall be okay
+        }
+      }
+
+      // 3 -> 4: migrate .options to .initialParameters/.userParameters
+      if (fromVersion < 4) {
+        try {
+          state.llms.forEach(_port_V3Options_to_V4Parameters_inline);
+        } catch (error) {
+          // ... if there's any error, ignore - shall be okay
+        }
+      }
 
       return state;
     },
@@ -269,8 +280,8 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
 ));
 
 
-export function findLLMOrThrow<TLLMOptions>(llmId: DLLMId): DLLM<TLLMOptions> {
-  const llm: DLLM<TLLMOptions> | undefined = llmsStoreState().llms.find(llm => llm.id === llmId);
+export function findLLMOrThrow(llmId: DLLMId): DLLM {
+  const llm: DLLM | undefined = llmsStoreState().llms.find(llm => llm.id === llmId);
   if (!llm)
     throw new Error(`Large Language Model ${llmId} not found`);
   return llm;
@@ -441,4 +452,29 @@ function _selectFastLlmID(vendors: GroupedVendorLLMs) {
       return lowestCostLlm.id;
   }
   return null;
+}
+
+
+function _port_V3Options_to_V4Parameters_inline(llm: DLLM): void {
+
+  // skip if already migrated
+  if ('initialParameters' in (llm as object)) return;
+
+  // initialize initialParameters and userParameters if they don't exist
+  if (!llm.initialParameters) llm.initialParameters = {};
+  if (!llm.userParameters) llm.userParameters = {};
+
+  // migrate options to initialParameters/userParameters
+  type DLLMV3_Options = DLLM & { options?: { llmRef: string, llmTemperature?: number, llmResponseTokens?: number } & Record<string, any> };
+  const llmV3 = llm as DLLMV3_Options;
+  if ('options' in llmV3 && typeof llmV3.options === 'object') {
+    if ('llmRef' in llmV3.options)
+      llm.initialParameters.llmRef = llmV3.options.llmRef;
+    if ('llmTemperature' in llmV3.options && typeof llmV3.options.llmTemperature === 'number')
+      llm.initialParameters.llmTemperature = Math.max(0, Math.min(1, llmV3.options.llmTemperature));
+    if ('llmResponseTokens' in llmV3.options && typeof llmV3.options.llmResponseTokens === 'number')
+      llm.initialParameters.llmResponseTokens = llmV3.options.llmResponseTokens;
+    delete llmV3.options;
+  }
+
 }

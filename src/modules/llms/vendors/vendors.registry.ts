@@ -61,8 +61,8 @@ export function findAllModelVendors(): IModelVendor[] {
   return modelVendors;
 }
 
-export function findModelVendor<TServiceSettings extends object = {}, TAccess = unknown, TLLMOptions = unknown>(
+export function findModelVendor<TServiceSettings extends object = {}, TAccess = unknown>(
   vendorId?: ModelVendorId,
-): IModelVendor<TServiceSettings, TAccess, TLLMOptions> | null {
-  return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TServiceSettings, TAccess, TLLMOptions>) ?? null : null;
+): IModelVendor<TServiceSettings, TAccess> | null {
+  return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TServiceSettings, TAccess>) ?? null : null;
 }

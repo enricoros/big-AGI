@@ -10,12 +10,12 @@ import type { IModelVendor } from './IModelVendor';
 import { vendorHasBackendCap } from './vendor.helpers';
 
 
-const stableNoLlms: DLLM<any>[] = [];
+const stableNoLlms: DLLM[] = [];
 
 /**
  * Service-specific read/write - great time saver
  */
-export function useServiceSetup<TServiceSettings extends object, TAccess, TLLMOptions>(serviceId: DModelsServiceId, vendor: IModelVendor<TServiceSettings, TAccess, TLLMOptions>): {
+export function useServiceSetup<TServiceSettings extends object, TAccess>(serviceId: DModelsServiceId, vendor: IModelVendor<TServiceSettings, TAccess>): {
   service: DModelsService<TServiceSettings> | null;
   serviceAccess: TAccess;
 

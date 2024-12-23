@@ -4,6 +4,7 @@
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DModelParameterId, DModelParameterSpec, DModelParameterValues } from './llms.parameters';
 import type { DModelPricing } from './llms.pricing';
 import type { DModelsServiceId } from './modelsservice.types';
 
@@ -17,7 +18,7 @@ export type DLLMId = string;
 /**
  * Large Language Model - description and configuration (data object, stored)
  */
-export interface DLLM<TLLMOptions = Record<string, any>> {
+export interface DLLM {
   id: DLLMId;
 
   // editable properties (kept on update, if isEdited)
@@ -26,7 +27,6 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
   updated?: number | 0;
   description: string;
   hidden: boolean;                  // hidden from UI selectors
-  isEdited?: boolean;               // user has edited the soft properties
 
   // hard properties (overwritten on update)
   contextTokens: number | null;     // null: must assume it's unknown
@@ -36,12 +36,18 @@ export interface DLLM<TLLMOptions = Record<string, any>> {
   benchmark?: { cbaElo?: number, cbaMmlu?: number }; // benchmark values
   pricing?: DModelPricing;
 
+  // parameters system
+  parameterSpecs: DModelParameterSpec<DModelParameterId>[];
+  initialParameters: DModelParameterValues;
+
   // references
   sId: DModelsServiceId;
   vId: ModelVendorId;
 
-  // llm-specific
-  options: { llmRef: string } & Partial<TLLMOptions>;
+  // user edited properties - if not undefined/missing, they override the others
+  userLabel?: string;
+  userHidden?: boolean;
+  userParameters?: DModelParameterValues; // user has set these parameters
 }
 
 

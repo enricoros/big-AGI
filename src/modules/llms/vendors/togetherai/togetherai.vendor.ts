@@ -3,8 +3,7 @@ import { TogetherIcon } from '~/common/components/icons/vendors/TogetherIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 import { TogetherAIServiceSetup } from './TogetherAIServiceSetup';
 
@@ -15,7 +14,7 @@ interface DTogetherAIServiceSettings {
   togetherFreeTrial: boolean;
 }
 
-export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
+export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, OpenAIAccessSchema> = {
   id: 'togetherai',
   name: 'Together AI',
   displayRank: 34,
@@ -26,7 +25,6 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
   // components
   Icon: TogetherIcon,
   ServiceSetupComponent: TogetherAIServiceSetup,
-  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
   initializeSetup: () => ({

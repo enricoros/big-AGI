@@ -7,27 +7,16 @@ import type { DLLM } from '~/common/stores/llms/llms.types';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { InlineError } from '~/common/components/InlineError';
 
+import { FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
-import { DOpenAILLMOptions, FALLBACK_LLM_RESPONSE_TOKENS, FALLBACK_LLM_TEMPERATURE } from './openai.vendor';
 
-
-function normalizeOpenAIOptions(partialOptions?: Partial<DOpenAILLMOptions>) {
-  return {
-    llmRef: 'unknown_id',
-    llmTemperature: FALLBACK_LLM_TEMPERATURE,
-    llmResponseTokens: FALLBACK_LLM_RESPONSE_TOKENS,
-    ...partialOptions,
-  };
-}
-
-
-export function OpenAILLMOptions(props: { llm: DLLM<DOpenAILLMOptions> }) {
+export function LLMOptions(props: { llm: DLLM }) {
 
   // derived state
-  const { id: llmId, maxOutputTokens, options } = props.llm;
-  const { llmResponseTokens, llmTemperature } = normalizeOpenAIOptions(options);
-  const { updateLLMOptions } = llmsStoreActions();
+  const { id: llmId, maxOutputTokens, initialParameters, userParameters /*, parameterSpecs*/ } = props.llm;
+  const { llmResponseTokens = FALLBACK_LLM_PARAM_RESPONSE_TOKENS, llmTemperature = FALLBACK_LLM_PARAM_TEMPERATURE } = getAllModelParameterValues(initialParameters, userParameters);
+  const { updateLLMUserParameters } = llmsStoreActions();
 
   // state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(llmTemperature > 1);
@@ -36,9 +25,9 @@ export function OpenAILLMOptions(props: { llm: DLLM<DOpenAILLMOptions> }) {
 
   const handleOverheatToggle = React.useCallback(() => {
     if (overheat && llmTemperature > 1)
-      updateLLMOptions(llmId, { llmTemperature: 1 });
+      updateLLMUserParameters(llmId, { llmTemperature: 1 });
     setOverheat(!overheat);
-  }, [llmId, llmTemperature, overheat, updateLLMOptions]);
+  }, [llmId, llmTemperature, overheat, updateLLMUserParameters]);
 
 
   return <>
@@ -49,7 +38,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<DOpenAILLMOptions> }) {
       min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
       valueLabelDisplay='on'
       value={llmTemperature}
-      onChange={value => updateLLMOptions(llmId, { llmTemperature: value })}
+      onChange={value => updateLLMUserParameters(llmId, { llmTemperature: value })}
       endAdornment={showOverheatButton &&
         <Tooltip title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
           <IconButton
@@ -68,7 +57,7 @@ export function OpenAILLMOptions(props: { llm: DLLM<DOpenAILLMOptions> }) {
         min={256} max={maxOutputTokens} step={256} defaultValue={1024}
         valueLabelDisplay='on'
         value={llmResponseTokens}
-        onChange={value => updateLLMOptions(llmId, { llmResponseTokens: value })}
+        onChange={value => updateLLMUserParameters(llmId, { llmResponseTokens: value })}
       />
     ) : (
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
