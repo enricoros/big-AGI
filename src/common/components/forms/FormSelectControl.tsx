@@ -18,7 +18,7 @@ export const FormSelectControl = <TValue extends string>(props: {
   title?: React.ReactNode;
   tooltip?: React.ReactNode;
   disabled?: boolean;
-  options: FormSelectOption<TValue>[];
+  options: Readonly<FormSelectOption<TValue>[]>;
   value?: TValue;
   onChange: (value: TValue) => void;
   placeholder?: React.ReactNode;
