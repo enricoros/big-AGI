@@ -27,7 +27,24 @@ const llmSelectSx: SxProps = {
   flex: 1,
   backgroundColor: 'background.popup',
   // minWidth: '200',
-};
+} as const;
+
+const _slotProps = {
+  listbox: {
+    sx: {
+      // larger list
+      '--ListItem-paddingLeft': '1rem',
+      '--ListItem-minHeight': '2.5rem',
+      // minWidth: '100%',
+    },
+  },
+  button: {
+    sx: {
+      // show the full name on the button
+      whiteSpace: 'inherit',
+    },
+  },
+} as const;
 
 /**
  * Select the Model, synced with either Global (Chat) LLM state, or local
@@ -115,22 +132,7 @@ export function useLLMSelect(
         disabled={disabled}
         onChange={onSelectChange}
         placeholder={placeholder}
-        slotProps={{
-          listbox: {
-            sx: {
-              // larger list
-              '--ListItem-paddingLeft': '1rem',
-              '--ListItem-minHeight': '2.5rem',
-              // minWidth: '100%',
-            },
-          },
-          button: {
-            sx: {
-              // show the full name on the button
-              whiteSpace: 'inherit',
-            },
-          },
-        }}
+        slotProps={_slotProps}
         sx={llmSelectSx}
       >
         {componentOptions}
