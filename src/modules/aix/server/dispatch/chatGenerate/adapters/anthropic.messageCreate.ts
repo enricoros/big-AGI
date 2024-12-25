@@ -88,6 +88,12 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     // top_p: undefined,
   };
 
+  // Top-P instead of temperature
+  if (model.topP !== undefined) {
+    payload.top_p = model.topP;
+    delete payload.temperature
+  }
+
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);
   if (!validated.success) {
