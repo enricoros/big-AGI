@@ -233,6 +233,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     stream_options: z.object({
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
+    reasoning_effort: z.enum(['low', 'medium', 'high']).optional(), // [OpenAI, 2024-12-17] reasoning effort, o1 models only for now
     response_format: z.discriminatedUnion('type', [
       z.object({
         type: z.literal('text'), // Default
