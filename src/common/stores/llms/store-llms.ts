@@ -8,8 +8,9 @@ import { persist } from 'zustand/middleware';
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
+import type { DModelParameterId } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './modelsservice.types';
+import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { getLlmCostForTokens, portModelPricingV2toV3 } from './llms.pricing';
 
 
@@ -33,6 +34,7 @@ interface LlmsActions {
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DLLM['userParameters']>) => void;
+  deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
 
   addService: (service: DModelsService) => void;
   removeService: (id: DModelsServiceId) => void;
@@ -133,14 +135,22 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
       })),
 
     updateLLMUserParameters: (id: DLLMId, partialUserParameters: Partial<DLLM['userParameters']>) =>
-      set(state => ({
-        llms: state.llms.map((llm: DLLM): DLLM =>
+      set(({ llms }) => ({
+        llms: llms.map((llm: DLLM): DLLM =>
           llm.id === id
             ? { ...llm, userParameters: { ...llm.userParameters, ...partialUserParameters } }
             : llm,
         ),
       })),
 
+    deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) =>
+      set(({ llms }) => ({
+        llms: llms.map((llm: DLLM): DLLM =>
+          llm.id === id && llm.userParameters
+            ? { ...llm, userParameters: Object.fromEntries(Object.entries(llm.userParameters).filter(([key]) => key !== parameterId)) }
+            : llm,
+        ),
+      })),
 
     addService: (service: DModelsService) =>
       set(state => {

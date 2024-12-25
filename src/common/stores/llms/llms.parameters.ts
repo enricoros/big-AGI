@@ -63,7 +63,7 @@ export const DModelParameterRegistry = {
     incompatibleWith: ['temperature'] as const,
   } as const,
 
-  'vnd.oai.reasoning_effort': {
+  llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,
     description: 'Constrains effort on reasoning for OpenAI reasoning models',
@@ -87,7 +87,7 @@ export type DModelParameterValues = {
   [K in DModelParameterId]?: DModelParameterValue<K>;
 }
 
-export type DModelParameterId = keyof typeof DModelParameterRegistry; // max_tokens, temperature, top_p, vnd.oai.reasoning_effort, ...
+export type DModelParameterId = keyof typeof DModelParameterRegistry;
 // type _ExtendedParameterId = keyof typeof _ExtendedParameterRegistry;
 
 type _EnumValues<T> = T extends { type: 'enum', values: readonly (infer U)[] } ? U : never;
