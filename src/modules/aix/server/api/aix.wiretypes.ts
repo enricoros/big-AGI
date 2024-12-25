@@ -376,6 +376,8 @@ export namespace AixWire_API {
     id: z.string(),
     temperature: z.number().min(0).max(2).optional(),
     maxTokens: z.number().min(1).optional(),
+    topP: z.number().min(0).max(1).optional(),
+    vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
   });
 
   /// Context

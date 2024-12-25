@@ -70,7 +70,7 @@ const ModelParameterSpec_schema = z.object({
    */
   paramId: z.enum([
     'llmTopP',
-    'vnd.oai.reasoning_effort',  // vendor-specific
+    'llmVndOaiReasoningEffort',  // vendor-specific
   ]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),

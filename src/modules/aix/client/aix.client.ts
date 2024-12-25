@@ -29,23 +29,31 @@ export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['
 }
 
 export function aixCreateModelFromLLMOptions(
-  llmOptions: DModelParameterValues | undefined,
-  llmOptionsOverride: DModelParameterValues | undefined,
+  llmOptions: DModelParameterValues,
+  llmOptionsOverride: Omit<DModelParameterValues, 'llmRef'> | undefined,
   debugLlmId: string,
 ): AixAPI_Model {
-  // model params (llm)
-  let { llmRef, llmTemperature, llmResponseTokens } = llmOptions || {};
-  if (!llmRef || llmTemperature === undefined)
+
+  // destructure input with the overrides
+  const { llmRef, llmTemperature, llmResponseTokens, llmTopP, llmVndOaiReasoningEffort } = {
+    ...llmOptions,
+    ...llmOptionsOverride,
+  };
+
+  // llmRef is absolutely required
+  if (!llmRef)
     throw new Error(`AIX: Error in configuration for model ${debugLlmId} (missing ref, temperature): ${JSON.stringify(llmOptions)}`);
 
-  // model params overrides
-  if (llmOptionsOverride?.llmTemperature !== undefined) llmTemperature = llmOptionsOverride.llmTemperature;
-  if (llmOptionsOverride?.llmResponseTokens !== undefined) llmResponseTokens = llmOptionsOverride.llmResponseTokens;
+  // llmTemperature is highly recommended, so we display a note if it's missing
+  if (llmTemperature === undefined)
+    console.warn(`[DEV] AIX: Missing temperature for model ${debugLlmId}, using default.`);
 
   return {
     id: llmRef,
-    temperature: llmTemperature,
-    ...(llmResponseTokens ? { maxTokens: llmResponseTokens } : {}),
+    ...(llmTemperature !== undefined ? { temperature: llmTemperature } : {}),
+    ...(llmResponseTokens /* null: similar to undefined, will omit the value */ ? { maxTokens: llmResponseTokens } : {}),
+    ...(llmTopP !== undefined ? { topP: llmTopP } : {}),
+    ...(llmVndOaiReasoningEffort ? { vndOaiReasoningEffort: llmVndOaiReasoningEffort } : {}),
   };
 }
 
@@ -70,7 +78,7 @@ type StreamMessageStatus = {
 interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
-  llmOptionsOverride?: DModelParameterValues;
+  llmOptionsOverride?: Omit<DModelParameterValues, 'llmRef'>; // overrides for the LLM options
 }
 
 

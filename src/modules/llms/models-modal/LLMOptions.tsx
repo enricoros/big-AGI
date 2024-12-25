@@ -15,6 +15,7 @@ const reasoningEffortOptions = [
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' },
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' },
   { value: 'low', label: 'Low', description: 'Quick, concise responses' },
+  { value: 'unspecified', label: 'Default', description: 'Default value (unset)' },
 ] as const;
 
 
@@ -24,13 +25,13 @@ export function LLMOptions(props: { llm: DLLM }) {
   const { id: llmId, maxOutputTokens, initialParameters, userParameters, parameterSpecs } = props.llm;
 
   // external state
-  const { updateLLMUserParameters } = llmsStoreActions();
+  const { updateLLMUserParameters, deleteLLMUserParameter } = llmsStoreActions();
   const allParameters = getAllModelParameterValues(initialParameters, userParameters);
 
   // derived state
   const llmTemperature = allParameters?.llmTemperature ?? FALLBACK_LLM_PARAM_TEMPERATURE;
   const llmResponseTokens = allParameters?.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
-  const llmVndOaiReasoningEffort = allParameters?.['vnd.oai.reasoning_effort'];
+  const llmVndOaiReasoningEffort = allParameters?.llmVndOaiReasoningEffort;
   const tempAboveOne = llmTemperature > 1;
 
   // more state (here because the initial state depends on props)
@@ -47,7 +48,7 @@ export function LLMOptions(props: { llm: DLLM }) {
 
 
   // find the reasoning effort parameter spec
-  const paramVndOaiReasoningEffort = parameterSpecs?.find(p => p.paramId === 'vnd.oai.reasoning_effort') as DModelParameterSpec<'vnd.oai.reasoning_effort'> | undefined;
+  const paramReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
 
   const showOverheatButton = overheat || tempAboveOne;
 
@@ -85,13 +86,17 @@ export function LLMOptions(props: { llm: DLLM }) {
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
     )}
 
-    {paramVndOaiReasoningEffort && (
+    {paramReasoningEffort && (
       <FormSelectControl
-        disabled
         title='Reasoning Effort'
         tooltip='Controls how much effort the model spends on reasoning'
-        value={llmVndOaiReasoningEffort ?? 'medium'}
-        onChange={(value) => updateLLMUserParameters(llmId, { 'vnd.oai.reasoning_effort': value })}
+        value={llmVndOaiReasoningEffort ?? 'unspecified'}
+        onChange={(value) => {
+          if (value === 'unspecified' || !value)
+            deleteLLMUserParameter(llmId, 'llmVndOaiReasoningEffort');
+          else
+            updateLLMUserParameters(llmId, { 'llmVndOaiReasoningEffort': value });
+        }}
         options={reasoningEffortOptions}
       />
     )}
