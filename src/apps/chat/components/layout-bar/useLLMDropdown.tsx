@@ -14,6 +14,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { findModelsServiceOrNull, llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
+import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 
 
@@ -43,6 +44,9 @@ function LLMDropdown(props: {
   }, [chatLlmId]);
 
 
+  // dropdown items - chached
+  const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>();
+
   const llmDropdownItems: OptimaDropdownItems = React.useMemo(() => {
     const llmItems: OptimaDropdownItems = {};
     let prevServiceId: DModelsServiceId | null = null;
@@ -69,7 +73,8 @@ function LLMDropdown(props: {
         llmItems[`sep-${llm.sId}`] = {
           type: 'separator',
           title: serviceLabel,
-          icon: vendor?.Icon ? <vendor.Icon /> : undefined,
+          // NOTE: commenting because not useful, and creates a recursive issue in isDeepEqual - not needed, so kthxbye
+          // icon: vendor?.Icon ? <vendor.Icon /> : undefined,
         };
         prevServiceId = llm.sId;
         sepCount++;
@@ -81,6 +86,7 @@ function LLMDropdown(props: {
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };
     }
+
     // if there's a single separator (i.e. only one source), remove it
     if (sepCount === 1) {
       for (const key in llmItems) {
@@ -90,7 +96,13 @@ function LLMDropdown(props: {
         }
       }
     }
-    return llmItems;
+
+    // stabilize the items: reuse the full array if nothing changed
+    const prev = stabilizeLlmOptions.current;
+    if (prev && isDeepEqual(prev, llmItems)) return prev;
+
+    // otherwise update the cache and return the new items
+    return stabilizeLlmOptions.current = llmItems;
   }, [chatLlmId, llms, filterString]);
 
 
