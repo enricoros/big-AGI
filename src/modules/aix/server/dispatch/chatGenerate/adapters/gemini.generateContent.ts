@@ -51,6 +51,12 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     },
   };
 
+  // Top-P instead of temperature
+  if (model.topP !== undefined) {
+    delete payload.generationConfig!.temperature;
+    payload.generationConfig!.topP = model.topP;
+  }
+
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
   if (!validated.success) {
