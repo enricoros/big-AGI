@@ -13,7 +13,8 @@ import { fixupHost } from '~/common/util/urlUtils';
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
-import { azureModelToModelDescription, deepseekModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models/models.data';
+import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models/models.data';
+import { deepseekModelFilter, deepseekModelToModelDescription } from './models/deepseek.models';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
 import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
@@ -152,6 +153,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         case 'deepseek':
           models = openAIModels
+            .filter(({ id }) => deepseekModelFilter(id))
             .map(({ id }) => deepseekModelToModelDescription(id));
           break;
 
