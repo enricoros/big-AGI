@@ -34,7 +34,7 @@ export async function runPersonaOnConversationHead(
 
   const cHandler = ConversationsManager.getHandler(conversationId);
 
-  const _history = cHandler.historyViewHead('runPersonaOnConversationHead') as Readonly<DMessage[]>;
+  const _history = cHandler.historyViewHeadOrThrow('runPersonaOnConversationHead') as Readonly<DMessage[]>;
   if (_history.length === 0)
     return false;
 

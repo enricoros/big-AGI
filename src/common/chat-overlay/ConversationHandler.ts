@@ -209,7 +209,7 @@ export class ConversationHandler {
     _chatStoreActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
   }
 
-  historyViewHead(scope: string): Readonly<DMessage[]> {
+  historyViewHeadOrThrow(scope: string): Readonly<DMessage[]> {
     const messages = _chatStoreActions.historyView(this.conversationId);
     if (messages === undefined)
       throw new Error(`allMessages: Conversation not found, ${scope}`);
