@@ -643,6 +643,7 @@ export function AppChat() {
             <ScrollToBottom
               bootToBottom
               stickToBottomInitial
+              disableAutoStick={isMobile && _paneBeamIsOpen}
               sx={scrollToBottomSx}
             >
 
