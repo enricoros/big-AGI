@@ -31,7 +31,7 @@ import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMess
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationSystemPurposeId, isValidConversation, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useChatLLM } from '~/common/stores/llms/llms.hooks';
@@ -254,13 +254,20 @@ export function AppChat() {
   }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
-    const focusedConversation = getConversation(focusedPaneConversationId);
-    if (focusedPaneConversationId && focusedConversation?.messages?.length) {
-      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      if (lastMessage.role === 'assistant')
-        ConversationsManager.getHandler(focusedPaneConversationId).historyTruncateTo(lastMessage.id, -1);
-      await handleExecuteAndOutcome('generate-content', focusedConversation.id, 'chat-regenerate-last'); // truncate if assistant, then gen-text
-    }
+    // Ctrl + Shift + Z
+    if (!focusedPaneConversationId) return;
+    const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
+    if (!cHandler.isValid()) return;
+    const inputHistory = cHandler.historyViewHeadOrThrow('chat-regenerate-shortcut');
+    if (!inputHistory.length) return;
+
+    // remove the last message if assistant's
+    const lastMessage = inputHistory[inputHistory.length - 1];
+    if (lastMessage.role === 'assistant')
+      cHandler.historyTruncateTo(lastMessage.id, -1);
+
+    // generate: NOTE: this will replace the system message correctly
+    await handleExecuteAndOutcome('generate-content', focusedPaneConversationId, 'chat-regenerate-last'); // truncate if assistant, then gen-text
   }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
@@ -284,10 +291,8 @@ export function AppChat() {
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
   const handleImagineFromText = React.useCallback(async (conversationId: DConversationId, subjectText: string) => {
-    const conversation = getConversation(conversationId);
-    if (!conversation)
-      return;
     const cHandler = ConversationsManager.getHandler(conversationId);
+    if (!cHandler.isValid()) return;
     const userImagineMessage = createDMessagePlaceholderIncomplete('user', `Thinking at the subject...`); // [chat] append user:imagine prompt
     cHandler.messageAppend(userImagineMessage);
     await imaginePromptFromTextOrThrow(subjectText, conversationId)

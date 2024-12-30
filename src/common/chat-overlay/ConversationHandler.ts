@@ -216,6 +216,14 @@ export class ConversationHandler {
     return messages;
   }
 
+  historyFindMessageOrThrow(messageId: DMessageId): Readonly<DMessage> | undefined {
+    return _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
+  }
+
+  title(): string | undefined {
+    return _chatStoreActions.title(this.conversationId);
+  }
+
 
   // Beam
 
