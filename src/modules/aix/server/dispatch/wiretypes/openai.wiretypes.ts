@@ -384,6 +384,10 @@ export namespace OpenAIWire_API_Chat_Completions {
       accepted_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
       rejected_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
     }).optional(), // not present in other APIs yet
+
+    // [DeepSeek, 2024-08-02] context caching on disk
+    prompt_cache_hit_tokens: z.number().optional(),
+    prompt_cache_miss_tokens: z.number().optional(),
   }).nullable();
 
   const Choice_NS_schema = z.object({
