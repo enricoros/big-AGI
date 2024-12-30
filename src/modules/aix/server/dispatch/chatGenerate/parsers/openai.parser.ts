@@ -313,7 +313,7 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
     return undefined;
 
   // Require at least the completion tokens, or issue a DEV warning otherwise
-  if (!usage.completion_tokens) {
+  if (usage.completion_tokens === undefined) {
     // Warn, so we may adjust this usage parsing for Non-OpenAI APIs
     console.log('[DEV] AIX: OpenAI-dispatch missing completion tokens in usage', { usage });
     return undefined;
