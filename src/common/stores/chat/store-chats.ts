@@ -53,6 +53,7 @@ export interface ChatActions {
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
+  title: (cId: DConversationId) => string | undefined;
 
   // utility function
   _editConversation: (cId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -388,6 +389,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             userTitle,
             ...(!userTitle && { autoTitle: undefined }), // clear autotitle when clearing usertitle
           }),
+
+      title: (conversationId: DConversationId): string | undefined => {
+        const existing = _get().conversations.find(_c => _c.id === conversationId);
+        return existing ? conversationTitle(existing) : undefined;
+      },
 
       setUserSymbol: (conversationId: DConversationId, userSymbol: string | null) =>
         _get()._editConversation(conversationId,

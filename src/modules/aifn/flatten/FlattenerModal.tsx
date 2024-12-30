@@ -12,7 +12,6 @@ import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { getConversation } from '~/common/stores/chat/store-chats';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
@@ -65,7 +64,7 @@ function FlatteningProgress(props: { llmLabel: string, partialText: string | nul
 }
 
 
-function encodeConversationAsUserMessage(userPrompt: string, messages: DMessage[]): string {
+function encodeConversationAsUserMessage(userPrompt: string, messages: Readonly<DMessage[]>): string {
   let encodedMessages = '';
 
   for (const message of messages) {
@@ -103,9 +102,11 @@ export function FlattenerModal(props: {
   const handlePerformFlattening = React.useCallback(async (flattenStyle: FlattenStyleType) => {
 
     // validate config (or set error)
-    const conversation = getConversation(props.conversationId);
-    const messages = conversation?.messages;
-    if (!messages || !messages.length)
+    if (!props.conversationId)
+      return setErrorMessage('No conversation selected');
+    const cHandler = ConversationsManager.getHandler(props.conversationId);
+    const messages = !cHandler.isValid() ? [] : cHandler.historyViewHeadOrThrow('flattener-modal');
+    if (!messages.length)
       return setErrorMessage('No messages in conversation');
     if (!llm)
       return setErrorMessage('No model selected');
