@@ -339,6 +339,16 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
     }
   }
 
+  // [DeepSeek] Input redistribution: Cache Read
+  if (usage.prompt_cache_hit_tokens !== undefined) {
+    const TCacheRead = usage.prompt_cache_hit_tokens;
+    if (TCacheRead > 0) {
+      metricsUpdate.TCacheRead = TCacheRead;
+      if (usage.prompt_cache_miss_tokens !== undefined)
+        metricsUpdate.TIn = usage.prompt_cache_miss_tokens;
+    }
+  }
+
   // TODO Input redistribution: Audio tokens
 
   // Output Metrics
