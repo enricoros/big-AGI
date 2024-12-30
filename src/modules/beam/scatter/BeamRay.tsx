@@ -41,12 +41,12 @@ import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
   textAlign: 'center',
 };*/
 
-const rayControlsSx: SxProps = {
+export const rayControlsSx: SxProps = {
   // layout
   display: 'flex', alignItems: 'center', gap: 1,
 };
 
-const rayControlsMobileSx: SxProps = {
+export const rayControlsMobileSx: SxProps = {
   ...rayControlsSx,
 
   // anchor top
