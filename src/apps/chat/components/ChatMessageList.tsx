@@ -138,7 +138,7 @@ export function ChatMessageList(props: {
   const handleMessageBeam = React.useCallback(async (messageId: DMessageId) => {
     // Message option menu Beam
     if (!conversationId || !props.conversationHandler || !props.conversationHandler.isValid()) return;
-    const inputHistory = props.conversationHandler.historyViewHead('chat-beam-message');
+    const inputHistory = props.conversationHandler.historyViewHeadOrThrow('chat-beam-message');
     if (!inputHistory.length) return;
 
     // TODO: replace the Persona and Auto-Cache-hint in the history?

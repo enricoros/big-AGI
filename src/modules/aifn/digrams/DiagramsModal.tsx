@@ -95,7 +95,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     setAbortController(stepAbortController);
     // cHandler.setAbortController(stepAbortController);
 
-    const reChatHistory = cHandler.historyViewHead('diagrams-modal');
+    const reChatHistory = cHandler.historyViewHeadOrThrow('diagrams-modal');
     const { chatSystemInstruction } = splitSystemMessageFromHistory(reChatHistory);
     if (!chatSystemInstruction)
       return setErrorMessage('No System instruction in this conversation');

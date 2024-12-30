@@ -268,7 +268,7 @@ export function AppChat() {
     if (!focusedPaneConversationId) return;
     const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
     if (!cHandler.isValid()) return;
-    const inputHistory = cHandler.historyViewHead('chat-beam-shortcut');
+    const inputHistory = cHandler.historyViewHeadOrThrow('chat-beam-shortcut');
     if (!inputHistory.length) return;
 
     // TODO: replace the Persona and Auto-Cache-hint in the history?
