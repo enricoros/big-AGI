@@ -13,6 +13,7 @@ import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { AppChatIntent } from '../../AppChat';
 import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '../../store-app-chat';
 
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
@@ -36,7 +37,7 @@ import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentF
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
-import { launchAppCall } from '~/common/app.routes';
+import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
@@ -125,6 +126,7 @@ export function Composer(props: {
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
+  const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -397,6 +399,14 @@ export function Composer(props: {
       behavior: 'smooth',
     });
   }, [speechInterimResult]);
+
+  React.useEffect(() => {
+    // auto-start the microphone if appChat was created with a particular intent
+    if (appChatNewChatIntent === 'voiceInput') {
+      toggleRecognition();
+      void removeQueryParam('newChat');
+    }
+  }, [appChatNewChatIntent, toggleRecognition]);
 
 
   // Other send actins
