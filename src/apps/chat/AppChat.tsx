@@ -61,7 +61,8 @@ export const CHAT_NOVEL_TITLE = 'Chat';
 
 
 export interface AppChatIntent {
-  initialConversationId: string | null;
+  initialConversationId?: string;
+  newChat?: 'voiceInput';
 }
 
 const scrollToBottomSx = {
@@ -199,23 +200,6 @@ export function AppChat() {
     if (navigateHistoryInFocusedPane(direction))
       showNextTitleChange.current = true;
   }, [navigateHistoryInFocusedPane]);
-
-  // [effect] Handle the initial conversation intent
-  React.useEffect(() => {
-    if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
-      return openConversationInFocusedPane(null! /* for debugging purporse */);
-    intent.initialConversationId && openConversationInFocusedPane(intent.initialConversationId);
-  }, [intent.initialConversationId, openConversationInFocusedPane]);
-
-  // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
-  React.useEffect(() => {
-    if (showNextTitleChange.current) {
-      showNextTitleChange.current = false;
-      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
-      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
-      return () => removeSnackbar(id);
-    }
-  }, [focusedChatNumber, focusedChatTitle]);
 
 
   // Execution
@@ -483,6 +467,32 @@ export function AppChat() {
   );
 
   useSetOptimaAppMenu(focusedMenuItems, 'AppChat');
+
+
+  // Effects
+
+  // [effect] Handle the conversation intent
+  React.useEffect(() => {
+    // Debug: open a null chat
+    if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
+      openConversationInFocusedPane(null! /* for debugging purporse */);
+    // Open the initial conversation if set
+    else if (intent.initialConversationId)
+      openConversationInFocusedPane(intent.initialConversationId);
+    // Create a new chat if requested
+    else if (intent.newChat !== undefined)
+      handleConversationNewInFocusedPane(false, false);
+  }, [handleConversationNewInFocusedPane, intent.initialConversationId, intent.newChat, openConversationInFocusedPane]);
+
+  // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
+  React.useEffect(() => {
+    if (showNextTitleChange.current) {
+      showNextTitleChange.current = false;
+      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
+      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
+      return () => removeSnackbar(id);
+    }
+  }, [focusedChatNumber, focusedChatTitle]);
 
 
   // Shortcuts

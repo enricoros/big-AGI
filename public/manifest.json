@@ -66,6 +66,18 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "New Voice Chat",
+      "url": "/?newChat=voiceInput",
+      "description": "Start a new chat with voice input",
+      "icons": [
+        {
+          "src": "/icons/icon-voicechat-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
