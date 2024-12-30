@@ -566,6 +566,11 @@ export function ChatMessage(props: {
     // style: when the user skips the message
     ...(isUserMessageSkipped && messageSkippedSx),
 
+    // style: when the message is being edited
+    ...(isEditingText && {
+      zIndex: 1, // this is to make the whole message appear on top of Beam Scatter > RayControlsMemo
+    }),
+
     // for: ENABLE_COPY_MESSAGE_OVERLAY
     // '&:hover > button': { opacity: 1 },
 
@@ -573,7 +578,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
 
 
   // avatar icon & label & tooltip
