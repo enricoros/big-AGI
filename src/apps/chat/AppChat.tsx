@@ -31,7 +31,7 @@ import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMess
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationSystemPurposeId, isValidConversation, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useSetOptimaAppMenu } from '~/common/layout/optima/useOptima';
 import { themeBgAppChatComposer } from '~/common/app.theme';
 import { useChatLLM } from '~/common/stores/llms/llms.hooks';
@@ -265,14 +265,20 @@ export function AppChat() {
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
     // Ctrl + Shift + B
-    const focusedConversation = getConversation(focusedPaneConversationId);
-    if (focusedConversation?.messages?.length) {
-      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      if (lastMessage.role === 'assistant')
-        ConversationsManager.getHandler(focusedConversation.id).beamInvoke(focusedConversation.messages.slice(0, -1), [lastMessage], lastMessage.id);
-      else if (lastMessage.role === 'user')
-        ConversationsManager.getHandler(focusedConversation.id).beamInvoke(focusedConversation.messages, [], null);
-    }
+    if (!focusedPaneConversationId) return;
+    const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
+    if (!cHandler.isValid()) return;
+    const inputHistory = cHandler.historyViewHead('chat-beam-shortcut');
+    if (!inputHistory.length) return;
+
+    // TODO: replace the Persona and Auto-Cache-hint in the history?
+
+    // replace the prompt in history
+    const lastMessage = inputHistory[inputHistory.length - 1];
+    if (lastMessage.role === 'assistant')
+      cHandler.beamInvoke(inputHistory.slice(0, -1), [lastMessage], lastMessage.id);
+    else if (lastMessage.role === 'user')
+      cHandler.beamInvoke(inputHistory, [], null);
   }, [focusedPaneConversationId]);
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
