@@ -32,10 +32,10 @@ interface PVariableDefinition {
   pattern?: RegExp;               // for variables that need regex replacement (e.g., {{LLM.LowRL:...}})
 
   // function to generate the replacement text
-  replace: (context: DPromptMixerContext) => string | null;
+  replace: (context: PPromptMixerContext) => string | null;
 }
 
-export interface DPromptMixerContext {
+export interface PPromptMixerContext {
   assistantLlmId?: DLLMId;
   deviceIsDesktop?: boolean;
   deviceBrowserLang?: string;
@@ -44,7 +44,7 @@ export interface DPromptMixerContext {
   customFields?: Record<string, string>;
 }
 
-// export type DPromptVariable = keyof typeof PromptVariableRegistry;
+export type PPromptVariable = keyof typeof PromptVariableRegistry;
 
 
 // Registry

@@ -5,10 +5,10 @@ import { BrowserLang, Is } from '~/common/util/pwaUtils';
 
 import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
 
-import { DPromptMixerContext, PromptVariableRegistry } from './pmix.parameters';
+import { PPromptMixerContext, PromptVariableRegistry } from './pmix.parameters';
 
 
-export function replacePromptVariables(template: string, context: DPromptMixerContext): string {
+export function replacePromptVariables(template: string, context: PPromptMixerContext): string {
   let mixed = template;
 
   // auto-append Auto-Suggest features if enabled
