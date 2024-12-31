@@ -47,7 +47,7 @@
  * @returns null if the message is safe, or a string with the user message if it's not safe
  */
 /* NOTE: NOT PORTED TO AIX YET, this was the former "LLMS" implementation
-async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: VChatMessageIn | null): Promise<string | null> {
+async function _openAIModerationCheck(access: OpenAIAccessSchema, lastMessage: ... | null): Promise<string | null> {
   if (!lastMessage || lastMessage.role !== 'user')
     return null;
 

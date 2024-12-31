@@ -4,7 +4,7 @@ import { Typography } from '@mui/joy';
 
 import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessage';
 
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
@@ -50,12 +50,11 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     if (rayMessage.role !== 'assistant')
       throw new Error('Invalid response role');
 
+  const gatherSystemInstruction = createDMessageTextContent('system', _mixChatGeneratePrompt(_i.systemPrompt, inputs.rayMessages.length, prevStepOutput));
+  const chatMessagesWithoutSystem = inputs.chatMessages.filter(_m => (_m.role === 'user' || _m.role === 'assistant'));
   const gatherHistory: DMessage[] = [
-    // s
-    createDMessageTextContent('system', _mixChatGeneratePrompt(_i.systemPrompt, inputs.rayMessages.length, prevStepOutput)),
-    // s0-h0-u0: remove the system messages
-    ...inputs.chatMessages
-      .filter(_m => (_m.role === 'user' || _m.role === 'assistant')),
+    // s0-h0-u0
+    ...chatMessagesWithoutSystem,
     // aN: every proposal is an assistant message
     // FIXME: there could be an issue with aix.dispatch fusion of assistant messages, and in the future, this should require a
     //        re-encoding or structuring of sorts, e.g.: .map(_m => ({ ..._m, metadata: { ..._m.metadata, asAttachment: true } }))
@@ -105,8 +104,9 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
   };
 
   // stream the gathered message
-  return aixChatGenerateContent_DMessage_FromHistory(
+  return aixChatGenerateContent_DMessage_FromConversation(
     inputs.llmId,
+    gatherSystemInstruction,
     gatherHistory,
     'beam-gather', inputs.contextRef,
     { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : 1 },

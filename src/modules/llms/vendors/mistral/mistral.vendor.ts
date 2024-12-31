@@ -3,8 +3,7 @@ import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAILLMOptions, DOpenAIServiceSettings, ModelVendorOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { DOpenAIServiceSettings, ModelVendorOpenAI } from '../openai/openai.vendor';
 
 import { MistralServiceSetup } from './MistralServiceSetup';
 
@@ -16,7 +15,7 @@ type DMistralServiceSettings = Pick<DOpenAIServiceSettings, 'oaiKey' | 'oaiHost'
 
 /** Implementation Notes for the Mistral vendor
  */
-export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
+export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAccessSchema> = {
   id: 'mistral',
   name: 'Mistral',
   displayRank: 18,
@@ -27,7 +26,6 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
   // components
   Icon: MistralIcon,
   ServiceSetupComponent: MistralServiceSetup,
-  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
   initializeSetup: () => ({

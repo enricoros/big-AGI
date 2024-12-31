@@ -3,8 +3,7 @@ import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 import { GroqServiceSetup } from './GroqServiceSetup';
 
@@ -13,7 +12,7 @@ interface DGroqServiceSettings {
   groqKey: string;
 }
 
-export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
+export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSchema> = {
   id: 'groq',
   name: 'Groq',
   displayRank: 32,
@@ -24,7 +23,6 @@ export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSch
   // components
   Icon: GroqIcon,
   ServiceSetupComponent: GroqServiceSetup,
-  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
   initializeSetup: () => ({

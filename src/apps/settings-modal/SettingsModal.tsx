@@ -15,6 +15,7 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optima';
+import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
@@ -135,9 +136,12 @@ export function SettingsModal(props: {
       title='Preferences' strongerTitle
       open={props.open} onClose={props.onClose}
       startButton={isMobile ? undefined : (
-        <Button variant='soft' onClick={props.onOpenShortcuts}>
-          👉 See Shortcuts
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <DarkModeToggleButton hasText={true} />
+          <Button variant='soft' color='neutral' onClick={props.onOpenShortcuts}>
+            👉 See Shortcuts
+          </Button>
+        </Box>
       )}
     >
 

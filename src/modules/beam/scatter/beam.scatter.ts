@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromHistory } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
@@ -8,6 +8,7 @@ import { createDMessageEmpty, DMessage, duplicateDMessageNoVoid, messageWasInter
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
 import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
@@ -53,6 +54,10 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   if (!inputHistory || inputHistory.length < 1 || inputHistory[inputHistory.length - 1].role !== 'user')
     return { ...ray, scatterIssue: `Invalid conversation history (${inputHistory?.length})` };
 
+  // split pre dynamic-personas
+  const { chatSystemInstruction: scatterSystemInstruction, chatHistory: scatterInputHistory } = splitSystemMessageFromHistory(inputHistory);
+
+
   const abortController = new AbortController();
 
   const onMessageUpdated = (incrementalMessage: AixChatGenerateContent_DMessage, completed: boolean) => {
@@ -69,9 +74,10 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
   };
 
   // stream the ray's messages directly to the state store
-  aixChatGenerateContent_DMessage_FromHistory(
+  aixChatGenerateContent_DMessage_FromConversation(
     llmId,
-    inputHistory,
+    scatterSystemInstruction,
+    scatterInputHistory,
     'beam-scatter', ray.rayId,
     { abortSignal: abortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : rays.length },
     onMessageUpdated,

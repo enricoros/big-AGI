@@ -27,18 +27,18 @@ export const MessagesSelectionHeader = (props: { hasSelected: boolean, sumTokens
   }}>
     <Checkbox size='md' onChange={event => props.onSelectAll(event.target.checked)} sx={{ minWidth: 24, justifyContent: 'center' }} />
 
-    <Box>Select all ({props.sumTokens?.toLocaleString()})</Box>
+    <Box sx={{ fontSize: 'sm' }}>Select all ({props.sumTokens?.toLocaleString()})</Box>
 
     <Box sx={{ mx: 'auto', display: 'flex', gap: 1 }}>
-      <Button variant='solid' disabled={!props.hasSelected} onClick={props.onDeleteMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<DeleteOutlineIcon />}>
-        Delete
-      </Button>
-      <Button variant='solid' disabled={!props.hasSelected} onClick={props.onHideMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<VisibilityOffIcon />}>
+      <Button size='sm' disabled={!props.hasSelected} onClick={props.onHideMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<VisibilityOffIcon />}>
         Hide
+      </Button>
+      <Button size='sm' disabled={!props.hasSelected} onClick={props.onDeleteMessages} sx={{ minWidth: { md: 120 } }} endDecorator={<DeleteOutlineIcon />}>
+        Delete
       </Button>
     </Box>
 
-    <IconButton onClick={props.onClose}>
+    <IconButton size='sm' onClick={props.onClose}>
       <ClearIcon />
     </IconButton>
   </Sheet>;

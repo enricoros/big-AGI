@@ -1,5 +1,6 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
+import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageFragment, DMessageImageRefPart, isContentOrAttachmentFragment, isTextContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
@@ -26,9 +27,9 @@ export type AixChatGenerate_TextMessages = {
   text: string;
 }[];
 
-export function aixCGR_FromSimpleText(systemInstruction: string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
+export function aixCGR_FromSimpleText(systemInstruction: null | string, messages: AixChatGenerate_TextMessages): AixAPIChatGenerate_Request {
   return {
-    systemMessage: aixCGR_SystemMessage(systemInstruction),
+    systemMessage: systemInstruction === null ? null : aixCGR_SystemMessageText(systemInstruction),
     chatSequence: messages.map(m => {
       switch (m.role) {
         case 'user':
@@ -40,7 +41,7 @@ export function aixCGR_FromSimpleText(systemInstruction: string, messages: AixCh
   };
 }
 
-export function aixCGR_SystemMessage(text: string) {
+export function aixCGR_SystemMessageText(text: string) {
   return { parts: [aixCGRTextPart(text)] };
 }
 
@@ -61,43 +62,61 @@ function aixCGRTextPart(text: string) {
 // AIX <> Chat Messages API helpers
 //
 
-export async function aixCGR_FromDMessagesOrThrow(
-  messageSequence: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
-  _assemblyMode: 'complete' = 'complete',
-): Promise<AixAPIChatGenerate_Request> {
+
+export async function aixCGR_SystemMessage_FromDMessageOrThrow(
+  systemInstruction: null | Pick<DMessage, 'fragments' | 'metadata' | 'userFlags'>,
+): Promise<AixAPIChatGenerate_Request['systemMessage']> {
+
+  // quick bypass for no message
+  if (!systemInstruction)
+    return null;
+
+  // create the system instruction
+  const sm: AixAPIChatGenerate_Request['systemMessage'] = {
+    parts: [],
+  };
+
+  // process fragments of the system instruction
+  for (const fragment of systemInstruction.fragments) {
+    if (isTextContentFragment(fragment)) {
+      sm.parts.push(fragment.part);
+    }
+    // TODO: handle other types of fragments if needed, such as the 'doc' type
+    else {
+      if (process.env.NODE_ENV === 'development')
+        throw new Error('[DEV] aixCGR_systemMessageFromInstruction: unexpected system fragment');
+      console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected system fragment:', fragment);
+    }
+  }
+
+  // (on System message) handle the ant-cache-prompt user/auto flags
+  const mHasAntCacheFlag = messageHasUserFlag(systemInstruction, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(systemInstruction, MESSAGE_FLAG_VND_ANT_CACHE_USER);
+  if (mHasAntCacheFlag)
+    sm.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
+
+  return sm;
+}
+
+
+export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
+  messageSequenceWithoutSystem: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
+  // _assemblyMode: 'complete' = 'complete',
+): Promise<AixAPIChatGenerate_Request['chatSequence']> {
 
   // if the user has marked messages for exclusion, we skip them
-  messageSequence = messageSequence.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
+  messageSequenceWithoutSystem = messageSequenceWithoutSystem.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
 
   // reduce history
-  return await messageSequence.reduce(async (accPromise, m, index): Promise<AixAPIChatGenerate_Request> => {
+  // NOTE: we used to have a "systemMessage" here, but we're moving to a more strict API with separate processing of it;
+  //       - as such we now 'throw' if a system message is found (on dev mode, and just warn in production).
+  //       - still, we keep the full reducer as a 'AixCGR_FromDmessages' type, in case we need more complex reductions in the future
+  const cgr = await messageSequenceWithoutSystem.reduce(async (accPromise, m, _index): Promise<AixAPIChatGenerate_Request> => {
     const acc = await accPromise;
 
-    // (on Assistant messages) handle the ant-cache-prompt user/auto flags
+    // (on any User/Assistant messages) check the ant-cache-prompt user/auto flags
     const mHasAntCacheFlag = messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(m, MESSAGE_FLAG_VND_ANT_CACHE_USER);
 
-    // extract system
-    if (index === 0 && m.role === 'system') {
-      // create parts if not exist
-      if (!acc.systemMessage) {
-        acc.systemMessage = {
-          parts: [],
-        };
-      }
-      for (const systemFragment of m.fragments) {
-        if (isTextContentFragment(systemFragment)) {
-          acc.systemMessage.parts.push(systemFragment.part);
-        } else {
-          console.warn('aixCGR_FromDMessages: unexpected system fragment', systemFragment);
-        }
-      }
-      // (on System message) handle the ant-cache-prompt user/auto flags
-      if (mHasAntCacheFlag)
-        acc.systemMessage.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
-      return acc;
-    }
-
-    // map the other parts
+    // in the new version we handle all parts and only expect User and Assistant DMessages - as the System has been handled separately
     const dMessageRole: DMessageRole = m.role;
     if (dMessageRole === 'user') {
 
@@ -228,12 +247,25 @@ export async function aixCGR_FromDMessagesOrThrow(
       acc.chatSequence.push(...assistantMessages);
 
     } else {
+
+      // DEV MODE: THROW ERROR, to aid the porting efforts
+      if (process.env.NODE_ENV === 'development')
+        throw new Error(`[DEV] aixCGR_FromDMessages: unexpected message role ${m.role}. Please PORT the caller to the systemIntruction API change.`);
+
       // TODO: implement mid-chat system messages if needed
-      console.warn('aixCGR_FromDMessages: unexpected message role', m.role);
+      // NOTE: the API should just disallow 'system' messages in the middle of the chat
+      console.warn('[DEV] aixCGR_FromDMessages: unexpected message role', m.role);
+
     }
 
     return acc;
-  }, Promise.resolve({ chatSequence: [] } as AixAPIChatGenerate_Request));
+  }, Promise.resolve({
+    systemMessage: null,
+    chatSequence: [],
+  } as Pick<AixAPIChatGenerate_Request, 'systemMessage' | 'chatSequence'>) /* this is the key to the new version of this function which doesn't extract system messages anymore */);
+
+  // as promised we only return this as we only built this, and not the full CGR.
+  return cgr.chatSequence;
 }
 
 
@@ -283,30 +315,74 @@ function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): Aix
 
 /// Client-side hotfixes
 
-/**
- * Hot fix for handling system messages with OpenAI O1 Preview models.
- * Converts System to User messages for compatibility.
- */
-export function clientHotFixGenerateRequestForO1Preview(aixChatGenerate: AixAPIChatGenerate_Request): void {
+
+export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interfaces'], aixChatGenerate: AixAPIChatGenerate_Request, modelName: string): {
+  shallDisableStreaming: boolean;
+  workaroundsCount: number;
+} {
 
   let workaroundsCount = 0;
 
+  // Apply the cast-sys0-to-usr0 hot fix (e.g. o1-preview); however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
+  if (llmInterfaces.includes(LLM_IF_HOTFIX_Sys0ToUsr0))
+    workaroundsCount += clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate);
+
+  // Apply the strip-images hot fix (e.g. o1-preview); however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
+  if (llmInterfaces.includes(LLM_IF_HOTFIX_StripImages))
+    workaroundsCount += clientHotFixGenerateRequest_StripImages(aixChatGenerate);
+
+  // Disable streaming for select chat models that don't support it (e.g. o1-preview (old) and o1-2024-12-17)
+  const shallDisableStreaming = llmInterfaces.includes(LLM_IF_HOTFIX_NoStream);
+
+  if (workaroundsCount > 0)
+    console.warn(`[DEV] Working around '${modelName}' model limitations: client-side applied ${workaroundsCount} workarounds`);
+
+  return { shallDisableStreaming, workaroundsCount };
+
+}
+
+
+/**
+ * Hot fix for handling system messages in models that do not support them, such as `o1-preview`.
+ * -> Converts System to User messages for compatibility.
+ *
+ * Notes for the o1-2024-12-17 model:
+ * - we don't cast the system to user, as the aix dispatcher is casting the 'system' message to 'developer'
+ */
+function clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate: AixAPIChatGenerate_Request): number {
+
   // Convert the main system message if it exists
-  if (aixChatGenerate.systemMessage) {
-    workaroundsCount++;
+  if (!aixChatGenerate.systemMessage)
+    return 0;
 
-    // Convert system message to user message
-    const systemAsUser: AixMessages_UserMessage = {
-      role: 'user',
-      parts: aixChatGenerate.systemMessage.parts,
-    };
+  // Convert system message to user message
+  const systemAsUser: AixMessages_UserMessage = {
+    role: 'user',
+    parts: aixChatGenerate.systemMessage.parts,
+  };
 
-    // Insert the converted system message at the beginning of the chat sequence
-    aixChatGenerate.chatSequence.unshift(systemAsUser);
+  // Insert the converted system message at the beginning of the chat sequence (recreating the array to not alter the original)
+  aixChatGenerate.chatSequence = [...aixChatGenerate.chatSequence];
+  aixChatGenerate.chatSequence.unshift(systemAsUser);
 
-    // Remove the original system message
-    delete aixChatGenerate.systemMessage;
-  }
+  // Remove the original system message
+  aixChatGenerate.systemMessage = null;
+
+  // Log the workaround applied
+  return 1;
+
+}
+
+
+/**
+ * Hot fix for models that don't support vision input and we need to perform the fix ahead of AIX send.
+ *
+ * Notes for the o1-2024-12-17 model:
+ * - we don't strip inline images, as o1 supports them
+ */
+function clientHotFixGenerateRequest_StripImages(aixChatGenerate: AixAPIChatGenerate_Request): number {
+
+  let workaroundsCount = 0;
 
   // Note: other conversions that would translate to system inside the AIX Dispatch will be handled there, as we have a
   // higher level representation here, where the roles are 'user', 'model', and 'tool'.
@@ -325,7 +401,6 @@ export function clientHotFixGenerateRequestForO1Preview(aixChatGenerate: AixAPIC
   }
 
   // Log the number of workarounds applied
-  if (workaroundsCount > 0)
-    console.warn(`[DEV] Working around o1 models limitations: applied ${workaroundsCount} client-side workarounds`);
+  return workaroundsCount;
 
 }

@@ -19,8 +19,7 @@ import { patchSvgString } from './RenderCodeSVG';
  * If you update this file, also make sure the interfaces/type definitions and initialization
  * options are updated accordingly.
  */
-const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js';
-const MERMAID_ERROR_PREFIX: string = '[Mermaid]';
+const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js';
 
 interface MermaidAPI {
   initialize: (config: any) => void;
@@ -117,6 +116,10 @@ function useMermaidLoader() {
   return { mermaidAPI, isSuccess: !!mermaidAPI, hasStartedLoading: loadingStarted, error: loadingError };
 }
 
+type MermaidResult =
+  | { success: true; svg: string }
+  | { success: false; error: string };
+
 
 export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boolean }) {
 
@@ -127,16 +130,16 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
   const { mermaidAPI, error: mermaidLoadError } = useMermaidLoader();
 
   // [effect] re-render on code changes
-  const { data } = useQuery({
+  const { data } = useQuery<MermaidResult>({
     enabled: !!mermaidAPI && !!props.mermaidCode,
     queryKey: ['mermaid', props.mermaidCode],
-    queryFn: async () => {
+    queryFn: async (): Promise<MermaidResult> => {
       try {
         const elementId = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
         const { svg } = await mermaidAPI!.render(elementId, props.mermaidCode, mermaidContainerRef.current!);
-        return svg;
+        return svg ? { success: true, svg } : { success: false, error: 'No SVG returned.' };
       } catch (error: any) {
-        return MERMAID_ERROR_PREFIX + ' ' + (error?.message || 'invalid.');
+        return { success: false, error: error?.message ?? error?.toString() ?? 'unknown error' };
       }
     },
     staleTime: 1000 * 60 * 60 * 24, // 1 day
@@ -144,11 +147,10 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
 
   // derived
   const hasMermaidLoadError = !!mermaidLoadError;
-  const hasSvgError = data?.startsWith(MERMAID_ERROR_PREFIX);
 
   return (
     <Box component='div'>
-      {hasSvgError && (
+      {data?.success === false && (
         <Typography level='body-sm' color='danger' variant='plain' sx={{ mb: 2, borderRadius: 'xs' }}>
           Unable to display diagram. Issue with the generated Mermaid code.
         </Typography>
@@ -156,8 +158,13 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
       <Box
         component='div'
         ref={mermaidContainerRef}
-        dangerouslySetInnerHTML={{ __html: hasMermaidLoadError ? mermaidLoadError : (patchSvgString(props.fitScreen, data) || 'Loading Diagram...') }}
-        sx={hasSvgError ? diagramErrorSx : diagramSx}
+        dangerouslySetInnerHTML={{
+          __html:
+            hasMermaidLoadError ? mermaidLoadError
+              : data?.success === false ? data.error
+                : patchSvgString(props.fitScreen, data?.svg) || 'Loading Diagram...',
+        }}
+        sx={data?.success === false ? diagramErrorSx : diagramSx}
       />
     </Box>
   );

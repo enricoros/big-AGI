@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
@@ -218,13 +218,14 @@ export function ModelsServiceSelector(props: {
 
 
       {/* vendors popup, for adding */}
-      <CloseableMenu
-        placement='bottom-start' zIndex={themeZIndexOverMobileDrawer}
-        open={!!vendorsMenuAnchor} anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
-        sx={{ minWidth: 200 }}
+      <CloseablePopup
+        menu anchorEl={vendorsMenuAnchor} onClose={closeVendorsMenu}
+        minWidth={200}
+        placement='auto-end'
+        zIndex={themeZIndexOverMobileDrawer}
       >
         {vendorComponents}
-      </CloseableMenu>
+      </CloseablePopup>
 
     </Box>
   );

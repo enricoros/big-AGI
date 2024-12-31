@@ -56,6 +56,75 @@ export function agiCustomId(digits: number) {
   return nanoid(digits);
 }
 
+
+// UUID v4 generation - because in DBs the lookup is faster, although it takes more bytes as a string
+
+type UuidV4Scope =
+  | 'conversation-2'
+  | 'persona-2'
+  ;
+
+
+/**
+ * Generates a UUID v4 using the Web Crypto API
+ * @returns A standard UUID v4 string (e.g., '123e4567-e89b-12d3-a456-426614174000')
+ */
+export function agiUuidV4(_scope: UuidV4Scope): string {
+  // for modern browsers and Node.js
+  if (typeof crypto !== 'undefined' && crypto.randomUUID)
+    return crypto.randomUUID();
+
+  // fallback for missing crypto.randomUUID
+  const randomValues = new Uint8Array(16);
+  crypto.getRandomValues(randomValues);
+
+  // Set version (4) and variant (RFC4122)
+  randomValues[6] = (randomValues[6] & 0x0f) | 0x40;
+  randomValues[8] = (randomValues[8] & 0x3f) | 0x80;
+
+  // Convert to hex string and format as UUID
+  const hex = Array.from(randomValues)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/**
+ * Converts a nanoid to a UUID v4 format string. The conversion is:
+ * - Deterministic (same nanoid always produces the same UUID)
+ * - Maintains randomness properties
+ * - Produces valid UUID v4 format (8-4-4-4-12 characters)
+ */
+export function nanoidToUuidV4(nanoid: string, _scope: 'convert-stored-chat-v1'): string {
+  // 1. Create a consistent hash from the nanoid
+  const hash = new Uint8Array(16);
+  for (let i = 0; i < nanoid.length; i++) {
+    // Simple but consistent hash function
+    hash[i % 16] ^= nanoid.charCodeAt(i);
+  }
+
+  // 2. Ensure UUID v4 format requirements
+  // Version 4 UUID has these requirements:
+  // - bit 6-7 of clock_seq_hi_and_reserved to 0b10 (RFC 4122)
+  // - bit 12-15 of time_hi_and_version to 0b0100 (version 4)
+  hash[6] = (hash[6] & 0x0f) | 0x40;  // Version 4
+  hash[8] = (hash[8] & 0x3f) | 0x80;  // RFC 4122 variant
+
+  // 3. Convert to hex string
+  const hexArray = Array.from(hash).map(b => b.toString(16).padStart(2, '0'));
+
+  // 4. Format as UUID (8-4-4-4-12)
+  return [
+    hexArray.slice(0, 4).join(''),
+    hexArray.slice(4, 6).join(''),
+    hexArray.slice(6, 8).join(''),
+    hexArray.slice(8, 10).join(''),
+    hexArray.slice(10, 16).join(''),
+  ].join('-');
+}
+
+
 /*
 // Similar to the above but makes sure there's no collision with the given list of IDs
 export function agiUuidUncollided(scope: Extract<UidScope, 'chat-dfragment'>, existingIds: string[]) {

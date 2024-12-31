@@ -13,9 +13,9 @@ import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { AppChatIntent } from '../../AppChat';
 import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '../../store-app-chat';
 
-import type { DOpenAILLMOptions } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
@@ -31,12 +31,13 @@ import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/compon
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
-import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
-import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { launchAppCall } from '~/common/app.routes';
+import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
+import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
@@ -49,8 +50,9 @@ import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import type { ActileItem } from './actile/ActileProvider';
+import { providerAttachmentLabels } from './actile/providerAttachmentLabels';
 import { providerCommands } from './actile/providerCommands';
-import { providerStarredMessage, StarredMessageItem } from './actile/providerStarredMessage';
+import { providerStarredMessages, StarredMessageItem } from './actile/providerStarredMessage';
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
@@ -124,6 +126,7 @@ export function Composer(props: {
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
+  const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -220,7 +223,7 @@ export function Composer(props: {
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
-  const tokensResponseMax = (props.chatLLM?.options as DOpenAILLMOptions /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
+  const tokensResponseMax = getModelParameterValueOrThrow('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
   const tokenChatPricing = props.chatLLM?.pricing?.chat;
 
@@ -397,6 +400,14 @@ export function Composer(props: {
     });
   }, [speechInterimResult]);
 
+  React.useEffect(() => {
+    // auto-start the microphone if appChat was created with a particular intent
+    if (appChatNewChatIntent === 'voiceInput') {
+      toggleRecognition();
+      void removeQueryParam('newChat');
+    }
+  }, [appChatNewChatIntent, toggleRecognition]);
+
 
   // Other send actins
 
@@ -457,35 +468,32 @@ export function Composer(props: {
 
   // Actiles
 
-  const onActileCommandPaste = React.useCallback((item: ActileItem) => {
+  const onActileCommandPaste = React.useCallback(({ label }: ActileItem, searchPrefix: string) => {
     if (composerTextAreaRef.current) {
       const textArea = composerTextAreaRef.current;
       const currentText = textArea.value;
       const cursorPos = textArea.selectionStart;
 
       // Find the position where the command starts
-      const commandStart = currentText.lastIndexOf('/', cursorPos);
+      const commandStart = currentText.lastIndexOf(searchPrefix, cursorPos);
 
       // Construct the new text with the autocompleted command
-      const newText = currentText.substring(0, commandStart) + item.label + ' ' + currentText.substring(cursorPos);
+      setComposeText((prevText) => prevText.substring(0, commandStart) + label + ' ' + prevText.substring(cursorPos));
 
-      // Update the text area with the new text
-      setComposeText(newText);
-
-      // Move the cursor to the end of the autocompleted command
-      const newCursorPos = commandStart + item.label.length + 1;
-      textArea.setSelectionRange(newCursorPos, newCursorPos);
+      // Schedule setting the cursor position after the state update
+      const newCursorPos = commandStart + label.length + 1;
+      setTimeout(() => composerTextAreaRef.current?.setSelectionRange(newCursorPos, newCursorPos), 0);
     }
   }, [composerTextAreaRef, setComposeText]);
 
   const onActileEmbedMessage = React.useCallback(async ({ conversationId, messageId }: StarredMessageItem) => {
     // get the message
-    const conversation = getConversation(conversationId);
-    const messageToEmbed = conversation?.messages.find(m => m.id === messageId);
-    if (conversation && messageToEmbed) {
+    const cHandler = ConversationsManager.getHandler(conversationId);
+    const messageToEmbed = cHandler.historyFindMessageOrThrow(messageId);
+    if (messageToEmbed) {
       const fragmentsCopy = duplicateDMessageFragmentsNoVoid(messageToEmbed.fragments); // [attach] deep copy a message's fragments to attach to ego
       if (fragmentsCopy.length) {
-        const chatTitle = conversationTitle(conversation);
+        const chatTitle = cHandler.title() ?? '';
         const messageText = messageFragmentsReduceText(fragmentsCopy);
         const label = `${chatTitle} > ${messageText.slice(0, 10)}...`;
         await attachAppendEgoFragments(fragmentsCopy, label, chatTitle, conversationId, messageId);
@@ -493,9 +501,12 @@ export function Composer(props: {
     }
   }, [attachAppendEgoFragments]);
 
-  const actileProviders = React.useMemo(() => {
-    return [providerCommands(onActileCommandPaste), providerStarredMessage(onActileEmbedMessage)];
-  }, [onActileCommandPaste, onActileEmbedMessage]);
+
+  const actileProviders = React.useMemo(() => [
+    providerAttachmentLabels(conversationOverlayStore, onActileCommandPaste),
+    providerCommands(onActileCommandPaste),
+    providerStarredMessages(onActileEmbedMessage),
+  ], [conversationOverlayStore, onActileCommandPaste, onActileEmbedMessage]);
 
   const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, composerTextAreaRef);
 
@@ -666,9 +677,9 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
-  // stable randomization of the /verb, between '/draw', '/react', '/beam', '/browse'
+  // stable randomization of the /verb, between '/draw', '/react', '/browse'
   const placeholderAction = React.useMemo(() => {
-    const actions = ['/react', '/beam'];
+    const actions: string[] = ['/react'];
     if (props.capabilityHasT2I) actions.push('/draw');
     if (hasComposerBrowseCapability) actions.push('/browse');
     return actions[Math.floor(Math.random() * actions.length)];
@@ -719,7 +730,7 @@ export function Composer(props: {
         >
 
           {/* [Mobile: top, Desktop: left] */}
-          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'flex-start' }}>
+          <Grid xs={12} md={9}><Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'stretch' }}>
 
             {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
             {isMobile && (
@@ -761,7 +772,7 @@ export function Composer(props: {
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
             {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1 }}>
 
                 {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
                 {/*  Attach*/}

@@ -1,8 +1,7 @@
 import type { IModelVendor } from '../IModelVendor';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
 
-import { DOpenAILLMOptions, ModelVendorOpenAI } from '../openai/openai.vendor';
-import { OpenAILLMOptions } from '../openai/OpenAILLMOptions';
+import { ModelVendorOpenAI } from '../openai/openai.vendor';
 
 import { LMStudioServiceSetup } from './LMStudioServiceSetup';
 import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
@@ -12,7 +11,7 @@ interface DLMStudioServiceSettings {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
 }
 
-export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIAccessSchema, DOpenAILLMOptions> = {
+export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIAccessSchema> = {
   id: 'lmstudio',
   name: 'LM Studio',
   displayRank: 52,
@@ -22,7 +21,6 @@ export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIA
   // components
   Icon: LMStudioIcon,
   ServiceSetupComponent: LMStudioServiceSetup,
-  LLMOptionsComponent: OpenAILLMOptions,
 
   // functions
   initializeSetup: () => ({

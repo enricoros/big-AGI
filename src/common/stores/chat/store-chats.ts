@@ -53,6 +53,7 @@ export interface ChatActions {
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
+  title: (cId: DConversationId) => string | undefined;
 
   // utility function
   _editConversation: (cId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
@@ -389,6 +390,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             ...(!userTitle && { autoTitle: undefined }), // clear autotitle when clearing usertitle
           }),
 
+      title: (conversationId: DConversationId): string | undefined => {
+        const existing = _get().conversations.find(_c => _c.id === conversationId);
+        return existing ? conversationTitle(existing) : undefined;
+      },
+
       setUserSymbol: (conversationId: DConversationId, userSymbol: string | null) =>
         _get()._editConversation(conversationId,
           {
@@ -427,11 +433,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       partialize: (state) => ({
         ...state,
         conversations: state.conversations
-          .filter(c => {
+          .filter((c, _ignoreIdx, all) => {
             // do not save incognito conversations
             if (c._isIncognito) return false;
             // do not save empty conversations, begin saving them when they have content
-            return !(!c.messages?.length && !c.autoTitle && !c.userTitle);
+            return c.messages?.length || c.userTitle || c.autoTitle || all.length <= 1;
           })
           .map((conversation: DConversation) => {
             // remove the converation AbortController (current data structure version)

@@ -17,6 +17,7 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineError } from '~/common/components/InlineError';
 import { adjustContentScaling } from '~/common/app.theme';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -94,16 +95,16 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
     setAbortController(stepAbortController);
     // cHandler.setAbortController(stepAbortController);
 
-    const history = cHandler.historyViewHead('diagrams-modal');
-    const systemMessage = history.length > 0 ? history[0] : null;
-    if (!systemMessage || systemMessage?.role !== 'system')
+    const reChatHistory = cHandler.historyViewHeadOrThrow('diagrams-modal');
+    const { chatSystemInstruction } = splitSystemMessageFromHistory(reChatHistory);
+    if (!chatSystemInstruction)
       return setErrorMessage('No System instruction in this conversation');
 
     try {
       const { systemInstruction, messages } = bigDiagramPrompt(
         diagramType,
         diagramLanguage,
-        messageFragmentsReduceText(systemMessage.fragments),
+        messageFragmentsReduceText(chatSystemInstruction.fragments),
         subject,
         customInstruction,
       );

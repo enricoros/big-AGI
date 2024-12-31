@@ -317,6 +317,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // TODO: fully reform this function to be using information from the DLLM, rather than this manual mapping
 
   // [OpenAI]
+  if (model.endsWith('-o1')) return 'o1';
   if (model.includes('o1-')) {
     if (model.includes('o1-mini')) return 'o1 Mini';
     if (model.includes('o1-preview')) return 'o1 Preview';

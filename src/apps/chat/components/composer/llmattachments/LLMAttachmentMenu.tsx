@@ -15,7 +15,7 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -151,11 +151,13 @@ export function LLMAttachmentMenu(props: {
   const showInputs = uiComplexityMode !== 'minimal';
 
   return (
-    <CloseableMenu
-      dense placement='top'
+    <CloseablePopup
+      menu anchorEl={props.menuAnchor} onClose={props.onClose}
+      dense
+      maxWidth={460}
+      minWidth={260}
       noTopPadding
-      open anchorEl={props.menuAnchor} onClose={props.onClose}
-      sx={{ minWidth: 260, maxWidth: 460 }}
+      placement='top'
     >
 
       {/* Move Arrows */}
@@ -388,6 +390,6 @@ export function LLMAttachmentMenu(props: {
         Remove
       </MenuItem>
 
-    </CloseableMenu>
+    </CloseablePopup>
   );
 }

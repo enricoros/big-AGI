@@ -2,42 +2,17 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
-import type { OpenAIWire_Tools } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
-import { DLLM, DLLMId, LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { DLLM, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
 import type { ModelDescriptionSchema } from './server/llm.server.types';
-import { DOpenAILLMOptions, FALLBACK_LLM_TEMPERATURE } from './vendors/openai/openai.vendor';
 import { findServiceAccessOrThrow } from './vendors/vendor.helpers';
 
 
-// LLM Client Types
-// NOTE: Model List types in '../server/llm.server.types';
-
-export interface VChatMessageIn {
-  role: 'assistant' | 'system' | 'user'; // | 'function';
-  content: string;
-  //name?: string; // when role: 'function'
-}
-
-export type VChatFunctionIn = OpenAIWire_Tools.FunctionDefinition;
-
-export interface VChatMessageOut {
-  role: 'assistant' | 'system' | 'user';
-  content: string;
-  finish_reason: 'stop' | 'length' | null;
-}
-
-export interface VChatMessageOrFunctionCallOut extends VChatMessageOut {
-  function_name: string;
-  function_arguments: object | null;
-}
-
-
-// LLM Client Functions
+// LLM Model Updates Client Functions
 
 export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServiceId, keepUserEdits: boolean): Promise<{ models: ModelDescriptionSchema[] }> {
 
@@ -68,7 +43,9 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   return data;
 }
 
-function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DModelsService): DLLM<DOpenAILLMOptions> {
+const _fallbackInterfaces = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
+
+function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DModelsService): DLLM {
 
   // null means unknown contenxt/output tokens
   const contextTokens = d.contextWindow || null;
@@ -77,7 +54,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   const llmResponseTokens = maxOutputTokens ? Math.round(maxOutputTokens * llmResponseTokensRatio) : null;
 
   // create the object
-  const dllm: DLLM<DOpenAILLMOptions> = {
+  const dllm: DLLM = {
     id: `${service.id}-${d.id}`,
 
     // editable properties
@@ -86,28 +63,31 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     updated: d.updated || 0,
     description: d.description,
     hidden: !!d.hidden,
-    // isEdited: false, // NOTE: this is set by the store on user edits
 
     // hard properties
     contextTokens,
     maxOutputTokens,
     trainingDataCutoff: d.trainingDataCutoff,
-    interfaces: d.interfaces?.length ? d.interfaces : [LLM_IF_OAI_Chat],
-    // inputTypes: ...
+    interfaces: d.interfaces?.length ? d.interfaces : _fallbackInterfaces,
     benchmark: d.benchmark,
-    // pricing: undefined,
+    // pricing: undefined, // set below, since it needs some adaptation
+
+    // parameters system (spec and initial values)
+    parameterSpecs: d.parameterSpecs?.length ? d.parameterSpecs : [],
+    initialParameters: {
+      llmRef: d.id,
+      llmTemperature: FALLBACK_LLM_PARAM_TEMPERATURE,
+      llmResponseTokens: llmResponseTokens,
+    },
 
     // references
     sId: service.id,
     vId: service.vId,
 
-    // llm-specific
-    options: {
-      llmRef: d.id,
-      // @ts-ignore FIXME: large assumption that this is LLMOptionsOpenAI object
-      llmTemperature: FALLBACK_LLM_TEMPERATURE,
-      llmResponseTokens,
-    },
+    // user edited properties: not set
+    // userLabel: undefined,
+    // userHidden: undefined,
+    // userParameters: undefined,
   };
 
   // set the pricing
@@ -122,22 +102,4 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   }
 
   return dllm;
-}
-
-
-export async function llmStreamingChatGenerate<
-  TServiceSettings extends object = {},
-  TAccess = undefined,
-  TLLMOptions = unknown
->(
-  llmId: DLLMId,
-  messages: VChatMessageIn[],
-  contextName: string,
-  contextRef: string | null,
-  functions: VChatFunctionIn[] | null,
-  forceFunctionName: string | null,
-  abortSignal: AbortSignal,
-  onUpdate: (update: any, done: boolean) => void,
-): Promise<void> {
-  throw new Error(`llmStreamingChatGenerate: ${contextName} not migrated to AIX yet.`);
 }

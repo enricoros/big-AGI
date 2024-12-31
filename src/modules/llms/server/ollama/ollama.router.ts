@@ -9,15 +9,14 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
-import { OpenAIHistorySchema, OpenAIModelSchema } from '../openai/openai.router';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
-import { WireOllamaChatCompletionInput, wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
+import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama.wiretypes';
 
 
 // Default hosts
 const DEFAULT_OLLAMA_HOST = 'http://127.0.0.1:11434';
-export const OLLAMA_PATH_CHAT = '/api/chat';
+// export const OLLAMA_PATH_CHAT = '/api/chat';
 const OLLAMA_PATH_TAGS = '/api/tags';
 const OLLAMA_PATH_SHOW = '/api/show';
 
@@ -38,7 +37,7 @@ export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { hea
 }
 
 
-export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, jsonOutput: boolean, stream: boolean): WireOllamaChatCompletionInput => ({
+/*export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: OpenAIHistorySchema, jsonOutput: boolean, stream: boolean): WireOllamaChatCompletionInput => ({
   model: model.id,
   messages: history,
   options: {
@@ -49,7 +48,7 @@ export const ollamaChatCompletionPayload = (model: OpenAIModelSchema, history: O
   // functions: ...
   // function_call: ...
   stream,
-});
+});*/
 
 
 /* Unused: switched to the Chat endpoint (above). The implementation is left here for reference.
@@ -232,6 +231,7 @@ export const llmOllamaRouter = createTRPCRouter({
             updated: Date.parse(model.modified_at) ?? undefined,
             description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
             contextWindow,
+            ...(contextWindow ? { maxCompletionTokens: Math.round(contextWindow / 2) } : {}),
             interfaces: [LLM_IF_OAI_Chat],
           };
         }),

@@ -16,43 +16,6 @@ export function azureModelToModelDescription(azureDeploymentRef: string, openAIM
 }
 
 
-// [Deepseek AI]
-const _knownDeepseekChatModels: ManualMappings = [
-  // [Models and Pricing](https://platform.deepseek.com/api-docs/pricing)
-  // [List Models](https://platform.deepseek.com/api-docs/api/list-models)
-  {
-    idPrefix: 'deepseek-chat',
-    label: 'Deepseek Chat V2',
-    description: 'Good at general tasks, 128K context length',
-    contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
-    maxCompletionTokens: 4096,
-    chatPrice: { input: 0.14, output: 0.28 },
-  },
-  {
-    idPrefix: 'deepseek-coder',
-    label: 'Deepseek Coder V2',
-    description: 'Good at coding and math tasks, 128K context length',
-    contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
-    maxCompletionTokens: 4096,
-    chatPrice: { input: 0.14, output: 0.28 },
-  },
-];
-
-export function deepseekModelToModelDescription(deepseekModelId: string): ModelDescriptionSchema {
-  return fromManualMapping(_knownDeepseekChatModels, deepseekModelId, undefined, undefined, {
-    idPrefix: deepseekModelId,
-    label: deepseekModelId.replaceAll(/[_-]/g, ' '),
-    description: 'New Deepseek Model',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat], // assume..
-    hidden: true,
-  });
-}
-
-
 // [LM Studio]
 export function lmStudioModelToModelDescription(modelId: string): ModelDescriptionSchema {
 
@@ -300,16 +263,24 @@ export function openPipeModelToModelDescriptions(wireModel: object): ModelDescri
 // [OpenRouter]
 
 const orOldModelIDs = [
-  'openai/gpt-3.5-turbo-0301', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314', 'openai/text-davinci-002',
-  'anthropic/claude-2.1', 'anthropic/claude-2.0', 'anthropic/claude-v1', 'anthropic/claude-1.2',
-  'anthropic/claude-instant-v1-100k', 'anthropic/claude-v1-100k', 'anthropic/claude-instant-1.0',
+  // Older OpenAI models
+  'openai/gpt-3.5-turbo-0301', 'openai/gpt-3.5-turbo-0613', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
+  // Older Anthropic models
+  'anthropic/claude-1', 'anthropic/claude-1.2', 'anthropic/claude-instant-1.0', 'anthropic/claude-instant-1.1',
+  'anthropic/claude-2', 'anthropic/claude-2:beta', 'anthropic/claude-2.0', 'anthropic/claude-2.1', 'anthropic/claude-2.0:beta',
 ];
 
 const orModelFamilyOrder = [
-  // great models (pickes by hand, they're free)
-  'mistralai/mistral-7b-instruct', 'nousresearch/nous-capybara-7b',
-  // great orgs
-  'huggingfaceh4/', 'openchat/', 'anthropic/', 'google/', 'mistralai/', 'openai/', 'meta-llama/', 'phind/',
+  // Leading models/organizations (based on capabilities and popularity)
+  'anthropic/', 'openai/', 'google/', 'mistralai/', 'meta-llama/',
+  // Other major providers
+  'x-ai/', 'amazon/', 'cohere/', 'nvidia/', 'inflection/',
+  // Specialized/AI companies
+  'perplexity/', 'phind/', 'qwen/', 'deepseek/',
+  // Research/open models
+  'microsoft/', 'nousresearch/', 'openchat/', 'huggingfaceh4/',
+  // Community/other providers
+  // 'gryphe/', 'thedrummer/', 'undi95/', 'cognitivecomputations/', 'sao10k/',
 ];
 
 export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }): number {
@@ -318,7 +289,7 @@ export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }
 
   // If both have a prefix, sort by prefix first, and then alphabetically
   if (aPrefixIndex !== -1 && bPrefixIndex !== -1)
-    return aPrefixIndex !== bPrefixIndex ? aPrefixIndex - bPrefixIndex : a.id.localeCompare(b.id);
+    return aPrefixIndex !== bPrefixIndex ? aPrefixIndex - bPrefixIndex : b.id.localeCompare(a.id);
 
   // If one has a prefix and the other doesn't, prioritize the one with prefix
   return aPrefixIndex !== -1 ? -1 : 1;
@@ -344,6 +315,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   let label = model.name || model.id.replace('/', ' · ');
   if (seemsFree)
     label += ' · 🎁'; // Free? Discounted?
+  // label = label.replace('(self-moderated)', '🔓');
 
   // hidden: hide by default older models or models not in known families
   const hidden = orOldModelIDs.includes(model.id) || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
@@ -610,6 +582,8 @@ export function fromManualMapping(mappings: ManualMappings, id: string, created?
     md.maxCompletionTokens = known.maxCompletionTokens;
   if (known.trainingDataCutoff)
     md.trainingDataCutoff = known.trainingDataCutoff;
+  if (known.parameterSpecs)
+    md.parameterSpecs = known.parameterSpecs;
   if (known.benchmark)
     md.benchmark = known.benchmark;
   if (known.chatPrice)

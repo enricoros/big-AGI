@@ -49,11 +49,17 @@ export function ellipsizeFront(text: string, maxLength: number) {
   return '…' + text.slice(-(maxLength - 1));
 }
 
-export function ellipsizeMiddle(text: string, maxLength: number) {
+export function ellipsizeMiddle(text: string, maxLength: number, ellipsis: string = '…'): string {
   if (text.length <= maxLength)
     return text;
-  const half = Math.floor(maxLength / 2);
-  return text.slice(0, half) + '…' + text.slice(-(maxLength - half - 1));
+  if (maxLength <= ellipsis.length)
+    return ellipsis.slice(0, maxLength);
+
+  const sideLength = (maxLength - ellipsis.length) / 2;
+  const frontLength = Math.ceil(sideLength);
+  const backLength = Math.floor(sideLength);
+
+  return text.slice(0, frontLength) + ellipsis + text.slice(-backLength);
 }
 
 export function ellipsizeEnd(text: string, maxLength: number, maxLines?: number) {
@@ -83,4 +89,25 @@ export function ellipsizeEnd(text: string, maxLength: number, maxLines?: number)
   }
 
   return text;
+}
+
+
+export function textEscapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+
+export function textIsSingleEmoji(text: string): boolean {
+  if (!Intl.Segmenter)
+    throw new Error('Intl.Segmenter is not supported');
+
+  // create segmenter instance with default locale
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  const segments = Array.from(segmenter.segment(text));
+  return segments.length === 1;
 }
