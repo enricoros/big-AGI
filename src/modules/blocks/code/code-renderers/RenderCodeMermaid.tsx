@@ -19,7 +19,7 @@ import { patchSvgString } from './RenderCodeSVG';
  * If you update this file, also make sure the interfaces/type definitions and initialization
  * options are updated accordingly.
  */
-const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js';
+const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js';
 const MERMAID_ERROR_PREFIX: string = '[Mermaid]';
 
 interface MermaidAPI {
@@ -134,7 +134,7 @@ export function RenderCodeMermaid(props: { mermaidCode: string, fitScreen: boole
       try {
         const elementId = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
         const { svg } = await mermaidAPI!.render(elementId, props.mermaidCode, mermaidContainerRef.current!);
-        return svg;
+        return svg ? svg : MERMAID_ERROR_PREFIX + ' no SVG.';
       } catch (error: any) {
         return MERMAID_ERROR_PREFIX + ' ' + (error?.message || 'invalid.');
       }
