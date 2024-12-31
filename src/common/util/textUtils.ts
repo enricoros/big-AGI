@@ -90,3 +90,24 @@ export function ellipsizeEnd(text: string, maxLength: number, maxLines?: number)
 
   return text;
 }
+
+
+export function textEscapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+
+export function textIsSingleEmoji(text: string): boolean {
+  if (!Intl.Segmenter)
+    throw new Error('Intl.Segmenter is not supported');
+
+  // create segmenter instance with default locale
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  const segments = Array.from(segmenter.segment(text));
+  return segments.length === 1;
+}
