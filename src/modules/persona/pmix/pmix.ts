@@ -6,16 +6,7 @@ import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
 
-/*type Variables =
-  | '{{Today}}'
-  | '{{Cutoff}}'
-  | '{{PreferTables}}'
-  | '{{RenderMermaid}}'
-  | '{{RenderPlantUML}}'
-  | '{{RenderSVG}}'
-  | '{{InputImage0}}'
-  | '{{ToolBrowser0}}';
-
+/*
 type VariableResolverContext = {
   assistantLlmId: DLLMId;
 };
