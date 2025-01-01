@@ -13,22 +13,7 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useDefaultLLMIDs, useLLM } from '~/common/stores/llms/llms.hooks';
 
-import { findModelVendor } from '../vendors/vendors.registry';
-
-
-function VendorLLMOptionsComponent(props: { llmId: DLLMId }) {
-  // get LLM (warning: this will refresh all children components on every change of any LLM field)
-  const llm = useLLM(props.llmId);
-  if (!llm)
-    return 'Options issue: LLM not found for id ' + props.llmId;
-
-  // get vendor
-  const vendor = findModelVendor(llm.vId);
-  if (!vendor)
-    return `Options issue: Vendor not found for LLM ${props.llmId}, service ${llm.sId}, vendor ${llm.vId}`;
-
-  return <vendor.LLMOptionsComponent llm={llm} />;
-}
+import { LLMOptions } from './LLMOptions';
 
 
 function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): React.ReactNode {
@@ -113,7 +98,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     >
 
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
-        <VendorLLMOptionsComponent llmId={props.id} />
+        <LLMOptions llm={llm} />
       </Box>
 
       <Divider />
@@ -162,7 +147,9 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             {/*· tags: {llm.tags.join(', ')}*/}
             {!!llm.pricing?.chat && prettyPricingComponent(llm.pricing.chat)}
             {/*{!!llm.benchmark && <>benchmark: <b>{llm.benchmark.cbaElo?.toLocaleString() || '(unk) '}</b> CBA Elo<br /></>}*/}
-            config: {JSON.stringify(llm.options)}
+            {llm.parameterSpecs?.length > 0 && <>options: {llm.parameterSpecs.map(ps => ps.paramId).join(', ')}<br /></>}
+            {Object.keys(llm.initialParameters || {}).length > 0 && <>initial parameters: {JSON.stringify(llm.initialParameters)}<br /></>}
+            {Object.keys(llm.userParameters || {}).length > 0 && <>user parameters: {JSON.stringify(llm.userParameters)}<br /></>}
           </Typography>
         </Box>}
       </FormControl>

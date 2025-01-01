@@ -35,7 +35,7 @@ import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
@@ -566,6 +566,11 @@ export function ChatMessage(props: {
     // style: when the user skips the message
     ...(isUserMessageSkipped && messageSkippedSx),
 
+    // style: when the message is being edited
+    ...(isEditingText && {
+      zIndex: 1, // this is to make the whole message appear on top of Beam Scatter > RayControlsMemo
+    }),
+
     // for: ENABLE_COPY_MESSAGE_OVERLAY
     // '&:hover > button': { opacity: 1 },
 
@@ -573,7 +578,7 @@ export function ChatMessage(props: {
     display: 'block', // this is Needed, otherwise there will be a horizontal overflow
 
     ...props.sx,
-  }), [adjContentScaling, backgroundColor, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
+  }), [adjContentScaling, backgroundColor, isEditingText, isUserMessageSkipped, isUserStarred, isVndAndCacheAuto, isVndAndCacheUser, props.sx, uiComplexityMode]);
 
 
   // avatar icon & label & tooltip
@@ -791,10 +796,11 @@ export function ChatMessage(props: {
 
       {/* Message Operations Menu (3 dots) */}
       {!!opsMenuAnchor && (
-        <CloseableMenu
-          dense placement='auto-end'
-          open={true} anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
-          sx={{ minWidth: 280 }}
+        <CloseablePopup
+          menu anchorEl={opsMenuAnchor} onClose={handleCloseOpsMenu}
+          dense
+          minWidth={280}
+          placement={fromAssistant ? 'auto-start' : 'auto-end'}
         >
 
           {fromSystem && (
@@ -941,7 +947,7 @@ export function ChatMessage(props: {
                   : <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>Beam Edit<KeyStroke variant='outlined' combo='Ctrl + Shift + B' /></Box>}
             </MenuItem>
           )}
-        </CloseableMenu>
+        </CloseablePopup>
       )}
 
 
@@ -1044,10 +1050,11 @@ export function ChatMessage(props: {
 
       {/* Context (Right-click) Menu */}
       {!!contextMenuAnchor && (
-        <CloseableMenu
-          dense placement='bottom-start'
-          open={true} anchorEl={contextMenuAnchor} onClose={closeContextMenu}
-          sx={{ minWidth: 220 }}
+        <CloseablePopup
+          menu anchorEl={contextMenuAnchor} onClose={closeContextMenu}
+          dense
+          minWidth={220}
+          placement='bottom-start'
         >
           <MenuItem onClick={handleOpsCopy} sx={{ flex: 1, alignItems: 'center' }}>
             <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
@@ -1066,7 +1073,7 @@ export function ChatMessage(props: {
             <ListItemDecorator>{props.isSpeaking ? <CircularProgress size='sm' /> : <RecordVoiceOverOutlinedIcon />}</ListItemDecorator>
             Speak
           </MenuItem>}
-        </CloseableMenu>
+        </CloseablePopup>
       )}
 
     </Box>

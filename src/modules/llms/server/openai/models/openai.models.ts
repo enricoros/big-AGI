@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Vision, LLM_IF_SPECIAL_OAI_O1Preview } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -99,13 +99,39 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 0.15, cache: { cType: 'oai-ac', read: 0.075 }, output: 0.6 },
     benchmark: { cbaElo: 1272 },
   },
+  {
+    idPrefix: 'gpt-4o-mini-audio-preview',
+    label: 'GPT-4o Mini Audio Preview',
+    description: 'Preview release for audio inputs in chat completions.',
+    symLink: 'gpt-4o-mini-audio-preview-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 0.15, output: 0.6 /* TODO: AUDIO 10/20 */ },
+    isPreview: true,
+  },
+  {
+    idPrefix: 'gpt-4o-mini-audio-preview-2024-12-17',
+    label: 'GPT-4o Mini Audio Preview (2024-12-17)',
+    description: 'Snapshot for the Audio API model.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 0.15, output: 0.6 /* TODO: AUDIO 10/20 */ },
+    isPreview: true,
+    hidden: true,
+  },
 
   // GPT-4o Realtime Preview
   {
     idPrefix: 'gpt-4o-realtime-preview',
-    label: 'GPT-4o Realtime',
+    label: 'GPT-4o Realtime Preview',
     description: 'Preview release for the Realtime API. Points to the latest snapshot of GPT-4o Realtime Preview model: gpt-4o-realtime-preview-2024-10-01.',
-    symLink: 'gpt-4o-realtime-preview-2024-10-01',
+    symLink: 'gpt-4o-realtime-preview-2024-10-01', // will point to `gpt-4o-realtime-preview-2024-12-17` on Jan 9, 2025
     hidden: true,
     // copied from symlinked
     contextWindow: 128000,
@@ -116,8 +142,20 @@ export const _knownOpenAIChatModels: ManualMappings = [
     isPreview: true,
   },
   {
+    idPrefix: 'gpt-4o-realtime-preview-2024-12-17',
+    label: 'GPT-4o Realtime Preview (2024-12-17)',
+    description: 'Snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Realtime],
+    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 },
+    isPreview: true,
+    hidden: true,
+  },
+  {
     idPrefix: 'gpt-4o-realtime-preview-2024-10-01',
-    label: 'GPT-4o Realtime (2024-10-01)',
+    label: 'GPT-4o Realtime Preview (2024-10-01)',
     description: 'Current snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
@@ -128,18 +166,58 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true,
   },
   {
+    idPrefix: 'gpt-4o-mini-realtime-preview',
+    label: 'GPT-4o Mini Realtime Preview',
+    description: 'Preview release for the Realtime API. Points to the latest snapshot of GPT-4o Mini Realtime Preview model: gpt-4o-mini-realtime-preview-2024-12-17.',
+    symLink: 'gpt-4o-mini-realtime-preview-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Realtime],
+    chatPrice: { input: 0.6, cache: { cType: 'oai-ac', read: 0.3 }, output: 2.4 },
+    isPreview: true,
+  },
+  {
+    idPrefix: 'gpt-4o-mini-realtime-preview-2024-12-17',
+    label: 'GPT-4o Mini Realtime Preview (2024-12-17)',
+    description: 'Snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Realtime],
+    chatPrice: { input: 0.6, cache: { cType: 'oai-ac', read: 0.3 }, output: 2.4 },
+    isPreview: true,
+    hidden: true,
+  },
+
+  // GPT-4o Audio Preview
+  {
     idPrefix: 'gpt-4o-audio-preview',
     label: 'GPT-4o Audio Preview',
     description: 'Preview release for audio inputs in chat completions.',
-    symLink: 'gpt-4o-audio-preview-2024-10-01',
+    symLink: 'gpt-4o-audio-preview-2024-10-01', // will point to `gpt-4o-audio-preview-2024-12-17` on Jan 9, 2025
     hidden: true,
     // copied from symlinked
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [ /* Assuming audio interface */],
-    chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 /* TODO: AUDIO 100/200 */ },
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 100/200 */ },
     isPreview: true,
+  },
+  {
+    idPrefix: 'gpt-4o-audio-preview-2024-12-17',
+    label: 'GPT-4o Audio Preview (2024-12-17)',
+    description: 'Snapshot for the Audio API model.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 40/80 */ },
+    isPreview: true,
+    hidden: true,
   },
   {
     idPrefix: 'gpt-4o-audio-preview-2024-10-01',
@@ -148,10 +226,39 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [ /* Assuming audio interface */],
-    chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 1.25 }, output: 10 /* TODO: AUDIO 100/200 */ },
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 100/200 */ },
     isPreview: true,
     hidden: true,
+  },
+
+  // o1
+  {
+    idPrefix: 'o1',
+    label: 'o1',
+    description: 'Points to the most recent snapshot of the o1 model: o1-2024-12-17',
+    symLink: 'o1-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoStream],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1335 + 1 },
+  },
+  {
+    idPrefix: 'o1-2024-12-17',
+    label: 'o1 (2024-12-17)',
+    description: 'Latest o1 model.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoStream],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1335 + 1 },
   },
 
   // o1-preview
@@ -165,9 +272,9 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1339 },
+    benchmark: { cbaElo: 1335 },
     isPreview: true,
   },
   {
@@ -177,9 +284,9 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 32768,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1339 },
+    benchmark: { cbaElo: 1335 },
     isPreview: true,
   },
 
@@ -194,7 +301,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 3, cache: { cType: 'oai-ac', read: 1.5 }, output: 12 },
     benchmark: { cbaElo: 1314 },
     isPreview: true,
@@ -206,7 +313,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 65536,
     trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_SPECIAL_OAI_O1Preview, LLM_IF_OAI_PromptCaching],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
     chatPrice: { input: 3, cache: { cType: 'oai-ac', read: 1.5 }, output: 12 },
     benchmark: { cbaElo: 1314 },
     isPreview: true,
@@ -460,7 +567,7 @@ const openAIModelsDenyList: string[] = [
   'dall-e-3', 'dall-e-2',
 
   // Moderation models
-  'omni-moderation-latest', 'omni-moderation-2024-09-26'
+  'omni-moderation-latest', 'omni-moderation-2024-09-26',
 ];
 
 export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {

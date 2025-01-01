@@ -13,9 +13,9 @@ import SendIcon from '@mui/icons-material/Send';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { AppChatIntent } from '../../AppChat';
 import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '../../store-app-chat';
 
-import type { DOpenAILLMOptions } from '~/modules/llms/vendors/openai/openai.vendor';
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
@@ -31,12 +31,13 @@ import { ShortcutKey, ShortcutObject, useGlobalShortcuts } from '~/common/compon
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
-import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
-import { getConversation, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { launchAppCall } from '~/common/app.routes';
+import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
+import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
@@ -125,6 +126,7 @@ export function Composer(props: {
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
+  const { newChat: appChatNewChatIntent } = useRouterQuery<Partial<AppChatIntent>>();
   const { labsAttachScreenCapture, labsCameraDesktop, labsShowCost, labsShowShortcutBar } = useUXLabsStore(useShallow(state => ({
     labsAttachScreenCapture: state.labsAttachScreenCapture,
     labsCameraDesktop: state.labsCameraDesktop,
@@ -221,7 +223,7 @@ export function Composer(props: {
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
   const tokensHistory = _historyTokenCount;
-  const tokensResponseMax = (props.chatLLM?.options as DOpenAILLMOptions /* FIXME: BIG ASSUMPTION */)?.llmResponseTokens || 0;
+  const tokensResponseMax = getModelParameterValueOrThrow('llmResponseTokens', props.chatLLM?.initialParameters, props.chatLLM?.userParameters, 0) ?? 0;
   const tokenLimit = props.chatLLM?.contextTokens || 0;
   const tokenChatPricing = props.chatLLM?.pricing?.chat;
 
@@ -398,6 +400,14 @@ export function Composer(props: {
     });
   }, [speechInterimResult]);
 
+  React.useEffect(() => {
+    // auto-start the microphone if appChat was created with a particular intent
+    if (appChatNewChatIntent === 'voiceInput') {
+      toggleRecognition();
+      void removeQueryParam('newChat');
+    }
+  }, [appChatNewChatIntent, toggleRecognition]);
+
 
   // Other send actins
 
@@ -478,12 +488,12 @@ export function Composer(props: {
 
   const onActileEmbedMessage = React.useCallback(async ({ conversationId, messageId }: StarredMessageItem) => {
     // get the message
-    const conversation = getConversation(conversationId);
-    const messageToEmbed = conversation?.messages.find(m => m.id === messageId);
-    if (conversation && messageToEmbed) {
+    const cHandler = ConversationsManager.getHandler(conversationId);
+    const messageToEmbed = cHandler.historyFindMessageOrThrow(messageId);
+    if (messageToEmbed) {
       const fragmentsCopy = duplicateDMessageFragmentsNoVoid(messageToEmbed.fragments); // [attach] deep copy a message's fragments to attach to ego
       if (fragmentsCopy.length) {
-        const chatTitle = conversationTitle(conversation);
+        const chatTitle = cHandler.title() ?? '';
         const messageText = messageFragmentsReduceText(fragmentsCopy);
         const label = `${chatTitle} > ${messageText.slice(0, 10)}...`;
         await attachAppendEgoFragments(fragmentsCopy, label, chatTitle, conversationId, messageId);

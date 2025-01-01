@@ -24,7 +24,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
 
   const chatLLMId = getChatLLMId();
   const cHandler = ConversationsManager.getHandler(conversationId);
-  const initialHistory = cHandler.historyViewHead(executeCallerNameDebug) as Readonly<DMessage[]>;
+  const initialHistory = cHandler.historyViewHeadOrThrow('handle-execute-' + executeCallerNameDebug) as Readonly<DMessage[]>;
 
   // Update the system message from the active persona to the history
   // NOTE: this does NOT call setMessages anymore (optimization). make sure to:
@@ -72,7 +72,8 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       return await runPersonaOnConversationHead(chatLLMId, conversationId);
 
     case 'beam-content':
-      cHandler.beamInvoke(cHandler.historyViewHead('beam-content'), [], null);
+      const updatedInputHistory = cHandler.historyViewHeadOrThrow('chat-beam-execute');
+      cHandler.beamInvoke(updatedInputHistory, [], null);
       return true;
 
     case 'append-user':

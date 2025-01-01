@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, ListItem, ListItemButton, ListItemDecorator, Sheet, Typography } from '@mui/joy';
 
-import { CloseableMenu } from '~/common/components/CloseableMenu';
+import { CloseablePopup } from '~/common/components/CloseablePopup';
 
 import type { ActileItem, ActileProvider } from './ActileProvider';
 
@@ -33,12 +33,12 @@ export function ActilePopup(props: {
   }, [props.itemsByProvider, props.activeItemIndex]);
 
   return (
-    <CloseableMenu
-      open anchorEl={props.anchorEl} onClose={props.onClose}
-      noTopPadding
-      noBottomPadding
+    <CloseablePopup
+      menu anchorEl={props.anchorEl} onClose={props.onClose}
       maxHeightGapPx={320}
-      sx={{ minWidth: 320 }}
+      minWidth={320}
+      noBottomPadding
+      noTopPadding
     >
 
       {!props.itemsByProvider.length && (
@@ -108,6 +108,6 @@ export function ActilePopup(props: {
         </React.Fragment>
       ))}
 
-    </CloseableMenu>
+    </CloseablePopup>
   );
 }

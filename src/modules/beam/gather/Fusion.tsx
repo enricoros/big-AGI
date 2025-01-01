@@ -117,6 +117,7 @@ export function Fusion(props: {
         factory={factory}
         isFusing={isFusing}
         isInterrupted={isStopped}
+        isMobile={props.isMobile}
         isUsable={isUsable}
         llmLabel={llmLabel}
         llmVendorIcon={llmVendorIcon}

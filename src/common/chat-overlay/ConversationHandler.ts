@@ -8,7 +8,7 @@ import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_van
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { ChatActions, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
+import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
@@ -122,6 +122,10 @@ export class ConversationHandler {
     return _chatStoreActions.isIncognito(this.conversationId);
   }
 
+  isValid(): boolean {
+    return isValidConversation(this.conversationId);
+  }
+
 
   // Message Management
 
@@ -205,11 +209,19 @@ export class ConversationHandler {
     _chatStoreActions.historyTruncateToIncluded(this.conversationId, messageId, offset);
   }
 
-  historyViewHead(scope: string): Readonly<DMessage[]> {
+  historyViewHeadOrThrow(scope: string): Readonly<DMessage[]> {
     const messages = _chatStoreActions.historyView(this.conversationId);
     if (messages === undefined)
       throw new Error(`allMessages: Conversation not found, ${scope}`);
     return messages;
+  }
+
+  historyFindMessageOrThrow(messageId: DMessageId): Readonly<DMessage> | undefined {
+    return _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
+  }
+
+  title(): string | undefined {
+    return _chatStoreActions.title(this.conversationId);
   }
 
 

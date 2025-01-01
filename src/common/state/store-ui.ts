@@ -134,6 +134,10 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 );
 
 
+export function useUIComplexityMode(): UIComplexityMode {
+  return useUIPreferencesStore((state) => state.complexityMode);
+}
+
 export function useUIComplexityIsMinimal(): boolean {
   return useUIPreferencesStore((state) => state.complexityMode === 'minimal');
 }

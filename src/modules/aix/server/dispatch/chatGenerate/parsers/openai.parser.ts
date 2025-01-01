@@ -313,7 +313,7 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
     return undefined;
 
   // Require at least the completion tokens, or issue a DEV warning otherwise
-  if (!usage.completion_tokens) {
+  if (usage.completion_tokens === undefined) {
     // Warn, so we may adjust this usage parsing for Non-OpenAI APIs
     console.log('[DEV] AIX: OpenAI-dispatch missing completion tokens in usage', { usage });
     return undefined;
@@ -336,6 +336,16 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
       metricsUpdate.TCacheRead = TCacheRead;
       if (metricsUpdate.TIn !== undefined)
         metricsUpdate.TIn -= TCacheRead;
+    }
+  }
+
+  // [DeepSeek] Input redistribution: Cache Read
+  if (usage.prompt_cache_hit_tokens !== undefined) {
+    const TCacheRead = usage.prompt_cache_hit_tokens;
+    if (TCacheRead > 0) {
+      metricsUpdate.TCacheRead = TCacheRead;
+      if (usage.prompt_cache_miss_tokens !== undefined)
+        metricsUpdate.TIn = usage.prompt_cache_miss_tokens;
     }
   }
 

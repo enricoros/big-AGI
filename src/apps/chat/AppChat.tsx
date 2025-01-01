@@ -41,7 +41,7 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 import { useRouterQuery } from '~/common/app.routes';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
-import { ChatAppMenuItems } from './components/layout-menu/ChatAppMenuItems';
+import { ChatPane } from './components/layout-pane/ChatPane';
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
 import { ChatBarDropdowns } from './components/layout-bar/ChatBarDropdowns';
@@ -61,7 +61,8 @@ export const CHAT_NOVEL_TITLE = 'Chat';
 
 
 export interface AppChatIntent {
-  initialConversationId: string | null;
+  initialConversationId?: string;
+  newChat?: 'voiceInput';
 }
 
 const scrollToBottomSx = {
@@ -200,23 +201,6 @@ export function AppChat() {
       showNextTitleChange.current = true;
   }, [navigateHistoryInFocusedPane]);
 
-  // [effect] Handle the initial conversation intent
-  React.useEffect(() => {
-    if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
-      return openConversationInFocusedPane(null! /* for debugging purporse */);
-    intent.initialConversationId && openConversationInFocusedPane(intent.initialConversationId);
-  }, [intent.initialConversationId, openConversationInFocusedPane]);
-
-  // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
-  React.useEffect(() => {
-    if (showNextTitleChange.current) {
-      showNextTitleChange.current = false;
-      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
-      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
-      return () => removeSnackbar(id);
-    }
-  }, [focusedChatNumber, focusedChatTitle]);
-
 
   // Execution
 
@@ -270,34 +254,45 @@ export function AppChat() {
   }, [handleExecuteAndOutcome]);
 
   const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
-    const focusedConversation = getConversation(focusedPaneConversationId);
-    if (focusedPaneConversationId && focusedConversation?.messages?.length) {
-      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      if (lastMessage.role === 'assistant')
-        ConversationsManager.getHandler(focusedPaneConversationId).historyTruncateTo(lastMessage.id, -1);
-      await handleExecuteAndOutcome('generate-content', focusedConversation.id, 'chat-regenerate-last'); // truncate if assistant, then gen-text
-    }
+    // Ctrl + Shift + Z
+    if (!focusedPaneConversationId) return;
+    const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
+    if (!cHandler.isValid()) return;
+    const inputHistory = cHandler.historyViewHeadOrThrow('chat-regenerate-shortcut');
+    if (!inputHistory.length) return;
+
+    // remove the last message if assistant's
+    const lastMessage = inputHistory[inputHistory.length - 1];
+    if (lastMessage.role === 'assistant')
+      cHandler.historyTruncateTo(lastMessage.id, -1);
+
+    // generate: NOTE: this will replace the system message correctly
+    await handleExecuteAndOutcome('generate-content', focusedPaneConversationId, 'chat-regenerate-last'); // truncate if assistant, then gen-text
   }, [focusedPaneConversationId, handleExecuteAndOutcome]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
     // Ctrl + Shift + B
-    const focusedConversation = getConversation(focusedPaneConversationId);
-    if (focusedConversation?.messages?.length) {
-      const lastMessage = focusedConversation.messages[focusedConversation.messages.length - 1];
-      if (lastMessage.role === 'assistant')
-        ConversationsManager.getHandler(focusedConversation.id).beamInvoke(focusedConversation.messages.slice(0, -1), [lastMessage], lastMessage.id);
-      else if (lastMessage.role === 'user')
-        ConversationsManager.getHandler(focusedConversation.id).beamInvoke(focusedConversation.messages, [], null);
-    }
+    if (!focusedPaneConversationId) return;
+    const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
+    if (!cHandler.isValid()) return;
+    const inputHistory = cHandler.historyViewHeadOrThrow('chat-beam-shortcut');
+    if (!inputHistory.length) return;
+
+    // TODO: replace the Persona and Auto-Cache-hint in the history?
+
+    // replace the prompt in history
+    const lastMessage = inputHistory[inputHistory.length - 1];
+    if (lastMessage.role === 'assistant')
+      cHandler.beamInvoke(inputHistory.slice(0, -1), [lastMessage], lastMessage.id);
+    else if (lastMessage.role === 'user')
+      cHandler.beamInvoke(inputHistory, [], null);
   }, [focusedPaneConversationId]);
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
   const handleImagineFromText = React.useCallback(async (conversationId: DConversationId, subjectText: string) => {
-    const conversation = getConversation(conversationId);
-    if (!conversation)
-      return;
     const cHandler = ConversationsManager.getHandler(conversationId);
+    if (!cHandler.isValid()) return;
     const userImagineMessage = createDMessagePlaceholderIncomplete('user', `Thinking at the subject...`); // [chat] append user:imagine prompt
     cHandler.messageAppend(userImagineMessage);
     await imaginePromptFromTextOrThrow(subjectText, conversationId)
@@ -467,22 +462,48 @@ export function AppChat() {
   );
 
   const focusedMenuItems = React.useMemo(() =>
-      <ChatAppMenuItems
-        isMobile={isMobile}
+      <ChatPane
         conversationId={focusedPaneConversationId}
         disableItems={!focusedPaneConversationId || isFocusedChatEmpty}
         hasConversations={hasConversations}
         isMessageSelectionMode={isMessageSelectionMode}
+        isVerticalSplit={isMobile || isTallScreen}
         onConversationBranch={handleConversationBranch}
         onConversationClear={handleConversationReset}
         onConversationFlatten={handleConversationFlatten}
         // onConversationNew={handleConversationNewInFocusedPane}
         setIsMessageSelectionMode={setIsMessageSelectionMode}
       />,
-    [focusedPaneConversationId, handleConversationBranch, handleConversationReset, handleConversationFlatten, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile],
+    [focusedPaneConversationId, handleConversationBranch, handleConversationFlatten, handleConversationReset, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile, isTallScreen],
   );
 
   useSetOptimaAppMenu(focusedMenuItems, 'AppChat');
+
+
+  // Effects
+
+  // [effect] Handle the conversation intent
+  React.useEffect(() => {
+    // Debug: open a null chat
+    if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
+      openConversationInFocusedPane(null! /* for debugging purporse */);
+    // Open the initial conversation if set
+    else if (intent.initialConversationId)
+      openConversationInFocusedPane(intent.initialConversationId);
+    // Create a new chat if requested
+    else if (intent.newChat !== undefined)
+      handleConversationNewInFocusedPane(false, false);
+  }, [handleConversationNewInFocusedPane, intent.initialConversationId, intent.newChat, openConversationInFocusedPane]);
+
+  // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
+  React.useEffect(() => {
+    if (showNextTitleChange.current) {
+      showNextTitleChange.current = false;
+      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
+      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
+      return () => removeSnackbar(id);
+    }
+  }, [focusedChatNumber, focusedChatTitle]);
 
 
   // Shortcuts
@@ -622,6 +643,7 @@ export function AppChat() {
             <ScrollToBottom
               bootToBottom
               stickToBottomInitial
+              disableAutoStick={isMobile && _paneBeamIsOpen}
               sx={scrollToBottomSx}
             >
 
