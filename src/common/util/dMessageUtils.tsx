@@ -356,7 +356,13 @@ export function prettyShortChatModelName(model: string | undefined): string {
   if (model.includes(':'))
     return model.replace(':latest', '').replaceAll(':', ' ');
   // [xAI]
-  if (model.includes('grok-beta')) return 'Grok Beta';
+  if (model.includes('grok-')) {
+    if (model.includes('grok-3')) return 'Grok 3';
+    if (model.includes('grok-2-vision')) return 'Grok 2 Vision';
+    if (model.includes('grok-2')) return 'Grok 2';
+    if (model.includes('grok-beta')) return 'Grok Beta';
+    if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
+  }
   return model;
 }
 
