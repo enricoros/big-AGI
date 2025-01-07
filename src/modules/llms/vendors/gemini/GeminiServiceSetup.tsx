@@ -35,7 +35,7 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
 export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // advanced mode
-  const advanced = useToggleableBoolean(true);
+  const advanced = useToggleableBoolean(false);
   // external state
   const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorGemini);
