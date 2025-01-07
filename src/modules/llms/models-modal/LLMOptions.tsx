@@ -50,8 +50,7 @@ export function LLMOptions(props: { llm: DLLM }) {
   // find the reasoning effort parameter spec
   const paramReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
 
-  const showOverheatButton = overheat || tempAboveOne;
-
+  const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
   return <>
 
@@ -62,9 +61,10 @@ export function LLMOptions(props: { llm: DLLM }) {
       valueLabelDisplay='on'
       value={llmTemperature}
       onChange={value => updateLLMUserParameters(llmId, { llmTemperature: value })}
-      endAdornment={showOverheatButton &&
+      endAdornment={
         <Tooltip title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
           <IconButton
+            disabled={!showOverheatButton}
             variant={overheat ? 'soft' : 'plain'} color={overheat ? 'danger' : 'neutral'}
             onClick={handleOverheatToggle} sx={{ ml: 2 }}
           >
