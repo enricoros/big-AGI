@@ -344,6 +344,14 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Anthropic]
   const prettyAnthropic = _prettyAnthropicModelName(model);
   if (prettyAnthropic) return prettyAnthropic;
+  // [Gemini]
+  if (model.includes('gemini-')) {
+    return model.replaceAll('-', ' ')
+      .replace('gemini', 'Gemini')
+      .replace('pro', 'Pro')
+      .replace('flash', 'Flash')
+      .replace('thinking', 'Thinking');
+  }
   // [Deepseek]
   if (model.includes('deepseek-chat')) return 'Deepseek Chat';
   if (model.includes('deepseek-coder')) return 'Deepseek Coder';
