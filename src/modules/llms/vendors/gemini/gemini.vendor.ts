@@ -10,6 +10,7 @@ import { GeminiServiceSetup } from './GeminiServiceSetup';
 
 interface DGeminiServiceSettings {
   geminiKey: string;
+  geminiHost: string;
   minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold;
 }
 
@@ -39,6 +40,7 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   // functions
   initializeSetup: () => ({
     geminiKey: '',
+    geminiHost: '',
     minSafetyLevel: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
   }),
   validateSetup: (setup) => {
@@ -47,6 +49,7 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   getTransportAccess: (partialSetup): GeminiAccessSchema => ({
     dialect: 'gemini',
     geminiKey: partialSetup?.geminiKey || '',
+    geminiHost: partialSetup?.geminiHost || '',
     minSafetyLevel: partialSetup?.minSafetyLevel || 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
   }),
 

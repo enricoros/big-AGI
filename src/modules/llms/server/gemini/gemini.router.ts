@@ -23,7 +23,7 @@ const DEFAULT_GEMINI_HOST = 'https://generativelanguage.googleapis.com';
 export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
 
   const geminiKey = access.geminiKey || env.GEMINI_API_KEY || '';
-  const geminiHost = fixupHost(DEFAULT_GEMINI_HOST, apiPath);
+  const geminiHost = fixupHost(access.geminiHost || DEFAULT_GEMINI_HOST, apiPath);
 
   // update model-dependent paths
   if (apiPath.includes('{model=models/*}')) {
@@ -59,6 +59,7 @@ async function geminiPOST<TOut extends object, TPostBody extends object>(access:
 export const geminiAccessSchema = z.object({
   dialect: z.enum(['gemini']),
   geminiKey: z.string(),
+  geminiHost: z.string(),
   minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold_enum,
 });
 export type GeminiAccessSchema = z.infer<typeof geminiAccessSchema>;

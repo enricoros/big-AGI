@@ -17,9 +17,11 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorGemini } from './gemini.vendor';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 
 
-const GEMINI_API_KEY_LINK = 'https://makersuite.google.com/app/apikey';
+const GEMINI_API_KEY_LINK = 'https://aistudio.google.com/app/apikey';
 
 const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: string }[] = [
   { value: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED', label: 'Default' },
@@ -32,12 +34,14 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
 
 export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
+  // advanced mode
+  const advanced = useToggleableBoolean(false);
   // external state
   const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { geminiKey, minSafetyLevel } = serviceAccess;
+  const { geminiKey, geminiHost, minSafetyLevel } = serviceAccess;
   const needsUserKey = !serviceHasBackendCap;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
@@ -90,7 +94,15 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       {/*of being unsafe.*/}
     </FormHelperText>
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
+    {advanced.on && <FormTextField
+      autoCompleteId='openai-host'
+      title='API Endpoint'
+      placeholder={`https://generativelanguage.googleapis.com`}
+      value={geminiHost}
+      onChange={text => updateSettings({ geminiHost: text })}
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 
