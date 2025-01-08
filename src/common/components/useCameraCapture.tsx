@@ -150,7 +150,7 @@ const sliderContainerSx: SxProps = {
 };
 
 
-async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefObject<HTMLVideoElement>) {
+async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefObject<HTMLVideoElement | null>) {
 
   if (!selectedDevice || !navigator.mediaDevices?.getUserMedia)
     throw new Error('Browser has no camera access');
