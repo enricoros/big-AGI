@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 
-export function useFullscreenElement<T extends HTMLElement>(elementRef: React.RefObject<T | null>) {
+export function useFullscreenElement<T extends HTMLElement>(elementRef: React.RefObject<T>) {
 
   // state
   const [isFullscreen, setIsFullscreen] = React.useState<boolean>(false);

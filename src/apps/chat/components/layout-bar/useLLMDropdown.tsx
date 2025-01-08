@@ -45,7 +45,7 @@ function LLMDropdown(props: {
 
 
   // dropdown items - chached
-  const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>(null);
+  const stabilizeLlmOptions = React.useRef<OptimaDropdownItems>();
 
   const llmDropdownItems: OptimaDropdownItems = React.useMemo(() => {
     const llmItems: OptimaDropdownItems = {};

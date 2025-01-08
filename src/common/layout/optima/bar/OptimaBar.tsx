@@ -112,7 +112,7 @@ function RenderAsPanel(props: {
 // Popup Menu
 
 function RenderAsPopupDesktopOnly(props: {
-  menuAnchor: React.RefObject<HTMLButtonElement | null>,
+  menuAnchor: React.RefObject<HTMLButtonElement>,
   menuContent: React.ReactNode,
 }) {
 

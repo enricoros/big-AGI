@@ -1,3 +1,6 @@
+import React from 'react';
+
+
 /*
  * Custom implementation of deep equality check for objects and arrays.
  * Note that some libs provide it, but we don't want another dependency and this
@@ -41,12 +44,12 @@ export function isDeepEqual<T>(a: T, b: T): boolean {
 }
 
 
-/*export function useDeep<S, U>(selector: (state: S) => U): (state: S) => U {
-  const prev = React.useRef<U>(null);
+export function useDeep<S, U>(selector: (state: S) => U): (state: S) => U {
+  const prev = React.useRef<U>();
   return (state) => {
     const next = selector(state);
     return isDeepEqual(prev.current, next)
       ? (prev.current as U)
       : (prev.current = next);
   };
-}*/
+}
