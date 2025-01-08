@@ -55,10 +55,11 @@ export function AddFolderButton() {
           fontSize: 'sm',
           fontWeight: 'lg',
           color: 'neutral.outlinedColor',
+          border: 0,
         }}
       >
         <ListItemDecorator>
-          <AddIcon sx={{ '--Icon-fontSize': 'var(--joy-fontSize-xl)', pl: '0.125rem' }} />
+          <AddIcon sx={{ fontSize: 'xl', pl: '0.25rem' }} />
         </ListItemDecorator>
         New folder
       </ListItemButton>
