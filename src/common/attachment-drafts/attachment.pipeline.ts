@@ -264,7 +264,8 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
       converters.push({ id: 'image-original', name: 'Image (original quality)', disabled: !inputImageMimeSupported });
       if (!inputImageMimeSupported)
         converters.push({ id: 'image-to-default', name: `As Image (${DEFAULT_ADRAFT_IMAGE_MIMETYPE})` });
-      converters.push({ id: 'image-ocr', name: 'As Text (OCR)' });
+      converters.push({ id: 'unhandled', name: 'No Image' });
+      converters.push({ id: 'image-ocr', name: 'Add Text (OCR)', isCheckbox: true });
       break;
 
     // PDF
