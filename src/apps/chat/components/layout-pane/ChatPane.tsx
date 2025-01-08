@@ -1,13 +1,12 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, IconButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 
@@ -18,7 +17,6 @@ import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHo
 import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconSplitHorizontalRemove';
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
-import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { OptimaPanelGroup, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroup';
 import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
