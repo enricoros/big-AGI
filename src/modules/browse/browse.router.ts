@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 
-import { BrowserContext, connect, ScreenshotOptions } from '@cloudflare/puppeteer';
+import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer-core';
 import { default as TurndownService } from 'turndown';
 import { load as cheerioLoad } from 'cheerio';
 
@@ -121,20 +121,29 @@ async function workerPuppeteer(
   };
 
   // [puppeteer] start the remote session
-  const browser = await connect({ browserWSEndpoint });
+  const browser: Browser = await puppeteer.connect({
+    browserWSEndpoint,
+    // Add default options for better stability
+    // defaultViewport: { width: 1024, height: 768 },
+    // acceptInsecureCerts: true,
+    protocolTimeout: WORKER_TIMEOUT,
+  });
 
-  // for local testing, open an incognito context, to seaparate cookies
+  // for local testing, open an incognito context, to separate cookies
   let incognitoContext: BrowserContext | null = null;
   const isLocalBrowser = browserWSEndpoint.startsWith('ws://');
   if (isLocalBrowser)
-    incognitoContext = await browser.createIncognitoBrowserContext();
+    incognitoContext = await browser.createBrowserContext();
   const page = incognitoContext ? await incognitoContext.newPage() : await browser.newPage();
   page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
 
   // open url
   try {
-    const response = await page.goto(targetUrl);
-    const contentType = response?.headers()?.['content-type'];
+    const response = await page.goto(targetUrl, {
+      waitUntil: 'networkidle0', // Wait until network is idle
+      timeout: WORKER_TIMEOUT,
+    });
+    const contentType = response?.headers()['content-type'];
     const isWebPage = contentType?.startsWith('text/html') || contentType?.startsWith('text/plain') || false;
     if (!isWebPage) {
       // noinspection ExceptionCaughtLocallyJS
@@ -192,7 +201,11 @@ async function workerPuppeteer(
       const { width, height, quality } = screenshotOptions;
       const scale = Math.round(100 * width / 1024) / 100;
 
-      await page.setViewport({ width: width / scale, height: height / scale, deviceScaleFactor: scale });
+      await page.setViewport({
+        width: width / scale,
+        height: height / scale,
+        deviceScaleFactor: scale,
+      });
 
       const imageType: ScreenshotOptions['type'] = 'webp';
       const mimeType = `image/${imageType}`;
@@ -215,30 +228,17 @@ async function workerPuppeteer(
     console.error('workerPuppeteer: page.screenshot', error);
   }
 
-  // close the page
-  try {
-    await page.close();
-  } catch (error: any) {
-    console.error('workerPuppeteer: page.close', error);
-  }
+  // Cleanup: close everything in reverse order
+  await page.close().catch((error) =>
+    console.error('workerPuppeteer: page.close error', { error }));
 
-  // close the incognito context
-  if (incognitoContext) {
-    try {
-      await incognitoContext.close();
-    } catch (error: any) {
-      console.error('workerPuppeteer: incognitoContext.close', error);
-    }
-  }
+  if (incognitoContext) await incognitoContext.close().catch((error) =>
+    console.error('workerPuppeteer: context.close error', { error }));
 
-  // close the browse (important!)
-  if (!isLocalBrowser) {
-    try {
-      await browser.close();
-    } catch (error: any) {
-      console.error('workerPuppeteer: browser.close', error);
-    }
-  }
+  if (!isLocalBrowser) await browser.disconnect().catch((error) =>
+    console.error('workerPuppeteer: browser.disconnect error', { error }));
+  else await browser.close().catch((error) =>
+    console.error('workerPuppeteer: browser.close error', { error }));
 
   return result;
 }

@@ -79,7 +79,6 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@cloudflare/puppeteer": "0.0.11",
     "@types/diff": "^7.0.0",
     "@types/node": "^22.10.5",
     "@types/nprogress": "^0.2.3",
@@ -97,6 +96,7 @@
     "eslint-config-next": "^15.1.4",
     "prettier": "^3.4.2",
     "prisma": "^5.22.0",
+    "puppeteer-core": "^23.11.1",
     "typescript": "^5.7.2"
   },
   "engines": {
