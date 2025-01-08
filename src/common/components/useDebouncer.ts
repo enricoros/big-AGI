@@ -9,20 +9,20 @@ export function useDebouncer<TValue = string | number>(
   const [immediateValue, setImmediateValue] = React.useState<TValue>(initialValue);
   const [debouncedValue, setDebouncedValue] = React.useState<TValue>(initialValue);
   const valueRef = React.useRef(initialValue);
-  const debounceTimeoutRef = React.useRef<number>(null);
-  const deadlineTimeoutRef = React.useRef<number>(null);
+  const debounceTimeoutRef = React.useRef<number>();
+  const deadlineTimeoutRef = React.useRef<number>();
 
   const clearDebounceTimeout = React.useCallback(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
-      debounceTimeoutRef.current = null;
+      debounceTimeoutRef.current = undefined;
     }
   }, []);
 
   const clearDeadlineTimeout = React.useCallback(() => {
     if (deadlineTimeoutRef.current) {
       clearTimeout(deadlineTimeoutRef.current);
-      deadlineTimeoutRef.current = null;
+      deadlineTimeoutRef.current = undefined;
     }
   }, []);
 
