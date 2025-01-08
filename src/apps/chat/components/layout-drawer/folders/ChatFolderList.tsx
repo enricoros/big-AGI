@@ -1,16 +1,55 @@
 import * as React from 'react';
-import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { List, ListItem, ListItemButton, ListItemDecorator, Sheet } from '@mui/joy';
-import FolderIcon from '@mui/icons-material/Folder';
+import { Box, List, ListItem, ListItemButton, ListItemDecorator } from '@mui/joy';
+import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
-import { StrictModeDroppable } from '~/common/components/StrictModeDroppable';
 
 import { AddFolderButton } from './AddFolderButton';
 import { FolderListItem } from './FolderListItem';
+
+
+const _styles = {
+  listBase: {
+
+    // show scrollbars when shrunk
+    height: '100%',
+    overflowY: 'auto',
+
+    // style
+    // borderRadius: 'sm',
+    backgroundColor: 'background.popup',
+    boxShadow: 'sm',
+
+    // original list properties
+    '--List-gap': 0,
+    '--List-radius': '0.5rem',
+    '--ListDivider-gap': 0,
+
+    // copied from the former PageDrawerList as this was contained
+    '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+
+    // override global variant tokens
+    // '--joy-palette-neutral-plainHoverBg': 'rgba(0 0 0 / 0.08)',
+    // '--joy-palette-neutral-plainActiveBg': 'rgba(0 0 0 / 0.12)',
+    // [theme.getColorSchemeSelector('dark')]: {
+    //   '--joy-palette-neutral-plainHoverBg': 'rgba(255 255 255 / 0.1)',
+    //   '--joy-palette-neutral-plainActiveBg': 'rgba(255 255 255 / 0.16)',
+    // },
+  } as const,
+
+  allItem: {
+    border: 0,
+  } as const,
+} as const;
+
+const _dndModifiers = [restrictToVerticalAxis, restrictToParentElement];
 
 
 export function ChatFolderList(props: {
@@ -24,120 +63,94 @@ export function ChatFolderList(props: {
   // derived props
   const { folders, onFolderSelect, activeFolderId } = props;
 
+
+  // DnD Kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+
+  // memos
+
+  const folderIds = React.useMemo(() => {
+    return folders.map(f => f.id);
+  }, [folders]);
+
+  const listSx = React.useMemo(() => ({
+    ..._styles.listBase,
+    ...themeScalingMap[props.contentScaling].chatDrawerItemFolderSx,
+  }), [props.contentScaling]);
+
+
   // handlers
 
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    useFolderStore.getState().moveFolder(result.source.index, result.destination.index);
-  };
+  const handleDragEnd = React.useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = folderIds.findIndex(fId => fId === active.id);
+    const newIndex = folderIds.findIndex(fId => fId === over.id);
+    if (oldIndex !== -1 && newIndex !== -1)
+      useFolderStore.getState().moveFolder(oldIndex, newIndex);
+  }, [folderIds]);
 
 
   return (
-    <Sheet variant='soft' sx={props.sx}>
+    <Box sx={props.sx}>
+
       <List
         variant='plain'
-        sx={(theme) => ({
-          // added to be responsive to parent's layout sizing
-          height: '100%',
-          overflowY: 'auto',
-
-          // original list properties
-          '& ul': {
-            '--List-gap': '0px',
-            bgcolor: 'background.popup',
-            '& > li:first-of-type > [role="button"]': {
-              borderTopRightRadius: 'var(--List-radius)',
-              borderTopLeftRadius: 'var(--List-radius)',
-            },
-            '& > li:last-child > [role="button"]': {
-              borderBottomRightRadius: 'var(--List-radius)',
-              borderBottomLeftRadius: 'var(--List-radius)',
-            },
-          },
-          // copied from the former PageDrawerList as this was contained
-          '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-
-          // dynamic sizing
-          ...themeScalingMap[props.contentScaling].chatDrawerItemFolderSx,
-          // '--ListItemDecorator-size': '2.75rem',
-          // '--ListItem-minHeight': '2.75rem',
-
-          '--List-radius': '8px',
-          '--List-gap': '1rem',
-          '--ListDivider-gap': '0px',
-          // '--ListItem-paddingY': '0.5rem',
-          // override global variant tokens
-          '--joy-palette-neutral-plainHoverBg': 'rgba(0 0 0 / 0.08)',
-          '--joy-palette-neutral-plainActiveBg': 'rgba(0 0 0 / 0.12)',
-          [theme.getColorSchemeSelector('light')]: {
-            '--joy-palette-divider': 'rgba(0 0 0 / 0.08)',
-          },
-          [theme.getColorSchemeSelector('dark')]: {
-            '--joy-palette-neutral-plainHoverBg': 'rgba(255 255 255 / 0.1)',
-            '--joy-palette-neutral-plainActiveBg': 'rgba(255 255 255 / 0.16)',
-          },
-          boxShadow: 'sm',
-        })}
+        sx={listSx}
       >
-        <ListItem nested>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <StrictModeDroppable
-              droppableId='folder'
-              renderClone={(provided, snapshot, rubric) => (
-                <FolderListItem
-                  activeFolderId={activeFolderId}
-                  folder={folders[rubric.source.index]}
-                  onFolderSelect={onFolderSelect}
-                  provided={provided}
-                  snapshot={snapshot}
-                />
-              )}
-            >
-              {(provided) => (
-                <List ref={provided.innerRef} {...provided.droppableProps}>
 
-                  {/* First item is the 'All' button */}
-                  <ListItem>
-                    <ListItemButton
-                      // handle folder select
-                      onClick={(event) => {
-                        event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
-                        onFolderSelect(null);
-                      }}
-                      selected={!activeFolderId}
-                      sx={{ border: 0 }}
-                    >
-                      <ListItemDecorator>
-                        <FolderIcon />
-                      </ListItemDecorator>
-                      All
-                    </ListItemButton>
-                  </ListItem>
-
-                  {folders.map((folder, index) => (
-                    <Draggable key={folder.id} draggableId={folder.id} index={index}>
-                      {(provided, snapshot) => (
-                        <FolderListItem
-                          activeFolderId={activeFolderId}
-                          folder={folder}
-                          onFolderSelect={onFolderSelect}
-                          provided={provided}
-                          snapshot={snapshot}
-                        />
-                      )}
-                    </Draggable>
-                  ))}
-
-                  {provided.placeholder}
-
-                  <AddFolderButton />
-                </List>
-              )}
-            </StrictModeDroppable>
-          </DragDropContext>
+        {/* 'All' Button */}
+        <ListItem>
+          <ListItemButton
+            selected={!activeFolderId}
+            onClick={(event) => {
+              event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
+              onFolderSelect(null);
+            }}
+            sx={_styles.allItem}
+          >
+            <ListItemDecorator>{!activeFolderId ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}</ListItemDecorator>
+            All
+          </ListItemButton>
         </ListItem>
-      </List>
 
-     </Sheet>
+        {/* Sortable folders */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          modifiers={_dndModifiers}
+        >
+          <SortableContext
+            items={folderIds}
+            strategy={verticalListSortingStrategy}
+          >
+
+            {/* Folder Items */}
+            {folders.map((folder) => (
+              <FolderListItem
+                key={folder.id}
+                folder={folder}
+                isActive={folder.id === activeFolderId}
+                onFolderSelect={onFolderSelect}
+              />
+            ))}
+
+          </SortableContext>
+        </DndContext>
+
+        {/* 'Add Folder' Button */}
+        <AddFolderButton />
+
+      </List>
+    </Box>
   );
 }

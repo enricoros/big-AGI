@@ -283,6 +283,7 @@ function ChatDrawer(props: {
           flexGrow: 0, flexShrink: 2, overflow: 'hidden',
           minHeight: '7.5rem',
           p: 2,
+          backgroundColor: 'background.level1',
         }}
       />
     )}
