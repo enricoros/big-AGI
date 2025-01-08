@@ -23,8 +23,8 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
   // state
   const [inputValue, setInputValue] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
-  const refocusTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout>>(null);
+  const refocusTimerRef = React.useRef<ReturnType<typeof setTimeout>>(null);
 
   // derived state
   const { debounceTimeout, minChars, onDebounce, aggressiveRefocus, ...rest } = props;
@@ -40,7 +40,7 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
 
     debounceTimerRef.current = setTimeout(() => {
       // reset the timer
-      debounceTimerRef.current = undefined;
+      debounceTimerRef.current = null;
 
       // Don't call onDebounce if the input value is too short
       if (newValue && minChars && newValue?.length < minChars)
@@ -55,7 +55,7 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
           clearTimeout(refocusTimerRef.current);
 
         refocusTimerRef.current = setTimeout(() => {
-          refocusTimerRef.current = undefined;
+          refocusTimerRef.current = null;
           inputRef.current?.focus();
         }, 20);
       }

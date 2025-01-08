@@ -91,7 +91,7 @@ export function useChatDrawerRenderItems(
   searchDepth: ChatSearchDepth,
 ): ChatDrawerRenderItems {
 
-  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>();
+  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>(null);
 
   return useChatStore(({ conversations }) => {
 
