@@ -135,7 +135,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
       listboxOpen={listboxOpen}
       onListboxOpenChange={(isOpen) => {
         if (isOpen !== listboxOpen)
-          setListboxOpen(isOpen)
+          setListboxOpen(isOpen);
       }}
       indicator={<KeyboardArrowDownIcon />}
       slotProps={selectSlotProps}
@@ -156,6 +156,20 @@ function OptimaBarDropdown<TValue extends string>(props: {
         {itemsKeys.map((_itemKey: string, idx: number) => {
           const _item = props.items[_itemKey];
           const isActive = _itemKey === props.value;
+
+          // Label & Decorators
+          let label = _item.title || '';
+          let decorator: React.ReactNode = null;
+          if (props.showSymbols) {
+            if (_item.icon) {
+              decorator = <ListItemDecorator>{_item.icon}</ListItemDecorator>;
+            } else if (_item.symbol !== undefined) {
+              decorator = <ListItemDecorator sx={{ fontSize: 'xl' }}>{_item.symbol || ''}</ListItemDecorator>;
+              if (_item.symbol)
+                label = `${_item.symbol} ${label}`;
+            }
+          }
+
           return _item.type === 'separator' ? (
             <ListDivider key={_itemKey || `sep-${idx}`}>
               {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, '--Icon-fontSize': 'var(--joy-fontSize-lg)' }}>*/}
@@ -164,13 +178,9 @@ function OptimaBarDropdown<TValue extends string>(props: {
               {/*</Box>*/}
             </ListDivider>
           ) : (
-            <Option key={_itemKey} value={_itemKey}>
+            <Option key={_itemKey} value={_itemKey} label={label}>
               {/* Icon / Symbol */}
-              {props.showSymbols && (
-                _item.icon ? <ListItemDecorator>{_item.icon}</ListItemDecorator>
-                  : _item.symbol ? <ListItemDecorator sx={{ fontSize: 'xl' }}>{_item.symbol + ' '}</ListItemDecorator>
-                    : null
-              )}
+              {decorator}
 
               {/* Text */}
               <Typography className='agi-ellipsize'>
