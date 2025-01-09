@@ -23,7 +23,7 @@ import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
 

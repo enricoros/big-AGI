@@ -13,7 +13,7 @@ import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } f
 import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_vanilla';
 
 import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
-import type { AttachmentDraftsStoreApi } from './store-perchat-attachment-drafts_slice';
+import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 
 
 // enable to debug operations
