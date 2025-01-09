@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DModelParameterId } from './llms.parameters';
+import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './modelsservice.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { getLlmCostForTokens, portModelPricingV2toV3 } from './llms.pricing';
@@ -33,7 +33,7 @@ interface LlmsActions {
   removeLLM: (id: DLLMId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
-  updateLLMUserParameters: (id: DLLMId, partial: Partial<DLLM['userParameters']>) => void;
+  updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
 
   addService: (service: DModelsService) => void;
@@ -134,7 +134,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         ),
       })),
 
-    updateLLMUserParameters: (id: DLLMId, partialUserParameters: Partial<DLLM['userParameters']>) =>
+    updateLLMUserParameters: (id: DLLMId, partialUserParameters: Partial<DModelParameterValues>) =>
       set(({ llms }) => ({
         llms: llms.map((llm: DLLM): DLLM =>
           llm.id === id
