@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { IconButton, Tooltip } from '@mui/joy';
+import { Box, IconButton, Tooltip } from '@mui/joy';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
 import { DModelParameterId, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
@@ -86,13 +86,15 @@ export function LLMParametersEditor(props: {
     />
 
     {(llmResponseTokens !== null && maxOutputTokens !== null) ? (
-      <FormSliderControl
-        title='Output Tokens' ariaLabel='Model Max Tokens'
-        min={256} max={maxOutputTokens} step={256} defaultValue={1024}
-        valueLabelDisplay={parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'}
-        value={llmResponseTokens}
-        onChange={value => onChangeParameter({ llmResponseTokens: value })}
-      />
+      <Box sx={{ mr: 1 }}>
+        <FormSliderControl
+          title='Output Tokens' ariaLabel='Model Max Tokens'
+          min={256} max={maxOutputTokens} step={256} defaultValue={1024}
+          valueLabelDisplay={parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'}
+          value={llmResponseTokens}
+          onChange={value => onChangeParameter({ llmResponseTokens: value })}
+        />
+      </Box>
     ) : (
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
     )}
