@@ -20,7 +20,13 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile: (file: File) => Promise<boolean>) => {
+/**
+ * @param attachmentsStoreApi A Per-Chat or standalone Attachment Drafts store.
+ * @param enableLoadURLsOnPaste Only used if invoking attachAppendDataTransfer or attachAppendClipboardItems.
+ * @param hintAddImages Attach an additional image representation of the attachment; only if Release.Features.ENABLE_TEXT_AND_IMAGES.
+ * @param onFilterAGIFile If defined, run this async functiion on '.agi.json' files to decide whether to load them (if returns true) or attach them (if returns false).
+ */
+export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile?: (file: File) => Promise<boolean>) {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -43,7 +49,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // special case: intercept AGI files to potentially load them instead of attaching them
     if (fileWithHandle.name.endsWith('.agi.json'))
-      if (await onFilterAGIFile(fileWithHandle))
+      if (onFilterAGIFile && await onFilterAGIFile(fileWithHandle))
         return;
 
     return _createAttachmentDraft({
@@ -150,7 +156,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       if (textPlainUrl && textPlainUrl.trim()) {
         void _createAttachmentDraft({
           media: 'url', url: textPlainUrl, refUrl: textPlain,
-        }, { hintAddImages});
+        }, { hintAddImages });
 
         return 'as_url';
       }
@@ -281,7 +287,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     attachmentsTakeAllFragments,
     attachmentsTakeFragmentsByType,
   };
-};
+}
 
 
 /**
