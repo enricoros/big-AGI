@@ -14,7 +14,10 @@ export function useChatLLM(): { chatLLM: DLLM | null } {
 }
 
 export function useLLM(llmId: DLLMId): DLLM | null {
-  return useModelsStore(state => state.llms.find(llm => llm.id === llmId) ?? null);
+  return useModelsStore(state => {
+    if (!llmId) return null;
+    return state.llms.find(llm => llm.id === llmId) ?? null;
+  });
 }
 
 export function useDefaultLLMIDs(): { chatLLMId: DLLMId | null; fastLLMId: DLLMId | null; } {
