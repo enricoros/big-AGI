@@ -31,7 +31,7 @@ export function ConfirmationModal(props: {
     >
       {!props.noTitleBar && <Divider />}
 
-      <Typography level='body-md'>
+      <Typography component='div' level='body-md'>
         {props.confirmationText}
       </Typography>
 
