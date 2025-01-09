@@ -20,7 +20,7 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean, hintAddImages: boolean, onFilterAGIFile: (file: File) => Promise<boolean>) => {
+export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile: (file: File) => Promise<boolean>) => {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -145,7 +145,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // attach as URL
     const textPlain = dt.getData('text/plain') || '';
-    if (textPlain && enableLoadURLs) {
+    if (textPlain && enableLoadURLsOnPaste) {
       const textPlainUrl = asValidURL(textPlain);
       if (textPlainUrl && textPlainUrl.trim()) {
         void _createAttachmentDraft({
@@ -170,7 +170,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLs, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLsOnPaste, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -223,7 +223,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
 
       // attach as URL
-      if (textPlain && enableLoadURLs) {
+      if (textPlain && enableLoadURLsOnPaste) {
         const textPlainUrl = asValidURL(textPlain);
         if (textPlainUrl && textPlainUrl.trim()) {
           void _createAttachmentDraft({
@@ -243,7 +243,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLs, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLsOnPaste, hintAddImages]);
 
   /**
    * Append ego content to the attachments.
