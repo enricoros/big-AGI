@@ -13,7 +13,7 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useDefaultLLMIDs, useLLM } from '~/common/stores/llms/llms.hooks';
 
-import { LLMOptions } from './LLMOptions';
+import { LLMOptionsGlobal } from './LLMOptionsGlobal';
 
 
 function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): React.ReactNode {
@@ -98,7 +98,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
     >
 
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
-        <LLMOptions llm={llm} />
+        <LLMOptionsGlobal llm={llm} />
       </Box>
 
       <Divider />
