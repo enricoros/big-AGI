@@ -63,6 +63,7 @@ export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file
 export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
 export type AttachmentCreationOptions = {
+  /** Also attach an image representation of the attachment. Requires Release.Features.ENABLE_TEXT_AND_IMAGES as well. */
   hintAddImages?: boolean;
 }
 
