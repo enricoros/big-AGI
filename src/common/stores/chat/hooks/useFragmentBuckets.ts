@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isPlaceholderPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
+
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isPlaceholderPart, isVoidFragment } from '../chat.fragments';
 
 
 interface FragmentBuckets {
