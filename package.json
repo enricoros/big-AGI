@@ -33,9 +33,9 @@
     "@mui/material": "^5.16.14",
     "@next/bundle-analyzer": "^15.1.4",
     "@next/third-parties": "^15.1.4",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "~5.22.0",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "@tanstack/react-query": "^5.62.16",
+    "@tanstack/react-query": "^5.63.0",
     "@trpc/client": "11.0.0-rc.688",
     "@trpc/next": "11.0.0-rc.688",
     "@trpc/react-query": "11.0.0-rc.688",
@@ -51,7 +51,7 @@
     "idb-keyval": "^6.2.1",
     "mammoth": "^1.9.0",
     "nanoid": "^5.0.9",
-    "next": "~15.1.4",
+    "next": "^15.1.4",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "4.10.38",
     "plantuml-encoder": "^1.4.0",
@@ -95,9 +95,9 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.4",
     "prettier": "^3.4.2",
-    "prisma": "^5.22.0",
+    "prisma": "~5.22.0",
     "puppeteer-core": "^23.11.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": "^22.0.0 || ^20.0.0"
