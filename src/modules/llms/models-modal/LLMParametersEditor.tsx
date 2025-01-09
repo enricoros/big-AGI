@@ -69,7 +69,7 @@ export function LLMParametersEditor(props: {
       title='Temperature' ariaLabel='Model Temperature'
       description={llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
       min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
-      valueLabelDisplay='on'
+      valueLabelDisplay={parameters?.llmTemperature !== undefined ? 'on' : 'auto'}
       value={llmTemperature}
       onChange={value => onChangeParameter({ llmTemperature: value })}
       endAdornment={
@@ -89,7 +89,7 @@ export function LLMParametersEditor(props: {
       <FormSliderControl
         title='Output Tokens' ariaLabel='Model Max Tokens'
         min={256} max={maxOutputTokens} step={256} defaultValue={1024}
-        valueLabelDisplay='on'
+        valueLabelDisplay={parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'}
         value={llmResponseTokens}
         onChange={value => onChangeParameter({ llmResponseTokens: value })}
       />
