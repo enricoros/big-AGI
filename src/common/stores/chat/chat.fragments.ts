@@ -447,6 +447,25 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
 
 /// Editor Helpers - Fragment Editing
 
+export function splitFragmentsByType(fragments: DMessageFragment[]) {
+  // also see `useFragmentBuckets.ts` which inspired this function
+  return fragments.reduce((acc, frag) => {
+    if (isContentFragment(frag))
+      acc.contentFragments.push(frag);
+    else if (isAttachmentFragment(frag))
+      acc.attachmentFragments.push(frag);
+    else if (isVoidFragment(frag))
+      acc.voidFragments.push(frag);
+    else
+      console.warn('[DEV] splitFragmentsByType: Unexpected fragment type:', frag.ft);
+    return acc;
+  }, {
+    contentFragments: [] as DMessageContentFragment[],
+    attachmentFragments: [] as DMessageAttachmentFragment[],
+    voidFragments: [] as DMessageVoidFragment[],
+  });
+}
+
 /**
  * Updates a fragment with the edited text, ensuring the fragment retains its type and structure.
  * @returns A new fragment with the edited text applied or null if the fragment type isn't handled.
