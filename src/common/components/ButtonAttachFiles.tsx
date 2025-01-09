@@ -43,6 +43,7 @@ export const ButtonAttachFilesMemo = React.memo(ButtonAttachFiles);
 
 function ButtonAttachFiles(props: {
   isMobile?: boolean,
+  disabled?: boolean,
   fullWidth?: boolean,
   multiple?: boolean,
   noToolTip?: boolean,
@@ -54,7 +55,7 @@ function ButtonAttachFiles(props: {
   const handleAttachFilePicker = React.useCallback(() => openFileForAttaching(props.multiple || false, onAttachFiles), [onAttachFiles, props.multiple]);
 
   return props.isMobile ? (
-    <IconButton onClick={handleAttachFilePicker}>
+    <IconButton disabled={props.disabled} onClick={handleAttachFilePicker}>
       <AttachFileRoundedIcon />
     </IconButton>
   ) : (
@@ -63,6 +64,7 @@ function ButtonAttachFiles(props: {
         fullWidth={props.fullWidth}
         variant='plain'
         color='neutral'
+        disabled={props.disabled}
         onClick={handleAttachFilePicker}
         startDecorator={<AttachFileRoundedIcon />}
         sx={{ justifyContent: 'flex-start' }}
