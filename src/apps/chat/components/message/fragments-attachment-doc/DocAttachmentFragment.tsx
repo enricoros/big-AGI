@@ -271,17 +271,19 @@ export function DocAttachmentFragment(props: {
         />
       ) : (
         // Document viewer, including the collapse/expand state inside
-        <AutoBlocksRenderer
-          // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
-          text={fragmentDocPart.data.text}
-          renderAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
+        <Box my={1}>
+          <AutoBlocksRenderer
+            // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
+            text={fragmentDocPart.data.text}
+            renderAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
           fromRole={props.messageRole}
           contentScaling={props.contentScaling}
           fitScreen={props.isMobile}
           isMobile={props.isMobile}
           codeRenderVariant='plain'
-          textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
-        />
+            textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
+          />
+        </Box>
       )}
 
     </RenderCodePanelFrame>
