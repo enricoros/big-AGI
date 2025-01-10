@@ -69,10 +69,6 @@ export function DocAttachmentFragmentButton(props: {
   const hasLiveFile = !!liveFileMetadata;
   const isLiveFilePaired = liveFileMetadata ? liveFileMetadata.isPairingValid || false : false;
 
-  // only operate on doc fragments
-  if (!isDocPart(fragment.part))
-    throw new Error('Unexpected part type: ' + fragment.part.pt);
-
   // handlers
   const handleSelectFragment = React.useCallback(() => {
     toggleSelected(fragment.fId);
@@ -102,6 +98,10 @@ export function DocAttachmentFragmentButton(props: {
     // from LLMAttachmentButton
     display: 'flex', flexDirection: 'row',
   }), [isSelected, props.contentScaling]);
+
+  // only operate on doc fragments
+  if (!isDocPart(fragment.part))
+    return 'Unexpected: ' + fragment.part.pt;
 
   const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
