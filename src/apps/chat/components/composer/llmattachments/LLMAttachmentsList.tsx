@@ -33,7 +33,7 @@ export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
  * Renderer of attachment drafts, with menus, etc.
  */
 export function LLMAttachmentsList(props: {
-  agiAttachmentPrompts: AgiAttachmentPromptsData
+  agiAttachmentPrompts?: AgiAttachmentPromptsData,
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
   canInlineSomeFragments: boolean,
   llmAttachmentDrafts: LLMAttachmentDraft[],
@@ -142,7 +142,7 @@ export function LLMAttachmentsList(props: {
       <Box sx={{ height: '100%', pr: 5, overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
 
         {/* AI Suggestion Button */}
-        {(agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData) && (
+        {(!!agiAttachmentPrompts && (agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData)) && (
           <LLMAttachmentsPromptsButtonMemo data={agiAttachmentPrompts} />
         )}
 
@@ -212,10 +212,12 @@ export function LLMAttachmentsList(props: {
         placement='top-start'
       >
         {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
-        <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
-          <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
-          What can I do?
-        </MenuItem>
+        {!!agiAttachmentPrompts && (
+          <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
+            <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
+            What can I do?
+          </MenuItem>
+        )}
 
         <ListDivider />
 
