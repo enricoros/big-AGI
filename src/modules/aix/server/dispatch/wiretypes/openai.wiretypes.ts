@@ -19,6 +19,7 @@ export namespace OpenAIWire_ContentParts {
 
   /// Content parts - Input
 
+  export type TextContentPart = z.infer<typeof TextContentPart_schema>;
   const TextContentPart_schema = z.object({
     type: z.literal('text'),
     text: z.string(),
