@@ -3,6 +3,8 @@ import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.router'
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
+import { approxDocPart_To_String } from './anthropic.messageCreate';
+
 
 //
 // OpenAI API - Chat Adapter - Implementation Notes
@@ -458,17 +460,11 @@ function _toApproximateOpanAIFlattenSystemMessage(texts: OpenAIWire_ContentParts
   return texts.map(text => text.text).join(approxSystemMessageJoiner);
 }
 
-function _toApproximateOpenAIDocPart({ data, ref }: AixParts_DocPart): OpenAIWire_ContentParts.TextContentPart {
+function _toApproximateOpenAIDocPart(part: AixParts_DocPart): OpenAIWire_ContentParts.TextContentPart {
 
   // Corner case, low probability: if the content is already enclosed in triple-backticks, return it as-is
-  if (data.text.startsWith('```'))
-    return OpenAIWire_ContentParts.TextContentPart(data.text);
+  if (part.data.text.startsWith('```'))
+    return OpenAIWire_ContentParts.TextContentPart(part.data.text);
 
-  // TODO: consider a better representation here - we use the 'legacy' markdown encoding
-  //       but we may as well support different ones in the future, such as:
-  //       - '<doc id='ref' title='title' version='version'>\n...\n</doc>'
-  //       - ```doc id='ref' title='title' version='version'\n...\n```
-  //       - etc.
-
-  return OpenAIWire_ContentParts.TextContentPart(`\`\`\`${ref || ''}\n${data.text}\n\`\`\`\n`);
+  return OpenAIWire_ContentParts.TextContentPart(approxDocPart_To_String(part));
 }
