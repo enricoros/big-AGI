@@ -48,8 +48,8 @@ export function useLiveFileSync(
   workspaceId: DWorkspaceId | null,
   isMobile: boolean,
   bufferText: string,
-  onReplaceLiveFileId: (liveFileId: LiveFileId) => void,
-  onSetBufferText: (text: string) => void,
+  onReplaceLiveFileId?: (liveFileId: LiveFileId) => void,
+  onSetBufferText?: (text: string) => void,
 ) {
 
   // state
@@ -140,7 +140,7 @@ export function useLiveFileSync(
         console.warn('[DEV] No workspaceId to pair the file with.');
       else
         workspaceActions().liveFileAssign(workspaceId, liveFileId);
-      onReplaceLiveFileId(liveFileId);
+      onReplaceLiveFileId?.(liveFileId);
       // Immediately load the preview on this ID
       await _handleReloadFileContent(liveFileId);
     } catch (error: any) {
@@ -166,7 +166,7 @@ export function useLiveFileSync(
     if (fileContent === undefined)
       setStatus({ message: 'No file content loaded. Please preview changes first.', mtype: 'info' });
     else
-      onSetBufferText(fileContent);
+      onSetBufferText?.(fileContent);
   }, [fileContent, onSetBufferText]);
 
   const handleSaveToDisk = React.useCallback(async (event: React.MouseEvent) => {
@@ -196,7 +196,7 @@ export function useLiveFileSync(
 
   // Memoed components code
 
-  const liveFileControlButton = React.useMemo(() => !isLiveFileSupported() ? null : (
+  const liveFileControlButton = React.useMemo(() => (!isLiveFileSupported() || !onReplaceLiveFileId) ? null : (
     <LiveFileControlButton
       disabled={isSavingFile}
       hasContent={fileHasContent}
@@ -206,7 +206,7 @@ export function useLiveFileSync(
       onPairWithPicker={handlePairNewFileWithPicker}
       onUpdateFileContent={_handleReloadFileContent}
     />
-  ), [fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, _handleReloadFileContent, isPairingValid, isSavingFile]);
+  ), [_handleReloadFileContent, fileHasContent, handlePairNewFSFHandle, handlePairNewFileWithPicker, isPairingValid, isSavingFile, onReplaceLiveFileId]);
 
   const liveFileActions = React.useMemo(() => {
     if (!isLiveFileSupported() || (!status && !fileHasContent))
@@ -244,7 +244,7 @@ export function useLiveFileSync(
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
           {/* Load from file */}
-          {fileIsDifferent && !isError && (
+          {fileIsDifferent && !isError && !!onSetBufferText && (
             <Button
               variant='outlined'
               color='neutral'
@@ -287,12 +287,14 @@ export function useLiveFileSync(
             <Menu size='md' sx={{ minWidth: 220 }}>
 
               {/* Reassign File button */}
-              <MenuItem onClick={handlePairNewFileWithPicker}>
-                <ListItemDecorator>
-                  <LiveFileChooseIcon />
-                </ListItemDecorator>
-                Pair a different file
-              </MenuItem>
+              {!!onReplaceLiveFileId && (
+                <MenuItem onClick={handlePairNewFileWithPicker}>
+                  <ListItemDecorator>
+                    <LiveFileChooseIcon />
+                  </ListItemDecorator>
+                  Pair a different file
+                </MenuItem>
+              )}
 
               <ListDivider />
 
@@ -310,7 +312,7 @@ export function useLiveFileSync(
         </Box>
       </Sheet>
     );
-  }, [fileHasContent, fileIsDifferent, handleStopLiveFile, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, _handleReloadFileContent, isMobile, isPairingValid, isSavingFile, status]);
+  }, [_handleReloadFileContent, fileHasContent, fileIsDifferent, handleLoadFromDisk, handlePairNewFileWithPicker, handleSaveToDisk, handleStopLiveFile, isMobile, isPairingValid, isSavingFile, onReplaceLiveFileId, onSetBufferText, status]);
 
 
   // Auto-click on 'refresh' on window focus
