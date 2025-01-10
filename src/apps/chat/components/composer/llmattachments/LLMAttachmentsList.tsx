@@ -37,7 +37,7 @@ export function LLMAttachmentsList(props: {
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
   canInlineSomeFragments: boolean,
   llmAttachmentDrafts: LLMAttachmentDraft[],
-  onAttachmentDraftsAction: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
+  onAttachmentDraftsAction?: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
 }) {
 
   // state
@@ -74,12 +74,12 @@ export function LLMAttachmentsList(props: {
 
   const handleOverallCopyText = React.useCallback(() => {
     handleOverallMenuHide();
-    onAttachmentDraftsAction(null, 'copy-text');
+    onAttachmentDraftsAction?.(null, 'copy-text');
   }, [handleOverallMenuHide, onAttachmentDraftsAction]);
 
   const handleOverallInlineText = React.useCallback(() => {
     handleOverallMenuHide();
-    onAttachmentDraftsAction(null, 'inline-text');
+    onAttachmentDraftsAction?.(null, 'inline-text');
   }, [handleOverallMenuHide, onAttachmentDraftsAction]);
 
   const handleOverallClear = React.useCallback(async () => {
@@ -109,7 +109,7 @@ export function LLMAttachmentsList(props: {
   const handleDraftAction = React.useCallback((attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => {
     // pass-through, but close the menu as well, as the action is destructive for the caller
     handleDraftMenuHide();
-    onAttachmentDraftsAction(attachmentDraftId, actionId);
+    onAttachmentDraftsAction?.(attachmentDraftId, actionId);
   }, [handleDraftMenuHide, onAttachmentDraftsAction]);
 
   const handleViewImageRefPart = React.useCallback((imageRefPart: DMessageImageRefPart) => {
@@ -196,7 +196,7 @@ export function LLMAttachmentsList(props: {
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === llmAttachmentDrafts.length - 1}
         onClose={handleDraftMenuHide}
-        onDraftAction={handleDraftAction}
+        onDraftAction={!onAttachmentDraftsAction ? undefined : handleDraftAction}
         onViewDocPart={handleViewDocPart}
         onViewImageRefPart={handleViewImageRefPart}
       />
@@ -218,19 +218,17 @@ export function LLMAttachmentsList(props: {
             What can I do?
           </MenuItem>
         )}
+        {!!agiAttachmentPrompts && <ListDivider />}
 
-        <ListDivider />
-
-        <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
+        {!!onAttachmentDraftsAction && <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline all text
-        </MenuItem>
-        <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeFragments}>
+        </MenuItem>}
+        {!!onAttachmentDraftsAction && <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           Copy all text
-        </MenuItem>
-
-        <ListDivider />
+        </MenuItem>}
+        {!!onAttachmentDraftsAction && <ListDivider />}
 
         <MenuItem onClick={handleOverallClear}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>
