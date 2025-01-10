@@ -72,7 +72,7 @@ export namespace GeminiWire_ContentParts {
   /**
    * The result output from a FunctionCall that contains a string representing the FunctionDeclaration.name
    * and a structured JSON object containing any output from the function is used as context to the model.
-   * This should contain the result of aFunctionCall made based on model prediction.
+   * This should contain the result of a FunctionCall made based on model prediction.
    *
    * NOTE from the online Google docs on 2024-07-20:
    * - The next conversation turn may contain a [FunctionResponse][content.part.function_response] with
@@ -212,9 +212,11 @@ export namespace GeminiWire_Messages {
   // Model Content - response.candidates[number].content
 
   export const ModelContent_schema = Content_schema.extend({
-    role: z.literal('model'),
+    role: z.literal('model')
+      .optional(), // 2025-01-10: added because sometimes gemini sends the empty `{"candidates": [{"content": {}, ...` just for the finishreason
     // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
-    parts: z.array(GeminiWire_ContentParts.ModelContentPart_schema),
+    parts: z.array(GeminiWire_ContentParts.ModelContentPart_schema)
+      .optional(), // 2025-01-10: added because sometimes gemini sends the empty `{"candidates": [{"content": {}, ...` just for the finishreason
   });
 
   // export const UserMessage_schema = Content_schema.extend({
@@ -301,6 +303,7 @@ export namespace GeminiWire_Safety {
     'HARM_CATEGORY_HATE_SPEECH',
     'HARM_CATEGORY_SEXUALLY_EXPLICIT',
     'HARM_CATEGORY_DANGEROUS_CONTENT',
+    'HARM_CATEGORY_CIVIC_INTEGRITY', // 2025-01-10
   ]);
 
   export const HarmProbability_enum = z.enum([
@@ -344,6 +347,8 @@ export namespace GeminiWire_Safety {
     'BLOCK_REASON_UNSPECIFIED',
     'SAFETY',
     'OTHER',
+    'BLOCKLIST',
+    'PROHIBITED_CONTENT',
   ]);
 
   export const PromptFeedback_schema = z.object({
@@ -388,6 +393,12 @@ export namespace GeminiWire_API_Generate_Content {
     temperature: z.number().min(0).max(2).optional(),
     topP: z.number().optional(),
     topK: z.number().int().optional(),
+
+    // Added on 2025-01-10 - commented out for now
+    // presencePenalty: z.number().optional(),
+    // frequencyPenalty: z.number().optional(),
+    // responseLogprobs: z.boolean().optional(),
+    // logprobs: z.number().int().optional(),
   });
 
   export type Request = z.infer<typeof Request_schema>;
