@@ -29,6 +29,38 @@ import { ViewDocPartModal } from '../../message/fragments-content/ViewDocPartMod
 export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
 
 
+const _style = {
+
+  bar: {
+    position: 'relative',
+  } as const,
+
+  barScrollX: {
+    height: '100%',
+    pr: 5,
+    overflowX: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+  } as const,
+
+  barWraps: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 1,
+  } as const,
+
+  barMenuButton: {
+    // borderRadius: 'sm',
+    borderRadius: 0,
+    position: 'absolute', right: 0, top: 0,
+    backgroundColor: 'neutral.softDisabledBg',
+  } as const,
+
+} as const;
+
+
 /**
  * Renderer of attachment drafts, with menus, etc.
  */
@@ -38,6 +70,7 @@ export function LLMAttachmentsList(props: {
   canInlineSomeFragments: boolean,
   llmAttachmentDrafts: LLMAttachmentDraft[],
   onAttachmentDraftsAction?: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
+  buttonsCanWrap?: boolean,
 }) {
 
   // state
@@ -136,10 +169,10 @@ export function LLMAttachmentsList(props: {
   return <>
 
     {/* Attachment Drafts bar */}
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={_style.bar}>
 
       {/* Horizontally scrollable */}
-      <Box sx={{ height: '100%', pr: 5, overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={!props.buttonsCanWrap ? _style.barScrollX : _style.barWraps}>
 
         {/* AI Suggestion Button */}
         {(!!agiAttachmentPrompts && (agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData)) && (
@@ -160,18 +193,15 @@ export function LLMAttachmentsList(props: {
       </Box>
 
       {/* Overall Menu button */}
-      <IconButton
-        onClick={handleOverallMenuToggle}
-        onContextMenu={handleOverallMenuToggle}
-        sx={{
-          // borderRadius: 'sm',
-          borderRadius: 0,
-          position: 'absolute', right: 0, top: 0,
-          backgroundColor: 'neutral.softDisabledBg',
-        }}
-      >
-        <ExpandLessIcon />
-      </IconButton>
+      {!_style.barWraps && (
+        <IconButton
+          onClick={handleOverallMenuToggle}
+          onContextMenu={handleOverallMenuToggle}
+          sx={_style.barMenuButton}
+        >
+          <ExpandLessIcon />
+        </IconButton>
+      )}
 
     </Box>
 
