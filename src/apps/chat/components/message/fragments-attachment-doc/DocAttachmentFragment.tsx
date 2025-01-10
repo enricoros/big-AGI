@@ -171,8 +171,10 @@ export function DocAttachmentFragment(props: {
       <div>{fragmentDocPart.vdt}</div>
       <div>Text Buffer Id</div>
       <div>{fragmentId}</div>
+      {!!fragment.caption && <div>Att. Caption</div>}
+      {!!fragment.caption && <div>{fragment.caption}</div>}
     </Box>
-  ), [fragment.title, fragmentDocPart, fragmentId]);
+  ), [fragment.caption, fragment.title, fragmentDocPart, fragmentId]);
 
 
   const headerRow = React.useMemo(() => {
