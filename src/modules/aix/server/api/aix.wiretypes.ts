@@ -224,6 +224,7 @@ export namespace AixWire_Content {
   export const SystemInstruction_schema = z.object({
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      AixWire_Parts.DocPart_schema, // Jan 10, 2025: added support for Docs in AIX system
       AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
