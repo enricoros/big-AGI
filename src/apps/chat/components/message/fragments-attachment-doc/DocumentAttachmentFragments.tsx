@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Box } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { DMessageAttachmentFragment, DMessageFragmentId, isDocPart } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { DocAttachmentFragmentButton } from './DocAttachmentFragmentButton';
@@ -102,7 +102,7 @@ export function DocumentAttachmentFragments(props: {
       </Box>
 
       {/* Document Viewer & Editor */}
-      {!!selectedFragment && (
+      {!!selectedFragment && isDocPart(selectedFragment.part) && (
         <DocAttachmentFragment
           key={selectedFragment.fId /* this is here for the useLiveFile hook which otherwise would migrate state across fragments */}
           fragment={selectedFragment}

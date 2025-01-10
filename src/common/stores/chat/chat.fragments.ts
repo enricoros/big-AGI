@@ -466,6 +466,10 @@ export function splitFragmentsByType(fragments: DMessageFragment[]) {
   });
 }
 
+export function filterDocAttachmentFragments(fragments: DMessageAttachmentFragment[]) {
+  return fragments.filter(fragment => isDocPart(fragment.part));
+}
+
 /**
  * Updates a fragment with the edited text, ensuring the fragment retains its type and structure.
  * @returns A new fragment with the edited text applied or null if the fragment type isn't handled.
