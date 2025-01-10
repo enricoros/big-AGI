@@ -86,13 +86,16 @@ export function DocAttachmentFragment(props: {
 
   // LiveFile sync
 
+  const disableLiveFile = !onFragmentReplace
+    || !workspaceId; // NOTE: this is a trick for when used outside of a WorkspaceId context provider
+
   const { liveFileControlButton, liveFileActions } = useLiveFileSync(
     fragment.liveFileId ?? null,
     workspaceId,
     props.isMobile,
     fragmentDocPart.data.text,
-    handleReplaceFragmentLiveFileId,
-    handleReplaceDocFragmentText,
+    disableLiveFile ? undefined : handleReplaceFragmentLiveFileId,
+    disableLiveFile ? undefined : handleReplaceDocFragmentText,
   );
 
 
