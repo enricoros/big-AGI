@@ -325,8 +325,12 @@ export namespace GeminiWire_Safety {
     'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
     'BLOCK_LOW_AND_ABOVE',
     'BLOCK_MEDIUM_AND_ABOVE',
-    'BLOCK_ONLY_HIGH',
-    'BLOCK_NONE',
+    'BLOCK_ONLY_HIGH', // Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
+    'BLOCK_NONE', // All content will be allowed.
+    /**
+     * 2025-01-10: see bug #720 and https://discuss.ai.google.dev/t/flash-2-0-doesnt-respect-block-none-on-all-harm-categories/59352/1
+     */
+    'OFF', // Turn off the safety filter.
   ]);
 
   export const SafetySetting_schema = z.object({

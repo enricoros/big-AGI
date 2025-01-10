@@ -29,6 +29,7 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
   { value: 'BLOCK_MEDIUM_AND_ABOVE', label: 'Medium and above' },
   { value: 'BLOCK_ONLY_HIGH', label: 'Only high' },
   { value: 'BLOCK_NONE', label: 'None' },
+  { value: 'OFF', label: 'Safety Filter Off (2025)' },
 ];
 
 
