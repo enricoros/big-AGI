@@ -27,6 +27,10 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
       }
       return acc;
     }, { parts: [] } as Exclude<TRequest['systemInstruction'], undefined>);
+
+    // unset system instructions with no parts
+    if (!systemInstruction.parts.length)
+      systemInstruction = undefined;
   }
 
   // Chat Messages
