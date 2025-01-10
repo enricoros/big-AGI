@@ -862,7 +862,7 @@ export function ChatMessage(props: {
             </MenuItem>
           )}
           {/* Aix Skip Message */}
-          {!messagePendingIncomplete && (
+          {!messagePendingIncomplete && !!props.onMessageToggleUserFlag && (
             <MenuItem onClick={handleOpsToggleSkipMessage}>
               <ListItemDecorator>{isUserMessageSkipped ? <VisibilityOffIcon sx={{ color: 'danger.plainColor' }} /> : <VisibilityIcon />}</ListItemDecorator>
               {isUserMessageSkipped ? 'Unskip' : 'Skip AI processing'}
