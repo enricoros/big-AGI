@@ -91,7 +91,9 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
 
   // (on System message) handle the ant-cache-prompt user/auto flags
   const mHasAntCacheFlag = messageHasUserFlag(systemInstruction, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(systemInstruction, MESSAGE_FLAG_VND_ANT_CACHE_USER);
-  if (mHasAntCacheFlag)
+  if (mHasAntCacheFlag
+    && sm.parts.length > 0 // added this to avoid settings a cache control on an empty system message
+  )
     sm.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
 
   return sm;
