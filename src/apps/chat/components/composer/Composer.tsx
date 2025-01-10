@@ -63,7 +63,7 @@ import { useLLMAttachmentDrafts } from './llmattachments/useLLMAttachmentDrafts'
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
 
-import { ButtonAttachCameraMemo, useCameraCaptureModal } from './buttons/ButtonAttachCamera';
+import { ButtonAttachCameraMemo, useCameraCaptureModalDialog } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
@@ -580,7 +580,7 @@ export function Composer(props: {
     void attachAppendFile('camera', file);
   }, [attachAppendFile]);
 
-  const { openCamera, cameraCaptureComponent } = useCameraCaptureModal(handleAttachCameraImage);
+  const { openCamera, cameraCaptureComponent } = useCameraCaptureModalDialog(handleAttachCameraImage);
 
   const handleAttachScreenCapture = React.useCallback((file: File) => {
     void attachAppendFile('screencapture', file);
@@ -757,7 +757,7 @@ export function Composer(props: {
 
                       {/* Responsive Paste button */}
                       {supportsClipboardRead() && <MenuItem>
-                        <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />
+                        <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />
                       </MenuItem>}
 
                     </Menu>
@@ -782,7 +782,7 @@ export function Composer(props: {
                 <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
 
                 {/* Responsive Paste button */}
-                {supportsClipboardRead() && <ButtonAttachClipboardMemo onClick={attachAppendClipboardItems} />}
+                {supportsClipboardRead() && <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />}
 
                 {/* Responsive Screen Capture button */}
                 {labsAttachScreenCapture && supportsScreenCapture && <ButtonAttachScreenCaptureMemo onAttachScreenCapture={handleAttachScreenCapture} />}

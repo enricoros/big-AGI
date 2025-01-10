@@ -4,34 +4,47 @@ import { Box, Button, IconButton, Tooltip } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 
+import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
+
 import { CameraCaptureModal } from '../CameraCaptureModal';
-
-
-const attachCameraLegend = (isMobile: boolean) =>
-  <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
-    <b>Attach photo</b><br />
-    {isMobile ? 'Auto-OCR to read text' : 'See the world, on the go'}
-  </Box>;
 
 
 export const ButtonAttachCameraMemo = React.memo(ButtonAttachCamera);
 
-function ButtonAttachCamera(props: { isMobile?: boolean, onOpenCamera: () => void }) {
+function ButtonAttachCamera(props: {
+  isMobile?: boolean,
+  disabled?: boolean,
+  fullWidth?: boolean,
+  noToolTip?: boolean,
+  onOpenCamera: () => void,
+}) {
   return props.isMobile ? (
-    <IconButton onClick={props.onOpenCamera}>
+    <IconButton disabled={props.disabled} onClick={props.onOpenCamera}>
       <AddAPhotoIcon />
     </IconButton>
   ) : (
-    <Tooltip disableInteractive variant='solid' placement='top-start' title={attachCameraLegend(!!props.isMobile)}>
-      <Button fullWidth variant='plain' color='neutral' onClick={props.onOpenCamera} startDecorator={<CameraAltOutlinedIcon />}
-              sx={{ justifyContent: 'flex-start' }}>
+    <Tooltip arrow disableInteractive placement='top-start' title={props.noToolTip ? null : (
+      <Box sx={buttonAttachSx.tooltip}>
+        <b>Attach photo</b><br />
+        {!!props.isMobile ? 'Auto-OCR to read text' : 'See the world, on the go'}
+      </Box>
+    )}>
+      <Button
+        variant='plain'
+        color='neutral'
+        disabled={props.disabled}
+        fullWidth={props.fullWidth}
+        startDecorator={<CameraAltOutlinedIcon />}
+        onClick={props.onOpenCamera}
+        sx={buttonAttachSx.desktop}
+      >
         Camera
       </Button>
     </Tooltip>
   );
 }
 
-export function useCameraCaptureModal(onAttachImage: (file: File) => void) {
+export function useCameraCaptureModalDialog(onAttachImageStable: (file: File) => void) {
 
   // state
   const [open, setOpen] = React.useState(false);
@@ -41,9 +54,9 @@ export function useCameraCaptureModal(onAttachImage: (file: File) => void) {
   const cameraCaptureComponent = React.useMemo(() => open && (
     <CameraCaptureModal
       onCloseModal={() => setOpen(false)}
-      onAttachImage={onAttachImage}
+      onAttachImage={onAttachImageStable}
     />
-  ), [open, onAttachImage]);
+  ), [open, onAttachImageStable]);
 
   return {
     openCamera,
