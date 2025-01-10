@@ -213,6 +213,7 @@ export namespace GeminiWire_Messages {
 
   export const ModelContent_schema = Content_schema.extend({
     role: z.literal('model')
+      .or(z.literal('MODEL')) // [Gemini]: 2024-10-29: code execution seems to return .role='MODEL' instead of 'model' when .parts=[codeExecutionResult]
       .optional(), // 2025-01-10: added because sometimes gemini sends the empty `{"candidates": [{"content": {}, ...` just for the finishreason
     // 'Model' generated contents are of fewer types compared to the ContentParts, which represent also user objects
     parts: z.array(GeminiWire_ContentParts.ModelContentPart_schema)
