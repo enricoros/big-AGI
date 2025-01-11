@@ -12,7 +12,7 @@ import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
 import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_vanilla';
 
-import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
+import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 
 
@@ -56,6 +56,22 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
     }, { hintAddImages });
   }, [_createAttachmentDraft, hintAddImages, onFilterAGIFile]);
+
+  /**
+   * Append a URL, likely a web page or youtube transcript, to the attachments.
+   */
+  const attachAppendUrl = React.useCallback((origin: AttachmentDraftSourceOriginUrl, url: string, refUrl?: string) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendUrl', url);
+
+    const validUrl = asValidURL(url);
+    if (!validUrl)
+      return false;
+
+    return _createAttachmentDraft({
+      media: 'url', origin, url: validUrl, refUrl: refUrl || url,
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, hintAddImages]);
 
   /**
    * Append data transfer to the attachments.
@@ -153,11 +169,8 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     const textPlain = dt.getData('text/plain') || '';
     if (textPlain && enableLoadURLsOnPaste) {
       const textPlainUrl = asValidURL(textPlain);
-      if (textPlainUrl && textPlainUrl.trim()) {
-        void _createAttachmentDraft({
-          media: 'url', url: textPlainUrl, refUrl: textPlain,
-        }, { hintAddImages });
-
+      if (textPlainUrl) {
+        void attachAppendUrl(method, textPlainUrl, textPlain);
         return 'as_url';
       }
     }
@@ -176,7 +189,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLsOnPaste, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -231,10 +244,8 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       // attach as URL
       if (textPlain && enableLoadURLsOnPaste) {
         const textPlainUrl = asValidURL(textPlain);
-        if (textPlainUrl && textPlainUrl.trim()) {
-          void _createAttachmentDraft({
-            media: 'url', url: textPlainUrl.trim(), refUrl: textPlain,
-          }, { hintAddImages });
+        if (textPlainUrl) {
+          void attachAppendUrl('clipboard-read', textPlainUrl, textPlain);
           continue;
         }
       }
@@ -249,7 +260,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLsOnPaste, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
 
   /**
    * Append ego content to the attachments.
@@ -281,6 +292,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     attachAppendDataTransfer,
     attachAppendEgoFragments,
     attachAppendFile,
+    attachAppendUrl,
 
     // manage attachments
     attachmentsRemoveAll,
