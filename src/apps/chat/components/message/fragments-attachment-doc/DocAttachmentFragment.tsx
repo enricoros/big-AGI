@@ -259,6 +259,7 @@ export function DocAttachmentFragment(props: {
       headerRow={headerRow}
       subHeaderInline={!isEditing && liveFileActions}
       toolbarRow={toolbarRow}
+      selectedOutline
     >
 
       {/* Show / Edit the Document Attachment Part */}
