@@ -271,6 +271,7 @@ export function DocAttachmentFragment(props: {
           contentScaling={props.contentScaling}
           editedText={editedText}
           setEditedText={props.setEditedText}
+          squareTopBorder
           onSubmit={handleEditApply}
           onEscapePressed={handleToggleEdit}
           // endDecorator={editedText ? 'Shift+Enter to save · Escape to cancel.' : 'No changes · Escape to cancel.'}
