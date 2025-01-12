@@ -19,6 +19,10 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
 
   try {
     const page = await callBrowseFetchPageOrThrow(url);
+    if (!page.content) {
+      cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createErrorContentFragment('Issue: Browsing pointed to a file but we do not support files at the moment.'), true);
+      return false;
+    }
 
     const pageContent = page.content.markdown || page.content.text || page.content.html || 'Issue: Browsing did not produce a page content.';
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(pageContent), true);

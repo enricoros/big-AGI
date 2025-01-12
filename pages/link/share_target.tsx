@@ -78,6 +78,10 @@ function AppShareTarget() {
       callBrowseFetchPageOrThrow(intentURL)
         .then(page => {
           if (page.stopReason !== 'error') {
+            if (!page.content) {
+              setErrorMessage(page.file ? 'No web page found, and we do not support files at the moment.' : 'No content found');
+              return;
+            }
             let pageContent = page.content.markdown || page.content.text || page.content.html || '';
             if (pageContent)
               pageContent = '\n\n```' + intentURL + '\n' + pageContent + '\n```\n';

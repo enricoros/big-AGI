@@ -6,6 +6,7 @@ import { youTubeGetVideoData } from '~/modules/youtube/useYouTubeTranscript';
 
 import { Is } from '~/common/util/pwaUtils';
 import { agiCustomId, agiUuid } from '~/common/util/idUtils';
+import { base64ToArrayBuffer } from '~/common/util/urlUtils';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
 import { humanReadableHyphenated } from '~/common/util/textUtils';
 import { pdfToImageDataURLs, pdfToText } from '~/common/util/pdfUtils';
@@ -98,29 +99,44 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
 
       try {
         // fetch the web page
-        const { title, content: { html, markdown, text }, screenshot } = await callBrowseFetchPageOrThrow(
-          source.url, ['text', 'markdown', 'html'], { width: 512, height: 512, quality: 98 },
+        const { title, content, file, screenshot } = await callBrowseFetchPageOrThrow(
+          source.url, ['text', 'markdown', 'html'], { width: 512, height: 512, quality: 98 }, true,
         );
-        if (html || markdown || text)
+        if (content) {
+          const { html, markdown, text } = content;
+          if (html || markdown || text)
+            edit({
+              label: title || source.refUrl,
+              input: {
+                mimeType: INT_MIME_VND_AGI_WEBPAGE,
+                data: {
+                  pageText: text ?? undefined,
+                  pageMarkdown: markdown ?? undefined,
+                  pageCleanedHtml: html ?? undefined,
+                  pageTitle: title || undefined,
+                },
+                urlImage: !screenshot ? undefined : {
+                  ...screenshot,
+                  generator: 'web-capture',
+                  timestamp: Date.now(),
+                },
+              },
+            });
+          else
+            edit({ inputError: 'No content found at this link' });
+        } else if (file) {
+          const data = base64ToArrayBuffer(file.data);
           edit({
-            label: title || source.refUrl,
+            label: file.fileName || source.refUrl,
+            // ref: source.refUrl,
             input: {
-              mimeType: INT_MIME_VND_AGI_WEBPAGE,
-              data: {
-                pageText: text ?? undefined,
-                pageMarkdown: markdown ?? undefined,
-                pageCleanedHtml: html ?? undefined,
-                pageTitle: title || undefined,
-              },
-              urlImage: !screenshot ? undefined : {
-                ...screenshot,
-                generator: 'web-capture',
-                timestamp: Date.now(),
-              },
+              mimeType: file.mimeType,
+              data: data,
+              dataSize: data.byteLength,
             },
           });
-        else
-          edit({ inputError: 'No content found at this link' });
+        } else
+          edit({ inputError: 'No content or file found at this link' });
       } catch (error: any) {
         edit({ inputError: `Issue downloading page: ${error?.message || (typeof error === 'string' ? error : JSON.stringify(error))}` });
       }
