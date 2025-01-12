@@ -301,7 +301,7 @@ export function DocAttachmentFragment(props: {
         />
       ) : (
         // Document viewer, including the collapse/expand state inside
-        <Box my={1}>
+        <Box py={1}>
           <AutoBlocksRenderer
             // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
             text={fragmentDocPart.data.text}
