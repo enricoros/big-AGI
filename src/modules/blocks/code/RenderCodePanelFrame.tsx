@@ -103,10 +103,10 @@ export function RenderCodePanelFrame(props: {
     {
       // toolbar row
       backgroundColor: `${props.toolbarColor || props.color}.${isDarkMode ? 900 : 50}`,
-      borderTop: '1px solid',
-      borderTopColor: `${props.toolbarColor || props.color}.outlinedBorder`,
-      borderBottom: '1px solid',
-      borderBottomColor: /*isEditing ? 'transparent' :*/ `${props.toolbarColor || props.color}.outlinedBorder`,
+      // borderTop: '1px solid',
+      // borderTopColor: `${props.toolbarColor || props.color}.outlinedBorder`,
+      // borderBottom: '1px solid',
+      // borderBottomColor: /*isEditing ? 'transparent' :*/ `${props.toolbarColor || props.color}.outlinedBorder`,
       p: 1,
       // layout
       display: 'grid',
