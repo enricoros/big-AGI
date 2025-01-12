@@ -35,7 +35,7 @@ export function aixCreateModelFromLLMOptions(
 ): AixAPI_Model {
 
   // destructure input with the overrides
-  const { llmRef, llmTemperature, llmResponseTokens, llmTopP, llmVndOaiReasoningEffort } = {
+  const { llmRef, llmTemperature, llmResponseTokens, llmTopP, llmVndOaiReasoningEffort, llmVndOaiRestoreMarkdown } = {
     ...llmOptions,
     ...llmOptionsOverride,
   };
@@ -54,6 +54,7 @@ export function aixCreateModelFromLLMOptions(
     ...(llmResponseTokens /* null: similar to undefined, will omit the value */ ? { maxTokens: llmResponseTokens } : {}),
     ...(llmTopP !== undefined ? { topP: llmTopP } : {}),
     ...(llmVndOaiReasoningEffort ? { vndOaiReasoningEffort: llmVndOaiReasoningEffort } : {}),
+    ...(llmVndOaiRestoreMarkdown ? { vndOaiRestoreMarkdown: llmVndOaiRestoreMarkdown } : {}),
   };
 }
 

@@ -6,6 +6,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import { DModelParameterId, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
+import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
 
 
@@ -40,6 +41,7 @@ export function LLMParametersEditor(props: {
   const llmTemperature = allParameters.llmTemperature ?? FALLBACK_LLM_PARAM_TEMPERATURE;
   const llmResponseTokens = allParameters.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
   const llmVndOaiReasoningEffort = allParameters.llmVndOaiReasoningEffort;
+  const llmVndOaiRestoreMarkdown = !!allParameters.llmVndOaiRestoreMarkdown;
   const tempAboveOne = llmTemperature > 1;
 
   // more state (here because the initial state depends on props)
@@ -59,7 +61,8 @@ export function LLMParametersEditor(props: {
 
 
   // find the reasoning effort parameter spec
-  const paramReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
+  // NOTE: optimization: this controls both the 'reasoning effort' and 'restore markdown' UI settings
+  const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
 
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
@@ -99,7 +102,7 @@ export function LLMParametersEditor(props: {
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
     )}
 
-    {paramReasoningEffort && (
+    {paramSpecReasoningEffort && (
       <FormSelectControl
         title='Reasoning Effort'
         tooltip='Controls how much effort the model spends on reasoning'
@@ -108,9 +111,24 @@ export function LLMParametersEditor(props: {
           if (value === _UNSPECIFIED || !value)
             onRemoveParameter('llmVndOaiReasoningEffort');
           else
-            onChangeParameter({ 'llmVndOaiReasoningEffort': value });
+            onChangeParameter({ llmVndOaiReasoningEffort: value });
         }}
         options={_reasoningEffortOptions}
+      />
+    )}
+
+    {paramSpecReasoningEffort && (
+      <FormSwitchControl
+        title='Restore Markdown'
+        description='Enable markdown formatting'
+        tooltip='o1 models in the API will avoid generating responses with markdown formatting. This option signals to the model to re-enable markdown formatting in the respons'
+        checked={llmVndOaiRestoreMarkdown}
+        onChange={checked => {
+          if (!checked)
+            onRemoveParameter('llmVndOaiRestoreMarkdown');
+          else
+            onChangeParameter({ llmVndOaiRestoreMarkdown: true });
+        }}
       />
     )}
 
