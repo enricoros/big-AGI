@@ -196,6 +196,8 @@ async function search(query: string): Promise<string> {
 async function browse(url: string): Promise<string> {
   try {
     const page = await callBrowseFetchPageOrThrow(url);
+    if (!page.content)
+      return page.file ? 'A file download was requested, but we only support web pages: ' + page.url : 'No content received';
     const pageContent = page.content.markdown || page.content.text || page.content.html || '';
     return JSON.stringify(pageContent ? { text: pageContent } : { error: 'Issue reading the page' });
   } catch (error) {
