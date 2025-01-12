@@ -92,6 +92,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
   }
+  if (model.vndOaiRestoreMarkdown) {
+    _fixVndOaiRestoreMarkdown_Inline(payload);
+  }
 
   if (hotFixOpenAIo1Family)
     payload = _fixRequestForOpenAIO1_maxCompletionTokens(payload);
@@ -178,6 +181,24 @@ function _fixSquashMultiPartText(chatMessages: TRequestMessages): TRequestMessag
       acc.push(message);
     return acc;
   }, [] as TRequestMessages);
+}
+
+function _fixVndOaiRestoreMarkdown_Inline(payload: TRequest) {
+
+  // OpenAI - https://platform.openai.com/docs/guides/reasoning/advice-on-prompting#advice-on-prompting
+  //
+  // As of 2025-01-12, OpenAI states: << Markdown formatting: Starting with o1-2024-12-17,
+  // o1 models in the API will avoid generating responses with markdown formatting.
+  // To signal to the model when you do want markdown formatting in the response,
+  // include the string Formatting re-enabled on the first line of your developer message. >>
+  //
+  // This function prepends "Formatting re-enabled" to the first user message, if not already present
+  if (payload.messages?.length) {
+    const firstMessage = payload.messages[0];
+    if (firstMessage.role === 'developer' && firstMessage.content && !firstMessage.content.split('\n')[0].includes('Formatting re-enabled'))
+      firstMessage.content = 'Formatting re-enabled\n' + firstMessage.content;
+  }
+
 }
 
 /*function _fixUseDeprecatedFunctionCalls(payload: OpenaiWire_ChatCompletionRequest): OpenaiWire_ChatCompletionRequest {

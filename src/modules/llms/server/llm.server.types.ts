@@ -71,6 +71,9 @@ const ModelParameterSpec_schema = z.object({
   paramId: z.enum([
     'llmTopP',
     'llmVndOaiReasoningEffort',  // vendor-specific
+    // Optimization: we are not using this, but linking the 'presence' of the spec to the vndOaiReasoningEffort spec.
+    // This may change in the future if OpenAI decouples reasoning effort and markdown restoration.
+    // 'llmVndOaiRestoreMarkdown',
   ]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),

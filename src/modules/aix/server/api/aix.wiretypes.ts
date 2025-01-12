@@ -379,6 +379,7 @@ export namespace AixWire_API {
     maxTokens: z.number().min(1).optional(),
     topP: z.number().min(0).max(1).optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
+    vndOaiRestoreMarkdown: z.boolean().optional(),
   });
 
   /// Context

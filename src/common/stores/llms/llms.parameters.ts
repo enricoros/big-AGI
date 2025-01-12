@@ -71,6 +71,12 @@ export const DModelParameterRegistry = {
     requiredFallback: 'medium',
   } as const,
 
+  llmVndOaiRestoreMarkdown: {
+    label: 'Restore Markdown',
+    type: 'boolean' as const,
+    description: 'Restore Markdown formatting in the output',
+  } as const,
+
 } as const;
 
 
