@@ -291,18 +291,25 @@ export function DocAttachmentFragment(props: {
 
       {/* Delete / Confirm */}
       {!!onFragmentDelete && (
-        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse',gap: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
           {!isEditing && <Button
-          variant='soft'
-          color={DocSelColor}
-          size='sm'
-          onClick={handleToggleDeleteArmed}
-          startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-          sx={_styles.button}>
+            variant='soft'
+            color={DocSelColor}
+            size='sm'
+            onClick={handleToggleDeleteArmed}
+            startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+            sx={_styles.button}
+          >
             {isDeleteArmed ? 'Cancel' : 'Delete'}
           </Button>}
           {isDeleteArmed && (
-            <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
+            <Button
+              variant='solid'
+              color='danger'
+              size='sm'
+              onClick={handleFragmentDelete}
+              startDecorator={<DeleteForeverIcon />}
+            >
               Delete
             </Button>
           )}
@@ -311,17 +318,26 @@ export function DocAttachmentFragment(props: {
 
       {/* Edit / Save */}
       {!!onFragmentReplace && (
-        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1, ml: 'auto' }}>
-          <Button variant='soft'
-          color={DocSelColor}
-          size='sm'
-          onClick={handleToggleEdit}
-          startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}
+        <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
+          <Button
+            variant='soft'
+            color={DocSelColor}
+            size='sm'
+            onClick={handleToggleEdit}
+            startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}
             sx={_styles.button}
-        >{isEditing ? 'Cancel' : 'Edit'}
+          >
+            {isEditing ? 'Cancel' : 'Edit'}
           </Button>
           {isEditing && (
-            <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={_styles.button}>
+            <Button
+              variant='solid'
+              color='success'
+              onClick={handleEditApply}
+              size='sm'
+              startDecorator={<CheckRoundedIcon />}
+              sx={_styles.button}
+            >
               Save
             </Button>
           )}
