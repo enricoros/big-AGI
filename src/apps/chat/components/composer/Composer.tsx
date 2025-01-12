@@ -78,6 +78,7 @@ import { StatusBar } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
+import { useWebInputModal } from './WebInputModal';
 
 
 const zIndexComposerOverlayMic = 10;
@@ -597,6 +598,8 @@ export function Composer(props: {
 
   const handleAttachWebUrl = React.useCallback(async (url: string) => attachAppendUrl('input-link', url), [attachAppendUrl]);
 
+  const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebUrl);
+
 
   // Attachments Down
 
@@ -759,10 +762,9 @@ export function Composer(props: {
                       </MenuItem>
 
                       {/* Responsive Web button */}
-                      {/* NOTE: doesn't work yet because the Modal unmounts once the dropdown closes */}
-                      {/*<MenuItem>*/}
-                      {/*  <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onAttachWeb={handleAttachWebUrl} />*/}
-                      {/*</MenuItem>*/}
+                      <MenuItem>
+                        <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />
+                      </MenuItem>
 
                       {/* Responsive Paste button */}
                       {supportsClipboardRead() && <MenuItem>
@@ -791,7 +793,7 @@ export function Composer(props: {
                 <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
 
                 {/* Responsive Web button */}
-                <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onAttachWeb={handleAttachWebUrl} />
+                <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onOpenWebInput={openWebInputDialog} />
 
                 {/* Responsive Paste button */}
                 {supportsClipboardRead() && <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />}
@@ -1076,6 +1078,9 @@ export function Composer(props: {
 
       {/* Camera (when open) */}
       {cameraCaptureComponent}
+
+      {/* Web Input Dialog (when open) */}
+      {webInputDialogComponent}
 
       {/* Actile (when open) */}
       {actileComponent}
