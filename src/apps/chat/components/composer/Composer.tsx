@@ -844,6 +844,7 @@ export function Composer(props: {
                     }
                     slotProps={{
                       textarea: {
+                        height: '100%',
                         enterKeyHint: enterIsNewline ? 'enter' : 'send',
                         sx: {
                           ...(recognitionState.isAvailable && { pr: { md: 5 } }),
@@ -853,6 +854,7 @@ export function Composer(props: {
                       },
                     }}
                     sx={{
+                      height: '100%',
                       backgroundColor: 'background.level1',
                       '&:focus-within': { backgroundColor: 'background.popup', '.within-composer-focus': { backgroundColor: 'background.popup' } },
                       lineHeight: lineHeightTextareaMd,
