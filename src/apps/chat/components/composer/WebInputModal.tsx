@@ -74,10 +74,12 @@ function WebInputModal(props: {
       title='Add Web Content'
       titleStartDecorator={<LanguageRoundedIcon />}
       closeText={'Cancel'}
+      // unfilterBackdrop
+      // themedColor='neutral'
       hideBottomClose
     >
-      <Box fontSize='sm'>
-        Enter or paste web page addresses to import their content.
+      <Box fontSize='md'>
+        Enter web page addresses to import their content.
       </Box>
       <Typography level='body-sm'>
         Works on most websites and for YouTube videos (e.g., youtube.com/...) the transcript will be imported.
