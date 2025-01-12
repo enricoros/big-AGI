@@ -13,6 +13,7 @@ export async function callBrowseFetchPageOrThrow(
   url: string,
   transforms?: BrowsePageTransform[],
   screenshotOptions?: { width: number, height: number, quality?: number },
+  allowFileDownloads?: boolean,
 ) {
 
   // validate url
@@ -38,6 +39,7 @@ export async function callBrowseFetchPageOrThrow(
         url,
         transforms: transforms ? transforms : [pageTransform],
         screenshot: screenshotOptions || undefined,
+        allowFileDownloads: allowFileDownloads || false,
       }],
     });
   } catch (error: any) {
@@ -56,6 +58,7 @@ export async function callBrowseFetchPageOrThrow(
       case 'ack-start':
         // ignore
         break;
+
       case 'result':
         if (message.pages.length !== 1)
           throw new Error(`Browser downloaded ${message.pages?.length} pages, but only one was expected`);
@@ -63,7 +66,7 @@ export async function callBrowseFetchPageOrThrow(
         // throw if there's an error
         const page = message.pages[0];
         if (page.error) {
-          const haveNoContent = !Object.keys(page.content).length;
+          const haveNoContent = !page.content || !Object.keys(page.content).length;
           console.warn('[DEV] browse.client: puppeteer error:', page.error);
           if (haveNoContent)
             throw new Error(page.error);

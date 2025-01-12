@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 
 import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer-core';
 import { default as TurndownService } from 'turndown';
@@ -6,10 +7,12 @@ import { load as cheerioLoad } from 'cheerio';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
-import { TRPCError } from '@trpc/server';
+
+import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
 
 
-// change the page load and scrape timeout
+// configuration
+const DISABLE_FILE_DOWNLOADS = true;
 const WORKER_TIMEOUT = 20 * 1000; // 20 seconds
 
 
@@ -27,6 +30,7 @@ const fetchPageInputSchema = z.object({
   requests: z.array(z.object({
     url: z.string().url(),
     transforms: z.array(pageTransformSchema),
+    allowFileDownloads: z.boolean().optional(),
     screenshot: z.object({
       width: z.number(),
       height: z.number(),
@@ -41,7 +45,16 @@ const fetchPageInputSchema = z.object({
 const fetchPageWorkerOutputSchema = z.object({
   url: z.string(),
   title: z.string(),
-  content: z.record(pageTransformSchema, z.string()),
+
+  content: z.record(pageTransformSchema, z.string()).optional(), // either...
+  file: z.object({ // ...or
+    mimeType: z.string(),
+    encoding: z.literal('base64'),
+    data: z.string(),
+    size: z.number(),
+    fileName: z.string().optional(),
+  }).optional(), // ...or
+
   error: z.string().optional(),
   stopReason: z.enum(['end', 'timeout', 'error']),
   screenshot: z.object({
@@ -70,7 +83,7 @@ export const browseRouter = createTRPCRouter({
 
       // start all requests in parallel, intercepting erros too
       const results = await Promise.allSettled(requests.map(request =>
-        workerPuppeteer(endpoint, request.url, request.transforms, request.screenshot),
+        workerPuppeteer(endpoint, request.url, request.transforms, request.allowFileDownloads || false, request.screenshot),
       ));
 
       // return all pages trapping errors
@@ -82,7 +95,8 @@ export const browseRouter = createTRPCRouter({
             return {
               url: requests[index].url,
               title: '',
-              content: {},
+              content: undefined,
+              file: undefined,
               error: result.reason?.message || 'Unknown fetch error',
               stopReason: 'error',
               screenshot: undefined,
@@ -105,13 +119,19 @@ async function workerPuppeteer(
   browserWSEndpoint: string,
   targetUrl: string,
   transforms: PageTransformSchema[],
+  allowFileDownloads: boolean,
   screenshotOptions?: { width: number, height: number, quality?: number },
 ): Promise<FetchPageWorkerOutputSchema> {
+
+  // FIXME: remove this line for authenticated users(!)
+  if (DISABLE_FILE_DOWNLOADS)
+    allowFileDownloads = false;
 
   const result: FetchPageWorkerOutputSchema = {
     url: targetUrl,
     title: '',
-    content: {},
+    content: undefined,
+    file: undefined,
     error: undefined,
     stopReason: 'error',
     screenshot: undefined,
@@ -140,11 +160,35 @@ async function workerPuppeteer(
       waitUntil: 'networkidle0', // Wait until network is idle
       timeout: WORKER_TIMEOUT,
     });
-    const contentType = response?.headers()['content-type'];
+    if (!response) {
+      // noinspection ExceptionCaughtLocallyJS
+      throw new Error('No response received');
+    }
+
+    // check if the response is a file or a web page
+    const contentType = response.headers()['content-type'];
     const isWebPage = contentType?.startsWith('text/html') || contentType?.startsWith('text/plain') || false;
     if (!isWebPage) {
-      // noinspection ExceptionCaughtLocallyJS
-      throw new Error(`Invalid content-type: ${contentType}`);
+      if (!allowFileDownloads) {
+        // noinspection ExceptionCaughtLocallyJS
+        throw new Error(`Not a webpage: ${contentType}`);
+      } else {
+        try {
+          const { file } = await workerPuppeteerDownloadFileOrThrow(response);
+          result.file = {
+            mimeType: file.mimeType,
+            encoding: 'base64',
+            data: file.data,
+            size: file.size,
+            fileName: file.filename || '',
+          };
+          result.stopReason = 'end';
+          result.title = file.filename || '';
+        } catch (error: any) {
+          // noinspection ExceptionCaughtLocallyJS
+          throw new Error(error?.message || 'File download failed');
+        }
+      }
     } else {
       result.stopReason = 'end';
     }
@@ -153,12 +197,12 @@ async function workerPuppeteer(
     const isTimeout = error?.message?.includes('Navigation timeout') || false;
     result.stopReason = isTimeout ? 'timeout' : 'error';
     if (!isTimeout) {
-      result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown goto error');
+      result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown navigation error');
     }
   }
 
   // Get the page title after successful navigation
-  if (result.stopReason !== 'error') {
+  if (result.stopReason !== 'error' && !result.file) {
     try {
       result.title = await page.title();
     } catch (error: any) {
@@ -168,7 +212,8 @@ async function workerPuppeteer(
 
   // transform the content of the page as text
   try {
-    if (result.stopReason !== 'error') {
+    if (result.stopReason !== 'error' && !result.file) {
+      result.content = {};
       for (const transform of transforms) {
         switch (transform) {
           case 'html':
@@ -194,7 +239,7 @@ async function workerPuppeteer(
 
   // get a screenshot of the page
   try {
-    if (screenshotOptions?.width && screenshotOptions?.height) {
+    if (screenshotOptions?.width && screenshotOptions?.height && !result.file) {
       const { width, height, quality } = screenshotOptions;
       const scale = Math.round(100 * width / 1024) / 100;
 
