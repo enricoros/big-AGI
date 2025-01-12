@@ -31,6 +31,13 @@ function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) 
 }
 
 
+const _styles = {
+  button: {
+    minWidth: 100,
+  } as const,
+} as const;
+
+
 export function DocAttachmentFragment(props: {
   fragment: DMessageAttachmentFragment,
   editedText?: string,
@@ -63,7 +70,8 @@ export function DocAttachmentFragment(props: {
   if (!isDocPart(fragmentDocPart))
     throw new Error('Unexpected part type: ' + fragmentDocPart.pt);
 
-  const fragmentTitle = fragmentDocPart.l1Title || fragment.title;
+  const fragmentTitle = fragmentDocPart.l1Title || fragment.caption;
+  const reverseToolbar = props.messageRole === 'assistant';
 
 
   // hooks
@@ -220,16 +228,24 @@ export function DocAttachmentFragment(props: {
   const toolbarRow = React.useMemo(() => (
     <Box sx={{
       display: 'flex',
+      flexDirection: !reverseToolbar ? 'row' : 'row-reverse',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
       gap: 1,
     }}>
 
       {/* Delete / Confirm */}
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button variant='outlined' color={isDeleteArmed ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleDeleteArmed} startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}>
+      <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
+        {!isEditing && <Button
+          variant='soft'
+          color={DocSelColor}
+          size='sm'
+          onClick={handleToggleDeleteArmed}
+          startDecorator={isDeleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+          sx={_styles.button}
+        >
           {isDeleteArmed ? 'Cancel' : 'Delete'}
-        </Button>
+        </Button>}
         {isDeleteArmed && (
           <Button variant='solid' color='danger' size='sm' onClick={handleFragmentDelete} startDecorator={<DeleteForeverIcon />}>
             Delete
@@ -238,18 +254,25 @@ export function DocAttachmentFragment(props: {
       </Box>
 
       {/* Edit / Save */}
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button variant='outlined' color={isEditing ? 'neutral' : DocSelColor} size='sm' onClick={handleToggleEdit} startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}>
+      <Box sx={{ display: 'flex', flexDirection: !reverseToolbar ? 'row' : 'row-reverse', gap: 1 }}>
+        <Button
+          variant='soft'
+          color={DocSelColor}
+          size='sm'
+          onClick={handleToggleEdit}
+          startDecorator={isEditing ? <CloseRoundedIcon /> : <EditRoundedIcon />}
+          sx={_styles.button}
+        >
           {isEditing ? 'Cancel' : 'Edit'}
         </Button>
         {isEditing && (
-          <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />}>
+          <Button variant='solid' color='success' onClick={handleEditApply} size='sm' startDecorator={<CheckRoundedIcon />} sx={_styles.button}>
             Save
           </Button>
         )}
       </Box>
     </Box>
-  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing]);
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, reverseToolbar]);
 
 
   return (
@@ -283,11 +306,11 @@ export function DocAttachmentFragment(props: {
             // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
             text={fragmentDocPart.data.text}
             renderAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
-          fromRole={props.messageRole}
-          contentScaling={props.contentScaling}
-          fitScreen={props.isMobile}
-          isMobile={props.isMobile}
-          codeRenderVariant='plain'
+            fromRole={props.messageRole}
+            contentScaling={props.contentScaling}
+            fitScreen={props.isMobile}
+            isMobile={props.isMobile}
+            codeRenderVariant='plain'
             textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
           />
         </Box>
