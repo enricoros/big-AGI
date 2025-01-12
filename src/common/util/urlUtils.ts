@@ -30,12 +30,44 @@ export function getOriginUrl(): string {
 /**
  * If the string is a valid URL, return it. Otherwise, return null.
  */
-export function asValidURL(textString: string | null): string | null {
+export function asValidURL(textString: string | null, strictMode: boolean = false): string | null {
+
+  // basic input validation
   if (!textString) return null;
-  const urlRegex = /^(https?:\/\/\S+)$/g;
-  const trimmedTextString = textString.trim();
-  const urlMatch = urlRegex.exec(trimmedTextString);
-  return urlMatch ? urlMatch[1] : null;
+  const trimmed = textString.trim();
+  if (!trimmed) return null;
+
+  try {
+
+    // relax protocol to https
+    let urlString = trimmed;
+    if (!/^https?:\/\//i.test(trimmed))
+      urlString = 'https://' + trimmed;
+
+    // throw if URL is invalid
+    const url = new URL(urlString);
+
+    // strict mode: extra validations
+    if (strictMode) {
+      // protocol must be http(s)
+      if (!['http:', 'https:'].includes(url.protocol))
+        return null;
+
+      // no IP addresses in strict mode
+      if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(url.hostname))
+        return null;
+
+      // no credentials in strict mode
+      if (url.username || url.password)
+        return null;
+    }
+
+    // Return the normalized URL
+    return url.toString();
+
+  } catch (e) {
+    return null;
+  }
 }
 
 /**
