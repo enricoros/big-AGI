@@ -37,7 +37,7 @@ export function extractYoutubeVideoIDFromURL(testYTUrl: string): string | null {
       const possibleID = url.pathname.slice(1).split('/')[0]; // Get first path segment
       if (videoIdPattern.test(possibleID))
         return possibleID;
-      console.log('[DEV]: Invalid youtu.be video ID:', possibleID);
+      // console.log('[DEV]: Invalid youtu.be video ID:', possibleID);
       return null;
     }
 
