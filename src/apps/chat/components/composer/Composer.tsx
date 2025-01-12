@@ -66,6 +66,7 @@ import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode
 import { ButtonAttachCameraMemo, useCameraCaptureModalDialog } from './buttons/ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './buttons/ButtonAttachClipboard';
 import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCapture';
+import { ButtonAttachWebMemo } from './buttons/ButtonAttachWeb';
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
 import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
@@ -186,7 +187,7 @@ export function Composer(props: {
   // attachments-overlay: comes from the attachments slice of the conversation overlay
   const {
     /* items */ attachmentDrafts,
-    /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile,
+    /* append */ attachAppendClipboardItems, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile, attachAppendUrl,
     /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType,
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile);
 
@@ -594,6 +595,8 @@ export function Composer(props: {
         .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Unable to attach the file "${file.name}" (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
   }, [attachAppendFile]);
 
+  const handleAttachWebUrl = React.useCallback(async (url: string) => attachAppendUrl('input-link', url), [attachAppendUrl]);
+
 
   // Attachments Down
 
@@ -734,7 +737,7 @@ export function Composer(props: {
 
             {/* [Mobile, Col1] Mic, Insert Multi-modal content, and Broadcast buttons */}
             {isMobile && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1 }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: 1, alignSelf: 'flex-start' }}>
 
                 {/* [mobile] Mic button */}
                 {recognitionState.isAvailable && <ButtonMicMemo variant={micVariant} color={micColor} errorMessage={recognitionState.errorMessage} onClick={handleToggleMic} />}
@@ -755,6 +758,12 @@ export function Composer(props: {
                         <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
                       </MenuItem>
 
+                      {/* Responsive Web button */}
+                      {/* NOTE: doesn't work yet because the Modal unmounts once the dropdown closes */}
+                      {/*<MenuItem>*/}
+                      {/*  <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onAttachWeb={handleAttachWebUrl} />*/}
+                      {/*</MenuItem>*/}
+
                       {/* Responsive Paste button */}
                       {supportsClipboardRead() && <MenuItem>
                         <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />
@@ -772,7 +781,7 @@ export function Composer(props: {
 
             {/* [Desktop, Col1] Insert Multi-modal content buttons */}
             {isDesktop && showChatAttachments && (
-              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1 }}>
+              <Box sx={{ flexGrow: 0, display: 'grid', gap: (labsAttachScreenCapture && labsCameraDesktop) ? 0.5 : 1, alignSelf: 'flex-start' }}>
 
                 {/*<FormHelperText sx={{ mx: 'auto' }}>*/}
                 {/*  Attach*/}
@@ -780,6 +789,9 @@ export function Composer(props: {
 
                 {/* Responsive Open Files button */}
                 <ButtonAttachFilesMemo onAttachFiles={handleAttachFiles} fullWidth multiple />
+
+                {/* Responsive Web button */}
+                <ButtonAttachWebMemo disabled={!hasComposerBrowseCapability} onAttachWeb={handleAttachWebUrl} />
 
                 {/* Responsive Paste button */}
                 {supportsClipboardRead() && <ButtonAttachClipboardMemo onAttachClipboard={attachAppendClipboardItems} />}
@@ -804,10 +816,10 @@ export function Composer(props: {
             }}>
 
               {/* Text Edit + Mic buttons + MicOverlay */}
-              <Box sx={{ position: 'relative' /* for Mic overlay */ }}>
+              <Box sx={{ position: 'relative' /* for Mic overlay */, height: '100%' }}>
 
                 {/* Edit box with inner Token Progress bar */}
-                <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */ }}>
+                <Box sx={{ position: 'relative' /* for TokenBadge & TokenProgress */, height: '100%' }}>
 
                   <Textarea
                     variant='outlined'
