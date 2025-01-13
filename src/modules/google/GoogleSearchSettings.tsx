@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { FormControl, FormHelperText, Input } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
+import LanguageIcon from '@mui/icons-material/Language';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
@@ -18,9 +19,10 @@ export function GoogleSearchSettings() {
 
   // external state
   const backendHasGoogle = getBackendCapabilities().hasGoogleCustomSearch;
-  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId } = useGoogleSearchStore(useShallow(state => ({
+  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId, restrictToDomain, setRestrictToDomain } = useGoogleSearchStore(useShallow(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,
+    restrictToDomain: state.restrictToDomain, setRestrictToDomain: state.setRestrictToDomain,
   })));
 
 
@@ -32,6 +34,8 @@ export function GoogleSearchSettings() {
   const handleGoogleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCloudApiKey(e.target.value);
 
   const handleCseIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCSEId(e.target.value);
+
+  const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => setRestrictToDomain(e.target.value);
 
 
   return <>
@@ -61,6 +65,19 @@ export function GoogleSearchSettings() {
         variant='outlined' placeholder={backendHasGoogle ? '...' : 'missing'} error={!isValidId}
         value={googleCSEId} onChange={handleCseIdChange}
         startDecorator={<SearchIcon />}
+        slotProps={{ input: { sx: { width: '100%' } } }}
+        sx={{ width: '100%' }}
+      />
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Restrict to Domain'
+                      description='Optional'
+                      tooltip='Limit searches to a specific domain (e.g., "wikipedia.org")' />
+      <Input
+        variant='outlined' placeholder='example.com'
+        value={restrictToDomain} onChange={handleDomainChange}
+        startDecorator={<LanguageIcon />}
         slotProps={{ input: { sx: { width: '100%' } } }}
         sx={{ width: '100%' }}
       />

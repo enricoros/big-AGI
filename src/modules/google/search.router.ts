@@ -19,6 +19,7 @@ export const googleSearchRouter = createTRPCRouter({
       items: z.number(),
       key: z.string().optional(), // could be server-set
       cx: z.string().optional(), // could be server-set
+      restrictToDomain: z.string().nullable(),
     }))
     .query(async ({ input }): Promise<{ pages: Search.API.BriefResult[] }> => {
 
@@ -28,6 +29,12 @@ export const googleSearchRouter = createTRPCRouter({
         key: (input.key || env.GOOGLE_CLOUD_API_KEY || '').trim(),
         num: input.items,
       };
+
+      // add domain restriction if provided
+      if (input.restrictToDomain) {
+        customSearchParams.siteSearch = input.restrictToDomain.trim();
+        customSearchParams.siteSearchFilter = 'i'; // 'i' to include only these results (vs 'e' to exclude)
+      }
 
       if (!customSearchParams.key || !customSearchParams.cx)
         throw new Error('Missing API Key or Custom Search Engine ID');

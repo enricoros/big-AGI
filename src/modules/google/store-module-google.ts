@@ -12,6 +12,9 @@ interface ModuleGoogleSearchStore {
   googleCSEId: string;
   setGoogleCSEId: (cseId: string) => void;
 
+  restrictToDomain: string;
+  setRestrictToDomain: (domain: string) => void;
+
 }
 
 export const useGoogleSearchStore = create<ModuleGoogleSearchStore>()(
@@ -25,6 +28,9 @@ export const useGoogleSearchStore = create<ModuleGoogleSearchStore>()(
 
       googleCSEId: '',
       setGoogleCSEId: (cseId: string) => set({ googleCSEId: cseId }),
+
+      restrictToDomain: '',
+      setRestrictToDomain: (domain: string) => set({ restrictToDomain: domain }),
 
     }),
     {
