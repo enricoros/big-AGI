@@ -35,8 +35,8 @@ export namespace Search {
       // c2coff?: string; // Enables or disables Simplified and Traditional Chinese Search ("1" or "0")
       // hq?: string; // Appends the specified query terms to the query, as if they were combined with a logical AND operator
       // hl?: string; // Sets the user interface language
-      // siteSearch?: string; // Specifies a given site which should always be included or excluded from results
-      // siteSearchFilter?: string; // Controls whether to include or exclude results from the site named in the siteSearch parameter ("e" or "i")
+      siteSearch?: string; // Specifies a given site which should always be included or excluded from results
+      siteSearchFilter?: string; // Controls whether to include or exclude results from the site named in the siteSearch parameter ("e" or "i")
       // exactTerms?: string; // Identifies a phrase that all documents in the search results must contain
       // excludeTerms?: string; // Identifies a word or phrase that should not appear in any documents in the search results
       // linkSite?: string; // Specifies that all search results should contain a link to a particular URL
