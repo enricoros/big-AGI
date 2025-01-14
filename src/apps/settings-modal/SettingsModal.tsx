@@ -28,12 +28,13 @@ import { VoiceSettings } from './VoiceSettings';
 
 // configuration
 const COLOR_TAB_LIST = 'primary';
+const TAB_RADIUS = 'md';
 
 
 // styled <AccordionGroup variant='plain'> into a Topics component
 const Topics = styled(AccordionGroup)({
   // round and clip corners
-  borderRadius: 'var(--joy-radius-md)',
+  borderRadius: `calc(var(--joy-radius-${TAB_RADIUS}) - 1px)`, // compensates for a half-pixel weirdness
   overflow: 'hidden',
 
   // larger summary, with a spinning icon
@@ -133,7 +134,7 @@ const _styles = {
     backgroundColor: `${COLOR_TAB_LIST}.softHoverBg`,
     mb: 2,
     p: 0.5,
-    borderRadius: 'md',
+    borderRadius: TAB_RADIUS,
     fontSize: 'md',
     fontWeight: 'md',
     boxShadow: `inset 1px 1px 4px -3px var(--joy-palette-${COLOR_TAB_LIST}-solidHoverBg)`,
@@ -157,8 +158,9 @@ const _styles = {
   } as const,
 
   tabPanel: {
+    boxShadow: 'xs',
     backgroundColor: 'background.surface',
-    borderRadius: 'md',
+    borderRadius: TAB_RADIUS,
     p: 0,
     // p: 'var(--Tabs-gap)',
   } as const,
@@ -196,8 +198,8 @@ export function SettingsModal(props: {
       startButton={isMobile ? undefined : (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <DarkModeToggleButton hasText={true} />
-          <Button variant='soft' color='neutral' onClick={props.onOpenShortcuts}>
-            👉 See Shortcuts
+          <Button size='sm' variant='soft' color='neutral' onClick={props.onOpenShortcuts}>
+            👉 Shortcuts
           </Button>
         </Box>
       )}
