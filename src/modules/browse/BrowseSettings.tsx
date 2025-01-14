@@ -37,9 +37,7 @@ export function BrowseSettings() {
   return <>
 
     <Typography level='body-sm'>
-      Configure Browsing to enable loading links and web pages. <ExternalLink
-      href='https://github.com/enricoros/big-agi/blob/main/docs/config-feature-browse.md'>
-      Learn more</ExternalLink>.
+      Configure Browsing to enable loading links and web pages. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
     </Typography>
 
     <FormInputKey
@@ -52,7 +50,7 @@ export function BrowseSettings() {
 
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Load pages as:' />
+      <FormLabelStart title='Default format' description={pageTransform === 'text' ? 'Converts page to text' : pageTransform === 'markdown' ? 'Converts page to markdown' : 'Preserves HTML'} />
       <Select
         variant='outlined'
         value={pageTransform} onChange={handlePageTransformChange}
