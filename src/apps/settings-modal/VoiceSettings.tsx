@@ -2,9 +2,7 @@ import * as React from 'react';
 
 import { FormControl } from '@mui/joy';
 
-import { useChatAutoAI, useChatMicTimeoutMs } from '../chat/store-app-chat';
-
-import { useElevenLabsVoices } from '~/modules/elevenlabs/useElevenLabsVoiceDropdown';
+import { useChatMicTimeoutMs } from '../chat/store-app-chat';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
@@ -16,8 +14,6 @@ export function VoiceSettings() {
 
   // external state
   const isMobile = useIsMobile();
-  const { autoSpeak, setAutoSpeak } = useChatAutoAI();
-  const { hasVoices } = useElevenLabsVoices();
   const [chatTimeoutMs, setChatTimeoutMs] = useChatMicTimeoutMs();
 
 
@@ -46,19 +42,6 @@ export function VoiceSettings() {
       ]}
       value={chatTimeoutValue} onChange={setChatTimeoutValue}
     />}
-
-    <FormRadioControl
-      title='Speak Responses'
-      description={autoSpeak === 'off' ? 'Off' : 'First paragraph'}
-      tooltip={!hasVoices ? 'No voices available, please configure a voice synthesis service' : undefined}
-      disabled={!hasVoices}
-      options={[
-        { value: 'off', label: 'Off' },
-        { value: 'firstLine', label: 'Start' },
-        { value: 'all', label: 'Full' },
-      ]}
-      value={autoSpeak} onChange={setAutoSpeak}
-    />
 
   </>;
 }
