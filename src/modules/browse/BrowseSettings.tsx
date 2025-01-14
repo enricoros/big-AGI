@@ -41,7 +41,7 @@ export function BrowseSettings() {
   return <>
 
     <Typography level='body-sm'>
-      Enables downloading of web pages as attachments. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
+      Enables downloading of web pages. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
       {/*Web Browser lets the AI visit and analyze web pages in real-time. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more about setup</ExternalLink>.*/}
     </Typography>
 
@@ -72,7 +72,7 @@ export function BrowseSettings() {
     </FormControl>
 
 
-    <FormLabel>Enable browsing on:</FormLabel>
+    <FormLabel>Enable page loading for:</FormLabel>
 
     <FormControl disabled={!mayWork}>
       <Checkbox size='sm' label='Attachments' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
@@ -85,8 +85,8 @@ export function BrowseSettings() {
     </FormControl>
 
     <FormControl disabled>
-      <Checkbox size='sm' label='Chat with Personas' checked={false} onChange={(event) => setEnablePersonaTool(event.target.checked)} />
-      <FormHelperText sx={_styleHelperText}>Not yet available</FormHelperText>
+      <Checkbox size='sm' label='Personas browsing tool' checked={false} onChange={(event) => setEnablePersonaTool(event.target.checked)} />
+      <FormHelperText sx={_styleHelperText}>Coming soon</FormHelperText>
       {/*<FormHelperText sx={_styleHelperText}>Enable loading URLs by Personas</FormHelperText>*/}
     </FormControl>
 

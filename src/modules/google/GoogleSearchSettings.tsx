@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { FormControl, FormHelperText, Input } from '@mui/joy';
+import { FormControl, Input, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
-import LanguageIcon from '@mui/icons-material/Language';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
@@ -40,9 +40,9 @@ export function GoogleSearchSettings() {
 
   return <>
 
-    <FormHelperText sx={{ display: 'block' }}>
-      Configure the Programmable Search Engine to enable searching the web for links.
-    </FormHelperText>
+    <Typography level='body-sm'>
+      Enables searching the web for links. Uses the Google <ExternalLink href='https://developers.google.com/custom-search/v1/overview'>Programmable Search Engine</ExternalLink> API.
+    </Typography>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='GCP API Key'
@@ -77,7 +77,7 @@ export function GoogleSearchSettings() {
       <Input
         variant='outlined' placeholder='example.com'
         value={restrictToDomain} onChange={handleDomainChange}
-        startDecorator={<LanguageIcon />}
+        // startDecorator={<LanguageIcon />}
         slotProps={{ input: { sx: { width: '100%' } } }}
         sx={{ width: '100%' }}
       />
