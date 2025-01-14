@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, tabClasses, TabList, TabPanel, Tabs } from '@mui/joy';
+import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import MicIcon from '@mui/icons-material/Mic';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
@@ -80,20 +82,32 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
         >
           {!!props.icon && (
             <Avatar
-              color='primary'
-              variant={expanded ? 'soft' : 'plain'}
+              color={COLOR_TAB_LIST}
+              variant={expanded ? 'plain' /* was: soft */ : 'plain'}
+              // size='sm'
             >
               {props.icon}
             </Avatar>
           )}
-          <ListItemContent>
+          <ListItemContent sx={{ color: `${COLOR_TAB_LIST}.softColor` }}>
             {props.title}
           </ListItemContent>
         </AccordionSummary>
       )}
 
-      <AccordionDetails>
-        <Box sx={{ display: 'grid', gap: 1.5 /* keep in sync with ProviderConfigure > ExpanderControlledBox > Card > CardContent (Draw App) */ }}>
+      <AccordionDetails
+        slotProps={{
+          content: {
+            sx: {
+              px: { xs: 1.5, md: 2 },
+            },
+          },
+        }}
+      >
+        <Box sx={{
+          display: 'grid',
+          gap: 2, // keep in sync with ProviderConfigure > ExpanderControlledBox > Card > CardContent (Draw App)
+        }}>
           {props.children}
         </Box>
       </AccordionDetails>
@@ -122,24 +136,23 @@ const _styles = {
     fontSize: 'md',
     fontWeight: 'md',
     boxShadow: `inset 1px 1px 4px -3px var(--joy-palette-${COLOR_TAB_LIST}-solidHoverBg)`,
-    gap: 1,
-    overflow: 'hidden',
-    [`& .${tabClasses.root}[aria-selected="true"]`]: {
+    gap: 0.5,
+  } as const,
+
+  tabsListTab: {
+    borderRadius: 'sm',
+    flex: 1,
+    p: 0,
+    '&[aria-selected="true"]': {
       // color: 'primary.plainColor',
-      borderRadius: 'sm',
       bgcolor: 'background.popup',
       boxShadow: 'sm',
       fontWeight: 'lg',
       zIndex: 1,
     } as const,
-    // [`& .${tabClasses.root}:hover`]: {
-    //   bgcolor: 'background.level1',
-    // } as const,
-  } as const,
-
-  tab: {
-    flex: 1,
-    p: 0,
+    '&:hover': {
+      backgroundColor: 'background.level1',
+    } as const,
   } as const,
 
   tabPanel: {
@@ -202,10 +215,10 @@ export function SettingsModal(props: {
           disableUnderline
           sx={_styles.tabsList}
         >
-          <Tab disableIndicator value='chat' sx={_styles.tab}>Chat</Tab>
-          <Tab disableIndicator value='voice' sx={_styles.tab}>Voice</Tab>
-          <Tab disableIndicator value='draw' sx={_styles.tab}>Draw</Tab>
-          <Tab disableIndicator value='tools' sx={_styles.tab}>Tools</Tab>
+          <Tab disableIndicator value='chat' sx={_styles.tabsListTab}>Chat</Tab>
+          <Tab disableIndicator value='voice' sx={_styles.tabsListTab}>Voice</Tab>
+          <Tab disableIndicator value='draw' sx={_styles.tabsListTab}>Draw</Tab>
+          <Tab disableIndicator value='tools' sx={_styles.tabsListTab}>Tools</Tab>
         </TabList>
 
         <TabPanel value='chat' variant='outlined' sx={_styles.tabPanel}>
@@ -213,7 +226,10 @@ export function SettingsModal(props: {
             <Topic>
               <AppChatSettingsUI />
             </Topic>
-            <Topic icon='🧠' title={<>Chat AI <WarningRoundedIcon sx={{ ml: 1, color: 'orangered' }} /></>} startCollapsed>
+            <Topic icon={<AutoAwesomeIcon />} title={
+              'Chat AI'
+              // <>Chat AI <WarningRoundedIcon sx={{ ml: 1, color: 'orangered' }} /></>
+            } startCollapsed>
               <AppChatSettingsAI />
             </Topic>
             <Topic icon={<ScienceIcon />} title='Labs' startCollapsed>
@@ -224,10 +240,10 @@ export function SettingsModal(props: {
 
         <TabPanel value='voice' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
-            <Topic icon='🎙️' title='Voice settings'>
+            <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
               <VoiceSettings />
             </Topic>
-            <Topic icon='📢' title='ElevenLabs API'>
+            <Topic icon={/*'📢'*/ <RecordVoiceOverIcon />} title='ElevenLabs API'>
               <ElevenlabsSettings />
             </Topic>
           </Topics>
