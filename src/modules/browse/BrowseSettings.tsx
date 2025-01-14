@@ -20,17 +20,16 @@ const _styleHelperText = {
 export function BrowseSettings() {
 
   // external state
-  const { mayWork, isServerConfig, isClientValid, inCommand, inComposer, inReact, inPersonas } = useBrowseCapability();
+  const { mayWork, isServerConfig, isClientValid, inComposer, inReact, inPersonas } = useBrowseCapability();
   const {
     wssEndpoint, setWssEndpoint,
     pageTransform, setPageTransform,
-    setEnableCommandBrowse, setEnableComposerAttach, setEnableReactTool, setEnablePersonaTool,
+    setEnableComposerAttach, setEnableReactTool, setEnablePersonaTool,
   } = useBrowseStore(useShallow(state => ({
     wssEndpoint: state.wssEndpoint,
     pageTransform: state.pageTransform,
     setPageTransform: state.setPageTransform,
     setWssEndpoint: state.setWssEndpoint,
-    setEnableCommandBrowse: state.setEnableCommandBrowse,
     setEnableComposerAttach: state.setEnableComposerAttach,
     setEnableReactTool: state.setEnableReactTool,
     setEnablePersonaTool: state.setEnablePersonaTool,
@@ -78,11 +77,6 @@ export function BrowseSettings() {
     <FormControl disabled={!mayWork}>
       <Checkbox size='sm' label='Attachments' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
       <FormHelperText sx={_styleHelperText}>{platformAwareKeystrokes('Load and attach when pasting a URL')}</FormHelperText>
-    </FormControl>
-
-    <FormControl disabled={!mayWork}>
-      <Checkbox size='sm' label='/browse' checked={inCommand} onChange={(event) => setEnableCommandBrowse(event.target.checked)} />
-      <FormHelperText sx={_styleHelperText}>{platformAwareKeystrokes('Use /browse to load a web page')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>

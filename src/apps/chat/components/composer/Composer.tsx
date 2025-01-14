@@ -685,13 +685,12 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
-  // stable randomization of the /verb, between '/draw', '/react', '/browse'
+  // stable randomization of the /verb, between '/draw', '/react'
   const placeholderAction = React.useMemo(() => {
     const actions: string[] = ['/react'];
     if (props.capabilityHasT2I) actions.push('/draw');
-    if (hasComposerBrowseCapability) actions.push('/browse');
     return actions[Math.floor(Math.random() * actions.length)];
-  }, [hasComposerBrowseCapability, props.capabilityHasT2I]);
+  }, [props.capabilityHasT2I]);
 
   let textPlaceholder: string =
     isDraw ? 'Describe what you would like to see...'
