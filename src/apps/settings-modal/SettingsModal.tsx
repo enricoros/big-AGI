@@ -1,7 +1,5 @@
 import * as React from 'react';
-
-import type { SxProps } from '@mui/joy/styles/types';
-import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, Divider, ListItemContent, styled, Tab, tabClasses, TabList, TabPanel, Tabs } from '@mui/joy';
+import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, tabClasses, TabList, TabPanel, Tabs } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
@@ -23,6 +21,10 @@ import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
 import { VoiceSettings } from './VoiceSettings';
+
+
+// configuration
+const COLOR_TAB_LIST = 'primary';
 
 
 // styled <AccordionGroup variant='plain'> into a Topics component
@@ -101,12 +103,54 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
 }
 
 
-const settingTaxSx: SxProps = {
-  fontFamily: 'body',
-  flex: 1,
-  p: 0,
-  m: 0,
-};
+const _styles = {
+
+  // modal: undefined,
+  modal: {
+    backgroundColor: 'background.level1',
+  } as const,
+
+  tabs: {
+    backgroundColor: 'transparent',
+  } as const,
+
+  tabsList: {
+    backgroundColor: `${COLOR_TAB_LIST}.softHoverBg`,
+    mb: 2,
+    p: 0.5,
+    borderRadius: 'md',
+    fontSize: 'md',
+    fontWeight: 'md',
+    boxShadow: `inset 1px 1px 4px -3px var(--joy-palette-${COLOR_TAB_LIST}-solidHoverBg)`,
+    gap: 1,
+    overflow: 'hidden',
+    [`& .${tabClasses.root}[aria-selected="true"]`]: {
+      // color: 'primary.plainColor',
+      borderRadius: 'sm',
+      bgcolor: 'background.popup',
+      boxShadow: 'sm',
+      fontWeight: 'lg',
+      zIndex: 1,
+    } as const,
+    // [`& .${tabClasses.root}:hover`]: {
+    //   bgcolor: 'background.level1',
+    // } as const,
+  } as const,
+
+  tab: {
+    flex: 1,
+    p: 0,
+  } as const,
+
+  tabPanel: {
+    backgroundColor: 'background.surface',
+    borderRadius: 'md',
+    p: 0,
+    // p: 'var(--Tabs-gap)',
+  } as const,
+
+} as const;
+
 
 /**
  * Component that allows the User to modify the application settings,
@@ -143,42 +187,28 @@ export function SettingsModal(props: {
           </Button>
         </Box>
       )}
+      sx={_styles.modal}
     >
 
-      <Divider />
+      {/*<Divider />*/}
 
       <Tabs
         aria-label='Settings tabbed menu'
         value={props.tab || 'chat'}
         onChange={handleSetTab}
+        sx={_styles.tabs}
       >
         <TabList
           disableUnderline
-          sx={{
-            bgcolor: 'primary.softHoverBg',
-            mb: 2,
-            p: 0.5,
-            borderRadius: 'md',
-            fontSize: 'md',
-            fontWeight: 'md',
-            gap: 1,
-            overflow: 'hidden',
-            [`& .${tabClasses.root}[aria-selected="true"]`]: {
-              // color: 'primary.plainColor',
-              borderRadius: 'sm',
-              bgcolor: 'background.popup',
-              boxShadow: 'sm',
-              fontWeight: 'lg',
-            },
-          }}
+          sx={_styles.tabsList}
         >
-          <Tab disableIndicator value='chat' sx={settingTaxSx}>Chat</Tab>
-          <Tab disableIndicator value='voice' sx={settingTaxSx}>Voice</Tab>
-          <Tab disableIndicator value='draw' sx={settingTaxSx}>Draw</Tab>
-          <Tab disableIndicator value='tools' sx={settingTaxSx}>Tools</Tab>
+          <Tab disableIndicator value='chat' sx={_styles.tab}>Chat</Tab>
+          <Tab disableIndicator value='voice' sx={_styles.tab}>Voice</Tab>
+          <Tab disableIndicator value='draw' sx={_styles.tab}>Draw</Tab>
+          <Tab disableIndicator value='tools' sx={_styles.tab}>Tools</Tab>
         </TabList>
 
-        <TabPanel value='chat' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='chat' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -192,7 +222,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='voice' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='voice' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic icon='🎙️' title='Voice settings'>
               <VoiceSettings />
@@ -203,7 +233,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='draw' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='draw' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic>
               <T2ISettings />
@@ -217,7 +247,7 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='tools' variant='outlined' sx={{ p: 'var(--Tabs-gap)', borderRadius: 'md' }}>
+        <TabPanel value='tools' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic icon={<SearchIcon />} title='Browsing'>
               <BrowseSettings />
@@ -230,7 +260,7 @@ export function SettingsModal(props: {
         </TabPanel>
       </Tabs>
 
-      <Divider />
+      {/*<Divider />*/}
 
     </GoodModal>
   );
