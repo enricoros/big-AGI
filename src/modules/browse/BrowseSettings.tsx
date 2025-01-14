@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Checkbox, FormControl, FormHelperText, Option, Select, Typography } from '@mui/joy';
+import { Checkbox, FormControl, FormHelperText, FormLabel, Option, Select, Typography } from '@mui/joy';
 
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalLink } from '~/common/components/ExternalLink';
@@ -10,6 +10,11 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
 import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
+
+
+const _styleHelperText = {
+  fontSize: 'xs',
+} as const;
 
 
 export function BrowseSettings() {
@@ -37,7 +42,8 @@ export function BrowseSettings() {
   return <>
 
     <Typography level='body-sm'>
-      Configure Browsing to enable loading links and web pages. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
+      Enables downloading of web pages as attachments. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
+      {/*Web Browser lets the AI visit and analyze web pages in real-time. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more about setup</ExternalLink>.*/}
     </Typography>
 
     <FormInputKey
@@ -50,7 +56,7 @@ export function BrowseSettings() {
 
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Default format' description={pageTransform === 'text' ? 'Converts page to text' : pageTransform === 'markdown' ? 'Converts page to markdown' : 'Preserves HTML'} />
+      <FormLabelStart title='Web page to LLM' description={pageTransform === 'text' ? 'Converts to text' : pageTransform === 'markdown' ? 'Converts to markdown' : 'Preserves HTML (heavy)'} />
       <Select
         variant='outlined'
         value={pageTransform} onChange={handlePageTransformChange}
@@ -67,27 +73,27 @@ export function BrowseSettings() {
     </FormControl>
 
 
-    <Typography level='body-sm' sx={{ mt: 2 }}>Browsing enablement:</Typography>
+    <FormLabel>Enable browsing on:</FormLabel>
 
     <FormControl disabled={!mayWork}>
-      <Checkbox size='sm' label='Paste URLs' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
-      <FormHelperText>{platformAwareKeystrokes('Load and attach when pasting a URL')}</FormHelperText>
+      <Checkbox size='sm' label='Attachments' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
+      <FormHelperText sx={_styleHelperText}>{platformAwareKeystrokes('Load and attach when pasting a URL')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>
       <Checkbox size='sm' label='/browse' checked={inCommand} onChange={(event) => setEnableCommandBrowse(event.target.checked)} />
-      <FormHelperText>{platformAwareKeystrokes('Use /browse to load a web page')}</FormHelperText>
+      <FormHelperText sx={_styleHelperText}>{platformAwareKeystrokes('Use /browse to load a web page')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>
       <Checkbox size='sm' label='ReAct' checked={inReact} onChange={(event) => setEnableReactTool(event.target.checked)} />
-      <FormHelperText>Enables loadURL() in ReAct</FormHelperText>
+      <FormHelperText sx={_styleHelperText}>Enables loadURL() in ReAct</FormHelperText>
     </FormControl>
 
     <FormControl disabled>
       <Checkbox size='sm' label='Chat with Personas' checked={false} onChange={(event) => setEnablePersonaTool(event.target.checked)} />
-      <FormHelperText>Not yet available</FormHelperText>
-      {/*<FormHelperText>Enable loading URLs by Personas</FormHelperText>*/}
+      <FormHelperText sx={_styleHelperText}>Not yet available</FormHelperText>
+      {/*<FormHelperText sx={_styleHelperText}>Enable loading URLs by Personas</FormHelperText>*/}
     </FormControl>
 
   </>;
