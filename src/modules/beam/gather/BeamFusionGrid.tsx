@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps, VariantProp } from '@mui/joy/styles/types';
 import { Alert, Box, Button, Typography, useTheme } from '@mui/joy';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
-import LanguageIcon from '@mui/icons-material/Language';
+import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 
 import { BrowserLang } from '~/common/util/pwaUtils';
 
@@ -161,7 +161,7 @@ export function BeamFusionGrid(props: {
           // full row of the grid
           gridColumn: '1 / -1',
         }}>
-          <Typography level='body-sm' color='warning' startDecorator={<LanguageIcon />}>
+          <Typography level='body-sm' color='warning' startDecorator={<LanguageRoundedIcon />}>
             Note: Merges are defined in English and have not been translated to your browser language ({navigator.language}) yet.
           </Typography>
         </Alert>
