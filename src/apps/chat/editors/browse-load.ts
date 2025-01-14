@@ -1,3 +1,6 @@
+/*
+// NOTE: this is not used anymore and here just as a reference code and to demonstrate alternative conversation modes / editors
+
 import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
@@ -37,3 +40,4 @@ export const runBrowseGetPageUpdatingState = async (cHandler: ConversationHandle
     return false;
   }
 };
+ */

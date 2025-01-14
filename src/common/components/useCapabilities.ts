@@ -65,7 +65,6 @@ export interface CapabilityBrowsing {
   isServerConfig: boolean;
   isClientConfig: boolean;
   isClientValid: boolean;
-  inCommand: boolean;
   inComposer: boolean;
   inReact: boolean;
   inPersonas: boolean;
