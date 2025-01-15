@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
@@ -250,6 +251,44 @@ function ChatDrawer(props: {
   ]);
 
 
+  // Virtualize the list
+
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const virtEstimateSize = React.useCallback((index: number) => {
+    const item = renderNavItems[index];
+    switch (item.type) {
+      case 'nav-item-group':
+        return 34;
+      case 'nav-item-chat-data':
+        return item.isActive ? 80 : 36;
+      case 'nav-item-info-message':
+        return 34;
+    }
+  }, [renderNavItems]);
+
+  const virtUniqueKeys = React.useMemo(() => renderNavItems.map((item, idx) => {
+    switch (item.type) {
+      case 'nav-item-group':
+        return `g-${item.title}`;
+      case 'nav-item-chat-data':
+        return `c-${item.conversationId}${item.isActive ? '-active' : ''}`;
+      case 'nav-item-info-message':
+        return `i-${idx}`;
+    }
+  }), [renderNavItems]);
+
+  const virtUniqueKey = React.useCallback((index: number) => virtUniqueKeys[index], [virtUniqueKeys]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: renderNavItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: virtEstimateSize,
+    getItemKey: virtUniqueKey,
+    overscan: 0,
+  });
+
+
   return <>
 
     {/* Drawer Header */}
@@ -328,55 +367,94 @@ function ChatDrawer(props: {
             // transition: 'box-shadow 0.2s',
           }}
         >
-          <ListItemDecorator><AddIcon sx={{ fontSize: '' }} /></ListItemDecorator>
+          <ListItemDecorator><AddIcon /></ListItemDecorator>
           New chat
         </Button>
 
       </Box>
 
       {/* Chat Titles List (shrink as half the rate as the Folders List) */}
-      <Box sx={{ flexGrow: 1, flexShrink: 1, flexBasis: '20rem', overflowY: 'auto', ...themeScalingMap[contentScaling].chatDrawerItemSx }}>
-        {renderNavItems.map((item, idx) => item.type === 'nav-item-chat-data' ? (
-            <ChatDrawerItemMemo
-              key={'nav-chat-' + item.conversationId}
-              item={item}
-              showSymbols={!showPersonaIcons ? false : zenMode ? false : gifMode ? 'gif' : true}
-              bottomBarBasis={filteredChatsBarBasis}
-              onConversationActivate={handleConversationActivate}
-              onConversationBranch={onConversationBranch}
-              onConversationDeleteNoConfirmation={handleConversationDeleteNoConfirmation}
-              onConversationExport={onConversationsExportDialog}
-              onConversationFolderChange={handleConversationFolderChange}
-            />
-          ) : item.type === 'nav-item-group' ? (
-            <Typography key={'nav-divider-' + idx} level='body-xs' sx={{
-              textAlign: 'center',
-              my: 1,
-              // my: 'calc(var(--ListItem-minHeight) / 4)',
-              // keeps the group header sticky to the top
-              position: 'sticky',
-              top: 0,
-              backgroundColor: 'background.popup',
-              zIndex: 1,
-            }}>
-              {item.title}
-            </Typography>
-          ) : item.type === 'nav-item-info-message' ? (
-            <Box key={'nav-info-' + idx} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, ml: 2 }}>
-              <Typography level='body-xs' sx={{ color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
-                {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
-                {item.message}
-              </Typography>
-              {(filterHasStars || filterHasImageAssets || filterHasDocFragments) && (
-                <Tooltip title='Clear Filters'>
-                  <IconButton size='sm' color='primary' onClick={clearFilters}>
-                    <ClearIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
-          ) : null,
-        )}
+      <Box
+        ref={parentRef}
+        sx={{
+          flex: 1,
+          // flexGrow: 1,
+          // flexShrink: 1,
+          // flexBasis: '20rem',
+          overflowY: 'auto',
+          ...themeScalingMap[contentScaling].chatDrawerItemSx,
+        }}
+      >
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const item = renderNavItems[virtualRow.index];
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                {item.type === 'nav-item-group' ? (
+                  <Typography
+                    level='body-xs'
+                    sx={{
+                      textAlign: 'center',
+                      my: 1,
+                      // my: 'calc(var(--ListItem-minHeight) / 4)',
+                      // keeps the group header sticky to the top
+                      position: 'sticky',
+                      top: 0,
+                      backgroundColor: 'background.popup',
+                      zIndex: 1,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                ) : item.type === 'nav-item-chat-data' ? (
+                  <ChatDrawerItemMemo
+                    item={item}
+                    showSymbols={!showPersonaIcons ? false : zenMode ? false : gifMode ? 'gif' : true}
+                    bottomBarBasis={filteredChatsBarBasis}
+                    onConversationActivate={handleConversationActivate}
+                    onConversationBranch={onConversationBranch}
+                    onConversationDeleteNoConfirmation={handleConversationDeleteNoConfirmation}
+                    onConversationExport={onConversationsExportDialog}
+                    onConversationFolderChange={handleConversationFolderChange}
+                  />
+                ) : item.type === 'nav-item-info-message' ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, ml: 2 }}>
+                    <Typography level='body-xs' sx={{ color: 'primary.softColor', my: 'calc(var(--ListItem-minHeight) / 4)' }}>
+                      {filterHasStars && (
+                        <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />
+                      )}
+                      {item.message}
+                    </Typography>
+                    {(filterHasStars || filterHasImageAssets || filterHasDocFragments) && (
+                      <Tooltip title='Clear Filters'>
+                        <IconButton size='sm' color='primary' onClick={clearFilters}>
+                          <ClearIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                ) : 'Unknown item type'}
+              </div>
+            );
+          })}
+        </div>
       </Box>
 
       <ListDivider sx={{ my: 0 }} />
