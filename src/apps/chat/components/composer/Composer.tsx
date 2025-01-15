@@ -596,8 +596,8 @@ export function Composer(props: {
         .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Unable to attach the file "${file.name}" (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
   }, [attachAppendFile]);
 
-  const handleAttachWebLinks = React.useCallback(async (urls: string[]) => {
-    urls.forEach(url => void attachAppendUrl('input-link', url));
+  const handleAttachWebLinks = React.useCallback(async (links: { url: string }[]) => {
+    links.forEach(link => void attachAppendUrl('input-link', link.url));
   }, [attachAppendUrl]);
 
   const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebLinks);
