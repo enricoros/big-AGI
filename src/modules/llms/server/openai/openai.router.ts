@@ -496,8 +496,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'openrouter':
-      const orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
+      let orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
       const orHost = fixupHost(access.oaiHost || DEFAULT_OPENROUTER_HOST, apiPath);
+
+      // multi-key with random selection
+      if (orKey.includes(',')) {
+        const multiKeys = orKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        orKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!orKey || !orHost)
         throw new Error('Missing OpenRouter API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
