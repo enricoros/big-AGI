@@ -40,22 +40,22 @@ interface AppChatStore {
   clearFilters: () => void;
 
   filterHasDocFragments: boolean;
-  setFilterHasDocFragments: (filterHasDocFragments: boolean) => void;
+  toggleFilterHasDocFragments: () => void;
 
   filterHasImageAssets: boolean;
-  setFilterHasImageAssets: (filterHasImageAssets: boolean) => void;
+  toggleFilterHasImageAssets: () => void;
 
   filterHasStars: boolean;
-  setFilterHasStars: (filterHasStars: boolean) => void;
+  toggleFilterHasStars: () => void;
 
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
   showPersonaIcons2: boolean;
-  setShowPersonaIcons: (showPersonaIcons: boolean) => void;
+  toggleShowPersonaIcons: () => void;
 
   showRelativeSize: boolean;
-  setShowRelativeSize: (showRelativeSize: boolean) => void;
+  toggleShowRelativeSize: () => void;
 
   showTextDiff: boolean;
   setShowTextDiff: (showTextDiff: boolean) => void;
@@ -103,23 +103,23 @@ const useAppChatStore = create<AppChatStore>()(persist(
     clearFilters: () => _set({ filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
 
     filterHasDocFragments: false,
-    setFilterHasDocFragments: (filterHasDocFragments: boolean) => _set({ filterHasDocFragments }),
+    toggleFilterHasDocFragments: () => _set(({ filterHasDocFragments }) => ({ filterHasDocFragments: !filterHasDocFragments })),
 
     filterHasImageAssets: false,
-    setFilterHasImageAssets: (filterHasImageAssets: boolean) => _set({ filterHasImageAssets }),
+    toggleFilterHasImageAssets: () => _set(({ filterHasImageAssets }) => ({ filterHasImageAssets: !filterHasImageAssets })),
 
     filterHasStars: false,
-    setFilterHasStars: (filterHasStars: boolean) => _set({ filterHasStars }),
+    toggleFilterHasStars: () => _set(({ filterHasStars }) => ({ filterHasStars: !filterHasStars })),
 
     micTimeoutMs: 2000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
 
     // new default on 2024-11-18: disable icons by default, too confusing
     showPersonaIcons2: false,
-    setShowPersonaIcons: (showPersonaIcons: boolean) => _set({ showPersonaIcons2: showPersonaIcons }),
+    toggleShowPersonaIcons: () => _set(({ showPersonaIcons2 }) => ({ showPersonaIcons2: !showPersonaIcons2 })),
 
     showRelativeSize: false,
-    setShowRelativeSize: (showRelativeSize: boolean) => _set({ showRelativeSize }),
+    toggleShowRelativeSize: () => _set(({ showRelativeSize }) => ({ showRelativeSize: !showRelativeSize })),
 
     showTextDiff: false,
     setShowTextDiff: (showTextDiff: boolean) => _set({ showTextDiff }),
@@ -199,25 +199,21 @@ export const useChatMicTimeoutMsValue = (): number =>
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(useShallow(state => [state.micTimeoutMs, state.setMicTimeoutMs]));
 
-export const useChatDrawerFilters = () => {
-  const values = useAppChatStore(useShallow(state => ({
+export function useChatDrawerFilters() {
+  return useAppChatStore(useShallow(state => ({
     filterHasDocFragments: state.filterHasDocFragments,
     filterHasImageAssets: state.filterHasImageAssets,
     filterHasStars: state.filterHasStars,
     showPersonaIcons: state.showPersonaIcons2,
     showRelativeSize: state.showRelativeSize,
+    clearFilters: state.clearFilters,
+    toggleFilterHasDocFragments: state.toggleFilterHasDocFragments,
+    toggleFilterHasImageAssets: state.toggleFilterHasImageAssets,
+    toggleFilterHasStars: state.toggleFilterHasStars,
+    toggleShowPersonaIcons: state.toggleShowPersonaIcons,
+    toggleShowRelativeSize: state.toggleShowRelativeSize,
   })));
-  const chatStoreState = useAppChatStore.getState();
-  return {
-    ...values,
-    clearFilters: chatStoreState.clearFilters,
-    toggleFilterHasDocFragments: () => chatStoreState.setFilterHasDocFragments(!values.filterHasDocFragments),
-    toggleFilterHasImageAssets: () => chatStoreState.setFilterHasImageAssets(!values.filterHasImageAssets),
-    toggleFilterHasStars: () => chatStoreState.setFilterHasStars(!values.filterHasStars),
-    toggleShowPersonaIcons: () => chatStoreState.setShowPersonaIcons(!values.showPersonaIcons),
-    toggleShowRelativeSize: () => chatStoreState.setShowRelativeSize(!values.showRelativeSize),
-  };
-};
+}
 
 export const useChatShowTextDiff = (): [boolean, (showDiff: boolean) => void] =>
   useAppChatStore(useShallow(state => [state.showTextDiff, state.setShowTextDiff]));
