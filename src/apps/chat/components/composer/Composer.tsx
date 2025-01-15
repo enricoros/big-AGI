@@ -596,8 +596,8 @@ export function Composer(props: {
         .catch((error: any) => addSnackbar({ key: 'attach-file-open-fail', message: `Unable to attach the file "${file.name}" (${error?.message || error?.toString() || 'unknown error'})`, type: 'issue' }));
   }, [attachAppendFile]);
 
-  const handleAttachWebLinks = React.useCallback(async (urls: string[]) => {
-    urls.forEach(url => void attachAppendUrl('input-link', url));
+  const handleAttachWebLinks = React.useCallback(async (links: { url: string }[]) => {
+    links.forEach(link => void attachAppendUrl('input-link', link.url));
   }, [attachAppendUrl]);
 
   const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebLinks);
@@ -685,13 +685,12 @@ export function Composer(props: {
     !llmAttachmentDraftsCollection.canAttachAllFragments ? 'warning'
       : undefined;
 
-  // stable randomization of the /verb, between '/draw', '/react', '/browse'
+  // stable randomization of the /verb, between '/draw', '/react'
   const placeholderAction = React.useMemo(() => {
     const actions: string[] = ['/react'];
     if (props.capabilityHasT2I) actions.push('/draw');
-    if (hasComposerBrowseCapability) actions.push('/browse');
     return actions[Math.floor(Math.random() * actions.length)];
-  }, [hasComposerBrowseCapability, props.capabilityHasT2I]);
+  }, [props.capabilityHasT2I]);
 
   let textPlaceholder: string =
     isDraw ? 'Describe what you would like to see...'

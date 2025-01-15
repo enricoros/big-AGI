@@ -4,7 +4,6 @@ import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { createTextContentFragment, DMessageFragment, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import { extractChatCommand, helpPrettyChatCommands } from '../commands/commands.registry';
-import { runBrowseGetPageUpdatingState } from './browse-load';
 import { runImageGenerationUpdatingState } from './image-generate';
 import { runReActUpdatingState } from './react-tangent';
 
@@ -33,9 +32,6 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
 
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
   switch (providerId) {
-
-    case 'cmd-ass-browse':
-      return await runBrowseGetPageUpdatingState(cHandler, userText);
 
     case 'cmd-ass-t2i':
       return await runImageGenerationUpdatingState(cHandler, userText);

@@ -30,7 +30,7 @@ export function getOriginUrl(): string {
 /**
  * If the string is a valid URL, return it. Otherwise, return null.
  */
-export function asValidURL(textString: string | null, strictMode: boolean = false): string | null {
+export function asValidURL(textString: string | null, relaxProtocol: boolean = false /*, strictMode: boolean = false*/): string | null {
 
   // basic input validation
   if (!textString) return null;
@@ -38,20 +38,20 @@ export function asValidURL(textString: string | null, strictMode: boolean = fals
   if (!trimmed) return null;
 
   try {
-
-    // relax protocol to https
+    // relax protocol to https if missing
     let urlString = trimmed;
-    if (!/^https?:\/\//i.test(trimmed))
+    if (relaxProtocol && !/^https?:\/\//i.test(trimmed) && trimmed.includes('.'))
       urlString = 'https://' + trimmed;
 
     // throw if URL is invalid
     const url = new URL(urlString);
 
+    // protocol must be http(s)
+    if (!['http:', 'https:'].includes(url.protocol))
+      return null;
+
     // strict mode: extra validations
-    if (strictMode) {
-      // protocol must be http(s)
-      if (!['http:', 'https:'].includes(url.protocol))
-        return null;
+    /*if (strictMode) {
 
       // no IP addresses in strict mode
       if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(url.hostname))
@@ -60,7 +60,7 @@ export function asValidURL(textString: string | null, strictMode: boolean = fals
       // no credentials in strict mode
       if (url.username || url.password)
         return null;
-    }
+    }*/
 
     // Return the normalized URL
     return url.toString();

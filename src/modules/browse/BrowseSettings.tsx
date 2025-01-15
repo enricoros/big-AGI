@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Checkbox, FormControl, FormHelperText, Option, Select, Typography } from '@mui/joy';
+import { Checkbox, FormControl, FormHelperText, FormLabel, Option, Select, Typography } from '@mui/joy';
 
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalLink } from '~/common/components/ExternalLink';
@@ -12,20 +12,24 @@ import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
 
 
+const _styleHelperText = {
+  fontSize: 'xs',
+} as const;
+
+
 export function BrowseSettings() {
 
   // external state
-  const { mayWork, isServerConfig, isClientValid, inCommand, inComposer, inReact, inPersonas } = useBrowseCapability();
+  const { mayWork, isServerConfig, isClientValid, inComposer, inReact, inPersonas } = useBrowseCapability();
   const {
     wssEndpoint, setWssEndpoint,
     pageTransform, setPageTransform,
-    setEnableCommandBrowse, setEnableComposerAttach, setEnableReactTool, setEnablePersonaTool,
+    setEnableComposerAttach, setEnableReactTool, setEnablePersonaTool,
   } = useBrowseStore(useShallow(state => ({
     wssEndpoint: state.wssEndpoint,
     pageTransform: state.pageTransform,
     setPageTransform: state.setPageTransform,
     setWssEndpoint: state.setWssEndpoint,
-    setEnableCommandBrowse: state.setEnableCommandBrowse,
     setEnableComposerAttach: state.setEnableComposerAttach,
     setEnableReactTool: state.setEnableReactTool,
     setEnablePersonaTool: state.setEnablePersonaTool,
@@ -37,9 +41,9 @@ export function BrowseSettings() {
   return <>
 
     <Typography level='body-sm'>
-      Configure Browsing to enable loading links and web pages. <ExternalLink
-      href='https://github.com/enricoros/big-agi/blob/main/docs/config-feature-browse.md'>
-      Learn more</ExternalLink>.
+      Enables downloading of web pages. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.<br />
+      <b>Web Search</b> is configured separately and requires a Google API key.
+      {/*Web Browser lets the AI visit and analyze web pages in real-time. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more about setup</ExternalLink>.*/}
     </Typography>
 
     <FormInputKey
@@ -52,7 +56,7 @@ export function BrowseSettings() {
 
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart title='Load pages as:' />
+      <FormLabelStart title='Web page to LLM' description={pageTransform === 'text' ? 'Converts to text' : pageTransform === 'markdown' ? 'Converts to markdown' : 'Preserves HTML (heavy)'} />
       <Select
         variant='outlined'
         value={pageTransform} onChange={handlePageTransformChange}
@@ -69,27 +73,22 @@ export function BrowseSettings() {
     </FormControl>
 
 
-    <Typography level='body-sm' sx={{ mt: 2 }}>Browsing enablement:</Typography>
+    <FormLabel>Enable page loading for:</FormLabel>
 
     <FormControl disabled={!mayWork}>
-      <Checkbox size='sm' label='Paste URLs' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
-      <FormHelperText>{platformAwareKeystrokes('Load and attach when pasting a URL')}</FormHelperText>
-    </FormControl>
-
-    <FormControl disabled={!mayWork}>
-      <Checkbox size='sm' label='/browse' checked={inCommand} onChange={(event) => setEnableCommandBrowse(event.target.checked)} />
-      <FormHelperText>{platformAwareKeystrokes('Use /browse to load a web page')}</FormHelperText>
+      <Checkbox size='sm' label='Attachments' checked={inComposer} onChange={(event) => setEnableComposerAttach(event.target.checked)} />
+      <FormHelperText sx={_styleHelperText}>{platformAwareKeystrokes('Load and attach when pasting a URL')}</FormHelperText>
     </FormControl>
 
     <FormControl disabled={!mayWork}>
       <Checkbox size='sm' label='ReAct' checked={inReact} onChange={(event) => setEnableReactTool(event.target.checked)} />
-      <FormHelperText>Enables loadURL() in ReAct</FormHelperText>
+      <FormHelperText sx={_styleHelperText}>Enables loadURL() in ReAct</FormHelperText>
     </FormControl>
 
     <FormControl disabled>
-      <Checkbox size='sm' label='Chat with Personas' checked={false} onChange={(event) => setEnablePersonaTool(event.target.checked)} />
-      <FormHelperText>Not yet available</FormHelperText>
-      {/*<FormHelperText>Enable loading URLs by Personas</FormHelperText>*/}
+      <Checkbox size='sm' label='Personas browsing tool' checked={false} onChange={(event) => setEnablePersonaTool(event.target.checked)} />
+      <FormHelperText sx={_styleHelperText}>Coming soon</FormHelperText>
+      {/*<FormHelperText sx={_styleHelperText}>Enable loading URLs by Personas</FormHelperText>*/}
     </FormControl>
 
   </>;

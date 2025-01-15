@@ -20,10 +20,14 @@ export let devMode_AixLastDispatchRequest: { url: string, headers: string, body:
 export class ContentReassembler {
 
   private currentTextFragmentIndex: number | null = null;
+  private readonly dispatchRequest: typeof devMode_AixLastDispatchRequest = null;
 
-  constructor(readonly accumulator: AixChatGenerateContent_LL) {
-    // [DEV} nullify the global
-    devMode_AixLastDispatchRequest = null;
+  constructor(readonly accumulator: AixChatGenerateContent_LL, debugDispatchRequest: boolean) {
+    // [DEV] Debugging the request, last-write-wins for the global (displayed in the UI)
+    if (debugDispatchRequest) {
+      this.dispatchRequest = { url: '', headers: '', body: '', particles: [] };
+      devMode_AixLastDispatchRequest = this.dispatchRequest;
+    }
   }
 
   // reset(): void {
@@ -34,7 +38,6 @@ export class ContentReassembler {
   reassembleParticle(op: AixWire_Particles.ChatGenerateOp, debugIsAborted: boolean): void {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p:', op);
-    let isDebug = false;
     switch (true) {
 
       // TextParticleOp
@@ -65,6 +68,10 @@ export class ContentReassembler {
       // ChatControlOp
       case 'cg' in op:
         switch (op.cg) {
+          case '_debugRequest':
+            if (this.dispatchRequest)
+              Object.assign(this.dispatchRequest, op.request);
+            break;
           case 'end':
             this.onCGEnd(op);
             break;
@@ -77,10 +84,6 @@ export class ContentReassembler {
           case 'set-model':
             this.onModelName(op);
             break;
-          case '_debugRequest':
-            isDebug = true;
-            devMode_AixLastDispatchRequest = { ...op.request, particles: [] };
-            break;
           default:
             this._appendReassemblyDevError(`unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
         }
@@ -91,8 +94,8 @@ export class ContentReassembler {
     }
 
     // [DEV] Debugging
-    if (!isDebug && devMode_AixLastDispatchRequest?.particles)
-      devMode_AixLastDispatchRequest.particles.push((debugIsAborted ? '!(A)! ' : '') + JSON.stringify(op));
+    if (this.dispatchRequest && (!('cg' in op) || op.cg !== '_debugRequest'))
+      this.dispatchRequest.particles.push((debugIsAborted ? '!(A)! ' : '') + JSON.stringify(op));
   }
 
   reassembleClientAbort(): void {
