@@ -80,6 +80,172 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
 
   /* OpenPipe models - by default it's OpenAI models, through the proxy service. */
 
+  // DeepSeek models
+  {
+    id: 'openpipe:openrouter/deepseek/deepseek-chat',
+    label: '💾➜ DeepSeek V3',
+    description: 'DeepSeek-V3 is the latest model from the DeepSeek team, building upon the instruction following and coding abilities of the previous versions. Pre-trained on diverse data including code, academic papers, and general knowledge.',
+    contextWindow: 64000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2023-12',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.14, output: 0.28 },
+  },
+
+  {
+    id: 'openpipe:openrouter/qwen/qvq-72b-preview',
+    label: '💾➜ Qwen QvQ 72B Preview',
+    description: 'Experimental research model developed by the Qwen team with 128K context window.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-12',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.25, output: 0.5 },
+  },
+
+  {
+    id: 'openpipe:openrouter/nousresearch/hermes-3-llama-3.1-70b',
+    label: '💾➜ Hermes 3 70B Instruct',
+    description: 'Generalist language model with improvements over Hermes 2, featuring a 131K context window.',
+    contextWindow: 131000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-08',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.12, output: 0.3 },
+  },
+
+  {
+    id: 'openpipe:openrouter/meta-llama/llama-3.3-70b-instruct',
+    label: '💾➜ Llama 3.3 70B Instruct',
+    description: 'Meta Llama 3.3 multilingual large language model with strong capabilities in finance, academia, and science. Features 131K context window.',
+    contextWindow: 131072,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-12',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.12, output: 0.3 },
+  },
+
+  {
+    id: 'openpipe:openrouter/perplexity/llama-3.1-sonar-huge-128k-online',
+    label: '💾➜ Llama 3.1 Sonar 405B Online',
+    description: 'Perplexity\'s latest Sonar model family based on Llama 3.1, featuring a 127K context window and online capabilities.',
+    contextWindow: 127072,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-08',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 5.0, output: 5.0 },
+  },
+
+  {
+    id: 'openpipe:openrouter/nousresearch/hermes-3-llama-3.1-405b',
+    label: '💾➜ Hermes 3 405B Instruct',
+    description: 'Hermes 3 405B model with improvements over Hermes 2, featuring a 131K context window and enhanced generalist capabilities.',
+    contextWindow: 131072,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-08',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.8, output: 0.8 },
+  },
+
+  {
+    id: 'openpipe:openrouter/meta-llama/llama-3.1-405b',
+    label: '💾➜ Llama 3.1 405B (base)',
+    description: 'Meta\'s latest class of model (Llama 3.1) launched with a variety of sizes & flavors. This is the base 405B model with a 32K context window.',
+    contextWindow: 32768,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-08',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 2.0, output: 2.0 },
+  },
+
+  {
+    id: 'openpipe:openrouter/meta-llama/llama-3.2-90b-vision-instruct',
+    label: '💾➜ Llama 3.2 90B Vision Instruct',
+    description: 'The Llama 90B Vision model is a top-tier, 90-billion-parameter multimodal model designed for advanced vision and language tasks. Features 131K context window.',
+    contextWindow: 131072,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-09',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
+    chatPrice: { input: 0.9, output: 0.9 },
+  },
+
+  {
+    id: 'openpipe:openrouter/nvidia/llama-3.1-nemotron-70b-instruct',
+    label: '💾➜ NVIDIA Llama 3.1 Nemotron 70B Instruct',
+    description: 'NVIDIA\'s Llama 3.1 Nemotron 70B is a language model designed for generating precise and high-quality text. Features 131K context window.',
+    contextWindow: 131000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-10',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.12, output: 0.3 },
+  },
+
+  {
+    id: 'openpipe:openrouter/anthracite-org/magnum-v4-72b',
+    label: '💾➜ Magnum v4 72B',
+    description: 'A series of models designed to replicate the prose quality of the Claude 3 models, featuring a 16K context window.',
+    contextWindow: 16384,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-10',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 1.875, output: 2.25 },
+  },
+
+  {
+    id: 'openpipe:openrouter/x-ai/grok-2-1212',
+    label: '💾➜ Grok 2 1212',
+    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and overall performance. Features 131K context window.',
+    contextWindow: 131072,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-12',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 2.0, output: 10.0 },
+  },
+
+  {
+    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
+    label: '💾➜ Grok 2 Vision 1212',
+    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction adherence, and overall performance. Features 32K context window.',
+    contextWindow: 32768,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-12',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
+    chatPrice: { input: 2.0, output: 10.0 },
+  },
+
+  {
+    id: 'openpipe:openrouter/openai/chatgpt-4o-latest',
+    label: '💾➜ ChatGPT-4o',
+    description: 'OpenAI ChatGPT 4o is continually updated by OpenAI to point to the current version of GPT-4o. Features 128K context window.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: '2024-08',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
+    chatPrice: { input: 5.0, output: 15.0 },
+  },
+
+  {
+    id: 'openpipe:openrouter/anthropic/claude-3.5-sonnet',
+    label: '💾➜ Claude 3.5 Sonnet',
+    description: 'New Claude 3.5 Sonnet delivers better-than-Opus capabilities, faster-than-Sonnet speeds, and a 200K context window.',
+    contextWindow: 200000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-10',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
+    chatPrice: { input: 3.0, output: 15.0 },
+  },
+
+  {
+    id: 'openpipe:openrouter/qwen/qwen-2.5-coder-32b-instruct',
+    label: '💾➜ Qwen2.5 Coder 32B Instruct',
+    description: 'Qwen2.5-Coder is the latest series of Code-Specific Qwen large language models (formerly CodeQwen). Features 33K context window.',
+    contextWindow: 33000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-11',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.07, output: 0.16 },
+  },
+
   // OpenAI models: these work
   {
     id: 'gpt-4o-mini-2024-07-18',
