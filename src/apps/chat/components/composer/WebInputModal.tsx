@@ -50,12 +50,12 @@ function WebInputModal(props: {
     const cleanUrls = urls.reduce((acc, { value }) => {
       const trimmed = (value || '').trim();
       if (!trimmed) return acc;
-      // noinspection HttpUrlsUsage
-      const normalized = (!trimmed.startsWith('http://') && !trimmed.startsWith('https://'))
-        ? 'https://' + trimmed
-        : trimmed;
-      if (asValidURL(normalized))
-        acc.push(normalized);
+      
+      // this form uses a 'relaxed' URL validation, meaning one can write 'big-agi.com' and we'll assume https://
+      const relaxedUrl = asValidURL(trimmed, true);
+      if (relaxedUrl)
+        acc.push(relaxedUrl);
+
       return acc;
     }, [] as string[]);
     if (!cleanUrls.length) {
