@@ -560,7 +560,7 @@ async function _aixChatGenerateContent_LL(
       streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
       ...(getLabsDevMode() && {
         connectionOptions: {
-          debugDispatchRequestbody: true, // [DEV] Debugging the request without requiring a server restart
+          debugDispatchRequestbody: aixContext.name === 'conversation', // [DEV] Debugging the request without requiring a server restart
         },
       }),
     }, {
