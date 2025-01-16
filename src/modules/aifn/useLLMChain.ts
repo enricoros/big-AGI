@@ -29,9 +29,9 @@ export function useLLMChain(
   steps: LLMChainStep[],
   llmId: DLLMId | undefined,
   chainInput: string | undefined,
-  onSuccess: (output: string, input: string) => void,
   aixContextName: AixAPI_Context_ChatGenerate['name'],
   aixContextRef: AixAPI_Context_ChatGenerate['ref'],
+  onSuccess?: (output: string, input: string) => void,
 ) {
 
   // state

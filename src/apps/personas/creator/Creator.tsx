@@ -145,9 +145,9 @@ export function Creator(props: { display: boolean }) {
     creationChainSteps,
     personaLlm?.id,
     chainInputText ?? undefined,
-    savePersona,
     'persona-extract',
     chainId,
+    savePersona,
   );
 
 
