@@ -4,8 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Input } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
-import { useYouTubeTranscript, YTVideoTranscript } from '~/modules/youtube/useYouTubeTranscript';
+import { extractYoutubeVideoIDFromURL } from './youtube.utils';
+import { useYouTubeTranscript, YTVideoTranscript } from './useYouTubeTranscript';
 
 
 interface YouTubeURLInputProps {
