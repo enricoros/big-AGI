@@ -55,8 +55,8 @@ function plantumlDiagramPrompt(diagramType: DiagramType): { sys: string, usr: st
 
 function mermaidDiagramPrompt(diagramType: DiagramType): { sys: string, usr: string } {
   let promptDetails = diagramType === 'auto'
-    ? 'Generate a valid Mermaid diagram markdown (```mermaid\\n...```), ready for rendering. The code should have no external references and all names must be in double quotes and properly escaped. Select the most appropriate Mermaid diagram type: flowchart, sequence, class, state, erd, gantt, pie, or git.'
-    : 'Generate a valid Mermaid mindmap markdown (```mermaid\\n...```), ready for rendering. The code should have no external references and all names must be in double quotes and properly escaped. ' + mermaidMindmapExample;
+    ? 'Generate a valid Mermaid diagram markdown (```mermaid\\n...```), ready for rendering. The code should have no external references and all names must be properly escaped. Select the most appropriate Mermaid diagram type: flowchart, sequence, class, state, erd, gantt, pie, or git.'
+    : 'Generate a valid Mermaid mindmap markdown (```mermaid\\n...```), ready for rendering. The code should have no external references and all names must be properly escaped. ' + mermaidMindmapExample;
   return {
     sys: `Your task is to generate accurate and well-structured Mermaid code from the given text. ${promptDetails}`,
     usr: `Generate the Mermaid code for a ${diagramType === 'auto' ? 'suitable diagram' : 'mind map'} that ${diagramType === 'auto' ? 'best captures the essence' : 'effectively summarizes the key points'} of the preceding message.`,
