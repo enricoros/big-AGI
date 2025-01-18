@@ -89,17 +89,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:openrouter/nvidia/llama-3.1-nemotron-70b-instruct',
-    label: '💾➜ NVIDIA Nemotron 70B Instruct',
-    description: 'Advanced model optimized for improved helpfulness, capable of chat, text-to-text, and code generation tasks.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.35, output: 0.4 },
-  },
-
-  {
     id: 'openpipe:openrouter/openchat/openchat-7b',
     label: '💾➜ OpenChat 7B',
     description: 'Open source model that outperforms ChatGPT-3.5 on several benchmarks. Uses SFT and RLFT for alignment with human goals.',
@@ -108,17 +97,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2024-01',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/anthracite-org/magnum-v4-72b',
-    label: '💾➜ Anthracite Magnum v4 72B',
-    description: 'Large-scale model designed for advanced reasoning and complex tasks.',
-    contextWindow: 16384,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 1.875, output: 2.25 },
   },
 
   {
@@ -152,83 +130,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2024-01',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.1, output: 0.1 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.2-11b-vision-instruct',
-    label: '💾➜ Meta Llama 3.2 11B Vision',
-    description: 'Vision-capable model optimized for fast output speed and low latency.',
-    contextWindow: 130000,
-    maxCompletionTokens: 130000,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.2-90b-vision-instruct',
-    label: '💾➜ Meta Llama 3.2 90B Vision',
-    description: 'Large vision model with high quality outputs and extensive context handling.',
-    contextWindow: 130000,
-    maxCompletionTokens: 130000,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.2-3b-instruct',
-    label: '💾➜ Meta Llama 3.2 3B',
-    description: 'Compact instruction-following model suitable for lightweight applications.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.1-405b-instruct',
-    label: '💾➜ Meta Llama 3.1 405B Instruct',
-    description: 'Advanced multilingual model optimized for dialogue use cases. Strong performance on MMLU, CommonSenseQA, and other benchmarks.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2023-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.1-405b-instruct:free',
-    label: '💾➜ Meta Llama 3.1 405B Instruct Free',
-    description: 'Free version of the Llama 3.1 405B Instruct model with same capabilities.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2023-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.1-405b',
-    label: '💾➜ Meta Llama 3.1 405B',
-    description: 'Base version of Meta\'s largest Llama 3.1 model with extensive multilingual capabilities.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2023-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/nousresearch/hermes-3-llama-3.1-405b',
-    label: '💾➜ Hermes 3 Llama 3.1 405B',
-    description: 'Generalist language model with improved capabilities over Hermes 2, featuring enhanced function calling and structured output capabilities.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.0, output: 0.0 },
   },
 
   /* OpenPipe models - by default it's OpenAI models, through the proxy service. */
@@ -369,18 +270,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:openrouter/nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
-    label: '💾➜ NVIDIA Nemotron 70B Instruct',
-    description: 'Advanced 70B parameter model based on Llama 3.1, optimized with RLHF using HelpSteer2 dataset. Achieves strong performance with 8.98 on MT-Bench.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4000,
-    trainingDataCutoff: '2023-12',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.4 },
-    benchmark: { cbaElo: 1267 },
-  },
-
-  {
     id: 'openpipe:totalgpt/midnight/Midnight-Miqu-70B-v1.5',
     label: '💾➜ Midnight Miqu 70B v1.5',
     description: 'Creative writing focused 70B parameter model with strong performance in storytelling and roleplaying. Achieves consistent 77+ scores on EQ-Bench.',
@@ -427,162 +316,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:openrouter/mistralai/Mixtral-8x7B-Instruct-v0.1',
-    label: '💾➜ Mixtral 8x7B Instruct v0.1',
-    description: 'High-performance model with 32K context window, achieving 8.30 on MT-Bench. Excels in code generation and text summarization.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.15, output: 0.3 },
-    benchmark: { cbaElo: 1270 },
-  },
-
-  {
-    id: 'openpipe:openrouter/thedrummer/Rocinante-12B-v1.1',
-    label: '💾➜ TheDrummer Rocinante 12B v1.1',
-    description: 'Mistral-based 12B parameter model optimized for creative writing and storytelling, featuring BF16 precision and adjustable temperature settings.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.1, output: 0.2 },
-  },
-
-  {
-    id: 'openpipe:openrouter/qwen/Qwen2-72B-Instruct',
-    label: '💾➜ Qwen2 72B Instruct',
-    description: 'Advanced 72B parameter model with multimodal capabilities, supporting vision, code, and multilingual tasks. Features 128K context window and strong performance across various benchmarks.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.25, output: 0.5 },
-    benchmark: { cbaElo: 1285 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
-    label: '💾➜ Llama 3.2 11B Vision Instruct',
-    description: 'Vision-optimized 11B parameter model with capabilities in visual recognition, reasoning, and captioning. Features 128K theoretical context window (8K practical limit).',
-    contextWindow: 8192,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2023-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.15, output: 0.3 },
-  },
-
-  {
-    id: 'openpipe:openrouter/nousresearch/hermes-3-llama-3.1-70b',
-    label: '💾➜ Hermes 3 70B Instruct',
-    description: 'Generalist language model with improvements over Hermes 2, featuring a 131K context window.',
-    contextWindow: 131000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-08',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.12, output: 0.3 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.3-70b-instruct',
-    label: '💾➜ Llama 3.3 70B Instruct',
-    description: 'Meta Llama 3.3 multilingual large language model with strong capabilities in finance, academia, and science. Features 131K context window.',
-    contextWindow: 131072,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.12, output: 0.3 },
-  },
-
-  {
-    id: 'openpipe:openrouter/perplexity/llama-3.1-sonar-huge-128k-online',
-    label: '💾➜ Llama 3.1 Sonar 405B Online',
-    description: 'Perplexity\'s latest Sonar model family based on Llama 3.1, featuring a 127K context window and online capabilities.',
-    contextWindow: 127072,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-08',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 5.0, output: 5.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/nousresearch/hermes-3-llama-3.1-405b',
-    label: '💾➜ Hermes 3 405B Instruct',
-    description: 'Hermes 3 405B model with improvements over Hermes 2, featuring a 131K context window and enhanced generalist capabilities.',
-    contextWindow: 131072,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-08',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.8, output: 0.8 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.1-405b',
-    label: '💾➜ Llama 3.1 405B (base)',
-    description: 'Meta\'s latest class of model (Llama 3.1) launched with a variety of sizes & flavors. This is the base 405B model with a 32K context window.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-08',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 2.0, output: 2.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/meta-llama/llama-3.2-90b-vision-instruct',
-    label: '💾➜ Llama 3.2 90B Vision Instruct',
-    description: 'The Llama 90B Vision model is a top-tier, 90-billion-parameter multimodal model designed for advanced vision and language tasks. Features 131K context window.',
-    contextWindow: 131072,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-09',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.9, output: 0.9 },
-  },
-
-  {
-    id: 'openpipe:openrouter/nvidia/llama-3.1-nemotron-70b-instruct',
-    label: '💾➜ NVIDIA Llama 3.1 Nemotron 70B Instruct',
-    description: 'NVIDIA\'s Llama 3.1 Nemotron 70B is a language model designed for generating precise and high-quality text. Features 131K context window.',
-    contextWindow: 131000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-10',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.12, output: 0.3 },
-  },
-
-  {
-    id: 'openpipe:openrouter/anthracite-org/magnum-v4-72b',
-    label: '💾➜ Magnum v4 72B',
-    description: 'A series of models designed to replicate the prose quality of the Claude 3 models, featuring a 16K context window.',
-    contextWindow: 16384,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-10',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 1.875, output: 2.25 },
-  },
-
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-1212',
-    label: '💾➜ Grok 2 1212',
-    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and overall performance. Features 131K context window.',
-    contextWindow: 131072,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 2.0, output: 10.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
-    label: '💾➜ Grok 2 Vision 1212',
-    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction adherence, and overall performance. Features 32K context window.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-12',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
-    chatPrice: { input: 2.0, output: 10.0 },
-  },
-
-  {
     id: 'openpipe:openrouter/openai/chatgpt-4o-latest',
     label: '💾➜ ChatGPT-4o',
     description: 'OpenAI ChatGPT 4o is continually updated by OpenAI to point to the current version of GPT-4o. Features 128K context window.',
@@ -602,17 +335,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2024-10',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
     chatPrice: { input: 3.0, output: 15.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/qwen/qwen-2.5-coder-32b-instruct',
-    label: '💾➜ Qwen2.5 Coder 32B Instruct',
-    description: 'Qwen2.5-Coder is the latest series of Code-Specific Qwen large language models (formerly CodeQwen). Features 33K context window.',
-    contextWindow: 33000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-11',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 0.07, output: 0.16 },
   },
 
   {
@@ -652,17 +374,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     id: 'openpipe:openrouter/google/learnlm-1.5-pro-experimental:free',
     label: '💾➜ Google LearnLM 1.5 Pro Exp',
     description: 'Experimental learning-focused model with advanced text processing capabilities.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.0, output: 0.0 },
-  },
-
-  {
-    id: 'openpipe:openrouter/infermatic/mn-inferor-12b',
-    label: '💾➜ Infermatic MN Inferor 12B',
-    description: '12.2B parameter model optimized for advanced text generation and conversational applications using Model Stock merge method.',
     contextWindow: 32768,
     maxCompletionTokens: 4096,
     trainingDataCutoff: '2024-01',
