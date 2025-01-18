@@ -78,6 +78,116 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 
 const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   {
+    id: 'openpipe:groqcloud/gemma2-9b-it',
+    label: '💾➜ Gemma 2 9B Instruct',
+    description: 'Gemma 2 9B model optimized for instruction following with 8K context window.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama-3.3-70b-versatile',
+    label: '💾➜ Llama 3.3 70B Versatile',
+    description: 'Latest Llama 3.3 70B model with enhanced versatility and 128K context window.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-03',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama-3.1-8b-instant',
+    label: '💾➜ Llama 3.1 8B Instant',
+    description: 'Fast and efficient Llama 3.1 8B model optimized for quick responses.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-02',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/mixtral-8x7b-32768',
+    label: '💾➜ Mixtral 8x7B 32K',
+    description: 'Mixtral 8x7B model with 32K context window, combining multiple expert models.',
+    contextWindow: 32768,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama3-70b-8192',
+    label: '💾➜ Llama 3 70B 8K',
+    description: 'Llama 3 70B model with 8K context window.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama3-8b-8192',
+    label: '💾➜ Llama 3 8B 8K',
+    description: 'Llama 3 8B model with 8K context window.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama-3.2-1b-preview',
+    label: '💾➜ Llama 3.2 1B Preview',
+    description: 'Preview version of Llama 3.2 1B model.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-02',
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama-3.2-3b-preview',
+    label: '💾➜ Llama 3.2 3B Preview',
+    description: 'Preview version of Llama 3.2 3B model.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-02',
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama-3.2-11b-vision-preview',
+    label: '💾➜ Llama 3.2 11B Vision Preview',
+    description: 'Preview version of Llama 3.2 11B model with vision capabilities.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-02',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
+    id: 'openpipe:groqcloud/llama-3.2-90b-vision-preview',
+    label: '💾➜ Llama 3.2 90B Vision Preview',
+    description: 'Preview version of Llama 3.2 90B model with vision capabilities.',
+    contextWindow: 8192,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-02',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    chatPrice: { input: 0.0, output: 0.0 },
+  },
+
+  {
     id: 'openpipe:openrouter/google/gemini-flash-1.5',
     label: '💾➜ Google Gemini Flash 1.5',
     description: 'Optimized for speed and efficiency, designed for high-volume tasks at scale with extensive context handling capabilities.',
