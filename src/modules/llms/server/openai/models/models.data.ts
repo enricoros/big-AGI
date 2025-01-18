@@ -268,7 +268,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/inflatebot/inflatebot-MN-12B-Mag-Mell-R1',
+    id: 'openpipe:totalgpt/inflatebot-MN-12B-Mag-Mell-R1',
     label: '💾➜ InflateBot MN 12B Mag-Mell 🎁',
     description: 'Mistral-based 12B parameter model optimized for creative and fictional applications, with strong ChatML formatting capabilities.',
     contextWindow: 32768,
@@ -279,7 +279,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/sao10k/Sao10K-72B-Qwen2.5-Kunou-v1-FP8-Dynamic',
+    id: 'openpipe:totalgpt/Sao10K-72B-Qwen2.5-Kunou-v1-FP8-Dynamic',
     label: '💾➜ Sao10K Qwen2.5 72B Kunou 🎁',
     description: 'Advanced 72B parameter model based on Qwen2.5 architecture with 128K context support.',
     contextWindow: 128000,
@@ -290,7 +290,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/sao10k/Sao10K-L3.3-70B-Euryale-v2.3-FP8-Dynamic',
+    id: 'openpipe:totalgpt/Sao10K-L3.3-70B-Euryale-v2.3-FP8-Dynamic',
     label: '💾➜ Sao10K Llama 3.3 70B Euryale 🎁',
     description: 'Llama 3.3-based 70B parameter model with 128K context window and enhanced creative capabilities.',
     contextWindow: 128000,
@@ -301,7 +301,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/meta-llama/Llama-3.3-70B-Instruct-FP8-Dynamic',
+    id: 'openpipe:totalgpt/Llama-3.3-70B-Instruct-FP8-Dynamic',
     label: '💾➜ Meta Llama 3.3 70B Instruct FP8 🎁',
     description: 'Advanced multilingual model with 128K context window, trained on over 15 trillion tokens with optimized FP8 quantization.',
     contextWindow: 128000,
@@ -312,7 +312,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/anthracite-org/magnum-v2-72b-FP8-Dynamic',
+    id: 'openpipe:totalgpt/magnum-v2-72b-FP8-Dynamic',
     label: '💾➜ Anthracite Magnum v2 72B 🎁',
     description: 'High-performance 72B parameter model based on Qwen2, optimized for multilingual communication and complex reasoning. Achieves 75.60% on IFEval and 57.85% on BBH benchmarks.',
     contextWindow: 16384,
@@ -324,7 +324,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/nousresearch/Hermes-3-Llama-3.1-70B-FP8',
+    id: 'openpipe:totalgpt/Hermes-3-Llama-3.1-70B-FP8',
     label: '💾➜ NousResearch Hermes 3 70B 🎁',
     description: 'Advanced reasoning model based on Llama 3.1 architecture, optimized with FP8 quantization for efficient deployment. Features strong capabilities in structured outputs and function calling.',
     contextWindow: 128000,
@@ -335,7 +335,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/qwen/Qwen-QwQ-32B-Preview',
+    id: 'openpipe:totalgpt/Qwen-QwQ-32B-Preview',
     label: '💾➜ Qwen QwQ 32B Preview 🎁',
     description: 'Specialized 32B parameter model with strong capabilities in mathematics, programming, and scientific reasoning. Features 32K context window and optimized attention mechanisms.',
     contextWindow: 32768,
@@ -346,7 +346,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/infermatic/Infermatic-MN-12B-Inferor-v',
+    id: 'openpipe:totalgpt/Infermatic-MN-12B-Inferor-v0.0',
     label: '💾➜ Infermatic MN 12B Inferor 🎁',
     description: 'Mistral-based 12B parameter model optimized with BFloat16 precision, featuring advanced text generation capabilities through model merging techniques.',
     contextWindow: 32768,
@@ -357,7 +357,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/thedrummer/UnslopNemo-12B-v4.1',
+    id: 'openpipe:totalgpt/UnslopNemo-12B-v4.1',
     label: '💾➜ TheDrummer UnslopNemo 12B v4.1 🎁',
     description: 'General-purpose 12B parameter language model focused on text generation and processing tasks.',
     contextWindow: 32768,
@@ -368,7 +368,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/qwen/Qwen2.5-72B-Instruct-Turbo',
+    id: 'openpipe:totalgpt/Qwen2.5-72B-Instruct-Turbo',
     label: '💾➜ Qwen 2.5 72B Instruct Turbo 🎁',
     description: 'High-performance 72B parameter model optimized for speed and efficiency. Achieves 93.1 on RULER benchmark and excels in long-text tasks with 100% accuracy in 1M length Passkey Retrieval.',
     contextWindow: 32768,
@@ -380,7 +380,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/midnight/Midnight-Miqu-70B-v1.5',
+    id: 'openpipe:totalgpt/Midnight-Miqu-70B-v1.5',
     label: '💾➜ Midnight Miqu 70B v1.5 🎁',
     description: 'Creative writing focused 70B parameter model with strong performance in storytelling and roleplaying. Achieves consistent 77+ scores on EQ-Bench.',
     contextWindow: 32768,
@@ -392,7 +392,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/wizardlm/WizardLM-2-8x22B',
+    id: 'openpipe:totalgpt/WizardLM-2-8x22B',
     label: '💾➜ WizardLM 2 8x22B 🎁',
     description: 'Advanced reasoning model with exceptional performance in technical tasks. Achieves 9.2 in reasoning, 9.4 in technical analysis, and 9.3 in language understanding benchmarks.',
     contextWindow: 65536,
@@ -404,7 +404,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/tenyx/Llama-3-TenyxChat-DaybreakStorywriter-70B-fp8-dynamic',
+    id: 'openpipe:totalgpt/lama-3-TenyxChat-DaybreakStorywriter-70B-fp8-dynamic',
     label: '💾➜ TenyxChat Daybreak 70B 🎁',
     description: 'Llama 3-based storytelling model optimized with fp8 dynamic quantization for efficient deployment.',
     contextWindow: 8192,
@@ -415,7 +415,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/sao10k/Sao10K-L3.1-70B-Hanami-x1',
+    id: 'openpipe:totalgpt/Sao10K-L3.1-70B-Hanami-x1',
     label: '💾➜ Sao10K Llama 3.1 70B Hanami 🎁',
     description: 'Advanced 70B parameter model based on Llama 3.1 architecture with extended context handling capabilities.',
     contextWindow: 128000,
