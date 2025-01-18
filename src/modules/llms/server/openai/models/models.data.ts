@@ -423,7 +423,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     maxCompletionTokens: 4096,
     trainingDataCutoff: '2024-01',
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.4 },
+    chatPrice: { input: 3.0, output: 3.0 },
   },
 
   {
