@@ -312,7 +312,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/magnum-v2-72b-FP8-Dynamic',
+    id: 'openpipe:totalgpt/anthracite-org-magnum-v2-72b-FP8-Dynamic',
     label: '💾➜ Anthracite Magnum v2 72B 🎁',
     description: 'High-performance 72B parameter model based on Qwen2, optimized for multilingual communication and complex reasoning. Achieves 75.60% on IFEval and 57.85% on BBH benchmarks.',
     contextWindow: 16384,
@@ -321,6 +321,18 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 0.25, output: 0.5 },
     benchmark: { cbaElo: 1250 },
+  },
+
+  {
+    id: 'openpipe:totalgpt/anthracite-org-magnum-v4-72b-FP8-Dynamic',
+    label: '💾➜ Anthracite Magnum v4 72B 🎁',
+    description: 'Advanced 72B parameter model based on Qwen2.5, optimized with FP8 dynamic quantization. Designed to replicate Claude 3 prose quality with 32K context window.',
+    contextWindow: 32768,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.25, output: 0.5 },
+    benchmark: { cbaElo: 1270 },
   },
 
   {
