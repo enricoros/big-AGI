@@ -78,6 +78,30 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 
 const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   {
+    id: 'openpipe:openrouter/openai/o1-preview',
+    label: '💾➜ O1 Preview',
+    description: 'Advanced reasoning model with 300B parameters, superior problem-solving capabilities, and enhanced attention mechanisms.',
+    contextWindow: 128000,
+    maxCompletionTokens: 32800,
+    trainingDataCutoff: '2023-10',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 5.0, output: 15.0 },
+    benchmark: { cbaElo: 1300 },
+  },
+
+  {
+    id: 'openpipe:openrouter/openai/o1-mini',
+    label: '💾➜ O1 Mini',
+    description: 'Efficient 100B parameter model optimized for resource-constrained environments with strong performance in STEM topics.',
+    contextWindow: 128000,
+    maxCompletionTokens: 65000,
+    trainingDataCutoff: '2023-10',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 1.0, output: 3.0 },
+    benchmark: { cbaElo: 1200 },
+  },
+
+  {
     id: 'openpipe:groqcloud/gemma2-9b-it',
     label: '💾➜ Gemma 2 9B Instruct 🎁',
     description: 'Gemma 2 9B model optimized for instruction following with 8K context window.',
