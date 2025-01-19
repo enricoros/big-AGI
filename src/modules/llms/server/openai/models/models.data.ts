@@ -380,6 +380,17 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
+    id: 'openpipe:totalgpt/TheDrummer-Anubis-70B-v1-FP8-Dynamic',
+    label: '💾➜ TheDrummer Anubis 70B v1 🎁',
+    description: '70B parameter model optimized with FP8 dynamic quantization, focused on creative writing and roleplay scenarios. Features 32K context window.',
+    contextWindow: 32768,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 0.2, output: 0.4 },
+  },
+
+  {
     id: 'openpipe:totalgpt/Qwen2.5-72B-Instruct-Turbo',
     label: '💾➜ Qwen 2.5 72B Instruct Turbo 🎁',
     description: 'High-performance 72B parameter model optimized for speed and efficiency. Achieves 93.1 on RULER benchmark and excels in long-text tasks with 100% accuracy in 1M length Passkey Retrieval.',
