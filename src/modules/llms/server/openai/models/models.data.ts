@@ -416,6 +416,18 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
+    id: 'openpipe:totalgpt/alpindale-WizardLM-2-8x22B',
+    label: '💾➜ Alpindale WizardLM 2 8x22B 🎁',
+    description: 'Specialized 141B parameter model fine-tuned for storytelling and roleplay. Features strong performance on reasoning tasks with 52.72% on IFEval and 48.58% on BBH benchmarks.',
+    contextWindow: 16384,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 0.2, output: 0.4 },
+    benchmark: { cbaElo: 1265 },
+  },
+
+  {
     id: 'openpipe:totalgpt/lama-3-TenyxChat-DaybreakStorywriter-70B-fp8-dynamic',
     label: '💾➜ TenyxChat Daybreak 70B 🎁',
     description: 'Llama 3-based storytelling model optimized with fp8 dynamic quantization for efficient deployment.',
@@ -435,6 +447,17 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2024-01',
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 3.0, output: 3.0 },
+  },
+
+  {
+    id: 'openpipe:totalgpt/rAIfle-SorcererLM-8x22b-bf16',
+    label: '💾➜ rAIfle SorcererLM 8x22B BF16 🎁',
+    description: 'Advanced 141B parameter model optimized for roleplay and creative writing. Based on WizardLM-2 with BF16 precision and enhanced vocabulary capabilities.',
+    contextWindow: 16384,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 0.2, output: 0.4 },
   },
 
   {
