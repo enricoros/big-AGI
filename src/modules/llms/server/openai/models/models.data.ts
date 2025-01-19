@@ -494,6 +494,18 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
+    id: 'openpipe:openrouter/anthropic/claude-3-opus',
+    label: '💾➜ Claude 3 Opus',
+    description: 'Most advanced Claude model with exceptional performance across benchmarks (88.2 MMLU, 95.4 HellaSwag). Features 200K context window and multimodal capabilities.',
+    contextWindow: 200000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: '2023-08',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
+    chatPrice: { input: 15.0, output: 75.0 },
+    benchmark: { cbaElo: 1350 },
+  },
+
+  {
     id: 'openpipe:openrouter/google/gemini-2.0-flash-exp:free',
     label: '💾➜ Google Gemini 2.0 Flash Exp 🎁',
     description: 'Advanced experimental model with multimodal understanding, coding capabilities, and complex instruction following.',
