@@ -177,6 +177,11 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this._queueParticleS();
   }
 
+  /** Appends reasoning text, for now it's the same as appendText */
+  appendReasoningText(textChunk: string) {
+    this.appendText(textChunk);
+  }
+
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
   private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
     if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE)
