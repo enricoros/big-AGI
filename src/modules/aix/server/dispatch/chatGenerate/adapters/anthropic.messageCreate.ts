@@ -96,7 +96,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     // metadata: { user_id: ... }
     // stop_sequences: undefined,
     stream: streaming,
-    temperature: model.temperature !== undefined ? model.temperature : undefined,
+    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
     // top_k: undefined,
     // top_p: undefined,
   };
