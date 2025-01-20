@@ -20,7 +20,7 @@ export function heuristicIsSVGCode(trimmedCode: string): boolean {
   const codeWithoutInitialComments = trimmedCode.startsWith('<!--') ? _removePotentialComments(trimmedCode) : trimmedCode;
 
   // check for standard SVG patterns
-  return codeWithoutInitialComments.startsWith('<svg') || codeWithoutInitialComments.startsWith('<?xml version="1.0" encoding="UTF-8"?>\\n<svg');
+  return codeWithoutInitialComments.startsWith('<svg') || codeWithoutInitialComments.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg');
 }
 
 
