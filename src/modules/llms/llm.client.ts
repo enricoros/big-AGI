@@ -3,7 +3,7 @@ import { sendGAEvent } from '@next/third-parties/google';
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
-import { DLLM, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { DLLM, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -76,7 +76,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     parameterSpecs: d.parameterSpecs?.length ? d.parameterSpecs : [],
     initialParameters: {
       llmRef: d.id,
-      llmTemperature: FALLBACK_LLM_PARAM_TEMPERATURE,
+      llmTemperature: d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null : FALLBACK_LLM_PARAM_TEMPERATURE,
       llmResponseTokens: llmResponseTokens,
     },
 

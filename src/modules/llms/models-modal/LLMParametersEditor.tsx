@@ -23,6 +23,7 @@ export function LLMParametersEditor(props: {
   // consts
   maxOutputTokens: number | null,
   parameterSpecs: DModelParameterSpec<DModelParameterId>[],
+  parameterOmitTemperature?: boolean,
   baselineParameters: DModelParameterValues,
 
   // value and onChange for the parameters
@@ -38,11 +39,11 @@ export function LLMParametersEditor(props: {
   const allParameters = getAllModelParameterValues(baselineParameters, parameters);
 
   // derived state
-  const llmTemperature = allParameters.llmTemperature ?? FALLBACK_LLM_PARAM_TEMPERATURE;
+  const llmTemperature: number | null = allParameters.llmTemperature === undefined ? FALLBACK_LLM_PARAM_TEMPERATURE : allParameters.llmTemperature;
   const llmResponseTokens = allParameters.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
   const llmVndOaiReasoningEffort = allParameters.llmVndOaiReasoningEffort;
   const llmVndOaiRestoreMarkdown = !!allParameters.llmVndOaiRestoreMarkdown;
-  const tempAboveOne = llmTemperature > 1;
+  const tempAboveOne = llmTemperature !== null && llmTemperature > 1;
 
   // more state (here because the initial state depends on props)
   const [overheat, setOverheat] = React.useState(tempAboveOne);
@@ -70,7 +71,8 @@ export function LLMParametersEditor(props: {
 
     <FormSliderControl
       title='Temperature' ariaLabel='Model Temperature'
-      description={llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
+      description={llmTemperature === null ? 'Unsupported' : llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
+      disabled={props.parameterOmitTemperature}
       min={0} max={overheat ? 2 : 1} step={0.1} defaultValue={0.5}
       valueLabelDisplay={parameters?.llmTemperature !== undefined ? 'on' : 'auto'}
       value={llmTemperature}
