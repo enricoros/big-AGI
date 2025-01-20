@@ -71,7 +71,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy),
     parallel_tool_calls: undefined,
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
-    temperature: model.temperature !== undefined ? model.temperature : undefined,
+    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
     top_p: undefined,
     n: hotFixOnlySupportN1 ? undefined : 0, // NOTE: we choose to not support this at the API level - most downstram ecosystem supports 1 only, which is the default
     stream: streaming,

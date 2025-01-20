@@ -58,7 +58,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
       responseSchema: undefined, // (default, optional) NOTE: for JSON output, we'd take the schema here
       candidateCount: undefined, // (default, optional)
       maxOutputTokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
-      temperature: model.temperature !== undefined ? model.temperature : undefined,
+      ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
       topP: undefined, // (default, optional)
       topK: undefined, // (default, optional)
     },
