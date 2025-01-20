@@ -177,9 +177,17 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this._queueParticleS();
   }
 
-  /** Appends reasoning text, for now it's the same as appendText */
+  /** Appends reasoning text, which is its own kind of content */
   appendReasoningText(textChunk: string) {
-    this.appendText(textChunk);
+    // if there was another Part in the making, queue it
+    if (this.currentPart)
+      this.endMessagePart();
+    this.currentPart = {
+      p: 'tr_',
+      _t: textChunk,
+    };
+    // [throttle] send it immediately for now
+    this._queueParticleS();
   }
 
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */

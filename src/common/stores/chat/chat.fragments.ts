@@ -59,6 +59,7 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
  * Void Fragments: no meaning, pure cosmetic, not stored, not processed
  */
 export type DMessageVoidFragment = _DMessageFragmentWrapper<'void',
+  | DVoidModelAuxPart             // (non submitted) model auxiliary information, from the model itself
   | DVoidPlaceholderPart          // (non submitted) placeholder to be replaced by another part
   | _SentinelPart
 >;
@@ -150,6 +151,8 @@ export type DMessageToolResponsePart = {
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 
+type DVoidModelAuxPart = { pt: 'ma', aType: 'reasoning' | string, aText: string };
+
 type DVoidPlaceholderPart = { pt: 'ph', pText: string };
 
 type _SentinelPart = { pt: '_pt_sentinel' };
@@ -211,6 +214,10 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
 
 export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']): part is DMessageToolResponsePart & { response: { type: 'function_call' } } {
   return part.pt === 'tool_response' && part.response.type === 'function_call';
+}
+
+export function isModelAuxPart(part: DMessageVoidFragment['part']) {
+  return part.pt === 'ma';
 }
 
 export function isPlaceholderPart(part: DMessageVoidFragment['part']) {
@@ -280,6 +287,10 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
 
 
 /// Void Fragments - Creation & Duplication
+
+export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string): DMessageVoidFragment {
+  return _createVoidFragment(_create_ModelAux_Part(aType, aText));
+}
 
 export function createPlaceholderVoidFragment(placeholderText: string): DMessageVoidFragment {
   return _createVoidFragment(_create_Placeholder_Part(placeholderText));
@@ -356,6 +367,10 @@ function _create_CodeExecutionResponse_Part(id: string, error: boolean | string,
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
+function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string): DVoidModelAuxPart {
+  return { pt: 'ma', aType, aText };
+}
+
 function _create_Placeholder_Part(placeholderText: string): DVoidPlaceholderPart {
   return { pt: 'ph', pText: placeholderText };
 }
@@ -375,6 +390,9 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
 
     case 'image_ref':
       return _create_ImageRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
+
+    case 'ma':
+      return _create_ModelAux_Part(part.aType, part.aText) as TPart;
 
     case 'ph':
       return _create_Placeholder_Part(part.pText) as TPart;
