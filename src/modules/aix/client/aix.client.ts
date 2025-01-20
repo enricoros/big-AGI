@@ -1,7 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
-import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature } from '~/common/stores/llms/llms.types';
 import { apiStream } from '~/common/util/trpc.client';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
@@ -29,6 +29,7 @@ export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['
 }
 
 export function aixCreateModelFromLLMOptions(
+  llmInterfaces: DLLM['interfaces'],
   llmOptions: DModelParameterValues,
   llmOptionsOverride: Omit<DModelParameterValues, 'llmRef'> | undefined,
   debugLlmId: string,
@@ -48,9 +49,12 @@ export function aixCreateModelFromLLMOptions(
   if (llmTemperature === undefined)
     console.warn(`[DEV] AIX: Missing temperature for model ${debugLlmId}, using default.`);
 
+  // Client-side late stage model HotFixes
+  const hotfixOmitTemperature = llmInterfaces.includes(LLM_IF_HOTFIX_NoTemperature);
+
   return {
     id: llmRef,
-    ...(llmTemperature !== undefined ? { temperature: llmTemperature } : {}),
+    ...(hotfixOmitTemperature ? { temperature: null } : llmTemperature !== undefined ? { temperature: llmTemperature } : {}),
     ...(llmResponseTokens /* null: similar to undefined, will omit the value */ ? { maxTokens: llmResponseTokens } : {}),
     ...(llmTopP !== undefined ? { topP: llmTopP } : {}),
     ...(llmVndOaiReasoningEffort ? { vndOaiReasoningEffort: llmVndOaiReasoningEffort } : {}),
@@ -199,7 +203,7 @@ export async function aixChatGenerateText_Simple(
 
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-  const aixModel = aixCreateModelFromLLMOptions(llmParameters, clientOptions?.llmOptionsOverride, llmId);
+  const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmOptionsOverride, llmId);
 
   // Aix ChatGenerate Request
   const aixChatGenerate = aixCGR_FromSimpleText(
@@ -373,7 +377,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
 
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-  const aixModel = aixCreateModelFromLLMOptions(llmParameters, clientOptions?.llmOptionsOverride, llmId);
+  const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmOptionsOverride, llmId);
 
   // Client-side late stage model HotFixes
   const { shallDisableStreaming } = clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llmParameters.llmRef || llm.id);
