@@ -355,6 +355,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Deepseek]
   if (model.includes('deepseek-chat')) return 'Deepseek Chat';
   if (model.includes('deepseek-coder')) return 'Deepseek Coder';
+  if (model.includes('deepseek-reasoner')) return 'Deepseek Reasoner';
   // [LM Studio]
   if (model.startsWith('C:\\') || model.startsWith('D:\\'))
     return _prettyLMStudioFileModelName(model).replace('.gguf', '');
