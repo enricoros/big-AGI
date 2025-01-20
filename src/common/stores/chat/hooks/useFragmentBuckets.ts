@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isPlaceholderPart, isVoidFragment } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isModelAuxPart, isPlaceholderPart, isVoidFragment, } from '../chat.fragments';
 
 
 interface FragmentBuckets {
@@ -37,8 +37,10 @@ export function useFragmentBuckets(messageFragments: DMessageFragment[]): Fragme
         else
           nonImageAttachments.push(fragment);
       } else if (isVoidFragment(fragment)) {
-        if (isPlaceholderPart(fragment.part))
+        if (isModelAuxPart(fragment.part) || isPlaceholderPart(fragment.part))
           contentOrVoidFragments.push(fragment);
+        else
+          console.warn('[DEV] Unexpected void fragment:', fragment);
       } else
         console.warn('[DEV] Unexpected fragment type:', fragment.ft);
     });
