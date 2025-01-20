@@ -1,5 +1,5 @@
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createTextContentFragment, isTextPart } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment, } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
@@ -48,6 +48,9 @@ export class ContentReassembler {
       // PartParticleOp
       case 'p' in op:
         switch (op.p) {
+          case 'tr_':
+            this.onAppendReasoningText(op);
+            break;
           case 'fci':
             this.onStartFunctionCallInvocation(op);
             break;
@@ -127,7 +130,7 @@ export class ContentReassembler {
 
     // add to existing TextContentFragment
     const currentTextFragment = this.currentTextFragmentIndex !== null ? this.accumulator.fragments[this.currentTextFragmentIndex] : null;
-    if (currentTextFragment && isTextPart(currentTextFragment.part)) {
+    if (currentTextFragment && isTextContentFragment(currentTextFragment)) {
       currentTextFragment.part.text += particle.t;
       return;
     }
@@ -137,6 +140,22 @@ export class ContentReassembler {
     this.accumulator.fragments.push(newTextFragment);
     this.currentTextFragmentIndex = this.accumulator.fragments.length - 1;
 
+  }
+
+  private onAppendReasoningText({ _t }: Extract<AixWire_Particles.PartParticleOp, { p: 'tr_' }>): void {
+    // Break text accumulation
+    this.currentTextFragmentIndex = null;
+
+    // add to existing ModelAuxVoidFragment if possible
+    const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
+      currentFragment.part.aText += _t;
+      return;
+    }
+
+    // new ModelAuxVoidFragment
+    const fragment = createModelAuxVoidFragment('reasoning', _t);
+    this.accumulator.fragments.push(fragment);
   }
 
   private onStartFunctionCallInvocation(fci: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }>): void {
@@ -155,7 +174,7 @@ export class ContentReassembler {
 
   private onAppendFunctionCallInvocationArgs(_fci: Extract<AixWire_Particles.PartParticleOp, { p: '_fci' }>): void {
     const fragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
-    if (fragment && fragment.part.pt === 'tool_invocation' && fragment.part.invocation.type === 'function_call') {
+    if (fragment && isContentFragment(fragment) && fragment.part.pt === 'tool_invocation' && fragment.part.invocation.type === 'function_call') {
       const updatedPart = {
         ...fragment.part,
         invocation: {
@@ -225,7 +244,7 @@ export class ContentReassembler {
     if (MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN) {
       const currentTextFragment = this.currentTextFragmentIndex === null ? null
         : this.accumulator.fragments[this.currentTextFragmentIndex];
-      if (currentTextFragment && isTextPart(currentTextFragment.part)) {
+      if (currentTextFragment && isTextContentFragment(currentTextFragment)) {
         currentTextFragment.part.text += ' ' + issueText;
         return;
       }

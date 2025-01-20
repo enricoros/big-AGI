@@ -5,7 +5,7 @@ import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature } from '~/common/stores/llms/
 import { apiStream } from '~/common/util/trpc.client';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
-import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, isErrorPart } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
@@ -68,7 +68,7 @@ export function aixCreateModelFromLLMOptions(
  * The object is modified in-place from the lower layers and passed to the callback for efficiency.
  */
 export interface AixChatGenerateContent_DMessage extends Pick<DMessage, 'fragments' | 'generator' | 'pendingIncomplete'> {
-  fragments: DMessageContentFragment[];
+  fragments: (DMessageContentFragment | DMessageVoidFragment)[];
   generator: DMessageGenerator; // Extract<DMessageGenerator, { mgt: 'aix' }>;
   pendingIncomplete: boolean;
 }
@@ -284,7 +284,7 @@ export async function aixChatGenerateText_Simple(
 
   // throw if there are error fragments
   const errorMessage = ll.fragments
-    .filter(f => isErrorPart(f.part))
+    .filter(f => isContentFragment(f) && isErrorPart(f.part))
     .map(f => (f.part as DMessageErrorPart).error).join('\n');
   if (errorMessage)
     throw new Error('AIX: Error in response: ' + errorMessage);
@@ -484,7 +484,7 @@ function _updateGeneratorCostsInPlace(generator: DMessageGenerator, llm: DLLM, d
 export interface AixChatGenerateContent_LL {
   // source of truth for any caller
   // - empty array means no content yet, and no error
-  fragments: DMessageContentFragment[];
+  fragments: (DMessageContentFragment | DMessageVoidFragment)[];
 
   // pieces of generator
   genMetricsLg?: DMetricsChatGenerate_Lg;
