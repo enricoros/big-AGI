@@ -67,6 +67,7 @@ export type DModelInterfaceV1 =
   | 'oai-needs-audio'
   | 'gem-code-execution'
   | 'hotfix-no-stream'         // disable streaming for o1-preview (old) and o1 (20241217)
+  | 'hotfix-no-temperature'    // disable temperature for deepseek-r1
   | 'hotfix-strip-images'      // strip images from the input
   | 'hotfix-sys0-to-usr0'      // cast sys0 to usr0
   ;
@@ -86,6 +87,7 @@ export const LLM_IF_OAI_Realtime: DModelInterfaceV1 = 'oai-realtime';
 export const LLM_IF_OAI_NeedsAudio: DModelInterfaceV1 = 'oai-needs-audio';
 export const LLM_IF_GEM_CodeExecution: DModelInterfaceV1 = 'gem-code-execution';
 export const LLM_IF_HOTFIX_NoStream: DModelInterfaceV1 = 'hotfix-no-stream';
+export const LLM_IF_HOTFIX_NoTemperature: DModelInterfaceV1 = 'hotfix-no-temperature';
 export const LLM_IF_HOTFIX_StripImages: DModelInterfaceV1 = 'hotfix-strip-images';
 export const LLM_IF_HOTFIX_Sys0ToUsr0: DModelInterfaceV1 = 'hotfix-sys0-to-usr0';
 
@@ -104,6 +106,7 @@ export const LLMS_ALL_INTERFACES = [
   LLM_IF_OAI_NeedsAudio,
   LLM_IF_GEM_CodeExecution,
   LLM_IF_HOTFIX_NoStream,
+  LLM_IF_HOTFIX_NoTemperature,
   LLM_IF_HOTFIX_StripImages,
   LLM_IF_HOTFIX_Sys0ToUsr0,
 ] as const;

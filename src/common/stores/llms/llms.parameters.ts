@@ -49,6 +49,9 @@ export const DModelParameterRegistry = {
     type: 'float' as const,
     description: 'Controls randomness in the output',
     range: [0.0, 2.0] as const,
+    nullable: {
+      meaning: 'Explicitly avoid sending temperature to upstream API',
+    },
     requiredFallback: FALLBACK_LLM_PARAM_TEMPERATURE,
   } as const,
 
@@ -100,7 +103,10 @@ type _EnumValues<T> = T extends { type: 'enum', values: readonly (infer U)[] } ?
 
 type DModelParameterValue<T extends DModelParameterId> =
   typeof DModelParameterRegistry[T]['type'] extends 'integer' ? number | null :
-    typeof DModelParameterRegistry[T]['type'] extends 'float' ? number :
+    typeof DModelParameterRegistry[T]['type'] extends 'float'
+      ? typeof DModelParameterRegistry[T] extends { nullable: any }
+        ? number | null
+        : number :
       typeof DModelParameterRegistry[T]['type'] extends 'string' ? string :
         typeof DModelParameterRegistry[T]['type'] extends 'boolean' ? boolean :
           typeof DModelParameterRegistry[T]['type'] extends 'enum'
