@@ -8,6 +8,9 @@ import { useQuery } from '@tanstack/react-query';
 // import { fetchYouTubeTranscript } from './youtube.fetcher';
 import { apiAsync } from '~/common/util/trpc.client';
 
+import type { YouTubeVideoData } from './youtube.types';
+
+
 // configuration
 const USE_FRONTEND_FETCH = false;
 
@@ -18,7 +21,7 @@ export interface YTVideoTranscript {
   thumbnailUrl: string;
 }
 
-export async function youTubeGetVideoData(videoId: string) {
+export async function youTubeGetVideoData(videoId: string): Promise<YouTubeVideoData> {
   if (USE_FRONTEND_FETCH) {
     // return fetchYouTubeTranscript(videoId, url => frontendSideFetch(url).then(res => res.text()));
     throw new Error('Big-AGI: Browser youtube transcript download is disabled.');
