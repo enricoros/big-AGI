@@ -51,7 +51,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=development,enable=${{ github.ref == 'refs/heads/v1-dev' }}
             type=raw,value=stable,enable=${{ github.ref == 'refs/heads/v1-stable' }}
             type=ref,event=tag  # Use the tag name as a tag for tag builds
             type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
