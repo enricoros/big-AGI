@@ -13,7 +13,6 @@ on:
   push:
     branches:
       - v2-dev
-      #- v1-dev # Disabled because this is not needed anymore
       #- v1-stable  # Disabled as the v* tag is used for stable releases
     tags:
       - 'v*'  # Trigger on version tags (e.g., v1.7.0)
