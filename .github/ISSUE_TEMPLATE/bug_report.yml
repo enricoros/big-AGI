@@ -5,14 +5,30 @@ labels: [ 'type: bug' ]
 body:
   - type: markdown
     attributes:
-      value: Thank you for reporting a bug.
+      value: Thank you for reporting a bug. Please help us by providing accurate environment information.
+
+  - type: dropdown
+    attributes:
+      label: Environment
+      description: (required) Where are you experiencing this issue?
+      options:
+        - big-agi.com (production website)
+        - GitHub v2-dev branch
+        - GitHub other branch (specify in description)
+        - Docker container (specify in description)
+        - Local development
+        - Other
+    validations:
+      required: true
+
   - type: textarea
     attributes:
       label: Description
-      description: (required) Please provide a clear description. Please also provide the steps to reproduce.
+      description: (required) Please provide a clear description and **steps to reproduce**.
       placeholder: 'Concise description + steps to reproduce.'
     validations:
       required: true
+
   - type: textarea
     attributes:
       label: Device and browser
@@ -20,10 +36,12 @@ body:
       placeholder: 'Device: (e.g., iPhone 16, Pixel 9, PC, Macbook...), OS: (e.g., iOS 17, Windows 12), Browser: (e.g., Chrome 119, Safari 18, Firefox..)'
     validations:
       required: true
+
   - type: textarea
     attributes:
       label: Screenshots and more
       placeholder: 'Attach screenshots, or add any additional context here.'
+
   - type: checkboxes
     attributes:
       label: Willingness to Contribute
