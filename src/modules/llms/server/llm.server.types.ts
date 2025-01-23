@@ -77,7 +77,6 @@ const ModelParameterSpec_schema = z.object({
   ]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
-  upstreamDefault: z.any().optional(),
 });
 
 export const ModelDescription_schema = z.object({
