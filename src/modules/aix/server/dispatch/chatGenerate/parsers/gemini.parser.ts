@@ -67,7 +67,11 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
 
           // <- TextPart
           case 'text' in mPart:
-            pt.appendText(mPart.text || '');
+            // [Gemini, 2025-01-23] CoT support
+            if (mPart.thought)
+              pt.appendReasoningText(mPart.text || '');
+            else
+              pt.appendText(mPart.text || '');
             break;
 
           // <- FunctionCallPart
