@@ -65,7 +65,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
     _rayUpdate(ray.rayId, (ray) => ({
       message: {
         ...ray.message,
-        ...(incrementalFragments?.length ? { fragments: incrementalFragments } : {}),
+        ...(incrementalFragments?.length ? { fragments: [...incrementalFragments] } : {}),
         ...incrementalRest,
         ...(completed ? { pendingIncomplete: undefined } : {}), // clear the pending flag once the message is complete
         ...(incrementalFragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
