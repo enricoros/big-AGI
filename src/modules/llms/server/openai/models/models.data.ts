@@ -188,6 +188,26 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 250000, output: 1250000 },
   },
   {
+    id: 'openpipe:openrouter/cohere/command-r-08-2024',
+    label: '💾➜ Cohere Command R (08-2024)',
+    description: 'Command-R is a 35B parameter model that performs conversational language tasks at a higher quality, more reliably, and with a longer context than previous models. It can be used for complex workflows like code generation, retrieval augmented generation (RAG), tool use, and agents.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4000,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 37500, output: 150000 },
+  },
+  {
+    id: 'openpipe:openrouter/cohere/command-r-plus-08-2024',
+    label: '💾➜ Cohere Command R+ (08-2024)',
+    description: 'Command R+ 08-2024 is an update of Command R+ with roughly 50% higher throughput and 25% lower latencies compared to the previous version, while keeping the hardware footprint the same.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4000,
+    trainingDataCutoff: '2024-01',
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: { input: 2375000, output: 9500000 },
+  },
+  {
     id: 'openpipe:openrouter/sophosympatheia/rogue-rose-103b-v0.2:free',
     label: '💾➜ Rogue Rose 103B v0.2 🎁',
     description: 'Rogue Rose demonstrates strong capabilities in roleplaying and storytelling applications, potentially surpassing other models in the 103-120B parameter range. While it occasionally exhibits inconsistencies with scene logic, the overall interaction quality represents an advancement in natural language processing for creative applications.',
@@ -1077,7 +1097,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 142500, output: 570000 },
   },
 {
-  id: 'openpipe:deepseek/deepseek-r1',
+  id: 'openpipe:openrouter/deepseek/deepseek-r1',
   label: '💾➜ DeepSeek R1',
   description: 'DeepSeek-R1 is here!\n\n⚡ Performance on par with OpenAI-o1\n📖 Fully open-source model & technical report\n🏆 MIT licensed: Distill & commercialize freely!',
   contextWindow: 64000,
@@ -1087,7 +1107,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 550000, output: 2190000 },
 },
 {
-  id: 'openpipe:sophosympatheia/rogue-rose-103b-v0.2:free',
+  id: 'openpipe:openrouter/sophosympatheia/rogue-rose-103b-v0.2:free',
   label: '💾➜ Rogue Rose 103B v0.2 🎁',
   description: 'Rogue Rose demonstrates strong capabilities in roleplaying and storytelling applications, potentially surpassing other models in the 103-120B parameter range. While it occasionally exhibits inconsistencies with scene logic, the overall interaction quality represents an advancement in natural language processing for creative applications. Based on a 120-layer frankenmerge model combining two custom 70B architectures.',
   contextWindow: 4096,
@@ -1097,7 +1117,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 0, output: 0 },
 },
 {
-  id: 'openpipe:minimax/minimax-01',
+  id: 'openpipe:openrouter/minimax/minimax-01',
   label: '💾➜ MiniMax-01 🎁',
   description: 'MiniMax-01 combines MiniMax-Text-01 for text generation and MiniMax-VL-01 for image understanding. It has 456 billion parameters, with 45.9 billion parameters activated per inference, and can handle a context of up to 4 million tokens. The text model adopts a hybrid architecture combining Lightning Attention, Softmax Attention, and Mixture-of-Experts (MoE). The image model adopts the "ViT-MLP-LLM" framework.',
   contextWindow: 1000192,
@@ -1107,7 +1127,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 200, output: 1100 },
 },
 {
-  id: 'openpipe:mistralai/codestral-2501',
+  id: 'openpipe:openrouter/mistralai/codestral-2501',
   label: '💾➜ Mistral Codestral 2501 🎁',
   description: 'Mistral\'s cutting-edge language model for coding. Codestral specializes in low-latency, high-frequency tasks such as fill-in-the-middle (FIM), code correction and test generation. Features a massive 256K context window for handling large codebases and documentation.',
   contextWindow: 256000,
@@ -1117,7 +1137,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 300, output: 900 },
 },
 {
-  id: 'openpipe:microsoft/phi-4',
+  id: 'openpipe:openrouter/microsoft/phi-4',
   label: '💾➜ Microsoft Phi-4 🎁',
   description: 'Microsoft Research Phi-4 is designed to perform well in complex reasoning tasks and can operate efficiently in situations with limited memory or where quick responses are needed. At 14 billion parameters, it was trained on a mix of high-quality synthetic datasets, data from curated websites, and academic materials. It has undergone careful improvement to follow instructions accurately and maintain strong safety standards.',
   contextWindow: 16384,
@@ -1127,7 +1147,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 70, output: 140 },
 },
 {
-  id: 'openpipe:sao10k/l3.1-70b-hanami-x1',
+  id: 'openpipe:openrouter/sao10k/l3.1-70b-hanami-x1',
   label: '💾➜ Sao10K Llama 3.1 70B Hanami x1 🎁',
   description: 'An experimental model from Sao10K built on their Euryale v2.2 base. Features enhanced context handling capabilities and improved performance on creative and narrative tasks. Optimized for maintaining coherence in extended conversations.',
   contextWindow: 16000,
@@ -1137,7 +1157,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 3000, output: 3000 },
 },
 {
-  id: 'openpipe:mistralai/codestral-mamba',
+  id: 'openpipe:openrouter/mistralai/codestral-mamba',
   label: '💾➜ Mistral Codestral Mamba 🎁',
   description: 'A 7.3B parameter Mamba-based model designed for code and reasoning tasks. Features linear time inference allowing for theoretically infinite sequence lengths, 256K token context window, and optimized for quick responses. Performs comparably to state-of-the-art transformer models in code and reasoning tasks. Available under Apache 2.0 license.',
   contextWindow: 256000,
@@ -1147,7 +1167,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 250, output: 250 },
 },
 {
-  id: 'openpipe:ai21/jamba-1-5-large',
+  id: 'openpipe:openrouter/ai21/jamba-1-5-large',
   label: '💾➜ AI21 Jamba 1.5 Large 🎁',
   description: 'Jamba 1.5 Large is part of AI21\'s new family of open models, offering superior speed, efficiency, and quality. Features a 256K effective context window, the longest among open models, enabling improved performance on tasks like document summarization and analysis. Built on a novel SSM-Transformer architecture, it outperforms larger models like Llama 3.1 70B on benchmarks while maintaining resource efficiency.',
   contextWindow: 256000,
@@ -1157,7 +1177,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 2000, output: 8000 },
 },
 {
-  id: 'openpipe:ai21/jamba-1-5-mini',
+  id: 'openpipe:openrouter/ai21/jamba-1-5-mini',
   label: '💾➜ AI21 Jamba 1.5 Mini 🎁',
   description: 'Jamba 1.5 Mini is the world\'s first production-grade Mamba-based model, combining SSM and Transformer architectures for a 256K context window and high efficiency. Works with 9 languages and can handle various writing and analysis tasks as well as or better than similar small models. Uses less computer memory and works faster with longer texts than previous designs.',
   contextWindow: 256000,
@@ -1167,7 +1187,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 200, output: 400 },
 },
 {
-  id: 'openpipe:microsoft/phi-3.5-mini-128k-instruct',
+  id: 'openpipe:openrouter/microsoft/phi-3.5-mini-128k-instruct',
   label: '💾➜ Microsoft Phi-3.5 Mini 128K 🎁',
   description: 'Phi-3.5 Mini uses 3.8B parameters and is a dense decoder-only transformer model. These models were trained with Phi-3 datasets that include both synthetic data and filtered, publicly available websites data, with a focus on high quality and reasoning-dense properties. Features robust safety measures and achieves state-of-the-art performance among models under 13B parameters.',
   contextWindow: 128000,
@@ -1177,7 +1197,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 100, output: 100 },
 },
 {
-  id: 'openpipe:microsoft/phi-3.5-medium-128k-instruct',
+  id: 'openpipe:openrouter/microsoft/phi-3.5-medium-128k-instruct',
   label: '💾➜ Microsoft Phi-3.5 Medium 128K 🎁',
   description: 'Phi-3.5 128K Medium is a powerful 14-billion parameter model designed for advanced language understanding, reasoning, and instruction following. Optimized through supervised fine-tuning and preference adjustments, it excels in tasks involving common sense, mathematics, logical reasoning, and code processing. In the MMLU-Pro eval, the model even comes close to a Llama3 70B level of performance.',
   contextWindow: 128000,
@@ -1187,7 +1207,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 1000, output: 1000 },
 },
 {
-  id: 'openpipe:liquid/lfm-40b',
+  id: 'openpipe:openrouter/liquid/lfm-40b',
   label: '💾➜ Liquid LFM 40B MoE 🎁',
   description: 'Liquid\'s 40.3B Mixture of Experts (MoE) model. Liquid Foundation Models (LFMs) are large neural networks built with computational units rooted in dynamic systems. LFMs are general-purpose AI models that can be used to model any kind of sequential data, including video, audio, text, time series, and signals.',
   contextWindow: 66000,
@@ -1197,7 +1217,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 150, output: 150 },
 },
 {
-  id: 'openpipe:thedrummer/rocinante-12b',
+  id: 'openpipe:openrouter/thedrummer/rocinante-12b',
   label: '💾➜ Rocinante 12B 🎁',
   description: 'Rocinante 12B is designed for engaging storytelling and rich prose. Early testers have reported expanded vocabulary with unique and expressive word choices, enhanced creativity for vivid narratives, and ability to generate adventure-filled and captivating stories.',
   contextWindow: 32768,
@@ -1207,7 +1227,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 250, output: 500 },
 },
 {
-  id: 'openpipe:qwen/qwen-2.5-72b-instruct-turbo',
+  id: 'openpipe:openrouter/qwen/qwen-2.5-72b-instruct-turbo',
   label: '💾➜ Qwen 2.5 72B Instruct Turbo 🎁',
   description: 'High-performance 72B parameter model optimized for speed and efficiency. Features state-of-the-art instruction following capabilities and enhanced reasoning. Achieves 93.1 on RULER benchmark and excels in long-text tasks with 100% accuracy in 1M length Passkey Retrieval. Particularly strong in technical and analytical tasks.',
   contextWindow: 32768,
@@ -1227,7 +1247,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 200000, output: 400000 },
 },
 {
-  id: 'openpipe:microsoft/wizardlm-2-8x22b',
+  id: 'openpipe:openrouter/microsoft/wizardlm-2-8x22b',
   label: '💾➜ WizardLM 2 8x22B 🎁',
   description: 'WizardLM-2 8x22B is Microsoft AI\'s most advanced Wizard model. It demonstrates highly competitive performance compared to leading proprietary models, and consistently outperforms all existing state-of-the-art opensource models. Features sophisticated mixture-of-experts architecture for enhanced problem-solving. Built as an instruct finetune of Mixtral 8x22B.',
   contextWindow: 65536,
@@ -1237,7 +1257,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 500, output: 500 },
 },
 {
-  id: 'openpipe:microsoft/wizardlm-2-7b',
+  id: 'openpipe:openrouter/microsoft/wizardlm-2-7b',
   label: '💾➜ WizardLM 2 7B 🎁',
   description: 'WizardLM-2 7B is the smaller variant of Microsoft AI\'s latest Wizard model. It is the fastest and achieves comparable performance with existing 10x larger opensource leading models. Built as a finetune of Mistral 7B Instruct, using the same technique as WizardLM-2 8x22B.',
   contextWindow: 32000,
@@ -1247,7 +1267,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 70, output: 70 },
 },
 {
-  id: 'openpipe:google/gemini-pro-1.5',
+  id: 'openpipe:openrouter/google/gemini-pro-1.5',
   label: '💾➜ Google Gemini Pro 1.5 🎁',
   description: 'Google\'s latest multimodal model, supports image and video inputs in text or chat prompts. Optimized for language tasks including code generation, text generation and editing, problem solving, recommendations, information extraction, data extraction or generation, and AI agents. Features an industry-leading 2M token context window.',
   contextWindow: 2000000,
@@ -1257,7 +1277,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 1250, output: 5000 },
 },
 {
-  id: 'openpipe:openai/gpt-4-turbo',
+  id: 'openpipe:openrouter/openai/gpt-4-turbo',
   label: '💾➜ OpenAI GPT-4 Turbo 🎁',
   description: 'The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling. Features improved instruction following, reproducible outputs, and parallel function calling. Training data up to December 2023.',
   contextWindow: 128000,
@@ -1267,7 +1287,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 10000, output: 30000 },
 },
 {
-  id: 'openpipe:cohere/command-r-plus',
+  id: 'openpipe:openrouter/cohere/command-r-plus',
   label: '💾➜ Cohere Command R+ 🎁',
   description: 'Command R+ is a new, 104B-parameter LLM from Cohere. It\'s useful for roleplay, general consumer usecases, and Retrieval Augmented Generation (RAG). Features multilingual support for ten key languages to facilitate global business operations. Offers roughly 50% higher throughput and 25% lower latencies compared to previous Command R+ versions.',
   contextWindow: 128000,
@@ -1277,7 +1297,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 2850, output: 14250 },
 },
 {
-  id: 'openpipe:databricks/dbrx-instruct',
+  id: 'openpipe:openrouter/databricks/dbrx-instruct',
   label: '💾➜ Databricks DBRX 132B Instruct 🎁',
   description: 'DBRX is a new open source large language model developed by Databricks. At 132B parameters, it outperforms existing open source LLMs like Llama 2 70B and Mixtral-8x7b on standard industry benchmarks. Uses a fine-grained mixture-of-experts (MoE) architecture with 36B active parameters on any input. Pre-trained on 12T tokens of text and code data.',
   contextWindow: 32768,
@@ -1287,7 +1307,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 1080, output: 1080 },
 },
 {
-  id: 'openpipe:sophosympatheia/midnight-rose-70b',
+  id: 'openpipe:openrouter/sophosympatheia/midnight-rose-70b',
   label: '💾➜ Midnight Rose 70B 🎁',
   description: 'A merge with a complex family tree, this model was crafted for roleplaying and storytelling. Midnight Rose is a successor to Rogue Rose and Aurora Nights and improves upon them both. Features enhanced creative writing capabilities and produces lengthy output by default. Descends from earlier versions of Midnight Rose and Wizard Tulu Dolphin 70B.',
   contextWindow: 4096,
@@ -1297,7 +1317,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 800, output: 800 },
 },
 {
-  id: 'openpipe:01-ai/yi-large',
+  id: 'openpipe:openrouter/01-ai/yi-large',
   label: '💾➜ 01.AI Yi Large 🎁',
   description: 'The Yi Large model was designed by 01.AI with knowledge search, data classification, human-like chat bots, and customer service in mind. Stands out for its multilingual proficiency, particularly in Spanish, Chinese, Japanese, German, and French.',
   contextWindow: 32768,
@@ -1307,7 +1327,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 3000, output: 3000 },
 },
 {
-  id: 'openpipe:ai21/jamba-instruct',
+  id: 'openpipe:openrouter/ai21/jamba-instruct',
   label: '💾➜ AI21 Jamba Instruct 🎁',
   description: 'The Jamba-Instruct model is an instruction-tuned variant of their hybrid SSM-Transformer Jamba model, specifically optimized for enterprise applications. Features a 256K context window for processing extensive information like financial reports or legal documents. Designed with enhanced safety features to ensure secure deployment in enterprise environments.',
   contextWindow: 256000,
@@ -1317,7 +1337,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 500, output: 700 },
 },
 {
-  id: 'openpipe:anthropic/claude-3.5-sonnet-20240620',
+  id: 'openpipe:openrouter/anthropic/claude-3.5-sonnet-20240620',
   label: '💾➜ Claude 3.5 Sonnet 🎁',
   description: 'Claude 3.5 Sonnet delivers better-than-Opus capabilities, faster-than-Sonnet speeds, at the same Sonnet prices. Particularly excels at coding (autonomously writes, edits, and runs code), data science (navigates unstructured data while using multiple tools), visual processing (interpreting charts, graphs, and images), and agentic tasks (complex multi-step problem solving).',
   contextWindow: 200000,
@@ -1327,7 +1347,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 3000, output: 15000 },
 },
 {
-  id: 'openpipe:anthropic/claude-3.5-haiku',
+  id: 'openpipe:openrouter/anthropic/claude-3.5-haiku',
   label: '💾➜ Claude 3.5 Haiku 🎁',
   description: 'Claude 3.5 Haiku is Anthropic\'s fastest and most compact model for near-instant responsiveness. Features quick and accurate targeted performance, making it ideal for applications requiring high throughput and low latency. Maintains high quality output while delivering significantly faster response times.',
   contextWindow: 200000,
@@ -1337,7 +1357,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 250, output: 1250 },
 },
 {
-  id: 'openpipe:anthropic/claude-3-opus',
+  id: 'openpipe:openrouter/anthropic/claude-3-opus',
   label: '💾➜ Claude 3 Opus 🎁',
   description: 'Claude 3 Opus is Anthropic\'s most powerful model for highly complex tasks. It boasts top-level performance, intelligence, fluency, and understanding. Features comprehensive multimodal capabilities and excels at tasks requiring sophisticated reasoning and analysis. Particularly strong in research, technical documentation, and complex problem-solving scenarios.',
   contextWindow: 200000,
@@ -1347,7 +1367,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 15000, output: 75000 },
 },
 {
-  id: 'openpipe:google/gemini-flash-1.5',
+  id: 'openpipe:openrouter/google/gemini-flash-1.5',
   label: '💾➜ Google Gemini Flash 1.5 🎁',
   description: 'Gemini 1.5 Flash is a foundation model that performs well at a variety of multimodal tasks such as visual understanding, classification, summarization, and content creation from image, audio and video. Designed for high-volume, high-frequency tasks where cost and latency matter. Achieves comparable quality to other Gemini Pro models at significantly reduced cost.',
   contextWindow: 1000000,
@@ -1357,7 +1377,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 75, output: 300 },
 },
 {
-  id: 'openpipe:google/gemini-flash-1.5-8b',
+  id: 'openpipe:openrouter/google/gemini-flash-1.5-8b',
   label: '💾➜ Google Gemini Flash 1.5 8B 🎁',
   description: 'Gemini Flash 1.5 8B is optimized for speed and efficiency, offering enhanced performance in small prompt tasks like chat, transcription, and translation. Features reduced latency making it highly effective for real-time and large-scale operations. This model focuses on cost-effective solutions while maintaining high-quality results.',
   contextWindow: 1000000,
@@ -1367,7 +1387,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 37.5, output: 150 },
 },
 {
-  id: 'openpipe:google/gemini-flash-1.5-exp',
+  id: 'openpipe:openrouter/google/gemini-flash-1.5-exp',
   label: '💾➜ Google Gemini Flash 1.5 Experimental 🎁',
   description: 'Gemini 1.5 Flash Experimental is an experimental version of the Gemini 1.5 Flash model. Features comprehensive vision capabilities, sophisticated function calling, and structured JSON output generation. Excels at complex reasoning tasks while maintaining faster inference speeds. Note: This model is experimental and not suited for production use-cases.',
   contextWindow: 1000000,
@@ -1377,7 +1397,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 0, output: 0 },
 },
 {
-  id: 'openpipe:google/gemini-2.0-flash-thinking-exp-1219:free',
+  id: 'openpipe:openrouter/google/gemini-2.0-flash-thinking-exp-1219:free',
   label: '💾➜ Gemini 2.0 Flash Thinking Experimental 🎁',
   description: 'Gemini 2.0 Flash Thinking Mode is an experimental model that\'s trained to generate the "thinking process" the model goes through as part of its response. Features stronger reasoning capabilities than the base Gemini 2.0 Flash model due to this explicit thought generation. Particularly useful for tasks requiring step-by-step reasoning or explanation.',
   contextWindow: 40000,
@@ -1387,7 +1407,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 0, output: 0 },
 },
 {
-  id: 'openpipe:sao10k/l3.3-euryale-70b',
+  id: 'openpipe:openrouter/sao10k/l3.3-euryale-70b',
   label: '💾➜ Sao10K Llama 3.3 Euryale 70B 🎁',
   description: 'Euryale L3.3 70B is a model focused on creative roleplay from Sao10k. Features enhanced narrative capabilities and character development. Successor to Euryale L3 70B v2.2 with improved context handling and creative writing abilities.',
   contextWindow: 131072,
@@ -1397,7 +1417,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 700, output: 800 },
 },
 {
-  id: 'openpipe:openai/o1',
+  id: 'openpipe:openrouter/openai/o1',
   label: '💾➜ OpenAI o1 🎁',
   description: 'The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology. Features sophisticated multimodal capabilities and a 200K token context window.',
   contextWindow: 200000,
@@ -1407,7 +1427,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 15000, output: 60000 },
 },
 {
-  id: 'openpipe:eva-unit-01/eva-llama-3.33-70b',
+  id: 'openpipe:openrouter/eva-unit-01/eva-llama-3.33-70b',
   label: '💾➜ EVA Llama 3.33 70B 🎁',
   description: 'EVA Llama 3.33 70B is a roleplay and storywriting specialist model. It is a full-parameter finetune of Llama-3.3-70B-Instruct on mixture of synthetic and natural data. Uses Celeste 70B 0.1 data mixture, greatly expanding it to improve versatility, creativity and "flavor" of the resulting model.',
   contextWindow: 16384,
@@ -1417,7 +1437,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 4000, output: 6000 },
 },
 {
-  id: 'openpipe:x-ai/grok-2-vision-1212',
+  id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
   label: '💾➜ xAI Grok 2 Vision 1212 🎁',
   description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications. Features enhanced steerability and reasoning capabilities for next-generation image solutions.',
   contextWindow: 32768,
@@ -1427,7 +1447,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 2000, output: 10000 },
 },
 {
-  id: 'openpipe:x-ai/grok-2-1212',
+  id: 'openpipe:openrouter/x-ai/grok-2-1212',
   label: '💾➜ xAI Grok 2 1212 🎁',
   description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model. Features improved reasoning capabilities and enhanced context handling with a 131K token window.',
   contextWindow: 131072,
@@ -1437,7 +1457,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 2000, output: 10000 },
 },
 {
-  id: 'openpipe:cohere/command-r-08-2024',
+  id: 'openpipe:openrouter/cohere/command-r-08-2024',
   label: '💾➜ Cohere Command R (08-2024) 🎁',
   description: 'Command R 08-2024 is an update of Command R with improved performance for multilingual retrieval-augmented generation (RAG) and tool use. Features better performance at math, code and reasoning tasks, competitive with the previous version of the larger Command R+ model.',
   contextWindow: 128000,
@@ -1447,7 +1467,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 142.5, output: 570 },
 },
 {
-  id: 'openpipe:cohere/command-r-plus-08-2024',
+  id: 'openpipe:openrouter/cohere/command-r-plus-08-2024',
   label: '💾➜ Cohere Command R+ (08-2024) 🎁',
   description: 'Command R+ 08-2024 is an update of Command R+ with roughly 50% higher throughput and 25% lower latencies compared to the previous version, while keeping the hardware footprint the same. Features enhanced performance across a wide range of tasks while maintaining efficiency.',
   contextWindow: 128000,
@@ -1457,7 +1477,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 2375, output: 9500 },
 },
 {
-  id: 'openpipe:qwen/qwen-2-vl-72b-instruct',
+  id: 'openpipe:openrouter/qwen/qwen-2-vl-72b-instruct',
   label: '💾➜ Qwen2-VL 72B Instruct 🎁',
   description: 'Qwen2 VL 72B is a multimodal LLM with state-of-the-art understanding of images of various resolution & ratio. Features ability to understand videos over 20 minutes long, agent capabilities for operating mobile devices and robots based on visual input, and multilingual support for text understanding in images across European languages, Japanese, Korean, Arabic, Vietnamese, etc.',
   contextWindow: 4096,
@@ -1467,7 +1487,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 400, output: 400 },
 },
 {
-  id: 'openpipe:qwen/qwen-2-vl-7b-instruct',
+  id: 'openpipe:openrouter/qwen/qwen-2-vl-7b-instruct',
   label: '💾➜ Qwen2-VL 7B Instruct 🎁',
   description: 'Qwen2 VL 7B is the smaller variant of Qwen\'s multimodal LLM family. Features the same capabilities as the 72B model including state-of-the-art visual understanding, video comprehension, and multilingual support for text in images. Optimized for efficiency while maintaining strong performance on visual tasks.',
   contextWindow: 4096,
@@ -1477,7 +1497,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 100, output: 100 },
 },
 {
-  id: 'openpipe:google/gemini-flash-1.5-8b-exp',
+  id: 'openpipe:openrouter/google/gemini-flash-1.5-8b-exp',
   label: '💾➜ Google Gemini Flash 1.5 8B Experimental 🎁',
   description: 'Gemini Flash 1.5 8B Experimental is an experimental, 8B parameter version of the Gemini Flash 1.5 model. Features multimodal capabilities and optimized performance for speed and efficiency. Note: This model is currently experimental and not suitable for production use-cases.',
   contextWindow: 1000000,
@@ -1487,7 +1507,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 0, output: 0 },
 },
 {
-  id: 'openpipe:perplexity/llama-3-sonar-large-32k-chat',
+  id: 'openpipe:openrouter/perplexity/llama-3-sonar-large-32k-chat',
   label: '💾➜ Perplexity Llama3 Sonar 70B 🎁',
   description: 'Llama3 Sonar is Perplexity\'s latest model family. It surpasses their earlier Sonar models in cost-efficiency, speed, and performance. Features enhanced reasoning capabilities and improved context handling with a 32K token window.',
   contextWindow: 32768,
@@ -1497,7 +1517,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 1000, output: 1000 },
 },
 {
-  id: 'openpipe:perplexity/llama-3-sonar-large-32k-online',
+  id: 'openpipe:openrouter/perplexity/llama-3-sonar-large-32k-online',
   label: '💾➜ Perplexity Llama3 Sonar 70B Online 🎁',
   description: 'Llama3 Sonar is Perplexity\'s latest model family. This is the online version with internet access, focused on delivering helpful, up-to-date, and factual responses. Features enhanced reasoning capabilities and improved context handling with a 28K token window.',
   contextWindow: 28000,
@@ -1507,7 +1527,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 1000, output: 1000 },
 },
 {
-  id: 'openpipe:perplexity/llama-3-sonar-small-32k-chat',
+  id: 'openpipe:openrouter/perplexity/llama-3-sonar-small-32k-chat',
   label: '💾➜ Perplexity Llama3 Sonar 8B 🎁',
   description: 'Llama3 Sonar is Perplexity\'s latest model family. This is their 8B parameter variant, offering an efficient balance of performance and speed. Features enhanced reasoning capabilities and improved context handling with a 32K token window.',
   contextWindow: 32768,
@@ -1517,7 +1537,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 200, output: 200 },
 },
 {
-  id: 'openpipe:perplexity/llama-3-sonar-small-32k-online',
+  id: 'openpipe:openrouter/perplexity/llama-3-sonar-small-32k-online',
   label: '💾➜ Perplexity Llama3 Sonar 8B Online 🎁',
   description: 'Llama3 Sonar is Perplexity\'s latest model family. This is the online version of their 8B parameter model with internet access, focused on delivering helpful, up-to-date, and factual responses. Features enhanced reasoning capabilities and improved context handling with a 28K token window.',
   contextWindow: 28000,
@@ -1527,7 +1547,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 200, output: 200 },
 },
 {
-  id: 'openpipe:perplexity/llama-3-sonar-medium-32k-chat',
+  id: 'openpipe:openrouter/perplexity/llama-3-sonar-medium-32k-chat',
   label: '💾➜ Perplexity Llama3 Sonar 34B 🎁',
   description: 'Llama3 Sonar is Perplexity\'s latest model family. This is their 34B parameter variant, offering a balanced compromise between the 8B and 70B models. Features enhanced reasoning capabilities and improved context handling with a 32K token window.',
   contextWindow: 32768,
@@ -1885,31 +1905,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 250000, output: 500000 },
     benchmark: { cbaElo: 1275 },
   },
-
-  {
-    id: 'openpipe:totalgpt/Midnight-Miqu-70B-v1.5',
-    label: '💾➜ Midnight Miqu 70B v1.5 🎁',
-    description: 'Creative writing focused 70B parameter model with exceptional performance in storytelling and roleplaying. Features advanced narrative generation capabilities and strong character consistency. Achieves consistent 77+ scores on EQ-Bench, demonstrating high emotional intelligence in dialogue generation.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Json],
-    chatPrice: { input: 200000, output: 400000 },
-    benchmark: { cbaElo: 1260 },
-  },
-
-  {
-    id: 'openpipe:totalgpt/WizardLM-2-8x22B',
-    label: '💾➜ WizardLM 2 8x22B 🎁',
-    description: 'Advanced reasoning model with exceptional performance in technical tasks. Features sophisticated mixture-of-experts architecture for enhanced problem-solving. Achieves 9.2 in reasoning, 9.4 in technical analysis, and 9.3 in language understanding benchmarks. Particularly excels at complex mathematical and scientific tasks.',
-    contextWindow: 65536,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 150000, output: 300000 },
-    benchmark: { cbaElo: 1280 },
-  },
-
+  
   {
     id: 'openpipe:totalgpt/alpindale-WizardLM-2-8x22B',
     label: '💾➜ Alpindale WizardLM 2 8x22B 🎁',
@@ -1923,7 +1919,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/lama-3-TenyxChat-DaybreakStorywriter-70B-fp8-dynamic',
+    id: 'openpipe:totalgpt/llama-3-TenyxChat-DaybreakStorywriter-70B-fp8-dynamic',
     label: '💾➜ TenyxChat Daybreak 70B 🎁',
     description: 'Llama 3-based storytelling model optimized with fp8 dynamic quantization for efficient deployment. Features enhanced narrative generation capabilities and strong character development. Particularly excels at maintaining consistent story arcs and dialogue across extended sequences.',
     contextWindow: 8192,
