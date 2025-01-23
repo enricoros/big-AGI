@@ -70,6 +70,12 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.topP = model.topP;
   }
 
+  // Thinking models: add showing the thinking trace
+  if (model.vndGeminiShowThoughts)
+    payload.generationConfig!.thinkingConfig = {
+      includeThoughts: true,
+    };
+
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
   if (!validated.success) {
