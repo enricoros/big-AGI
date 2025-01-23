@@ -244,7 +244,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 3000000, output: 3000000 },
   },
   {
-    id: 'openpipe:/deepseek/deepseek-chat',
+    id: 'openpipe:deepseek/deepseek-chat',
     label: '💾➜ DeepSeek V3',
     description: 'DeepSeek-V3 is the latest model from the DeepSeek team, building upon the instruction following and coding abilities of the previous versions. Pre-trained on nearly 15 trillion tokens, the reported evaluations reveal that the model outperforms other open-source models and rivals leading closed-source models.',
     contextWindow: 64000,
@@ -1736,7 +1736,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:totalgpt/Hermes-3-Llama-3.1-70B-FP8',
+    id: 'openpipe:totalgpt/NousResearch-Hermes-3-Llama-3.1-70B-FP8',
     label: '💾➜ NousResearch Hermes 3 70B 🎁',
     description: 'Advanced reasoning model based on Llama 3.1 architecture, optimized with FP8 quantization for efficient deployment. Features strong capabilities in structured outputs and function calling. Excels at complex reasoning tasks and maintains high accuracy in technical domains. Supports 128K context window for handling extensive documents.',
     contextWindow: 128000,
