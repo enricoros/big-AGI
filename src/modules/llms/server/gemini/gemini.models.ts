@@ -79,19 +79,11 @@ const _knownGeminiModels: ({
   description?: string,
   deprecated?: string, // Gemini may provide deprecation dates
   _delete?: boolean, // some gemini models are not acknowledged by Google Docs anymore, and leaving them in the list will confuse users
-} & Pick<ModelDescriptionSchema, 'interfaces' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
+} & Pick<ModelDescriptionSchema, 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
   // New Experimental Models
   {
     id: 'models/gemini-exp-1206',
-    isPreview: true,
-    chatPrice: geminiExpPricingFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    // hidden: true,
-    // description: 'Quality improvements',
-  },
-  {
-    id: 'models/gemini-exp-1121',
     isPreview: true,
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
@@ -104,10 +96,21 @@ const _knownGeminiModels: ({
 
   // Gemini 2.0 Flash Thinking models
   {
-    id: 'models/gemini-2.0-flash-thinking-exp',
-    symLink: 'models/gemini-2.0-flash-thinking-exp-1219',
+    id: 'models/gemini-2.0-flash-thinking-exp', // alias to the latest Flash Thinking model
+    symLink: 'models/gemini-2.0-flash-thinking-exp-01-21',
+    // copied from symlinked
     chatPrice: geminiExpPricingFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
+    benchmark: { cbaElo: 1369 },
+  },
+  {
+    id: 'models/gemini-2.0-flash-thinking-exp-01-21',
+    labelOverride: 'Gemini 2.0 Flash Thinking Experimental 01-21',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1369 },
   },
   {
@@ -116,7 +119,9 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1369 },
+    _delete: true, // replaced by `gemini-2.0-flash-thinking-exp-01-21`
   },
 
 
@@ -172,6 +177,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
+    _delete: true, // replaced by gemini-1.5-flash-8b
   },
   {
     id: 'models/gemini-1.5-flash-8b-exp-0827',
@@ -180,6 +186,7 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
     benchmark: { cbaElo: 1205 },
+    _delete: true, // replaced by gemini-1.5-flash-8b
   },
   {
     id: 'models/gemini-1.5-flash-8b-latest',
@@ -209,6 +216,15 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     hidden: true,
+    _delete: true, // replaced by gemini-exp-1206
+  },
+  {
+    id: 'models/gemini-1.5-pro-exp-0827',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
+    hidden: true,
+    _delete: true, // replaced by gemini-exp-1206
   },
   {
     id: 'models/gemini-1.5-pro-latest', // updated to latest stable version
@@ -252,7 +268,7 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-1.0-pro-001+',
     chatPrice: gemini10ProPricing,
     interfaces: [LLM_IF_OAI_Chat],
-    _delete: true, // confusing
+    _delete: true, // kept for reference, but doc states deprecation on 2025-02-15
     deprecated: '2025-02-15',
   },
   {
@@ -366,6 +382,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     maxCompletionTokens: outputTokenLimit,
     // trainingDataCutoff: knownModel?.trainingDataCutoff, // disabled as we don't get this from Gemini
     interfaces,
+    parameterSpecs: knownModel?.parameterSpecs,
     // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
     benchmark: knownModel?.benchmark,
     chatPrice: knownModel?.chatPrice,
@@ -373,4 +390,3 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     // deprecated: knownModel?.deprecated,
   };
 }
-
