@@ -379,6 +379,7 @@ export namespace AixWire_API {
       .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
     maxTokens: z.number().min(1).optional(),
     topP: z.number().min(0).max(1).optional(),
+    vndGeminiShowThoughts: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
   });

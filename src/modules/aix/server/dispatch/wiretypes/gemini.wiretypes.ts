@@ -395,6 +395,11 @@ export namespace GeminiWire_API_Generate_Content {
     topP: z.number().optional(),
     topK: z.number().int().optional(),
 
+    // Added on 2025-01-23 - undocumented yet, thinking traces
+    thinkingConfig: z.object({
+      includeThoughts: z.boolean().optional(),
+    }).optional(),
+
     // Added on 2025-01-10 - commented out for now
     // presencePenalty: z.number().optional(),
     // frequencyPenalty: z.number().optional(),
