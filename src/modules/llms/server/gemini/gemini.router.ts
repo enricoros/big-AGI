@@ -20,7 +20,7 @@ const DEFAULT_GEMINI_HOST = 'https://generativelanguage.googleapis.com';
 
 // Mappers
 
-export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
+export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string, useV1Alpha: boolean): { headers: HeadersInit, url: string } {
 
   const geminiHost = fixupHost(access.geminiHost || DEFAULT_GEMINI_HOST, apiPath);
   let geminiKey = access.geminiKey || env.GEMINI_API_KEY || '';
@@ -41,6 +41,10 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
     apiPath = apiPath.replace('{model=models/*}', modelRefId);
   }
 
+  // [Gemini, 2025-01-23] CoT support - requires `v1alpha` Gemini API
+  if (useV1Alpha)
+    apiPath = apiPath.replaceAll('v1beta', 'v1alpha');
+
   return {
     headers: {
       'Content-Type': 'application/json',
@@ -52,13 +56,13 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
 }
 
 
-async function geminiGET<TOut extends object>(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = geminiAccess(access, modelRefId, apiPath);
+async function geminiGET<TOut extends object>(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string /*, signal?: AbortSignal*/, useV1Alpha: boolean): Promise<TOut> {
+  const { headers, url } = geminiAccess(access, modelRefId, apiPath, useV1Alpha);
   return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Gemini' });
 }
 
-async function geminiPOST<TOut extends object, TPostBody extends object>(access: GeminiAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = geminiAccess(access, modelRefId, apiPath);
+async function geminiPOST<TOut extends object, TPostBody extends object>(access: GeminiAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/, useV1Alpha: boolean): Promise<TOut> {
+  const { headers, url } = geminiAccess(access, modelRefId, apiPath, useV1Alpha);
   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Gemini' });
 }
 
@@ -92,7 +96,7 @@ export const llmGeminiRouter = createTRPCRouter({
     .query(async ({ input }) => {
 
       // get the models
-      const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath);
+      const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath, false);
       const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
 
       // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,

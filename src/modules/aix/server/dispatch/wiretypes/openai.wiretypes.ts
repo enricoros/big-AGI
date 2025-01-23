@@ -480,6 +480,8 @@ export namespace OpenAIWire_API_Chat_Completions {
       .nullable(), // [Deepseek] added .nullable()
     // delta-text content
     content: z.string().nullable().optional(),
+    // delta-reasoning content
+    reasoning_content: z.string().nullable().optional(), // [Deepseek, 2025-01-20]
     // delta-tool-calls content
     tool_calls: z.array(ChunkDeltaToolCalls_schema).optional()
       .nullable(), // [TogetherAI] added .nullable(), see https://github.com/togethercomputer/together-python/issues/160

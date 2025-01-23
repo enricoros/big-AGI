@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { getImageInformationFromBytes } from '~/modules/t2i/t2i.server';
 
+import type { YouTubeVideoData } from './youtube.types';
+
 
 /// THIS IS NORMALLY SERVER-SIDE CODE - do not include/invoke in the frontend ///
 
@@ -14,20 +16,6 @@ function extractFromTo(html: string, from: string, to: string, label: string): s
   return html.substring(indexStart, indexEnd);
 }
 
-
-interface YouTubeVideoData {
-  videoId: string;
-  videoTitle: string;
-  videoDescription: string;
-  thumbnailUrl: string;
-  thumbnailImage: null | {
-    imgDataUrl: string;
-    mimeType: string;
-    width: number;
-    height: number;
-  };
-  transcript: string;
-}
 
 function decodeHtmlEntities(text: string): string {
   const entities: { [key: string]: string } = {

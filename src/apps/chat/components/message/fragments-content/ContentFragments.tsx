@@ -13,6 +13,7 @@ import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
 import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
 import { BlockPartImageRef } from './BlockPartImageRef';
+import { BlockPartModelAux } from './BlockPartModelAux';
 import { BlockPartPlaceholder } from './BlockPartPlaceholder';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
@@ -63,7 +64,7 @@ export function ContentFragments(props: {
 
   onFragmentBlank: () => void
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
-  onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
   onMessageDelete?: () => void,
 
   onContextMenu?: (event: React.MouseEvent) => void;
@@ -111,6 +112,20 @@ export function ContentFragments(props: {
       if (isVoidFragment(fragment)) {
         const { fId, part } = fragment;
         switch (part.pt) {
+          case 'ma': {
+            return (
+              <BlockPartModelAux
+                key={fId}
+                fragmentId={fId}
+                auxType={part.aType}
+                auxText={part.aText}
+                zenMode={props.uiComplexityMode === 'minimal'}
+                contentScaling={props.contentScaling}
+                onFragmentReplace={props.onFragmentReplace}
+              />
+            );
+          }
+
           case 'ph': {
             return (
               <BlockPartPlaceholder
@@ -126,14 +141,15 @@ export function ContentFragments(props: {
 
           case '_pt_sentinel':
           default:
-            <ScaledTextBlockRenderer
-              key={fId}
-              text={`Unknown Void Fragment: ${part.pt}`}
-              contentScaling={props.contentScaling}
-              textRenderVariant='text'
-              showAsDanger
-            />;
-            break;
+            return (
+              <ScaledTextBlockRenderer
+                key={fId}
+                text={`Unknown Void Fragment: ${part.pt}`}
+                contentScaling={props.contentScaling}
+                textRenderVariant='text'
+                showAsDanger
+              />
+            );
         }
       }
 

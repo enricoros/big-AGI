@@ -177,6 +177,19 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this._queueParticleS();
   }
 
+  /** Appends reasoning text, which is its own kind of content */
+  appendReasoningText(textChunk: string) {
+    // if there was another Part in the making, queue it
+    if (this.currentPart)
+      this.endMessagePart();
+    this.currentPart = {
+      p: 'tr_',
+      _t: textChunk,
+    };
+    // [throttle] send it immediately for now
+    this._queueParticleS();
+  }
+
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
   private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
     if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE)

@@ -36,7 +36,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
-  const hotFixThrowCannotFC = openAIDialect === 'deepseek' || openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
+  const hotFixThrowCannotFC = openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
 
   // Model incompatibilities -> Hotfixes
 
@@ -71,7 +71,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy),
     parallel_tool_calls: undefined,
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
-    temperature: model.temperature !== undefined ? model.temperature : undefined,
+    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
     top_p: undefined,
     n: hotFixOnlySupportN1 ? undefined : 0, // NOTE: we choose to not support this at the API level - most downstram ecosystem supports 1 only, which is the default
     stream: streaming,

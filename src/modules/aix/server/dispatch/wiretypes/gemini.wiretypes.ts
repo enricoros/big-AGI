@@ -52,6 +52,7 @@ export namespace GeminiWire_ContentParts {
 
   export const TextPart_schema = z.object({
     text: z.string(),
+    thought: z.boolean().optional(), // [Gemini, 2025-01-23] CoT support
   });
 
   const InlineDataPart_schema = z.object({
@@ -394,6 +395,11 @@ export namespace GeminiWire_API_Generate_Content {
     temperature: z.number().min(0).max(2).optional(),
     topP: z.number().optional(),
     topK: z.number().int().optional(),
+
+    // [Gemini, 2025-01-23] CoT support - undocumented yet
+    thinkingConfig: z.object({
+      includeThoughts: z.boolean().optional(),
+    }).optional(),
 
     // Added on 2025-01-10 - commented out for now
     // presencePenalty: z.number().optional(),
