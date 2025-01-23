@@ -3,74 +3,82 @@ import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
-  // Perplexity Sonar Online Models
+  // Current Perplexity Models
+  {
+    id: 'sonar-pro',
+    label: 'Sonar Pro 🌐',
+    description: 'Advanced model with enhanced search capabilities and 200k context window',
+    contextWindow: 200000,
+    maxCompletionTokens: 8000,
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: {
+      input: 3,    // $3 per 1M tokens
+      output: 15,  // $15 per 1M tokens
+      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+    },
+  },
+  {
+    id: 'sonar',
+    label: 'Sonar 🌐',
+    description: 'Base model with 127k context window',
+    contextWindow: 127000,
+    maxCompletionTokens: 4000,
+    interfaces: [LLM_IF_OAI_Chat],
+    chatPrice: {
+      input: 1,   // $1 per 1M tokens
+      output: 1,  // $1 per 1M tokens
+      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+    },
+  },
+
+  // Legacy Models (to be deprecated after 2/22/2025)
   {
     id: 'llama-3.1-sonar-small-128k-online',
-    label: 'Sonar Small Online 🌐',
-    description: 'Llama 3.1 Sonar Small 128k Online',
-    contextWindow: 127072,
+    label: 'Sonar Small Online (Legacy)',
+    description: 'Llama 3.1 Sonar Small 128k Online (Legacy, deprecated after 2/22/2025)',
+    contextWindow: 127000,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, /* Price per 1M tokens in USD */ output: 0.2 /* Same as input *//* perRequest: 0.005, // $5 per 1000 requests = $0.005 per request */ },
+    chatPrice: {
+      input: 0.2,
+      output: 0.2,
+      // Note: also has $5 per 1000 requests cost
+    },
+    hidden: true,
   },
   {
     id: 'llama-3.1-sonar-large-128k-online',
-    label: 'Sonar Large Online 🌐',
-    description: 'Llama 3.1 Sonar Large 128k Online',
-    contextWindow: 127072,
+    label: 'Sonar Large Online (Legacy)',
+    description: 'Llama 3.1 Sonar Large 128k Online (Legacy, deprecated after 2/22/2025)',
+    contextWindow: 127000,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 1, output: 1/*perRequest: 0.005,*/ },
+    chatPrice: {
+      input: 1,
+      output: 1,
+      // Note: also has $5 per 1000 requests cost
+    },
+    hidden: true,
   },
   {
     id: 'llama-3.1-sonar-huge-128k-online',
-    label: 'Sonar Huge Online 🌐',
-    description: 'Llama 3.1 Sonar Huge 128k Online',
-    contextWindow: 127072,
+    label: 'Sonar Huge Online (Legacy)',
+    description: 'Llama 3.1 Sonar Huge 128k Online (Legacy, deprecated after 2/22/2025)',
+    contextWindow: 127000,
     interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 5, output: 5/*perRequest: 0.005,*/ },
-  },
-
-  // Perplexity Sonar Chat Models
-  {
-    id: 'llama-3.1-sonar-small-128k-chat',
-    label: 'Sonar Small Chat',
-    description: 'Llama 3.1 Sonar Small 128k Chat',
-    contextWindow: 127072,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.2 },
-  },
-  {
-    id: 'llama-3.1-sonar-large-128k-chat',
-    label: 'Sonar Large Chat',
-    description: 'Llama 3.1 Sonar Large 128k Chat',
-    contextWindow: 127072,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 1, output: 1 },
-  },
-
-  // Open-Source Models
-  {
-    id: 'llama-3.1-8b-instruct',
-    label: 'Llama 3.1 8B Instruct',
-    description: 'Llama 3.1 8B Instruct',
-    contextWindow: 131072,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 0.2, output: 0.2 },
-  },
-  {
-    id: 'llama-3.1-70b-instruct',
-    label: 'Llama 3.1 70B Instruct',
-    description: 'Llama 3.1 70B Instruct',
-    contextWindow: 131072,
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 1, output: 1 },
+    chatPrice: {
+      input: 5,
+      output: 5,
+      // Note: also has $5 per 1000 requests cost
+    },
+    hidden: true,
   },
 ];
 
 const perplexityAIModelFamilyOrder = [
+  'sonar-pro',
+  'sonar',
   'llama-3.1-sonar-huge',
   'llama-3.1-sonar-large',
   'llama-3.1-sonar-small',
-  'llama-3.1',
   '',
 ];
 
