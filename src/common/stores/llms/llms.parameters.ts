@@ -66,6 +66,13 @@ export const DModelParameterRegistry = {
     incompatibleWith: ['temperature'] as const,
   } as const,
 
+  llmVndGeminiShowThoughts: {
+    label: 'Show Thoughts',
+    type: 'boolean' as const,
+    description: 'Show Gemini\'s reasoning process',
+    initialValue: true,
+  } as const,
+
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,

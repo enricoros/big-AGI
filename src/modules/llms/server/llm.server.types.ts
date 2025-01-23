@@ -64,12 +64,17 @@ const PricingChatGenerate_schema = z.object({
 /// Model Description (out)
 const ModelParameterSpec_schema = z.object({
   /**
+   * User-changeable parameters for this LLM.
+   *
    * Uncommon idiosyncratic parameters for this model
    * - we have only the 'extra' params here, as `llmRef`, `llmResponseTokens` and `llmTemperature` are common
    * - see `llms.parameters.ts` for the full list
+   *
+   * NOTE: (!) keep this in sync with `DModelParameterId` (llms.parameters.ts) which is also used in AixAPI_Model when making the request
    */
   paramId: z.enum([
     'llmTopP',
+    'llmVndGeminiShowThoughts',  // vendor-specific
     'llmVndOaiReasoningEffort',  // vendor-specific
     // Optimization: we are not using this, but linking the 'presence' of the spec to the vndOaiReasoningEffort spec.
     // This may change in the future if OpenAI decouples reasoning effort and markdown restoration.
