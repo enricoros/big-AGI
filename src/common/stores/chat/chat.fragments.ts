@@ -308,8 +308,9 @@ function _createSentinelFragment(): _SentinelFragment {
 }
 
 
-export function duplicateDMessageFragmentsNoVoid(fragments: Readonly<DMessageFragment[]>): DMessageFragment[] {
-  return fragments.map(_duplicateFragment).filter(f => f.ft !== 'void');
+export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[]>, skipVoid: boolean): DMessageFragment[] {
+  return !skipVoid ? fragments.map(_duplicateFragment)
+    : fragments.map(_duplicateFragment).filter(f => f.ft !== 'void');
 }
 
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
