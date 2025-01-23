@@ -13,6 +13,10 @@ import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId 
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 
+// configuration
+// const REASONING_COLOR = '#ca74b8'; // '#f22a85' (folder-aligned), '#ca74b8' (emoji-aligned)
+
+
 const _styles = {
 
   block: {
@@ -22,18 +26,29 @@ const _styles = {
   chip: {
     px: 1.5,
     py: 0.375,
-    boxShadow: '0px 2px 4px -2px rgba(0, 0, 0, 0.25)',
+    outline: '1px solid',
+    outlineColor: 'success.solidBg', // .outlinedBorder
+    boxShadow: `1px 2px 4px -3px var(--joy-palette-success-solidBg)`,
+  } as const,
+
+  chipIcon: {
+    fontSize: '1rem',
+    mr: 0.5,
   } as const,
 
   chipExpanded: {
     px: 1.5,
     py: 0.375,
+    // borderRadius: 'sm',
+    // transition: 'border-radius 0.2s ease-in-out',
   } as const,
 
   text: {
-    backgroundColor: 'background.level1',
-    borderRadius: 'md',
-    boxShadow: 'inset 1px 1px 4px -3px var(--joy-palette-neutral-solidBg)',
+    borderRadius: '12px',
+    border: '1px solid',
+    borderColor: 'success.outlinedColor',
+    backgroundColor: 'rgb(var(--joy-palette-success-lightChannel) / 15%)', // similar to success.50
+    boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
     mt: 1,
     p: 1,
 
@@ -73,7 +88,7 @@ export function BlockPartModelAux(props: {
   const scaledTypographySx = useScaledTypographySx(adjustContentScaling(props.contentScaling, -1), false, false);
   const textSx = React.useMemo(() => ({ ..._styles.text, ...scaledTypographySx }), [scaledTypographySx]);
 
-  let typeText = props.auxType === 'reasoning' ? 'Thought Process' : 'Auxiliary';
+  let typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
 
   // handlers
@@ -107,22 +122,25 @@ export function BlockPartModelAux(props: {
     {/* Chip to expand/collapse */}
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
-        variant={expanded ? 'solid' : 'outlined'}
+        color='success'
+        variant={expanded ? 'solid' : 'soft'}
         size='sm'
         onClick={() => setExpanded(on => !on)}
         sx={expanded ? _styles.chipExpanded : _styles.chip}
-        startDecorator={<AllInclusiveIcon />}
+        startDecorator={<AllInclusiveIcon sx={_styles.chipIcon}  /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */ />}
+        // startDecorator='🧠'
       >
-        {expanded ? '' : <>&nbsp;Show </>}{typeText}
+        Show {typeText}
       </Chip>
 
       {expanded && showInline && (
         <Chip
-          variant='outlined'
+          color='success'
+          variant='soft'
           size='sm'
           onClick={!onFragmentReplace ? undefined : handleInline}
           endDecorator={<TextFieldsIcon />}
-          sx={_styles.chipExpanded}
+          sx={_styles.chip}
         >
           Make Regular Text
         </Chip>
