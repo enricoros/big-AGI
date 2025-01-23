@@ -7,9 +7,11 @@ import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types'
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 import { ApproximateCosts } from '../ApproximateCosts';
@@ -19,7 +21,7 @@ import { useServiceSetup } from '../useServiceSetup';
 import { ModelVendorGemini } from './gemini.vendor';
 
 
-const GEMINI_API_KEY_LINK = 'https://makersuite.google.com/app/apikey';
+const GEMINI_API_KEY_LINK = 'https://aistudio.google.com/app/apikey';
 
 const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: string }[] = [
   { value: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED', label: 'Default' },
@@ -27,17 +29,21 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
   { value: 'BLOCK_MEDIUM_AND_ABOVE', label: 'Medium and above' },
   { value: 'BLOCK_ONLY_HIGH', label: 'Only high' },
   { value: 'BLOCK_NONE', label: 'None' },
+  { value: 'OFF', label: 'Safety Filter Off (2025)' },
 ];
 
 
 export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
+
+  // advanced mode
+  const advanced = useToggleableBoolean(false);
 
   // external state
   const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { geminiKey, minSafetyLevel } = serviceAccess;
+  const { geminiKey, geminiHost, minSafetyLevel } = serviceAccess;
   const needsUserKey = !serviceHasBackendCap;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
@@ -62,7 +68,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Safety Settings'
                       description='Threshold' />
       <Select
@@ -80,17 +86,25 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
           <Option key={'gemini-safety-' + option.value} value={option.value}>{option.label}</Option>
         ))}
       </Select>
-    </FormControl>
+    </FormControl>}
 
-    <FormHelperText sx={{ display: 'block' }}>
-      Gemini has <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
-      adjustable safety settings</Link> on: Harassment, Hate speech,
-      Sexually explicit, Civic integrity, and Dangerous content, in addition to non-adjustable built-in filters.
+    {advanced.on && <FormHelperText sx={{ display: 'block' }}>
+      Gemini has advanced <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
+      safety settings</Link> on: harassment, hate speech,
+      sexually explicit, civic integrity, and dangerous content, in addition to non-adjustable built-in filters.
       {/*By default, the model will block content with <em>medium and above</em> probability*/}
       {/*of being unsafe.*/}
-    </FormHelperText>
+    </FormHelperText>}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
+    {advanced.on && <FormTextField
+      autoCompleteId='gemini-host'
+      title='API Endpoint'
+      placeholder={`https://generativelanguage.googleapis.com`}
+      value={geminiHost}
+      onChange={text => updateSettings({ geminiHost: text })}
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

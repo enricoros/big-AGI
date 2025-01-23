@@ -1,6 +1,6 @@
 import type { ActileItem, ActileProvider, ActileProviderItems } from './ActileProvider';
 
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
 
 export interface AttachmentLabelItem extends ActileItem {
   // nothing to do do here, this is really just a label

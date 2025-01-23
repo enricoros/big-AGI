@@ -38,8 +38,9 @@ export type AttachmentDraftId = string;
 
 export type AttachmentDraftSource = {
   media: 'url';
+  origin: AttachmentDraftSourceOriginUrl;
   url: string; // parsed valid url
-  refUrl: string; // original text (use this as text ref, otherwise use the url)
+  refUrl: string; // original url literal text (use this as text ref, otherwise use the url)
 } | {
   media: 'file';
   origin: AttachmentDraftSourceOriginFile,
@@ -62,7 +63,10 @@ export type AttachmentDraftSourceOriginFile = 'camera' | 'screencapture' | 'file
 
 export type AttachmentDraftSourceOriginDTO = 'drop' | 'paste';
 
+export type AttachmentDraftSourceOriginUrl = 'input-link' | 'clipboard-read' | AttachmentDraftSourceOriginDTO;
+
 export type AttachmentCreationOptions = {
+  /** Also attach an image representation of the attachment. Requires Release.Features.ENABLE_TEXT_AND_IMAGES as well. */
   hintAddImages?: boolean;
 }
 

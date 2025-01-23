@@ -27,9 +27,20 @@ const enableLoggerLink = (opts: any) => {
 };
 
 
-/**
- * Typesafe React Query hooks for the tRPC Edge-Runtime API
- */
+/// Edge APIs: async, query, and stream
+
+/** Typesafe async/await hooks for the the Edge-Runtime API */
+export const apiAsync = createTRPCClient<AppRouterEdge>({
+  links: [
+    loggerLink({ enabled: enableLoggerLink }),
+    httpLink({
+      url: `${getBaseUrl()}/api/edge`,
+      transformer: transformer,
+    }),
+  ],
+});
+
+/** Typesafe React Query hooks for the tRPC Edge-Runtime API */
 export const apiQuery = createTRPCNext<AppRouterEdge>({
   config() {
     return {
@@ -67,24 +78,7 @@ export const apiQuery = createTRPCNext<AppRouterEdge>({
   transformer: transformer,
 });
 
-
-/**
- * Typesafe async/await hooks for the the Edge-Runtime API
- */
-export const apiAsync = createTRPCClient<AppRouterEdge>({
-  links: [
-    loggerLink({ enabled: enableLoggerLink }),
-    httpLink({
-      url: `${getBaseUrl()}/api/edge`,
-      transformer: transformer,
-    }),
-  ],
-});
-
-
-/**
- * Stream API: uses tRPC streaming to transfer partial updates to the client
- */
+/** Stream API: uses tRPC streaming to transfer partial updates to the client */
 export const apiStream = createTRPCClient<AppRouterEdge>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
@@ -103,15 +97,27 @@ export const apiStream = createTRPCClient<AppRouterEdge>({
 });
 
 
-/**
- * Node/Immediate API: Typesafe async/await hooks for the the Node functions API
- */
+/// Node.js runtime APIs
+
+/** Node/Immediate API: Typesafe async/await hooks for the the Node functions API */
 export const apiAsyncNode = createTRPCClient<AppRouterCloud>({
   links: [
     loggerLink({ enabled: enableLoggerLink }),
     httpLink({
       url: `${getBaseUrl()}/api/cloud`,
       transformer: transformer,
+    }),
+  ],
+});
+
+/** Node/Streaming API: typesafe async generator hooks */
+export const apiStreamNode = createTRPCClient<AppRouterCloud>({
+  links: [
+    loggerLink({ enabled: enableLoggerLink }),
+    unstable_httpBatchStreamLink({
+      url: `${getBaseUrl()}/api/cloud`,
+      transformer: transformer,
+      maxItems: 1, // to not wait for the last connection to close
     }),
   ],
 });

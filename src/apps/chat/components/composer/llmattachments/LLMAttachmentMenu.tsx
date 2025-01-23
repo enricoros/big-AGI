@@ -23,7 +23,7 @@ import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
 import type { LLMAttachmentDraft } from './useLLMAttachmentDrafts';
 import type { LLMAttachmentDraftsAction } from './LLMAttachmentsList';
 
@@ -49,7 +49,7 @@ export function LLMAttachmentMenu(props: {
   isPositionFirst: boolean,
   isPositionLast: boolean,
   onClose: () => void,
-  onDraftAction: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
+  onDraftAction?: (attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => void,
   onViewDocPart: (docPart: DMessageDocPart) => void,
   onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
 }) {
@@ -223,15 +223,15 @@ export function LLMAttachmentMenu(props: {
         <LinearProgress determinate value={100 * draft.outputsConversionProgress} sx={{ mx: 1 }} />
       )}
 
-      {SHOW_INLINING_OPERATIONS && <ListDivider />}
-      {SHOW_INLINING_OPERATIONS && (
-        <MenuItem onClick={() => onDraftAction(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
+      {SHOW_INLINING_OPERATIONS && !!onDraftAction && <ListDivider />}
+      {SHOW_INLINING_OPERATIONS && !!onDraftAction && (
+        <MenuItem onClick={() => onDraftAction?.(draftId, 'inline-text')} disabled={!llmSupportsTextFragments || isConverting}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline text
         </MenuItem>
       )}
-      {SHOW_INLINING_OPERATIONS && (
-        <MenuItem onClick={() => onDraftAction(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
+      {SHOW_INLINING_OPERATIONS && !!onDraftAction && (
+        <MenuItem onClick={() => onDraftAction?.(draftId, 'copy-text')} disabled={!llmSupportsTextFragments || isConverting}>
           <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           Copy text
         </MenuItem>

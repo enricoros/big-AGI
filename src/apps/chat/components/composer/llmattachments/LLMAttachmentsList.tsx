@@ -14,7 +14,7 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
+import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
 import type { DMessageDocPart, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 
 import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
@@ -29,15 +29,48 @@ import { ViewDocPartModal } from '../../message/fragments-content/ViewDocPartMod
 export type LLMAttachmentDraftsAction = 'inline-text' | 'copy-text';
 
 
+const _style = {
+
+  bar: {
+    position: 'relative',
+  } as const,
+
+  barScrollX: {
+    height: '100%',
+    pr: 5,
+    overflowX: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+  } as const,
+
+  barWraps: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 1,
+  } as const,
+
+  barMenuButton: {
+    // borderRadius: 'sm',
+    borderRadius: 0,
+    position: 'absolute', right: 0, top: 0,
+    backgroundColor: 'neutral.softDisabledBg',
+  } as const,
+
+} as const;
+
+
 /**
  * Renderer of attachment drafts, with menus, etc.
  */
 export function LLMAttachmentsList(props: {
-  agiAttachmentPrompts: AgiAttachmentPromptsData
+  agiAttachmentPrompts?: AgiAttachmentPromptsData,
   attachmentDraftsStoreApi: AttachmentDraftsStoreApi,
   canInlineSomeFragments: boolean,
   llmAttachmentDrafts: LLMAttachmentDraft[],
-  onAttachmentDraftsAction: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
+  onAttachmentDraftsAction?: (attachmentDraftId: AttachmentDraftId | null, actionId: LLMAttachmentDraftsAction) => void,
+  buttonsCanWrap?: boolean,
 }) {
 
   // state
@@ -74,12 +107,12 @@ export function LLMAttachmentsList(props: {
 
   const handleOverallCopyText = React.useCallback(() => {
     handleOverallMenuHide();
-    onAttachmentDraftsAction(null, 'copy-text');
+    onAttachmentDraftsAction?.(null, 'copy-text');
   }, [handleOverallMenuHide, onAttachmentDraftsAction]);
 
   const handleOverallInlineText = React.useCallback(() => {
     handleOverallMenuHide();
-    onAttachmentDraftsAction(null, 'inline-text');
+    onAttachmentDraftsAction?.(null, 'inline-text');
   }, [handleOverallMenuHide, onAttachmentDraftsAction]);
 
   const handleOverallClear = React.useCallback(async () => {
@@ -109,7 +142,7 @@ export function LLMAttachmentsList(props: {
   const handleDraftAction = React.useCallback((attachmentDraftId: AttachmentDraftId, actionId: LLMAttachmentDraftsAction) => {
     // pass-through, but close the menu as well, as the action is destructive for the caller
     handleDraftMenuHide();
-    onAttachmentDraftsAction(attachmentDraftId, actionId);
+    onAttachmentDraftsAction?.(attachmentDraftId, actionId);
   }, [handleDraftMenuHide, onAttachmentDraftsAction]);
 
   const handleViewImageRefPart = React.useCallback((imageRefPart: DMessageImageRefPart) => {
@@ -136,13 +169,13 @@ export function LLMAttachmentsList(props: {
   return <>
 
     {/* Attachment Drafts bar */}
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={_style.bar}>
 
       {/* Horizontally scrollable */}
-      <Box sx={{ height: '100%', pr: 5, overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={!props.buttonsCanWrap ? _style.barScrollX : _style.barWraps}>
 
         {/* AI Suggestion Button */}
-        {(agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData) && (
+        {(!!agiAttachmentPrompts && (agiAttachmentPrompts.isVisible || agiAttachmentPrompts.hasData)) && (
           <LLMAttachmentsPromptsButtonMemo data={agiAttachmentPrompts} />
         )}
 
@@ -160,18 +193,15 @@ export function LLMAttachmentsList(props: {
       </Box>
 
       {/* Overall Menu button */}
-      <IconButton
-        onClick={handleOverallMenuToggle}
-        onContextMenu={handleOverallMenuToggle}
-        sx={{
-          // borderRadius: 'sm',
-          borderRadius: 0,
-          position: 'absolute', right: 0, top: 0,
-          backgroundColor: 'neutral.softDisabledBg',
-        }}
-      >
-        <ExpandLessIcon />
-      </IconButton>
+      {!_style.barWraps && (
+        <IconButton
+          onClick={handleOverallMenuToggle}
+          onContextMenu={handleOverallMenuToggle}
+          sx={_style.barMenuButton}
+        >
+          <ExpandLessIcon />
+        </IconButton>
+      )}
 
     </Box>
 
@@ -196,7 +226,7 @@ export function LLMAttachmentsList(props: {
         isPositionFirst={itemMenuIndex === 0}
         isPositionLast={itemMenuIndex === llmAttachmentDrafts.length - 1}
         onClose={handleDraftMenuHide}
-        onDraftAction={handleDraftAction}
+        onDraftAction={!onAttachmentDraftsAction ? undefined : handleDraftAction}
         onViewDocPart={handleViewDocPart}
         onViewImageRefPart={handleViewImageRefPart}
       />
@@ -212,23 +242,23 @@ export function LLMAttachmentsList(props: {
         placement='top-start'
       >
         {/* uses the agiAttachmentPrompts to imagine what the user will ask aboud those */}
-        <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
-          <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
-          What can I do?
-        </MenuItem>
+        {!!agiAttachmentPrompts && (
+          <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!hasAttachments || agiAttachmentPrompts.isFetching}>
+            <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
+            What can I do?
+          </MenuItem>
+        )}
+        {!!agiAttachmentPrompts && <ListDivider />}
 
-        <ListDivider />
-
-        <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
+        {!!onAttachmentDraftsAction && <MenuItem onClick={handleOverallInlineText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
           Inline all text
-        </MenuItem>
-        <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeFragments}>
+        </MenuItem>}
+        {!!onAttachmentDraftsAction && <MenuItem onClick={handleOverallCopyText} disabled={!canInlineSomeFragments}>
           <ListItemDecorator><ContentCopyIcon /></ListItemDecorator>
           Copy all text
-        </MenuItem>
-
-        <ListDivider />
+        </MenuItem>}
+        {!!onAttachmentDraftsAction && <ListDivider />}
 
         <MenuItem onClick={handleOverallClear}>
           <ListItemDecorator><ClearIcon /></ListItemDecorator>

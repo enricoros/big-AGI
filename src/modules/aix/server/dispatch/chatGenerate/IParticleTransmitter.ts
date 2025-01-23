@@ -20,6 +20,9 @@ export interface IParticleTransmitter {
   /** Appends text, creating a part if missing [throttled] */
   appendText(textChunk: string): void;
 
+  /** Appends reasoning text, creating a part if missing [throttled] */
+  appendReasoningText(textChunk: string): void;
+
   /**
    * Creates a FC part, flushing the previous one if needed, and starts adding data to it
    * @param id if null [Gemini], a new id will be generated to keep it linked to future tool responses

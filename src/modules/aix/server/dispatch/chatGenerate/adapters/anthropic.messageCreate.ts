@@ -1,6 +1,6 @@
 import { escapeXml } from '~/server/wire';
 
-import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
+import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
 
@@ -21,6 +21,15 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   if (chatGenerate.systemMessage?.parts.length) {
     systemMessage = chatGenerate.systemMessage.parts.reduce((acc, part) => {
       switch (part.pt) {
+
+        case 'text':
+          acc.push(AnthropicWire_Blocks.TextBlock(part.text));
+          break;
+
+        case 'doc':
+          acc.push(AnthropicWire_Blocks.TextBlock(approxDocPart_To_String(part)));
+          break;
+
         case 'meta_cache_control':
           if (!acc.length)
             console.warn('Anthropic: cache_control without a message to attach to');
@@ -29,12 +38,16 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
           else
             AnthropicWire_Blocks.blockSetCacheControl(acc[acc.length - 1], 'ephemeral');
           break;
-        case 'text':
-          acc.push(AnthropicWire_Blocks.TextBlock(part.text));
-          break;
+
+        default:
+          throw new Error(`Unsupported part type in System message: ${(part as any).pt}`);
       }
       return acc;
     }, [] as Exclude<TRequest['system'], undefined>);
+
+    // unset system message if empty
+    if (!systemMessage.length)
+      systemMessage = undefined;
   }
 
   // Transform the chat messages into Anthropic's format
@@ -83,7 +96,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     // metadata: { user_id: ... }
     // stop_sequences: undefined,
     stream: streaming,
-    temperature: model.temperature !== undefined ? model.temperature : undefined,
+    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
     // top_k: undefined,
     // top_p: undefined,
   };
@@ -91,7 +104,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   // Top-P instead of temperature
   if (model.topP !== undefined) {
     payload.top_p = model.topP;
-    delete payload.temperature
+    delete payload.temperature;
   }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
@@ -136,11 +149,11 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           case 'doc':
-            yield { role: 'user', content: AnthropicWire_Blocks.TextBlock('```' + (part.ref || '') + '\n' + part.data.text + '\n```\n') };
+            yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(approxDocPart_To_String(part)) };
             break;
 
           case 'meta_in_reference_to':
-            const irtXMLString = inReferenceTo_To_XMLString(part);
+            const irtXMLString = approxInReferenceTo_To_XMLString(part);
             if (irtXMLString)
               yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(irtXMLString) };
             break;
@@ -259,7 +272,22 @@ function _toAnthropicToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest
   }
 }
 
-export function inReferenceTo_To_XMLString(irt: AixParts_MetaInReferenceToPart): string | null {
+
+// Approximate conversions - alternative approaches should be tried until we find the best one
+
+export function approxDocPart_To_String({ ref, data }: AixParts_DocPart /*, wrapFormat?: 'markdown-code'*/): string {
+  // NOTE: Consider a better representation here
+  //
+  // We use the 'legacy' markdown encoding, but we may consider:
+  //  - '<doc id='ref' title='title' version='version'>\n...\n</doc>'
+  //  - ```doc id='ref' title='title' version='version'\n...\n```
+  //  - # Title [id='ref' version='version']\n...\n
+  //  - ...more ideas...
+  //
+  return '```' + (ref || '') + '\n' + data.text + '\n```\n';
+}
+
+export function approxInReferenceTo_To_XMLString(irt: AixParts_MetaInReferenceToPart): string | null {
   const refs = irt.referTo.map(r => escapeXml(r.mText));
   if (!refs.length)
     return null; // `<context>User provides no specific references</context>`;

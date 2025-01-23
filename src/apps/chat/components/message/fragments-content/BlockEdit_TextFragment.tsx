@@ -7,7 +7,7 @@ import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 
 
-const textAreaSlotPropsEnter = {
+const _textAreaSlotPropsEnter = {
   textarea: {
     enterKeyHint: 'enter' as const,
   },
@@ -20,12 +20,19 @@ const textAreaSlotPropsEnter = {
   },
 };
 
-const textAreaSlotPropsDone = {
-  ...textAreaSlotPropsEnter,
+const _textAreaSlotPropsDone = {
+  ..._textAreaSlotPropsEnter,
   textarea: {
     enterKeyHint: 'done' as const,
   },
 };
+
+const _styles = {
+  squareTop: {
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  } as const,
+} as const;
 
 
 /**
@@ -42,6 +49,7 @@ export function BlockEdit_TextFragment(props: {
   // visual
   contentScaling: ContentScaling,
   // endDecorator?: React.ReactNode
+  squareTopBorder?: boolean,
 
   // edited value
   editedText?: string,
@@ -107,8 +115,9 @@ export function BlockEdit_TextFragment(props: {
       // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
-      slotProps={enterIsNewline ? textAreaSlotPropsEnter : textAreaSlotPropsDone}
+      slotProps={enterIsNewline ? _textAreaSlotPropsEnter : _textAreaSlotPropsDone}
       // endDecorator={props.endDecorator}
+      sx={!props.squareTopBorder ? undefined : _styles.squareTop}
     />
   );
 }

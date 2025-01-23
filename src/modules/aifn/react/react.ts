@@ -5,7 +5,7 @@
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
-import { callBrowseFetchPage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
@@ -185,7 +185,7 @@ async function wikipedia(q: string): Promise<string> {
 
 async function search(query: string): Promise<string> {
   try {
-    const data = await callApiSearchGoogle(query);
+    const data = await callApiSearchGoogle(query, 10);
     return JSON.stringify(data);
   } catch (error: any) {
     console.error('Error fetching search results:', error);
@@ -195,7 +195,9 @@ async function search(query: string): Promise<string> {
 
 async function browse(url: string): Promise<string> {
   try {
-    const page = await callBrowseFetchPage(url);
+    const page = await callBrowseFetchPageOrThrow(url);
+    if (!page.content)
+      return page.file ? 'A file download was requested, but we only support web pages: ' + page.url : 'No content received';
     const pageContent = page.content.markdown || page.content.text || page.content.html || '';
     return JSON.stringify(pageContent ? { text: pageContent } : { error: 'Issue reading the page' });
   } catch (error) {

@@ -2,6 +2,30 @@ import * as React from 'react';
 
 import { Box, ListDivider, Typography } from '@mui/joy';
 
+import { useIsMobile } from '~/common/components/useMatchMedia';
+
+
+const _styles = {
+  root: {
+    mb: 2.25,
+  },
+  title: {
+    textAlign: 'start',
+  },
+  accentedTagline: {
+    textAlign: 'start',
+    mt: 0.75,
+  },
+  tagline: {
+    color: 'text.secondary',
+    textAlign: 'start',
+    mt: 0.75,
+  },
+  divisor: {
+    mt: 2.25,
+  },
+};
+
 
 export function OptimaAppPageHeading(props: {
   title: React.ReactNode;
@@ -11,15 +35,19 @@ export function OptimaAppPageHeading(props: {
   endDecorator?: React.ReactNode;
   noDivider?: boolean;
 }) {
+
+  // external state
+  const isMobile = useIsMobile();
+
   return (
     <Box mb={2.25}>
-      {!!props.title && <Typography level='h2' sx={{ textAlign: 'start' }} startDecorator={props.startDecorator} endDecorator={props.endDecorator}>
+      {!!props.title && <Typography level={isMobile ? 'h3' : 'h2'} startDecorator={props.startDecorator} endDecorator={props.endDecorator} sx={_styles.title}>
         {props.title}
       </Typography>}
-      {!!props.tagline && <Typography level='body-sm' sx={{ color: !props.accentedTagline ? undefined : 'text.secondary', textAlign: 'start', mt: 0.75 }}>
+      {!!props.tagline && <Typography level='body-sm' sx={props.accentedTagline ? _styles.accentedTagline : _styles.tagline}>
         {props.tagline}
       </Typography>}
-      {!props.noDivider && <ListDivider sx={{ mt: 2.25 }} />}
+      {!props.noDivider && <ListDivider sx={_styles.divisor} />}
     </Box>
   );
 }

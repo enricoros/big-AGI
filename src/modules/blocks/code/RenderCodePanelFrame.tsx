@@ -29,6 +29,7 @@ export function RenderCodePanelFrame(props: {
   headerRow?: React.ReactNode;
   subHeaderInline?: React.ReactNode;
   toolbarRow?: React.ReactNode;
+  selectedOutline?: boolean
   onHeaderClick?: () => void;
   onHeaderContext?: (event: React.MouseEvent<HTMLElement>) => void;
   children: React.ReactNode;
@@ -60,7 +61,7 @@ export function RenderCodePanelFrame(props: {
       }),
       backgroundColor: /*props.noOuterShadow ? 'background.popup' :*/ 'background.surface',
       border: '1px solid',
-      borderColor: `${props.color}.outlinedBorder`,
+      borderColor: !props.selectedOutline ? `${props.color}.outlinedBorder` : `${props.color}.outlinedColor`,
       borderRadius: 'sm',
       ...(!props.noOuterShadow && { boxShadow: 'sm' }),
       // boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
@@ -102,17 +103,17 @@ export function RenderCodePanelFrame(props: {
     {
       // toolbar row
       backgroundColor: `${props.toolbarColor || props.color}.${isDarkMode ? 900 : 50}`,
-      borderTop: '1px solid',
-      borderTopColor: `${props.toolbarColor || props.color}.outlinedBorder`,
-      borderBottom: '1px solid',
-      borderBottomColor: /*isEditing ? 'transparent' :*/ `${props.toolbarColor || props.color}.outlinedBorder`,
+      // borderTop: '1px solid',
+      // borderTopColor: `${props.toolbarColor || props.color}.outlinedBorder`,
+      // borderBottom: '1px solid',
+      // borderBottomColor: /*isEditing ? 'transparent' :*/ `${props.toolbarColor || props.color}.outlinedBorder`,
       p: 1,
       // layout
       display: 'grid',
       gap: 1,
     },
 
-  ], [isClickableHeader, isDarkMode, props.color, props.contentScaling, props.gutterBlock, props.noOuterShadow, props.toolbarColor]);
+  ], [isClickableHeader, isDarkMode, props.color, props.contentScaling, props.gutterBlock, props.noOuterShadow, props.selectedOutline, props.toolbarColor]);
 
   return (
     <Box sx={frameSx}>

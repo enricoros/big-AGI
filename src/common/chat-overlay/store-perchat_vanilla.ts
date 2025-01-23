@@ -1,7 +1,8 @@
 import { StoreApi, useStore } from 'zustand';
 import { createStore as createVanillaStore } from 'zustand/vanilla';
 
-import { AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-perchat-attachment-drafts_slice';
+import { AttachmentDraftsStoreApi, AttachmentsDraftsStore, createAttachmentDraftsStoreSlice } from '~/common/attachment-drafts/store-attachment-drafts_slice';
+
 import { ComposerOverlayStore, createComposerOverlayStoreSlice } from './store-perchat-composer_slice';
 import { createEphemeralsOverlayStoreSlice, EphemeralsOverlayStore } from './store-perchat-ephemerals_slice';
 import { createVariformOverlayStoreSlice, VariformOverlayStore } from './store-perchat-variform_slice';
@@ -40,7 +41,7 @@ export const useChatOverlayStore = <T, >(vanillaStore: Readonly<StoreApi<PerChat
   useStore(vanillaStore || fallbackStoreApi, selector);
 
 // usages: useAttachmentDrafts
-export const useChatAttachmentsStore = <T, >(vanillaStore: Readonly<StoreApi<AttachmentsDraftsStore>> | null, selector: (store: AttachmentsDraftsStore) => T): T =>
+export const useChatAttachmentsStore = <T, >(vanillaStore: Readonly<AttachmentDraftsStoreApi> | null, selector: (store: AttachmentsDraftsStore) => T): T =>
   useStore(vanillaStore || fallbackStoreApi, selector);
 
 // usages: Composer

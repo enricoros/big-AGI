@@ -130,7 +130,7 @@ export class AudioLivePlayer {
       }
     }
 
-    this.audioContext.close();
+    void this.audioContext.close(); // fire/forget
     this.audioElement.src = '';
   }
 }

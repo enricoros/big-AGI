@@ -138,7 +138,15 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         accumulator.content = (accumulator.content || '') + delta.content;
         pt.appendText(delta.content);
 
-      } else if (delta.content !== undefined && delta.content !== null)
+      }
+      // delta: Reasoning Content [Deepseek, 2025-01-20]
+      else if (typeof delta.reasoning_content === 'string') {
+
+        // Note: not using the accumulator as it's a relic of the past probably
+        pt.appendReasoningText(delta.reasoning_content);
+
+      }
+      else if (delta.content !== undefined && delta.content !== null)
         throw new Error(`unexpected delta content type: ${typeof delta.content}`);
 
       // delta: Tool Calls

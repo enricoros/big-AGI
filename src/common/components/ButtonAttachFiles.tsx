@@ -7,6 +7,12 @@ import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import { KeyStroke } from '~/common/components/KeyStroke';
 
 
+export const buttonAttachSx = {
+  tooltip: { px: 1, py: 0.75, lineHeight: '1.5rem' } as const,
+  desktop: { justifyContent: 'flex-start' } as const,
+} as const;
+
+
 export async function openFileForAttaching(
   multiple: boolean,
   onAttachFiles: (files: FileWithHandle[], errorMessage: string | null) => void | Promise<void>,
@@ -31,41 +37,43 @@ export async function openFileForAttaching(
 }
 
 
-const attachFileLegend =
-  <Box sx={{ px: 1, py: 0.75, lineHeight: '1.5rem' }}>
-    <b>Attach files</b><br />
-    Drag & drop in chat for faster loads ⚡
-    <KeyStroke combo='Ctrl + Shift + F' sx={{ mt: 1, mb: 0.5 }} />
-  </Box>;
-
-
 export const ButtonAttachFilesMemo = React.memo(ButtonAttachFiles);
 
 function ButtonAttachFiles(props: {
-  isMobile?: boolean,
-  fullWidth?: boolean,
   multiple?: boolean,
+  isMobile?: boolean,
+  disabled?: boolean,
+  fullWidth?: boolean,
   noToolTip?: boolean,
   onAttachFiles: (files: FileWithHandle[], errorMessage: string | null) => void,
 }) {
 
   const { onAttachFiles } = props;
 
-  const handleAttachFilePicker = React.useCallback(() => openFileForAttaching(props.multiple || false, onAttachFiles), [onAttachFiles, props.multiple]);
+  const handleAttachFilePicker = React.useCallback(() => {
+    return openFileForAttaching(props.multiple || false, onAttachFiles);
+  }, [onAttachFiles, props.multiple]);
 
   return props.isMobile ? (
-    <IconButton onClick={handleAttachFilePicker}>
+    <IconButton disabled={props.disabled} onClick={handleAttachFilePicker}>
       <AttachFileRoundedIcon />
     </IconButton>
   ) : (
-    <Tooltip disableInteractive variant='solid' placement='top-start' title={props.noToolTip ? null : attachFileLegend}>
+    <Tooltip arrow disableInteractive placement='top-start' title={props.noToolTip ? null : (
+      <Box sx={buttonAttachSx.tooltip}>
+        <b>Attach files</b><br />
+        Drag & drop in chat for faster loads ⚡
+        <KeyStroke combo='Ctrl + Shift + F' sx={{ mt: 1, mb: 0.5 }} />
+      </Box>
+    )}>
       <Button
-        fullWidth={props.fullWidth}
         variant='plain'
         color='neutral'
+        disabled={props.disabled}
+        fullWidth={props.fullWidth}
         onClick={handleAttachFilePicker}
         startDecorator={<AttachFileRoundedIcon />}
-        sx={{ justifyContent: 'flex-start' }}
+        sx={buttonAttachSx.desktop}
       >
         File
       </Button>

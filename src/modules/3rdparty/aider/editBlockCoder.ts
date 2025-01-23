@@ -26,9 +26,9 @@ interface Edit {
 }
 
 class EditBlockCoder {
-  private partialResponseContent: string;
-  private fence: [string, string];
-  private filenames: string[]; // List of valid filenames
+  private readonly partialResponseContent: string;
+  private readonly fence: [string, string];
+  private readonly filenames: string[]; // List of valid filenames
   private io: IO;
 
   constructor(
@@ -49,6 +49,7 @@ class EditBlockCoder {
   public getEdits(): Edit[] {
     const content = this.partialResponseContent;
     // Extract edits from the content
+    // noinspection UnnecessaryLocalVariableJS
     const edits = findOriginalUpdateBlocks(
       content,
       this.fence,

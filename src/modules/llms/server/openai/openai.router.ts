@@ -13,11 +13,12 @@ import { fixupHost } from '~/common/util/urlUtils';
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
-import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription, togetherAIModelsToModelDescriptions } from './models/models.data';
-import { deepseekModelFilter, deepseekModelToModelDescription } from './models/deepseek.models';
+import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/models.data';
+import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
 import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
+import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
 
@@ -154,7 +155,8 @@ export const llmOpenAIRouter = createTRPCRouter({
         case 'deepseek':
           models = openAIModels
             .filter(({ id }) => deepseekModelFilter(id))
-            .map(({ id }) => deepseekModelToModelDescription(id));
+            .map(({ id }) => deepseekModelToModelDescription(id))
+            .sort(deepseekModelSort);
           break;
 
         case 'groq':
@@ -495,8 +497,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'openrouter':
-      const orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
+      let orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
       const orHost = fixupHost(access.oaiHost || DEFAULT_OPENROUTER_HOST, apiPath);
+
+      // multi-key with random selection
+      if (orKey.includes(',')) {
+        const multiKeys = orKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        orKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!orKey || !orHost)
         throw new Error('Missing OpenRouter API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 

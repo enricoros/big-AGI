@@ -49,6 +49,9 @@ export const DModelParameterRegistry = {
     type: 'float' as const,
     description: 'Controls randomness in the output',
     range: [0.0, 2.0] as const,
+    nullable: {
+      meaning: 'Explicitly avoid sending temperature to upstream API',
+    },
     requiredFallback: FALLBACK_LLM_PARAM_TEMPERATURE,
   } as const,
 
@@ -63,12 +66,25 @@ export const DModelParameterRegistry = {
     incompatibleWith: ['temperature'] as const,
   } as const,
 
+  llmVndGeminiShowThoughts: {
+    label: 'Show Thoughts',
+    type: 'boolean' as const,
+    description: 'Show Gemini\'s reasoning process',
+    initialValue: true,
+  } as const,
+
   llmVndOaiReasoningEffort: {
     label: 'Reasoning Effort',
     type: 'enum' as const,
     description: 'Constrains effort on reasoning for OpenAI reasoning models',
     values: ['low', 'medium', 'high'] as const,
-    requiredFallback: 'med',
+    requiredFallback: 'medium',
+  } as const,
+
+  llmVndOaiRestoreMarkdown: {
+    label: 'Restore Markdown',
+    type: 'boolean' as const,
+    description: 'Restore Markdown formatting in the output',
   } as const,
 
 } as const;
@@ -80,7 +96,7 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
   paramId: T;
   required?: boolean;
   hidden?: boolean;
-  upstreamDefault?: DModelParameterValue<T>;
+  // upstreamDefault?: DModelParameterValue<T>;
 }
 
 export type DModelParameterValues = {
@@ -94,7 +110,10 @@ type _EnumValues<T> = T extends { type: 'enum', values: readonly (infer U)[] } ?
 
 type DModelParameterValue<T extends DModelParameterId> =
   typeof DModelParameterRegistry[T]['type'] extends 'integer' ? number | null :
-    typeof DModelParameterRegistry[T]['type'] extends 'float' ? number :
+    typeof DModelParameterRegistry[T]['type'] extends 'float'
+      ? typeof DModelParameterRegistry[T] extends { nullable: any }
+        ? number | null
+        : number :
       typeof DModelParameterRegistry[T]['type'] extends 'string' ? string :
         typeof DModelParameterRegistry[T]['type'] extends 'boolean' ? boolean :
           typeof DModelParameterRegistry[T]['type'] extends 'enum'
@@ -103,6 +122,27 @@ type DModelParameterValue<T extends DModelParameterId> =
 
 
 /// Utility Functions
+
+export function applyModelParameterInitialValues(parameterIds: DModelParameterId[], parameterValues: DModelParameterValues, overwrite: boolean): void {
+  for (const paramId of parameterIds) {
+
+    // skip if the value is already present
+    if (!overwrite && paramId in parameterValues)
+      continue;
+
+    // find the parameter definition
+    const paramDef = DModelParameterRegistry[paramId];
+    if (!paramDef) {
+      console.warn(`applyModelParameterInitialValues: unknown parameter id '${paramId}'`);
+      continue;
+    }
+
+    // apply the initial value
+    if ('initialValue' in paramDef && paramDef.initialValue !== undefined)
+      parameterValues[paramId] = paramDef.initialValue as DModelParameterValue<typeof paramId>;
+  }
+}
+
 
 const _requiredParamId: DModelParameterId[] = ['llmRef', 'llmResponseTokens', 'llmTemperature'] as const;
 

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import type { DraggableProvided, DraggableStateSnapshot, DraggingStyle, NotDraggingStyle } from 'react-beautiful-dnd';
+import * as React from 'react';
+import { CSS } from '@dnd-kit/utilities';
+import { useSortable } from '@dnd-kit/sortable';
 
-import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, radioClasses, RadioGroup, Sheet } from '@mui/joy';
+import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, RadioGroup, Sheet } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Done from '@mui/icons-material/Done';
@@ -15,205 +16,184 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 
+const _styles = {
+
+  menuButton: {
+    visibility: 'hidden',
+  } as const,
+
+  itemButton: {
+    border: 0,
+  } as const,
+
+  itemTextArea: {
+    ml: -1.5,
+    mr: -0.5,
+    flexGrow: 1,
+  } as const,
+
+} as const;
+
+
 export function FolderListItem(props: {
-  activeFolderId: string | null;
   folder: DFolder;
+  isActive: boolean;
   onFolderSelect: (folderId: string | null) => void;
-  provided: DraggableProvided;
-  snapshot: DraggableStateSnapshot;
 }) {
 
-  // internal state
-  const [deleteArmed, setDeleteArmed] = useState(false);
-  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  // props
+  const { isActive, onFolderSelect } = props;
+  const { id: folderId, color: folderColor, title: folderTitle } = props.folder;
 
-  // State to control the open state of the Menu
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLAnchorElement>(null);
+  // state
+  const [deleteArmed, setDeleteArmed] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLAnchorElement>(null);
+
+  // DnD Kit sortable
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: folderId });
 
 
-  // derived props
-  const { activeFolderId, folder, onFolderSelect, provided, snapshot } = props;
+  // handlers
+
+  const handleFolderActivate = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    onFolderSelect(folderId);
+  }, [folderId, onFolderSelect]);
 
 
-  // Menu
-  const handleMenuToggle = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  // menu handlers
+
+  const handleMenuToggle = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    setMenuAnchorEl(anchor => anchor ? null : event.currentTarget);
+    event.stopPropagation(); // keep the focus on the menu that's opening
     setDeleteArmed(false); // Reset delete armed state
-  };
+    setMenuAnchorEl(anchor => anchor ? null : event.currentTarget);
+  }, []);
 
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-  };
+  const handleMenuClose = React.useCallback(() => setMenuAnchorEl(null), []);
 
 
   // Edit Title
 
-  const handleEditTitle = (event: React.MouseEvent<HTMLElement, MouseEvent>, folderId: string) => {
+  const handleEditTitle = React.useCallback((event: React.MouseEvent<HTMLElement, MouseEvent>) => {
     event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
-    setEditingFolderId(folderId);
-  };
+    setIsEditing(true);
+  }, []);
 
-  const handleCancelEditTitle = () => {
-    setEditingFolderId(null);
-  };
+  const handleCancelEditTitle = React.useCallback(() => setIsEditing(false), []);
 
-  const handleSetTitle = (newTitle: string, folderId: string) => {
+  const handleSetTitle = React.useCallback((newTitle: string, folderId: string) => {
     if (newTitle.trim())
       useFolderStore.getState().setFolderName(folderId, newTitle.trim());
-    setEditingFolderId(null); // Exit edit mode
+    setIsEditing(false); // Exit edit mode
     // Blur the input element if it's currently focused
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-  };
+  }, []);
 
 
   // Deletion
 
-  const handleDeleteButtonShow = (event: React.MouseEvent) => {
+  const handleDeleteButtonShow = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     setDeleteArmed(true);
-  };
+  }, []);
 
-  const handleDeleteConfirmed = (event: React.MouseEvent) => {
-    if (deleteArmed) {
-      setDeleteArmed(false);
-      event.stopPropagation();
-      useFolderStore.getState().deleteFolder(folder.id);
-      handleMenuClose();
-    }
-  };
+  const handleDeleteConfirmed = React.useCallback((event: React.MouseEvent) => {
+    if (!deleteArmed) return;
+    setDeleteArmed(false);
+    event.stopPropagation();
+    useFolderStore.getState().deleteFolder(folderId);
+    handleMenuClose();
+  }, [deleteArmed, folderId, handleMenuClose]);
 
-  const handleDeleteCanceled = (event: React.MouseEvent) => {
-    if (deleteArmed) {
-      setDeleteArmed(false);
-      event.stopPropagation();
-    }
-  };
+  const handleDeleteCanceled = React.useCallback((event: React.MouseEvent) => {
+    if (!deleteArmed) return;
+    setDeleteArmed(false);
+    event.stopPropagation();
+  }, [deleteArmed]);
 
 
   // Color
 
-  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    useFolderStore.getState().setFolderColor(folder.id, event.target.value);
+  const handleColorChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    useFolderStore.getState().setFolderColor(folderId, event.target.value);
     handleMenuClose();
-  };
+  }, [folderId, handleMenuClose]);
 
-
-  const getItemStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
-    userSelect: 'none',
-    borderRadius: '8px',
-    backgroundColor: isDragging ? 'rgba(0, 80, 80, 0.18)' : 'transparent',
-
-    ...draggableStyle,
-
-    // Any additional styles you want to apply during dragging
-    ...(isDragging &&
-      {
-        // Apply any drag-specific styles here
-        // marginLeft: '12px',
-      }),
-  });
-
-  const getListItemContentStyle = (isDragging: boolean, _draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
-    ...(isDragging && {
-      // Apply any drag-specific styles here
-      marginLeft: '20px',
-    }),
-  });
-
-  const getListItemDecoratorStyle = (isDragging: boolean, _draggableStyle: DraggingStyle | NotDraggingStyle | undefined) => ({
-    ...(isDragging && {
-      // Apply any drag-specific styles here
-      marginLeft: '12px',
-    }),
-  });
-
-  const handleFolderSelect = (folderId: string | null) => {
-    onFolderSelect(folderId);
-  };
 
   return (
     <ListItem
-      ref={provided.innerRef}
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
-      style={{
-        ...getItemStyle(snapshot.isDragging, provided.draggableProps.style),
+      ref={setNodeRef}
+      sx={{
+        transform: CSS.Transform.toString(transform),
+        transition,
         userSelect: 'none',
+        zIndex: isDragging ? 1 : undefined,
+
+        // shows the menu icon on hover
+        '&:hover .menu-icon': {
+          visibility: 'visible',
+        },
       }}
-    >
-      <ListItemButton
-        // handle folder select
-        onClick={(event) => {
-          event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
-          handleFolderSelect(folder.id);
-        }}
-        selected={folder.id === activeFolderId}
-        sx={{
-          border: 0,
-          justifyContent: 'space-between',
-          '&:hover .menu-icon': {
-            visibility: 'visible', // Hide delete icon for default folder
-          },
-        }}
-      >
-        <ListItemDecorator
-          style={{
-            ...getListItemDecoratorStyle(snapshot.isDragging, provided.draggableProps.style),
-            userSelect: 'none',
-          }}
-        >
-          <FolderIcon style={{ color: folder.color || 'inherit' }} />
-        </ListItemDecorator>
-
-        {editingFolderId === folder.id ? (
-          <InlineTextarea
-            initialText={folder.title}
-            onEdit={newTitle => handleSetTitle(newTitle, folder.id)}
-            onCancel={handleCancelEditTitle}
-            sx={{ ml: -1.5, mr: -0.5, flexGrow: 1 }}
-          />
-        ) : (
-          <ListItemContent
-            onDoubleClick={event => handleEditTitle(event, folder.id)}
-            style={{
-              ...getListItemContentStyle(snapshot.isDragging, provided.draggableProps.style),
-              userSelect: 'none',
-            }}
-          >
-            {folder.title}
-          </ListItemContent>
-        )}
-
-        {/* Icon to show the Popup menu */}
+      endAction={!isEditing &&
         <IconButton
           size='sm'
-          variant='outlined'
-          className='menu-icon'
+          // variant='plain'
           onClick={handleMenuToggle}
           onContextMenu={handleMenuToggle}
-          sx={{
-            visibility: 'hidden',
-            my: '-0.25rem', /* absorb the button padding */
-          }}
+          sx={!isActive ? _styles.menuButton : undefined}
+          className='menu-icon'
         >
           <MoreVertIcon />
         </IconButton>
+      }
+    >
+      <ListItemButton
+        {...attributes}
+        {...listeners}
+        selected={isActive}
+        onClick={handleFolderActivate}
+        sx={_styles.itemButton}
+      >
+        <ListItemDecorator>
+          <FolderIcon style={{ color: folderColor || 'inherit' }} />
+        </ListItemDecorator>
 
+        {isEditing ? (
+          <InlineTextarea
+            initialText={folderTitle}
+            onEdit={newTitle => handleSetTitle(newTitle, folderId)}
+            onCancel={handleCancelEditTitle}
+            sx={_styles.itemTextArea}
+          />
+        ) : (
+          <ListItemContent onDoubleClick={handleEditTitle}>
+            {folderTitle}
+          </ListItemContent>
+        )}
+
+        {/* Folder Options Menu */}
         {!!menuAnchorEl && (
           <CloseablePopup
             menu anchorEl={menuAnchorEl} onClose={handleMenuClose}
             dense
-            minWidth={200}
             placement='top'
             zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
           >
 
             <MenuItem
               onClick={(event) => {
-                handleEditTitle(event, folder.id);
+                handleEditTitle(event);
                 handleMenuClose();
               }}
             >
@@ -270,7 +250,7 @@ export function FolderListItem(props: {
               </FormLabel>
               <RadioGroup
                 aria-labelledby='product-color-attribute'
-                defaultValue={folder.color || 'warning'}
+                defaultValue={folderColor || 'warning'}
                 onChange={handleColorChange}
                 sx={{ gap: 2, flexWrap: 'wrap', flexDirection: 'row', maxWidth: 240 }}
               >
@@ -300,17 +280,17 @@ export function FolderListItem(props: {
                         radio: {
                           sx: {
                             display: 'contents',
-                            '--variant-borderWidth': '2px',
+                            // '--variant-borderWidth': '2px',
                           },
                         },
                       }}
-                      sx={{
-                        '--joy-focus-outlineOffset': '4px',
-                        '--joy-palette-focusVisible': color,
-                        [`& .${radioClasses.action}.${radioClasses.focusVisible}`]: {
-                          outlineWidth: '2px',
-                        },
-                      }}
+                      // sx={{
+                      //   '--joy-focus-outlineOffset': '4px',
+                      //   '--joy-palette-focusVisible': color,
+                      //   [`& .${radioClasses.action}.${radioClasses.focusVisible}`]: {
+                      //     outlineWidth: '2px',
+                      //   },
+                      // }}
                     />
                   </Sheet>
                 ))}

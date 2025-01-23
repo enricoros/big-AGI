@@ -2,7 +2,7 @@ import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageFragment, DMessageImageRefPart, isContentOrAttachmentFragment, isTextContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isTextContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -80,9 +80,9 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
   for (const fragment of systemInstruction.fragments) {
     if (isTextContentFragment(fragment)) {
       sm.parts.push(fragment.part);
-    }
-    // TODO: handle other types of fragments if needed, such as the 'doc' type
-    else {
+    } else if (isAttachmentFragment(fragment) && isDocPart(fragment.part)) {
+      sm.parts.push(fragment.part);
+    } else {
       if (process.env.NODE_ENV === 'development')
         throw new Error('[DEV] aixCGR_systemMessageFromInstruction: unexpected system fragment');
       console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected system fragment:', fragment);
@@ -91,7 +91,9 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
 
   // (on System message) handle the ant-cache-prompt user/auto flags
   const mHasAntCacheFlag = messageHasUserFlag(systemInstruction, MESSAGE_FLAG_VND_ANT_CACHE_AUTO) || messageHasUserFlag(systemInstruction, MESSAGE_FLAG_VND_ANT_CACHE_USER);
-  if (mHasAntCacheFlag)
+  if (mHasAntCacheFlag
+    && sm.parts.length > 0 // added this to avoid settings a cache control on an empty system message
+  )
     sm.parts.push(_clientCreateAixMetaCacheControlPart('anthropic-ephemeral'));
 
   return sm;

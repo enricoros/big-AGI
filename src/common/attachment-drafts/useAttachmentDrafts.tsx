@@ -12,15 +12,21 @@ import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
 import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_vanilla';
 
-import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile } from './attachment.types';
-import type { AttachmentDraftsStoreApi } from './store-perchat-attachment-drafts_slice';
+import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
+import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 
 
 // enable to debug operations
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
-export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLs: boolean, hintAddImages: boolean, onFilterAGIFile: (file: File) => Promise<boolean>) => {
+/**
+ * @param attachmentsStoreApi A Per-Chat or standalone Attachment Drafts store.
+ * @param enableLoadURLsOnPaste Only used if invoking attachAppendDataTransfer or attachAppendClipboardItems.
+ * @param hintAddImages Attach an additional image representation of the attachment; only if Release.Features.ENABLE_TEXT_AND_IMAGES.
+ * @param onFilterAGIFile If defined, run this async functiion on '.agi.json' files to decide whether to load them (if returns true) or attach them (if returns false).
+ */
+export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile?: (file: File) => Promise<boolean>) {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -43,13 +49,29 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // special case: intercept AGI files to potentially load them instead of attaching them
     if (fileWithHandle.name.endsWith('.agi.json'))
-      if (await onFilterAGIFile(fileWithHandle))
+      if (onFilterAGIFile && await onFilterAGIFile(fileWithHandle))
         return;
 
     return _createAttachmentDraft({
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
     }, { hintAddImages });
   }, [_createAttachmentDraft, hintAddImages, onFilterAGIFile]);
+
+  /**
+   * Append a URL, likely a web page or youtube transcript, to the attachments.
+   */
+  const attachAppendUrl = React.useCallback((origin: AttachmentDraftSourceOriginUrl, url: string, refUrl?: string) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendUrl', url);
+
+    const validUrl = asValidURL(url);
+    if (!validUrl)
+      return false;
+
+    return _createAttachmentDraft({
+      media: 'url', origin, url: validUrl, refUrl: refUrl || url,
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, hintAddImages]);
 
   /**
    * Append data transfer to the attachments.
@@ -145,13 +167,10 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // attach as URL
     const textPlain = dt.getData('text/plain') || '';
-    if (textPlain && enableLoadURLs) {
+    if (textPlain && enableLoadURLsOnPaste) {
       const textPlainUrl = asValidURL(textPlain);
-      if (textPlainUrl && textPlainUrl.trim()) {
-        void _createAttachmentDraft({
-          media: 'url', url: textPlainUrl, refUrl: textPlain,
-        }, { hintAddImages});
-
+      if (textPlainUrl) {
+        void attachAppendUrl(method, textPlainUrl, textPlain);
         return 'as_url';
       }
     }
@@ -170,7 +189,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLs, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -223,12 +242,10 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
       const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
 
       // attach as URL
-      if (textPlain && enableLoadURLs) {
+      if (textPlain && enableLoadURLsOnPaste) {
         const textPlainUrl = asValidURL(textPlain);
-        if (textPlainUrl && textPlainUrl.trim()) {
-          void _createAttachmentDraft({
-            media: 'url', url: textPlainUrl.trim(), refUrl: textPlain,
-          }, { hintAddImages });
+        if (textPlainUrl) {
+          void attachAppendUrl('clipboard-read', textPlainUrl, textPlain);
           continue;
         }
       }
@@ -243,7 +260,7 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [_createAttachmentDraft, attachAppendFile, enableLoadURLs, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
 
   /**
    * Append ego content to the attachments.
@@ -275,13 +292,14 @@ export const useAttachmentDrafts = (attachmentsStoreApi: AttachmentDraftsStoreAp
     attachAppendDataTransfer,
     attachAppendEgoFragments,
     attachAppendFile,
+    attachAppendUrl,
 
     // manage attachments
     attachmentsRemoveAll,
     attachmentsTakeAllFragments,
     attachmentsTakeFragmentsByType,
   };
-};
+}
 
 
 /**

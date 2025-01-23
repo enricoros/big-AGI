@@ -5,7 +5,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { setComposerStartupText } from '~/common/logic/store-logic-sherpa';
 
-import { callBrowseFetchPage } from '~/modules/browse/browse.client';
+import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
 import { LogoProgress } from '~/common/components/LogoProgress';
 import { asValidURL } from '~/common/util/urlUtils';
@@ -75,9 +75,13 @@ function AppShareTarget() {
   React.useEffect(() => {
     if (intentURL) {
       setIsDownloading(true);
-      callBrowseFetchPage(intentURL)
+      callBrowseFetchPageOrThrow(intentURL)
         .then(page => {
           if (page.stopReason !== 'error') {
+            if (!page.content) {
+              setErrorMessage(page.file ? 'No web page found, and we do not support files at the moment.' : 'No content found');
+              return;
+            }
             let pageContent = page.content.markdown || page.content.text || page.content.html || '';
             if (pageContent)
               pageContent = '\n\n```' + intentURL + '\n' + pageContent + '\n```\n';

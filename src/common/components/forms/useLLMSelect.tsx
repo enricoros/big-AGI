@@ -36,14 +36,14 @@ const _slotProps = {
       '--ListItem-paddingLeft': '1rem',
       '--ListItem-minHeight': '2.5rem',
       // minWidth: '100%',
-    },
-  },
+    } as const,
+  } as const,
   button: {
     sx: {
       // show the full name on the button
       whiteSpace: 'inherit',
-    },
-  },
+    } as const,
+  } as const,
 } as const;
 
 /**
@@ -100,6 +100,7 @@ export function useLLMSelect(
           value={llm.id}
           // Disabled to avoid regenerating the memo too frequently
           // sx={llm.id === chatLLMId ? { fontWeight: 'md' } : undefined}
+          label={llm.label}
         >
           {(!noIcons && !!vendor?.Icon) && (
             <ListItemDecorator>

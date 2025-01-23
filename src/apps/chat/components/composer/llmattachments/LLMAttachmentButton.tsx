@@ -22,7 +22,7 @@ import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob'
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import type { AttachmentDraft, AttachmentDraftConverterType, AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
-import { DMessageDataRef, DMessageImageRefPart, DMessageTextPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageDataRef, DMessageImageRefPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { ellipsizeFront, ellipsizeMiddle } from '~/common/util/textUtils';

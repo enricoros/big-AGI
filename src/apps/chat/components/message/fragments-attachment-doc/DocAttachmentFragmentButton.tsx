@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
-import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
@@ -69,10 +69,6 @@ export function DocAttachmentFragmentButton(props: {
   const hasLiveFile = !!liveFileMetadata;
   const isLiveFilePaired = liveFileMetadata ? liveFileMetadata.isPairingValid || false : false;
 
-  // only operate on doc fragments
-  if (!isDocPart(fragment.part))
-    throw new Error('Unexpected part type: ' + fragment.part.pt);
-
   // handlers
   const handleSelectFragment = React.useCallback(() => {
     toggleSelected(fragment.fId);
@@ -91,7 +87,7 @@ export function DocAttachmentFragmentButton(props: {
     fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
     border: '1px solid',
     borderRadius: 'sm',
-    boxShadow: `0px 3px 4px -2px rgb(var(--joy-palette-${isSelected ? DocSelColor : DocUnselColor}-darkChannel) / ${isSelected ? 50 : 20}%)`,
+    boxShadow: isSelected ? undefined : `0px 3px 4px -2px rgb(var(--joy-palette-${isSelected ? DocSelColor : DocUnselColor}-darkChannel) / ${isSelected ? 50 : 20}%)`,
     ...isSelected ? {
       borderColor: `${DocSelColor}.solidBg`,
     } : {
@@ -103,9 +99,13 @@ export function DocAttachmentFragmentButton(props: {
     display: 'flex', flexDirection: 'row',
   }), [isSelected, props.contentScaling]);
 
+  // only operate on doc fragments
+  if (!isDocPart(fragment.part))
+    return 'Unexpected: ' + fragment.part.pt;
+
   const buttonText = ellipsizeMiddle(fragment.part.l1Title || fragment.title || 'Document', 28 /* totally arbitrary length */);
 
-  const Icon = isSelected ? ExpandCircleDownIcon : buttonIconForFragment(fragment.part);
+  const Icon = isSelected ? EditRoundedIcon : buttonIconForFragment(fragment.part);
 
   return (
     <Button
@@ -118,17 +118,17 @@ export function DocAttachmentFragmentButton(props: {
     >
       {!!Icon && (
         <Box sx={{
-          height: '100%',
+          height: '80%', // was 100%, but it's neat-o to have the line a bit engraved
           paddingX: '0.5rem',
           borderRight: '1px solid',
-          borderRightColor: isSelected ? `${DocSelColor}.solidBg` : `${DocUnselColor}.outlinedBorder`,
+          borderRightColor: isSelected ? `${DocSelColor}.solidBg` : `${DocUnselColor}.outlinedDisabledBorder`, // this was outlinedBorder
           display: 'flex', alignItems: 'center',
         }}>
           <Icon />
         </Box>
       )}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingX: '0.5rem' }}>
-        <Box sx={{ whiteSpace: 'nowrap', fontWeight: 'md' }}>
+        <Box sx={{ whiteSpace: 'nowrap', fontWeight: 'md', minWidth: 48 }}>
           {buttonText}
         </Box>
         {/*<Box sx={{ fontSize: 'xs', fontWeight: 'sm' }}>*/}
