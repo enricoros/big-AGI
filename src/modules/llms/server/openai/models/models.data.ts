@@ -254,7 +254,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 3000000, output: 3000000 },
   },
   {
-    id: 'openpipe:openrouter/deepseek/deepseek-chat',
+    id: 'openpipe:/deepseek/deepseek-chat',
     label: '💾➜ DeepSeek V3',
     description: 'DeepSeek-V3 is the latest model from the DeepSeek team, building upon the instruction following and coding abilities of the previous versions. Pre-trained on nearly 15 trillion tokens, the reported evaluations reveal that the model outperforms other open-source models and rivals leading closed-source models.',
     contextWindow: 64000,
@@ -381,7 +381,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     chatPrice: { input: 0, output: 0 },
   },
   {
-    id: 'openpipe:openrouter/deepseek/deepseek-r1',
+    id: 'openpipe:deepseek/deepseek-reasoner',
     label: '💾➜ DeepSeek R1',
     description: 'DeepSeek-R1 is here!\n\n⚡ Performance on par with OpenAI-o1\n📖 Fully open-source model & technical report\n🏆 MIT licensed: Distill & commercialize freely!',
     contextWindow: 64000,
