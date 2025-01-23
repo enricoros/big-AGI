@@ -4,7 +4,7 @@ import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { DLLM, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
-import { FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
+import { applyModelParameterInitialValues, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
@@ -89,6 +89,10 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // userHidden: undefined,
     // userParameters: undefined,
   };
+
+  // set other params from spec
+  if (d.parameterSpecs)
+    applyModelParameterInitialValues(d.parameterSpecs.map(p => p.paramId), dllm.initialParameters, false);
 
   // set the pricing
   if (d.chatPrice && typeof d.chatPrice === 'object') {
