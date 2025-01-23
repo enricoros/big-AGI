@@ -727,7 +727,7 @@ export function ChatMessage(props: {
 
             onFragmentBlank={handleFragmentNew}
             onFragmentDelete={handleFragmentDelete}
-            onFragmentReplace={handleFragmentReplace}
+            onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
             onMessageDelete={props.onMessageDelete ? handleOpsDelete : undefined}
 
             onContextMenu={(props.onMessageFragmentReplace && ENABLE_CONTEXT_MENU) ? handleBlocksContextMenu : undefined}

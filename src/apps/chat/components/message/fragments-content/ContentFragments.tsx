@@ -64,7 +64,7 @@ export function ContentFragments(props: {
 
   onFragmentBlank: () => void
   onFragmentDelete: (fragmentId: DMessageFragmentId) => void,
-  onFragmentReplace: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
+  onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
   onMessageDelete?: () => void,
 
   onContextMenu?: (event: React.MouseEvent) => void;
@@ -116,9 +116,12 @@ export function ContentFragments(props: {
             return (
               <BlockPartModelAux
                 key={fId}
+                fragmentId={fId}
                 auxType={part.aType}
                 auxText={part.aText}
+                zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
+                onFragmentReplace={props.onFragmentReplace}
               />
             );
           }
