@@ -1,7 +1,7 @@
 import * as React from 'react';
+import { stringify as csvStringify } from 'csv-stringify/browser/esm/sync';
 
 import type { Pluggable as UnifiedPluggable } from 'unified';
-import { CSVLink } from 'react-csv';
 import { Components as ReactMarkdownComponents, default as ReactMarkdown } from 'react-markdown';
 import { default as rehypeKatex } from 'rehype-katex';
 import { default as remarkGfm } from 'remark-gfm';
@@ -11,6 +11,7 @@ import { remarkMark } from 'remark-mark-highlight';
 import { Box, Chip } from '@mui/joy';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
 
@@ -60,6 +61,7 @@ const _styles = {
 
   button: {
     // backgroundColor: 'background.popup',
+    borderRadius: 0,
     px: 1.5,
     py: 0.375,
     outline: '1px solid',
@@ -76,16 +78,38 @@ interface TableRendererProps {
 
 function TableRenderer({ children, node, ...props }: TableRendererProps) {
 
-  // Apply custom styles or modifications here
+  // extracts the table data by parsing the DOM
   const tableData = _extractTableData(children);
 
-  // Generate markdown string
-  const markdownString = tableData?.length >= 1 ? generateMarkdownTableFromData(tableData) : '';
+  // handlers
 
-  // Function to copy markdown to clipboard
-  const copyMarkdownToClipboard = React.useCallback(() => {
+  const handleDownloadCsv = React.useCallback(() => {
+    if (!tableData?.length) return;
+
+    // take all rows except the first one
+    const dataRows = tableData.slice(1);
+
+    // convert to CSV
+    const csvString = csvStringify(dataRows, {
+      bom: true,                 // add BOM marker for UTF-8 detection in Excel
+      quoted: true,              // quote all fields
+      quote: '"',                // use double quotes
+      escape: '"',               // escape quotes with double quotes
+      header: true,
+      columns: tableData[0],
+    });
+
+    // create blob and trigger download
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    downloadBlob(blob, 'table.csv');
+  }, [tableData]);
+
+  const handleCopyMarkdown = React.useCallback(() => {
+    if (!tableData?.length) return;
+    const markdownString = generateMarkdownTableFromData(tableData);
     copyToClipboard(markdownString, 'Markdown Table');
-  }, [markdownString]);
+  }, [tableData]);
+
 
   return (
     <>
@@ -96,31 +120,29 @@ function TableRenderer({ children, node, ...props }: TableRendererProps) {
       {/* Download CSV link and Copy Markdown Button */}
       {tableData?.length >= 1 && (
         <Box sx={_styles.buttons}>
-          <CSVLink filename='big-agi-table.csv' data={tableData}>
-            <Chip
-              variant='soft'
-              color='neutral'
-              size='sm'
-              // endDecorator={<DownloadIcon />}
-              sx={_styles.button}
-            >
-              Download CSV
-            </Chip>
-          </CSVLink>
+          {/* Download button*/}
+          <Chip
+            variant='soft'
+            color='neutral'
+            size='sm'
+            onClick={handleDownloadCsv}
+            // endDecorator={<DownloadIcon />}
+            sx={_styles.button}
+          >
+            Download CSV
+          </Chip>
 
           {/* Button to copy markdown */}
-          {!!markdownString && (
-            <Chip
-              variant='soft'
-              color='neutral'
-              size='sm'
-              onClick={copyMarkdownToClipboard}
-              // endDecorator={<ContentCopyIcon />}
-              sx={_styles.button}
-            >
-              Copy Markdown
-            </Chip>
-          )}
+          <Chip
+            variant='soft'
+            color='neutral'
+            size='sm'
+            onClick={handleCopyMarkdown}
+            // endDecorator={<ContentCopyIcon />}
+            sx={_styles.button}
+          >
+            Copy Markdown
+          </Chip>
         </Box>
       )}
     </>
