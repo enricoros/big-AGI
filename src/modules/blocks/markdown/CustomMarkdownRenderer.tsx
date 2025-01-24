@@ -8,8 +8,7 @@ import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
 import { remarkMark } from 'remark-mark-highlight';
 
-import { Box, Button } from '@mui/joy';
-import DownloadIcon from '@mui/icons-material/Download';
+import { Box, Chip } from '@mui/joy';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
@@ -44,9 +43,30 @@ function MarkRenderer({ children }: { children: React.ReactNode }) {
 
 // TableRenderer adds a CSV Download Link and a Copy Markdown Button
 
-const tableButtonsSx = {
-  backgroundColor: 'background.popup',
-  borderRadius: 0,
+const _styles = {
+
+  tableStyle: {
+    borderCollapse: 'collapse',
+    width: '100%',
+    marginBottom: '0.5rem',
+  } as const,
+
+  buttons: {
+    mb: 2,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+  } as const,
+
+  button: {
+    // backgroundColor: 'background.popup',
+    px: 1.5,
+    py: 0.375,
+    outline: '1px solid',
+    outlineColor: 'neutral.outlinedBorder', // .outlinedBorder
+    // boxShadow: `1px 2px 4px -3px var(--joy-palette-neutral-solidBg)`,
+  } as const,
+
 };
 
 interface TableRendererProps {
@@ -69,37 +89,37 @@ function TableRenderer({ children, node, ...props }: TableRendererProps) {
 
   return (
     <>
-      <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.5rem' }} {...props}>
+      <table style={_styles.tableStyle} {...props}>
         {children}
       </table>
 
       {/* Download CSV link and Copy Markdown Button */}
       {tableData?.length >= 1 && (
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={_styles.buttons}>
           <CSVLink filename='big-agi-table.csv' data={tableData}>
-            <Button
-              variant='outlined'
+            <Chip
+              variant='soft'
               color='neutral'
               size='sm'
-              endDecorator={<DownloadIcon />}
-              sx={tableButtonsSx}
+              // endDecorator={<DownloadIcon />}
+              sx={_styles.button}
             >
               Download CSV
-            </Button>
+            </Chip>
           </CSVLink>
 
           {/* Button to copy markdown */}
           {!!markdownString && (
-            <Button
-              variant='outlined'
+            <Chip
+              variant='soft'
               color='neutral'
               size='sm'
               onClick={copyMarkdownToClipboard}
               // endDecorator={<ContentCopyIcon />}
-              sx={tableButtonsSx}
+              sx={_styles.button}
             >
               Copy Markdown
-            </Button>
+            </Chip>
           )}
         </Box>
       )}
