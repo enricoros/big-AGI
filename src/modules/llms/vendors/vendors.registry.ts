@@ -54,9 +54,6 @@ const MODEL_VENDOR_REGISTRY: Record<ModelVendorId, IModelVendor> = {
   xai: ModelVendorXAI,
 } as Record<string, IModelVendor>;
 
-export function getModelVendorsCount(): number {
-  return Object.keys(MODEL_VENDOR_REGISTRY).length;
-}
 
 export function findAllModelVendors(): IModelVendor[] {
   const modelVendors = Object.values(MODEL_VENDOR_REGISTRY);
@@ -68,4 +65,8 @@ export function findModelVendor<TServiceSettings extends object = {}, TAccess = 
   vendorId?: ModelVendorId,
 ): IModelVendor<TServiceSettings, TAccess> | null {
   return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TServiceSettings, TAccess>) ?? null : null;
+}
+
+export function getDefaultModelVendor(): IModelVendor {
+  return MODEL_VENDOR_REGISTRY.openai;
 }

@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
+import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
@@ -38,7 +39,7 @@ interface LlmsActions {
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
 
-  addService: (service: DModelsService) => void;
+  createModelsService: (vendor: IModelVendor) => DModelsService;
   removeService: (id: DModelsServiceId) => void;
   updateServiceSettings: <TServiceSettings>(id: DModelsServiceId, partialSettings: Partial<TServiceSettings>) => void;
 
@@ -53,7 +54,7 @@ interface LlmsActions {
 }
 
 export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
-  (set) => ({
+  (set, get) => ({
 
     // initial state
 
@@ -157,23 +158,45 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         ),
       })),
 
-    addService: (service: DModelsService) =>
-      set(state => {
-        // re-number all services for the given vendor
-        const sameVendor = service.vId;
+    createModelsService: (vendor: IModelVendor): DModelsService => {
+
+      function _locallyUniqueServiceId(vendorId: ModelVendorId, existingServices: DModelsService[]): DModelsServiceId {
+        let serviceId: DModelsServiceId = vendorId;
+        let serviceIdx = 0;
+        while (existingServices.find(s => s.id === serviceId)) {
+          serviceIdx++;
+          serviceId = `${vendorId}-${serviceIdx}`;
+        }
+        return serviceId;
+      }
+
+      function _relabelServicesFromSameVendor(vendorId: ModelVendorId, services: DModelsService[]): DModelsService[] {
         let n = 0;
-        return {
-          sources: [...state.sources, service].map((s: DModelsService): DModelsService =>
-            s.vId === sameVendor
-              ? {
-                ...s,
-                label: s.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : ''),
-              }
-              : s,
-          ),
-          confServiceId: state.confServiceId ?? service.id,
-        };
-      }),
+        return services.map((s: DModelsService): DModelsService =>
+          (s.vId !== vendorId) ? s
+            : { ...s, label: s.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : '') },
+        );
+      }
+
+      const { sources: existingServices, confServiceId } = get();
+
+      // create the service
+      const newService: DModelsService = {
+        id: _locallyUniqueServiceId(vendor.id, existingServices),
+        label: vendor.name,
+        vId: vendor.id,
+        setup: vendor.initializeSetup?.() || {},
+      };
+
+      const newServices = _relabelServicesFromSameVendor(vendor.id, [...existingServices, newService]);
+
+      set({
+        sources: newServices,
+        confServiceId: confServiceId ?? newService.id,
+      });
+
+      return newServices[newServices.length - 1];
+    },
 
     removeService: (id: DModelsServiceId) =>
       set(state => {

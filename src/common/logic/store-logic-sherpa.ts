@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Release } from '~/common/app.release';
 import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '~/common/util/storageUtils';
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
-import { reconfigureBackendModels } from '~/common/logic/reconfigureBackendModels';
+import { reconfigureBackendModels } from './reconfigureBackendModels';
 
 
 // Sherpa State: navigation thought the app, remembers the counters for progressive disclosure of complex features
@@ -66,12 +66,13 @@ export function markNewsAsSeen() {
 }
 
 
-// Reconfgure Backend Models
+// Reconfigure Backend Models
 
 export async function sherpaReconfigureBackendModels() {
   return reconfigureBackendModels(
     useLogicSherpaStore.getState().lastLlmReconfigHash,
     (hash: string) => useLogicSherpaStore.setState({ lastLlmReconfigHash: hash }),
+    true, true
   );
 }
 

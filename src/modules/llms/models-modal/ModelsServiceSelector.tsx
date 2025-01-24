@@ -13,8 +13,8 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
-import { createModelsServiceForVendor, vendorHasBackendCap } from '../vendors/vendor.helpers';
-import { findAllModelVendors, findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
+import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
+import { vendorHasBackendCap } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
 
 
@@ -56,14 +56,10 @@ export function ModelsServiceSelector(props: {
 
   const { modelsServices, setSelectedServiceId } = props;
 
-  const handleAddServiceForVendor = React.useCallback((vendorId: ModelVendorId) => {
+  const handleAddServiceForVendor = React.useCallback((vendor: IModelVendor) => {
     closeVendorsMenu();
-    const { sources: modelsServices, addService } = llmsStoreState();
-    const modelsService = createModelsServiceForVendor(vendorId, modelsServices);
-    if (modelsService) {
-      addService(modelsService);
-      setSelectedServiceId(modelsService.id);
-    }
+    const modelsService = llmsStoreState().createModelsService(vendor);
+    setSelectedServiceId(modelsService.id);
   }, [setSelectedServiceId]);
 
   const enableDeleteButton = !!props.selectedServiceId && modelsServices.length > 1;
@@ -111,7 +107,7 @@ export function ModelsServiceSelector(props: {
             vendor,
             enabled,
             component: (
-              <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddServiceForVendor(vendor.id)}>
+              <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddServiceForVendor(vendor)}>
                 <ListItemDecorator>
                   {vendorIcon(vendor, vendorHasBackendCap(vendor))}
                 </ListItemDecorator>
