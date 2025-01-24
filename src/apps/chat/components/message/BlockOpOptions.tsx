@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
-import { DMessageFragment, DMessageTextPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageTextPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 
 // configuration
@@ -54,7 +54,7 @@ const optionSx: SxProps = {
 };
 
 
-export function optionsExtractFromFragments_dangerModifyFragment(enabled: boolean, fragments: DMessageFragment[]): { fragments: DMessageFragment[], options: string[], } {
+export function optionsExtractFromFragments_dangerModifyFragment(enabled: boolean, fragments: DMessageContentFragment[]): { fragments: DMessageContentFragment[], options: string[], } {
   if (enabled && fragments.length) {
     const fragment = fragments[fragments.length - 1];
     if (isTextContentFragment(fragment)) {
