@@ -1346,7 +1346,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 4000, output: 6000 },
 },
 {
-  id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
+  id: 'openpipe:x-ai/grok-2-vision-1212',
   label: '💾➜ xAI Grok 2 Vision 1212',
   description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications. Features enhanced steerability and reasoning capabilities for next-generation image solutions.',
   contextWindow: 32768,
@@ -1356,7 +1356,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   chatPrice: { input: 2000, output: 10000 },
 },
 {
-  id: 'openpipe:openrouter/x-ai/grok-2-1212',
+  id: 'openpipe:x-ai/grok-2-1212',
   label: '💾➜ xAI Grok 2 1212',
   description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model. Features improved reasoning capabilities and enhanced context handling with a 131K token window.',
   contextWindow: 131072,
