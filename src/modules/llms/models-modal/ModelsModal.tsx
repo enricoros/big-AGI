@@ -14,8 +14,7 @@ import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
 import { ModelsServiceSelector } from './ModelsServiceSelector';
 import { ModelsWizard } from './ModelsWizard';
-import { createModelsServiceForDefaultVendor } from '../vendors/vendor.helpers';
-import { findModelVendor } from '../vendors/vendors.registry';
+import { findModelVendor, getDefaultModelVendor } from '../vendors/vendors.registry';
 
 
 // configuration
@@ -66,9 +65,9 @@ function ModelsConfiguratorModal(props: {
   const autoAddTrigger = !showWizard && props.allowAutoTrigger;
   React.useEffect(() => {
     // Note: we use the immediate version to not react to deletions
-    const { addService, sources: modelsServices } = llmsStoreState();
+    const { createModelsService, sources: modelsServices } = llmsStoreState();
     if (autoAddTrigger && !modelsServices.length)
-      addService(createModelsServiceForDefaultVendor(modelsServices));
+      createModelsService(getDefaultModelVendor());
   }, [autoAddTrigger]);
 
 

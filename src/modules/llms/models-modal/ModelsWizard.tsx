@@ -11,7 +11,6 @@ import type { IModelVendor } from '../vendors/IModelVendor';
 import { ModelVendorAnthropic } from '../vendors/anthropic/anthropic.vendor';
 import { ModelVendorGemini } from '../vendors/gemini/gemini.vendor';
 import { ModelVendorOpenAI } from '../vendors/openai/openai.vendor';
-import { createModelsServiceForVendor } from '../vendors/vendor.helpers';
 import { llmsUpdateModelsForServiceOrThrow } from '../llm.client';
 
 
@@ -81,12 +80,8 @@ function WizardProviderSetup(props: {
   const handleSetServiceKey = React.useCallback(async () => {
 
     // create the service if missing
-    const { sources: llmsServices, addService, updateServiceSettings, setLLMs } = llmsStoreState();
-    let vendorService = llmsServices.find(s => s.vId === vendorId);
-    if (!vendorService) {
-      vendorService = createModelsServiceForVendor(vendorId, llmsServices);
-      addService(vendorService);
-    }
+    const { sources: llmsServices, createModelsService, updateServiceSettings, setLLMs } = llmsStoreState();
+    const vendorService = llmsServices.find(s => s.vId === vendorId) || createModelsService(props.vendor);
     const vendorServiceId = vendorService.id;
 
     // set the key
@@ -114,7 +109,7 @@ function WizardProviderSetup(props: {
     }
     setIsLoading(false);
 
-  }, [localKey, props.apiKeyField, vendorId]);
+  }, [localKey, props.apiKeyField, props.vendor, vendorId]);
 
 
   // memoed components
