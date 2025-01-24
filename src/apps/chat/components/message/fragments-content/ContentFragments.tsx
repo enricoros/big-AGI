@@ -6,22 +6,19 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import { DMessageContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isPlaceholderPart, isTextPart, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragmentId, isTextPart } from '~/common/stores/chat/chat.fragments';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
 import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
 import { BlockPartImageRef } from './BlockPartImageRef';
-import { BlockPartModelAnnotations } from './BlockPartModelAnnotations';
-import { BlockPartModelAux } from './BlockPartModelAux';
-import { BlockPartPlaceholder } from './BlockPartPlaceholder';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
 
 
-const editLayoutSx: SxProps = {
+const _editLayoutSx: SxProps = {
   display: 'grid',
   gap: 1.5,     // see why we give more space on ChatMessage
 
@@ -32,20 +29,20 @@ const editLayoutSx: SxProps = {
   // },
 };
 
-const startLayoutSx: SxProps = {
-  ...editLayoutSx,
+const _startLayoutSx: SxProps = {
+  ..._editLayoutSx,
   justifyContent: 'flex-start',
-};
+} as const;
 
-const endLayoutSx: SxProps = {
-  ...editLayoutSx,
+const _endLayoutSx: SxProps = {
+  ..._editLayoutSx,
   justifyContent: 'flex-end',
-};
+} as const;
 
 
 export function ContentFragments(props: {
 
-  fragments: DMessageFragment[]
+  contentFragments: DMessageContentFragment[]
   showEmptyNotice: boolean,
 
   contentScaling: ContentScaling,
@@ -73,18 +70,16 @@ export function ContentFragments(props: {
 
 }) {
 
-  const fragmentsCount = props.fragments.length;
+  const isEmpty = !props.contentFragments.length;
   const fromAssistant = props.messageRole === 'assistant';
   const fromUser = props.messageRole === 'user';
   const isEditingText = !!props.textEditsState;
-  // const isMonoFragment = fragmentsCount < 2;
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
-  const showDataStreamViz = props.uiComplexityMode !== 'minimal' && fragmentsCount === 1 && isVoidFragment(props.fragments[0]) && isPlaceholderPart(props.fragments[0].part);
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
-  if (isEditingText && !fragmentsCount)
+  if (isEditingText && isEmpty)
     return (
-      <Button variant='plain' color='neutral' onClick={props.onFragmentBlank} sx={{ justifyContent: 'flex-start' }}>
+      <Button aria-label='message body empty' variant='plain' color='neutral' onClick={props.onFragmentBlank} sx={{ justifyContent: 'flex-start' }}>
         add text ...
       </Button>
     );
@@ -94,10 +89,10 @@ export function ContentFragments(props: {
     return null;
 
   // if no fragments, don't box them
-  if (!props.showEmptyNotice && !fragmentsCount)
+  if (!props.showEmptyNotice && isEmpty)
     return null;
 
-  return <Box aria-label='message body' sx={(isEditingText || showDataStreamViz) ? editLayoutSx : fromAssistant ? startLayoutSx : endLayoutSx}>
+  return <Box aria-label='message body' sx={isEditingText ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
@@ -108,69 +103,7 @@ export function ContentFragments(props: {
       />
     )}
 
-    {props.fragments.map((fragment) => {
-
-      // Render VOID fragments
-      if (isVoidFragment(fragment)) {
-        const { fId, part } = fragment;
-        switch (part.pt) {
-          case 'annotations':
-            return (
-              <BlockPartModelAnnotations
-                key={fId}
-                annotations={part.annotations}
-                contentScaling={props.contentScaling}
-              />
-            );
-
-          case 'ma':
-            return (
-              <BlockPartModelAux
-                key={fId}
-                fragmentId={fId}
-                auxType={part.aType}
-                auxText={part.aText}
-                auxHasSignature={part.textSignature !== undefined}
-                auxRedactedDataCount={part.redactedData?.length ?? 0}
-                zenMode={props.uiComplexityMode === 'minimal'}
-                contentScaling={props.contentScaling}
-                onFragmentReplace={props.onFragmentReplace}
-              />
-            );
-
-          case 'ph':
-            return (
-              <BlockPartPlaceholder
-                key={fId}
-                placeholderText={part.pText}
-                messageRole={props.messageRole}
-                contentScaling={props.contentScaling}
-                showAsItalic
-                showAsDataStreamViz={showDataStreamViz}
-              />
-            );
-
-          case '_pt_sentinel':
-            return null;
-
-          default:
-            // noinspection JSUnusedLocalSymbols
-            const _exhaustiveVoidFragmentCheck: never = part;
-            return (
-              <ScaledTextBlockRenderer
-                key={fId}
-                text={`Unknown Void Fragment: ${(part as any)?.pt}`}
-                contentScaling={props.contentScaling}
-                textRenderVariant='text'
-                showAsDanger
-              />
-            );
-        }
-      }
-
-      // Render CONTENT fragments
-      if (!isContentFragment(fragment))
-        return null;
+    {props.contentFragments.map((fragment) => {
 
       // simplify
       const { fId, part } = fragment;

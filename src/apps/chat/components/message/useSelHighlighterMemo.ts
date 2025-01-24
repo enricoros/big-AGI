@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageContentFragment, DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { wrapWithMarkdownSyntax } from '~/modules/blocks/markdown/markdown.wrapper';
 
 import { BUBBLE_MIN_TEXT_LENGTH } from './ChatMessage';
@@ -29,7 +29,7 @@ type HighlightTool = 'highlight' | 'strike' | 'strong';
 export function useSelHighlighterMemo(
   messageId: DMessageId,
   selText: string | null,
-  fragments: DMessageFragment[],
+  fragments: DMessageContentFragment[],
   fromAssistant: boolean,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
 ): ((tool: HighlightTool) => void) | null {

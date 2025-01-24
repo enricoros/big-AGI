@@ -55,6 +55,7 @@ import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
+import { VoidFragments } from './fragments-void/VoidFragments';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
 import { setIsNotificationEnabledForModel, useChatShowTextDiff } from '../../store-app-chat';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
@@ -210,12 +211,13 @@ export function ChatMessage(props: {
 
   const {
     imageAttachments,       // Stamp-sized Images
-    contentOrVoidFragments, // Text (Markdown + Code + ... blocks), Errors, (large) Images, Placeholders
+    voidFragments,          // Model-Aux, Placeholders
+    contentFragments,       // Text (Markdown + Code + ... blocks), Errors, (large) Images
     nonImageAttachments,    // Document Attachments, likely the User dropped them in
   } = useFragmentBuckets(messageFragments);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
-  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentOrVoidFragments, fromAssistant, props.onMessageFragmentReplace);
+  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, props.onMessageFragmentReplace);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
   const isSpecialT2I = textSubject.startsWith('https://images.prodia.xyz/') || textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
@@ -527,9 +529,9 @@ export function ChatMessage(props: {
 
   const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && messageGenerator?.tokenStopReason !== 'out-of-tokens' && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
-  const { fragments: renderFragments, options: continuationOptions } = React.useMemo(() => {
-    return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, contentOrVoidFragments);
-  }, [contentOrVoidFragments, lookForOptions]);
+  const { fragments: renderContentFragments, options: continuationOptions } = React.useMemo(() => {
+    return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, contentFragments);
+  }, [contentFragments, lookForOptions]);
 
 
   // style
@@ -720,9 +722,20 @@ export function ChatMessage(props: {
             />
           )}
 
+          {/* Void Fragments */}
+          {voidFragments.length >= 1 && (
+            <VoidFragments
+              voidFragments={voidFragments}
+              nonVoidFragmentsCount={renderContentFragments.length}
+              contentScaling={adjContentScaling}
+              uiComplexityMode={uiComplexityMode}
+              messageRole={messageRole}
+            />
+          )}
+
           {/* Content Fragments */}
           <ContentFragments
-            fragments={renderFragments}
+            contentFragments={renderContentFragments}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
 
             contentScaling={adjContentScaling}
