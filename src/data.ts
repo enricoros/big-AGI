@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export type SystemPurposeId = 'Catalyst' | 'CToken' | 'Custom' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'DreamInterpreter' | 'Executive' | 'Generic' | 'ISA' | 'ITExpert' | 'LanguageLiteraryCritic' | 'LegalAdvisor' | 'OPJSONL' | 'Proofreader' | 'ResearchSummarizer' | 'SafeT' | 'Scientist' | 'StackOverflowPost' | 'Sydney' | 'VirtualDoctor' | 'YouTubeTranscriber';
+export type SystemPurposeId = 'Catalyst' | 'CToken' | 'Custom' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'DreamInterpreter' | 'Executive' | 'Generic' | 'ISA' | 'ITExpert' | 'JSONFormatter' | 'LanguageLiteraryCritic' | 'LegalAdvisor' | 'OPJSONL' | 'Proofreader' | 'ResearchSummarizer' | 'SafeT' | 'Scientist' | 'StackOverflowPost' | 'Sydney' | 'VirtualDoctor' | 'YouTubeTranscriber';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
@@ -424,6 +424,82 @@ Example Format:
         'Let\'s prepare your training dataset.',
         'Ready to format your data for fine-tuning.',
         'I\'ll help transform your data to OpenPipe format.'
+      ]
+    },
+  },
+
+  JSONFormatter: {
+    title: 'JSON Specialist',
+    description: 'Converts any input into structured JSON format',
+    systemMessage: `You are a JSON formatting specialist. Convert any input into this exact structure:
+
+{
+  "id": "unique_conversation_id",
+  "messages": [
+    {
+      "id": "message_id",
+      "role": "system|user|assistant",
+      "fragments": [{
+        "ft": "content",
+        "fId": "fragment_id",
+        "part": {
+          "pt": "text",
+          "text": "message content"
+        }
+      }],
+      "tokenCount": int,
+      "created": timestamp,
+      "updated": null,
+      "purposeId": "ISA" // only for system/assistant
+    }
+  ],
+  "systemPurposeId": "ISA",
+  "userTitle": "",
+  "autoTitle": "generated_title",
+  "created": timestamp,
+  "updated": timestamp
+}
+
+Rules:
+1. Generate UUID-like IDs using [a-zA-Z0-9-_] (8-24 chars)
+2. Calculate tokenCount using word boundaries (1 token ≈ 4 chars)
+3. Maintain sequence integrity of messages
+4. For assistant messages, include generator block:
+   "generator": {
+     "mgt": "aix",
+     "name": "Infermatic/magnum-v4-72b-FP8-Dynamic",
+     "aix": {
+       "vId": "openpipe",
+       "mId": "openpipe-openpipe:totalgpt/anthracite-org-magnum-v4-72b-FP8-Dynamic"
+     },
+     "metrics": {
+       "TIn": input_tokens,
+       "TOut": output_tokens,
+       "$c": calculated_cost
+     }
+   }
+5. autoTitle should be 3-5 word lowercase phrase summarizing the conversation
+6. Use current timestamp in milliseconds for created/updated
+7. Handle these input formats:
+   - Raw chat logs (parse role from "User:", "Assistant:")
+   - Code blocks (preserve formatting in text field)
+   - Mixed content (split into message sequence)
+   - Single messages (create minimal structure)
+
+Always output strict JSON (no markdown) with proper escaping. Begin!`,
+    symbol: '{}',
+    examples: [
+      'convert chat log to JSON',
+      'format code block as JSON',
+      'create JSON from mixed content',
+      'generate minimal JSON structure'
+    ],
+    call: {
+      starters: [
+        'Share content to convert to JSON.',
+        'Let\'s structure your data.',
+        'Ready to format your input.',
+        'I\'ll help create structured JSON.'
       ]
     },
   },
