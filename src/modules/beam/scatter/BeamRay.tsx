@@ -53,7 +53,7 @@ export const rayControlsMobileSx: SxProps = {
   position: 'sticky', top: 0, bottom: 64,
 
   // looks (absorb parent padding, and overwrite with color and zIndex to stay on top)
-  zIndex: 1,
+  zIndex: 2, // because 'Chip' component have a zIndex of 1 in the inner label
   backgroundColor: 'inherit',
   mx: 'calc(-1 * var(--Card-padding))',
   px: 'var(--Card-padding)',
