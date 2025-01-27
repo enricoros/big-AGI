@@ -81,6 +81,7 @@ export function BlockPartModelAux(props: {
 }) {
 
   // state
+  const [neverExpanded, setNeverExpanded] = React.useState(true);
   const [expanded, setExpanded] = React.useState(false);
 
   // external state
@@ -97,6 +98,11 @@ export function BlockPartModelAux(props: {
 
   const { onFragmentReplace } = props;
   const showInline = !!onFragmentReplace;
+
+  const handleToggleExpanded = React.useCallback(() => {
+    setNeverExpanded(false);
+    setExpanded(on => !on);
+  }, []);
 
   const handleInline = React.useCallback(() => {
     if (!onFragmentReplace) return;
@@ -127,7 +133,7 @@ export function BlockPartModelAux(props: {
         color='success'
         variant={expanded ? 'solid' : 'soft'}
         size='sm'
-        onClick={() => setExpanded(on => !on)}
+        onClick={handleToggleExpanded}
         sx={expanded ? _styles.chipExpanded : _styles.chip}
         startDecorator={<AllInclusiveIcon sx={_styles.chipIcon}  /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */ />}
         // startDecorator='🧠'
@@ -152,9 +158,11 @@ export function BlockPartModelAux(props: {
     {/* Controlled Box */}
     <ExpanderControlledBox expanded={expanded}>
 
-      <Typography sx={textSx}>
-        {props.auxText}
-      </Typography>
+      {!neverExpanded && (
+        <Typography sx={textSx}>
+          {props.auxText}
+        </Typography>
+      )}
 
     </ExpanderControlledBox>
 
