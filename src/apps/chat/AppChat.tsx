@@ -136,8 +136,8 @@ export function AppChat() {
   const {
     // state
     chatPanes,
+    focusedPaneConversationId, // <-- key
     focusedPaneIndex,
-    focusedPaneConversationId,
     // actions
     navigateHistoryInFocusedPane,
     openConversationInFocusedPane,
