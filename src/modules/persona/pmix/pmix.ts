@@ -22,11 +22,11 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
 
     // validate presence of dependencies
     if (definition.dependencies?.assistantLlmId && !context.assistantLlmId) {
-      console.warn(`[DEV] replacePromptVariables: skipping ${variable} due to missing LLM ID`);
+      console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing LLM ID`);
       continue;
     }
     if (definition.dependencies?.lowHourPrecision && context.lowHourPrecision === undefined) {
-      console.warn(`[DEV] replacePromptVariables: skipping ${variable} due to missing lowHourPrecision`);
+      console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing lowHourPrecision`);
       continue;
     }
 
