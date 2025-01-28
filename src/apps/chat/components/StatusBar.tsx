@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-
-import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, styled, Typography } from '@mui/joy';
+import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import MinimizeIcon from '@mui/icons-material/Minimize';
@@ -27,12 +25,79 @@ const hideButtonTooltip = (
   </Box>
 );
 
-const hideButtonSx: SxProps = {
-  '--IconButton-size': '28px',
-  '--Icon-fontSize': '16px',
-  '--Icon-color': 'var(--joy-palette-text-tertiary)',
-  mr: -0.5,
-};
+const _styles = {
+
+  bar: {
+    borderBottom: '1px solid',
+    // borderBottomColor: 'var(--joy-palette-divider)',
+    borderBottomColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
+    // borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+    // backgroundColor: 'var(--joy-palette-background-surface)',
+    // paddingBlock: '0.25rem',
+    paddingInline: '0.5rem',
+    // layout
+    display: 'flex',
+    flexFlow: 'row nowrap',
+    columnGap: '1.5rem', // space between shortcuts
+    lineHeight: '1em',
+    // animation: `${animateAppear} 0.3s ease-out`,
+    // transition: 'all 0.2s ease',
+    // '&:hover': {
+    //   backgroundColor: 'var(--joy-palette-background-level1)',
+    // },
+  } as const,
+
+  hideButton: {
+    '--IconButton-size': '28px',
+    '--Icon-fontSize': '16px',
+    '--Icon-color': 'var(--joy-palette-text-tertiary)',
+    mr: -0.5,
+  } as const,
+
+  shortcut: {
+    display: 'flex',
+    alignItems: 'center',
+    whiteSpace: 'nowrap',
+    gap: '2px', // space between modifiers
+    marginBlock: '0.25rem',
+    // transition: 'transform 0.2s ease',
+    // '&:hover': {
+    //   transform: 'scale(1.05)',
+    // },
+    '&:hover > div': {
+      backgroundColor: 'background.level1',
+    } as const,
+    cursor: 'pointer',
+    [`&[aria-disabled="true"]`]: {
+      opacity: 0.5,
+      pointerEvents: 'none',
+    } as const,
+  } as const,
+
+  itemKey: {
+    fontSize: 'xs',
+    fontWeight: 'md',
+    border: '1px solid',
+    borderColor: 'neutral.outlinedBorder',
+    borderRadius: 'xs',
+    // backgroundColor: 'var(--joy-palette-neutral-outlinedBorder)',
+    backgroundColor: 'background.popup',
+    // boxShadow: 'inset 2px 0px 4px -2px var(--joy-palette-background-backdrop)',
+    boxShadow: 'xs',
+    // minWidth: '1rem',
+    paddingBlock: '1px',
+    paddingInline: '4px',
+    // pointerEvents: 'none',
+    cursor: 'pointer',
+    transition: 'background-color 1s ease',
+  } as const,
+
+  itemIcon: {
+    fontSize: 'md',
+  } as const,
+
+} as const;
+
 
 // const animateAppear = keyframes`
 //     from {
@@ -44,64 +109,6 @@ const hideButtonSx: SxProps = {
 //         transform: translateY(0);
 //     }
 // `;
-
-const StatusBarContainer = styled(Box)({
-  borderBottom: '1px solid',
-  // borderBottomColor: 'var(--joy-palette-divider)',
-  borderBottomColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
-  // borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  // backgroundColor: 'var(--joy-palette-background-surface)',
-  // paddingBlock: '0.25rem',
-  paddingInline: '0.5rem',
-  // layout
-  display: 'flex',
-  flexFlow: 'row nowrap',
-  columnGap: '1.5rem', // space between shortcuts
-  lineHeight: '1em',
-  // animation: `${animateAppear} 0.3s ease-out`,
-  // transition: 'all 0.2s ease',
-  // '&:hover': {
-  //   backgroundColor: 'var(--joy-palette-background-level1)',
-  // },
-});
-
-const ShortcutContainer = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  whiteSpace: 'nowrap',
-  gap: '2px', // space between modifiers
-  marginBlock: '0.25rem',
-  // transition: 'transform 0.2s ease',
-  // '&:hover': {
-  //   transform: 'scale(1.05)',
-  // },
-  '&:hover > div': {
-    backgroundColor: 'var(--joy-palette-background-level1)',
-  },
-  cursor: 'pointer',
-  [`&[aria-disabled="true"]`]: {
-    opacity: 0.5,
-    pointerEvents: 'none',
-  }
-});
-
-const ShortcutKey = styled(Box)({
-  fontSize: 'var(--joy-fontSize-xs)',
-  fontWeight: 'var(--joy-fontWeight-md)',
-  border: '1px solid',
-  borderColor: 'var(--joy-palette-neutral-outlinedBorder)',
-  borderRadius: 'var(--joy-radius-xs)',
-  // backgroundColor: 'var(--joy-palette-neutral-outlinedBorder)',
-  backgroundColor: 'var(--joy-palette-background-popup)',
-  // boxShadow: 'inset 2px 0px 4px -2px var(--joy-palette-background-backdrop)',
-  boxShadow: 'var(--joy-shadow-xs)',
-  // minWidth: '1rem',
-  paddingBlock: '1px',
-  paddingInline: '4px',
-  // pointerEvents: 'none',
-  cursor: 'pointer',
-  transition: 'background-color 1s ease',
-});
 
 
 // Display mac-style shortcuts on windows as well
@@ -118,6 +125,8 @@ function _platformAwareModifier(symbol: 'Ctrl' | 'Alt' | 'Shift') {
   }
 }
 
+const ShortcutItemMemo = React.memo(ShortcutItem);
+
 function ShortcutItem(props: { shortcut: ShortcutObject }) {
 
   const handleClicked = React.useCallback(() => {
@@ -126,17 +135,22 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
   }, [props.shortcut]);
 
   return (
-    <ShortcutContainer onClick={!props.shortcut.disabled ? handleClicked : undefined} aria-disabled={props.shortcut.disabled}>
-      {!!props.shortcut.ctrl && <ShortcutKey>{_platformAwareModifier('Ctrl')}</ShortcutKey>}
-      {!!props.shortcut.shift && <ShortcutKey>{_platformAwareModifier('Shift')}</ShortcutKey>}
-      {/*{!!props.shortcut.altForNonMac && <ShortcutKey onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <ShortcutKey>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</ShortcutKey>
+    <Box
+      onClick={!props.shortcut.disabled ? handleClicked : undefined}
+      aria-disabled={props.shortcut.disabled}
+      sx={_styles.shortcut}
+    >
+      {!!props.shortcut.ctrl && <Box sx={_styles.itemKey}>{_platformAwareModifier('Ctrl')}</Box>}
+      {!!props.shortcut.shift && <Box sx={_styles.itemKey}>{_platformAwareModifier('Shift')}</Box>}
+      {/*{!!props.shortcut.altForNonMac && <Box sx={_styles.itemKey} onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
+      <Box sx={_styles.itemKey}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</Box>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
-      {props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={{ fontSize: 'md' }} />}
-    </ShortcutContainer>
+      {!!props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={_styles.itemIcon} />}
+    </Box>
   );
 }
 
+export const StatusBarMemo = React.memo(StatusBar);
 
 export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: boolean }) {
 
@@ -202,27 +216,30 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
     return null;
 
   return (
-    <StatusBarContainer aria-label='Status bar'>
+    <Box
+      aria-label='Shortcuts and status bar'
+      sx={_styles.bar}
+    >
 
       {(!props.toggleMinimized || !COMPOSER_ENABLE_MINIMIZE) && !props.isMinimized ? (
         // Close Button
         <GoodTooltip variantOutlined arrow placement='top' title={hideButtonTooltip}>
-          <IconButton size='sm' sx={hideButtonSx} onClick={handleHideShortcuts}>
+          <IconButton size='sm' onClick={handleHideShortcuts} sx={_styles.hideButton}>
             <CloseRoundedIcon />
           </IconButton>
         </GoodTooltip>
       ) : (
         // Minimize / Maximize Button - note the Maximize icon would be more correct, but also less discoverable
-        <IconButton size='sm' sx={hideButtonSx} onClick={props.toggleMinimized}>
+        <IconButton size='sm' onClick={props.toggleMinimized} sx={_styles.hideButton}>
           {props.isMinimized ? <ExpandLessIcon /> : <MinimizeIcon />}
         </IconButton>
       )}
 
       {/* Show all shortcuts */}
       {shortcuts.map((shortcut, idx) => (
-        <ShortcutItem key={shortcut.key + idx} shortcut={shortcut} />
+        <ShortcutItemMemo key={shortcut.key + idx} shortcut={shortcut} />
       ))}
 
-    </StatusBarContainer>
+    </Box>
   );
 }
