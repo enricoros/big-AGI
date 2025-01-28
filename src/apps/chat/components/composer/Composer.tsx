@@ -74,7 +74,7 @@ import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
-import { StatusBar } from '../StatusBar';
+import { StatusBarMemo } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
@@ -723,7 +723,7 @@ export function Composer(props: {
   return (
     <Box aria-label='User Message' component='section' sx={props.sx}>
 
-      {!isMobile && labsShowShortcutBar && <StatusBar toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
+      {!isMobile && labsShowShortcutBar && <StatusBarMemo toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
 
       {/* This container is here just to let the potential statusbar fill the whole space, so we moved the padding here and not in the parent */}
       <Box sx={(!isMinimized || isMobile || !labsShowShortcutBar) ? paddingBoxSx : minimizedSx}>
