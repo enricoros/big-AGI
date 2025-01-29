@@ -266,17 +266,21 @@ const orOldModelIDs = [
   // Older Anthropic models
   'anthropic/claude-1', 'anthropic/claude-1.2', 'anthropic/claude-instant-1.0', 'anthropic/claude-instant-1.1',
   'anthropic/claude-2', 'anthropic/claude-2:beta', 'anthropic/claude-2.0', 'anthropic/claude-2.1', 'anthropic/claude-2.0:beta',
+  // Older Google models
+  'google/palm-2-',
+  // Older Meta models
+  'meta-llama/llama-3-', 'meta-llama/llama-2-',
 ];
 
 const orModelFamilyOrder = [
   // Leading models/organizations (based on capabilities and popularity)
-  'anthropic/', 'openai/', 'google/', 'mistralai/', 'meta-llama/',
+  'anthropic/', 'deepseek/', 'google/', 'openai/', 'x-ai/',
   // Other major providers
-  'x-ai/', 'amazon/', 'cohere/', 'nvidia/', 'inflection/',
+  'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'phind/', 'qwen/', 'deepseek/',
+  'perplexity/', 'phind/', 'qwen/', 'inflection/',
   // Research/open models
-  'microsoft/', 'nousresearch/', 'openchat/', 'huggingfaceh4/',
+  'nvidia/', 'microsoft/', 'nousresearch/', 'openchat/', // 'huggingfaceh4/',
   // Community/other providers
   // 'gryphe/', 'thedrummer/', 'undi95/', 'cognitivecomputations/', 'sao10k/',
 ];
@@ -315,8 +319,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     label += ' · 🎁'; // Free? Discounted?
   // label = label.replace('(self-moderated)', '🔓');
 
-  // hidden: hide by default older models or models not in known families
-  const hidden = orOldModelIDs.includes(model.id) || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
+  // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
+  const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
+    || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
 
   return fromManualMapping([], model.id, undefined, undefined, {
     idPrefix: model.id,
