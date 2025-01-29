@@ -353,9 +353,15 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .replace('thinking', 'Thinking');
   }
   // [Deepseek]
-  if (model.includes('deepseek-chat')) return 'Deepseek Chat';
-  if (model.includes('deepseek-coder')) return 'Deepseek Coder';
-  if (model.includes('deepseek-reasoner')) return 'Deepseek Reasoner';
+  if (model.includes('deepseek-')) {
+    // start past the last /, if any
+    const lastSlashIndex = model.lastIndexOf('/');
+    const modelName = lastSlashIndex === -1 ? model : model.slice(lastSlashIndex + 1);
+    return modelName.replace('deepseek-', ' Deepseek ')
+      .replace('reasoner', 'R1').replace('r1', 'R1')
+      .replaceAll('-', ' ')
+      .trim();
+  }
   // [LM Studio]
   if (model.startsWith('C:\\') || model.startsWith('D:\\'))
     return _prettyLMStudioFileModelName(model).replace('.gguf', '');
