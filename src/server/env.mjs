@@ -110,11 +110,6 @@ export const env = createEnv({
 
   },
 
-  onValidationError: error => {
-    console.error('❌ Invalid environment variables:', error.issues);
-    throw new Error('Invalid environment variable');
-  },
-
   // matches user expectations - see https://github.com/enricoros/big-AGI/issues/279
   emptyStringAsUndefined: true,
 
