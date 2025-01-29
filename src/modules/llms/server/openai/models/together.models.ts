@@ -5,10 +5,9 @@ import { fromManualMapping, ManualMappings } from './models.data';
 import { wireTogetherAIListOutputSchema } from '../togetherai.wiretypes';
 
 
+// Note: 2025-01-28 - we used to have harcoded models here, but now we have a dynamic
+// list from the API, so we don't need to hardcode them here anymore.
 const _knownTogetherAIChatModels: ManualMappings = [
-  // Note: 2025-01-28 - we used to have harcoded models here, but now we have a dynamic
-  // list from the API, so we don't need to hardcode them here anymore.
-
   // {
   //   idPrefix: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
   //   label: 'Llama 3.3 70B Instruct Turbo',
