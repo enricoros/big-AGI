@@ -9,5 +9,7 @@ export const wireGroqModelsListOutputSchema = z.object({
   created: z.number(),
   owned_by: z.string(),
   active: z.boolean(),
+  context_window: z.number(),
+  // public_apps: z.any(),
 });
 
