@@ -4,7 +4,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { fixupHost } from '~/common/util/urlUtils';
 
@@ -201,7 +201,8 @@ export const llmOllamaRouter = createTRPCRouter({
 
           // pretty label and description
           const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` (${modelTag})` : '');
-          let description = OLLAMA_BASE_MODELS[modelName]?.description ?? 'Model unknown';
+          const baseModel = OLLAMA_BASE_MODELS[modelName] ?? {};
+          let description = baseModel.description || 'Model unknown';
 
           // prepend the parameters count and quantization level
           if (model.details?.quantization_level || model.details?.format || model.details?.parameter_size) {
@@ -210,6 +211,10 @@ export const llmOllamaRouter = createTRPCRouter({
               firstLine += `(${model.details.quantization_level}` + ((model.details.format) ? `, ${model.details.format})` : ')');
             if (model.size)
               firstLine += `, ${Math.round(model.size / 1024 / 1024).toLocaleString()} MB`;
+            if (baseModel.hasTools)
+              firstLine += ' [tools]';
+            if (baseModel.hasVision)
+              firstLine += ' [vision]';
             description = firstLine + '\n\n' + description;
           }
 
@@ -218,7 +223,7 @@ export const llmOllamaRouter = createTRPCRouter({
            *  - Note: as of 2024-01-26 the num_ctx line is present in 50% of the models, and in most cases set to 4096
            *  - We are tracking the Upstream issue https://github.com/ollama/ollama/issues/1473 for better ways to do this in the future
            */
-          let contextWindow = OLLAMA_BASE_MODELS[modelName]?.contextWindow || 8192;
+          let contextWindow = baseModel.contextWindow || 8192;
           if (model.parameters) {
             // split the parameters into lines, and find one called "num_ctx ...spaces... number"
             const paramsNumCtx = model.parameters.split('\n').find(line => line.startsWith('num_ctx '));
@@ -232,6 +237,13 @@ export const llmOllamaRouter = createTRPCRouter({
             }
           }
 
+          // auto-detect interfaces from the hardcoded description (in turn parsed from the html page)
+          const interfaces = !baseModel.isEmbeddings ? [LLM_IF_OAI_Chat] : [];
+          if (baseModel.hasTools)
+            interfaces.push(LLM_IF_OAI_Fn);
+          if (baseModel.hasVision || modelName.includes('-vision')) // Heuristic
+            interfaces.push(LLM_IF_OAI_Vision);
+
           // console.log('>>> ollama model', model.name, model.template, model.modelfile, '\n');
 
           return {
@@ -242,7 +254,7 @@ export const llmOllamaRouter = createTRPCRouter({
             description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
             contextWindow,
             ...(contextWindow ? { maxCompletionTokens: Math.round(contextWindow / 2) } : {}),
-            interfaces: [LLM_IF_OAI_Chat],
+            interfaces,
           };
         }),
       };
