@@ -2,16 +2,6 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision } fr
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { _knownOpenAIChatModels } from './openai.models';
-import { wireOpenPipeModelOutputSchema } from '../openpipe.wiretypes';
-
-
-export function azureModelToModelDescription(azureDeploymentRef: string, openAIModelIdBase: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
-  // if the deployment name mataches an OpenAI model prefix, use that
-  const known = _knownOpenAIChatModels.find(base => azureDeploymentRef == base.idPrefix);
-  return fromManualMapping(_knownOpenAIChatModels, known ? azureDeploymentRef : openAIModelIdBase, modelCreated, modelUpdated, undefined, true);
-}
-
 
 // [LM Studio]
 export function lmStudioModelToModelDescription(modelId: string): ModelDescriptionSchema {

@@ -622,3 +622,12 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
   // }
   // return bId.localeCompare(aId);
 }
+
+
+// [Azure]
+
+export function azureModelToModelDescription(azureDeploymentRef: string, openAIModelIdBase: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
+  // if the deployment name mataches an OpenAI model prefix, use that
+  const known = _knownOpenAIChatModels.find(base => azureDeploymentRef == base.idPrefix);
+  return fromManualMapping(_knownOpenAIChatModels, known ? azureDeploymentRef : openAIModelIdBase, modelCreated, modelUpdated, undefined, true);
+}
