@@ -37,6 +37,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
   const hotFixThrowCannotFC = openAIDialect === 'openrouter' /* OpenRouter FC support is not good (as of 2024-07-15) */ || openAIDialect === 'perplexity';
+  const hotFixVndORIncludeReasoning = openAIDialect === 'openrouter'; // [OpenRouter, 2025-01-24] has a special `include_reasoning` field to show the chain of thought
 
   // Model incompatibilities -> Hotfixes
 
@@ -81,6 +82,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     stop: undefined,
     user: undefined,
   };
+
+  // [OpenRouter, 2025-01-24]
+  if (hotFixVndORIncludeReasoning)
+    payload.include_reasoning = true;
 
   // Top-P instead of temperature
   if (model.topP !== undefined) {

@@ -146,6 +146,13 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         pt.appendReasoningText(delta.reasoning_content);
 
       }
+      // delta: Reasoning [OpenRouter, 2025-01-24]
+      else if (typeof delta.reasoning === 'string') {
+
+        // Note: not using the accumulator as it's a relic of the past probably
+        pt.appendReasoningText(delta.reasoning);
+
+      }
       else if (delta.content !== undefined && delta.content !== null)
         throw new Error(`unexpected delta content type: ${typeof delta.content}`);
 
