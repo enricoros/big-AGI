@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Chip, FormControl, IconButton, Input, Option, Select, Typography } from '@mui/joy';
+import { Autocomplete, Box, Button, Chip, FormControl, IconButton, Option, Select, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
 import FormatListNumberedRtlIcon from '@mui/icons-material/FormatListNumberedRtl';
 
@@ -14,11 +14,15 @@ import { apiQuery } from '~/common/util/trpc.client';
 import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 
 
+// configuration
+const FALLBACK_PRESELECT_MODEL = 'llama3';
+
+
 export function OllamaAdministration(props: { access: OllamaAccessSchema, onClose: () => void }) {
 
   // state
   const [sortByPulls, setSortByPulls] = React.useState<boolean>(false);
-  const [modelName, setModelName] = React.useState<string | null>('llama3');
+  const [_modelName, setModelName] = React.useState<string | null>(null);
   const [modelTag, setModelTag] = React.useState<string>('');
 
   // external state
@@ -29,21 +33,29 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
   const { isPending: isDeleting, status: deleteStatus, error: deleteError, mutate: deleteMutate, reset: deleteReset } = apiQuery.llmOllama.adminDelete.useMutation();
 
   // derived state
+  const modelName = _modelName || pullableData?.pullable?.[0]?.id || FALLBACK_PRESELECT_MODEL;
   let pullable = pullableData?.pullable || [];
   if (sortByPulls)
     pullable = pullable.toSorted((a, b) => b.pulls - a.pulls);
   const pullModelDescription = pullable.find(p => p.id === modelName)?.description ?? null;
 
 
-  const handleModelPull = () => {
+  const handleModelPull = React.useCallback(() => {
     deleteReset();
     modelName && pullMutate({ access: props.access, name: modelName + (modelTag ? ':' + modelTag : '') });
-  };
+  }, [modelName, modelTag, pullMutate, props.access, deleteReset]);
 
-  const handleModelDelete = () => {
+  const handleModelDelete = React.useCallback(() => {
     pullReset();
     modelName && deleteMutate({ access: props.access, name: modelName + (modelTag ? ':' + modelTag : '') });
-  };
+  }, [modelName, modelTag, deleteMutate, props.access, pullReset]);
+
+
+  // memo 'tags' for the autocomplete for the currently selected model
+  const pullableTagsMemo = React.useMemo(() => {
+    const model = pullable.find(p => p.id === modelName);
+    return model?.tags || [];
+  }, [pullable, modelName]);
 
 
   return (
@@ -65,7 +77,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
                 sx={{ flexGrow: 1 }}
               >
                 {pullable.map(p =>
-                  <Option key={p.id} value={p.id}>
+                  <Option key={p.id} value={p.id} label={p.label}>
                     {p.isNew === true && <Chip size='sm' variant='solid'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
                   </Option>,
                 )}
@@ -83,12 +95,20 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
           <FormControl sx={{ flexGrow: 1, flexBasis: 0.45 }}>
             <FormLabelStart title='Tag' />
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Input
-                variant='outlined' placeholder='latest'
-                value={modelTag || ''} onChange={event => setModelTag(event.target.value)}
-                sx={{ minWidth: 80, flexGrow: 1 }}
-                slotProps={{ input: { size: 10 } }} // halve the min width
+              <Autocomplete
+                placeholder='latest'
+                options={pullableTagsMemo}
+                value={modelTag || ''}
+                onChange={(_event: any, value: string | null) => setModelTag(value || '')}
+                sx={{ minWidth: 80, flexGrow: 1, boxShadow: 'none' }}
+                slotProps={{ input: { size: 10 } }} // halve the min width*/
               />
+              {/*<Input*/}
+              {/*  variant='outlined' placeholder='latest'*/}
+              {/*  value={modelTag || ''} onChange={event => setModelTag(event.target.value)}*/}
+              {/*  sx={{ minWidth: 80, flexGrow: 1 }}*/}
+              {/*  slotProps={{ input: { size: 10 } }} // halve the min width*/}
+              {/*/>*/}
               {!!modelName && (
                 <IconButton
                   component={Link} href={`https://ollama.ai/library/${modelName}`} target='_blank'
