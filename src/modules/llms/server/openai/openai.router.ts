@@ -98,7 +98,7 @@ export const llmOpenAIRouter = createTRPCRouter({
             model: z.string(), // the OpenAI model id
             owner: z.enum(['organization-owner']),
             id: z.string(), // the deployment name
-            status: z.enum(['succeeded']),
+            status: z.string(), // relaxed from z.enum(['succeeded']) for #744
             created_at: z.number(),
             updated_at: z.number(),
             object: z.literal('deployment'),
