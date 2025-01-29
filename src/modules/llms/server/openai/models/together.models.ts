@@ -50,9 +50,6 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
         return false;
 
       // NOTE: shall we filter out the non-running models?
-      if (model.id.indexOf('ion-Free') !== -1) {
-        console.log(`together.models: skipping vision-free model ${model.id}`, model);
-      }
 
       // filter-out deny list (testing models mainly)
       return !_togetherAIDenyList.some(prefix => model.id.includes(prefix));
