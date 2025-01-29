@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 
-/*const wireOllamaModelDetailsSchema = z.object({
+const wireOllamaModelDetailsSchema = z.object({
   parent_model: z.string().optional(),
   format: z.string().optional(),                      // e.g. gguf
   family: z.string().optional(),                      // e.g. llama, phi2, stablelm
-  families: z.array(z.string()).nullable().optional(),// e.g. null, [llama], [phi2]
+  // families: z.array(z.string()).nullable().optional(),// e.g. null, [llama], [phi2]
   parameter_size: z.string().optional(),              // e.g. 7B, 3B, 34B, 6B, 30B
   quantization_level: z.string().optional(),          // e.g. Q4_0, Q8_0, F16, ...
-}).optional();*/
+});
 
 /**
  * List Local Models (/api/tags) - Response
@@ -31,7 +31,7 @@ export const wireOllamaModelInfoSchema = z.object({
   modelfile: z.string(),
   parameters: z.string().optional(),
   template: z.string().optional(),
-  // details: wireOllamaModelDetailsSchema.optional(),
+  details: wireOllamaModelDetailsSchema.nullable().optional(),
 });
 
 
