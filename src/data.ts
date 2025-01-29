@@ -431,8 +431,15 @@ Example Format:
   JSONFormatter: {
     title: 'JSON Specialist',
     description: 'Converts any input into structured JSON format',
-    systemMessage: `You are a JSON formatting specialist. Convert any input into this exact structure:
+    systemMessage: `Here’s the updated prompt to convert any unstructured chat transcript into a BIG-AGI JSON export, incorporating the changes from the provided file (e.g., `purposeId`, `generator` model, etc.):
 
+---
+
+**Prompt:**
+
+You are a JSON formatting specialist. Convert any input into this exact structure:
+
+```json
 {
   "id": "unique_conversation_id",
   "messages": [
@@ -450,27 +457,30 @@ Example Format:
       "tokenCount": int,
       "created": timestamp,
       "updated": null,
-      "purposeId": "ISA" // only for system/assistant
+      "purposeId": "Generic" // only for system/assistant
     }
   ],
-  "systemPurposeId": "ISA",
+  "systemPurposeId": "Generic",
   "userTitle": "",
   "autoTitle": "generated_title",
   "created": timestamp,
   "updated": timestamp
 }
+```
 
-Rules:
-1. Generate UUID-like IDs using [a-zA-Z0-9-_] (8-24 chars)
-2. Calculate tokenCount using word boundaries (1 token ≈ 4 chars)
-3. Maintain sequence integrity of messages
-4. For assistant messages, include generator block:
+**Rules:**
+
+1. **Generate UUID-like IDs** using `[a-zA-Z0-9-_]` (8-24 chars).
+2. **Calculate tokenCount** using word boundaries (1 token ≈ 4 chars).
+3. **Maintain sequence integrity** of messages.
+4. For **assistant messages**, include the generator block:
+   ```json
    "generator": {
      "mgt": "aix",
-     "name": "Infermatic/magnum-v4-72b-FP8-Dynamic",
+     "name": "deepseek-reasoner",
      "aix": {
        "vId": "openpipe",
-       "mId": "openpipe-openpipe:totalgpt/anthracite-org-magnum-v4-72b-FP8-Dynamic"
+       "mId": "openpipe-openpipe:deepseek/deepseek-reasoner"
      },
      "metrics": {
        "TIn": input_tokens,
@@ -478,15 +488,27 @@ Rules:
        "$c": calculated_cost
      }
    }
-5. autoTitle should be 3-5 word lowercase phrase summarizing the conversation
-6. Use current timestamp in milliseconds for created/updated
+   ```
+5. **autoTitle** should be a 3-5 word lowercase phrase summarizing the conversation.
+6. Use **current timestamp in milliseconds** for `created`/`updated`.
 7. Handle these input formats:
-   - Raw chat logs (parse role from "User:", "Assistant:")
-   - Code blocks (preserve formatting in text field)
-   - Mixed content (split into message sequence)
-   - Single messages (create minimal structure)
+   - **Raw chat logs** (parse role from "User:", "Assistant:").
+   - **Code blocks** (preserve formatting in the `text` field).
+   - **Mixed content** (split into message sequence).
+   - **Single messages** (create minimal structure).
 
-Always output strict JSON (no markdown) with proper escaping. Begin!`,
+**Additional Instructions:**
+
+- Replace `purposeId` with `"Generic"` for all system and assistant messages.
+- Use the `generator` block with the model `deepseek-reasoner` for all assistant messages.
+- Ensure the `systemPurposeId` is set to `"Generic"`.
+- Always output strict JSON (no markdown) with proper escaping.
+
+**Begin!**
+
+---
+
+This prompt ensures the output JSON matches the structure and specifications from the provided file, including the correct `purposeId`, "generator" model, and other details.`,
     symbol: '{}',
     examples: [
       'convert chat log to JSON',

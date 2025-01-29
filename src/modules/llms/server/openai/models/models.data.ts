@@ -147,16 +147,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 500000, output: 1500000 },
   },
-  {
-    id: 'openpipe:openrouter/anthropic/claude-3-opus-20240229',
-    label: '💾➜ Claude 3 Opus',
-    description: 'Claude 3 Opus is Anthropic\'s most powerful model, capable of handling complex tasks and long-form content creation with exceptional reasoning capabilities.',
-    contextWindow: 200000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-02',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 15000000, output: 75000000 },
-  },
+
   {
     id: 'openpipe:openrouter/anthropic/claude-3-sonnet-20240229',
     label: '💾➜ Claude 3 Sonnet',
@@ -282,16 +273,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 700000, output: 800000 },
   },
-  {
-    id: 'openpipe:openrouter/openai/o1',
-    label: '💾➜ OpenAI o1',
-    description: 'The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 15000000, output: 60000000 },
-  },
+
   {
     id: 'openpipe:openrouter/eva-unit-01/eva-llama-3.33-70b',
     label: '💾➜ EVA Llama 3.33 70B',
@@ -302,24 +284,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 4000000, output: 6000000 },
   },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
-    label: '💾➜ xAI Grok 2 Vision 1212',
-    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications.',
-    contextWindow: 32768,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-1212',
-    label: '💾➜ xAI Grok 2 1212',
-    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model.',
-    contextWindow: 131072,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
+
   {
     id: 'openpipe:openrouter/cohere/command-r-08-2024',
     label: '💾➜ Cohere Command R (08-2024)',
@@ -475,24 +440,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 4000000, output: 6000000 },
   },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
-    label: '💾➜ xAI Grok 2 Vision 1212',
-    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications.',
-    contextWindow: 32768,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-1212',
-    label: '💾➜ xAI Grok 2 1212',
-    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model.',
-    contextWindow: 131072,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
+
   {
     id: 'openpipe:openrouter/cohere/command-r-08-2024',
     label: '💾➜ Cohere Command R (08-2024)',
@@ -578,16 +526,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 700000, output: 800000 },
   },
-  {
-    id: 'openpipe:openrouter/openai/o1',
-    label: '💾➜ OpenAI o1',
-    description: 'The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 15000000, output: 60000000 },
-  },
+
   {
     id: 'openpipe:openrouter/eva-unit-01/eva-llama-3.33-70b',
     label: '💾➜ EVA Llama 3.33 70B',
@@ -598,24 +537,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 4000000, output: 6000000 },
   },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
-    label: '💾➜ xAI Grok 2 Vision 1212',
-    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications.',
-    contextWindow: 32768,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-1212',
-    label: '💾➜ xAI Grok 2 1212',
-    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model.',
-    contextWindow: 131072,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
+
   {
     id: 'openpipe:openrouter/cohere/command-r-08-2024',
     label: '💾➜ Cohere Command R (08-2024)',
@@ -702,16 +624,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 700000, output: 800000 },
   },
-  {
-    id: 'openpipe:openrouter/openai/o1',
-    label: '💾➜ OpenAI o1',
-    description: 'The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 15000000, output: 60000000 },
-  },
+
   {
     id: 'openpipe:openrouter/eva-unit-01/eva-llama-3.33-70b',
     label: '💾➜ EVA Llama 3.33 70B',
@@ -722,24 +635,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 4000000, output: 6000000 },
   },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
-    label: '💾➜ xAI Grok 2 Vision 1212',
-    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications.',
-    contextWindow: 32768,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-1212',
-    label: '💾➜ xAI Grok 2 1212',
-    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model.',
-    contextWindow: 131072,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
+
   {
     id: 'openpipe:openrouter/cohere/command-r-08-2024',
     label: '💾➜ Cohere Command R (08-2024)',
@@ -828,17 +724,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2023-12',
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 500000, output: 1500000 },
-  },
-
-  {
-    id: 'openpipe:openrouter/anthropic/claude-3-opus-20240229',
-    label: '💾➜ Claude 3 Opus',
-    description: 'Claude 3 Opus is Anthropic\'s most powerful model, capable of handling complex tasks and long-form content creation with exceptional reasoning capabilities.',
-    contextWindow: 200000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-02',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 15000000, output: 75000000 },
   },
 
   {
@@ -962,17 +847,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   },
 
   {
-    id: 'openpipe:openrouter/openai/o1',
-    label: '💾➜ OpenAI o1',
-    description: 'The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology. Features sophisticated multimodal capabilities and a 200K token context window.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-    chatPrice: { input: 15000000, output: 60000000 },
-  },
-
-  {
     id: 'openpipe:openrouter/eva-unit-01/eva-llama-3.33-70b',
     label: '💾➜ EVA Llama 3.33 70B',
     description: 'EVA Llama 3.33 70B is a roleplay and storywriting specialist model. It is a full-parameter finetune of Llama-3.3-70B-Instruct on mixture of synthetic and natural data. Uses Celeste 70B 0.1 data mixture, greatly expanding it to improve versatility, creativity and "flavor" of the resulting model.',
@@ -981,28 +855,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2024-01',
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: { input: 4000000, output: 6000000 },
-  },
-
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-vision-1212',
-    label: '💾➜ xAI Grok 2 Vision 1212',
-    description: 'Grok 2 Vision 1212 advances image-based AI with stronger visual comprehension, refined instruction-following, and multilingual support. From object recognition to style analysis, it empowers developers to build more intuitive, visually aware applications. Features enhanced steerability and reasoning capabilities for next-generation image solutions.',
-    contextWindow: 32768,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 2000000, output: 10000000 },
-  },
-
-  {
-    id: 'openpipe:openrouter/x-ai/grok-2-1212',
-    label: '💾➜ xAI Grok 2 1212',
-    description: 'Grok 2 1212 introduces significant enhancements to accuracy, instruction adherence, and multilingual support, making it a powerful and flexible choice for developers seeking a highly steerable, intelligent model. Features improved reasoning capabilities and enhanced context handling with a 131K token window.',
-    contextWindow: 131072,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2024-01',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 2000000, output: 10000000 },
   },
 
   {
@@ -1325,16 +1177,7 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
   interfaces: [LLM_IF_OAI_Chat],
   chatPrice: { input: 700, output: 800 },
 },
-{
-  id: 'openpipe:openrouter/openai/o1',
-  label: '💾➜ OpenAI o1',
-  description: 'The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology. Features sophisticated multimodal capabilities and a 200K token context window.',
-  contextWindow: 200000,
-  maxCompletionTokens: 100000,
-  trainingDataCutoff: '2024-01',
-  interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
-  chatPrice: { input: 15000, output: 60000 },
-},
+
 {
   id: 'openpipe:openrouter/eva-unit-01/eva-llama-3.33-70b',
   label: '💾➜ EVA Llama 3.33 70B',
@@ -1867,18 +1710,6 @@ const _knownOpenPipeChatModels: ModelDescriptionSchema[] = [
     trainingDataCutoff: '2024-10',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
     chatPrice: { input: 3000000, output: 15000000 },
-  },
-
-  {
-    id: 'openpipe:openrouter/anthropic/claude-3-opus',
-    label: '💾➜ Claude 3 Opus',
-    description: 'Most advanced Claude model demonstrating exceptional performance across all benchmarks (88.2 MMLU, 95.4 HellaSwag). Features 200K context window and sophisticated multimodal capabilities. Excels at complex reasoning, technical analysis, and creative tasks. Demonstrates strong capabilities in code generation, mathematical problem-solving, and scientific research.',
-    contextWindow: 200000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: '2023-08',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision],
-    chatPrice: { input: 15000000, output: 75000000 },
-    benchmark: { cbaElo: 1350 },
   },
 
   {
