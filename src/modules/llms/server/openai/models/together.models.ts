@@ -1,4 +1,4 @@
-import { LLM_IF_OAI_Chat } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -253,19 +253,18 @@ const _knownTogetherAIChatModels: ManualMappings = [
   },
 ] as const;
 
+// allow list patterns
+const _togetherAllowTypes = [
+  'chat',
+];
+
+const _togetherAIDenyList: string[] = [
+  'devuser/test',
+  'test-lora',
+  'test/test',
+];
 
 export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelDescriptionSchema[] {
-
-  function togetherAIModelToModelDescription(model: { id: string, created: number }) {
-    return fromManualMapping(_knownTogetherAIChatModels, model.id, model.created, undefined, {
-      idPrefix: model.id,
-      label: model.id.replaceAll('/', ' · ').replaceAll(/[_-]/g, ' '),
-      description: 'New Together AI Model',
-      contextWindow: null, // unknown
-      interfaces: [LLM_IF_OAI_Chat], // assume
-      hidden: true,
-    });
-  }
 
   function togetherAIModelsSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
     if (a.hidden && !b.hidden)
@@ -277,7 +276,56 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
     return a.id.localeCompare(b.id);
   }
 
-  return wireTogetherAIListOutputSchema.parse(wireModels)
-    .map(togetherAIModelToModelDescription)
+  return wireTogetherAIListOutputSchema
+    .parse(wireModels)
+
+    .filter((model) => {
+      // filter-out non-llms
+      if (!_togetherAllowTypes.includes(model.type))
+        return false;
+
+      // NOTE: shall we filter out the non-running models?
+      if (model.id.indexOf('ion-Free') !== -1) {
+        console.log(`together.models: skipping vision-free model ${model.id}`, model);
+      }
+
+      // filter-out deny list (testing models mainly)
+      return !_togetherAIDenyList.some(prefix => model.id.includes(prefix));
+    })
+
+    .map((model): ModelDescriptionSchema => {
+
+      // heuristics for names
+      const label = model.display_name || model.id.replaceAll('/', ' · ').replaceAll(/[_-]/g, ' ');
+      const description = `${model.organization || 'Toghether AI'} ${model.type} model. ${model.link || ''}`;
+      const contextWindow = model.context_length || null;
+      let chatPrice: ModelDescriptionSchema['chatPrice'] | undefined = undefined;
+      if (typeof model.pricing?.input === 'number' && typeof model.pricing?.output === 'number') {
+        const inputPrice = parseFloat('' + model.pricing.input);
+        const outputPrice = parseFloat('' + model.pricing.output);
+        if (inputPrice >= 0 && outputPrice >= 0)
+          chatPrice = {
+            input: model.pricing.input,
+            output: model.pricing.output,
+          };
+      }
+      const interfaces = [LLM_IF_OAI_Chat];
+      if (model.id.indexOf('vision') !== -1)
+        interfaces.push(LLM_IF_OAI_Vision);
+
+      return fromManualMapping(_knownTogetherAIChatModels, model.id, model.created, undefined, {
+        idPrefix: model.id,
+        label,
+        description,
+        contextWindow,
+        interfaces,
+        // parameterSpecs: ...
+        // maxCompletionTokens: ...
+        // trainingDataCutoff: ...
+        chatPrice,
+        hidden: false,
+      });
+    })
+
     .sort(togetherAIModelsSort);
 }
