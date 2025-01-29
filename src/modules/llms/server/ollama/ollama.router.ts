@@ -200,8 +200,18 @@ export const llmOllamaRouter = createTRPCRouter({
           const [modelName, modelTag] = model.name.split(':');
 
           // pretty label and description
-          const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` · ${modelTag}` : '');
-          const description = OLLAMA_BASE_MODELS[modelName]?.description ?? 'Model unknown';
+          const label = capitalizeFirstLetter(modelName) + ((modelTag && modelTag !== 'latest') ? ` (${modelTag})` : '');
+          let description = OLLAMA_BASE_MODELS[modelName]?.description ?? 'Model unknown';
+
+          // prepend the parameters count and quantization level
+          if (model.details?.quantization_level || model.details?.format || model.details?.parameter_size) {
+            let firstLine = model.details.parameter_size ? `${model.details.parameter_size} parameters ` : '';
+            if (model.details.quantization_level)
+              firstLine += `(${model.details.quantization_level}` + ((model.details.format) ? `, ${model.details.format})` : ')');
+            if (model.size)
+              firstLine += `, ${Math.round(model.size / 1024 / 1024).toLocaleString()} MB`;
+            description = firstLine + '\n\n' + description;
+          }
 
           /* Find the context window from the 'num_ctx' line in the parameters string, if present
            *  - https://github.com/enricoros/big-AGI/issues/309
