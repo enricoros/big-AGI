@@ -32,7 +32,7 @@ type TRequestMessages = TRequest['messages'];
 export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, jsonOutput: boolean, streaming: boolean): TRequest {
 
   // Dialect incompatibilities -> Hotfixes
-  const hotFixAlternateUserAssistantRoles = openAIDialect === 'perplexity';
+  const hotFixAlternateUserAssistantRoles = openAIDialect === 'deepseek' || openAIDialect === 'perplexity';
   const hotFixRemoveEmptyMessages = openAIDialect === 'perplexity';
   const hotFixRemoveStreamOptions = openAIDialect === 'azure' || openAIDialect === 'mistral';
   const hotFixSquashMultiPartText = openAIDialect === 'deepseek';
@@ -127,8 +127,8 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
     // treat intermediate system messages as user messages
     if (acc.length > 0 && historyItem.role === 'system') {
       historyItem = {
+        ...historyItem,
         role: 'user',
-        content: historyItem.content,
       };
     }
 
