@@ -42,6 +42,7 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 2, output: 6 },
   },
   {
+    hidden: true,
     idPrefix: 'mistral-large-latest',
     label: 'Mistral Large (latest)',
     symLink: 'mistral-large-2411',
@@ -63,6 +64,7 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 2, output: 6 },
   },
   {
+    hidden: true,
     idPrefix: 'pixtral-large-latest',
     label: 'Pixtral Large (latest)',
     symLink: 'pixtral-large-2411',
@@ -112,6 +114,7 @@ const _knownMistralChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat],
   },
   {
+    hidden: true,
     idPrefix: 'mistral-small-latest',
     label: 'Mistral Small (latest)',
     symLink: 'mistral-small-2501',
@@ -174,6 +177,7 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 0.3, output: 0.9 },
   },
   {
+    hidden: true,
     idPrefix: 'codestral-latest',
     label: 'Codestral (latest)',
     symLink: 'codestral-2501',
@@ -194,6 +198,7 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 0.1, output: 0.1 },
   },
   {
+    hidden: true,
     idPrefix: 'ministral-8b-latest',
     label: 'Ministral 8B (latest)',
     symLink: 'ministral-8b-2410',
@@ -214,6 +219,7 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 0.04, output: 0.04 },
   },
   {
+    hidden: true,
     idPrefix: 'ministral-3b-latest',
     label: 'Ministral 3B (latest)',
     symLink: 'ministral-3b-2410',
@@ -273,6 +279,7 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 0.15, output: 0.15 },
   },
   {
+    hidden: true,
     idPrefix: 'pixtral-12b-latest',
     label: 'Pixtral 12B (latest)',
     symLink: 'pixtral-12b-2409',
@@ -328,10 +335,10 @@ const _knownMistralChatModels: ManualMappings = [
     chatPrice: { input: 0.3, output: 0.9 }, // Assuming same price as codestral-latest
   },
   {
+    hidden: true,
     idPrefix: 'codestral-mamba-latest',
     label: 'Codestral Mamba (latest)',
     symLink: 'codestral-mamba-2407',
-    hidden: true,
     // Copied details
     description: 'A Mamba2 language model designed for coding tasks.',
     contextWindow: 256 * 1024, // 256K tokens
