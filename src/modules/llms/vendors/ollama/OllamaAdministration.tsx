@@ -15,15 +15,20 @@ import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
 
 
 // configuration
-const FALLBACK_PRESELECT_MODEL = 'llama3';
+const FALLBACK_PRESELECT_MODEL = 'llama3.3';
 
+
+const _stableNoPullable = [] as const;
+const _stableNoPullableTags = [] as const;
 
 export function OllamaAdministration(props: { access: OllamaAccessSchema, onClose: () => void }) {
 
   // state
   const [sortByPulls, setSortByPulls] = React.useState<boolean>(false);
-  const [_modelName, setModelName] = React.useState<string | null>(null);
-  const [modelTag, setModelTag] = React.useState<string>('');
+  const [_selectedModelName, setSelectedModelName] = React.useState<string | null>(null);
+  // state for the autocomplete component
+  const [modelTagValue, setModelTagValue] = React.useState<string | null>(null);
+  const [modelTagInputValue, setModelTagInputValue] = React.useState<string>('');
 
   // external state
   const { data: pullableData } = apiQuery.llmOllama.adminListPullable.useQuery({ access: props.access }, {
@@ -33,29 +38,36 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
   const { isPending: isDeleting, status: deleteStatus, error: deleteError, mutate: deleteMutate, reset: deleteReset } = apiQuery.llmOllama.adminDelete.useMutation();
 
   // derived state
-  const modelName = _modelName || pullableData?.pullable?.[0]?.id || FALLBACK_PRESELECT_MODEL;
-  let pullable = pullableData?.pullable || [];
-  if (sortByPulls)
-    pullable = pullable.toSorted((a, b) => b.pulls - a.pulls);
-  const pullModelDescription = pullable.find(p => p.id === modelName)?.description ?? null;
-
+  const selectedModelName = _selectedModelName // user selected
+    || pullableData?.pullableModels?.[0]?.id // or the first in the list
+    || FALLBACK_PRESELECT_MODEL; // or a fallback
 
   const handleModelPull = React.useCallback(() => {
     deleteReset();
-    modelName && pullMutate({ access: props.access, name: modelName + (modelTag ? ':' + modelTag : '') });
-  }, [modelName, modelTag, pullMutate, props.access, deleteReset]);
+    selectedModelName && pullMutate({ access: props.access, name: selectedModelName + (modelTagInputValue ? ':' + modelTagInputValue : '') });
+  }, [selectedModelName, modelTagInputValue, pullMutate, props.access, deleteReset]);
 
   const handleModelDelete = React.useCallback(() => {
     pullReset();
-    modelName && deleteMutate({ access: props.access, name: modelName + (modelTag ? ':' + modelTag : '') });
-  }, [modelName, modelTag, deleteMutate, props.access, pullReset]);
+    selectedModelName && deleteMutate({ access: props.access, name: selectedModelName + (modelTagInputValue ? ':' + modelTagInputValue : '') });
+  }, [selectedModelName, modelTagInputValue, deleteMutate, props.access, pullReset]);
 
 
-  // memo 'tags' for the autocomplete for the currently selected model
-  const pullableTagsMemo = React.useMemo(() => {
-    const model = pullable.find(p => p.id === modelName);
-    return model?.tags || [];
-  }, [pullable, modelName]);
+  // stabilize the derived arrays
+  const { pullableModels, pullModelTags, pullModelDescription } = React.useMemo(() => {
+    // optionally sort models by pulls
+    let pullable = pullableData?.pullableModels || _stableNoPullable;
+    if (sortByPulls)
+      pullable = pullable.toSorted((a, b) => b.pulls - a.pulls);
+
+    // return the tags and description for the selected model
+    const selectedModel = pullable.find(p => p.id === selectedModelName) ?? null;
+    return {
+      pullableModels: pullable,
+      pullModelDescription: selectedModel?.description || '',
+      pullModelTags: selectedModel?.tags || _stableNoPullableTags,
+    };
+  }, [pullableData?.pullableModels, sortByPulls, selectedModelName]);
 
 
   return (
@@ -69,14 +81,14 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
 
         <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1 }}>
           <FormControl sx={{ flexGrow: 1, flexBasis: 0.55 }}>
-            <FormLabelStart title='Name' />
+            <FormLabelStart title={sortByPulls ? 'Model (Sorted by Downloads)' : 'Popular Model'} />
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Select
-                value={modelName || ''}
-                onChange={(_event: any, value: string | null) => setModelName(value)}
+                value={selectedModelName || ''}
+                onChange={(_event: any, value: string | null) => setSelectedModelName(value)}
                 sx={{ flexGrow: 1 }}
               >
-                {pullable.map(p =>
+                {pullableModels.map(p =>
                   <Option key={p.id} value={p.id} label={p.label}>
                     {p.isNew === true && <Chip size='sm' variant='solid'>NEW</Chip>} {p.label}{sortByPulls && ` (${p.pulls.toLocaleString()})`}
                   </Option>,
@@ -96,10 +108,15 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
             <FormLabelStart title='Tag' />
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Autocomplete
+                freeSolo
+                openOnFocus
+                clearOnEscape
                 placeholder='latest'
-                options={pullableTagsMemo}
-                value={modelTag || ''}
-                onChange={(_event: any, value: string | null) => setModelTag(value || '')}
+                options={pullModelTags}
+                value={modelTagValue}
+                onChange={(_event, newValue) => setModelTagValue(newValue)}
+                inputValue={modelTagInputValue}
+                onInputChange={(_event, newInputValue) => setModelTagInputValue(newInputValue)}
                 sx={{ minWidth: 80, flexGrow: 1, boxShadow: 'none' }}
                 slotProps={{ input: { size: 10 } }} // halve the min width*/
               />
@@ -109,10 +126,8 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
               {/*  sx={{ minWidth: 80, flexGrow: 1 }}*/}
               {/*  slotProps={{ input: { size: 10 } }} // halve the min width*/}
               {/*/>*/}
-              {!!modelName && (
-                <IconButton
-                  component={Link} href={`https://ollama.ai/library/${modelName}`} target='_blank'
-                >
+              {!!selectedModelName && (
+                <IconButton component={Link} href={`https://ollama.ai/library/${selectedModelName}`} target='_blank'>
                   <LaunchIcon />
                 </IconButton>
               )}
@@ -130,9 +145,9 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
 
 
         {/* Description and Buttons */}
-        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between' }}>
 
-          <Typography level='body-sm'>
+          <Typography level='body-sm' sx={{ flex: 1, minWidth: 250 }}>
             {pullModelDescription}
           </Typography>
 
