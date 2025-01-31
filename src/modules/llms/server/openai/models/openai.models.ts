@@ -73,6 +73,87 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1337 },
   },
 
+  // GPT-4o Audio Preview
+  {
+    idPrefix: 'gpt-4o-audio-preview',
+    label: 'GPT-4o Audio Preview',
+    description: 'Preview release for audio inputs in chat completions.',
+    symLink: 'gpt-4o-audio-preview-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 100/200 */ },
+    isPreview: true,
+  },
+  {
+    idPrefix: 'gpt-4o-audio-preview-2024-12-17',
+    label: 'GPT-4o Audio Preview (2024-12-17)',
+    description: 'Snapshot for the Audio API model.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 40/80 */ },
+    isPreview: true,
+    hidden: true,
+  },
+  {
+    idPrefix: 'gpt-4o-audio-preview-2024-10-01',
+    label: 'GPT-4o Audio Preview (2024-10-01)',
+    description: 'Current snapshot for the Audio API model.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_NeedsAudio],
+    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 100/200 */ },
+    isPreview: true,
+    hidden: true,
+  },
+
+  // GPT-4o Realtime Preview
+  {
+    idPrefix: 'gpt-4o-realtime-preview',
+    label: 'GPT-4o Realtime Preview',
+    description: 'Preview release for the Realtime API. Points to the latest snapshot of GPT-4o Realtime Preview model: gpt-4o-realtime-preview-2024-12-17.',
+    symLink: 'gpt-4o-realtime-preview-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Realtime /* TBA FC, AUDIO */],
+    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* TODO: AUDIO 100/200 */ },
+    isPreview: true,
+  },
+  {
+    idPrefix: 'gpt-4o-realtime-preview-2024-12-17',
+    label: 'GPT-4o Realtime Preview (2024-12-17)',
+    description: 'Snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Realtime],
+    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 },
+    isPreview: true,
+    hidden: true,
+  },
+  {
+    idPrefix: 'gpt-4o-realtime-preview-2024-10-01',
+    label: 'GPT-4o Realtime Preview (2024-10-01)',
+    description: 'Current snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Realtime /* TBA FC, AUDIO */],
+    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* TODO: AUDIO 100/200 */ },
+    isPreview: true,
+    hidden: true,
+  },
+
+
   // GPT-4o mini
   {
     idPrefix: 'gpt-4o-mini',
@@ -125,46 +206,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     isPreview: true,
     hidden: true,
   },
-
-  // GPT-4o Realtime Preview
-  {
-    idPrefix: 'gpt-4o-realtime-preview',
-    label: 'GPT-4o Realtime Preview',
-    description: 'Preview release for the Realtime API. Points to the latest snapshot of GPT-4o Realtime Preview model: gpt-4o-realtime-preview-2024-12-17.',
-    symLink: 'gpt-4o-realtime-preview-2024-12-17',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime /* TBA FC, AUDIO */],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* TODO: AUDIO 100/200 */ },
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-realtime-preview-2024-12-17',
-    label: 'GPT-4o Realtime Preview (2024-12-17)',
-    description: 'Snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 },
-    isPreview: true,
-    hidden: true,
-  },
-  {
-    idPrefix: 'gpt-4o-realtime-preview-2024-10-01',
-    label: 'GPT-4o Realtime Preview (2024-10-01)',
-    description: 'Current snapshot for the Realtime API model. Supports low-latency, multimodal experiences including speech-to-speech capabilities.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Realtime /* TBA FC, AUDIO */],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 2.5 }, output: 20 /* TODO: AUDIO 100/200 */ },
-    isPreview: true,
-    hidden: true,
-  },
   {
     idPrefix: 'gpt-4o-mini-realtime-preview',
     label: 'GPT-4o Mini Realtime Preview',
@@ -188,46 +229,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     trainingDataCutoff: 'Oct 2023',
     interfaces: [LLM_IF_OAI_Realtime],
     chatPrice: { input: 0.6, cache: { cType: 'oai-ac', read: 0.3 }, output: 2.4 },
-    isPreview: true,
-    hidden: true,
-  },
-
-  // GPT-4o Audio Preview
-  {
-    idPrefix: 'gpt-4o-audio-preview',
-    label: 'GPT-4o Audio Preview',
-    description: 'Preview release for audio inputs in chat completions.',
-    symLink: 'gpt-4o-audio-preview-2024-12-17',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
-    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 100/200 */ },
-    isPreview: true,
-  },
-  {
-    idPrefix: 'gpt-4o-audio-preview-2024-12-17',
-    label: 'GPT-4o Audio Preview (2024-12-17)',
-    description: 'Snapshot for the Audio API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
-    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 40/80 */ },
-    isPreview: true,
-    hidden: true,
-  },
-  {
-    idPrefix: 'gpt-4o-audio-preview-2024-10-01',
-    label: 'GPT-4o Audio Preview (2024-10-01)',
-    description: 'Current snapshot for the Audio API model.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_NeedsAudio],
-    chatPrice: { input: 2.5, output: 10 /* TODO: AUDIO 100/200 */ },
     isPreview: true,
     hidden: true,
   },
@@ -349,7 +350,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
-  // GPT-4 Turbo with Vision -> 2024-04-09
+  // GPT-4 Turbo
   {
     idPrefix: 'gpt-4-turbo',
     label: 'GPT-4 Turbo',
@@ -376,23 +377,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1257 },
     hidden: true,
   },
-
-  // GPT-4 Turbo Previews
-  {
-    idPrefix: 'gpt-4-turbo-preview',
-    label: 'GPT-4 Turbo Preview',
-    description: 'GPT-4 Turbo preview model. Currently points to gpt-4-0125-preview.',
-    symLink: 'gpt-4-0125-preview',
-    hidden: true,
-    // copied from symlinked
-    isPreview: true,
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Dec 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1251 },
-  },
   {
     idPrefix: 'gpt-4-0125-preview',
     label: 'GPT-4 Turbo (0125)',
@@ -416,6 +400,21 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 10, output: 30 },
     benchmark: { cbaElo: 1251 },
     hidden: true,
+  },
+  {
+    idPrefix: 'gpt-4-turbo-preview',
+    label: 'GPT-4 Turbo Preview',
+    description: 'GPT-4 Turbo preview model. Currently points to gpt-4-0125-preview.',
+    symLink: 'gpt-4-0125-preview',
+    hidden: true,
+    isLegacy: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Dec 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 10, output: 30 },
+    benchmark: { cbaElo: 1251 },
   },
 
   // GPT4-32k's
@@ -495,9 +494,23 @@ export const _knownOpenAIChatModels: ManualMappings = [
     isLegacy: true,
   },
 
-  // 3.5-Turbo
+  // 3.5
   // Note: As of July 2024, gpt-4o-mini should be used in place of gpt-3.5-turbo, as it is cheaper, more capable, multimodal, and just as fast.
   // As such, many 3.5 models are in the 'deny list' below, and not even returned to the UI.
+  {
+    idPrefix: 'gpt-3.5-turbo',
+    label: '3.5-Turbo',
+    description: 'Currently points to gpt-3.5-turbo-0125. As of July 2024, gpt-4o-mini should be used in place of gpt-3.5-turbo, as it is cheaper, more capable, multimodal, and just as fast.',
+    symLink: 'gpt-3.5-turbo-0125',
+    // copied
+    contextWindow: 16385,
+    maxCompletionTokens: 4096,
+    trainingDataCutoff: 'Sep 2021',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.5, output: 1.5 },
+    benchmark: { cbaElo: 1106 },
+    hidden: true,
+  },
   {
     idPrefix: 'gpt-3.5-turbo-0125',
     label: '3.5-Turbo (2024-01-25)',
@@ -508,20 +521,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.5, output: 1.5 },
     benchmark: { cbaElo: 1106 },
-  },
-  {
-    idPrefix: 'gpt-3.5-turbo',
-    label: '3.5-Turbo',
-    description: 'Currently points to gpt-3.5-turbo-0125. As of July 2024, gpt-4o-mini should be used in place of gpt-3.5-turbo, as it is cheaper, more capable, multimodal, and just as fast.',
-    symLink: 'gpt-3.5-turbo-0125',
     hidden: true,
-    // copied
-    contextWindow: 16385,
-    maxCompletionTokens: 4096,
-    trainingDataCutoff: 'Sep 2021',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.5, output: 1.5 },
-    benchmark: { cbaElo: 1106 },
   },
   {
     idPrefix: 'gpt-3.5-turbo-1106',
@@ -535,8 +535,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1072 },
     hidden: true,
   },
-
-  // 3.5-Turbo-Instruct (Not for Chat)
   {
     idPrefix: 'gpt-3.5-turbo-instruct',
     label: '3.5-Turbo Instruct',
@@ -547,6 +545,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 1.5, output: 2 },
     hidden: true,
   },
+
 
   // Azure variants - because someone forgot the dot
   {
@@ -576,6 +575,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     interfaces: [LLM_IF_OAI_Chat],
     // hidden: true,
   },
+
 ];
 
 const openAIModelsDenyList: string[] = [
