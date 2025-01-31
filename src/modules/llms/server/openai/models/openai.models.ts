@@ -615,6 +615,26 @@ export function openAIModelToModelDescription(modelId: string, modelCreated: num
   return fromManualMapping(_knownOpenAIChatModels, modelId, modelCreated, modelUpdated);
 }
 
+
+const _manualOrderingIdPrefixes = [
+  // Reasoning models
+  'o3-20',
+  'o3-mini-',
+  'o1-20',
+  'o1-preview-',
+  'o1-mini-',
+  // Preferred models
+  'gpt-4o-20',
+  'gpt-4o-mini-',
+  // ChatGPT models
+  'chatgpt-',
+  // ...rest
+  // 'gpt-4-turbo-',
+  // 'gpt-4-',
+  // ...
+];
+
+
 export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionSchema) {
   // bottom: links
   const aLink = a.label.startsWith('🔗');
@@ -626,13 +646,23 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
   const bChat = b.interfaces.includes(LLM_IF_OAI_Chat);
   if (aChat !== bChat) return aChat ? -1 : 1;
 
+  // sort by manual ordering (if not present is implicitly at the bottom)
+  const aOrder = _manualOrderingIdPrefixes.findIndex(prefix => a.id.startsWith(prefix));
+  const bOrder = _manualOrderingIdPrefixes.findIndex(prefix => b.id.startsWith(prefix));
+  if (aOrder !== bOrder) {
+    if (aOrder === -1) return 1;
+    if (bOrder === -1) return -1;
+    return aOrder - bOrder;
+  }
+
   // fix the OpenAI model names to be chronologically sorted
   function remapReleaseDate(id: string): string {
     return id
       .replace('0314', '2023-03-14')
       .replace('0613', '2023-06-13')
       .replace('1106', '2023-11-06')
-      .replace('0125', '2024-01-25');
+      .replace('0125', '2024-01-25')
+      .replace('0409', '2024-04-09');
   }
 
   // due to using by-label, sorting doesn't require special cases anymore
