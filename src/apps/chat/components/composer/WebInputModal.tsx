@@ -38,9 +38,18 @@ function WebInputModal(props: {
     // mode: 'onChange', // validate on change
   });
   const { fields: formFields, append: formFieldsAppend, remove: formFieldsRemove } = useFieldArray({ control: formControl, name: 'links' });
+  const firstInputRef = React.useRef<HTMLInputElement>(null);
 
   // derived
   const urlFieldCount = formFields.length;
+
+  // [effect] auto-focus first input
+  React.useEffect(() => {
+    setTimeout(() => {
+      if (firstInputRef.current)
+        firstInputRef.current.focus();
+    }, 0);
+  }, []);
 
 
   // handlers
@@ -101,12 +110,16 @@ function WebInputModal(props: {
                 <FormControl error={!!error}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Input
-                      autoFocus={index === 0}
                       required={index === 0}
                       placeholder='https://...'
                       endDecorator={extractYoutubeVideoIDFromURL(value) ? <YouTubeIcon sx={{ color: 'red' }} /> : undefined}
                       value={value}
                       onChange={onChange}
+                      slotProps={index !== 0 ? undefined : {
+                        input: {
+                          ref: firstInputRef,
+                        },
+                      }}
                       sx={{ flex: 1 }}
                     />
                     {urlFieldCount > 1 && (

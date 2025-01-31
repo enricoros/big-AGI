@@ -4,6 +4,7 @@ import { Box, Button, IconButton, Tooltip } from '@mui/joy';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 
 import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
+import { KeyStroke } from '~/common/components/KeyStroke';
 
 
 export const ButtonAttachWebMemo = React.memo(ButtonAttachWeb);
@@ -39,6 +40,7 @@ function ButtonAttachWeb(props: {
       <Box sx={buttonAttachSx.tooltip}>
         <b>Add Web Content 🌐</b><br />
         Import from websites and YouTube
+        <KeyStroke combo='Ctrl + Shift + L' sx={{ mt: 1, mb: 0.5 }} />
       </Box>
     )}>
       {button}
