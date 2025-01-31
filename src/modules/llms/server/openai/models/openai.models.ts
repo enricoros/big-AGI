@@ -299,7 +299,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     label: 'o1 Preview',
     description: 'Points to the most recent snapshot of the o1 preview model: o1-preview-2024-09-12',
     symLink: 'o1-preview-2024-09-12',
-    hidden: true,
     // copied from symlinked
     contextWindow: 128000,
     maxCompletionTokens: 32768,
@@ -308,6 +307,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
     benchmark: { cbaElo: 1335 },
     isPreview: true,
+    hidden: true,
   },
   {
     idPrefix: 'o1-preview-2024-09-12',
@@ -320,6 +320,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
     benchmark: { cbaElo: 1335 },
     isPreview: true,
+    hidden: true,
   },
 
   // o1-mini
