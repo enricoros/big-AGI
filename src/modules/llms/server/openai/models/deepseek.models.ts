@@ -1,9 +1,4 @@
-import {
-  LLM_IF_HOTFIX_NoTemperature,
-  LLM_IF_OAI_Chat,
-  LLM_IF_OAI_Fn,
-  LLM_IF_OAI_Json,
-} from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -18,7 +13,7 @@ const _knownDeepseekChatModels: ManualMappings = [
     label: 'DeepSeek Reasoner R1',
     description: 'Reasoning model with Chain-of-Thought capabilities, 64K context length. No discount.',
     contextWindow: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_NoTemperature],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     maxCompletionTokens: 8192,
     chatPrice: { input: 0.55, output: 2.19, cache: { cType: 'oai-ac', read: 0.14 } },
   },
