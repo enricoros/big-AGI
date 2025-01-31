@@ -323,6 +323,10 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (model.includes('o1-preview')) return 'o1 Preview';
     return 'o1';
   }
+  if (model.includes('o3-')) {
+    if (model.includes('o3-mini')) return 'o3 Mini';
+    return 'o3';
+  }
   if (model.includes('chatgpt-4o-latest')) return 'ChatGPT 4o';
   if (model.includes('gpt-4')) {
     if (model.includes('gpt-4o-mini')) return 'GPT-4o mini';
