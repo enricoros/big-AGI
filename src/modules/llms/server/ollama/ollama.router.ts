@@ -112,8 +112,9 @@ const adminPullModelSchema = z.object({
   name: z.string(),
 });
 
+// this may not be needed
 const listPullableOutputSchema = z.object({
-  pullable: z.array(z.object({
+  pullableModels: z.array(z.object({
     id: z.string(),
     label: z.string(),
     tag: z.string(),
@@ -133,7 +134,7 @@ export const llmOllamaRouter = createTRPCRouter({
     .output(listPullableOutputSchema)
     .query(async ({}) => {
       return {
-        pullable: Object.entries(OLLAMA_BASE_MODELS).map(([model_id, model]) => ({
+        pullableModels: Object.entries(OLLAMA_BASE_MODELS).map(([model_id, model]) => ({
           id: model_id,
           label: capitalizeFirstLetter(model_id),
           tag: 'latest',
