@@ -9,6 +9,7 @@ import { OVERLAY_BUTTON_ZINDEX } from '~/modules/blocks/OverlayButton';
 export const BEAM_INVERT_BACKGROUND = true;
 export const BEAM_BTN_SX: SxProps = { minWidth: 128 };
 export const BEAM_PANE_ZINDEX = OVERLAY_BUTTON_ZINDEX + 1; // on top of the overlay buttons
+export const BEAM_SHOW_REASONING_ICON = false;
 
 // configuration [BEAM Scatter]
 export const SCATTER_COLOR = 'neutral' as const;

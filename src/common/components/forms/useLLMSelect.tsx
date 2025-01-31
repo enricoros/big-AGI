@@ -6,11 +6,15 @@ import { FormControl, ListDivider, ListItemDecorator, Option, Select, SvgIconPro
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
-import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
+import { DLLM, DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { useNonHiddenLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
+
+
+// configuration
+const LLM_SELECT_SHOW_REASONING_ICON = false;
 
 
 /*export function useLLMSelectGlobalState(): [DLLMId | null, (llmId: DLLMId | null) => void] {
@@ -75,6 +79,7 @@ export function useLLMSelect(
   const chatLLM = chatLLMId
     ? _filteredLLMs.find(llm => llm.id === chatLLMId) ?? null
     : null;
+  const chatLLMIsReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : chatLLM?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
 
 
   // Memo the LLM Options for the Select
@@ -134,13 +139,14 @@ export function useLLMSelect(
         onChange={onSelectChange}
         placeholder={placeholder}
         slotProps={_slotProps}
+        endDecorator={chatLLMIsReasoning ? '🧠' : undefined}
         sx={llmSelectSx}
       >
         {componentOptions}
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [chatLLMId, componentOptions, disabled, isHorizontal, label, onSelectChange, placeholder, smaller]);
+  ), [chatLLMId, chatLLMIsReasoning, componentOptions, disabled, isHorizontal, label, onSelectChange, placeholder, smaller]);
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
