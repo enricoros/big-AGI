@@ -37,7 +37,7 @@ Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and 
 Hit 5k commits last week. That's a lot of code, and it's the foundation for what's coming.
 
 Recent work has been intense:
-- Chain of thought reasoning across multiple LLMs: OpenAI o3 and o1, DeepSeek R1, Gemini 2.0 Flash Thinking, and more
+- Chain of thought reasoning across multiple LLMs: **OpenAI o3** and o1, **DeepSeek R1**, **Gemini 2.0 Flash Thinking**, and more
 - Beam is real - ~35% of our free users run it daily to compare models
 - New AIX framework lets us scale features we couldn't before
 - UI is faster than ever. Like, terminal-fast
