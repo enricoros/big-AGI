@@ -34,7 +34,7 @@ Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and 
 
 ### 5,000 Commits Milestone · Jan 2025
 
-Hit 5k commits last week. That's a lot of code, and it's the foundation for what's coming.
+Hit 5k commits last week. That's a lot of code, and it's the [foundation for what's coming](https://big-agi.com/blog/big-agi-2-is-almost-ready).
 
 Recent work has been intense:
 - Chain of thought reasoning across multiple LLMs: **OpenAI o3** and o1, **DeepSeek R1**, **Gemini 2.0 Flash Thinking**, and more
