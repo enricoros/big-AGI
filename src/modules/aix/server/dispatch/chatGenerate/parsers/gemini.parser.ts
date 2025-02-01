@@ -195,7 +195,7 @@ function _explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRati
   return safetyRatings
     .filter(rating => rating.probability !== 'NEGLIGIBLE')
     .map(rating => `${rating.category/*.replace('HARM_CATEGORY_', '')*/} (${rating.probability?.toLowerCase()})`)
-    .join(', ');
+    .join(', ') || 'Undocumented Gemini Safety Category.';
 }
 
 function _geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
