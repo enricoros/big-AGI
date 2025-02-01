@@ -16,7 +16,7 @@ import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server
 import { azureModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
-import { lmStudioModelToModelDescription, localAIModelToModelDescription } from './models/models.data';
+import { lmStudioModelToModelDescription, localAIModelToModelDescription, localAIModelSortFn } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
@@ -177,7 +177,8 @@ export const llmOpenAIRouter = createTRPCRouter({
         // [LocalAI]: map id to label
         case 'localai':
           models = openAIModels
-            .map(model => localAIModelToModelDescription(model.id));
+            .map(({ id }) => localAIModelToModelDescription(id))
+            .sort(localAIModelSortFn);
           break;
 
         case 'mistral':
