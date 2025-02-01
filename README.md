@@ -38,11 +38,11 @@ Hit 5k commits last week. That's a lot of code, and it's the foundation for what
 
 Recent work has been intense:
 - Chain of thought reasoning across multiple LLMs: OpenAI o3 and o1, DeepSeek R1, Gemini 2.0 Flash Thinking, and more
-- Client-side framework (AIX) that's allowing us to scale very fast to new LLMs and use cases
-- Beam is the real deal - ~35% of our free users run multi-model synthesis daily
-- Edge-optimized UI that feels faster than a terminal
+- Beam is real - ~35% of our free users run it daily to compare models
+- New AIX framework lets us scale features we couldn't before
+- UI is faster than ever. Like, terminal-fast
 
-Big-AGI 2 is weeks away. We're going long, but we're making it right. The new architecture is solid and the speed improvements are real.
+Big-AGI 2 is weeks away. Yes, we're late, but we're making it right. The new architecture is solid and the speed improvements are real.
 
 Stay tuned. This is going to be good.
 
