@@ -1,7 +1,7 @@
 # BIG-AGI 🧠✨
 
 Welcome to big-AGI, the AI suite for professionals that need function, form,
-simplicity, and speed. Powered by the latest models from 12 vendors and
+simplicity, and speed. Powered by the latest models from 15 vendors and
 open-source servers, `big-AGI` offers best-in-class Chats,
 [Beams](https://github.com/enricoros/big-AGI/issues/470),
 and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
@@ -11,9 +11,7 @@ Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
 
-> 🚀 Big-AGI 2 is launching Q4 2024. Be the first to experience it before the public release.
->
-> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=readme&utm_campaign=ea2)
+> 🚀 Big-AGI 2 is launching soon.
 
 Or fork & run on Vercel
 
@@ -32,15 +30,17 @@ Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and 
 
 ### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
-#### 5,000 Commits Milestone · Jan 2025
+---
+
+### 5,000 Commits Milestone · Jan 2025
 
 Hit 5k commits last week. That's a lot of code, and it's the foundation for what's coming.
 
 Recent work has been intense:
-- Chain of thought reasoning across multiple LLMs: o3, R1, Flash-Thinking
-- Client-side framework (AIX) that's letting us scale beyond what we thought possible
-- Beam getting real traction - ~35% of users run multi-model synthesis daily
-- Edge-optimized UI that feels faster than your terminal
+- Chain of thought reasoning across multiple LLMs: OpenAI o3 and o1, DeepSeek R1, Gemini 2.0 Flash Thinking, and more
+- Client-side framework (AIX) that's allowing us to scale very fast to new LLMs and use cases
+- Beam is the real deal - ~35% of our free users run multi-model synthesis daily
+- Edge-optimized UI that feels faster than a terminal
 
 Big-AGI 2 is weeks away. We're going long, but we're making it right. The new architecture is solid and the speed improvements are real.
 
