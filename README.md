@@ -32,6 +32,22 @@ Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and 
 
 ### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
 
+#### 5,000 Commits Milestone · Jan 2025
+
+Hit 5k commits last week. That's a lot of code, and it's the foundation for what's coming.
+
+Recent work has been intense:
+- Chain of thought reasoning across multiple LLMs: o3, R1, Flash-Thinking
+- Client-side framework (AIX) that's letting us scale beyond what we thought possible
+- Beam getting real traction - ~35% of users run multi-model synthesis daily
+- Edge-optimized UI that feels faster than your terminal
+
+Big-AGI 2 is weeks away. We're going long, but we're making it right. The new architecture is solid and the speed improvements are real.
+
+Stay tuned. This is going to be good.
+
+![5000e-830px](https://github.com/user-attachments/assets/42f7420b-9331-421b-9a18-2e653aaa7d9b)
+
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 
 - 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
