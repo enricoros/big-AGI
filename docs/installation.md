@@ -151,6 +151,6 @@ Enjoy all the features of big-AGI without the hassle of infrastructure managemen
 Join our vibrant community of developers, researchers, and AI enthusiasts. Share your projects, get help, and collaborate with others.
 
 - [Discord Community](https://discord.gg/MkH4qj2Jp9)
-- [Twitter](https://twitter.com/yourusername)
+- [Twitter](https://twitter.com/enricoros)
 
 For any questions or inquiries, please don't hesitate to [reach out to our team](mailto:hello@big-agi.com).
