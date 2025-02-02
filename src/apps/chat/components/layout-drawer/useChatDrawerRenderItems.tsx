@@ -91,6 +91,17 @@ export function useChatDrawerRenderItems(
   searchDepth: ChatSearchDepth,
 ): ChatDrawerRenderItems {
 
+  // state
+  const [_, setJustAMinuteCounter] = React.useState(0);
+
+
+  // [effect] Refresh every minute because the `getTimeBucketEn` function uses the current time
+  React.useEffect(() => {
+    const interval = setInterval(() => setJustAMinuteCounter(c => c + 1), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+
   const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>();
 
   return useChatStore(({ conversations }) => {
