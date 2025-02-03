@@ -48,7 +48,7 @@ function _getRandom1000() {
 /**
  * Detects what changes within an array of dependencies between renders.
  */
-export function useDebugHookChanges(deps: React.DependencyList, debugLocation: string) {
+export function useDebugHookChanges(debugLocation: string, deps: React.DependencyList) {
   const prevDeps = React.useRef<React.DependencyList>(deps);
 
   /* eslint-disable react-hooks/exhaustive-deps */

@@ -13,10 +13,13 @@ import { fixupHost } from '~/common/util/urlUtils';
 import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWire_API_Moderations_Create } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
-import { azureModelToModelDescription, groqModelSortFn, groqModelToModelDescription, lmStudioModelToModelDescription, localAIModelToModelDescription, openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/models.data';
+import { azureModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
+import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
+import { lmStudioModelToModelDescription, localAIModelToModelDescription, localAIModelSortFn } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
-import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
+import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
+import { openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
@@ -97,7 +100,7 @@ export const llmOpenAIRouter = createTRPCRouter({
             model: z.string(), // the OpenAI model id
             owner: z.enum(['organization-owner']),
             id: z.string(), // the deployment name
-            status: z.enum(['succeeded']),
+            status: z.string(), // relaxed from z.enum(['succeeded']) for #744
             created_at: z.number(),
             updated_at: z.number(),
             object: z.literal('deployment'),
@@ -161,6 +164,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         case 'groq':
           models = openAIModels
+            .filter(groqModelFilter)
             .map(groqModelToModelDescription)
             .sort(groqModelSortFn);
           break;
@@ -173,7 +177,8 @@ export const llmOpenAIRouter = createTRPCRouter({
         // [LocalAI]: map id to label
         case 'localai':
           models = openAIModels
-            .map(model => localAIModelToModelDescription(model.id));
+            .map(({ id }) => localAIModelToModelDescription(id))
+            .sort(localAIModelSortFn);
           break;
 
         case 'mistral':

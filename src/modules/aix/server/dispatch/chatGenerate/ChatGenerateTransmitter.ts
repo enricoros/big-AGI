@@ -8,6 +8,13 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 
 // configuration
 const ENABLE_EXTRA_DEV_MESSAGES = true;
+/**
+ * This is enabled by default because probabilistically unlikely -- however there will be false positives/negatives.
+ *
+ * To activate, one needs a text message with the full `<think>` tag at the beginning of the session. It's likely to
+ * happen if the tokenizer has been trained for it, but for general tokenizers (and for now) this escapes.
+ */
+const LLM_HOTFIX_TRANSFORM_THINKING = true;
 export const IssueSymbols = {
   Generic: '❌',
   PromptBlocked: '🚫',
@@ -38,6 +45,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   // State machinery
   private lastFunctionCallParticle: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }> | null = null;
+  private isThinkingText: boolean | undefined = !LLM_HOTFIX_TRANSFORM_THINKING ? false : undefined;
 
   // Termination
   private terminationReason: AixWire_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
@@ -178,17 +186,62 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Appends reasoning text, which is its own kind of content */
-  appendReasoningText(textChunk: string) {
+  appendReasoningText(textChunk: string, weak?: Extract<AixWire_Particles.PartParticleOp, { p: 'tr_' }>['weak']) {
+    // NOTE: don't skip on empty chunks, as we want to transition states
     // if there was another Part in the making, queue it
     if (this.currentPart)
       this.endMessagePart();
     this.currentPart = {
       p: 'tr_',
       _t: textChunk,
+      ...(weak ? { weak } : {}),
     };
     // [throttle] send it immediately for now
     this._queueParticleS();
   }
+
+  /**
+   * Support function to extract potential reasoning text in between <think> and </think> tags,
+   * if and only if it's the very first text in the whole session.
+   */
+  appendAutoText_weak(textChunk: string) {
+    // fast-path
+    if (this.isThinkingText === false) {
+      this.appendText(textChunk);
+      return;
+    }
+
+    // inspect only at the very beginning
+    let remaining = textChunk;
+    if (this.isThinkingText === undefined) {
+      const trimmed = remaining.trimStart();
+      if (trimmed.startsWith('<think>')) {
+        this.isThinkingText = true;
+        remaining = trimmed.substring('<think>'.length);
+      } else
+        this.isThinkingText = false;  // or never use thinking extraction
+    }
+
+    while (remaining.length > 0) {
+      if (this.isThinkingText) {
+        const closingIdx = remaining.indexOf('</think>');
+        if (closingIdx >= 0) {
+          const reasoningText = remaining.substring(0, closingIdx);
+          this.appendReasoningText(reasoningText, 'tag');
+          this.isThinkingText = false;
+          remaining = remaining.substring(closingIdx + '</think>'.length);
+          // this is the only branch that can still loop
+        } else {
+          this.appendReasoningText(remaining, 'tag');
+          return;
+        }
+      } else {
+        this.appendText(remaining);
+        return;
+      }
+    }
+  }
+
 
   /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
   private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {

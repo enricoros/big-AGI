@@ -137,8 +137,8 @@ export function ChatMessageList(props: {
 
   const handleMessageBeam = React.useCallback(async (messageId: DMessageId) => {
     // Message option menu Beam
-    if (!conversationId || !props.conversationHandler || !props.conversationHandler.isValid()) return;
-    const inputHistory = props.conversationHandler.historyViewHeadOrThrow('chat-beam-message');
+    if (!conversationId || !conversationHandler || !conversationHandler.isValid()) return;
+    const inputHistory = conversationHandler.historyViewHeadOrThrow('chat-beam-message');
     if (!inputHistory.length) return;
 
     // TODO: replace the Persona and Auto-Cache-hint in the history?
@@ -151,52 +151,52 @@ export function ChatMessageList(props: {
     // assistant: do an in-place beam
     if (lastTruncatedMessage.role === 'assistant') {
       if (truncatedHistory.length >= 2)
-        props.conversationHandler.beamInvoke(truncatedHistory.slice(0, -1), [lastTruncatedMessage], lastTruncatedMessage.id);
+        conversationHandler.beamInvoke(truncatedHistory.slice(0, -1), [lastTruncatedMessage], lastTruncatedMessage.id);
     } else if (lastTruncatedMessage.role === 'user') {
       // user: truncate and append (but if the next message is an assistant message, import it)
       const possibleNextMessage = inputHistory[truncatedHistory.length];
       if (possibleNextMessage?.role === 'assistant')
-        props.conversationHandler.beamInvoke(truncatedHistory, [possibleNextMessage], null);
+        conversationHandler.beamInvoke(truncatedHistory, [possibleNextMessage], null);
       else
-        props.conversationHandler.beamInvoke(truncatedHistory, [], null);
+        conversationHandler.beamInvoke(truncatedHistory, [], null);
     }
-  }, [conversationId, props.conversationHandler]);
+  }, [conversationHandler, conversationId]);
 
   const handleMessageBranch = React.useCallback((messageId: DMessageId) => {
     conversationId && onConversationBranch(conversationId, messageId, true);
   }, [conversationId, onConversationBranch]);
 
   const handleMessageTruncate = React.useCallback((messageId: DMessageId) => {
-    props.conversationHandler?.historyTruncateTo(messageId, 0);
-  }, [props.conversationHandler]);
+    conversationHandler?.historyTruncateTo(messageId, 0);
+  }, [conversationHandler]);
 
   const handleMessageDelete = React.useCallback((messageId: DMessageId) => {
-    props.conversationHandler?.messagesDelete([messageId]);
-  }, [props.conversationHandler]);
+    conversationHandler?.messagesDelete([messageId]);
+  }, [conversationHandler]);
 
   const handleMessageAppendFragment = React.useCallback((messageId: DMessageId, fragment: DMessageFragment) => {
-    props.conversationHandler?.messageFragmentAppend(messageId, fragment, false, false);
-  }, [props.conversationHandler]);
+    conversationHandler?.messageFragmentAppend(messageId, fragment, false, false);
+  }, [conversationHandler]);
 
   const handleMessageDeleteFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
-    props.conversationHandler?.messageFragmentDelete(messageId, fragmentId, false, true);
-  }, [props.conversationHandler]);
+    conversationHandler?.messageFragmentDelete(messageId, fragmentId, false, true);
+  }, [conversationHandler]);
 
   const handleMessageReplaceFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    props.conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, false);
-  }, [props.conversationHandler]);
+    conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, false);
+  }, [conversationHandler]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
-    props.conversationHandler?.messageToggleUserFlag(messageId, userFlag, true /* touch */);
+    conversationHandler?.messageToggleUserFlag(messageId, userFlag, true /* touch */);
     // Note: we don't support 'maxPerConversation' yet, which is supposed to turn off the flag from the beginning if it's too numerous
     // if (_maxPerConversation) {
     //   ...
     // }
-  }, [props.conversationHandler]);
+  }, [conversationHandler]);
 
   const handleAddInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
-    props.conversationHandler?.overlayActions.addInReferenceTo(item);
-  }, [props.conversationHandler]);
+    conversationHandler?.overlayActions.addInReferenceTo(item);
+  }, [conversationHandler]);
 
   const handleTextDiagram = React.useCallback(async (messageId: DMessageId, text: string) => {
     conversationId && onTextDiagram({ conversationId: conversationId, messageId, text });
@@ -238,15 +238,15 @@ export function ChatMessageList(props: {
   };
 
   const handleSelectionDelete = React.useCallback(() => {
-    props.conversationHandler?.messagesDelete(Array.from(selectedMessages));
+    conversationHandler?.messagesDelete(Array.from(selectedMessages));
     setSelectedMessages(new Set());
-  }, [props.conversationHandler, selectedMessages]);
+  }, [conversationHandler, selectedMessages]);
 
   const handleSelectionHide = React.useCallback(() => {
     for (let selectedMessage of Array.from(selectedMessages))
-      props.conversationHandler?.messageSetUserFlag(selectedMessage, MESSAGE_FLAG_AIX_SKIP, true, true);
+      conversationHandler?.messageSetUserFlag(selectedMessage, MESSAGE_FLAG_AIX_SKIP, true, true);
     setSelectedMessages(new Set());
-  }, [props.conversationHandler, selectedMessages]);
+  }, [conversationHandler, selectedMessages]);
 
   const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
 

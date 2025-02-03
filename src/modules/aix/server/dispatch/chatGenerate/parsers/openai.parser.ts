@@ -136,7 +136,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       if (typeof delta.content === 'string') {
 
         accumulator.content = (accumulator.content || '') + delta.content;
-        pt.appendText(delta.content);
+        pt.appendAutoText_weak(delta.content);
 
       }
       // delta: Reasoning Content [Deepseek, 2025-01-20]
@@ -144,6 +144,13 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
         // Note: not using the accumulator as it's a relic of the past probably
         pt.appendReasoningText(delta.reasoning_content);
+
+      }
+      // delta: Reasoning [OpenRouter, 2025-01-24]
+      else if (typeof delta.reasoning === 'string') {
+
+        // Note: not using the accumulator as it's a relic of the past probably
+        pt.appendReasoningText(delta.reasoning);
 
       }
       else if (delta.content !== undefined && delta.content !== null)
@@ -253,8 +260,10 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
 
       // message: Text
       if (typeof message.content === 'string') {
-        if (message.content)
+        if (message.content) {
+          // we will return the EXACT content for non-streaming calls, hence we don't call `appendAutoText_weak` here
           pt.appendText(message.content);
+        }
       } else if (message.content !== undefined && message.content !== null)
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 

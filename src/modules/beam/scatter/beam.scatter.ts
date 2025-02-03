@@ -4,7 +4,7 @@ import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromCo
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
-import { createDMessageEmpty, DMessage, duplicateDMessageNoVoid, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, DMessage, duplicateDMessage, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
@@ -65,7 +65,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
     _rayUpdate(ray.rayId, (ray) => ({
       message: {
         ...ray.message,
-        ...(incrementalFragments?.length ? { fragments: incrementalFragments } : {}),
+        ...(incrementalFragments?.length ? { fragments: [...incrementalFragments] } : {}),
         ...incrementalRest,
         ...(completed ? { pendingIncomplete: undefined } : {}), // clear the pending flag once the message is complete
         ...(incrementalFragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
@@ -267,7 +267,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       // pre-fill the ray with the imported message
       if (message.fragments.length) {
         emptyRay.status = 'success';
-        emptyRay.message = duplicateDMessageNoVoid(message); // [beam] import dmessage copy from chat
+        emptyRay.message = duplicateDMessage(message, false); // [beam] import dmessage copy from chat
         emptyRay.message.updated = Date.now();
         emptyRay.imported = true;
       }

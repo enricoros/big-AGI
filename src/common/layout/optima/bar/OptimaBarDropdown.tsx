@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SelectSlotsAndSlotProps } from '@mui/joy/Select/SelectProps';
-import { Box, ListDivider, listItemButtonClasses, ListItemDecorator, Option, optionClasses, Select, selectClasses, Typography } from '@mui/joy';
+import { Box, ListDivider, listItemButtonClasses, ListItemDecorator, Option, optionClasses, Select, selectClasses } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
@@ -11,12 +11,16 @@ const useDenseDropdowns = false;
 const useBigIcons = true;
 
 
-const selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
+const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
   root: {
     sx: {
       backgroundColor: 'transparent',
       // minWidth: selectMinWidth, // 160
-      maxWidth: 'calc(100dvw - 4.5rem)', /* 36px * 2 buttons */
+      maxWidth: 'calc(100dvw - 4.5rem)', /* 36px * 2 buttons (2 * var(--Bar)) */
+      // disappear when the 'agi-gone' class is set
+      '&.agi-gone': {
+        display: 'none',
+      },
     },
   },
   button: {
@@ -72,6 +76,27 @@ const selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
   },
 };
 
+const _styles = {
+
+  prependGap: {
+    height: 'var(--ListDivider-gap)',
+  } as const,
+
+  itemsScrollable: {
+    overflow: 'auto',
+    paddingBlock: 'var(--ListDivider-gap)',
+  } as const,
+
+  symbolDecorator: {
+    fontSize: 'xl',
+  } as const,
+
+  divider: {
+    my: 0,
+  } as const,
+
+} as const;
+
 
 export type OptimaDropdownItems = Record<string, {
   title: string,
@@ -102,6 +127,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
   appendOption?: React.JSX.Element,
   placeholder?: string,
   showSymbols?: boolean,
+  showGone?: boolean,
 }, ref: React.Ref<OptimaBarControlMethods>) {
 
   // state
@@ -124,7 +150,13 @@ function OptimaBarDropdown<TValue extends string>(props: {
     onChange(value);
   }, [onChange]);
 
+  const handleOnOpenChange = React.useCallback((isOpen: boolean) => {
+    if (isOpen !== listboxOpen)
+      setListboxOpen(isOpen);
+  }, [listboxOpen]);
+
   const itemsKeys = Object.keys(props.items);
+  const hasItems = itemsKeys.length >= 1;
 
   return (
     <Select
@@ -133,26 +165,19 @@ function OptimaBarDropdown<TValue extends string>(props: {
       onChange={handleOnChange}
       placeholder={props.placeholder}
       listboxOpen={listboxOpen}
-      onListboxOpenChange={(isOpen) => {
-        if (isOpen !== listboxOpen)
-          setListboxOpen(isOpen);
-      }}
+      onListboxOpenChange={handleOnOpenChange}
       indicator={<KeyboardArrowDownIcon />}
-      slotProps={selectSlotProps}
+      slotProps={_selectSlotProps}
+      className={props.showGone ? 'agi-gone' : ''}
     >
 
       {/* Prepender */}
-      {!!props.prependOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}
+      {!!props.prependOption && <Box sx={_styles.prependGap} />}
       {props.prependOption}
-      {/*{!!props.prependOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ my: 0 }} />}*/}
+      {/*{!!props.prependOption && hasItems && <ListDivider sx={_styles.divider} />}*/}
 
       {/* Scrollable Items list*/}
-      {(itemsKeys.length > 0) && <Box
-        sx={{
-          overflow: 'auto',
-          paddingBlock: 'var(--ListDivider-gap)',
-        }}
-      >
+      {hasItems && <Box sx={_styles.itemsScrollable}>
         {itemsKeys.map((_itemKey: string, idx: number) => {
           const _item = props.items[_itemKey];
           const isActive = _itemKey === props.value;
@@ -161,13 +186,12 @@ function OptimaBarDropdown<TValue extends string>(props: {
           let label = _item.title || '';
           let decorator: React.ReactNode = null;
           if (props.showSymbols) {
-            if (_item.icon) {
+            if (_item.icon)
               decorator = <ListItemDecorator>{_item.icon}</ListItemDecorator>;
-            } else if (_item.symbol !== undefined) {
-              decorator = <ListItemDecorator sx={{ fontSize: 'xl' }}>{_item.symbol || ''}</ListItemDecorator>;
-              if (_item.symbol)
-                label = `${_item.symbol} ${label}`;
-            }
+            else if (_item.symbol !== undefined)
+              decorator = <ListItemDecorator sx={_styles.symbolDecorator}>{_item.symbol || ''}</ListItemDecorator>;
+            if (_item.symbol)
+              label = `${_item.symbol} ${label}`;
           }
 
           return _item.type === 'separator' ? (
@@ -183,9 +207,9 @@ function OptimaBarDropdown<TValue extends string>(props: {
               {decorator}
 
               {/* Text */}
-              <Typography className='agi-ellipsize'>
+              <div className='agi-ellipsize'>
                 {_item.title}
-              </Typography>
+              </div>
 
               {/* Optional End Decorator */}
               {isActive && props.activeEndDecorator}
@@ -195,7 +219,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
       </Box>}
 
       {/* Appender */}
-      {!!props.appendOption && Object.keys(props.items).length >= 1 && <ListDivider sx={{ my: 0 }} />}
+      {!!props.appendOption && hasItems && <ListDivider sx={_styles.divider} />}
       {props.appendOption}
       {/*{!!props.appendOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}*/}
 

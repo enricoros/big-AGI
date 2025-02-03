@@ -288,6 +288,7 @@ export namespace OpenAIWire_API_Chat_Completions {
       include_usage: z.boolean().optional(), // If set, an additional chunk will be streamed with a 'usage' field on the entire request.
     }).optional(),
     reasoning_effort: z.enum(['low', 'medium', 'high']).optional(), // [OpenAI, 2024-12-17] reasoning effort, o1 models only for now
+    include_reasoning: z.boolean().optional(), // [OpenRouter, 2025-01-24] enables reasoning tokens
     prediction: z.object({ // [OpenAI, 2024-11-05] Predicted Outputs - for regenerating a file with only minor changes to most of the content.
       type: z.literal('content'),
       content: z.union([z.string(), z.array(OpenAIWire_ContentParts.ContentPart_schema)]),
@@ -482,6 +483,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     content: z.string().nullable().optional(),
     // delta-reasoning content
     reasoning_content: z.string().nullable().optional(), // [Deepseek, 2025-01-20]
+    reasoning: z.string().nullable().optional(), // [OpenRouter, 2025-01-24]
     // delta-tool-calls content
     tool_calls: z.array(ChunkDeltaToolCalls_schema).optional()
       .nullable(), // [TogetherAI] added .nullable(), see https://github.com/togethercomputer/together-python/issues/160

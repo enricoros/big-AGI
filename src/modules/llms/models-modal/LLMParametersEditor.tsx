@@ -136,7 +136,7 @@ export function LLMParametersEditor(props: {
       <FormSwitchControl
         title='Restore Markdown'
         description='Enable markdown formatting'
-        tooltip='o1 models in the API will avoid generating responses with markdown formatting. This option signals to the model to re-enable markdown formatting in the respons'
+        tooltip='o1 and o3 models in the API will avoid generating responses with markdown formatting. This option signals to the model to re-enable markdown formatting in the respons'
         checked={llmVndOaiRestoreMarkdown}
         onChange={checked => {
           if (!checked)

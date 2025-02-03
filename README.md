@@ -1,7 +1,7 @@
 # BIG-AGI 🧠✨
 
 Welcome to big-AGI, the AI suite for professionals that need function, form,
-simplicity, and speed. Powered by the latest models from 12 vendors and
+simplicity, and speed. Powered by the latest models from 15 vendors and
 open-source servers, `big-AGI` offers best-in-class Chats,
 [Beams](https://github.com/enricoros/big-AGI/issues/470),
 and [Calls](https://github.com/enricoros/big-AGI/issues/354) with AI personas,
@@ -11,9 +11,7 @@ Stay ahead of the curve with big-AGI. 🚀 Pros & Devs love big-AGI. 🤖
 
 [![Official Website](https://img.shields.io/badge/BIG--AGI.com-%23096bde?style=for-the-badge&logo=vercel&label=launch)](https://big-agi.com)
 
-> 🚀 Big-AGI 2 is launching Q4 2024. Be the first to experience it before the public release.
->
-> 👉 [Apply for Early Access](https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=readme&utm_campaign=ea2)
+> 🚀 Big-AGI 2 is launching soon.
 
 Or fork & run on Vercel
 
@@ -31,6 +29,24 @@ This repository contains two main versions:
 Note: After the V2 Q1 2025 release, `v2-dev` will become the default branch and `v1-stable` will reach EOL.
 
 ### Quick links: 👉 [roadmap](https://github.com/users/enricoros/projects/4/views/2) 👉 [installation](docs/installation.md) 👉 [documentation](docs/README.md)
+
+---
+
+### 5,000 Commits Milestone · Jan 2025
+
+Hit 5k commits last week. That's a lot of code, and it's the [foundation for what's coming](https://big-agi.com/blog/big-agi-2-is-almost-ready).
+
+Recent work has been intense:
+- Chain of thought reasoning across multiple LLMs: **OpenAI o3** and o1, **DeepSeek R1**, **Gemini 2.0 Flash Thinking**, and more
+- Beam is real - ~35% of our free users run it daily to compare models
+- New AIX framework lets us scale features we couldn't before
+- UI is faster than ever. Like, terminal-fast
+
+Big-AGI 2 is weeks away. Yes, we're late, but we're making it right. The new architecture is solid and the speed improvements are real.
+
+Stay tuned. This is going to be good.
+
+![5000e-830px](https://github.com/user-attachments/assets/42f7420b-9331-421b-9a18-2e653aaa7d9b)
 
 ### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
 

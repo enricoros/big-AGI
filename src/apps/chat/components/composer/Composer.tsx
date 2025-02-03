@@ -33,7 +33,7 @@ import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragmentsNoVoid } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { estimateTextTokens, glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getModelParameterValueOrThrow } from '~/common/stores/llms/llms.parameters';
@@ -74,7 +74,7 @@ import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
-import { StatusBar } from '../StatusBar';
+import { StatusBarMemo } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
 import { useComposerDragDrop } from './useComposerDragDrop';
@@ -493,7 +493,7 @@ export function Composer(props: {
     const cHandler = ConversationsManager.getHandler(conversationId);
     const messageToEmbed = cHandler.historyFindMessageOrThrow(messageId);
     if (messageToEmbed) {
-      const fragmentsCopy = duplicateDMessageFragmentsNoVoid(messageToEmbed.fragments); // [attach] deep copy a message's fragments to attach to ego
+      const fragmentsCopy = duplicateDMessageFragments(messageToEmbed.fragments, true); // [attach] deep copy a message's fragments to attach to ego
       if (fragmentsCopy.length) {
         const chatTitle = cHandler.title() ?? '';
         const messageText = messageFragmentsReduceText(fragmentsCopy);
@@ -630,8 +630,12 @@ export function Composer(props: {
     const composerShortcuts: ShortcutObject[] = [];
     if (showChatAttachments) {
       composerShortcuts.push({ key: 'f', ctrl: true, shift: true, action: () => openFileForAttaching(true, handleAttachFiles), description: 'Attach File' });
+      composerShortcuts.push({ key: 'l', ctrl: true, shift: true, action: openWebInputDialog, description: 'Attach Link' });
       if (supportsClipboardRead())
         composerShortcuts.push({ key: 'v', ctrl: true, shift: true, action: attachAppendClipboardItems, description: 'Attach Clipboard' });
+      // Future: keep reactive state here to support Live Screen Capture and more
+      // if (labsAttachScreenCapture && supportsScreenCapture)
+      //   composerShortcuts.push({ key: 's', ctrl: true, shift: true, action: openScreenCaptureDialog, description: 'Attach Screen Capture' });
     }
     if (recognitionState.isActive) {
       composerShortcuts.push({ key: 'm', ctrl: true, action: handleFinishMicAndSend, description: 'Mic · Send', disabled: !recognitionState.hasSpeech || sendStarted, endDecoratorIcon: TelegramIcon as any, level: 4 });
@@ -650,7 +654,7 @@ export function Composer(props: {
         }, description: 'Microphone',
       });
     return composerShortcuts;
-  }, [attachAppendClipboardItems, handleAttachFiles, handleFinishMicAndSend, recognitionState.hasSpeech, recognitionState.isActive, sendStarted, showChatAttachments, toggleRecognition]));
+  }, [attachAppendClipboardItems, handleAttachFiles, handleFinishMicAndSend, openWebInputDialog, recognitionState.hasSpeech, recognitionState.isActive, sendStarted, showChatAttachments, toggleRecognition]));
 
 
   // ...
@@ -723,7 +727,7 @@ export function Composer(props: {
   return (
     <Box aria-label='User Message' component='section' sx={props.sx}>
 
-      {!isMobile && labsShowShortcutBar && <StatusBar toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
+      {!isMobile && labsShowShortcutBar && <StatusBarMemo toggleMinimized={handleToggleMinimized} isMinimized={isMinimized} />}
 
       {/* This container is here just to let the potential statusbar fill the whole space, so we moved the padding here and not in the parent */}
       <Box sx={(!isMinimized || isMobile || !labsShowShortcutBar) ? paddingBoxSx : minimizedSx}>
