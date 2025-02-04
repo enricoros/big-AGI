@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Button, FormControl, Typography } from '@mui/joy';
+import { Button, FormControl, Tooltip, Typography } from '@mui/joy';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -50,23 +51,30 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ ollamaHost: text })}
     />
 
+    <FormControl orientation='horizontal'>
+      <FormLabelStart title='Image Input' description='PNG only' />
+      <Typography level='body-sm'>
+        Images are well supported (e.g. try Llama3.2-vision). However only the PNG format is accepted by the Ollama API.
+        For attachments, use the &quot;Original&quot; format option.
+      </Typography>
+    </FormControl>
+
     <FormSwitchControl
-      title='JSON Output' on='Enabled' fullWidth
-      description={<Link level='body-sm' href='https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion' target='_blank'>Information</Link>}
+      title='JSON mode'
+      on={<Typography level='title-sm' endDecorator={<WarningRoundedIcon sx={{ color: 'danger.solidBg' }} />}>Force JSON</Typography>}
+      off='Off (default)'
+      fullWidth
+      description={
+        <Tooltip arrow title='Models will output only JSON, including empty {} objects.'>
+          <Link level='body-sm' href='https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion' target='_blank'>Information</Link>
+        </Tooltip>
+      }
       checked={ollamaJson}
       onChange={on => {
         updateSettings({ ollamaJson: on });
         refetch();
       }}
     />
-
-    <FormControl orientation='horizontal'>
-      <FormLabelStart title='Image Input' description='Information' />
-      <Typography level='body-xs'>
-        Images are well supported (e.g. try Llama3.2-vision). However only the PNG format is accepted by the Ollama API.
-        For attachments, use the &quot;Original&quot; format option.
-      </Typography>
-    </FormControl>
 
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
