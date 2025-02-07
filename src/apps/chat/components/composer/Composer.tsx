@@ -600,7 +600,7 @@ export function Composer(props: {
     links.forEach(link => void attachAppendUrl('input-link', link.url));
   }, [attachAppendUrl]);
 
-  const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebLinks);
+  const { openWebInputDialog, webInputDialogComponent } = useWebInputModal(handleAttachWebLinks, composeText);
 
 
   // Attachments Down

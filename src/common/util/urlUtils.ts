@@ -81,6 +81,13 @@ export function fixupHost(host: string, apiPath: string): string {
   return host;
 }
 
+/**
+ * Extracts URLs from a text string.
+ */
+export function extractUrlsFromText(text: string): string[] {
+  const urlRegex = /(https?:\/\/\S+)/g;
+  return text.match(urlRegex) || [];
+}
 
 /**
  * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance)
