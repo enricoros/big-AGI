@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { Box, Button, Chip, FormControl, FormHelperText, IconButton, Input, Stack, Typography } from '@mui/joy';
+import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import AddIcon from '@mui/icons-material/Add';
 import BrowserUpdatedOutlinedIcon from '@mui/icons-material/BrowserUpdatedOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -29,38 +30,23 @@ type WebInputModalInputs = {
 
 const _styles = {
 
-  importTitle: {
-    mb: 1.5,
-    gap: 1,
-  } as const,
-
-  importBody: {
-    display: 'grid',
-    gap: 1,
-    p: 1.5,
-    boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
-    backgroundColor: 'background.level1',
-    borderRadius: 'sm',
-  } as const,
-
-  linkIcon: {
-    // opacity: 0.7,
-  } as const,
   ytIcon: {
     color: 'red',
   } as const,
 
   chipLink: {
-    '--Chip-radius': '4px',
-    whiteSpace: 'break-spaces',
-    gap: 1.5,
+    ml: 'auto',
+    pr: 1.125,
+    // '--Chip-radius': '4px',
+    // whiteSpace: 'break-spaces',
+    // gap: 1.5,
   } as const,
 
 } as const;
 
 
 function WebInputModal(props: {
-  composerText: string,
+  composerText?: string,
   onClose: () => void,
   onWebLinks: (urls: WebInputData[]) => void,
 }) {
@@ -68,7 +54,7 @@ function WebInputModal(props: {
   // state
   const { control: formControl, handleSubmit: formHandleSubmit, formState: { isValid: formIsValid, isDirty: formIsDirty } } = useForm<WebInputModalInputs>({
     values: { links: [{ url: '' }] },
-    // mode: 'onChange', // validate on change
+    mode: 'onChange', // validate on change
   });
   const { fields: formFields, append: formFieldsAppend, remove: formFieldsRemove, update: formFieldsUpdate } = useFieldArray({ control: formControl, name: 'links' });
   const firstInputRef = React.useRef<HTMLInputElement>(null);
@@ -89,10 +75,10 @@ function WebInputModal(props: {
   // memos
 
   const extractedComposerUrls = React.useMemo(() => {
-    return extractUrlsFromText(props.composerText);
+    return !props.composerText ? null : extractUrlsFromText(props.composerText);
   }, [props.composerText]);
 
-  const extractedUrlsCount = extractedComposerUrls.length;
+  const extractedUrlsCount = extractedComposerUrls?.length ?? 0;
 
   // handlers
 
@@ -121,23 +107,44 @@ function WebInputModal(props: {
   }, [handleClose, onWebLinks]);
 
 
-  const handleAddUrl = React.useCallback((newUrl: string) => {
-    // bail if can't add
-    if (!canAddMoreUrls)
-      return addSnackbar({ key: 'max-urls', message: `Maximum ${MAX_URLS} URLs allowed`, type: 'precondition-fail' });
+  // const handleAddUrl = React.useCallback((newUrl: string) => {
+  //   // bail if can't add
+  //   if (!canAddMoreUrls)
+  //     return addSnackbar({ key: 'max-urls', message: `Maximum ${MAX_URLS} URLs allowed`, type: 'precondition-fail' });
+  //
+  //   // bail if already in
+  //   const exists = formFields.some(({ url }) => url === newUrl);
+  //   if (exists)
+  //     return addSnackbar({ key: 'duplicate-url', message: 'URL already added', type: 'info' });
+  //
+  //   // replace the first empty field, or append
+  //   const emptyFieldIndex = formFields.findIndex(field => !field.url.trim());
+  //   if (emptyFieldIndex >= 0)
+  //     formFieldsUpdate(emptyFieldIndex, { url: newUrl });
+  //   else
+  //     formFieldsAppend({ url: newUrl });
+  // }, [canAddMoreUrls, formFields, formFieldsAppend, formFieldsUpdate]);
 
-    // bail if already in
-    const exists = formFields.some(({ url }) => url === newUrl);
-    if (exists)
-      return addSnackbar({ key: 'duplicate-url', message: 'URL already added', type: 'info' });
 
-    // replace the first empty field, or append
-    const emptyFieldIndex = formFields.findIndex(field => !field.url.trim());
-    if (emptyFieldIndex >= 0)
-      formFieldsUpdate(emptyFieldIndex, { url: newUrl });
-    else
-      formFieldsAppend({ url: newUrl });
-  }, [canAddMoreUrls, formFields, formFieldsAppend, formFieldsUpdate]);
+  const handleAddAllUrls = React.useCallback(() => {
+    if (!extractedComposerUrls) return;
+
+    // new URLs that are not already in the form
+    const newURLs = extractedComposerUrls.filter(url => !formFields.some(field => field.url.trim() === url));
+    if (!newURLs.length) return;
+
+    // find empty fields first
+    for (let i = 0; i < formFields.length; i++) {
+      const field = formFields[i];
+      if (!field.url.trim()) {
+        formFieldsUpdate(i, { url: newURLs.shift()! });
+        if (!newURLs.length) break;
+      }
+    }
+
+    // append remaining
+    newURLs.forEach(url => formFieldsAppend({ url }));
+  }, [extractedComposerUrls, formFields, formFieldsAppend, formFieldsUpdate]);
 
 
   return (
@@ -160,29 +167,21 @@ function WebInputModal(props: {
       </Typography>
 
 
-      {/* Detected URLs section */}
+      {/* Modified URLs section */}
       {!!extractedUrlsCount && (
-        <Box mb={3}>
-          <Typography
-            level='title-sm'
-            startDecorator={<BrowserUpdatedOutlinedIcon />}
-            sx={_styles.importTitle}
-          >
-            {extractedUrlsCount} URL{extractedUrlsCount > 1 ? 's' : ''} found in your message
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography level='title-sm' startDecorator={<BrowserUpdatedOutlinedIcon />}>
+            {extractedUrlsCount} URL{extractedUrlsCount > 1 ? 's' : ''} in your message
+            {/*{extractedUrlsCount} URL{extractedUrlsCount > 1 ? 's' : ''} found in your message*/}
           </Typography>
-          <Box sx={_styles.importBody}>
-            {extractedComposerUrls.map((url, index) => (
-              <Chip
-                key={index}
-                size='md'
-                onClick={() => handleAddUrl(url)}
-                startDecorator={extractYoutubeVideoIDFromURL(url) ? <YouTubeIcon sx={_styles.ytIcon} /> : <LanguageRoundedIcon sx={_styles.linkIcon} />}
-                sx={_styles.chipLink}
-              >
-                {url}
-              </Chip>
-            ))}
-          </Box>
+          <Chip
+            variant='soft'
+            onClick={handleAddAllUrls}
+            startDecorator={<AddCircleOutlineRoundedIcon />}
+            sx={_styles.chipLink}
+          >
+            Add
+          </Chip>
         </Box>
       )}
 
@@ -260,11 +259,11 @@ function WebInputModal(props: {
 }
 
 
-export function useWebInputModal(onAttachWebLinks: (urls: WebInputData[]) => void, composerText: string) {
+export function useWebInputModal(onAttachWebLinks: (urls: WebInputData[]) => void, composerText?: string) {
 
   // state
   const [open, setOpen] = React.useState(false);
-  const composerTextRef = React.useRef<string>(composerText);
+  const composerTextRef = React.useRef(composerText);
 
   // copy the text to a ref, constantly - we just care about a recent snapshot, but don't want to invalidate hooks
   composerTextRef.current = composerText;
