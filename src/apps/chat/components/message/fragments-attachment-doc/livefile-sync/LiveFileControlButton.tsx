@@ -71,7 +71,7 @@ export function LiveFileControlButton(props: {
         title={
           props.hasContent ? 'Reload and compare file contents'
             : props.isPaired ? 'Sync and monitor file changes'
-              : 'Set up live file pairing'
+              : 'Set up live file pairing (you can also drag and drop a file here)'
         }
         color='success'
         placement='top-end'
