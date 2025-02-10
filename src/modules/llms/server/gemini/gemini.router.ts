@@ -102,10 +102,12 @@ export const llmGeminiRouter = createTRPCRouter({
       // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,
       //       as the List API already all the info on all the models
 
+      // first filter from the original list
+      const filteredModels = detailedModels.filter(geminiFilterModels);
+
       // map to our output schema
-      const models = detailedModels
-        .filter(geminiFilterModels)
-        .map(geminiModel => geminiModelToModelDescription(geminiModel))
+      const models = filteredModels
+        .map(geminiModelToModelDescription)
         .filter(model => !!model)
         .sort(geminiSortModels);
 
