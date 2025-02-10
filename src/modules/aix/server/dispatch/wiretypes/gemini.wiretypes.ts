@@ -526,10 +526,10 @@ export namespace GeminiWire_API_Models_List {
 
   const Methods_enum = z.enum([
     'bidiGenerateContent', // appeared on 2024-12, see https://github.com/enricoros/big-AGI/issues/700
-    'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
     'countMessageTokens',
     'countTextTokens',
     'countTokens',
+    'createCachedContent', // appeared on 2024-06-10, see https://github.com/enricoros/big-AGI/issues/565
     'createTunedModel',
     'createTunedTextModel',
     'embedContent',
@@ -538,6 +538,7 @@ export namespace GeminiWire_API_Models_List {
     'generateContent',
     'generateMessage',
     'generateText',
+    'predict', // appeared on 2025-02-09, for `models/imagen-3.0-generate-002`
   ]);
 
   export type Model = z.infer<typeof Model_schema>;
