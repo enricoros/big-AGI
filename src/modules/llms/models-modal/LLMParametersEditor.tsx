@@ -62,12 +62,10 @@ export function LLMParametersEditor(props: {
   }, [onChangeParameter, overheat, tempAboveOne]);
 
 
-  // find the gemini show thoughts parameter spec
+  // optional params specs
   const paramSpecGeminiShowThoughts = parameterSpecs?.find(p => p.paramId === 'llmVndGeminiShowThoughts') as DModelParameterSpec<'llmVndGeminiShowThoughts'> | undefined;
-
-  // find the reasoning effort parameter spec
-  // NOTE: optimization: this controls both the 'reasoning effort' and 'restore markdown' UI settings
   const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
+  const paramSpecRestoreMarkdown = parameterSpecs?.find(p => p.paramId === 'llmVndOaiRestoreMarkdown') as DModelParameterSpec<'llmVndOaiRestoreMarkdown'> | undefined;
 
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
@@ -132,7 +130,7 @@ export function LLMParametersEditor(props: {
       />
     )}
 
-    {paramSpecReasoningEffort && (
+    {paramSpecRestoreMarkdown && (
       <FormSwitchControl
         title='Restore Markdown'
         description='Enable markdown formatting'

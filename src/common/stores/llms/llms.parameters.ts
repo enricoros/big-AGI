@@ -85,6 +85,7 @@ export const DModelParameterRegistry = {
     label: 'Restore Markdown',
     type: 'boolean' as const,
     description: 'Restore Markdown formatting in the output',
+    initialValue: true,
   } as const,
 
 } as const;
