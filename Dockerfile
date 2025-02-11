@@ -30,6 +30,9 @@ ENV NEXT_PUBLIC_GA4_MEASUREMENT_ID=${NEXT_PUBLIC_GA4_MEASUREMENT_ID}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# link ssl3 for latest Alpine
+RUN sh -c '[ ! -e /lib/libssl.so.3 ] && ln -s /usr/lib/libssl.so.3 /lib/libssl.so.3 || echo "Link already exists"'
+
 # Build the application
 ENV NODE_ENV production
 RUN npm run build
