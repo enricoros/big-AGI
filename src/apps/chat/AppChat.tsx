@@ -74,6 +74,16 @@ const chatMessageListSx: SxProps = {
   flexGrow: 1,
 };
 
+/*const chatMessageListBrandedSx: SxProps = {
+  flexGrow: 1,
+  backgroundBlendMode: 'soft-light',
+  backgroundColor: themeBgApp,
+  backgroundImage: 'url(https://...)',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: 'contain',
+} as const;*/
+
 const chatBeamWrapperSx: SxProps = {
   flexGrow: 1,
   // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
