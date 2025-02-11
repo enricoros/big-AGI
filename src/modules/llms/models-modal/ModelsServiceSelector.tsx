@@ -197,14 +197,25 @@ export function ModelsServiceSelector(props: {
         }}
       >
         {serviceItems.map(item => item.component)}
+
+        {/* Add Service button */}
+        {/*<ListDivider />*/}
+        {/*<ListItem onClick={handleShowVendors}>*/}
+        {/*  <ListItemButton>*/}
+        {/*    <ListItemDecorator>*/}
+        {/*      <AddIcon />*/}
+        {/*    </ListItemDecorator>*/}
+        {/*    Add Service*/}
+        {/*  </ListItemButton>*/}
+        {/*</ListItem>*/}
       </Select>
 
       {isMobile ? (
-        <IconButton variant={noServices ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
+        <IconButton variant={noServices ? 'solid' : 'outlined'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ borderColor: 'neutral.outlinedBorder' }}>
           <AddIcon />
         </IconButton>
       ) : (
-        <Button variant={noServices ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
+        <Button variant={noServices ? 'solid' : 'outlined'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ borderColor: 'neutral.outlinedBorder' }}>
           Add
         </Button>
       )}
