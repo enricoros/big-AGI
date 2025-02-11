@@ -63,7 +63,9 @@ export function ApproximateCosts(props: {
   const hasSaved = totalSavings && totalSavings > 0;
 
   return React.useMemo(() => {
-    if (!totalCosts) return props.children;
+    if (!totalCosts)
+      return !props.children ? undefined
+        : <Box sx={_styles.box}>{props.children}</Box>;
 
     return (
       <Box sx={_styles.box}>
@@ -99,14 +101,14 @@ export function ApproximateCosts(props: {
               {!!hasSaved && <> · saved <Box component='span' sx={{ color: 'success.plainColor' }}><b>{formatModelsCost(totalSavings)}</b></Box></>}
             </div>
             {' '}<Chip
-              size='sm'
-              color={hasSaved ? 'success' : 'neutral'}
-              variant='outlined'
-              onClick={() => setExpanded(true)}
-              sx={_styles.chipMore}
-            >
-              More...
-            </Chip>
+            size='sm'
+            color={hasSaved ? 'success' : 'neutral'}
+            variant='outlined'
+            onClick={() => setExpanded(true)}
+            sx={_styles.chipMore}
+          >
+            More...
+          </Chip>
           </Box>
         )}
       </Box>

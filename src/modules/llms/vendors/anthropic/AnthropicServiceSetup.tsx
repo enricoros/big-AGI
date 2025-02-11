@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, FormControl, Typography } from '@mui/joy';
+import { Alert, Box, FormControl, Typography } from '@mui/joy';
 
 import { useChatAutoAI } from '../../../../apps/chat/store-app-chat';
 
@@ -49,11 +49,9 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   return <>
 
     <ApproximateCosts serviceId={service?.id} whoSaved='Big-AGI saved you'>
-      <Alert variant='soft' color='success'>
-        <div>
-          Enjoy <b>Sonnet 3.5</b>, <b>Opus</b> and <b>Haiku 3</b>. Anthropic <ExternalLink level='body-sm' href='https://status.anthropic.com/'>server status</ExternalLink>.
-        </div>
-      </Alert>
+      <Box sx={{ level: 'body-sm' }}>
+        Enjoy <b>Sonnet 3.5</b>, <b>Opus</b> and <b>Haiku</b>. Anthropic <ExternalLink href='https://status.anthropic.com/' level='body-sm'>servers status</ExternalLink>.
+      </Box>
     </ApproximateCosts>
 
     <FormInputKey
