@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Checkbox, Divider } from '@mui/joy';
+import { Box, Divider } from '@mui/joy';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { GoodModal } from '~/common/components/modals/GoodModal';
@@ -28,7 +28,8 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // local state
   const [_selectedServiceId, setSelectedServiceId] = React.useState<DModelsServiceId | null>(null);
-  const [showAllServices, setShowAllServices] = React.useState<boolean>(false);
+  // const [showAllServices, setShowAllServices] = React.useState<boolean>(false);
+  const showAllServices = false;
 
   // external state
   const { showModels, showModelOptions } = useOptimaModelsModalsState();
@@ -41,7 +42,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   const activeService = modelsServices.find(s => s.id === selectedServiceId);
 
-  const multiService = modelsServices.length > 1;
+  // const multiService = modelsServices.length > 1;
 
   // Auto-open this dialog - anytime no service is selected
   const autoOpenTrigger = !selectedServiceId && !props.suspendAutoModelsSetup;
@@ -66,15 +67,16 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
     {showModels && <GoodModal
       title={<>Configure <b>AI Models</b></>}
       open onClose={optimaActions().closeModels}
+      darkBottomClose
       animateEnter={llmCount === 0}
       unfilterBackdrop
-      startButton={
-        multiService ? <Checkbox
-          label='All Services'
-          sx={{ my: 'auto' }}
-          checked={showAllServices} onChange={() => setShowAllServices(all => !all)}
-        /> : undefined
-      }
+      // startButton={
+      //   multiService ? <Checkbox
+      //     label='All Services'
+      //     sx={{ my: 'auto' }}
+      //     checked={showAllServices} onChange={() => setShowAllServices(all => !all)}
+      //   /> : undefined
+      // }
       sx={{
         // forces some shrinkage of the contents (ModelsList)
         overflow: 'auto',
@@ -117,7 +119,7 @@ export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
         />
       )}
 
-      <Divider />
+      <Divider sx={{ background: 'transparent'}} />
 
     </GoodModal>}
 
