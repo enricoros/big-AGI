@@ -4,10 +4,12 @@ import { Button, FormControl, Tooltip, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { asValidURL } from '~/common/util/urlUtils';
 
@@ -16,7 +18,6 @@ import { useServiceSetup } from '../useServiceSetup';
 
 import { ModelVendorOllama } from './ollama.vendor';
 import { OllamaAdministration } from './OllamaAdministration';
-import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 
 
 export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
@@ -79,7 +80,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <SetupFormRefetchButton
       refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError}
       leftButton={
-        <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)}>
+        <Button color='neutral' variant='solid' disabled={adminOpen} onClick={() => setAdminOpen(true)} startDecorator={<OllamaIcon sx={{ fontSize:'lg' }}/>}>
           Ollama Admin
         </Button>
       }
