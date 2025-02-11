@@ -58,15 +58,15 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     >
       <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces', mt: 0.5, ml: 0.1 }}>
         ✅{'  '}<Link href='https://localai.io/features/text-generation/' target='_blank'>Text generation</Link> with GPTs<br />
-        ✅{'  '}<Link href='https://localai.io/features/openai-functions/' target='_blank'>Function calling</Link> by GPTs 🆕<br />
-        ✅{'  '}<Link href='https://localai.io/models/' target='_blank'>Model Gallery</Link> 🆕<br />
-        ✖️{'  '}<Link href='https://localai.io/features/gpt-vision/' target='_blank'>Vision API</Link> for image chats<br />
+        ✅{'  '}<Link href='https://localai.io/features/openai-functions/' target='_blank'>Function calling</Link> by GPTs<br />
+        ✅{'  '}<Link href='https://localai.io/models/' target='_blank'>Model Gallery</Link><br />
+        ✅{'  '}<Link href='https://localai.io/features/gpt-vision/' target='_blank'>Vision API</Link> for image chats 🆕<br />
         ✖️{'  '}<Link href='https://localai.io/features/image-generation' target='_blank'>Image generation</Link> with stable diffusion<br />
         ✖️{'  '}<Link href='https://localai.io/features/audio-to-text/' target='_blank'>Audio to Text</Link><br />
         ✖️{'  '}<Link href='https://localai.io/features/text-to-audio/' target='_blank'>Text to Audio</Link><br />
         ✖️{'  '}<Link href='https://localai.io/features/embeddings/' target='_blank'>Embeddings generation</Link><br />
         ✖️{'  '}<Link href='https://localai.io/features/constrained_grammars/' target='_blank'>Constrained grammars</Link> (JSON output)<br />
-        ✖️{'  '}Voice cloning 🆕
+        ✖️{'  '}Voice cloning
       </Typography>
     </ExpanderAccordion>
 
