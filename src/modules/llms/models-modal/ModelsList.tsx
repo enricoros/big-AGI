@@ -223,7 +223,7 @@ export function ModelsList(props: {
       {items.length > 0 ? items : (
         <ListItem>
           <Typography level='body-sm'>
-            Please configure the service and update the list of models.
+            Please configure the service and refresh the models list.
           </Typography>
         </ListItem>
       )}
