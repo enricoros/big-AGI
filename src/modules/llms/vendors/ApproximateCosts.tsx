@@ -6,7 +6,45 @@ import { Box, Chip } from '@mui/joy';
 import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { formatModelsCost } from '~/common/util/costUtils';
 import { useCostMetricsForLLMService } from '~/common/stores/metrics/store-metrics';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
+
+const _styles = {
+
+  box: {
+    // undo the padding of the parent
+    m: 'calc(-1* var(--Card-padding))',
+    mb: 0,
+    p: 'var(--Card-padding)',
+
+    // style
+    fontSize: 'sm',
+    backgroundColor: 'neutral.softBg',
+
+    // border
+    borderBottom: '1px solid',
+    borderBottomColor: 'divider',
+
+    // layout
+    display: 'grid',
+    gap: 1,
+  } as const,
+
+  showCollapsed: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 1,
+  } as const,
+
+  chipLess: {
+    ml: 1,
+  } as const,
+
+  chipMore: {
+    ml: 'auto',
+  } as const,
+
+} as const;
 
 export function ApproximateCosts(props: {
   serviceId?: DModelsServiceId,
@@ -18,6 +56,7 @@ export function ApproximateCosts(props: {
   const [expanded, setExpanded] = React.useState(false);
 
   // external state
+  const isMobile = useIsMobile();
   const { totalCosts, totalSavings, totalInputTokens, totalOutputTokens, firstUsageDate, usageCount, partialMessageUsages } =
     useCostMetricsForLLMService(props.serviceId);
 
@@ -27,24 +66,7 @@ export function ApproximateCosts(props: {
     if (!totalCosts) return props.children;
 
     return (
-      <Box sx={{
-        // undo the padding of the parent
-        m: 'calc(-1* var(--Card-padding))',
-        mb: 0,
-        p: 'var(--Card-padding)',
-
-        // style
-        fontSize: 'sm',
-        backgroundColor: `${hasSaved ? 'success' : 'neutral'}.softBg`,
-
-        // border
-        borderBottom: '1px solid',
-        borderBottomColor: 'divider',
-
-        // layout
-        display: 'grid',
-        gap: 1
-      }}>
+      <Box sx={_styles.box}>
         {expanded ? <>
           <Box>
             Approximate costs: <b>{formatModelsCost(totalCosts)}</b>
@@ -59,31 +81,29 @@ export function ApproximateCosts(props: {
               color={hasSaved ? 'success' : 'neutral'}
               variant='outlined'
               onClick={() => setExpanded(false)}
-              sx={{ ml: 1 }}
+              sx={_styles.chipLess}
             >
               Less...
             </Chip>
           </Box>
           {!!hasSaved && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <span style={{ opacity: 0.75 }}>Thanks to Prompt Caching, </span>{props.whoSaved || 'you saved '} approximately <b>{formatModelsCost(totalSavings)}</b>.
-            </div>
+            <Box component='span' sx={{ color: 'success.plainColor' }}>Thanks to {props.whoSaved ? 'smart caching' : 'caching'}, {props.whoSaved || 'you saved '} approximately <b>{formatModelsCost(totalSavings)}</b>.</Box>
             {/*{advanced.on && <Button variant='outlined' size='sm' color='success' onClick={handleResetCosts}>*/}
             {/*  Reset*/}
             {/*</Button>}*/}
           </Box>}
         </> : (
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={_styles.showCollapsed}>
             <div>
-              {hasSaved ? 'Spend' : 'Approximate costs'}: <b>{formatModelsCost(totalCosts)}</b>
-              {!!hasSaved && <span style={{ opacity: 0.75 }}> (saved <b>{formatModelsCost(totalSavings)}</b>)</span>}
+              {(hasSaved && isMobile) ? 'Spend' : 'Approximate costs'}: <b>{formatModelsCost(totalCosts)}</b>
+              {!!hasSaved && <> · saved <Box component='span' sx={{ color: 'success.plainColor' }}><b>{formatModelsCost(totalSavings)}</b></Box></>}
             </div>
             {' '}<Chip
               size='sm'
               color={hasSaved ? 'success' : 'neutral'}
               variant='outlined'
               onClick={() => setExpanded(true)}
-              sx={{ ml: 'auto' }}
+              sx={_styles.chipMore}
             >
               More...
             </Chip>
@@ -91,5 +111,5 @@ export function ApproximateCosts(props: {
         )}
       </Box>
     );
-  }, [expanded, firstUsageDate, hasSaved, partialMessageUsages, props.children, props.whoSaved, totalCosts, totalInputTokens, totalOutputTokens, totalSavings, usageCount]);
+  }, [expanded, firstUsageDate, hasSaved, isMobile, partialMessageUsages, props.children, props.whoSaved, totalCosts, totalInputTokens, totalOutputTokens, totalSavings, usageCount]);
 }
