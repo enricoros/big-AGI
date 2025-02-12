@@ -55,7 +55,7 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
         <Typography level='body-sm'>
           Please ensure your <ExternalLink href='https://localai.io'>LocalAI</ExternalLink> instance is correctly configured.
           {checkboxExpanded && <> Visit the <Link href='https://localai.io/basics/getting_started/' target='_blank'>LocalAI website</Link> for detailed setup instructions.</>}
-          <Chip variant='outlined' sx={{ ml: 1, fontSize: '0.75rem' }} onClick={() => setCheckboxExpanded(on => !on)}>
+          <Chip component='span' variant='outlined' sx={{ ml: 1, fontSize: '0.75rem' }} onClick={() => setCheckboxExpanded(on => !on)}>
             Show {checkboxExpanded ? 'less' : 'more'}
           </Chip>
         </Typography>
