@@ -225,7 +225,7 @@ export function ModelsServiceSelector(props: {
           <AddIcon />
         </IconButton>
       ) : (
-        <Tooltip open={noServices && !vendorsMenuAnchor && !isMobile} variant='outlined' color='neutral' placement='top' arrow title='Add your first AI service'>
+        <Tooltip open={noServices && !vendorsMenuAnchor} variant='outlined' color='primary' size='md' placement={isMobile ? 'bottom-end' : 'top-start'} arrow title='Add your first AI service'>
           <Button variant={noServices ? 'solid' : 'outlined'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ borderColor: 'neutral.outlinedBorder' }}>
             Add
           </Button>

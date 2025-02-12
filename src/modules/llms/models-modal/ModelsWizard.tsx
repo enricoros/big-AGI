@@ -45,7 +45,7 @@ const _styles = {
     padding: 'var(--Card-padding)',
     // paddingRight: 'calc(1.5 * var(--Card-padding))',
     // background: 'linear-gradient(135deg, var(--joy-palette-primary-500), var(--joy-palette-primary-700))',
-    background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
+    // background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
     display: 'grid',
     gap: 'calc(0.75 * var(--Card-padding))',
   } as const,
@@ -122,7 +122,7 @@ function WizardProviderSetup(props: {
 
   // derived
   const isLocal = providerCat === 'local';
-  const valueName = isLocal ? 'server address' : 'API Key';
+  const valueName = isLocal ? 'server' : 'API Key';
   const { name: vendorName, Icon: VendorIcon } = providerVendor;
 
 
