@@ -8,7 +8,7 @@ import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/mode
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -63,7 +63,7 @@ export function ModelsServiceSelector(props: {
 
   const handleAddServiceForVendor = React.useCallback((vendor: IModelVendor) => {
     closeVendorsMenu();
-    const modelsService = llmsStoreState().createModelsService(vendor);
+    const modelsService = llmsStoreActions().createModelsService(vendor);
     setSelectedServiceId(modelsService.id);
   }, [setSelectedServiceId]);
 

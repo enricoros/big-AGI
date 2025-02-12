@@ -47,8 +47,9 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
       .forEach(remoteVendor => {
 
         // find the first service for this vendor
-        const { sources: services, createModelsService } = llmsStoreState();
-        const remoteService = services.find(s => s.vId === remoteVendor.id) || createModelsService(remoteVendor);
+        const { sources: services } = llmsStoreState();
+        const remoteService = services.find(s => s.vId === remoteVendor.id)
+          || llmsStoreActions().createModelsService(remoteVendor);
         servicesToReconfigure.push(remoteService);
 
       });
