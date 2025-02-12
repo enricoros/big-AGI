@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Avatar, Badge, Box, Button, Chip, CircularProgress, Input, Sheet, Typography } from '@mui/joy';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions, llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
@@ -135,7 +135,8 @@ function WizardProviderSetup(props: {
   const handleSetServiceKeyValue = React.useCallback(async () => {
 
     // create the service if missing
-    const { sources: llmsServices, createModelsService, updateServiceSettings, setLLMs } = llmsStoreState();
+    const { sources: llmsServices } = llmsStoreState();
+    const { createModelsService, updateServiceSettings, setLLMs } = llmsStoreActions();
     const vendorService = llmsServices.find(s => s.vId === providerVendor.id) || createModelsService(providerVendor);
     const vendorServiceId = vendorService.id;
 
