@@ -55,8 +55,8 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormControl orientation='horizontal'>
       <FormLabelStart title='Image Input' description='PNG only' />
       <Typography level='body-sm'>
-        Images are well supported (e.g. try Llama3.2-vision). However only the PNG format is accepted by the Ollama API.
-        For attachments, use the &quot;Original&quot; format option.
+        Ollama supports PNG images (e.g. try Llama3.2-vision).
+        For Image attachments, use the &quot;Original&quot; format option.
       </Typography>
     </FormControl>
 
