@@ -148,8 +148,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
       <Box sx={{ display: 'grid', gap: 'var(--Card-padding)' }}>
 
         <Typography level='body-sm'>
-          Install models from your LocalAI Model Gallery. We assume your LocalAI server is correcly
-          configured and running.
+          Install models from your LocalAI Model Gallery. <b>You need a properly configured LocalAI gallery.</b>
         </Typography>
 
         {/* Models being Installed */}
@@ -169,7 +168,7 @@ export function LocalAIAdmin(props: { access: OpenAIAccessSchema, onClose: () =>
 
 
         <Typography level='title-md'>
-          Available Models List
+          Available Models in Gallery
         </Typography>
 
         {/* Errors */}
