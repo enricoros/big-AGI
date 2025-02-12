@@ -20,6 +20,7 @@ const _styles = {
     // style
     fontSize: 'sm',
     backgroundColor: 'neutral.softBg',
+    // boxShadow: 'inset 0px 1px 4px -2px rgba(0, 0, 0, 0.2)',
 
     // border
     borderBottom: '1px solid',

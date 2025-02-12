@@ -50,7 +50,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <ApproximateCosts serviceId={service?.id} whoSaved='Big-AGI saved you'>
       <Box sx={{ level: 'body-sm' }}>
-        Enjoy <b>Sonnet 3.5</b>, <b>Opus</b> and <b>Haiku</b>. Anthropic <ExternalLink href='https://status.anthropic.com/' level='body-sm'>servers status</ExternalLink>.
+        Enjoy <b>Sonnet</b>, <b>Opus</b> and <b>Haiku</b> · Anthropic <Link href='https://status.anthropic.com/' level='body-sm' target='_blank'>servers status</Link>
       </Box>
     </ApproximateCosts>
 
@@ -66,17 +66,6 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-      <FormLabelStart
-        title='Prompt Caching'
-        description='Toggle per-Message'
-        tooltip='You can turn on/off caching on the fly for each message. Caching makes new input a bit more expensive, and reusing the cached input much cheaper. See Anthropic docs for details and pricing.'
-      />
-      <Typography level='title-sm'>
-        {autoVndAntBreakpoints ? 'User & Auto' : 'User-driven'}
-      </Typography>
-    </FormControl>
-
     <FormSwitchControl
       title='Auto-Caching' on='Enabled' off='Disabled'
       tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
@@ -84,6 +73,18 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       checked={autoVndAntBreakpoints}
       onChange={setAutoVndAntBreakpoints}
     />
+
+
+    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart
+        title='Caching'
+        description='Toggle per-Message'
+        tooltip='You can turn on/off caching on the fly for each message. Caching makes new input a bit more expensive, and reusing the cached input much cheaper. See Anthropic docs for details and pricing.'
+      />
+      <Typography level='title-sm'>
+        {autoVndAntBreakpoints ? 'User & Auto' : 'User-driven'}
+      </Typography>
+    </FormControl>
 
     {advanced.on && <FormTextField
       autoCompleteId='anthropic-host'

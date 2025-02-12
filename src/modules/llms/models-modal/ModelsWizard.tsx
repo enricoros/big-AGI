@@ -23,14 +23,34 @@ const WizardVendors = [
 ] as const;
 
 
-const wizardContainerSx = {
-  margin: 'calc(-1 * var(--Card-padding, 1rem))',
-  padding: 'var(--Card-padding)',
-  // background: 'linear-gradient(135deg, var(--joy-palette-primary-500), var(--joy-palette-primary-700))',
-  background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
-  display: 'grid',
-  gap: 'var(--Card-padding)',
-};
+const _styles = {
+
+  container: {
+    margin: 'calc(-1 * var(--Card-padding, 1rem))',
+    padding: 'var(--Card-padding)',
+    // paddingRight: 'calc(1.5 * var(--Card-padding))',
+    // background: 'linear-gradient(135deg, var(--joy-palette-primary-500), var(--joy-palette-primary-700))',
+    background: 'linear-gradient(135deg, var(--joy-palette-background-level1), var(--joy-palette-background-level1))',
+    display: 'grid',
+    gap: 'calc(0.75 * var(--Card-padding))',
+  } as const,
+
+  text1: {
+    my: 1,
+    ml: 7.25,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0.25,
+  } as const,
+
+  text2: {
+    my: 1,
+    ml: 7.25,
+    color: 'text.tertiary',
+    fontSize: 'sm',
+  } as const,
+
+} as const;
 
 
 function WizardProviderSetup(props: {
@@ -202,26 +222,26 @@ export function ModelsWizard(props: {
   onSwitchToAdvanced?: () => void,
 }) {
   return (
-    <Sheet variant='soft' sx={wizardContainerSx}>
+    <Sheet variant='soft' sx={_styles.container}>
 
-      <Box sx={{ ml: 7.25, display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-        {/*<Typography level='title-sm'>*/}
-        {/*  Quick Start*/}
-        {/*</Typography>*/}
-        <Typography level='body-sm'>
-          Enter API keys to connect Big-AGI to your AI providers.{' '}
-          {/*{!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> for more options.</>}*/}
+      <Box sx={_styles.text1}>
+        <Typography level='title-sm'>
+          Enter API keys to connect your AI services.
         </Typography>
+        {/*<Box sx={{ fontSize: 'sm', color: 'text.primary' }}>*/}
+        {/*  Enter API keys to connect your AI services.{' '}*/}
+        {/*  {!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> for more options.</>}*/}
+        {/*</Box>*/}
       </Box>
 
       {WizardVendors.map(({ vendor, apiKeyField }, index) => (
         <WizardProviderSetup key={vendor.id} apiKeyField={apiKeyField} isFirst={!index} vendor={vendor} />
       ))}
 
-      <Box sx={{ ml: 7.25, color: 'text.tertiary', fontSize: 'sm' }}>
+      <Box sx={_styles.text2}>
         {/*{!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> to choose between {getModelVendorsCount()} services.</>}{' '}*/}
-        {!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> for more services.</>}{' '}
-        Or <Box component='a' onClick={props.onSkip} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>skip</Box> for now and do it later.
+        {!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> for more services,</>}{' '}
+        or <Box component='a' onClick={props.onSkip} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>skip</Box> for now and do it later.
       </Box>
 
     </Sheet>

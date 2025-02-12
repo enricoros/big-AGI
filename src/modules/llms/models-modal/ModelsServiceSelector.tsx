@@ -7,6 +7,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -16,6 +17,10 @@ import type { IModelVendor } from '../vendors/IModelVendor';
 import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
 import { vendorHasBackendCap } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
+
+
+// configuration
+const ENABLE_DELETE_LAST = true; // This will fall the menu back to the 'Quick Setup' mode. was: Release.IsNodeDevBuild;
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
@@ -62,7 +67,7 @@ export function ModelsServiceSelector(props: {
     setSelectedServiceId(modelsService.id);
   }, [setSelectedServiceId]);
 
-  const enableDeleteButton = !!props.selectedServiceId && modelsServices.length > 1;
+  const enableDeleteButton = !!props.selectedServiceId && (ENABLE_DELETE_LAST || modelsServices.length > 1);
 
   const handleDeleteService = React.useCallback(async (serviceId: DModelsServiceId, skipConfirmation: boolean) => {
     // [shift] to delete without confirmation
@@ -197,7 +202,7 @@ export function ModelsServiceSelector(props: {
         onChange={(_event, value) => value && props.setSelectedServiceId(value)}
         startDecorator={selectedServiceItem?.icon}
         slotProps={{
-          root: { sx: { minWidth: 190 } },
+          root: { sx: { minWidth: 180 } },
           indicator: { sx: { opacity: 0.5 } },
         }}
       >
@@ -215,7 +220,7 @@ export function ModelsServiceSelector(props: {
         {/*</ListItem>*/}
       </Select>
 
-      {isMobile ? (
+      {(isMobile && !noServices) ? (
         <IconButton variant={noServices ? 'solid' : 'outlined'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ borderColor: 'neutral.outlinedBorder' }}>
           <AddIcon />
         </IconButton>
@@ -225,12 +230,16 @@ export function ModelsServiceSelector(props: {
         </Button>
       )}
 
-      <IconButton
-        variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
-        onClick={(event) => props.selectedServiceId && handleDeleteService(props.selectedServiceId, event.shiftKey)}
-      >
-        <DeleteOutlineIcon />
-      </IconButton>
+      {enableDeleteButton && (
+        <TooltipOutlined title={`Remove ${selectedServiceItem?.service.label || 'Service'}`}>
+          <IconButton
+            variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
+            onClick={(event) => props.selectedServiceId && handleDeleteService(props.selectedServiceId, event.shiftKey)}
+          >
+            <DeleteOutlineIcon />
+          </IconButton>
+        </TooltipOutlined>
+      )}
 
 
       {/* vendors popup, for adding */}

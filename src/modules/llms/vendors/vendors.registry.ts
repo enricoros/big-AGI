@@ -67,6 +67,6 @@ export function findModelVendor<TServiceSettings extends object = {}, TAccess = 
   return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TServiceSettings, TAccess>) ?? null : null;
 }
 
-export function getDefaultModelVendor(): IModelVendor {
-  return MODEL_VENDOR_REGISTRY.openai;
-}
+// export function getDefaultModelVendor(): IModelVendor {
+//   return MODEL_VENDOR_REGISTRY.openai;
+// }
