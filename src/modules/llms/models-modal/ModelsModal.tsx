@@ -91,7 +91,7 @@ function ModelsConfiguratorModal(props: {
   // start button
   const startButton = React.useMemo(() => {
     if (showWizard)
-      return <Button variant='outlined' color='neutral' onClick={handleShowAdvanced} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'Advanced Setup' : 'More Services'}</Button>;
+      return <Button variant='outlined' color='neutral' onClick={handleShowAdvanced} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'More Services' : 'More Services'}</Button>;
     // return <Badge size='sm' badgeContent='14 Services' color='neutral' variant='outlined'><Button variant='outlined' color='neutral' onClick={handleShowAdvanced}>{isMobile ? 'Advanced' : 'Switch to Advanced'}</Button></Badge>;
     if (!isMultiServices)
       return <Button variant='outlined' color='neutral' onClick={handleShowWizard} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'Quick Setup' : 'Quick Setup'}</Button>;
