@@ -2,7 +2,7 @@ import { apiAsync } from '~/common/util/trpc.client';
 
 import type { OpenAIAccessSchema } from '../../llms/server/openai/openai.router';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { T2iCreateImageOutput } from '../t2i.server';

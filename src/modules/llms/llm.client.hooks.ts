@@ -1,7 +1,7 @@
 import type { TRPCClientErrorBase } from '@trpc/client';
 import { useQuery } from '@tanstack/react-query';
 
-import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { llmsUpdateModelsForServiceOrThrow } from './llm.client';

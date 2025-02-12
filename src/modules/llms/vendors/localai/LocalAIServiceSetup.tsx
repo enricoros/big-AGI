@@ -5,7 +5,7 @@ import { Button, Chip, Typography } from '@mui/joy';
 
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { ExternalLink } from '~/common/components/ExternalLink';

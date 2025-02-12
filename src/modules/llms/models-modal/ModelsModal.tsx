@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Box, Button, Divider } from '@mui/joy';
 
-import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';

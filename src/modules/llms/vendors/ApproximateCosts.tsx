@@ -3,7 +3,7 @@ import TimeAgo from 'react-timeago';
 
 import { Box, Chip } from '@mui/joy';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { formatModelsCost } from '~/common/util/costUtils';
 import { useCostMetricsForLLMService } from '~/common/stores/metrics/store-metrics';
 import { useIsMobile } from '~/common/components/useMatchMedia';

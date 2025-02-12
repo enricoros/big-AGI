@@ -2,7 +2,7 @@ import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
