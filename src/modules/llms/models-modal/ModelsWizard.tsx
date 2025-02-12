@@ -221,12 +221,23 @@ export function ModelsWizard(props: {
   onSkip?: () => void,
   onSwitchToAdvanced?: () => void,
 }) {
+
+  // state
+  // const [category, setCategory] = React.useState<'popular' | 'local'>('popular');
+
   return (
     <Sheet variant='soft' sx={_styles.container}>
 
       <Box sx={_styles.text1}>
         <Typography level='title-sm'>
           Enter API keys to connect your AI services.
+          {/*<Chip variant='outlined' sx={{ ml: 0.5, mr: 0.25 }} onClick={() => setCategory('popular')}>*/}
+          {/*  popular*/}
+          {/*</Chip>*/}
+          {/*<Chip variant='outlined' sx={{ ml: 0.25, mr: 0.5 }} onClick={() => setCategory('popular')}>*/}
+          {/*  local*/}
+          {/*</Chip>*/}
+          {/*AI services.*/}
         </Typography>
         {/*<Box sx={{ fontSize: 'sm', color: 'text.primary' }}>*/}
         {/*  Enter API keys to connect your AI services.{' '}*/}
