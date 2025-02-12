@@ -51,10 +51,10 @@ export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <Typography level='body-sm'>
-      In order of capabilities we have Large, Medium, Small (Open 8x7B = Small 2312) and Tiny (Open 7B = Tiny 2312) models.
-      Note the elegance of the numbers, representing the Year and Month or release (YYMM).
-    </Typography>
+    {/*<Typography level='body-sm'>*/}
+    {/*  In order of capabilities we have Large, Medium, Small (Open 8x7B = Small 2312) and Tiny (Open 7B = Tiny 2312) models.*/}
+    {/*  Note the elegance of the numbers, representing the Year and Month or release (YYMM).*/}
+    {/*</Typography>*/}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
 
