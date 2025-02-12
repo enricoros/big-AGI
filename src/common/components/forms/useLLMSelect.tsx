@@ -46,6 +46,8 @@ const _slotProps = {
     sx: {
       // show the full name on the button
       whiteSpace: 'inherit',
+      wordBreak: 'break-word',
+      minWidth: '6rem',
     } as const,
   } as const,
 } as const;
