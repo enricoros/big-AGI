@@ -4,7 +4,7 @@ import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Se
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';

@@ -8,7 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';

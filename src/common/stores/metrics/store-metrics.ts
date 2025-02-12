@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 import type { MetricsChatGenerateCost_Md } from './metrics.chatgenerate';
 import { createServiceMetricsSlice, fallbackEmptyServiceMetricsAggregate, ServiceMetricsSlice } from './metrics.modelservice';

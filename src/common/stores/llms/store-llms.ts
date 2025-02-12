@@ -10,7 +10,7 @@ import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
-import type { DModelsService, DModelsServiceId } from './modelsservice.types';
+import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-assignments_slice';
 import { portModelPricingV2toV3 } from './llms.pricing';

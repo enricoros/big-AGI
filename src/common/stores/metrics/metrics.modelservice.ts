@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 import type { MetricsChatGenerateCost_Md } from './metrics.chatgenerate';
 

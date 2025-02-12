@@ -5,7 +5,7 @@ import type { SvgIconProps } from '@mui/joy';
 import type { BackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
