@@ -19,6 +19,16 @@ type DModelConfigurationParametric = {
 type DModelDomainId = 'primaryChat' | 'fastUtil';
 
 
+export function createDModelConfigurationPrimaryChat(modelId: DLLMId | null, modelParameters?: DModelParameterValues): DModelConfigurationParametric {
+  return {
+    mct: 'model-parametric',
+    domainId: 'primaryChat',
+    modelId: modelId,
+    modelParameters: modelParameters ?? undefined,
+  };
+}
+
+
 /// Future: Model Search Space ///
 
 /*
