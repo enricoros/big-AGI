@@ -50,7 +50,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <ApproximateCosts serviceId={service?.id} whoSaved='Big-AGI saved you'>
       <Box sx={{ level: 'body-sm' }}>
-        Enjoy <b>Sonnet</b>, <b>Opus</b> and <b>Haiku</b> · Anthropic <Link href='https://status.anthropic.com/' level='body-sm' target='_blank'>servers status</Link>
+        Enjoy <b>Sonnet</b>, <b>Opus</b> and <b>Haiku</b>. Experiencing Issues? Check <Link href='https://status.anthropic.com/' level='body-sm' target='_blank'>Anthropic status</Link>.
       </Box>
     </ApproximateCosts>
 
