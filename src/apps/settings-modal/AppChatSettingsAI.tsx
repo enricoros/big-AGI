@@ -7,12 +7,20 @@ import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useDefaultLLMIDs } from '~/common/stores/llms/llms.hooks';
+import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+
 import { useChatAutoAI } from '../chat/store-app-chat';
 
 
 export function AppChatSettingsAI() {
 
   // external state
+  const { fastLLMId } = useDefaultLLMIDs();
+  const { setFastLLMId } = llmsStoreActions();
+  const [_llm, llmComponent] = useLLMSelect(fastLLMId, setFastLLMId, '', true);
+
   const {
     autoSuggestAttachmentPrompts, setAutoSuggestAttachmentPrompts,
     autoSuggestDiagrams, setAutoSuggestDiagrams,
@@ -35,6 +43,25 @@ export function AppChatSettingsAI() {
   // const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
 
   return <>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart
+        title='Utility Model'
+        description='Fast, see info'
+        tooltip={<>
+          Lightweight model used for &quot;fast&quot;, low-cost operations, such as:
+          <ul>
+            <li>Chat title generation</li>
+            <li>Attachment prompts</li>
+            <li>Diagrams generation</li>
+            <li>Drawing prompts</li>
+            <li>And more</li>
+          </ul>
+          For chat messages and similar high-quality content, the chat model is used instead.
+        </>}
+      />
+      {llmComponent}
+    </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Chat Title'
