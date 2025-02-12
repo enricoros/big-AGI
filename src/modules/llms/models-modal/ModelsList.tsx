@@ -221,10 +221,13 @@ export function ModelsList(props: {
   return (
     <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
       {items.length > 0 ? items : (
-        <ListItem>
+        <ListItem sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Typography level='body-sm'>
-            Please configure the service and refresh the models list.
+            Please complete the configuration and refresh the models list.
           </Typography>
+          {/*<Skeleton variant='rectangular' animation={false} height={24} width={160} />*/}
+          {/*<Skeleton variant='rectangular' animation={false} height={24} width={120} />*/}
+          {/*<Skeleton variant='rectangular' animation={false} height={24} width={140} />*/}
         </ListItem>
       )}
     </List>

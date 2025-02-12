@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
@@ -225,9 +225,11 @@ export function ModelsServiceSelector(props: {
           <AddIcon />
         </IconButton>
       ) : (
-        <Button variant={noServices ? 'solid' : 'outlined'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ borderColor: 'neutral.outlinedBorder' }}>
-          Add
-        </Button>
+        <Tooltip open={noServices && !vendorsMenuAnchor && !isMobile} variant='outlined' color='primary' placement='top' arrow title='Add your first AI service'>
+          <Button variant={noServices ? 'solid' : 'outlined'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ borderColor: 'neutral.outlinedBorder' }}>
+            Add
+          </Button>
+        </Tooltip>
       )}
 
       {enableDeleteButton && (
