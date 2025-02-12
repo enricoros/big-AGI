@@ -399,7 +399,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       let oaiHost = fixupHost(access.oaiHost || env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST, apiPath);
       // warn if no key - only for default (non-overridden) hosts
       if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
-        throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
+        throw new Error('Missing OpenAI API Key. Add it on the UI or server side (your deployment).');
 
       // [Helicone]
       // We don't change the host (as we do on Anthropic's), as we expect the user to have a custom host.
@@ -489,7 +489,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'openpipe':
       const openPipeKey = access.oaiKey || env.OPENPIPE_API_KEY || '';
       if (!openPipeKey)
-        throw new Error('Missing OpenPipe API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+        throw new Error('Missing OpenPipe API Key or Host. Add it on the UI or server side (your deployment).');
 
       return {
         headers: {
@@ -515,7 +515,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       }
 
       if (!orKey || !orHost)
-        throw new Error('Missing OpenRouter API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
+        throw new Error('Missing OpenRouter API Key or Host. Add it on the UI or server side (your deployment).');
 
       return {
         headers: {

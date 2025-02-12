@@ -3,18 +3,18 @@ import * as React from 'react';
 import { Box, Button, Divider } from '@mui/joy';
 
 import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
+import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';
 import { runWhenIdle } from '~/common/util/pwaUtils';
-import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useHasLLMs, useModelsServices } from '~/common/stores/llms/llms.hooks';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { LLMOptionsModal } from './LLMOptionsModal';
 import { ModelsList } from './ModelsList';
 import { ModelsServiceSelector } from './ModelsServiceSelector';
 import { ModelsWizard } from './ModelsWizard';
-import { findModelVendor, getDefaultModelVendor } from '../vendors/vendors.registry';
+import { findModelVendor } from '../vendors/vendors.registry';
 
 
 // configuration
@@ -62,13 +62,20 @@ function ModelsConfiguratorModal(props: {
 
 
   // Auto-add the default service - at boot, when no service is present
-  const autoAddTrigger = !showWizard && props.allowAutoTrigger;
+  // const autoAddTrigger = !showWizard && props.allowAutoTrigger;
+  // React.useEffect(() => {
+  //   // Note: we use the immediate version to not react to deletions
+  //   const { createModelsService, sources: modelsServices } = llmsStoreState();
+  //   if (autoAddTrigger && !modelsServices.length)
+  //     createModelsService(getDefaultModelVendor());
+  // }, [autoAddTrigger]);
+
+  // [effect] Re-trigger easy mode when going back to 0 services
+  const triggerWizard = !modelsServices.length;
   React.useEffect(() => {
-    // Note: we use the immediate version to not react to deletions
-    const { createModelsService, sources: modelsServices } = llmsStoreState();
-    if (autoAddTrigger && !modelsServices.length)
-      createModelsService(getDefaultModelVendor());
-  }, [autoAddTrigger]);
+    if (triggerWizard)
+      setShowWizard(true);
+  }, [triggerWizard]);
 
 
   // handlers
@@ -84,10 +91,10 @@ function ModelsConfiguratorModal(props: {
   // start button
   const startButton = React.useMemo(() => {
     if (showWizard)
-      return <Button variant='outlined' color='neutral' onClick={handleShowAdvanced}>{isMobile ? 'Advanced' : 'Switch to Advanced'}</Button>;
+      return <Button variant='outlined' color='neutral' onClick={handleShowAdvanced} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'Advanced Setup' : 'More Services'}</Button>;
     // return <Badge size='sm' badgeContent='14 Services' color='neutral' variant='outlined'><Button variant='outlined' color='neutral' onClick={handleShowAdvanced}>{isMobile ? 'Advanced' : 'Switch to Advanced'}</Button></Badge>;
     if (!isMultiServices)
-      return <Button variant='outlined' color='neutral' onClick={handleShowWizard}>{isMobile ? 'Easy Mode' : 'Easy Mode'}</Button>;
+      return <Button variant='outlined' color='neutral' onClick={handleShowWizard} sx={{ backgroundColor: 'background.popup' }}>{isMobile ? 'Quick Setup' : 'Quick Setup'}</Button>;
     return undefined;
     // if (isMultiServices) {
     //   return (
@@ -102,9 +109,13 @@ function ModelsConfiguratorModal(props: {
 
   return (
     <GoodModal
-      title={<>{showWizard ? 'Welcome · Setup' : 'Configure'} <b>AI Models</b></>}
+      title={showWizard ? (
+        <AppBreadcrumbs size='md' rootTitle='Welcome'>
+          <AppBreadcrumbs.Leaf>Setup <b>AI Models</b></AppBreadcrumbs.Leaf>
+        </AppBreadcrumbs>
+      ) : <>Configure <b>AI Models</b></>}
       open onClose={optimaActions().closeModels}
-      darkBottomClose
+      darkBottomClose={!showWizard}
       closeText={showWizard ? 'Done' : undefined}
       animateEnter={!hasLLMs}
       unfilterBackdrop
@@ -117,7 +128,7 @@ function ModelsConfiguratorModal(props: {
 
       {!showWizard && <ModelsServiceSelector modelsServices={modelsServices} selectedServiceId={activeServiceId} setSelectedServiceId={setConfServiceId} />}
 
-      <Divider />
+      {(showWizard || !!activeService) && <Divider />}
 
       {showWizard && <ModelsWizard isMobile={isMobile} onSkip={optimaActions().closeModels} onSwitchToAdvanced={handleShowAdvanced} />}
 
