@@ -88,12 +88,8 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   llmsStoreActions().rerankLLMsByServices(configuredServiceIds);
 
   // if the current global Chat LLM is now hidden, auto-pick one that's not
-  const { llms: updatedLLMs, chatLLMId: newChatLLMId } = llmsStoreState();
-  if (newChatLLMId) {
-    const currentChatLLM = updatedLLMs.find(llm => llm.id === newChatLLMId);
-    if (!currentChatLLM || currentChatLLM.hidden)
-      llmsStoreActions().setChatLLMId(null);
-  }
+  // only do it for the primary chat LLM, so we leave other utility models alone
+  llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
 
   // end configuration
   _isConfiguring = false;

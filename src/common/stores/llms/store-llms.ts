@@ -9,10 +9,13 @@ import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrout
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DModelDomainId } from './model.domains.types';
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
-import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-assignments_slice';
+import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
+import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
+import { getDomainModelConfiguration } from './hooks/useDomainLLM';
 import { portModelPricingV2toV3 } from './llms.pricing';
 
 
@@ -91,7 +94,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
         return {
           llms: newLlms,
-          ...llmsHeuristicUpdateAssignments(newLlms, state.chatLLMId, state.fastLLMId),
+          ...llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
         };
       }),
 
@@ -100,7 +103,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = state.llms.filter(llm => llm.id !== id);
         return {
           llms: newLlms,
-          ...llmsHeuristicUpdateAssignments(newLlms, state.chatLLMId, state.fastLLMId),
+          ...llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
         };
       }),
 
@@ -197,7 +200,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         return {
           llms,
           sources: state.sources.filter(s => s.id !== id),
-          ...llmsHeuristicUpdateAssignments(llms, state.chatLLMId, state.fastLLMId),
+          ...llmsHeuristicUpdateAssignments(llms, state.modelAssignments),
         };
       }),
 
@@ -234,6 +237,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
      *  2: large changes on all LLMs, and reset chat/fast/func LLMs
      *  3: big-AGI v2
      *  4: migrate .options to .initialParameters/.userParameters
+     *  4B: we changed from .chatLLMId/.fastLLMId to modelAssignments: {}, without expicit migration (done on rehydrate, and for no particular reason)
      */
     version: 4,
     migrate: (_state: any, fromVersion: number): LlmsStore => {
@@ -254,8 +258,6 @@ export const useModelsStore = create<LlmsStore>()(persist(
           llm.interfaces = ['oai-chat' /* this is here like this to reduce dependencies */];
           // llm.inputTypes = { 'text': {} };
         }
-        state.chatLLMId = null;
-        state.fastLLMId = null;
       }
 
       // 2 -> 3: big-AGI v2: update all models for pricing info
@@ -304,8 +306,25 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
       // Select the best LLMs automatically, if not set
       try {
-        if (!state.chatLLMId || !state.fastLLMId)
-          Object.assign(state, llmsHeuristicUpdateAssignments(state.llms, state.chatLLMId, state.fastLLMId));
+        //  auto-detect assignments, or re-import them from the old format
+        if (!state.modelAssignments || !Object.keys(state.modelAssignments).length) {
+
+          // reimport the former chatLLMId and fastLLMId if set
+          const prevState = state as { chatLLMId?: DLLMId, fastLLMId?: DLLMId };
+          const existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>> = {};
+          if (prevState.chatLLMId) {
+            existingAssignments['primaryChat'] = createDModelConfiguration('primaryChat', prevState.chatLLMId);
+            existingAssignments['codeApply'] = createDModelConfiguration('codeApply', prevState.chatLLMId);
+            delete prevState.chatLLMId;
+          }
+          if (prevState.fastLLMId) {
+            existingAssignments['fastUtil'] = createDModelConfiguration('fastUtil', prevState.fastLLMId);
+            delete prevState.fastLLMId;
+          }
+
+          // auto-pick models
+          state.modelAssignments = llmsHeuristicUpdateAssignments(state.llms, existingAssignments);
+        }
       } catch (error) {
         console.error('Error in autoPickModels', error);
       }
@@ -327,15 +346,16 @@ export function findModelsServiceOrNull<TServiceSettings extends object>(service
 }
 
 export function getChatLLMId(): DLLMId | null {
-  return llmsStoreState().chatLLMId;
+  return getDomainModelConfiguration('primaryChat', true, true)?.modelId ?? null;
 }
 
 
 export function getLLMIdOrThrow(order: ('chat' | 'fast')[], supportsFunctionCallTool: boolean, supportsImageInput: boolean, useCaseLabel: string): DLLMId {
-  const { chatLLMId, fastLLMId } = llmsStoreState();
 
   for (const preference of order) {
-    const llmId = preference === 'chat' ? chatLLMId : fastLLMId;
+    const llmId = preference === 'chat'
+      ? getDomainModelConfiguration('primaryChat', true, true)?.modelId
+      : getDomainModelConfiguration('fastUtil', true, true)?.modelId;
     // we don't have one of those assigned, skip
     if (!llmId)
       continue;
@@ -364,10 +384,9 @@ export function llmsStoreActions(): LlmsRootActions & LlmsAssignmentsActions {
 }
 
 export function getLLMsDebugInfo() {
-  const { llms, sources, chatLLMId, fastLLMId } = llmsStoreState();
-  return { services: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId };
+  const { llms, sources, modelAssignments } = llmsStoreState();
+  return { services: sources.length, llmsCount: llms.length, modelAssignments };
 }
-
 
 function _port_V3Options_to_V4Parameters_inline(llm: DLLM): void {
 

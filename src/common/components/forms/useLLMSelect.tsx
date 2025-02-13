@@ -64,7 +64,7 @@ const _slotProps = {
  * @param isHorizontal if true, the select is horizontal (label - select)
  */
 export function useLLMSelect(
-  chatLLMId: DLLMId | null,
+  chatLLMId: undefined | DLLMId | null, // undefined: not set at all, null: has the meaning of no-llm-wanted here
   setChatLLMId: (llmId: DLLMId | null) => void,
   label: string = 'Model',
   smaller: boolean = false,
