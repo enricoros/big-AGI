@@ -21,6 +21,8 @@ const _knownXAIChatModels: ManualMappings = [
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
     chatPrice: { input: 2, output: 10 },
+    // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
+    benchmark: { cbaElo: 1288 },
   },
   {
     idPrefix: 'grok-2-1212',
@@ -30,6 +32,8 @@ const _knownXAIChatModels: ManualMappings = [
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 10 },
+    // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
+    benchmark: { cbaElo: 1288 },
   },
 
   {
