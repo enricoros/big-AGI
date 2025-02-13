@@ -6,9 +6,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { useDefaultLLMIDs } from '~/common/stores/llms/llms.hooks';
+import { useDomainLLM } from '~/common/stores/llms/hooks/useDomainLLM';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
@@ -17,9 +15,8 @@ import { useChatAutoAI } from '../chat/store-app-chat';
 export function AppChatSettingsAI() {
 
   // external state
-  const { fastLLMId } = useDefaultLLMIDs();
-  const { setFastLLMId } = llmsStoreActions();
-  const [_llm, llmComponent] = useLLMSelect(fastLLMId, setFastLLMId, '', true);
+  const { domainModelId: fastModelId, assignDomainModelId: setFastModelId } = useDomainLLM('fastUtil', true, false);
+  const [_llm, llmComponent] = useLLMSelect(fastModelId, setFastModelId, '', true);
 
   const {
     autoSuggestAttachmentPrompts, setAutoSuggestAttachmentPrompts,
