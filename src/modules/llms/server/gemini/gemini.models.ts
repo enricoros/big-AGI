@@ -100,6 +100,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     description: 'Improved quality, especially for world knowledge, code, and long context',
+    benchmark: { cbaElo: 1379 },
   },
   {
     id: 'models/gemini-2.0-pro-exp',
@@ -127,7 +128,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
-    benchmark: { cbaElo: 1369 },
+    benchmark: { cbaElo: 1384 },
     hidden: true, // only keeping the latest
   },
   {
@@ -136,7 +137,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
-    benchmark: { cbaElo: 1369 },
+    benchmark: { cbaElo: 1384 },
   },
   {
     id: 'models/gemini-2.0-flash-thinking-exp-1219',
@@ -145,7 +146,7 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpPricingFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
-    benchmark: { cbaElo: 1369 },
+    benchmark: { cbaElo: 1363 },
     // _delete: true, // replaced by `gemini-2.0-flash-thinking-exp-01-21`
     hidden: true, // only keeping the latest
   },
@@ -164,13 +165,13 @@ const _knownGeminiModels: ({
     chatPrice: gemini20FlashPricing,
     symLink: 'models/gemini-2.0-flash-001',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1369 }, // Placeholder - find actual benchmark if available
+    benchmark: { cbaElo: 1355 },
   },
   {
     id: 'models/gemini-2.0-flash-001',
     chatPrice: gemini20FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1369 }, // Placeholder - find actual benchmark if available
+    benchmark: { cbaElo: 1355 },
   },
 
   // 2.0 Flash Lite
@@ -179,7 +180,7 @@ const _knownGeminiModels: ({
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // No function calling or code execution
-    benchmark: { cbaElo: 1294 }, // Placeholder, outperforms 1.5 Flash
+    benchmark: { cbaElo: 1309 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-preview',
@@ -207,13 +208,13 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-1.5-flash-002',
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1227 },
+    benchmark: { cbaElo: 1271 },
   },
   {
     id: 'models/gemini-1.5-flash-002', // new stable version
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
-    benchmark: { cbaElo: 1227 },
+    benchmark: { cbaElo: 1271 },
     hidden: true,
   },
   {
