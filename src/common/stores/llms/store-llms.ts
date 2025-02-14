@@ -94,7 +94,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
         return {
           llms: newLlms,
-          ...llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
+          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
         };
       }),
 
@@ -103,7 +103,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const newLlms = state.llms.filter(llm => llm.id !== id);
         return {
           llms: newLlms,
-          ...llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
+          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
         };
       }),
 
@@ -200,7 +200,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         return {
           llms,
           sources: state.sources.filter(s => s.id !== id),
-          ...llmsHeuristicUpdateAssignments(llms, state.modelAssignments),
+          modelAssignments: llmsHeuristicUpdateAssignments(llms, state.modelAssignments),
         };
       }),
 

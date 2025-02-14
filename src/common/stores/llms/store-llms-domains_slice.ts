@@ -227,18 +227,36 @@ function _strategyTopQuality(vendors: PreferredRankedVendors): DLLMId | undefine
   return vendors.length ? vendors[0].llmsByElo[0]?.id : undefined;
 }
 
-function _strategyTopVendorLowestCost(vendors: PreferredRankedVendors): DLLMId | undefined {
+function _strategyTopVendorLowestCost(vendors: PreferredRankedVendors, requireEloRating: boolean = true): DLLMId | undefined {
+
+  // based on the assumption that the lowest (but non-zero) cost will happen for:
+  // - newest models
+  // - which also means better models (if the assumption holds over time)
+  // if the top provider doesn't have any, we move to the second, etc.
+
   if (!vendors.length) return undefined;
   for (const vendor of vendors) {
-    const lowestCostLlm = vendor.llmsByElo.reduce((acc, llm) => {
-      if (!acc)
-        return llm;
-      if (!llm.costRank || !acc.costRank)
-        return acc;
-      return llm.costRank < acc.costRank ? llm : acc;
-    }, null as RankedVendorLLMs['llmsByElo'][number] | null);
-    if (lowestCostLlm)
-      return lowestCostLlm.id;
+
+    // sort by increasing cost, with 0 ('free' at the end, to exclude experimental models)
+    const sorted = vendor.llmsByElo.toSorted((a, b) => {
+      if (!a.costRank && !b.costRank)
+        return 0;
+      if (!a.costRank)
+        return 1;
+      if (!b.costRank)
+        return -1;
+      return a.costRank - b.costRank;
+    });
+
+    // get the first that has cbaElo, assuming those are more 'social proofed' models
+    if (requireEloRating) {
+      const firstWithElo = sorted.find(llm => llm.cbaElo);
+      if (firstWithElo)
+        return firstWithElo.id;
+    }
+
+    if (sorted.length && sorted[0].id)
+      return sorted[0].id;
   }
   return undefined;
 }

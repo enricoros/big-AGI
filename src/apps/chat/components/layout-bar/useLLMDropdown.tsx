@@ -198,7 +198,7 @@ export function useChatLLMDropdown(dropdownRef: React.Ref<OptimaBarControlMethod
 
   // external state
   const llms = useAllLLMs();
-  const { domainModelId: chatLLMId, assignDomainModelId: setChatLLMId } = useDomainLLM('primaryChat', true, false);
+  const { domainModelId: chatLLMId, assignDomainModelId: setChatLLMId } = useDomainLLM('primaryChat');
 
   const chatLLMDropdown = React.useMemo(() => {
     return <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />;
