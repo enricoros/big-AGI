@@ -24,6 +24,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/state/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 
 // configuration
@@ -67,7 +68,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   // external state
   const isMobile = useIsMobile();
   const contentScaling = useUIContentScaling();
-  const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', 'chat');
+  const { domainModelId: runModelId } = useModelDomain('primaryChat');
+  const [diagramLlm, llmComponent] = useFormRadioLlmType('Generator', runModelId ?? null, 'run');
 
   // derived state
   const { messageId, text: subject } = props.config;

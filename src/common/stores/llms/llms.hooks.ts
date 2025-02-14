@@ -13,26 +13,13 @@ export function useChatLLM(): { chatLLM: DLLM | null } {
   return { chatLLM };
 }
 
-export function useLLM(llmId: DLLMId): DLLM | null {
-  return useModelsStore(state => {
-    if (!llmId) return null;
-    return state.llms.find(llm => llm.id === llmId) ?? null;
-  });
+export function useLLM(llmId: DLLMId): DLLM | undefined {
+  return useModelsStore(state => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));
 }
 
-export function useDefaultLLMIDs(): { chatLLMId: DLLMId | null; fastLLMId: DLLMId | null; } {
-  return useModelsStore(useShallow(state => ({
-    chatLLMId: state.chatLLMId,
-    fastLLMId: state.fastLLMId,
-  })));
-}
-
-export function useDefaultLLMs(): { chatLLM: DLLM | null; fastLLM: DLLM | null } {
+export function useLLMs(llmIds: ReadonlyArray<DLLMId>): ReadonlyArray<DLLM | undefined> {
   return useModelsStore(useShallow(state => {
-    const { chatLLMId, fastLLMId } = state;
-    const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
-    const fastLLM = fastLLMId ? state.llms.find(llm => llm.id === fastLLMId) ?? null : null;
-    return { chatLLM, fastLLM };
+    return llmIds.map(llmId => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));
   }));
 }
 
