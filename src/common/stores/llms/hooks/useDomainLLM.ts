@@ -47,8 +47,10 @@ function _getDomainModelConfigurationFromState({ llms, modelAssignments }: LlmsR
 
 /**
  * Single hooks to access per-domain LLM configurations.
+ * - Since this is reactive, we assume we don't do 'automated domain fallback' here
+ * - We also verify mandatory LLM existence
  */
-export function useDomainLLM(modelDomainId: DModelDomainId, verifyLLMExists: boolean, autoDomainFallback: boolean): {
+export function useDomainLLM(modelDomainId: DModelDomainId): {
 
   domainModelId: undefined | DLLMId | null;
   assignDomainModelId: (modelId: DLLMId | null) => void;
@@ -59,7 +61,7 @@ export function useDomainLLM(modelDomainId: DModelDomainId, verifyLLMExists: boo
 } {
 
   const domainModelConfiguration = useModelsStore(state =>
-    _getDomainModelConfigurationFromState(state, modelDomainId, verifyLLMExists, autoDomainFallback),
+    _getDomainModelConfigurationFromState(state, modelDomainId, true, false),
   );
 
   const assignDomainModelConfiguration = React.useCallback((modelConfiguration: DModelConfiguration) =>
