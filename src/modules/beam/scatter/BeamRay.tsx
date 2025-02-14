@@ -174,9 +174,10 @@ export function BeamRay(props: {
 
   const llmId = ray?.rayLlmId ?? null;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
-  const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(
-    llmId, setLlmId, '', true, isScattering,
-  );
+  const [llmOrNull, llmComponent, llmVendorIcon] = useLLMSelect(llmId, setLlmId, {
+    label: '',
+    disabled: isScattering,
+  });
 
   // more derived
   const llmShowReasoning = !BEAM_SHOW_REASONING_ICON ? false : llmOrNull?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;

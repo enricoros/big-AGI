@@ -83,9 +83,10 @@ export function BeamGatherPane(props: {
   })));
   const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
   const disableUnlessAutoStart = !props.canGather && !gatherAutoStartAfterScatter;
-  const [llmOrNull, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(
-    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true, disableUnlessAutoStart,
-  );
+  const [llmOrNull, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(currentGatherLlmId, setCurrentGatherLlmId, {
+    label: props.isMobile ? '' : 'Merge Model',
+    disabled: disableUnlessAutoStart,
+  });
 
   // derived state
   const llmShowReasoning = !BEAM_SHOW_REASONING_ICON ? false : llmOrNull?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
