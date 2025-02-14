@@ -1,13 +1,16 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { FormControl, ListDivider, ListItemDecorator, Option, Select, SvgIconProps } from '@mui/joy';
+import { FormControl, IconButton, ListDivider, ListItemDecorator, Option, Select, SvgIconProps } from '@mui/joy';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
 
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { getChatLLMId, llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
@@ -52,31 +55,34 @@ const _slotProps = {
   } as const,
 } as const;
 
+
+interface LLMSelectOptions {
+  label: string;
+  larger?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  isHorizontal?: boolean;
+  autoRefreshDomain?: DModelDomainId;
+}
+
 /**
  * Select the Model, synced with either Global (Chat) LLM state, or local
  *
  * @param llmId (required) the LLM id
  * @param setLlmId (required) the function to set the LLM id
- * @param label label of the select, use '' to hide it
- * @param smaller if true, the select is smaller
- * @param disabled
- * @param placeholder placeholder of the select
- * @param isHorizontal if true, the select is horizontal (label - select)
+ * @param options (optional) any arrray of options
  */
 export function useLLMSelect(
   llmId: undefined | DLLMId | null, // undefined: not set at all, null: has the meaning of no-llm-wanted here
   setLlmId: (llmId: DLLMId | null) => void,
-  label: string = 'Model',
-  smaller: boolean = false,
-  disabled: boolean = false,
-  placeholder: string = 'Models …',
-  isHorizontal: boolean = false,
+  options: LLMSelectOptions,
 ): [DLLM | null, React.JSX.Element | null, React.FunctionComponent<SvgIconProps> | undefined] {
 
   // external state
   const _filteredLLMs = useVisibleLLMs(llmId);
 
   // derived state
+  const { label, larger = false, disabled = false, placeholder = 'Models …', isHorizontal = false, autoRefreshDomain } = options;
   const noIcons = false; //smaller;
   const llm = !llmId ? null : _filteredLLMs.find(llm => llm.id === llmId) ?? null;
   const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
@@ -128,25 +134,31 @@ export function useLLMSelect(
 
   // memo Select
   const llmSelectComponent = React.useMemo(() => (
-    <FormControl orientation={isHorizontal ? 'horizontal' : undefined}>
+    <FormControl orientation={(isHorizontal || autoRefreshDomain) ? 'horizontal' : undefined}>
       {!!label && <FormLabelStart title={label} sx={/*{ mb: '0.25rem' }*/ undefined} />}
       {/*<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>*/}
       <Select
         variant='outlined'
-        value={llmId}
-        size={smaller ? 'sm' : undefined}
+        value={llmId ?? null}
+        size={larger ? undefined : 'sm'}
         disabled={disabled}
         onChange={onSelectChange}
         placeholder={placeholder}
         slotProps={_slotProps}
-        endDecorator={isReasoning ? '🧠' : undefined}
+        endDecorator={autoRefreshDomain ?
+          <TooltipOutlined title='Auto-select the model'>
+            <IconButton onClick={() => llmsStoreActions().assignDomainModelId(autoRefreshDomain, null)}>
+              <AutoModeIcon />
+            </IconButton>
+          </TooltipOutlined>
+          : isReasoning ? '🧠' : undefined}
         sx={llmSelectSx}
       >
         {optionsArray}
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [disabled, isHorizontal, isReasoning, label, llmId, onSelectChange, optionsArray, placeholder, smaller]);
+  ), [autoRefreshDomain, disabled, isHorizontal, isReasoning, label, larger, llmId, onSelectChange, optionsArray, placeholder]);
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
