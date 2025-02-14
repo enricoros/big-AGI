@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLM, DLLMId } from './llms.types';
-
+import type { DModelsServiceId } from './llms.service.types';
 import { useModelsStore } from './store-llms';
 
 
@@ -36,20 +36,16 @@ export function useDefaultLLMs(): { chatLLM: DLLM | null; fastLLM: DLLM | null }
   }));
 }
 
-export function useFilteredLLMs(filterId: false | DLLMId): DLLM[] {
+export function useLLMsByService(serviceId: false | DModelsServiceId): DLLM[] {
   return useModelsStore(useShallow(
-    state => !filterId ? state.llms : state.llms.filter(llm => llm.sId === filterId),
+    state => !serviceId ? state.llms : state.llms.filter(llm => llm.sId === serviceId),
   ));
 }
 
-export function useNonHiddenLLMs(): DLLM[] {
+export function useVisibleLLMs(includeLlmId: undefined | DLLMId | null): ReadonlyArray<DLLM> {
   return useModelsStore(useShallow(
-    ({ llms, chatLLMId }) => llms.filter(llm => !llm.hidden || (chatLLMId && llm.id === chatLLMId)),
+    ({ llms }) => llms.filter(llm => !llm.hidden || (includeLlmId && llm.id === includeLlmId)),
   ));
-}
-
-export function useLLMsCount(): number {
-  return useModelsStore(state => state.llms.length);
 }
 
 export function useHasLLMs(): boolean {
