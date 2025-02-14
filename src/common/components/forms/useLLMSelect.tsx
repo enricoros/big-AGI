@@ -8,7 +8,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import { DLLM, DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { useNonHiddenLLMs } from '~/common/stores/llms/llms.hooks';
+import { useVisibleLLMs } from '~/common/stores/llms/llms.hooks';
 
 import { FormLabelStart } from './FormLabelStart';
 
@@ -55,8 +55,8 @@ const _slotProps = {
 /**
  * Select the Model, synced with either Global (Chat) LLM state, or local
  *
- * @param chatLLMId (required) the LLM id
- * @param setChatLLMId (required) the function to set the LLM id
+ * @param llmId (required) the LLM id
+ * @param setLlmId (required) the function to set the LLM id
  * @param label label of the select, use '' to hide it
  * @param smaller if true, the select is smaller
  * @param disabled
@@ -64,8 +64,8 @@ const _slotProps = {
  * @param isHorizontal if true, the select is horizontal (label - select)
  */
 export function useLLMSelect(
-  chatLLMId: undefined | DLLMId | null, // undefined: not set at all, null: has the meaning of no-llm-wanted here
-  setChatLLMId: (llmId: DLLMId | null) => void,
+  llmId: undefined | DLLMId | null, // undefined: not set at all, null: has the meaning of no-llm-wanted here
+  setLlmId: (llmId: DLLMId | null) => void,
   label: string = 'Model',
   smaller: boolean = false,
   disabled: boolean = false,
@@ -74,18 +74,16 @@ export function useLLMSelect(
 ): [DLLM | null, React.JSX.Element | null, React.FunctionComponent<SvgIconProps> | undefined] {
 
   // external state
-  const _filteredLLMs = useNonHiddenLLMs();
+  const _filteredLLMs = useVisibleLLMs(llmId);
 
   // derived state
   const noIcons = false; //smaller;
-  const chatLLM = chatLLMId
-    ? _filteredLLMs.find(llm => llm.id === chatLLMId) ?? null
-    : null;
-  const chatLLMIsReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : chatLLM?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
+  const llm = !llmId ? null : _filteredLLMs.find(llm => llm.id === llmId) ?? null;
+  const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
 
 
-  // Memo the LLM Options for the Select
-  const componentOptions = React.useMemo(() => {
+  // memo LLM Options
+  const optionsArray = React.useMemo(() => {
     // create the option items
     let formerVendor: IModelVendor | null = null;
     return _filteredLLMs.reduce((acc, llm, _index) => {
@@ -106,7 +104,7 @@ export function useLLMSelect(
           key={'llm-' + llm.id}
           value={llm.id}
           // Disabled to avoid regenerating the memo too frequently
-          // sx={llm.id === chatLLMId ? { fontWeight: 'md' } : undefined}
+          // sx={llm.id === llmId ? { fontWeight: 'md' } : undefined}
           label={llm.label}
         >
           {(!noIcons && !!vendor?.Icon) && (
@@ -126,34 +124,34 @@ export function useLLMSelect(
   }, [_filteredLLMs, noIcons]);
 
 
-  const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => value && setChatLLMId(value), [setChatLLMId]);
+  const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => value && setLlmId(value), [setLlmId]);
 
-  // Memo the Select component
+  // memo Select
   const llmSelectComponent = React.useMemo(() => (
     <FormControl orientation={isHorizontal ? 'horizontal' : undefined}>
       {!!label && <FormLabelStart title={label} sx={/*{ mb: '0.25rem' }*/ undefined} />}
       {/*<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>*/}
       <Select
         variant='outlined'
-        value={chatLLMId}
+        value={llmId}
         size={smaller ? 'sm' : undefined}
         disabled={disabled}
         onChange={onSelectChange}
         placeholder={placeholder}
         slotProps={_slotProps}
-        endDecorator={chatLLMIsReasoning ? '🧠' : undefined}
+        endDecorator={isReasoning ? '🧠' : undefined}
         sx={llmSelectSx}
       >
-        {componentOptions}
+        {optionsArray}
       </Select>
       {/*</Box>*/}
     </FormControl>
-  ), [chatLLMId, chatLLMIsReasoning, componentOptions, disabled, isHorizontal, label, onSelectChange, placeholder, smaller]);
+  ), [disabled, isHorizontal, isReasoning, label, llmId, onSelectChange, optionsArray, placeholder, smaller]);
 
   // Memo the vendor icon for the chat LLM
   const chatLLMVendorIconFC = React.useMemo(() => {
-    return findModelVendor(chatLLM?.vId)?.Icon;
-  }, [chatLLM]);
+    return findModelVendor(llm?.vId)?.Icon;
+  }, [llm?.vId]);
 
-  return [chatLLM, llmSelectComponent, chatLLMVendorIconFC];
+  return [llm, llmSelectComponent, chatLLMVendorIconFC];
 }

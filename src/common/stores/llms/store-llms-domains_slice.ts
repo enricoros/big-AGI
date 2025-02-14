@@ -45,12 +45,29 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
     })),
 
   assignDomainModelId: (domainId, llmId) =>
-    _set(state => ({
-      modelAssignments: {
-        ...state.modelAssignments,
-        [domainId]: createDModelConfiguration(domainId, llmId),
-      },
-    })),
+    _set(state => {
+
+      // auto-assign if null, to prevent a domain from being left without a model
+      if (!llmId) {
+        const rankedVendors = _groupLlmsByVendorRankedByElo(state.llms);
+        const autoModelConfiguration = _autoModelConfiguration(domainId, rankedVendors);
+        if (autoModelConfiguration)
+          return {
+            modelAssignments: {
+              ...state.modelAssignments,
+              [domainId]: autoModelConfiguration,
+            },
+          };
+        // if no auto-assign, fall through, which will set the model to null
+      }
+
+      return {
+        modelAssignments: {
+          ...state.modelAssignments,
+          [domainId]: createDModelConfiguration(domainId, llmId),
+        },
+      };
+    }),
 
   autoReassignDomainModel: (domainId, ifNotPresent, ifNotVisible) => {
     const { llms, modelAssignments } = _get();

@@ -4,6 +4,8 @@ import type { DModelInterfaceV1 } from './llms.types';
 
 type ModelDomainSpec = {
   label: string;
+  confLabel: string;
+  confTooltip: string;
   description: string;
   recommended?: string;
   requiredInterfaces?: DModelInterfaceV1[];
@@ -17,12 +19,16 @@ export const ModelDomainsList: DModelDomainId[] = ['primaryChat', 'codeApply', '
 export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
   primaryChat: {
     label: 'Primary Chat',
+    confLabel: 'Chat',
+    confTooltip: 'Default model for new Chats',
     description: 'Main conversational model',
     requiredInterfaces: [],
     autoStrategy: 'topVendorTopLlm',
   },
   codeApply: {
     label: 'Code Editor',
+    confLabel: 'Code',
+    confTooltip: 'Model for applying code changes and other code-related complex operations. E.g. Sonnet 3.5',
     description: 'Code changes editor and applicator',
     recommended: 'Sonnet 3.5',
     requiredInterfaces: [],
@@ -31,6 +37,8 @@ export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
   },
   fastUtil: {
     label: 'Fast Utility',
+    confLabel: 'Fast',
+    confTooltip: 'Use this Model for "fast" features, such as Auto-Title, Summarize, etc.',
     description: 'Quick response model for simple tasks',
     autoStrategy: 'topVendorLowestCost',
     requiredInterfaces: [], // shall be [LLM_IF_OAI_Fn], but we don't inforce for now
