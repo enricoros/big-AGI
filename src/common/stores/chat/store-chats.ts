@@ -429,6 +429,32 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         return state;
       },
 
+      /**
+       * Note: default impl:
+       *   merge: (persistedState: unknown, currentState: S) => ({
+       *     ...currentState,
+       *     ...(persistedState as object),
+       *   }),
+       */
+      merge: (persistedState, currentState: ConversationsStore): ConversationsStore => {
+
+        // concatenate-merge conversations reloaded from storage
+        const mergedConversations = [...(currentState?.conversations || [])];
+        if (persistedState && typeof persistedState === 'object' && 'conversations' in persistedState) {
+          const storedConversations = persistedState.conversations as ChatState['conversations'];
+          if (storedConversations.length)
+            mergedConversations.push(...storedConversations);
+        }
+
+        return {
+          // default shallow merge
+          ...currentState,
+          ...(persistedState as object),
+          // ad-hoc concat merge
+          conversations: mergedConversations,
+        };
+      },
+
       // Pre-Saving: remove transient properties
       partialize: (state) => ({
         ...state,
