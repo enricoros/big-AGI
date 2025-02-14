@@ -50,7 +50,7 @@ function _getDomainModelConfigurationFromState({ llms, modelAssignments }: LlmsR
  * - Since this is reactive, we assume we don't do 'automated domain fallback' here
  * - We also verify mandatory LLM existence
  */
-export function useDomainLLM(modelDomainId: DModelDomainId): {
+export function useModelDomain(modelDomainId: DModelDomainId): {
 
   domainModelId: undefined | DLLMId | null;
   assignDomainModelId: (modelId: DLLMId | null) => void;
