@@ -16,7 +16,7 @@ export function ButtonMultiChat(props: { isMobile?: boolean, multiChat: boolean,
       color={multiChat ? 'warning' : undefined}
       onClick={() => props.onSetMultiChat(!multiChat)}
     >
-      {multiChat ? <ChatMulticastOnIcon /> : <ChatMulticastOffIcon />}
+      {multiChat ? <ChatMulticastOnIcon /> : <ChatMulticastOnIcon />}
     </IconButton>
   ) : (
     <FormControl orientation='horizontal' sx={{ minHeight: '2.25rem', justifyContent: 'space-between' }}>
