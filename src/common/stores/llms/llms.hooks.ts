@@ -5,15 +5,7 @@ import type { DModelsServiceId } from './llms.service.types';
 import { useModelsStore } from './store-llms';
 
 
-/**
- * Current 'Chat' LLM, or null
- */
-export function useChatLLM(): { chatLLM: DLLM | null } {
-  const chatLLM = useModelsStore(state => state.chatLLMId ? state.llms.find(llm => llm.id === state.chatLLMId) ?? null : null);
-  return { chatLLM };
-}
-
-export function useLLM(llmId: DLLMId): DLLM | undefined {
+export function useLLM(llmId: undefined | DLLMId | null): DLLM | undefined {
   return useModelsStore(state => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));
 }
 
