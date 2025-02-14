@@ -16,7 +16,7 @@ import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
-import { useDomainLLM } from '~/common/stores/llms/hooks/useDomainLLM';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 
 function LLMDropdown(props: {
@@ -198,7 +198,7 @@ export function useChatLLMDropdown(dropdownRef: React.Ref<OptimaBarControlMethod
 
   // external state
   const llms = useAllLLMs();
-  const { domainModelId: chatLLMId, assignDomainModelId: setChatLLMId } = useDomainLLM('primaryChat');
+  const { domainModelId: chatLLMId, assignDomainModelId: setChatLLMId } = useModelDomain('primaryChat');
 
   const chatLLMDropdown = React.useMemo(() => {
     return <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />;

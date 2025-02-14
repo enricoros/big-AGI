@@ -12,7 +12,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { useDomainAssignments } from '~/common/stores/llms/hooks/useDomainAssignments';
+import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsGlobal } from './LLMOptionsGlobal';
@@ -69,7 +69,7 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   // external state
   const llm = useLLM(props.id);
-  const domainAssignments = useDomainAssignments();
+  const domainAssignments = useModelDomains();
   const { removeLLM, updateLLM, assignDomainModelId } = llmsStoreActions();
 
   if (!llm)

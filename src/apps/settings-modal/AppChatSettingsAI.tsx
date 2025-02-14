@@ -7,7 +7,7 @@ import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
-import { useDomainLLM } from '~/common/stores/llms/hooks/useDomainLLM';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
@@ -25,7 +25,7 @@ function FormControlDomainModel(props: {
 }) {
 
   // external state
-  const { domainModelId: fastModelId, assignDomainModelId: setFastModelId } = useDomainLLM(props.domainId);
+  const { domainModelId: fastModelId, assignDomainModelId: setFastModelId } = useModelDomain(props.domainId);
   const [_llm, llmComponent] = useLLMSelect(fastModelId, setFastModelId, { label: '', autoRefreshDomain: props.domainId });
 
   return (
