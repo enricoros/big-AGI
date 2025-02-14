@@ -136,7 +136,7 @@ function WizardProviderSetup(props: {
 
     // create the service if missing
     const { sources: llmsServices } = llmsStoreState();
-    const { createModelsService, updateServiceSettings, setLLMs } = llmsStoreActions();
+    const { createModelsService, updateServiceSettings, setServiceLLMs } = llmsStoreActions();
     const vendorService = llmsServices.find(s => s.vId === providerVendor.id) || createModelsService(providerVendor);
     const vendorServiceId = vendorService.id;
 
@@ -147,7 +147,7 @@ function WizardProviderSetup(props: {
     // if the key is empty, remove the models
     if (!newKey) {
       setUpdateError(null);
-      setLLMs([], vendorServiceId, true, false);
+      setServiceLLMs(vendorServiceId, [], false, false);
       return;
     }
 
@@ -161,7 +161,7 @@ function WizardProviderSetup(props: {
       if (errorText.includes('Incorrect API key'))
         errorText = '[OpenAI issue] Unauthorized: Incorrect API key.';
       setUpdateError(errorText);
-      setLLMs([], vendorServiceId, true, false);
+      setServiceLLMs(vendorServiceId, [], false, false);
     }
     setIsLoading(false);
 

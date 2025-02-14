@@ -36,6 +36,7 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   _isConfiguring = true;
   // FIXME: future: move this to the end of the function, but also with strong retry count and error catching, so one's app wouldn't loop upon each boot
   setLastReconfigHash(backendReconfigHash);
+  const initiallyEmpty = !llmsStoreState().llms?.length;
 
   // reconfigure these
   const servicesToReconfigure: DModelsService[] = [];
@@ -87,9 +88,14 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   // Re-rank the LLMs based on the order of configured services
   llmsStoreActions().rerankLLMsByServices(configuredServiceIds);
 
-  // if the current global Chat LLM is now hidden, auto-pick one that's not
-  // only do it for the primary chat LLM, so we leave other utility models alone
-  llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
+  // Auto-assignment conditions
+  if (initiallyEmpty) {
+    // in case we refreshed all vendors, auto-assign the primary chat model, so it doesn't get locked to the first vendor
+    llmsStoreActions().assignDomainModelId('primaryChat', null);
+  } else {
+    // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
+    llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
+  }
 
   // end configuration
   _isConfiguring = false;
