@@ -107,7 +107,7 @@ export function Telephone(props: {
   const responseAbortController = React.useRef<AbortController | null>(null);
 
   // external state
-  const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown(llmDropdownRef);
+  const { chatLLMId: modelId, chatLLMDropdown: modelDropdown } = useChatLLMDropdown(llmDropdownRef);
   const { chatTitle, reMessages } = useChatStore(useShallow(state => {
     const conversation = props.callIntent.conversationId
       ? state.conversations.find(conversation => conversation.id === props.callIntent.conversationId) ?? null
@@ -226,7 +226,7 @@ export function Telephone(props: {
     }
 
     // bail if no llm selected
-    if (!chatLLMId) return;
+    if (!modelId) return;
 
 
     // Call Message Generation Prompt
@@ -249,7 +249,7 @@ export function Telephone(props: {
     setPersonaTextInterim('💭...');
 
     aixChatGenerateContent_DMessage_FromConversation(
-      chatLLMId,
+      modelId,
       callSystemInstruction,
       callGenerationInputHistory,
       'call',
@@ -285,7 +285,7 @@ export function Telephone(props: {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, chatLLMId, personaVoiceId, personaSystemMessage, reMessages]);
+  }, [isConnected, callMessages, modelId, personaVoiceId, personaSystemMessage, reMessages]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && recognitionState.hasSpeech;
@@ -326,7 +326,7 @@ export function Telephone(props: {
 
 
   return <>
-    <OptimaToolbarIn>{chatLLMDropdown}</OptimaToolbarIn>
+    <OptimaToolbarIn>{modelDropdown}</OptimaToolbarIn>
 
     <Typography
       level='h1'
