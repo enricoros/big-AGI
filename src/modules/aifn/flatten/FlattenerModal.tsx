@@ -15,6 +15,7 @@ import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from 
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 
 function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedStyle: (type: FlattenStyleType) => void }) {
@@ -92,7 +93,8 @@ export function FlattenerModal(props: {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // external state
-  const [llm, llmComponent] = useFormRadioLlmType();
+  const { domainModelId: runModelId } = useModelDomain('primaryChat');
+  const [llm, llmComponent] = useFormRadioLlmType('Model', runModelId ?? null, 'util');
   const {
     isStreaming, text: flattenedText, partialText, streamError,
     startStreaming, setText, resetText,
