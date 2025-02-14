@@ -119,7 +119,7 @@ export type OptimaBarControlMethods = {
 function OptimaBarDropdown<TValue extends string>(props: {
   // required
   items: OptimaDropdownItems,
-  value: TValue | null,
+  value: undefined | TValue | null, // undefined means no value is present, null means 'no/unset/force-empty' value
   onChange: (value: TValue | null) => void,
   // optional
   activeEndDecorator?: React.JSX.Element,
@@ -161,7 +161,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
   return (
     <Select
       variant='plain'
-      value={props.value}
+      value={props.value ?? null /* remove 'undefined' as an option */}
       onChange={handleOnChange}
       placeholder={props.placeholder}
       listboxOpen={listboxOpen}
