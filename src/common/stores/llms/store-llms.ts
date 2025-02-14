@@ -33,7 +33,7 @@ export interface LlmsRootState {
 
 interface LlmsRootActions {
 
-  setLLMs: (llms: DLLM[], serviceId: DModelsServiceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) => void;
+  setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: boolean, keepMissingLLMs: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
@@ -70,13 +70,13 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
     // actions
 
-    setLLMs: (llms: DLLM[], serviceId: DModelsServiceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) =>
-      set(state => {
+    setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: boolean, keepMissingLLMs: boolean) =>
+      set(({ llms: existingLLMs, modelAssignments }) => {
 
         // keep existing model customizations
         if (keepUserEdits) {
-          llms = llms.map((llm: DLLM): DLLM => {
-            const existing = state.llms.find(m => m.id === llm.id);
+          serviceLLMs = serviceLLMs.map((llm: DLLM): DLLM => {
+            const existing = existingLLMs.find(m => m.id === llm.id);
             return !existing ? llm : {
               ...llm,
               ...(existing.userLabel !== undefined ? { userLabel: existing.userLabel } : {}),
@@ -86,15 +86,15 @@ export const useModelsStore = create<LlmsStore>()(persist(
           });
         }
 
-        const otherLlms = deleteExpiredVendorLlms
-          ? state.llms.filter(llm => llm.sId !== serviceId)
-          : state.llms;
+        // remove models that are not in the new list
+        if (!keepMissingLLMs)
+          existingLLMs = existingLLMs.filter(llm => llm.sId !== serviceId);
 
         // replace existing llms with the same id
-        const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
+        const newLlms = [...serviceLLMs, ...existingLLMs.filter(existingLlm => !serviceLLMs.some(newLlm => newLlm.id === existingLlm.id))];
         return {
           llms: newLlms,
-          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
+          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, modelAssignments),
         };
       }),
 

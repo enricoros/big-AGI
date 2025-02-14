@@ -23,11 +23,11 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   const data = await vendor.rpcUpdateModelsOrThrow(transportAccess);
 
   // update the global models store
-  llmsStoreActions().setLLMs(
-    data.models.map(model => _createDLLMFromModelDescription(model, service)),
+  llmsStoreActions().setServiceLLMs(
     service.id,
-    true,
+    data.models.map(model => _createDLLMFromModelDescription(model, service)),
     keepUserEdits,
+    false,
   );
 
   // figure out which vendors are actually used and useful
