@@ -18,6 +18,9 @@ const MAX_CONCURRENT_PANES = 4;
 const DEBUG_PANES_MANAGER = false;
 
 
+// Future: support different types of panes: chat, docs, diff, settings, (beam?) etc.
+// type Pane = ChatPane;
+
 interface ChatPane {
 
   paneId: string;
@@ -46,6 +49,7 @@ interface AppChatPanesActions {
   openConversationInSplitPane: (conversationId: DConversationId) => void;
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
   duplicateFocusedPane: (/*paneIndex: number*/) => void;
+  insertEmptyAfterFocusedPane: (reuseEmpty: boolean) => void;
   removeOtherPanes: () => void;
   removePane: (paneIndex: number) => void;
   setFocusedPaneIndex: (paneIndex: number) => void;
@@ -204,6 +208,45 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         return {
           chatPanes: newPanes,
           chatPaneFocusIndex: dstIndex,
+        };
+      }),
+
+    insertEmptyAfterFocusedPane: (reuseEmpty: boolean) =>
+      _set(state => {
+        const { chatPanes, chatPaneFocusIndex: _srcIndex } = state;
+
+        // if reusing, move focus to the first empty pane, if any
+        if (reuseEmpty) {
+          const emptyPaneIndex = chatPanes.findIndex(pane => pane.conversationId === null);
+          if (emptyPaneIndex >= 0) {
+            if (DEBUG_PANES_MANAGER)
+              console.log('insertEmptyAfterFocusedPane: reusing empty pane at:', emptyPaneIndex);
+            return {
+              chatPaneFocusIndex: emptyPaneIndex,
+            };
+          }
+        }
+
+        // check precondition
+        if (chatPanes.length >= MAX_CONCURRENT_PANES) {
+          console.warn('Cannot add more panes: maximum reached');
+          return state;
+        }
+
+        // insert an empty pane after the focused pane, or at the end if no focus
+        const dstIndex = (_srcIndex !== null && _srcIndex >= 0) ? _srcIndex + 1 : chatPanes.length;
+        const newPanes = [
+          ...chatPanes.slice(0, dstIndex),
+          _createChatPane(null),
+          ...chatPanes.slice(dstIndex),
+        ];
+
+        if (DEBUG_PANES_MANAGER)
+          console.log('insertEmptyAfterFocusedPane: created new empty pane at:', dstIndex);
+
+        return {
+          chatPanes: newPanes,
+          chatPaneFocusIndex: dstIndex, // focus the new empty pane
         };
       }),
 
@@ -371,7 +414,9 @@ export function usePanesManager() {
 export function usePaneDuplicateOrClose() {
   return useAppChatPanesStore(useShallow(state => ({
     // state
-    canAddPane: state.chatPanes.length < MAX_CONCURRENT_PANES,
+    canAddPane: state.chatPanes.length < MAX_CONCURRENT_PANES
+      // if the current pane has an empty conversation, don't add another one!
+      && (state.chatPaneFocusIndex === null || state.chatPanes[state.chatPaneFocusIndex].conversationId !== null),
     isMultiPane: state.chatPanes.length > 1,
     // actions
     duplicateFocusedPane: state.duplicateFocusedPane,
