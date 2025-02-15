@@ -12,11 +12,14 @@ const _styles = {
   } as const,
 
   sheet: {
-    p: 1.5,
-    borderRadius: 'sm',
+    maxWidth: 204,
+    p: 2,
+    // backgroundColor: 'background.popup',
+    borderRadius: 'xl',
+
     display: 'flex',
     flexDirection: 'column',
-    gap: 1,
+    gap: 1.5,
   } as const,
 
   button: {
@@ -38,9 +41,10 @@ export function CMLZeroConversation(props: {
         variant='outlined'
         sx={_styles.sheet}
       >
-        <Typography level='body-sm'>
-          Please select or create<br />
-          a conversation.
+        <Typography level='body-xs'>
+          Please <b>select a conversation</b> from
+          the left pane, or <b>branch</b> one,
+          or create a <>new</> one.
         </Typography>
         <Button
           variant='soft'
