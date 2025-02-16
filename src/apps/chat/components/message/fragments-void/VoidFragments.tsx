@@ -56,6 +56,7 @@ export function VoidFragments(props: {
   contentScaling: ContentScaling,
   uiComplexityMode: UIComplexityMode,
   messageRole: DMessageRole,
+  messagePendingIncomplete?: boolean,
 
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 
@@ -94,6 +95,8 @@ export function VoidFragments(props: {
         //       auxText={part.aText}
         //       auxHasSignature={part.textSignature !== undefined}
         //       auxRedactedDataCount={part.redactedData?.length ?? 0}
+        //       nonVoidFragmentsCount={props.nonVoidFragmentsCount}
+        //       messagePendingIncomplete={!!props.messagePendingIncomplete}
         //       zenMode={props.uiComplexityMode === 'minimal'}
         //       contentScaling={props.contentScaling}
         //       isLastVoid={index === props.voidFragments.length - 1}
