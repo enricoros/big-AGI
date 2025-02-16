@@ -6,75 +6,77 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
+import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import type { DModelDomainId } from './model.domains.types';
 import type { DModelParameterId, DModelParameterValues } from './llms.parameters';
-import type { DModelsService, DModelsServiceId } from './modelsservice.types';
+import type { DModelsService, DModelsServiceId } from './llms.service.types';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
-import { getLlmCostForTokens, portModelPricingV2toV3 } from './llms.pricing';
+import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
+import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsHeuristicUpdateAssignments } from './store-llms-domains_slice';
+import { getDomainModelConfiguration } from './hooks/useModelDomain';
+import { portModelPricingV2toV3 } from './llms.pricing';
 
 
 /// ModelsStore - a store for configured LLMs and configured services
 
-interface LlmsState {
+export interface LlmsRootState {
 
   llms: DLLM[];
 
   sources: DModelsService<any>[];
 
-  chatLLMId: DLLMId | null;
-  fastLLMId: DLLMId | null;
+  confServiceId: DModelsServiceId | null;
 
 }
 
-interface LlmsActions {
+interface LlmsRootActions {
 
-  setLLMs: (llms: DLLM[], serviceId: DModelsServiceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) => void;
+  setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: boolean, keepMissingLLMs: boolean) => void;
   removeLLM: (id: DLLMId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
   updateLLM: (id: DLLMId, partial: Partial<DLLM>) => void;
   updateLLMUserParameters: (id: DLLMId, partial: Partial<DModelParameterValues>) => void;
   deleteLLMUserParameter: (id: DLLMId, parameterId: DModelParameterId) => void;
 
-  addService: (service: DModelsService) => void;
+  createModelsService: (vendor: IModelVendor) => DModelsService;
   removeService: (id: DModelsServiceId) => void;
   updateServiceSettings: <TServiceSettings>(id: DModelsServiceId, partialSettings: Partial<TServiceSettings>) => void;
 
-  setChatLLMId: (id: DLLMId | null) => void;
-  setFastLLMId: (id: DLLMId | null) => void;
+  setConfServiceId: (id: DModelsServiceId | null) => void;
 
   // special
   setOpenRouterKey: (key: string) => void;
 
 }
 
-export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
-  (set) => ({
+
+type LlmsRootSlice = LlmsRootState & LlmsRootActions;
+type LlmsStore = LlmsRootSlice & LlmsAssignmentsSlice;
+
+
+export const useModelsStore = create<LlmsStore>()(persist(
+  (set, get, _store) => ({
+
+    // include slices
+    ...createLlmsAssignmentsSlice(set, get, _store),
 
     // initial state
 
     llms: [],
     sources: [],
-
-    chatLLMId: null,
-    fastLLMId: null,
-
+    confServiceId: null,
 
     // actions
 
-    setChatLLMId: (id: DLLMId | null) =>
-      set(state => _heuristicUpdateSelectedLLMs(state.llms, id, state.fastLLMId)),
-
-    setFastLLMId: (id: DLLMId | null) =>
-      set(state => _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, id)),
-
-    setLLMs: (llms: DLLM[], serviceId: DModelsServiceId, deleteExpiredVendorLlms: boolean, keepUserEdits: boolean) =>
-      set(state => {
+    setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: boolean, keepMissingLLMs: boolean) =>
+      set(({ llms: existingLLMs, modelAssignments }) => {
 
         // keep existing model customizations
         if (keepUserEdits) {
-          llms = llms.map((llm: DLLM): DLLM => {
-            const existing = state.llms.find(m => m.id === llm.id);
+          serviceLLMs = serviceLLMs.map((llm: DLLM): DLLM => {
+            const existing = existingLLMs.find(m => m.id === llm.id);
             return !existing ? llm : {
               ...llm,
               ...(existing.userLabel !== undefined ? { userLabel: existing.userLabel } : {}),
@@ -84,15 +86,15 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
           });
         }
 
-        const otherLlms = deleteExpiredVendorLlms
-          ? state.llms.filter(llm => llm.sId !== serviceId)
-          : state.llms;
+        // remove models that are not in the new list
+        if (!keepMissingLLMs)
+          existingLLMs = existingLLMs.filter(llm => llm.sId !== serviceId);
 
         // replace existing llms with the same id
-        const newLlms = [...llms, ...otherLlms.filter(llm => !llms.find(m => m.id === llm.id))];
+        const newLlms = [...serviceLLMs, ...existingLLMs.filter(existingLlm => !serviceLLMs.some(newLlm => newLlm.id === existingLlm.id))];
         return {
           llms: newLlms,
-          ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId),
+          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, modelAssignments),
         };
       }),
 
@@ -101,7 +103,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         const newLlms = state.llms.filter(llm => llm.id !== id);
         return {
           llms: newLlms,
-          ..._heuristicUpdateSelectedLLMs(newLlms, state.chatLLMId, state.fastLLMId),
+          modelAssignments: llmsHeuristicUpdateAssignments(newLlms, state.modelAssignments),
         };
       }),
 
@@ -152,22 +154,45 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         ),
       })),
 
-    addService: (service: DModelsService) =>
-      set(state => {
-        // re-number all services for the given vendor
-        const sameVendor = service.vId;
+    createModelsService: (vendor: IModelVendor): DModelsService => {
+
+      function _locallyUniqueServiceId(vendorId: ModelVendorId, existingServices: DModelsService[]): DModelsServiceId {
+        let serviceId: DModelsServiceId = vendorId;
+        let serviceIdx = 0;
+        while (existingServices.find(s => s.id === serviceId)) {
+          serviceIdx++;
+          serviceId = `${vendorId}-${serviceIdx}`;
+        }
+        return serviceId;
+      }
+
+      function _relabelServicesFromSameVendor(vendorId: ModelVendorId, services: DModelsService[]): DModelsService[] {
         let n = 0;
-        return {
-          sources: [...state.sources, service].map((s: DModelsService): DModelsService =>
-            s.vId === sameVendor
-              ? {
-                ...s,
-                label: s.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : ''),
-              }
-              : s,
-          ),
-        };
-      }),
+        return services.map((s: DModelsService): DModelsService =>
+          (s.vId !== vendorId) ? s
+            : { ...s, label: s.label.replace(/ #\d+$/, '') + (++n > 1 ? ` #${n}` : '') },
+        );
+      }
+
+      const { sources: existingServices, confServiceId } = get();
+
+      // create the service
+      const newService: DModelsService = {
+        id: _locallyUniqueServiceId(vendor.id, existingServices),
+        label: vendor.name,
+        vId: vendor.id,
+        setup: vendor.initializeSetup?.() || {},
+      };
+
+      const newServices = _relabelServicesFromSameVendor(vendor.id, [...existingServices, newService]);
+
+      set({
+        sources: newServices,
+        confServiceId: confServiceId ?? newService.id,
+      });
+
+      return newServices[newServices.length - 1];
+    },
 
     removeService: (id: DModelsServiceId) =>
       set(state => {
@@ -175,7 +200,7 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
         return {
           llms,
           sources: state.sources.filter(s => s.id !== id),
-          ..._heuristicUpdateSelectedLLMs(llms, state.chatLLMId, state.fastLLMId),
+          modelAssignments: llmsHeuristicUpdateAssignments(llms, state.modelAssignments),
         };
       }),
 
@@ -187,6 +212,9 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
             : s,
         ),
       })),
+
+    setConfServiceId: (id: DModelsServiceId | null) =>
+      set({ confServiceId: id }),
 
     setOpenRouterKey: (key: string) =>
       set(state => {
@@ -209,12 +237,13 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
      *  2: large changes on all LLMs, and reset chat/fast/func LLMs
      *  3: big-AGI v2
      *  4: migrate .options to .initialParameters/.userParameters
+     *  4B: we changed from .chatLLMId/.fastLLMId to modelAssignments: {}, without expicit migration (done on rehydrate, and for no particular reason)
      */
     version: 4,
-    migrate: (_state: any, fromVersion: number): LlmsState => {
+    migrate: (_state: any, fromVersion: number): LlmsStore => {
 
       if (!_state) return _state;
-      const state: LlmsState = _state;
+      const state: LlmsStore = _state;
 
       // 0 -> 1: add 'maxOutputTokens' where missing
       if (fromVersion < 1)
@@ -229,8 +258,6 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
           llm.interfaces = ['oai-chat' /* this is here like this to reduce dependencies */];
           // llm.inputTypes = { 'text': {} };
         }
-        state.chatLLMId = null;
-        state.fastLLMId = null;
       }
 
       // 2 -> 3: big-AGI v2: update all models for pricing info
@@ -279,8 +306,25 @@ export const useModelsStore = create<LlmsState & LlmsActions>()(persist(
 
       // Select the best LLMs automatically, if not set
       try {
-        if (!state.chatLLMId || !state.fastLLMId)
-          Object.assign(state, _heuristicUpdateSelectedLLMs(state.llms, state.chatLLMId, state.fastLLMId));
+        //  auto-detect assignments, or re-import them from the old format
+        if (!state.modelAssignments || !Object.keys(state.modelAssignments).length) {
+
+          // reimport the former chatLLMId and fastLLMId if set
+          const prevState = state as { chatLLMId?: DLLMId, fastLLMId?: DLLMId };
+          const existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>> = {};
+          if (prevState.chatLLMId) {
+            existingAssignments['primaryChat'] = createDModelConfiguration('primaryChat', prevState.chatLLMId);
+            existingAssignments['codeApply'] = createDModelConfiguration('codeApply', prevState.chatLLMId);
+            delete prevState.chatLLMId;
+          }
+          if (prevState.fastLLMId) {
+            existingAssignments['fastUtil'] = createDModelConfiguration('fastUtil', prevState.fastLLMId);
+            delete prevState.fastLLMId;
+          }
+
+          // auto-pick models
+          state.modelAssignments = llmsHeuristicUpdateAssignments(state.llms, existingAssignments);
+        }
       } catch (error) {
         console.error('Error in autoPickModels', error);
       }
@@ -302,15 +346,16 @@ export function findModelsServiceOrNull<TServiceSettings extends object>(service
 }
 
 export function getChatLLMId(): DLLMId | null {
-  return llmsStoreState().chatLLMId;
+  return getDomainModelConfiguration('primaryChat', true, true)?.modelId ?? null;
 }
 
 
 export function getLLMIdOrThrow(order: ('chat' | 'fast')[], supportsFunctionCallTool: boolean, supportsImageInput: boolean, useCaseLabel: string): DLLMId {
-  const { chatLLMId, fastLLMId } = llmsStoreState();
 
   for (const preference of order) {
-    const llmId = preference === 'chat' ? chatLLMId : fastLLMId;
+    const llmId = preference === 'chat'
+      ? getDomainModelConfiguration('primaryChat', true, true)?.modelId
+      : getDomainModelConfiguration('fastUtil', true, true)?.modelId;
     // we don't have one of those assigned, skip
     if (!llmId)
       continue;
@@ -330,140 +375,18 @@ export function getLLMIdOrThrow(order: ('chat' | 'fast')[], supportsFunctionCall
 }
 
 
-export function llmsStoreState(): LlmsState & LlmsActions {
+export function llmsStoreState(): LlmsRootState & LlmsAssignmentsState {
   return useModelsStore.getState();
 }
 
-export function llmsStoreActions(): LlmsActions {
+export function llmsStoreActions(): LlmsRootActions & LlmsAssignmentsActions {
   return useModelsStore.getState();
-}
-
-
-/**
- * Heuristics to return the top LLMs from different vendors (diverse), based on their elo,
- * until there are vendors, otherwise loops, and pads with the fallback.
- *
- * @param count returns up to this number of LLMs
- * @param requireElo if true, only LLMs with elo are returned
- * @param fallback the LLM to use if there are not enough LLMs
- */
-export function getDiverseTopLlmIds(count: number, requireElo: boolean, fallback: DLLMId | null): DLLMId[] {
-  const llmIDs: DLLMId[] = [];
-
-  // iterate through the groups, and top to bottom
-  const llms = llmsStoreState().llms;
-  const groupedLlms = _groupLlmsByVendorRankedByElo(llms);
-  let groupLevel = 0;
-  while (llmIDs.length < count) {
-    let added = false;
-
-    for (const group of groupedLlms) {
-      if (groupLevel < group.llmsByElo.length) {
-        const llmEntry = group.llmsByElo[groupLevel];
-        if (!llmEntry.id || (requireElo && llmEntry.cbaElo === undefined))
-          continue;
-        llmIDs.push(llmEntry.id);
-        added = true;
-        if (llmIDs.length === count) break; // fast exit
-      }
-    }
-
-    if (!added)
-      break;
-    groupLevel++;
-  }
-
-  // pad with the fallback
-  while (llmIDs.length < count && fallback)
-    llmIDs.push(fallback);
-
-  return llmIDs;
 }
 
 export function getLLMsDebugInfo() {
-  const { llms, sources, chatLLMId, fastLLMId } = llmsStoreState();
-  return { services: sources.length, llmsCount: llms.length, chatId: chatLLMId, fastId: fastLLMId };
+  const { llms, sources, modelAssignments } = llmsStoreState();
+  return { services: sources.length, llmsCount: llms.length, modelAssignments };
 }
-
-function _heuristicUpdateSelectedLLMs(allLlms: DLLM[], chatLlmId: DLLMId | null, fastLlmId: DLLMId | null) {
-
-  let grouped: GroupedVendorLLMs;
-
-  function cachedGrouped() {
-    if (!grouped) grouped = _groupLlmsByVendorRankedByElo(allLlms);
-    return grouped;
-  }
-
-  // default Chat: top vendor by Elo, top model
-  if (!chatLlmId || !allLlms.find(llm => llm.id === chatLlmId)) {
-    const vendors = cachedGrouped();
-    chatLlmId = vendors.length ? vendors[0].llmsByElo[0].id : null;
-  }
-
-  // default Fast: vendors by Elo, lowest cost (if available)
-  if (!fastLlmId || !allLlms.find(llm => llm.id === fastLlmId)) {
-    const vendors = cachedGrouped();
-    fastLlmId = _selectFastLlmID(vendors);
-  }
-
-  return { chatLLMId: chatLlmId, fastLLMId: fastLlmId };
-}
-
-
-type BenchVendorLLMs = { vendorId: ModelVendorId, llmsByElo: { id: DLLMId, cbaElo: number | undefined, costRank: number | undefined }[] };
-type GroupedVendorLLMs = BenchVendorLLMs[];
-
-function _groupLlmsByVendorRankedByElo(llms: DLLM[]): GroupedVendorLLMs {
-  // group all LLMs by vendor
-  const grouped = llms.reduce((acc, llm) => {
-    if (llm.hidden) return acc;
-    const group = acc.find(v => v.vendorId === llm.vId);
-    const eloCostItem = {
-      id: llm.id,
-      cbaElo: llm.benchmark?.cbaElo,
-      costRank: !llm.pricing ? undefined : _getLlmCostBenchmark(llm),
-    };
-    if (!group)
-      acc.push({ vendorId: llm.vId, llmsByElo: [eloCostItem] });
-    else
-      group.llmsByElo.push(eloCostItem);
-    return acc;
-  }, [] as GroupedVendorLLMs);
-
-  // sort each vendor's LLMs by elo, decreasing
-  for (const vendor of grouped)
-    vendor.llmsByElo.sort((a, b) => (b.cbaElo ?? -1) - (a.cbaElo ?? -1));
-
-  // sort all vendors by their highest elo, decreasing
-  grouped.sort((a, b) => (b.llmsByElo[0].cbaElo ?? -1) - (a.llmsByElo[0].cbaElo ?? -1));
-  return grouped;
-}
-
-// Hypothetical cost benchmark for a model, based on total cost of 100k input tokens and 10k output tokens.
-function _getLlmCostBenchmark(llm: DLLM): number | undefined {
-  if (!llm.pricing?.chat) return undefined;
-  const costIn = getLlmCostForTokens(100000, 100000, llm.pricing.chat.input);
-  const costOut = getLlmCostForTokens(100000, 10000, llm.pricing.chat.output);
-  return (costIn !== undefined && costOut !== undefined) ? costIn + costOut : undefined;
-}
-
-// Selects the 'fast' llm
-function _selectFastLlmID(vendors: GroupedVendorLLMs) {
-  if (!vendors.length) return null;
-  for (const vendor of vendors) {
-    const lowestCostLlm = vendor.llmsByElo.reduce((acc, llm) => {
-      if (!acc)
-        return llm;
-      if (!llm.costRank || !acc.costRank)
-        return acc;
-      return llm.costRank < acc.costRank ? llm : acc;
-    }, null as BenchVendorLLMs['llmsByElo'][number] | null);
-    if (lowestCostLlm)
-      return lowestCostLlm.id;
-  }
-  return null;
-}
-
 
 function _port_V3Options_to_V4Parameters_inline(llm: DLLM): void {
 

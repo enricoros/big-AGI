@@ -1,9 +1,8 @@
-import { createModelsServiceForVendor } from '~/modules/llms/vendors/vendor.helpers';
 import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
@@ -13,18 +12,21 @@ let _isConfigurationDone = false;
 
 
 /**
- * Reload models for services configured in the backend.
+ * Reload models because of:
+ * - updated backend capabilities (e.g. new service added)
+ * - AIX/LLMs updated, in which case we'd have to re-scan services
  */
-export async function reconfigureBackendModels(newLlmReconfigHash: string, setReconfigHash: (hash: string) => void) {
+export async function reconfigureBackendModels(lastLlmReconfigHash: string, setLastReconfigHash: (hash: string) => void, remoteServices: boolean, existingServices: boolean) {
 
   // Note: double-calling is only expected to happen in react strict mode
   if (_isConfiguring || _isConfigurationDone)
     return;
 
-  // skip if no change is detected / no config needed
+  // skip if there haven't been any changes in the backend configuration
+  // Note: the hash captures both AIX/LLMs changes and new backend-configured services
   const backendCaps = getBackendCapabilities();
-  const llmReconfigHash = backendCaps.hashLlmReconfig;
-  if (!llmReconfigHash || llmReconfigHash === newLlmReconfigHash) {
+  const backendReconfigHash = backendCaps.hashLlmReconfig;
+  if (!backendReconfigHash || lastLlmReconfigHash === backendReconfigHash) {
     _isConfiguring = false;
     _isConfigurationDone = true;
     return;
@@ -32,34 +34,41 @@ export async function reconfigureBackendModels(newLlmReconfigHash: string, setRe
 
   // begin configuration
   _isConfiguring = true;
-  setReconfigHash(llmReconfigHash);
+  // FIXME: future: move this to the end of the function, but also with strong retry count and error catching, so one's app wouldn't loop upon each boot
+  setLastReconfigHash(backendReconfigHash);
+  const initiallyEmpty = !llmsStoreState().llms?.length;
 
-  // find all vendors configured in the backend
-  // **NOTE**: doesn't reload pure frontend ones
-  const backendConfiguredVendors = findAllModelVendors()
-    .filter(vendor => vendor.hasBackendCapKey && backendCaps[vendor.hasBackendCapKey]);
+  // reconfigure these
+  const servicesToReconfigure: DModelsService[] = [];
 
-  // List to keep track of the service IDs in order
-  const configuredServiceIds: DModelsServiceId[] = [];
-
-  // Sequentially auto-configure each vendor
-  await backendConfiguredVendors.reduce(async (promiseChain, vendor) => {
-    return promiseChain
-      .then(async () => {
+  // add the backend services
+  if (remoteServices)
+    findAllModelVendors()
+      .filter(vendor => vendor.hasBackendCapKey && backendCaps[vendor.hasBackendCapKey])
+      .forEach(remoteVendor => {
 
         // find the first service for this vendor
-        const { sources: modelsServices, addService } = llmsStoreState();
-        let service: DModelsService;
-        const firstServiceForVendor = modelsServices.find(s => s.vId === vendor.id);
-        if (!firstServiceForVendor) {
-          // create and append the model service, assuming the backend configuration will be successful
-          service = createModelsServiceForVendor(vendor.id, modelsServices);
-          addService(service);
-          // re-find it now that it's added
-          service = llmsStoreState().sources.find(_s => _s.id === service.id)!;
-        } else
-          service = firstServiceForVendor;
+        const { sources: services } = llmsStoreState();
+        const remoteService = services.find(s => s.vId === remoteVendor.id)
+          || llmsStoreActions().createModelsService(remoteVendor);
+        servicesToReconfigure.push(remoteService);
 
+      });
+
+  // add any other local services
+  if (existingServices)
+    llmsStoreState().sources
+      .filter(s => !servicesToReconfigure.includes(s))
+      .forEach(s => servicesToReconfigure.push(s));
+
+
+  // track in order the services that were configured
+  const configuredServiceIds: DModelsServiceId[] = [];
+
+  // sequentially re-configure
+  await servicesToReconfigure.reduce(async (promiseChain, service) => {
+    return promiseChain
+      .then(async () => {
         // keep track of the configured service IDs
         configuredServiceIds.push(service.id);
 
@@ -68,7 +77,7 @@ export async function reconfigureBackendModels(newLlmReconfigHash: string, setRe
       })
       .catch(error => {
         // catches errors and logs them, but does not stop the chain
-        console.error('Auto-configuration failed for vendor:', vendor.name, error);
+        console.error('Auto-configuration failed for service:', service.label, error);
       })
       .then(() => {
         // short delay between vendors
@@ -79,12 +88,13 @@ export async function reconfigureBackendModels(newLlmReconfigHash: string, setRe
   // Re-rank the LLMs based on the order of configured services
   llmsStoreActions().rerankLLMsByServices(configuredServiceIds);
 
-  // if the current global Chat LLM is now hidden, auto-pick one that's not
-  const { llms: updatedLLMs, chatLLMId: newChatLLMId } = llmsStoreState();
-  if (newChatLLMId) {
-    const currentChatLLM = updatedLLMs.find(llm => llm.id === newChatLLMId);
-    if (!currentChatLLM || currentChatLLM.hidden)
-      llmsStoreActions().setChatLLMId(null);
+  // Auto-assignment conditions
+  if (initiallyEmpty) {
+    // in case we refreshed all vendors, auto-assign the primary chat model, so it doesn't get locked to the first vendor
+    llmsStoreActions().assignDomainModelId('primaryChat', null);
+  } else {
+    // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
+    llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
   }
 
   // end configuration

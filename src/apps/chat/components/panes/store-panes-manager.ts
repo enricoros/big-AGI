@@ -18,6 +18,9 @@ const MAX_CONCURRENT_PANES = 4;
 const DEBUG_PANES_MANAGER = false;
 
 
+// Future: support different types of panes: chat, docs, diff, settings, (beam?) etc.
+// type Pane = ChatPane;
+
 interface ChatPane {
 
   paneId: string;
@@ -39,13 +42,14 @@ interface AppChatPanesState {
 
 }
 
-interface AppChatPanesStore extends AppChatPanesState {
+interface AppChatPanesActions {
 
   // actions
   openConversationInFocusedPane: (conversationId: DConversationId) => void;
   openConversationInSplitPane: (conversationId: DConversationId) => void;
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
   duplicateFocusedPane: (/*paneIndex: number*/) => void;
+  insertEmptyAfterFocusedPane: (reuseEmpty: boolean) => void;
   removeOtherPanes: () => void;
   removePane: (paneIndex: number) => void;
   setFocusedPaneIndex: (paneIndex: number) => void;
@@ -53,25 +57,8 @@ interface AppChatPanesStore extends AppChatPanesState {
 
 }
 
-function createPane(conversationId: DConversationId | null = null): ChatPane {
-  return {
-    paneId: agiUuid('chat-pane'),
-    conversationId,
-    history: conversationId ? [conversationId] : [],
-    historyIndex: conversationId ? 0 : -1,
-  };
-}
 
-function duplicatePane(pane: ChatPane): ChatPane {
-  return {
-    paneId: agiUuid('chat-pane'),
-    conversationId: pane.conversationId,
-    history: [...pane.history],
-    historyIndex: pane.historyIndex,
-  };
-}
-
-const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
+const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(persist(
   (_set, _get) => ({
 
     // Initial state: no panes
@@ -84,7 +71,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
 
         // If there's no pane or no focused pane, create and focus a new one.
         if (!chatPanes.length || chatPaneFocusIndex === null) {
-          const newPane = createPane(conversationId);
+          const newPane = _createChatPane(conversationId);
           return {
             chatPanes: [newPane],
             chatPaneFocusIndex: 0, // Focus the new pane
@@ -141,7 +128,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         _set((state) => ({
           chatPanes: [
             ...state.chatPanes.slice(0, insertIndex),
-            focusedPane ? duplicatePane(focusedPane) : createPane(null),
+            focusedPane ? _duplicateChatPane(focusedPane) : _createChatPane(null),
             ...state.chatPanes.slice(insertIndex),
           ],
           chatPaneFocusIndex: insertIndex,
@@ -214,13 +201,52 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
         // Insert the duplicated pane into the array, right after the original pane
         const newPanes = [
           ...chatPanes.slice(0, dstIndex),
-          duplicatePane(paneToDuplicate),
+          _duplicateChatPane(paneToDuplicate),
           ...chatPanes.slice(dstIndex),
         ];
 
         return {
           chatPanes: newPanes,
           chatPaneFocusIndex: dstIndex,
+        };
+      }),
+
+    insertEmptyAfterFocusedPane: (reuseEmpty: boolean) =>
+      _set(state => {
+        const { chatPanes, chatPaneFocusIndex: _srcIndex } = state;
+
+        // if reusing, move focus to the first empty pane, if any
+        if (reuseEmpty) {
+          const emptyPaneIndex = chatPanes.findIndex(pane => pane.conversationId === null);
+          if (emptyPaneIndex >= 0) {
+            if (DEBUG_PANES_MANAGER)
+              console.log('insertEmptyAfterFocusedPane: reusing empty pane at:', emptyPaneIndex);
+            return {
+              chatPaneFocusIndex: emptyPaneIndex,
+            };
+          }
+        }
+
+        // check precondition
+        if (chatPanes.length >= MAX_CONCURRENT_PANES) {
+          console.warn('Cannot add more panes: maximum reached');
+          return state;
+        }
+
+        // insert an empty pane after the focused pane, or at the end if no focus
+        const dstIndex = (_srcIndex !== null && _srcIndex >= 0) ? _srcIndex + 1 : chatPanes.length;
+        const newPanes = [
+          ...chatPanes.slice(0, dstIndex),
+          _createChatPane(null),
+          ...chatPanes.slice(dstIndex),
+        ];
+
+        if (DEBUG_PANES_MANAGER)
+          console.log('insertEmptyAfterFocusedPane: created new empty pane at:', dstIndex);
+
+        return {
+          chatPanes: newPanes,
+          chatPaneFocusIndex: dstIndex, // focus the new empty pane
         };
       }),
 
@@ -313,7 +339,7 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
 
         // play it safe, and make sure a pane exists, and is focused
         return {
-          chatPanes: newPanes.length ? newPanes : [createPane(conversationIds[0] ?? null)],
+          chatPanes: newPanes.length ? newPanes : [_createChatPane(conversationIds[0] ?? null)],
           chatPaneFocusIndex: (newPanes.length && chatPaneFocusIndex !== null && chatPaneFocusIndex < newPanes.length) ? chatPaneFocusIndex : 0,
         };
       }),
@@ -324,13 +350,42 @@ const useAppChatPanesStore = create<AppChatPanesStore>()(persist(
   },
 ));
 
+
+function _createChatPane(conversationId: DConversationId | null = null): ChatPane {
+  return {
+    paneId: agiUuid('chat-pane'),
+    conversationId,
+    history: conversationId ? [conversationId] : [],
+    historyIndex: conversationId ? 0 : -1,
+  };
+}
+
+function _duplicateChatPane(pane: ChatPane): ChatPane {
+  return {
+    paneId: agiUuid('chat-pane'),
+    conversationId: pane.conversationId,
+    history: [...pane.history],
+    historyIndex: pane.historyIndex,
+  };
+}
+
+
+// Instant getters
+
+export function panesManagerActions(): AppChatPanesActions {
+  return useAppChatPanesStore.getState();
+}
+
 export function getInstantAppChatPanesCount() {
   return useAppChatPanesStore.getState().chatPanes.length;
 }
 
+
+// Reactive hooks
+
 export function usePanesManager() {
-  // use Panes
-  const { _onConversationsChanged, ...panesFunctions } = useAppChatPanesStore(useShallow(state => ({
+  // use Panes - Note: before we had { _onConversationsChanged, ...panesFunctions } = ... but we don't need the internal function anymore
+  const panesData = useAppChatPanesStore(useShallow(state => ({
     // state
     chatPanes: state.chatPanes as Readonly<ChatPane[]>,
     focusedPaneIndex: state.chatPaneFocusIndex,
@@ -341,7 +396,6 @@ export function usePanesManager() {
     navigateHistoryInFocusedPane: state.navigateHistoryInFocusedPane,
     removePane: state.removePane,
     setFocusedPaneIndex: state.setFocusedPaneIndex,
-    _onConversationsChanged: state._onConversationsChanged,
   })));
 
   // use changes in Conversation IDs[] to trigger the existence check
@@ -351,18 +405,18 @@ export function usePanesManager() {
 
   // [Effect] Ensure all Panes have a valid Conversation ID
   React.useEffect(() => {
-    _onConversationsChanged(conversationIDs);
-  }, [conversationIDs, _onConversationsChanged]);
+    panesManagerActions()._onConversationsChanged(conversationIDs);
+  }, [conversationIDs]);
 
-  return {
-    ...panesFunctions,
-  };
+  return panesData;
 }
 
 export function usePaneDuplicateOrClose() {
   return useAppChatPanesStore(useShallow(state => ({
     // state
-    canAddPane: state.chatPanes.length < MAX_CONCURRENT_PANES,
+    canAddPane: state.chatPanes.length < MAX_CONCURRENT_PANES
+      // if the current pane has an empty conversation, don't add another one!
+      && (state.chatPaneFocusIndex === null || state.chatPanes[state.chatPaneFocusIndex].conversationId !== null),
     isMultiPane: state.chatPanes.length > 1,
     // actions
     duplicateFocusedPane: state.duplicateFocusedPane,

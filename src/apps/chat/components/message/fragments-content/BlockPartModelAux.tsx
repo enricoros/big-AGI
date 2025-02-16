@@ -146,6 +146,7 @@ export function BlockPartModelAux(props: {
           color='success'
           variant='soft'
           size='sm'
+          disabled={!onFragmentReplace}
           onClick={!onFragmentReplace ? undefined : handleInline}
           endDecorator={<TextFieldsIcon />}
           sx={_styles.chip}

@@ -3,16 +3,46 @@ import * as React from 'react';
 import { FormControl, Switch } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
+import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
 
 
-export function AppChatSettingsAI() {
+// configuration
+const SHOW_ALL_MODEL_DOMAINS = false;
+
+
+function FormControlDomainModel(props: {
+  domainId: DModelDomainId,
+  title: React.ReactNode,
+  description?: React.ReactNode,
+  tooltip?: React.ReactNode,
+}) {
 
   // external state
+  const { domainModelId: fastModelId, assignDomainModelId: setFastModelId } = useModelDomain(props.domainId);
+  const [_llm, llmComponent] = useLLMSelect(fastModelId, setFastModelId, { label: '', autoRefreshDomain: props.domainId });
+
+  return (
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart
+        title={props.title}
+        description={props.description}
+        tooltip={props.tooltip}
+      />
+      {llmComponent}
+    </FormControl>
+  );
+}
+
+
+export function AppChatSettingsAI() {
+
   const {
     autoSuggestAttachmentPrompts, setAutoSuggestAttachmentPrompts,
     autoSuggestDiagrams, setAutoSuggestDiagrams,
@@ -35,6 +65,27 @@ export function AppChatSettingsAI() {
   // const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
 
   return <>
+
+    {SHOW_ALL_MODEL_DOMAINS && <FormControlDomainModel domainId='primaryChat' title='Chat' description='Fallback model' />}
+
+    {SHOW_ALL_MODEL_DOMAINS && <FormControlDomainModel domainId='codeApply' title='Code' description='Edits model' />}
+
+    <FormControlDomainModel
+      domainId='fastUtil'
+      title='Utility Model'
+      description='Fast, see info'
+      tooltip={<>
+        Lightweight model used for &quot;fast&quot;, low-cost operations, such as:
+        <ul>
+          <li>Chat title generation</li>
+          <li>Attachment prompts</li>
+          <li>Diagrams generation</li>
+          <li>Drawing prompts</li>
+          <li>And more</li>
+        </ul>
+        For chat messages and similar high-quality content, the chat model is used instead.
+      </>}
+    />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Chat Title'

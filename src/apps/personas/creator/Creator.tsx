@@ -108,7 +108,7 @@ export function Creator(props: { display: boolean }) {
   // external state
   const contentScaling = useUIContentScaling();
   const [personaLlmId, setPersonaLlmId] = useLLMSelectLocalState(true);
-  const [personaLlm, llmComponent] = useLLMSelect(personaLlmId, setPersonaLlmId, 'Persona Creation Model');
+  const [personaLlm, llmComponent] = useLLMSelect(personaLlmId, setPersonaLlmId, { label: 'Persona Creation Model', larger: true });
 
 
   // editable prompts

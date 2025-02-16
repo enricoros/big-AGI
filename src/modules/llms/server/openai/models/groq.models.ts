@@ -11,14 +11,59 @@ import { wireGroqModelsListOutputSchema } from '../groq.wiretypes';
  * - pricing: https://groq.com/pricing/
  */
 const _knownGroqModels: ManualMappings = [
+  // Preview (recent)
   {
     isPreview: true,
     idPrefix: 'deepseek-r1-distill-llama-70b',
     label: 'DeepSeek R1 Distill Llama 70B (Preview)',
-    description: 'DeepSeek R1 Distill Llama 70B with a context window of 131,072 tokens. Preview model.',
+    description: 'DeepSeek R1 Distill Llama 70B with a context window of 131072 tokens. Preview model with tiered pricing up to 4K, 32K, and above 32K tokens.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: {
+      input: [{ upTo: 4000, price: 0.75 }, { upTo: 32000, price: 3.00 }, { upTo: null, price: 5.00 }],
+      output: [{ upTo: 4000, price: 0.99 }, { upTo: 32000, price: 3.00 }, { upTo: null, price: 5.00 }],
+    },
   },
+  {
+    isPreview: true,
+    idPrefix: 'deepseek-r1-distill-qwen-32b',
+    label: 'DeepSeek R1 Distill Qwen 32B (Preview)',
+    description: 'DeepSeek R1 Distill Qwen 32B with a context window of 131,072 tokens, up to 16,384 completion tokens. Preview model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    isPreview: true,
+    idPrefix: 'qwen-2.5-32b',
+    label: 'Qwen 2.5 · 32B (Preview)',
+    description: 'Qwen 2.5 32B developed by Alibaba Cloud with a context window of 131,072 tokens. Preview model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 8192,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    isPreview: true,
+    idPrefix: 'qwen-2.5-coder-32b',
+    label: 'Qwen 2.5 Coder · 32B (Preview)',
+    description: 'Qwen 2.5 32B developed by Alibaba Cloud with a context window of 131,072 tokens. Preview model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 8192,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    isPreview: true,
+    idPrefix: 'deepseek-r1-distill-llama-70b-specdec',
+    label: 'DeepSeek R1 Distill Llama 70B SpecDec (Preview)',
+    description: 'DeepSeek R1 Distill Llama 70B SpecDec with a context window of 131,072 tokens, up to 16,384 completion tokens. Preview model.',
+    contextWindow: 131072,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true, // preview, and pricing unknown
+  },
+
+  // Production Models
+  // ignoring (not chat models): distil-whisper-large-v3-en, whisper-large-v3, whisper-large-v3-turbo
   {
     idPrefix: 'gemma2-9b-it',
     label: 'Gemma 2 · 9B Instruct',
@@ -82,7 +127,7 @@ const _knownGroqModels: ManualMappings = [
   {
     isPreview: true,
     idPrefix: 'llama-3.3-70b-specdec',
-    label: 'Llama 3.3 · 70B SpecDec (Preview)',
+    label: 'Llama 3.3 · 70B SpecDec (Faster, Preview)',
     description: 'LLaMA 3.3 70B SpecDec with a context window of 8,192 tokens. Preview model.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],

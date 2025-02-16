@@ -66,3 +66,7 @@ export function findModelVendor<TServiceSettings extends object = {}, TAccess = 
 ): IModelVendor<TServiceSettings, TAccess> | null {
   return vendorId ? (MODEL_VENDOR_REGISTRY[vendorId] as IModelVendor<TServiceSettings, TAccess>) ?? null : null;
 }
+
+// export function getDefaultModelVendor(): IModelVendor {
+//   return MODEL_VENDOR_REGISTRY.openai;
+// }

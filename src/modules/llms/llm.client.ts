@@ -2,7 +2,7 @@ import { sendGAEvent } from '@next/third-parties/google';
 
 import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
 import { applyModelParameterInitialValues, FALLBACK_LLM_PARAM_TEMPERATURE } from '~/common/stores/llms/llms.parameters';
 import { isModelPricingFree } from '~/common/stores/llms/llms.pricing';
@@ -23,11 +23,11 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   const data = await vendor.rpcUpdateModelsOrThrow(transportAccess);
 
   // update the global models store
-  llmsStoreActions().setLLMs(
-    data.models.map(model => _createDLLMFromModelDescription(model, service)),
+  llmsStoreActions().setServiceLLMs(
     service.id,
-    true,
+    data.models.map(model => _createDLLMFromModelDescription(model, service)),
     keepUserEdits,
+    false,
   );
 
   // figure out which vendors are actually used and useful

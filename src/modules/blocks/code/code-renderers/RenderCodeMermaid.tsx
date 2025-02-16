@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { create } from 'zustand';
+import { create as createStoreForReactiveGlobals } from 'zustand';
 import { useQuery } from '@tanstack/react-query';
 
 import { Box, Typography } from '@mui/joy';
@@ -39,7 +39,7 @@ interface MermaidAPIStore {
   loadingError: string | null,
 }
 
-const useMermaidStore = create<MermaidAPIStore>()(
+const useMermaidStore = createStoreForReactiveGlobals<MermaidAPIStore>()(
   () => ({
     mermaidAPI: null,
     loadingError: null,

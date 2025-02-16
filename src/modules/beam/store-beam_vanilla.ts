@@ -4,7 +4,7 @@ import { createStore as createVanillaStore, StateCreator } from 'zustand/vanilla
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-import { getDiverseTopLlmIds } from '~/common/stores/llms/store-llms';
+import { llmsHeuristicGetTopDiverseLlmIds } from '~/common/stores/llms/store-llms-domains_slice';
 
 import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
 import { SCATTER_RAY_DEF } from './beam.config';
@@ -112,7 +112,7 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
       return;
 
     // it no config (first-time): Heuristic: auto-pick the best models for the user, based on their ELO and variety
-    const autoLlmIds = getDiverseTopLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId);
+    const autoLlmIds = llmsHeuristicGetTopDiverseLlmIds(SCATTER_RAY_DEF, true, initialChatLlmId);
     if (autoLlmIds.length > 0) {
       setRayLlmIds(autoLlmIds);
       setCurrentGatherLlmId(autoLlmIds[0]);

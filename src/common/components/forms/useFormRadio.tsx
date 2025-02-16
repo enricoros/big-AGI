@@ -17,21 +17,19 @@ export function useFormRadio<T extends string>(initialValue: T, options: FormRad
     setValue(event.target.value as T | null);
   }, []);
 
-  const component = React.useMemo(() =>
-      hidden === true
-        ? null
-        : <FormControl>
-          {!!label && <FormLabel>{label}</FormLabel>}
-          <RadioGroup
-            orientation='horizontal'
-            value={value} onChange={handleChange}
-          >
-            {options.map((option) =>
-              <Radio key={option.value} disabled={option.disabled} value={option.value} label={option.label} />)}
-          </RadioGroup>
-        </FormControl>,
-    [handleChange, hidden, label, options, value],
-  );
+  const component = React.useMemo(() => hidden === true ? null : (
+    <FormControl /* size='sm' NOTE: this would make all forms smaller, but requires an adaptation of all the other <RadioGroups> as well, including settings */>
+      {!!label && <FormLabel>{label}</FormLabel>}
+      <RadioGroup
+        orientation='horizontal'
+        value={value} onChange={handleChange}
+        sx={{ gap: 0.5 }}
+      >
+        {options.map((option) =>
+          <Radio key={option.value} disabled={option.disabled} value={option.value} label={option.label} />)}
+      </RadioGroup>
+    </FormControl>
+  ), [handleChange, hidden, label, options, value]);
 
   return [value, component, setValue];
 }

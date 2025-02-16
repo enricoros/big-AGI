@@ -1,21 +1,26 @@
 import * as React from 'react';
 
-import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Badge, Box, Button, IconButton, ListItemDecorator, MenuItem, Option, Select, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
-import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useModelsServices } from '~/common/stores/llms/llms.hooks';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
-import { createModelsServiceForVendor, vendorHasBackendCap } from '../vendors/vendor.helpers';
-import { findAllModelVendors, findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
+import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
+import { vendorHasBackendCap } from '../vendors/vendor.helpers';
+// import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
+
+
+// configuration
+const ENABLE_DELETE_LAST = true; // This will fall the menu back to the 'Quick Setup' mode. was: Release.IsNodeDevBuild;
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
@@ -35,7 +40,9 @@ function vendorIcon(vendor: IModelVendor | null, greenMark: boolean) {
 
 
 export function ModelsServiceSelector(props: {
-  selectedServiceId: DModelsServiceId | null, setSelectedServiceId: (serviceId: DModelsServiceId | null) => void,
+  modelsServices: DModelsService[],
+  selectedServiceId: DModelsServiceId | null,
+  setSelectedServiceId: (serviceId: DModelsServiceId | null) => void,
 }) {
 
   // state
@@ -44,7 +51,6 @@ export function ModelsServiceSelector(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const modelsServices = useModelsServices();
 
   const handleShowVendors = (event: React.MouseEvent<HTMLElement>) => setVendorsMenuAnchor(event.currentTarget);
 
@@ -53,21 +59,25 @@ export function ModelsServiceSelector(props: {
 
   // handlers
 
-  const { setSelectedServiceId } = props;
+  const { modelsServices, setSelectedServiceId } = props;
 
-  const handleAddServiceForVendor = React.useCallback((vendorId: ModelVendorId) => {
+  const handleAddServiceForVendor = React.useCallback((vendor: IModelVendor) => {
     closeVendorsMenu();
-    const { sources: modelsServices, addService } = llmsStoreState();
-    const modelsService = createModelsServiceForVendor(vendorId, modelsServices);
-    if (modelsService) {
-      addService(modelsService);
-      setSelectedServiceId(modelsService.id);
-    }
+    const modelsService = llmsStoreActions().createModelsService(vendor);
+    setSelectedServiceId(modelsService.id);
   }, [setSelectedServiceId]);
 
-  const enableDeleteButton = !!props.selectedServiceId && modelsServices.length > 1;
+  const enableDeleteButton = !!props.selectedServiceId && (ENABLE_DELETE_LAST || modelsServices.length > 1);
 
-  const handleDeleteService = React.useCallback(async (serviceId: DModelsServiceId) => {
+  const handleDeleteService = React.useCallback(async (serviceId: DModelsServiceId, skipConfirmation: boolean) => {
+    // [shift] to delete without confirmation
+    if (skipConfirmation) {
+      // select the next service
+      setSelectedServiceId(modelsServices.find(s => s.id !== serviceId)?.id ?? null);
+      // remove the service
+      llmsStoreActions().removeService(serviceId);
+      return;
+    }
     showPromisedOverlay('llms-service-remove', {}, ({ onResolve, onUserReject }) =>
       <ConfirmationModal
         open onClose={onUserReject} onPositive={() => onResolve(true)}
@@ -102,7 +112,7 @@ export function ModelsServiceSelector(props: {
             vendor,
             enabled,
             component: (
-              <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddServiceForVendor(vendor.id)}>
+              <MenuItem key={vendor.id} disabled={!enabled} onClick={() => handleAddServiceForVendor(vendor)}>
                 <ListItemDecorator>
                   {vendorIcon(vendor, vendorHasBackendCap(vendor))}
                 </ListItemDecorator>
@@ -192,29 +202,46 @@ export function ModelsServiceSelector(props: {
         onChange={(_event, value) => value && props.setSelectedServiceId(value)}
         startDecorator={selectedServiceItem?.icon}
         slotProps={{
-          root: { sx: { minWidth: 190 } },
+          root: { sx: { minWidth: 180 } },
           indicator: { sx: { opacity: 0.5 } },
         }}
       >
         {serviceItems.map(item => item.component)}
+
+        {/* Add Service button */}
+        {/*<ListDivider />*/}
+        {/*<ListItem onClick={handleShowVendors}>*/}
+        {/*  <ListItemButton>*/}
+        {/*    <ListItemDecorator>*/}
+        {/*      <AddIcon />*/}
+        {/*    </ListItemDecorator>*/}
+        {/*    Add Service*/}
+        {/*  </ListItemButton>*/}
+        {/*</ListItem>*/}
       </Select>
 
-      {isMobile ? (
-        <IconButton variant={noServices ? 'solid' : 'plain'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor}>
+      {(isMobile && !noServices) ? (
+        <IconButton variant={noServices ? 'solid' : 'outlined'} color='primary' onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} sx={{ borderColor: 'neutral.outlinedBorder' }}>
           <AddIcon />
         </IconButton>
       ) : (
-        <Button variant={noServices ? 'solid' : 'plain'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />}>
-          Add
-        </Button>
+        <Tooltip open={noServices && !vendorsMenuAnchor} variant='outlined' color='primary' size='md' placement={isMobile ? 'bottom-end' : 'top-start'} arrow title='Add your first AI service'>
+          <Button variant={noServices ? 'solid' : 'outlined'} onClick={handleShowVendors} disabled={!!vendorsMenuAnchor} startDecorator={<AddIcon />} sx={{ borderColor: 'neutral.outlinedBorder' }}>
+            Add
+          </Button>
+        </Tooltip>
       )}
 
-      <IconButton
-        variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
-        onClick={() => props.selectedServiceId && handleDeleteService(props.selectedServiceId)}
-      >
-        <DeleteOutlineIcon />
-      </IconButton>
+      {enableDeleteButton && (
+        <TooltipOutlined title={`Remove ${selectedServiceItem?.service.label || 'Service'}`}>
+          <IconButton
+            variant='plain' color='neutral' disabled={!enableDeleteButton} sx={{ ml: 'auto' }}
+            onClick={(event) => props.selectedServiceId && handleDeleteService(props.selectedServiceId, event.shiftKey)}
+          >
+            <DeleteOutlineIcon />
+          </IconButton>
+        </TooltipOutlined>
+      )}
 
 
       {/* vendors popup, for adding */}

@@ -10,7 +10,7 @@ import { FormLabelStart } from './FormLabelStart';
  */
 export function FormSwitchControl(props: {
   title: string | React.JSX.Element, description?: string | React.JSX.Element,
-  on?: string, off?: string, fullWidth?: boolean,
+  on?: React.ReactNode, off?: string, fullWidth?: boolean,
   checked: boolean, onChange: (on: boolean) => void,
   disabled?: boolean,
   tooltip?: React.ReactNode,

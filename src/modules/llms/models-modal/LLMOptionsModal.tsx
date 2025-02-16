@@ -6,12 +6,14 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { DPricingChatGenerate } from '~/common/stores/llms/llms.pricing';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { useDefaultLLMIDs, useLLM } from '~/common/stores/llms/llms.hooks';
+import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
+import { useLLM } from '~/common/stores/llms/llms.hooks';
 
 import { LLMOptionsGlobal } from './LLMOptionsGlobal';
 
@@ -67,14 +69,11 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   // external state
   const llm = useLLM(props.id);
-  const { chatLLMId, fastLLMId } = useDefaultLLMIDs();
-  const { removeLLM, updateLLM, setChatLLMId, setFastLLMId } = llmsStoreActions();
+  const domainAssignments = useModelDomains();
+  const { removeLLM, updateLLM, assignDomainModelId } = llmsStoreActions();
 
   if (!llm)
     return <>Options issue: LLM not found for id {props.id}</>;
-
-  const isChatLLM = chatLLMId === props.id;
-  const isFastLLM = fastLLMId === props.id;
 
   const handleLlmLabelSet = (event: React.ChangeEvent<HTMLInputElement>) => updateLLM(llm.id, { label: event.target.value || '' });
 
@@ -109,15 +108,19 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-        <FormLabelStart title='Defaults' sx={{ minWidth: 80 }} />
+        <FormLabelStart title='Assignment' description='Default model' sx={{ minWidth: 80 }} />
         <ButtonGroup orientation='horizontal' size='sm' variant='outlined'>
-          {/* Note: use Tooltip instead of GoodTooltip here, because GoodTooltip is not working well with ButtonGroup */}
-          <Tooltip title={isChatLLM ? 'Default model for new Chats' : 'Make this model the default Chat model'}>
-            <Button variant={isChatLLM ? 'solid' : undefined} onClick={() => setChatLLMId(isChatLLM ? null : props.id)}>Chat</Button>
-          </Tooltip>
-          <Tooltip title='Use this Model for "fast" features, such as Auto-Title, Summarize, etc.'>
-            <Button variant={isFastLLM ? 'solid' : undefined} onClick={() => setFastLLMId(isFastLLM ? null : props.id)}>Fast</Button>
-          </Tooltip>
+          {ModelDomainsList.map(domainId => {
+            const domainSpec = ModelDomainsRegistry[domainId];
+            const domainModelId = domainAssignments[domainId]?.modelId;
+            const isActive = domainModelId === llm.id;
+            return (
+              // Note: use Tooltip instead of GoodTooltip here, because GoodTooltip is not working well with ButtonGroup
+              <Tooltip arrow placement='top' key={domainId} title={domainSpec.confTooltip}>
+                <Button variant={isActive ? 'solid' : undefined} onClick={() => assignDomainModelId(domainId, isActive ? null : llm.id)}>{domainSpec.confLabel}</Button>
+              </Tooltip>
+            );
+          })}
         </ButtonGroup>
       </FormControl>
 

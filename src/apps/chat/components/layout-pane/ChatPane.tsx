@@ -23,7 +23,7 @@ import { optimaCloseAppMenu } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
-import { usePaneDuplicateOrClose } from '../panes/usePanesManager';
+import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
 
 
 function VariformPaneFrame() {
@@ -51,7 +51,7 @@ export function ChatPane(props: {
 }): React.ReactNode {
 
   // external state
-  const { canAddPane, isMultiPane, duplicateFocusedPane, removeOtherPanes } = usePaneDuplicateOrClose();
+  const { canAddPane, isMultiPane, removeOtherPanes } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
 
@@ -70,12 +70,15 @@ export function ChatPane(props: {
     event?.stopPropagation();
 
     // create a new pane with the current conversation
-    duplicateFocusedPane();
+    // duplicateFocusedPane();
+
+    // create a new empty pane
+    panesManagerActions().insertEmptyAfterFocusedPane(true);
 
     // load a brand new conversation inside
     // FIXME: still testing this
     // props.onConversationNew(true);
-  }, [duplicateFocusedPane]);
+  }, []);
 
   const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
     if (isMultiPane)

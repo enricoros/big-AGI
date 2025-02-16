@@ -17,7 +17,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1269, cbaMmlu: 88.7 }, // moved from 3.5 Sonnet (Previous Version), TO UPDATE!!
+    benchmark: { cbaElo: 1283, cbaMmlu: 88.7 },
   },
   {
     id: 'claude-3-5-haiku-20241022',
@@ -29,7 +29,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Jul 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
-    benchmark: { cbaElo: 1179, cbaMmlu: 75.2 }, // moved from 3.5 Haiku (Previous Version), TO UPDATE!!
+    benchmark: { cbaElo: 1236, cbaMmlu: 75.2 },
   },
   {
     id: 'claude-3-5-sonnet-20240620',
@@ -41,7 +41,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Apr 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1269 - 0.1, cbaMmlu: 88.7 - 0.1 },
+    benchmark: { cbaElo: 1268, cbaMmlu: 88.6 },
     hidden: true,
   },
 
@@ -56,7 +56,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
-    benchmark: { cbaElo: 1248, cbaMmlu: 86.8 },
+    benchmark: { cbaElo: 1247, cbaMmlu: 86.8 },
   },
   {
     id: 'claude-3-sonnet-20240229',
@@ -82,7 +82,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     trainingDataCutoff: 'Aug 2023',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 0.25, output: 1.25, cache: { cType: 'ant-bp', read: 0.03, write: 0.30, duration: 300 } },
-    benchmark: { cbaElo: 1179 - 0.1, cbaMmlu: 75.2 - 0.1 },
+    benchmark: { cbaElo: 1179, cbaMmlu: 75.1 },
   },
 
   // Legacy models - https://docs.anthropic.com/en/docs/about-claude/models#legacy-models

@@ -36,13 +36,13 @@ function ButtonAttachWeb(props: {
   );
 
   return (props.noToolTip || props.isMobile) ? button : (
-    <Tooltip arrow disableInteractive placement='top-start' title={(
+    <Tooltip arrow disableInteractive placement='top-start' title={
       <Box sx={buttonAttachSx.tooltip}>
         <b>Add Web Content 🌐</b><br />
         Import from websites and YouTube
         <KeyStroke combo='Ctrl + Shift + L' sx={{ mt: 1, mb: 0.5 }} />
       </Box>
-    )}>
+    }>
       {button}
     </Tooltip>
   );

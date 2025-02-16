@@ -1,28 +1,31 @@
 import * as React from 'react';
 
-import type { DLLM } from '~/common/stores/llms/llms.types';
-import { useDefaultLLMs } from '~/common/stores/llms/llms.hooks';
+import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
+import { useLLMs } from '~/common/stores/llms/llms.hooks';
 
 import type { FormRadioOption } from './FormRadioControl';
 import { useFormRadio } from './useFormRadio';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 
-type LlmType = 'chat' | 'fast';
+type LlmType = 'run' | 'util';
 
-export function useFormRadioLlmType(label: string = 'Model', initialModelType: LlmType = 'fast'): [DLLM | null, React.JSX.Element | null] {
+export function useFormRadioLlmType(label: string, runModelId: DLLMId | null, initialModelType: LlmType): [DLLM | undefined, React.JSX.Element | null] {
 
   // external state
-  const { chatLLM, fastLLM } = useDefaultLLMs();
+  const { domainModelId: utilModelId } = useModelDomain('fastUtil');
+  const [runLLM, utilLLM] = useLLMs([runModelId ?? '', utilModelId ?? '']);
 
-  const hidden = !chatLLM || !fastLLM || chatLLM === fastLLM;
+
+  const hidden = !runLLM || !utilLLM || runLLM === utilLLM;
 
   const options = React.useMemo((): FormRadioOption<LlmType>[] => [
-    { label: chatLLM?.label ?? '[missing chat llm]', value: 'chat' },
-    { label: fastLLM?.label ?? '[missing fast llm]', value: 'fast' },
-  ], [chatLLM, fastLLM]);
+    { label: runLLM?.label ?? '[missing llm]', value: 'run' },
+    { label: utilLLM?.label ?? '[missing util llm]', value: 'util' },
+  ], [runLLM, utilLLM]);
 
   const [llmType, component] = useFormRadio<LlmType>(initialModelType, options, label, hidden);
-  const value = (llmType === 'chat' || !fastLLM) ? chatLLM : fastLLM;
+  const value = (llmType === 'run' || !utilLLM) ? runLLM : utilLLM;
 
   return [value, component];
 }

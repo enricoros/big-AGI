@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 import { Box, IconButton, ListItemButton, ListItemDecorator } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
@@ -8,20 +7,22 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from '~/common/stores/llms/llms.types';
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
-import { findModelsServiceOrNull, llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
+import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 
 function LLMDropdown(props: {
   dropdownRef: React.Ref<OptimaBarControlMethods>,
-  llms: DLLM[],
-  chatLlmId: DLLMId | null,
+  llms: ReadonlyArray<DLLM>,
+  chatLlmId: undefined | DLLMId | null,
   setChatLlmId: (llmId: DLLMId | null) => void,
   placeholder?: string,
 }) {
@@ -194,16 +195,14 @@ function LLMDropdown(props: {
 
 
 export function useChatLLMDropdown(dropdownRef: React.Ref<OptimaBarControlMethods>) {
-  // external state
-  const { llms, chatLLMId } = useModelsStore(useShallow(state => ({
-    llms: state.llms, // NOTE: we don't need a deep comparison as we reference the same array
-    chatLLMId: state.chatLLMId,
-  })));
 
-  const chatLLMDropdown = React.useMemo(
-    () => <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={llmsStoreActions().setChatLLMId} />,
-    [chatLLMId, dropdownRef, llms],
-  );
+  // external state
+  const llms = useAllLLMs();
+  const { domainModelId: chatLLMId, assignDomainModelId: setChatLLMId } = useModelDomain('primaryChat');
+
+  const chatLLMDropdown = React.useMemo(() => {
+    return <LLMDropdown dropdownRef={dropdownRef} llms={llms} chatLlmId={chatLLMId} setChatLlmId={setChatLLMId} />;
+  }, [chatLLMId, dropdownRef, llms, setChatLLMId]);
 
   return { chatLLMId, chatLLMDropdown };
 }

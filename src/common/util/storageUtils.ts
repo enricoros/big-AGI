@@ -17,8 +17,11 @@ export async function requestPersistentStorageSafe(): Promise<boolean> {
       }
 
       const isGranted = await navigator.storage.persist();
-      if (DEBUG_PERSISTENCE || !isGranted)
-        console.warn('Persistent storage granted', isGranted, /*await navigator.storage.getDirectory(),*/ await estimatePersistentStorageOrThrow());
+      if (DEBUG_PERSISTENCE || !isGranted) {
+        // await navigator.storage.getDirectory()
+        const estimate = await estimatePersistentStorageOrThrow();
+        console.warn('Persistent storage granted:', isGranted, 'usageMB:', estimate?.usageMB, 'quotaMB:', estimate?.quotaMB);
+      }
       return isGranted;
     }
   } catch (error) {
@@ -36,7 +39,7 @@ export async function estimatePersistentStorageOrThrow(): Promise<{ usageMB: num
     return {
       // convert to MBs (with 3 decimal places)
       usageMB: Math.round((estimate.usage || 0) / 1024 / 1024 * 1000) / 1000,
-      quotaMB: Math.round((estimate.quota || 0) / 1024 / 1024 * 1000) / 1000,
+      quotaMB: Math.round((estimate.quota || 0) / 1024 / 1024),
     };
   }
 

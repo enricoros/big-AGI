@@ -9,15 +9,16 @@ import TextsmsOutlinedIcon from '@mui/icons-material/TextsmsOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { findModelsServiceOrNull, llmsStoreActions } from '~/common/stores/llms/store-llms';
-import { useDefaultLLMIDs, useFilteredLLMs } from '~/common/stores/llms/llms.hooks';
+import { useLLMsByService } from '~/common/stores/llms/llms.hooks';
+import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useModelDomains } from '~/common/stores/llms/hooks/useModelDomains';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { findModelVendor } from '../vendors/vendors.registry';
-import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 // configuration
@@ -31,6 +32,7 @@ function ModelItem(props: {
   serviceLabel: string,
   vendor: IModelVendor,
   chipChat: boolean,
+  chipCode: boolean,
   chipFast: boolean,
   onModelClicked: (llmId: DLLMId) => void,
   onModelSetHidden: (llmId: DLLMId, hidden: boolean) => void,
@@ -138,6 +140,7 @@ function ModelItem(props: {
           </Box>
         )) : <>
           {props.chipChat && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>chat</Chip>}
+          {props.chipCode && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>code</Chip>}
           {props.chipFast && <Chip size='sm' variant='plain' sx={{ boxShadow: 'sm' }}>fast</Chip>}
         </>}
 
@@ -168,8 +171,8 @@ export function ModelsList(props: {
 
   // external state
   const isMobile = useIsMobile();
-  const { chatLLMId, fastLLMId } = useDefaultLLMIDs();
-  const llms = useFilteredLLMs(props.filterServiceId === null ? false : props.filterServiceId);
+  const domainAssignments = useModelDomains();
+  const llms = useLLMsByService(props.filterServiceId === null ? false : props.filterServiceId);
 
   const { onOpenLLMOptions } = props;
 
@@ -178,53 +181,67 @@ export function ModelsList(props: {
   const handleModelSetHidden = React.useCallback((llmId: DLLMId, hidden: boolean) => llmsStoreActions().updateLLM(llmId, { hidden }), []);
 
 
-  // are we showing multiple services
-  const showAllServices = !props.filterServiceId;
-  const hasManyServices = llms.length >= 2 && llms.some(llm => llm.sId !== llms[0].sId);
-  let lastGroupLabel = '';
+  const modelItems: React.ReactNode[] = React.useMemo(() => {
 
-  // generate the list items, prepending headers when necessary
-  const items: React.JSX.Element[] = [];
-  for (const llm of llms) {
+    // are we showing multiple services
+    const showAllServices = !props.filterServiceId;
+    const hasManyServices = llms.length >= 2 && llms.some(llm => llm.sId !== llms[0].sId);
+    let lastGroupLabel = '';
 
-    // get the service label
-    const serviceLabel = findModelsServiceOrNull(llm.sId)?.label ?? llm.sId;
+    // derived
+    const primaryChatLlmId = domainAssignments['primaryChat']?.modelId;
+    // const codeApplyLlmId = domainAssignments['codeApply']?.modelId;
+    const fastUtilLlmId = domainAssignments['fastUtil']?.modelId;
 
-    // prepend label when switching services
-    if ((hasManyServices || showAllServices) && serviceLabel !== lastGroupLabel) {
-      items.push(
-        <ListItem key={'lab-' + llm.sId} sx={{ justifyContent: 'center' }}>
-          <Typography>
-            {serviceLabel}
-          </Typography>
-        </ListItem>,
+    // generate the list items, prepending headers when necessary
+    const items: React.JSX.Element[] = [];
+    for (const llm of llms) {
+
+      // get the service label
+      const serviceLabel = findModelsServiceOrNull(llm.sId)?.label ?? llm.sId;
+
+      // prepend label when switching services
+      if ((hasManyServices || showAllServices) && serviceLabel !== lastGroupLabel) {
+        items.push(
+          <ListItem key={'lab-' + llm.sId} sx={{ justifyContent: 'center' }}>
+            <Typography>
+              {serviceLabel}
+            </Typography>
+          </ListItem>,
+        );
+        lastGroupLabel = serviceLabel;
+      }
+
+      // for safety, ensure the vendor exists
+      const vendor = findModelVendor(llm.vId);
+      !!vendor && items.push(
+        <ModelItem
+          key={'llm-' + llm.id}
+          llm={llm}
+          serviceLabel={serviceLabel}
+          vendor={vendor}
+          chipChat={llm.id === primaryChatLlmId}
+          chipCode={false /* do not show the CODE chip for now, to not confuse users llm.id === codeApplyLlmId*/}
+          chipFast={llm.id === fastUtilLlmId}
+          onModelClicked={handleModelClicked}
+          onModelSetHidden={handleModelSetHidden}
+        />,
       );
-      lastGroupLabel = serviceLabel;
     }
 
-    // for safety, ensure the vendor exists
-    const vendor = findModelVendor(llm.vId);
-    !!vendor && items.push(
-      <ModelItem
-        key={'llm-' + llm.id}
-        llm={llm}
-        serviceLabel={serviceLabel}
-        vendor={vendor}
-        chipChat={llm.id === chatLLMId}
-        chipFast={llm.id === fastLLMId}
-        onModelClicked={handleModelClicked}
-        onModelSetHidden={handleModelSetHidden}
-      />,
-    );
-  }
+    return items;
+  }, [domainAssignments, handleModelClicked, handleModelSetHidden, llms, props.filterServiceId]);
 
   return (
     <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
-      {items.length > 0 ? items : (
-        <ListItem>
+      {modelItems.length > 0 ? modelItems : (
+        <ListItem sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Typography level='body-sm'>
-            Please configure the service and update the list of models.
+            Please complete the configuration and refresh the models list.
           </Typography>
+          {/*<Skeleton variant='rectangular' animation={false} height={24} width={160} />*/}
+          {/*<Skeleton variant='rectangular' animation={false} height={24} width={120} />*/}
+          {/*<Skeleton variant='rectangular' animation={false} height={24} width={140} />*/}
         </ListItem>
       )}
     </List>

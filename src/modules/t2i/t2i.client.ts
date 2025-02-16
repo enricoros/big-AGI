@@ -7,7 +7,7 @@ import { getBackendCapabilities } from '~/modules/backend/store-backend-capabili
 
 import type { CapabilityTextToImage, TextToImageProvider } from '~/common/components/useCapabilities';
 import type { DLLM } from '~/common/stores/llms/llms.types';
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { createDMessageDataRefDBlob, createImageContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';

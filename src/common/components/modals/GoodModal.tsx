@@ -29,6 +29,7 @@ export function GoodModal(props: {
   open: boolean,
   onClose?: () => void,
   hideBottomClose?: boolean,
+  darkBottomClose?: boolean,
   startButton?: React.JSX.Element,
   sx?: SxProps,
   children: React.ReactNode,
@@ -86,7 +87,18 @@ export function GoodModal(props: {
 
           {props.dividers === true && (!!props.startButton || showBottomClose) && <Divider />}
 
-          {(!!props.startButton || showBottomClose) && <Box sx={{ mt: 'auto', display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
+          {(!!props.startButton || showBottomClose) && <Box sx={{
+            mt: 'auto',
+            ...props.darkBottomClose && {
+              m: 'calc(-1* var(--Card-padding))',
+              p: 'var(--Card-padding)',
+              backgroundColor: 'background.level1',
+            },
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1,
+            justifyContent: 'space-between',
+          }}>
             {props.startButton}
             {showBottomClose && <Button aria-label='Close Dialog' variant='solid' color='neutral' onClick={props.onClose} sx={{ ml: 'auto', minWidth: 100 }}>
               {props.closeText || 'Close'}
