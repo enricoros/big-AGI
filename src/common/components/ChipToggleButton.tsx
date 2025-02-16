@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { VariantProp } from '@mui/joy/styles/types';
 import { Chip } from '@mui/joy';
 
 
@@ -15,11 +16,12 @@ export function ChipToggleButton(props: {
   text: React.ReactNode,
   active?: boolean,
   size?: 'sm' | 'md' | 'lg',
+  variant?: VariantProp,
   onClick?: () => void
 }) {
   return (
     <Chip
-      variant={props.active ? 'solid' : 'outlined'}
+      variant={props.active ? 'solid' : props.variant || 'outlined'}
       size={props.size}
       onClick={props.onClick}
       aria-checked={props.active}
