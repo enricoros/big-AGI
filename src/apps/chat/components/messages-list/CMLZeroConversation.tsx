@@ -12,7 +12,7 @@ const _styles = {
   } as const,
 
   sheet: {
-    maxWidth: 204,
+    maxWidth: 220,
     p: 2,
     // backgroundColor: 'background.popup',
     borderRadius: 'xl',
@@ -42,9 +42,9 @@ export function CMLZeroConversation(props: {
         sx={_styles.sheet}
       >
         <Typography level='body-xs'>
-          Please <b>select a conversation</b> from
-          the left pane, or <b>branch</b> one,
-          or create a <>new</> one.
+          Please <>select a conversation</> from
+          the left pane, <>branch</> a chat,
+          or create a new one.
         </Typography>
         <Button
           variant='soft'
