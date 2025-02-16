@@ -781,6 +781,7 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               uiComplexityMode={uiComplexityMode}
               messageRole={messageRole}
+              messagePendingIncomplete={messagePendingIncomplete}
               onFragmentReplace={!props.onMessageFragmentReplace ? undefined : handleFragmentReplace}
             />
           )}

@@ -11,6 +11,7 @@ import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { adjustContentScaling, ContentScaling } from '~/common/app.theme';
+import { animationSpinHalfPause } from '~/common/util/animUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -32,7 +33,7 @@ const _styles = {
   chip: {
     px: 1.5,
     py: 0.375,
-    my: '1px', // to not crop the outline on mobile
+    my: '1px', // to not crop the outline on mobile, or on beam
     outline: '1px solid',
     outlineColor: `${REASONING_COLOR}.solidBg`, // .outlinedBorder
     boxShadow: `1px 2px 4px -3px var(--joy-palette-${REASONING_COLOR}-solidBg)`,
@@ -41,12 +42,18 @@ const _styles = {
   chipDisabled: {
     px: 1.5,
     py: 0.375,
-    my: '1px', // to not crop the outline on mobile
+    my: '1px', // to not crop the outline on mobile, or on beam
   } as const,
 
   chipIcon: {
     fontSize: '1rem',
     mr: 0.5,
+  } as const,
+
+  chipIconPending: {
+    fontSize: '1rem',
+    mr: 0.5,
+    animation: `${animationSpinHalfPause} 2s ease-in-out infinite`,
   } as const,
 
   chipExpanded: {
@@ -99,6 +106,8 @@ export function BlockPartModelAux(props: {
   auxText: string,
   auxHasSignature: boolean,
   auxRedactedDataCount: number,
+  nonVoidFragmentsCount: number,
+  messagePendingIncomplete: boolean,
   zenMode: boolean,
   contentScaling: ContentScaling,
   isLastVoid: boolean,
@@ -161,7 +170,12 @@ export function BlockPartModelAux(props: {
         size='sm'
         onClick={handleToggleExpanded}
         sx={expanded ? _styles.chipExpanded : props.isLastVoid ? _styles.chip : _styles.chipDisabled}
-        startDecorator={<AllInclusiveIcon sx={_styles.chipIcon}  /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */ />}
+        startDecorator={
+          <AllInclusiveIcon
+            sx={(props.messagePendingIncomplete && !props.nonVoidFragmentsCount && !expanded && props.isLastVoid) ? _styles.chipIconPending : _styles.chipIcon}
+            /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
+          />
+        }
         // startDecorator='🧠'
       >
         Show {typeText}
@@ -172,10 +186,10 @@ export function BlockPartModelAux(props: {
           color={REASONING_COLOR}
           variant='soft'
           size='sm'
-          disabled={!onFragmentReplace}
+          disabled={!onFragmentReplace || props.messagePendingIncomplete}
           onClick={!onFragmentReplace ? undefined : handleInline}
           endDecorator={<TextFieldsIcon />}
-          sx={_styles.chip}
+          sx={(!onFragmentReplace || props.messagePendingIncomplete) ? _styles.chipDisabled : _styles.chip}
         >
           Make Regular Text
         </Chip>
