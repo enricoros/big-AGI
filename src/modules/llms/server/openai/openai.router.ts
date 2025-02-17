@@ -24,6 +24,7 @@ import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/p
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
+import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 
 const openAIDialects = z.enum([
@@ -580,10 +581,10 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, null, apiPath);
-  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: `OpenAI/${access.dialect}` });
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}` });
 }
 
 async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
   const { headers, url } = openAIAccess(access, modelRefId, apiPath);
-  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${access.dialect}` });
+  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}` });
 }
