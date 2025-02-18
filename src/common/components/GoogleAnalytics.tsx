@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { GoogleAnalytics as NextGoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 
 export const hasGoogleAnalytics = !!process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
@@ -7,6 +7,72 @@ export const hasGoogleAnalytics = !!process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
 export function getGA4MeasurementId(): string | null {
   return process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || null;
 }
+
+export function sendGAEvent(..._args: Object[]) {
+  if (currDataLayerName === undefined)
+    return console.warn('[DEV] GA has not been initialized yet');
+
+  if (window[currDataLayerName])
+    window[currDataLayerName]?.push(arguments);
+  else
+    console.warn('[DEV] GA dataLayer does not exist');
+}
+
+
+//
+// Google Analytics implementation
+// Taken from Vercel: https://github.com/vercel/next.js/blob/b996171654f8ae25b7409dc7a0f27d5217abf35e/packages/third-parties/src/google/ga.tsx
+//
+
+// defined during the first render
+let currDataLayerName: 'dataLayer' | undefined = undefined;
+
+declare global {
+  // noinspection JSUnusedGlobalSymbols
+  interface Window {
+    dataLayer?: Object[];
+  }
+}
+
+
+/**
+ * This has been adapted from Vercel, with:
+ * - removal of the performance.mark and useEffect
+ * - removal of custom dataLayer name
+ */
+function NextGoogleAnalytics(props: {
+  gaId: string
+  debugMode?: boolean
+  nonce?: string
+}) {
+  const { gaId, debugMode, nonce } = props;
+
+  if (currDataLayerName === undefined)
+    currDataLayerName = 'dataLayer';
+
+  return (
+    <>
+      <Script
+        id='_next-ga-init'
+        dangerouslySetInnerHTML={{
+          __html: `
+          window['${currDataLayerName}'] = window['${currDataLayerName}'] || [];
+          function gtag(){window['${currDataLayerName}'].push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '${gaId}' ${debugMode ? ',{ \'debug_mode\': true }' : ''});`,
+        }}
+        nonce={nonce}
+      />
+      <Script
+        id='_next-ga'
+        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+        nonce={nonce}
+      />
+    </>
+  );
+}
+
 
 /**
  * Note: we are using this third-party component from Vercel which is very experimental
