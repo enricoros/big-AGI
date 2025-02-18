@@ -13,12 +13,14 @@ import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 // List on: https://console.x.ai/team/_TEAM_ID_/models
 const _knownXAIChatModels: ManualMappings = [
 
+  // Grok 2
   {
     idPrefix: 'grok-2-vision-1212',
     label: `Grok 2 Vision (1212)`,
-    description: 'xAI model grok-2-vision-1212 with image and text input capabilities. Supports text generation with an 8,192 token context window.',
-    contextWindow: 8192,
+    description: 'xAI model grok-2-vision-1212 with image and text input capabilities. Supports text generation with a 32,768 token context window.',
+    contextWindow: 32768,
     maxCompletionTokens: undefined,
+    trainingDataCutoff: 'Jul 2024', // July 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
@@ -30,13 +32,16 @@ const _knownXAIChatModels: ManualMappings = [
     description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
+    trainingDataCutoff: 'Jul 2024', // July 17, 2024
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
   },
 
+  // Grok Beta (all deprecated)
   {
+    isLegacy: true,
     idPrefix: 'grok-vision-beta',
     label: `Grok Vision Beta`,
     description: 'xAI model grok-vision-beta with image and text input capabilities. Supports text generation with an 8,192 token context window.',
@@ -44,20 +49,23 @@ const _knownXAIChatModels: ManualMappings = [
     maxCompletionTokens: undefined,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
     chatPrice: { input: 5, output: 15 },
+    hidden: true,
   },
   {
+    isLegacy: true,
     idPrefix: 'grok-beta',
-    label: `Grok Beta`,
-    description: 'xAI\'s flagship model with real-time knowledge from the X platform. Supports text generation with a 131,072 token context window.',
+    label: 'Grok Beta',
+    description: 'xAI model grok-beta (deprecated) with text input capabilities. Supports text generation with a 131,072 token context window.',
     contextWindow: 131072,
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 5, output: 15 },
+    hidden: true,
   },
 ];
 
 
-//
+// xAI Model Descriptions
 export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
 
   // List models
@@ -121,16 +129,9 @@ export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchem
   if (aStartsWith !== bStartsWith)
     return aStartsWith - bStartsWith;
 
-  return a.label.localeCompare(b.label);
+  return b.label.localeCompare(a.label);
 }
 
-
-// not much for wiretypes, so we embed them locally
-export const wireTogetherAIListOutputSchema = z.array(z.object({
-  id: z.string(),
-  object: z.literal('model'),
-  created: z.number(),
-}));
 
 export const wireXAIModelSchema = z.object({
   id: z.string(),
