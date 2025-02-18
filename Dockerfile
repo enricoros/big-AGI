@@ -22,6 +22,9 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
+# Deployment type marker
+ENV NEXT_PUBLIC_DEPLOYMENT_TYPE=docker
+
 # Optional build version arguments at build time
 ARG NEXT_PUBLIC_BUILD_HASH
 ENV NEXT_PUBLIC_BUILD_HASH=${NEXT_PUBLIC_BUILD_HASH}

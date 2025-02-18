@@ -37,8 +37,9 @@ export const Release = {
   buildInfo: (_type: 'frontend' | 'backend') => ({
     // **NOTE**: do not change var names here, as they're matched from this point forward
     //           between the frontend and backend to ensure runtime consistency.
-    gitSha: process.env.NEXT_PUBLIC_BUILD_HASH,
+    deploymentType: process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE,
     pkgVersion: process.env.NEXT_PUBLIC_BUILD_PKGVER,
+    gitSha: process.env.NEXT_PUBLIC_BUILD_HASH,
     timestamp: process.env.NEXT_PUBLIC_BUILD_TIMESTAMP,
   }),
 
