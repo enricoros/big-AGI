@@ -1,7 +1,17 @@
+import { execSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
-// Build information
-process.env.NEXT_PUBLIC_BUILD_HASH = 'big-agi-2-dev';
+// Build information: from CI, or git commit hash
+let buildHash = process.env.NEXT_PUBLIC_BUILD_HASH || process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA; // Docker, GitHub Actions, Vercel
+try {
+  // fallback to local git commit hash
+  if (!buildHash)
+    buildHash = execSync('git rev-parse --short HEAD').toString().trim();
+} catch {
+  // final fallback
+  buildHash = '2-dev';
+}
+process.env.NEXT_PUBLIC_BUILD_HASH = (buildHash || '').slice(0, 10);
 process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + await readFile(new URL('./package.json', import.meta.url))).version;
 process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
 console.log(` 🧠 \x1b[1mbig-AGI\x1b[0m v${process.env.NEXT_PUBLIC_BUILD_PKGVER} (@${process.env.NEXT_PUBLIC_BUILD_HASH})`);
