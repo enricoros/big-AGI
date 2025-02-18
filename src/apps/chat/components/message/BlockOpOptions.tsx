@@ -11,7 +11,7 @@ import { DMessageFragment, DMessageTextPart, isTextContentFragment } from '~/com
 const OPTION_ACTIVE_COLOR: ColorPaletteProp = 'neutral';
 const OPTION_DEBUG_PARSER = false;
 const OPTION_MAX_LENGTH = 100;
-const OPTION_MAX_OPTIONS = 5;
+const OPTION_MAX_OPTIONS = 8;
 const OPTION_MIN_OPTIONS = 2;
 
 /*
@@ -43,7 +43,7 @@ const optionSx: SxProps = {
   // px: 1.5,
   py: 0.5,
   minHeight: '1rem',
-  color: 'text.secondary',
+  color: 'text.primary',
   // borderRadius: 'sm',
   borderRadius: '1rem',
   // width: '100%',
@@ -100,7 +100,7 @@ function _parseOptionsFromText(text: string): { beforeText: string; options: str
     const chunk = remainingText.slice(prevNewlineIdx + 1);
 
     // check if it's a list item
-    if (chunk.startsWith('- ') || chunk.startsWith('* ') || chunk.startsWith('+ ')) {
+    if (chunk.startsWith('- ') || chunk.startsWith('* ') || chunk.startsWith('+ ') || chunk.startsWith('• ')) {
       if (inOL) {
         if (OPTION_DEBUG_PARSER) debugParser('switched from OL to UL (end)');
         return null;
@@ -131,7 +131,7 @@ function _parseOptionsFromText(text: string): { beforeText: string; options: str
         if (OPTION_DEBUG_PARSER) debugParser('two newlines (end)');
         return null;
       }
-    } else if (remainingText.endsWith(':') || remainingText.endsWith('?')) {
+    } else if (remainingText.endsWith(':') || remainingText.endsWith('?') /*|| remainingText.endsWith('.')*/) {
       if (options.length >= OPTION_MIN_OPTIONS) {
         if (OPTION_DEBUG_PARSER) debugParser('found options (end)', remainingText);
         return { beforeText: remainingText, options };
