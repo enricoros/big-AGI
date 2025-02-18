@@ -1,6 +1,8 @@
 import * as React from 'react';
 import Script from 'next/script';
 
+import { Release } from '~/common/app.release';
+
 
 export const hasGoogleAnalytics = !!process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
 
@@ -39,6 +41,7 @@ declare global {
  * This has been adapted from Vercel, with:
  * - removal of the performance.mark and useEffect
  * - removal of custom dataLayer name
+ * - add user_properties: https://developers.google.com/analytics/devguides/collection/ga4/reference/config#user_properties
  */
 function NextGoogleAnalytics(props: {
   gaId: string
@@ -60,7 +63,16 @@ function NextGoogleAnalytics(props: {
           function gtag(){window['${currDataLayerName}'].push(arguments);}
           gtag('js', new Date());
 
-          gtag('config', '${gaId}' ${debugMode ? ',{ \'debug_mode\': true }' : ''});`,
+          gtag('config', '${gaId}', {
+            ${debugMode ? ' \'debug_mode\': true,' : ''}
+            'user_properties': {
+              'app_tenant': '${Release.TenantId || 'unknown'}',
+              'app_pl': '${Release.App.pl || 'unknown'}',
+              'app_build_hash': '${process.env.NEXT_PUBLIC_BUILD_HASH || 'unknown'}',
+              'app_pkg_version': '${process.env.NEXT_PUBLIC_BUILD_PKGVER || 'unknown'}',
+              'app_deployment_type': '${process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE || 'unknown'}'
+            }
+          });`,
         }}
         nonce={nonce}
       />
