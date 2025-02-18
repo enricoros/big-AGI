@@ -32,7 +32,6 @@
     "@mui/joy": "^5.0.0-beta.51",
     "@mui/material": "^5.16.14",
     "@next/bundle-analyzer": "^15.1.7",
-    "@next/third-parties": "^15.1.7",
     "@prisma/client": "~5.22.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.66.5",

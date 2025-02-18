@@ -1,5 +1,4 @@
 import React from 'react';
-import { sendGAEvent } from '@next/third-parties/google';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Step, stepClasses, StepIndicator, stepIndicatorClasses, Stepper, Typography } from '@mui/joy';
@@ -14,7 +13,7 @@ import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationTextShadowLimey } from '~/common/util/animUtils';
-import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/state/store-ui';
 
