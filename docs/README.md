@@ -28,6 +28,7 @@ How to set up AI models and features in big-AGI.
     [TogetherAI](https://api.together.xyz/settings/api-keys),
     [xAI](http://x.ai/api)
   - **[Azure OpenAI](config-azure-openai.md)** guide
+  - **FireworksAI** ([API keys](https://fireworks.ai/account/api-keys), via custom OpenAI endpoint: https://api.fireworks.ai/inference)
   - **[OpenRouter](config-openrouter.md)** guide
 
 
