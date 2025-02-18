@@ -4,6 +4,7 @@ import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.mjs';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import { T2iCreateImageOutput, t2iCreateImagesOutputSchema } from '~/modules/t2i/t2i.server';
 
@@ -15,6 +16,7 @@ import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWi
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { azureModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
+import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
 import { lmStudioModelToModelDescription, localAIModelToModelDescription, localAIModelSortFn } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
@@ -24,7 +26,6 @@ import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/p
 import { togetherAIModelsToModelDescriptions } from './models/together.models';
 import { wilreLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './localai.wiretypes';
 import { xaiModelDescriptions, xaiModelSort } from './models/xai.models';
-import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 
 const openAIDialects = z.enum([
@@ -190,6 +191,11 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         // [OpenAI]: chat-only models, custom sort, manual mapping
         case 'openai':
+
+          // [FireworksAI] special case for model enumeration
+          if (fireworksAIHeuristic(access.oaiHost))
+            return { models: fireworksAIModelsToModelDescriptions(openAIModels) };
+
           models = openAIModels
 
             // limit to only 'gpt' and 'non instruct' models

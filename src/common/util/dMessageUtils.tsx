@@ -382,6 +382,12 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (model.includes('grok-beta')) return 'Grok Beta';
     if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
   }
+  // [FireworksAI]
+  if (model.includes('accounts/')) {
+    const index = model.indexOf('accounts/');
+    const subStr = model.slice(index + 9);
+    return subStr.replaceAll('/models/', ' · ').replaceAll(/[_-]/g, ' ');
+  }
   return model;
 }
 
