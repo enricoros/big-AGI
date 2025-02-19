@@ -22,6 +22,7 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 
 | Service    | Chat       | Function Calling | Multi-Modal Input | Cont. (1) | Streaming | Idiosyncratic | 
 |------------|------------|------------------|-------------------|-----------|-----------|---------------|
+| Alibaba    | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
 | Anthropic  | ✅          | ✅ + Parallel     | Img: ✅            | ✅         | Yes + 📦  |               |
 | Azure      | ✅          | ✅                |                   | ✅         | Yes + 📦  |               |
 | Deepseek   | ✅          | ❌ (rejected)     |                   | ✅         | Yes + 📦  |               |
