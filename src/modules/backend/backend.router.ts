@@ -49,6 +49,7 @@ export const backendRouter = createTRPCRouter({
     .query(async ({ ctx: _unused }): Promise<BackendCapabilities> => {
       return {
         // llms
+        hasLlmAlibaba: !!env.ALIBABA_API_KEY || !!env.ALIBABA_API_HOST,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
         hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,

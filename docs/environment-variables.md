@@ -23,6 +23,8 @@ MDB_URI=
 OPENAI_API_KEY=
 OPENAI_API_HOST=
 OPENAI_API_ORG_ID=
+ALIBABA_API_HOST=
+ALIBABA_API_KEY=
 AZURE_OPENAI_API_ENDPOINT=
 AZURE_OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
@@ -88,6 +90,8 @@ requiring the user to enter an API key
 | `OPENAI_API_KEY`            | API key for OpenAI                                                                                             | Recommended                                                       |
 | `OPENAI_API_HOST`           | Changes the backend host for the OpenAI vendor, to enable platforms such as Helicone and CloudFlare AI Gateway | Optional                                                          |
 | `OPENAI_API_ORG_ID`         | Sets the "OpenAI-Organization" header field to support organization users                                      | Optional                                                          |
+| `ALIBABA_API_HOST`          | The Alibaba AI OpenAI-compatible endpoint                                                                      | Optional                                                          |
+| `ALIBABA_API_KEY`           | The API key for Alibaba AI                                                                                     | Optional                                                          |
 | `AZURE_OPENAI_API_ENDPOINT` | Azure OpenAI endpoint - host only, without the path                                                            | Optional, but if set `AZURE_OPENAI_API_KEY` must also be set      |
 | `AZURE_OPENAI_API_KEY`      | Azure OpenAI API key, see [config-azure-openai.md](config-azure-openai.md)                                     | Optional, but if set `AZURE_OPENAI_API_ENDPOINT` must also be set |
 | `ANTHROPIC_API_KEY`         | The API key for Anthropic                                                                                      | Optional                                                          |
