@@ -23,5 +23,7 @@
   "find-it-faster.general.useTerminalInEditor": true,
 
   "github.copilot.chat.scopeSelection": true,
-  "github.copilot.chat.localeOverride": "en"
+  "github.copilot.chat.localeOverride": "en",
+  "github.copilot.chat.experimental.generateTests.codeLens": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
