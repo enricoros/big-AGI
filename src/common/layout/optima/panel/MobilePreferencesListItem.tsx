@@ -8,13 +8,14 @@ import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
 import { optimaClosePanel, optimaOpenPreferences } from '../useOptima';
 
 
-export function MobilePreferencesListItem() {
+export function MobilePreferencesListItem(props: { autoClosePanel?: boolean }) {
 
   const handleShowPreferences = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     optimaOpenPreferences();
-    optimaClosePanel();
-  }, []);
+    if (props.autoClosePanel)
+      optimaClosePanel();
+  }, [props.autoClosePanel]);
 
   return (
     <ListItem endAction={<DarkModeToggleButton />}>
