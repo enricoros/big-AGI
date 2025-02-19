@@ -1,10 +1,11 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Sheet, styled } from '@mui/joy';
+import { Box, List, Sheet, styled } from '@mui/joy';
 
 import { NavItemApp } from '~/common/app.nav';
-import { themeZIndexDesktopPanel } from '~/common/app.theme';
+import { themeScalingMap, themeZIndexDesktopPanel } from '~/common/app.theme';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
@@ -63,6 +64,7 @@ const sheetClosedSx: SxProps = {
 export function DesktopPanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
+  const contentScaling = useUIContentScaling();
   const { panelShownAsPanel: isOpen, panelAsPopup } = useOptimaPanelOpen(false, props.currentApp);
 
   // Close the panel if the current page goes for a popup instead
@@ -78,6 +80,13 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
         component={props.component}
         sx={isOpen ? sheetOpenSx : sheetClosedSx}
       >
+
+        <List size={themeScalingMap[contentScaling]?.optimaPanelGroupSize} sx={{ '--ListItem-minHeight': '2.5rem', py: 0 /*0.75*/, flex: 0 }}>
+          {/*<OptimaPanelGroupedList>*/}
+          {/*<UserAccountListItem />*/}
+          {/*<PreferencesListItem />*/}
+          {/*</OptimaPanelGroupedList>*/}
+        </List>
 
         {/* [Desktop] Portal in the Panel */}
         {!panelAsPopup && <PanelContentPortal />}
