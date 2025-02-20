@@ -140,12 +140,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (!conversation || conversation.messages.length < 2) return;
 
   // require a valid fast model (only)
-  let fastLlmId, codeLlmId;
-  try {
-    fastLlmId = getDomainModelIdOrThrow(['fastUtil'], true, false, 'chat-followups');
-  } catch (error) {
-    return console.log(`autoSuggestions: ${error}`);
-  }
+  let codeLlmId;
   try {
     codeLlmId = getDomainModelIdOrThrow(['codeApply'], true, false, 'chat-followups');
   } catch (error) {
@@ -193,7 +188,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
 
     // Strict call to a function
     aixChatGenerateContent_DMessage(
-      fastLlmId,
+      codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(diagramsTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-diagram', conversationId),
       false,
