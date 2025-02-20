@@ -851,6 +851,7 @@ export function Composer(props: {
                     }
                     slotProps={{
                       textarea: {
+                        tabIndex: !recognitionState.isActive ? undefined : -1,
                         height: '100%',
                         enterKeyHint: enterIsNewline ? 'enter' : 'send',
                         sx: {
