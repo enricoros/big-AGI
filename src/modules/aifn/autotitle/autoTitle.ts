@@ -2,7 +2,7 @@ import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import { excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 
@@ -15,7 +15,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   // use valid fast model
   let autoTitleLlmId;
   try {
-    autoTitleLlmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'conversation-titler');
+    autoTitleLlmId = getDomainModelIdOrThrow(['fastUtil'], false, false, 'conversation-titler');
   } catch (error) {
     console.log(`autoConversationTitle: ${error}`);
     return false;

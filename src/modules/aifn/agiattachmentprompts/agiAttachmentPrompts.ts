@@ -1,13 +1,12 @@
 import { z } from 'zod';
 
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
-
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessageText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
 import { createTextContentFragment, DMessageAttachmentFragment, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 
 
 export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachmentFragment[], abortSignal: AbortSignal) {
@@ -21,7 +20,7 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
 
   // require llm
   const requireVision = attachmentFragments.some(f => isImageRefPart(f.part));
-  const llmId = getLLMIdOrThrow(['fast', 'chat'], true, requireVision, 'guess-attachments-prompts');
+  const llmId = getDomainModelIdOrThrow(['fastUtil', 'primaryChat'], true, requireVision, 'guess-attachments-prompts');
 
   const num_suggestions = 3;
 
