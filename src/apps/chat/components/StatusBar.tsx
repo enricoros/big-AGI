@@ -6,7 +6,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 
 // import { isMacUser } from '~/common/util/pwaUtils';
-import type { ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { ShortcutKey, ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
@@ -180,6 +180,10 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
       const bModifiers = (b.ctrl ? 1 : 0) + (b.shift ? 1 : 0);
       if (aModifiers !== bModifiers)
         return aModifiers - bModifiers;
+
+      // 3a. Special case for ShortcutKey.Esc, at the beginning
+      if (a.key === ShortcutKey.Esc) return -1;
+      if (b.key === ShortcutKey.Esc) return 1;
 
       // 3. Special case for 'Beam Edit'
       if (a.description === 'Beam Edit') return 1;
