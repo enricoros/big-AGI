@@ -1,18 +1,16 @@
 import * as React from 'react';
 
 import { FormControl, Switch } from '@mui/joy';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
+import { useLabsDevMode } from '~/common/state/store-ux-labs';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
-
-
-// configuration
-const SHOW_ALL_MODEL_DOMAINS = false;
 
 
 function FormControlDomainModel(props: {
@@ -49,6 +47,8 @@ export function AppChatSettingsAI() {
     autoTitleChat, setAutoTitleChat,
   } = useChatAutoAI();
 
+  const labsDevMode = useLabsDevMode();
+
 
   // callbacks
 
@@ -63,8 +63,6 @@ export function AppChatSettingsAI() {
   // const handleAutoSuggestQuestionsChange = (event: React.ChangeEvent<HTMLInputElement>) => setAutoSuggestQuestions(event.target.checked);
 
   return <>
-
-    {SHOW_ALL_MODEL_DOMAINS && <FormControlDomainModel domainId='primaryChat' title='Chat' description='Fallback model' />}
 
     <FormControlDomainModel
       domainId='codeApply'
@@ -96,6 +94,16 @@ export function AppChatSettingsAI() {
         For chat messages and similar high-quality content, the chat model is used instead.
       </>}
     />
+
+    {labsDevMode && (
+      <FormControlDomainModel
+        domainId='primaryChat'
+        title={<><EngineeringIcon color='warning' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Last used model</>}
+        description='Chat fallback model'
+        tooltip='The last used chat model, used as default for new conversations. This is a develoment setting used to test out auto-detection of the most fitting initial chat model.'
+      />
+    )}
+
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Chat Title'
