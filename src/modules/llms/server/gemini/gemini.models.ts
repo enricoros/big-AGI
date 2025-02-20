@@ -179,15 +179,15 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-lite-preview-02-05',
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // No function calling or code execution
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
     benchmark: { cbaElo: 1309 },
   },
   {
     id: 'models/gemini-2.0-flash-lite-preview',
     isPreview: true,
     chatPrice: gemini20FlashLitePricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // No function calling or code execution
-    benchmark: { cbaElo: 1294 }, // Placeholder, outperforms 1.5 Flash
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn],
+    benchmark: { cbaElo: 1294 },
     hidden: true,
   },
 
