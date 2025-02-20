@@ -18,7 +18,7 @@ export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAcc
   displayRank: 35,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmAlibaba',
+  hasServerConfigKey: 'hasLlmAlibaba',
 
   // components
   Icon: AlibabaCloudIcon,

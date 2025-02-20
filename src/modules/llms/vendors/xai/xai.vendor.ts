@@ -18,7 +18,7 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
   displayRank: 15,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmXAI',
+  hasServerConfigKey: 'hasLlmXAI',
 
   // Components
   Icon: XAIIcon,

@@ -19,8 +19,8 @@ export interface IModelVendor<TServiceSettings extends Record<string, any> = {},
   readonly brandColor?: string;
   readonly instanceLimit?: number;
   readonly hasFreeModels?: boolean;
-  readonly hasBackendCapFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
-  readonly hasBackendCapKey?: keyof BackendCapabilities;
+  readonly hasServerConfigFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
+  readonly hasServerConfigKey?: keyof BackendCapabilities;
 
   // components
   readonly Icon: React.FunctionComponent<SvgIconProps>;

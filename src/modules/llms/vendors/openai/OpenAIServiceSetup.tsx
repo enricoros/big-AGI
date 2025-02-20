@@ -30,12 +30,12 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   const advanced = useToggleableBoolean(!!props.serviceId?.includes('-'));
 
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
   const { oaiKey, oaiOrg, oaiHost, heliKey, moderationCheck } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
 
   const keyValid = true; //isValidOpenAIApiKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;

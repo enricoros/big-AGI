@@ -19,8 +19,8 @@ export const ModelVendorLocalAI: IModelVendor<DLocalAIServiceSettings, OpenAIAcc
   displayRank: 50,
   location: 'local',
   instanceLimit: 4,
-  hasBackendCapKey: 'hasLlmLocalAIHost',
-  hasBackendCapFn: (backendCapabilities) => {
+  hasServerConfigKey: 'hasLlmLocalAIHost',
+  hasServerConfigFn: (backendCapabilities) => {
     // this is to show the green mark on the vendor icon in the setup screen
     return backendCapabilities.hasLlmLocalAIHost || backendCapabilities.hasLlmLocalAIKey;
   },

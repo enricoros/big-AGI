@@ -31,13 +31,13 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
   const {
-    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
     serviceSetupValid, updateSettings,
   } = useServiceSetup(props.serviceId, ModelVendorAlibaba);
 
   // derived state
   const { oaiKey: alibabaOaiKey, oaiHost: alibabaOaiHost } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
   const shallFetchSucceed = !needsUserKey || (!!alibabaOaiKey && serviceSetupValid);
   const showKeyError = !!alibabaOaiKey && !serviceSetupValid;
 

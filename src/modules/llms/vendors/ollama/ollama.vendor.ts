@@ -19,7 +19,7 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   displayRank: 54,
   location: 'local',
   instanceLimit: 2,
-  hasBackendCapKey: 'hasLlmOllama',
+  hasServerConfigKey: 'hasLlmOllama',
 
   // components
   Icon: OllamaIcon,

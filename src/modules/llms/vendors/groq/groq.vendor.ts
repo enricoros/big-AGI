@@ -18,7 +18,7 @@ export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSch
   displayRank: 32,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmGroq',
+  hasServerConfigKey: 'hasLlmGroq',
 
   // components
   Icon: GroqIcon,
