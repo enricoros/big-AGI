@@ -16,7 +16,7 @@ const _knownAlibabaChatModels: ManualMappings = [
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     maxCompletionTokens: 8192,
-    chatPrice: { input: 0.0016, output: 0.0064 },
+    chatPrice: { input: 1.6, output: 6.4 },
     benchmark: { cbaElo: 1332 },
   },
   {
@@ -26,7 +26,7 @@ const _knownAlibabaChatModels: ManualMappings = [
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     maxCompletionTokens: 8192,
-    chatPrice: { input: 0.0004, output: 0.0012 },
+    chatPrice: { input: 0.4, output: 1.2 },
     benchmark: { cbaElo: 1282 },
   },
   {
@@ -36,7 +36,7 @@ const _knownAlibabaChatModels: ManualMappings = [
     contextWindow: 1000000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     maxCompletionTokens: 8192,
-    chatPrice: { input: 0.00005, output: 0.0002 },
+    chatPrice: { input: 0.05, output: 0.2 },
   },
 
   // Vision Models
