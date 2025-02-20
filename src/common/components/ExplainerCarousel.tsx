@@ -13,7 +13,7 @@ import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationTextShadowLimey } from '~/common/util/animUtils';
-import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/GoogleAnalytics';
+import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/state/store-ui';
 

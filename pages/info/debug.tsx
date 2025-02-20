@@ -29,7 +29,7 @@ import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 // utils access
 import { BrowserLang, clientHostName, Is, isPwa } from '~/common/util/pwaUtils';
-import { getGA4MeasurementId } from '~/common/components/GoogleAnalytics';
+import { getGA4MeasurementId } from '~/common/components/3rdparty/GoogleAnalytics';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';

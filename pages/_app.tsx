@@ -21,7 +21,7 @@ import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogi
 import { ProviderSingleTab } from '~/common/providers/ProviderSingleTab';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
 import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
-import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/3rdparty/GoogleAnalytics';
 
 
 const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
