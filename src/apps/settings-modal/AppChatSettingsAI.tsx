@@ -4,9 +4,7 @@ import { FormControl, Switch } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
-import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
@@ -68,8 +66,6 @@ export function AppChatSettingsAI() {
 
     {SHOW_ALL_MODEL_DOMAINS && <FormControlDomainModel domainId='primaryChat' title='Chat' description='Fallback model' />}
 
-    {SHOW_ALL_MODEL_DOMAINS && <FormControlDomainModel domainId='codeApply' title='Code' description='Edits model' />}
-
     <FormControlDomainModel
       domainId='codeApply'
       title='Coding model'
@@ -77,6 +73,8 @@ export function AppChatSettingsAI() {
       tooltip={<>
         Smart <b>code editing</b> model (must support Tool Calls) with great conding skills and not too slow. Used for:
         <ul>
+          <li>Diagrams generation</li>
+          <li>HTML UI generation</li>
           <li>Forward compatibility</li>
         </ul>
         Ideally select a Sonnet 3.5-class model.
@@ -92,7 +90,6 @@ export function AppChatSettingsAI() {
         <ul>
           <li>Chat title generation</li>
           <li>Attachment prompts</li>
-          <li>Diagrams generation</li>
           <li>Drawing prompts</li>
           <li>And more</li>
         </ul>
@@ -102,7 +99,8 @@ export function AppChatSettingsAI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Chat Title'
-                      description={autoTitleChat ? 'LLM Titling' : 'Manual only'} />
+                      description={autoTitleChat ? 'Auto' : 'Manual only'}
+                      tooltip='[Utility model]  Automatically generates relevant titles for new chat conversations.' />
       <Switch checked={autoTitleChat} onChange={handleAutoSetChatTitleChange}
               endDecorator={autoTitleChat ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
@@ -110,7 +108,8 @@ export function AppChatSettingsAI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Attachment Prompts'
-                      description={autoSuggestAttachmentPrompts ? 'LLM Prompts' : 'No'} />
+                      description={autoSuggestAttachmentPrompts ? 'Guess Actions' : 'Off'}
+                      tooltip='[Utility model]  Suggests actions/prompts when attachments are added to the conversation.' />
       <Switch checked={autoSuggestAttachmentPrompts} onChange={handleAutoSuggestAttachmentPromptsChange}
               endDecorator={autoSuggestAttachmentPrompts ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
@@ -118,7 +117,8 @@ export function AppChatSettingsAI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Generative Diagrams'
-                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'No'} />
+                      description={autoSuggestDiagrams ? 'Add Diagrams' : 'Off'}
+                      tooltip='[Coding model]  Automatically creates visual diagrams and flowcharts when the AI detects that a response would be clearer with a visual representation.' />
       <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
               endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
@@ -126,21 +126,19 @@ export function AppChatSettingsAI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart
-        title={<>
-          <b>Generative UI · Alpha</b>
-          <GoodTooltip enableInteractive arrow title={<>
-            SECURITY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES
-            <hr />
-            Alpha quality, for testing only. Does not include state synchronization. Use at your own risk.
-            {' - '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/227'>#227</ExternalLink>
-            {', '}<ExternalLink icon='issue' href='https://github.com/enricoros/big-agi/issues/228'>#228</ExternalLink>
-          </>}>
-            <WarningRoundedIcon sx={{ cursor: 'pointer', color: autoSuggestHTMLUI ? 'red' : 'orangered' }} />
-          </GoodTooltip>
+        title='Generative UIs'
+        description={autoSuggestHTMLUI ? 'Add HTML' : 'Off'}
+        tooltipWarning={autoSuggestHTMLUI}
+        tooltip={<>
+          [Coding model] Creates interactive UI components within chat responses when appropriate.
+          <hr />
+          SECURITY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES
+          <hr />
+          ALPHA QUALITY FOR TESTING ONLY. Use at your own risk.
         </>}
-        description={autoSuggestHTMLUI ? 'Auto-Render HTML' : 'No'} />
+      />
       <Switch checked={autoSuggestHTMLUI} onChange={handleAutoSuggestHTMLUIChange}
-              endDecorator={autoSuggestHTMLUI ? 'On' : 'Off'}
+              endDecorator={autoSuggestHTMLUI ? <div>On{' '}<WarningRoundedIcon sx={{ cursor: 'pointer', color: 'red' }} /></div> : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
