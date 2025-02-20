@@ -226,13 +226,13 @@ export const navItems: {
   // Modals
   modals: [
     {
-      name: 'Manage Models',
+      name: 'Configure AI Models',
       icon: BuildCircleIcon,
       type: 'modal',
       overlayId: 'models',
     },
     {
-      name: 'Preferences',
+      name: 'App Preferences',
       icon: SettingsIcon,
       type: 'modal',
       overlayId: 'settings',

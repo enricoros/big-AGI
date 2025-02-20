@@ -283,10 +283,10 @@ export function SettingsModal(props: {
 
         <TabPanel value='tools' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
-            <Topic icon={<LanguageRoundedIcon />} title='Web Browser'>
+            <Topic icon={<LanguageRoundedIcon />} title='Browse Web Pages'>
               <BrowseSettings />
             </Topic>
-            <Topic icon={<SearchIcon />} title='Web Search - Google API' startCollapsed>
+            <Topic icon={<SearchIcon />} title='Web Search · Google API' startCollapsed>
               <GoogleSearchSettings />
             </Topic>
             {/*<Topic icon='🛠' title='Other tools...' />*/}
