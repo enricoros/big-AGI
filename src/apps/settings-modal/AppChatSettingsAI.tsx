@@ -71,11 +71,24 @@ export function AppChatSettingsAI() {
     {SHOW_ALL_MODEL_DOMAINS && <FormControlDomainModel domainId='codeApply' title='Code' description='Edits model' />}
 
     <FormControlDomainModel
+      domainId='codeApply'
+      title='Coding model'
+      description='Best for code'
+      tooltip={<>
+        Smart <b>code editing</b> model (must support Tool Calls) with great conding skills and not too slow. Used for:
+        <ul>
+          <li>Forward compatibility</li>
+        </ul>
+        Ideally select a Sonnet 3.5-class model.
+      </>}
+    />
+
+    <FormControlDomainModel
       domainId='fastUtil'
-      title='Utility Model'
+      title='Utility model'
       description='Fast, see info'
       tooltip={<>
-        Lightweight model used for &quot;fast&quot;, low-cost operations, such as:
+        Lightweight model (must support Tool Calls) used for &quot;fast&quot;, low-cost operations, such as:
         <ul>
           <li>Chat title generation</li>
           <li>Attachment prompts</li>
