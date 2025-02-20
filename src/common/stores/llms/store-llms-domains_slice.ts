@@ -49,8 +49,7 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
 
       // auto-assign if null, to prevent a domain from being left without a model
       if (!llmId) {
-        const rankedVendors = _groupLlmsByVendorRankedByElo(state.llms);
-        const autoModelConfiguration = _autoModelConfiguration(domainId, rankedVendors);
+        const autoModelConfiguration = _autoModelConfiguration(domainId, state.llms);
         if (autoModelConfiguration)
           return {
             modelAssignments: {
@@ -91,8 +90,7 @@ export const createLlmsAssignmentsSlice: StateCreator<LlmsRootState & LlmsAssign
     }
 
     // re-assign
-    const rankedVendors = _groupLlmsByVendorRankedByElo(llms);
-    const autoModelConfiguration = _autoModelConfiguration(domainId, rankedVendors);
+    const autoModelConfiguration = _autoModelConfiguration(domainId, llms);
     if (autoModelConfiguration)
       _set(state => ({
         modelAssignments: {
@@ -164,16 +162,6 @@ export function llmsHeuristicGetTopDiverseLlmIds(count: number, requireElo: bool
  * Heuristic to update the assignments (either missing or invalid due to removed models).
  */
 export function llmsHeuristicUpdateAssignments(allLlms: ReadonlyArray<DLLM>, existingAssignments: Partial<Record<DModelDomainId, DModelConfiguration>>): LlmsAssignmentsState['modelAssignments'] {
-
-  // Cached function to only invoke once per call
-
-  let _grouped: PreferredRankedVendors;
-
-  function cachedGroupedLlmsByVendor() {
-    if (!_grouped) _grouped = _groupLlmsByVendorRankedByElo(allLlms);
-    return _grouped;
-  }
-
   return ModelDomainsList.reduce((acc, domainId: DModelDomainId) => {
 
     // reuse the existing assignment, if present
@@ -187,7 +175,7 @@ export function llmsHeuristicUpdateAssignments(allLlms: ReadonlyArray<DLLM>, exi
     }
 
     // apply the spec strategy for the domain
-    const autoModelConfiguration = _autoModelConfiguration(domainId, cachedGroupedLlmsByVendor());
+    const autoModelConfiguration = _autoModelConfiguration(domainId, allLlms);
     if (autoModelConfiguration)
       acc[domainId] = autoModelConfiguration;
 
@@ -198,8 +186,23 @@ export function llmsHeuristicUpdateAssignments(allLlms: ReadonlyArray<DLLM>, exi
 
 // Private - Strategies
 
-function _autoModelConfiguration(domainId: DModelDomainId, vendors: PreferredRankedVendors): DModelConfiguration | undefined {
+function _autoModelConfiguration(domainId: DModelDomainId, llms: ReadonlyArray<DLLM>): DModelConfiguration | undefined {
   const domainSpec = ModelDomainsRegistry[domainId] ?? undefined;
+
+  // Filter LLMs based on required interfaces, but relax the filter if none matches
+  let filteredLlms = llms;
+  if (domainSpec.requiredInterfaces?.length) {
+    const reqIfs = domainSpec.requiredInterfaces;
+    const subset = llms.filter(llm => reqIfs.every(reqIf => llm.interfaces.includes(reqIf)));
+    // only apply filter if we have at least one matching model
+    if (subset.length > 0)
+      filteredLlms = subset;
+  }
+
+  // Now group the final chosen set
+  const vendors = _groupLlmsByVendorRankedByElo(filteredLlms);
+
+  // Students: The rest is the existing strategy logic
   switch (domainSpec?.autoStrategy) {
 
     case 'topVendorTopLlm':
@@ -218,7 +221,7 @@ function _autoModelConfiguration(domainId: DModelDomainId, vendors: PreferredRan
       console.log('[DEV] unknown strategy for LLM domain', domainId);
   }
 
-  // console.log('[DEV] cannot auto-assign for domain', domainId, vendors.length);
+  // console.log('[DEV] cannot auto-assign for domain', domainId, llms.length, filteredLlms.length);
   return undefined;
 }
 
