@@ -95,6 +95,8 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   } else {
     // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
     llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
+    llmsStoreActions().autoReassignDomainModel('codeApply', true, false);
+    llmsStoreActions().autoReassignDomainModel('fastUtil', true, false);
   }
 
   // end configuration
