@@ -32,6 +32,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.69, output: 0.69 },
   },
   {
     isPreview: true,
@@ -41,6 +42,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.79, output: 0.79 },
   },
   {
     isPreview: true,
@@ -50,6 +52,7 @@ const _knownGroqModels: ManualMappings = [
     contextWindow: 131072,
     maxCompletionTokens: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.79, output: 0.79 },
   },
   {
     isPreview: true,
