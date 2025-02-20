@@ -28,6 +28,7 @@ function ModelsSetupButton() {
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+      minWidth: 120,
     }}
   >
     Models
