@@ -126,7 +126,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.0 Flash Thinking Experimental',
     // symLink: 'models/gemini-2.0-flash-thinking-exp-01-21',
     chatPrice: geminiExpPricingFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1384 },
     hidden: true, // only keeping the latest
@@ -135,7 +135,7 @@ const _knownGeminiModels: ({
     id: 'models/gemini-2.0-flash-thinking-exp-01-21',
     isPreview: true,
     chatPrice: geminiExpPricingFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1384 },
   },
@@ -144,7 +144,7 @@ const _knownGeminiModels: ({
     labelOverride: 'Gemini 2.0 Flash Thinking Experimental 1219',
     isPreview: true,
     chatPrice: geminiExpPricingFree,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1363 },
     // _delete: true, // replaced by `gemini-2.0-flash-thinking-exp-01-21`
