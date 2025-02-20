@@ -116,19 +116,20 @@ function ModelsConfiguratorModal(props: {
           <AppBreadcrumbs.Leaf>Setup <b>AI Models</b></AppBreadcrumbs.Leaf>
         </AppBreadcrumbs>
       ) : (
-        <>Configure <b>AI Models</b></>
-        // <AppBreadcrumbs size='md' rootTitle='AI Models'>
-        //   <Box sx={{ display: 'flex', gap: 1 }}>
-        //     {!hasLLMs ? <AppBreadcrumbs.Leaf>Setup</AppBreadcrumbs.Leaf> : <>
-        //       <Chip size='lg' variant={isTabSetup ? 'solid' : 'outlined'} color='neutral' onClick={isTabSetup ? undefined : handleToggleDefaults} sx={{}}>
-        //         Setup
-        //       </Chip>
-        //       <Chip size='lg' variant={isTabDefaults ? 'solid' : 'outlined'} color='neutral' onClick={isTabDefaults ? undefined : handleToggleDefaults} sx={{}}>
-        //         Defaults
-        //       </Chip>
-        //     </>}
-        //   </Box>
-        // </AppBreadcrumbs>
+        // <>Configure <b>AI Models</b></>
+        <AppBreadcrumbs size='md' rootTitle='Configure'>
+          <AppBreadcrumbs.Leaf><b>AI Models</b></AppBreadcrumbs.Leaf>
+          {/*<Box sx={{ display: 'flex', gap: 1 }}>*/}
+          {/*  {!hasLLMs ? <AppBreadcrumbs.Leaf>Setup</AppBreadcrumbs.Leaf> : <>*/}
+          {/*    <Chip size='lg' variant={isTabSetup ? 'solid' : 'outlined'} color='neutral' onClick={isTabSetup ? undefined : handleToggleDefaults} sx={{}}>*/}
+          {/*      Setup*/}
+          {/*    </Chip>*/}
+          {/*    <Chip size='lg' variant={isTabDefaults ? 'solid' : 'outlined'} color='neutral' onClick={isTabDefaults ? undefined : handleToggleDefaults} sx={{}}>*/}
+          {/*      Defaults*/}
+          {/*    </Chip>*/}
+          {/*  </>}*/}
+          {/*</Box>*/}
+        </AppBreadcrumbs>
       )}
       open onClose={optimaActions().closeModels}
       darkBottomClose={!isTabWizard}

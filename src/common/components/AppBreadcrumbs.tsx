@@ -11,7 +11,7 @@ const _sx = { p: 0 };
 export function AppBreadcrumbs(props: {
   size?: 'sm' | 'md' | 'lg';
   children?: React.ReactNode;
-  rootTitle?: string;
+  rootTitle?: React.ReactNode;
   onRootClick?: () => void;
 }) {
 
@@ -26,7 +26,8 @@ export function AppBreadcrumbs(props: {
   return <Breadcrumbs size={props.size || 'sm'} separator={<KeyboardArrowRightIcon />} aria-label='breadcrumbs' sx={_sx}>
     {(props.children && !!rootTitle && !!onRootClick)
       ? <AppBreadcrumbs.Link color='neutral' href='#' onClick={handleRootClick}>{props.rootTitle}</AppBreadcrumbs.Link>
-      : <Typography>{props.rootTitle}</Typography>
+      : (typeof props.rootTitle === 'string') ? <Typography>{props.rootTitle}</Typography>
+        : props.rootTitle
     }
     {props.children}
     {/*{nav.pnt === 'create-new' && <Link color='neutral' href='#'>Create New</Link>}*/}
