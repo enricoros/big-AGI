@@ -638,7 +638,9 @@ export function Composer(props: {
       //   composerShortcuts.push({ key: 's', ctrl: true, shift: true, action: openScreenCaptureDialog, description: 'Attach Screen Capture' });
     }
     if (recognitionState.isActive) {
-      composerShortcuts.push({ key: 'm', ctrl: true, action: handleFinishMicAndSend, description: 'Mic · Send', disabled: !recognitionState.hasSpeech || sendStarted, endDecoratorIcon: TelegramIcon as any, level: 4 });
+      composerShortcuts.push({ key: 'm', ctrl: true, action: handleFinishMicAndSend, disabled: !recognitionState.hasSpeech || sendStarted, level: 4 }); // Undocumented CTRL+M to send (former behavior)
+      composerShortcuts.push({ key: ShortcutKey.Enter, action: () => handleFinishMicAndSend('run-chat-generate'), description: 'Mic · Send', disabled: !recognitionState.hasSpeech || sendStarted, endDecoratorIcon: TelegramIcon as any, level: 4 });
+      composerShortcuts.push({ key: ShortcutKey.Enter, ctrl: true, action: () => handleFinishMicAndSend('run-chat-beam'), description: 'Mic · Beam', disabled: !recognitionState.hasSpeech || sendStarted, level: 4 });
       composerShortcuts.push({
         key: ShortcutKey.Esc, action: () => {
           setMicContinuation(false);
