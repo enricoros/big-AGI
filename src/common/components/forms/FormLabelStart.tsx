@@ -5,6 +5,7 @@ import { FormHelperText, FormLabel } from '@mui/joy';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 
 /**
@@ -14,6 +15,7 @@ const FormLabelStartBase = (props: {
   title: React.ReactNode,
   description?: React.ReactNode,
   tooltip?: React.ReactNode,
+  tooltipWarning?: boolean,
   onClick?: (event: React.MouseEvent) => void,
   sx?: SxProps,
 }) =>
@@ -31,7 +33,10 @@ const FormLabelStartBase = (props: {
     >
       {props.title} {!!props.tooltip && (
       <GoodTooltip title={props.tooltip} arrow placement='top'>
-        <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
+        {props.tooltipWarning
+          ? <WarningRoundedIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'red' }} />
+          : <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
+        }
       </GoodTooltip>
     )}
     </FormLabel>
