@@ -10,8 +10,8 @@
  * We centralize here the version information of the app, to have a uniform configuration surface.
  */
 export const Release = {
-  // CHANGE ME - this is the tenant ID, 'open' reserved for GitHub
-  TenantId: 'open',
+  // CHANGE ME - this is the tenant ID, 'dev' reserved for development only, 'open' reserved for GitHub
+  TenantSlug: 'open',
 
   App: {
     pl: 'v2-dev',
