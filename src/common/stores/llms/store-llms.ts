@@ -352,12 +352,19 @@ export function getChatLLMId(): DLLMId | null {
 
 export function getDomainModelIdOrThrow(tryDomains: DModelDomainId[], requireFunctionCallTools: boolean, requireImageInput: boolean, useCaseLabel: string): DLLMId {
   for (const domain of tryDomains) {
+    const isLastTry = domain === tryDomains[tryDomains.length - 1];
     const llmId = getDomainModelConfiguration(domain, true, true)?.modelId;
     if (!llmId) continue;
     try {
       const llm = findLLMOrThrow(llmId);
-      if (requireFunctionCallTools && !llm.interfaces.includes(LLM_IF_OAI_Fn)) continue;
-      if (requireImageInput && !llm.interfaces.includes(LLM_IF_OAI_Vision)) continue;
+      if (requireFunctionCallTools && !llm.interfaces.includes(LLM_IF_OAI_Fn)) {
+        if (isLastTry) console.log(`[llm selection] Accepting ${llmId} for '${useCaseLabel}' despite missing function call tools.`);
+        else continue;
+      }
+      if (requireImageInput && !llm.interfaces.includes(LLM_IF_OAI_Vision)) {
+        if (isLastTry) console.log(`[llm selection] Accepting ${llmId} for '${useCaseLabel}' despite missing image input.`);
+        else continue;
+      }
       return llmId;
     } catch (error) {
       // Try next or fall back to the error
