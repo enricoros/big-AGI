@@ -44,7 +44,7 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   // add the backend services
   if (remoteServices)
     findAllModelVendors()
-      .filter(vendor => vendor.hasBackendCapKey && backendCaps[vendor.hasBackendCapKey])
+      .filter(vendor => vendor.hasServerConfigKey && backendCaps[vendor.hasServerConfigKey])
       .forEach(remoteVendor => {
 
         // find the first service for this vendor

@@ -38,7 +38,7 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
   displayRank: 30,
   location: 'cloud',
   instanceLimit: 2,
-  hasBackendCapKey: 'hasLlmAzureOpenAI',
+  hasServerConfigKey: 'hasLlmAzureOpenAI',
 
   // components
   Icon: AzureIcon,

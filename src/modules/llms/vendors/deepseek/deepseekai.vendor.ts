@@ -18,7 +18,7 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
   displayRank: 16,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmDeepseek',
+  hasServerConfigKey: 'hasLlmDeepseek',
 
   // components
   Icon: DeepseekIcon,

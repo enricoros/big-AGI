@@ -21,7 +21,7 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
   displayRank: 18,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmMistral',
+  hasServerConfigKey: 'hasLlmMistral',
 
   // components
   Icon: MistralIcon,

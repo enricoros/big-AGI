@@ -23,12 +23,12 @@ import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor
 export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceHasVisibleLLMs, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceHasVisibleLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorOpenRouter);
 
   // derived state
   const { oaiKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
 
   const keyValid = isValidOpenRouterKey(oaiKey);
   const keyError = (/*needsUserKey ||*/ !!oaiKey) && !keyValid;

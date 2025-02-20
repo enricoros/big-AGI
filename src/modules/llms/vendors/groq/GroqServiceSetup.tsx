@@ -22,13 +22,13 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
   const {
-    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
     serviceSetupValid, updateSettings,
   } = useServiceSetup(props.serviceId, ModelVendorGroq);
 
   // derived state
   const { oaiKey: groqKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!groqKey && serviceSetupValid);

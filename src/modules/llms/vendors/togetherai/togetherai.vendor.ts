@@ -20,7 +20,7 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
   displayRank: 34,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmTogetherAI',
+  hasServerConfigKey: 'hasLlmTogetherAI',
 
   // components
   Icon: TogetherIcon,

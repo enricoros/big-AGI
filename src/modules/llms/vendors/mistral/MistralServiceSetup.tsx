@@ -22,12 +22,12 @@ const MISTRAL_REG_LINK = 'https://console.mistral.ai/';
 export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorMistral);
 
   // derived state
   const { oaiKey: mistralKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
 
   const shallFetchSucceed = !needsUserKey || (!!mistralKey && serviceSetupValid);
   const showKeyError = !!mistralKey && !serviceSetupValid;

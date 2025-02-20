@@ -22,13 +22,13 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
   const {
-    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
     serviceSetupValid, updateSettings,
   } = useServiceSetup(props.serviceId, ModelVendorPerplexity);
 
   // derived state
   const { oaiKey: perplexityKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!perplexityKey && serviceSetupValid);

@@ -19,7 +19,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
   service: DModelsService<TServiceSettings> | null;
   serviceAccess: TAccess;
 
-  serviceHasBackendCap: boolean;
+  serviceHasCloudTenantConfig: boolean;
   serviceHasLLMs: boolean;
   serviceHasVisibleLLMs: boolean;
   serviceSetupValid: boolean;
@@ -46,7 +46,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
       service,
       serviceAccess,
 
-      serviceHasBackendCap: vendorHasBackendCap(vendor),
+      serviceHasCloudTenantConfig: vendorHasBackendCap(vendor),
       serviceHasLLMs: !!serviceLLms.length,
       serviceHasVisibleLLMs: !!serviceLLms.find(llm => !llm.hidden),
       serviceSetupValid: serviceSetupValid,
