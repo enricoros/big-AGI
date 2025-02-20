@@ -249,10 +249,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
         {/* NOTE: this 'div' is only here to avoid some sort of collapse of the RenderCodeSyntax,
             which box disappears for some reason and the parent flex layout ends up lining up
-            chars in a non-proper way */}
-        <Box>
+            chars in a non-proper way.
+            Since this damages the 'fullscreen' operation, we restore it somehow.
+        */}
+        <Box sx={!isFullscreen ? undefined : { flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
+          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} isFullscreen={isFullscreen} />
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
               : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                 : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
