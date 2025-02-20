@@ -28,7 +28,7 @@ function generateLlmEnvConfigHash(env: Record<string, unknown>): string {
     .sort();                              // ignore order
   const hashInputs = [
     Release.Monotonics.Aix.toString(),  // triggers at every change (large downstream effect, know what you are doing)
-    Release.TenantId.toString(),          // triggers when branch changes
+    Release.TenantSlug.toString(),          // triggers when branch changes
     Release.App.pl.toString(),          // triggers when app changes
     ...envAPIKeys,                      // triggers when env keys change
   ];
