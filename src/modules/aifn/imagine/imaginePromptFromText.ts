@@ -1,6 +1,6 @@
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 
 
 const simpleImagineSystemPrompt =
@@ -16,7 +16,7 @@ Provide output a single image generation prompt and nothing else.`;
 export async function imaginePromptFromTextOrThrow(messageText: string, contextRef: string): Promise<string> {
 
   // we used the fast LLM, but let's just converge to the chat LLM here
-  const llmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'imagine-prompt-from-text');
+  const llmId = getDomainModelIdOrThrow(['fastUtil'], false, false, 'imagine-prompt-from-text');
 
   // truncate the messageText to full words and up to 1000 characters
   const lastSpace = messageText.slice(0, 1000).lastIndexOf(' ');
