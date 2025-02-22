@@ -94,6 +94,9 @@ export function BlockEdit_TextFragment(props: {
         e.preventDefault();
         if (!withControl || props.enableRestart)
           onSubmit(withControl);
+      } // [Beam] eat up pure Ctrl+Enter, to not restart beams
+      else if (e.ctrlKey) {
+        e.stopPropagation(); // prevents the global shortcut
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
