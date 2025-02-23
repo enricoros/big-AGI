@@ -222,8 +222,14 @@ const rehypePluginsStable: UnifiedPluggable[] = [
  */
 const preprocessMarkdown = (markdownText: string) => markdownText
   // Replace LaTeX delimiters with $$...$$
-  .replace(/\s\\\((.*?)\\\)/gs, (_match, p1) => ` $$${p1}$$`) // Replace inline LaTeX delimiters \( and \) with $$
-  .replace(/\s\\\[(.*?)\\]/gs, (_match, p1) => ` $$${p1}$$`) // Replace block LaTeX delimiters \[ and \] with $$
+  // Replace inline LaTeX delimiters \( and \) with $$
+  .replace(/(\s*)\\\((.*?)\\\)/gs, (_match, leadingSpace, mathContent) =>
+    `${leadingSpace}$$${mathContent}$$`
+  )
+  // Replace block LaTeX delimiters \[ and \] with $$
+  .replace(/(\s*)\\\[(.*?)\\]/gs, (_match, leadingSpace, mathContent) =>
+    `${leadingSpace}$$${mathContent}$$`
+  )
   // Replace <mark>...</mark> with ==...==, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
   .replace(/<mark>([\s\S]*?)<\/mark>/g, (_match, p1) => wrapWithMarkdownSyntax(p1, '=='))
   // Replace <del>...</del> with ~~...~~, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
