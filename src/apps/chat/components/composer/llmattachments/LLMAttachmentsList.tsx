@@ -193,7 +193,7 @@ export function LLMAttachmentsList(props: {
       </Box>
 
       {/* Overall Menu button */}
-      {!_style.barWraps && (
+      {!props.buttonsCanWrap && (
         <IconButton
           onClick={handleOverallMenuToggle}
           onContextMenu={handleOverallMenuToggle}
