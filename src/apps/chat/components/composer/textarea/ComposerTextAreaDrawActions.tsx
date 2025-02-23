@@ -34,7 +34,7 @@ export function ComposerTextAreaDrawActions(props: {
 
   // derived
   const trimmedPrompt = props.composerText.trim();
-  const userHasText = !!trimmedPrompt;
+  const userHasText = trimmedPrompt.length >= 3;
 
 
   const { onReplaceText } = props;
@@ -54,20 +54,22 @@ export function ComposerTextAreaDrawActions(props: {
     <Box sx={composerTextAreaSx}>
 
       {/* Enhance button */}
-      <Button
-        size='sm'
-        variant={isSimpleEnhancing ? 'soft' : 'soft'}
-        color='warning'
-        disabled={!userHasText}
-        loading={isSimpleEnhancing}
-        loadingPosition='end'
-        // className={promptButtonClass}
-        endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}
-        onClick={handleSimpleEnhance}
-        sx={!userHasText ? _style.gone : _style.enhance}
-      >
-        {isSimpleEnhancing ? 'Enhancing...' : 'Enhance Prompt'}
-      </Button>
+      <Box sx={{ ml: 'auto' }}>
+        <Button
+          size='sm'
+          variant={isSimpleEnhancing ? 'soft' : 'soft'}
+          color='warning'
+          disabled={!userHasText}
+          loading={isSimpleEnhancing}
+          loadingPosition='end'
+          // className={promptButtonClass}
+          endDecorator={<AutoFixHighIcon sx={{ fontSize: '20px' }} />}
+          onClick={handleSimpleEnhance}
+          sx={!userHasText ? _style.gone : _style.enhance}
+        >
+          {isSimpleEnhancing ? 'Enhancing...' : 'Enhance Prompt'}
+        </Button>
+      </Box>
 
     </Box>
   );
