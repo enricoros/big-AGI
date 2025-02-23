@@ -10,7 +10,7 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { DesignerPrompt, PromptComposer } from './create/PromptComposer';
 import { DrawCreateQueue } from './queue-draw-create';
 import { DrawSectionHeading } from './create/DrawSectionHeading';
-import { ProviderConfigure } from './create/ProviderConfigure';
+import { DrawProviderConfigure } from './create/DrawProviderConfigure';
 import { ZeroDrawConfig } from './create/ZeroDrawConfig';
 import { ZeroGenerations } from './create/ZeroGenerations';
 import { useProcessingQueue } from '~/common/logic/ProcessingQueue';
@@ -236,7 +236,7 @@ export function DrawCreate(props: {
     </Box>
 
     {/* AI Service Provider Options */}
-    <ProviderConfigure
+    <DrawProviderConfigure
       providers={props.providers}
       activeProviderId={props.activeProviderId}
       setActiveProviderId={props.setActiveProviderId}

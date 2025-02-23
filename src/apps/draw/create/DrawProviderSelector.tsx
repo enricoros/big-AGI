@@ -8,7 +8,7 @@ import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { hideOnMobile } from '~/common/app.theme';
 
 
-export function ProviderSelector(props: {
+export function DrawProviderSelector(props: {
   title?: string,
   providers: TextToImageProvider[],
   activeProviderId: string | null,

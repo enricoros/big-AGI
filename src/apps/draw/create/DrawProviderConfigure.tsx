@@ -10,10 +10,10 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 
-import { ProviderSelector } from './ProviderSelector';
+import { DrawProviderSelector } from './DrawProviderSelector';
 
 
-export function ProviderConfigure(props: {
+export function DrawProviderConfigure(props: {
   providers: TextToImageProvider[],
   activeProviderId: string | null,
   setActiveProviderId: (providerId: (string | null)) => void,
@@ -68,7 +68,7 @@ export function ProviderConfigure(props: {
       {/* Service / Options Button */}
       <Box sx={{ display: 'flex', flexFlow: 'row wrap', gap: 1 }}>
 
-        <ProviderSelector
+        <DrawProviderSelector
           title='AI Service:'
           providers={props.providers}
           activeProviderId={props.activeProviderId}
