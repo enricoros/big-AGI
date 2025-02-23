@@ -12,10 +12,19 @@ const _styles = {
   buttonGroup: {
     display: 'flex',
     justifyContent: 'space-evenly',
+    overflow: 'hidden',
+    // flexWrap: 'wrap',
+  } as const,
+
+  buttonActive: {
+    '--IconButton-size': {xs: '1.75rem', lg: '2rem'},
   } as const,
 
   button: {
-    borderRadius: 'sm',
+    '--IconButton-size': {xs: '1.75rem', lg: '2rem'},
+    border: '1px solid',
+    borderColor: 'warning.outlinedBorder',
+    backgroundColor: 'background.popup',
     // boxShadow: drawRepeat === n ? '0px 2px 8px 0px rgb(var(--joy-palette-warning-mainChannel) / 40%)' : 'none',
     // fontWeight: drawRepeat === n ? 'xl' : 400, /* reset, from 600 */
     transition: 'transform 0.14s, box-shadow 0.14s',
@@ -51,7 +60,7 @@ export function ButtonGroupDrawRepeat(props: {
             color='warning'
             variant={drawRepeat === n ? 'solid' : 'soft'}
             onClick={() => setDrawRepeat(n)}
-            sx={_styles.button}
+            sx={drawRepeat === n ? _styles.buttonActive : _styles.button}
           >
             {n}
           </IconButton>
