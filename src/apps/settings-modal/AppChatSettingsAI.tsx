@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { FormControl, Switch } from '@mui/joy';
+import CodeIcon from '@mui/icons-material/Code';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -66,7 +67,7 @@ export function AppChatSettingsAI() {
 
     <FormControlDomainModel
       domainId='codeApply'
-      title='Coding model'
+      title={<><CodeIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Coding Model</>}
       description='Best for code'
       tooltip={<>
         Smart <b>code editing</b> model (must support Tool Calls) with great conding skills and not too slow. Used for:
