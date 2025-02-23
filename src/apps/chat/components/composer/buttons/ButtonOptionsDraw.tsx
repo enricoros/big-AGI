@@ -12,7 +12,7 @@ export function ButtonOptionsDraw(props: { isMobile?: boolean, onClick: () => vo
     </IconButton>
   ) : (
     <Button variant='soft' color='warning' onClick={props.onClick} sx={props.sx}>
-      Options
+      Draw Options
     </Button>
   );
 }
