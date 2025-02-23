@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Chip } from '@mui/joy';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
@@ -12,6 +13,7 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { DVoidPlaceholderModelOp } from '~/common/stores/chat/chat.fragments';
 import { adjustContentScaling, ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DataStreamViz } from '~/common/components/DataStreamViz';
+import { animationSpinHalfPause } from '~/common/util/animUtils';
 
 
 // configuration
@@ -21,6 +23,21 @@ const MODELOP_TIMEOUT_LIMIT = 300; // seconds
 
 
 const _styles = {
+  followUpChip: {
+    px: 1.5,
+    py: 0.375,
+    my: '1px', // to not crop the outline on mobile, or on beam
+    outline: '1px solid',
+    outlineColor: 'primary.solidBg', // .outlinedBorder
+    boxShadow: `1px 2px 4px -3px var(--joy-palette-primary-solidBg)`,
+  } as const,
+
+  followUpChipIcon: {
+    fontSize: '1rem',
+    mr: 0.5,
+    animation: `${animationSpinHalfPause} 2s ease-in-out infinite`,
+  } as const,
+
   opChip: {
     maxWidth: '100%', // fundamental for the ellipsize to work
     // width: '100%', // would have way less 'jumpy-ness'
@@ -92,6 +109,7 @@ function ModelOperationChip(props: {
 
 export function BlockPartPlaceholder(props: {
   placeholderText: string,
+  placeholderType?: 'chat-gen-follow-up',
   placeholderModelOp?: DVoidPlaceholderModelOp,
   messageRole: DMessageRole,
   contentScaling: ContentScaling,
@@ -121,6 +139,20 @@ export function BlockPartPlaceholder(props: {
   // Alternative placeholder visualization
   if (shouldShowViz && showVisualization)
     return <DataStreamViz height={1 + 8 * 4} />;
+
+
+  // Type-based visualization
+  if (props.placeholderType === 'chat-gen-follow-up') return (
+    <Chip
+      color='primary'
+      variant='soft'
+      size='sm'
+      sx={_styles.followUpChip}
+      startDecorator={<HourglassEmptyIcon sx={_styles.followUpChipIcon} />}
+    >
+      {props.placeholderText}
+    </Chip>
+  );
 
   // Model operation renderer
   if (props.placeholderModelOp)
