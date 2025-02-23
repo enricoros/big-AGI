@@ -712,7 +712,7 @@ export function Composer(props: {
             + (recognitionState.isAvailable ? ' · ramble' : '')
             + '...';
 
-  if (isDesktop && timeToShowTips) {
+  if (isDesktop && timeToShowTips && !isDraw) {
     if (explainShiftEnter)
       textPlaceholder += !enterIsNewline ? '\n\n💡 Shift + Enter to add a new line' : '\n\n💡 Shift + Enter to send';
     else if (explainAltEnter)
