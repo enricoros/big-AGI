@@ -12,16 +12,17 @@ const _styles = {
   buttonGroup: {
     display: 'flex',
     justifyContent: 'space-evenly',
-    overflow: 'hidden',
-    // flexWrap: 'wrap',
+    // overflowX: 'hidden',
+    flexWrap: 'wrap',
+    minWidth: '131px',
   } as const,
 
   buttonActive: {
-    '--IconButton-size': {xs: '1.75rem', lg: '2rem'},
+    '--IconButton-size': { xs: '1.75rem', lg: '2rem' },
   } as const,
 
   button: {
-    '--IconButton-size': {xs: '1.75rem', lg: '2rem'},
+    '--IconButton-size': { xs: '1.75rem', lg: '2rem' },
     border: '1px solid',
     borderColor: 'warning.outlinedBorder',
     backgroundColor: 'background.popup',
