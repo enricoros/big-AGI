@@ -1,6 +1,3 @@
-// import { Brand } from '~/common/app.config';
-//
-//
 // type MediaSessionAction = 'play' | 'pause' | 'stop' | 'seekbackward' | 'seekforward' | 'previoustrack' | 'nexttrack';
 // export type MediaSessionCallbacks = Partial<Record<MediaSessionAction, () => void>>;
 //
@@ -63,9 +60,9 @@
 //     } else {
 //       if (!navigator.mediaSession.metadata)
 //         navigator.mediaSession.metadata = new MediaMetadata({
-//           title: Brand.Title.Common,
-//           artist: Brand.Title.Base,
-//           album: Brand.Title.Base,
+//           title: ProductName...
+//           artist: ProductName...
+//           album: ProductName...
 //         });
 //     }
 //

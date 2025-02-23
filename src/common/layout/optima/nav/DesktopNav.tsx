@@ -37,6 +37,8 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
   const { showModels, showPreferences } = useOptimaModals();
+
+  // derived state
   const noLLMs = !useHasLLMs();
 
 
@@ -53,7 +55,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     const visibleApps: NavItemApp[] = [];
     const overflowApps: NavItemApp[] = [];
 
-    navItems.apps.forEach((app, index) => {
+    navItems.apps.forEach((app) => {
       if (checkVisibileIcon(app, false, props.currentApp)) {
         if (!crossedDivider || app === props.currentApp)
           visibleApps.push(app);
@@ -190,6 +192,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       </DesktopNavGroupBox>
 
       <DesktopNavGroupBox sx={bottomGroupSx}>
+        {/*<UserNavIcon />*/}
         {navExtLinkItems}
         {navModalItems}
       </DesktopNavGroupBox>
