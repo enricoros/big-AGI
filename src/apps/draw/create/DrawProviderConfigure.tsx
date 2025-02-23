@@ -70,6 +70,7 @@ export function DrawProviderConfigure(props: {
 
         <DrawProviderSelector
           title='AI Service:'
+          variant='outlined'
           providers={props.providers}
           activeProviderId={props.activeProviderId}
           setActiveProviderId={props.setActiveProviderId}
