@@ -208,73 +208,16 @@ export function ChatPane(props: {
       </MenuItem>
     </OptimaPanelGroupedList>
 
-    <OptimaPanelGroupedList title='Controls' persistentCollapsibleId='chat-controls'>
-
-      <ListItem sx={{ mb: 0.25 }}>
-        <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
-          <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
-          System Instruction
-          {/*<FormLabelStart title='View System Instruction' />*/}
-          <Switch size='sm' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
-          {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
-        </ListItemButton>
-      </ListItem>
-
-      <OptimaPanelGroupGutter>
-
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr',
-          columnGap: 2,
-          rowGap: 1,
-          alignItems: 'center',
-        }}>
-
-          <FormLabelStart title='Reasoning:' />
-          <Select value='off' indicator={<KeyboardArrowDownIcon />} slotProps={{
-            indicator: { sx: { opacity: 0.5 } },
-            // root: { sx: { backgroundColor: 'background.popup', '&:hover': { backgroundColor: 'background.popup' } } },
-          }}>
-            <Option value='off'>Model</Option>
-            <Option value='react'>ReAct</Option>
-            <Option value='beam'>Beam</Option>
-            <Option value='prolog'>Prolog</Option>
-            <Option value='pna'>Plan & Answer</Option>
-          </Select>
-
-          <FormLabelStart title='Memory:' />
-          <Select value='off' indicator={<KeyboardArrowDownIcon />} slotProps={{
-            indicator: { sx: { opacity: 0.5 } },
-          }}>
-            <Option value='off'>Chat Contents</Option>
-            <Option value='prag'>Project RAG</Option>
-            <Option value='wrag'>Workspace RAG</Option>
-            <Option value='mgpt'>MemGPT</Option>
-          </Select>
-
-          {/*<FormLabelStart title='Data Link:' sx={{ ml: 'auto' }} />*/}
-          {/*<Checkbox size='sm' checked={false} label='Active (not true :)' />*/}
-
-        </Box>
-      </OptimaPanelGroupGutter>
-    </OptimaPanelGroupedList>
-
-
     {/* ... how do we name this? ... */}
-    {/*<OptimaPanelGroupedList title='Tinker' persistentCollapsibleId='chat-extra'>*/}
-    {/*  <MenuItem disabled={props.disableItems} onClick={handleToggleSystemMessages}>*/}
-    {/*    <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>*/}
-    {/*    System Instruction*/}
-    {/*    <Switch size='md' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />*/}
-    {/*  </MenuItem>*/}
-    {/*</OptimaPanelGroupedList>*/}
-
-    {/* Variform group */}
-    {labsDevMode && (
-      <OptimaPanelGroupedList title='Chat Variables' persistentCollapsibleId='chat-variform'>
-        <VariformPaneFrame />
-      </OptimaPanelGroupedList>
-    )}
+    <OptimaPanelGroupedList title='Persona'>
+      <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
+        <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
+        System Instruction
+        {/*<FormLabelStart title='View System Instruction' />*/}
+        <Switch size='md' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
+        {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
+      </ListItemButton>
+    </OptimaPanelGroupedList>
 
     {/* [DEV] Development */}
     {labsDevMode && (
