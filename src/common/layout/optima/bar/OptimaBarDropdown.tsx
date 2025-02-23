@@ -11,7 +11,7 @@ const useDenseDropdowns = false;
 const useBigIcons = true;
 
 
-const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
+export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
   root: {
     sx: {
       backgroundColor: 'transparent',
@@ -20,17 +20,19 @@ const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
       // disappear when the 'agi-gone' class is set
       '&.agi-gone': {
         display: 'none',
-      },
-    },
-  },
+      } as const,
+    } as const,
+  } as const,
+
   button: {
     className: 'agi-ellipsize',
     sx: {
       // these + the ellipsize class will ellipsize the text in the button
       display: 'inline-block',
       maxWidth: 300,
-    },
-  },
+    } as const,
+  } as const,
+
   indicator: {
     sx: {
       // additive white 50%
@@ -39,9 +41,10 @@ const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
       transition: '0.2s',
       [`&.${selectClasses.expanded}`]: {
         transform: 'rotate(-180deg)',
-      },
-    },
-  },
+      } as const,
+    } as const,
+  } as const,
+
   listbox: {
     // Note: we explored disablePortal, which could optimize performance, but it breaks the colors (as they'll look inverted)
     // disablePortal: false,
@@ -66,15 +69,15 @@ const _selectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
       [`& .${optionClasses.root}`]: {
         maxWidth: 'min(360px, calc(100dvw - 1rem))',
         minWidth: 160,
-      },
+      } as const,
 
       // Button styles
       [`& .${listItemButtonClasses.root}`]: {
         minWidth: 160,
-      },
-    },
-  },
-};
+      } as const,
+    } as const,
+  } as const,
+} as const;
 
 const _styles = {
 
@@ -167,7 +170,7 @@ function OptimaBarDropdown<TValue extends string>(props: {
       listboxOpen={listboxOpen}
       onListboxOpenChange={handleOnOpenChange}
       indicator={<KeyboardArrowDownIcon />}
-      slotProps={_selectSlotProps}
+      slotProps={optimaSelectSlotProps}
       className={props.showGone ? 'agi-gone' : ''}
     >
 
