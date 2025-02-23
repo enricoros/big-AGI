@@ -4,8 +4,8 @@ import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 
 
 const simpleImagineSystemPrompt =
-  `As an AI image generation prompt writer, create captivating but clear and simple prompts using adjectives, nouns, and artistic references that a non-technical person can understand.
-Craft creative, coherent and descriptive captions to guide the AI in generating visually striking artwork.
+  `As an AI image generation prompt writer, create precise, clear and simple prompts using adjectives, nouns, and artistic references.
+Craft creative, coherent and descriptive captions to guide the text-to-image AI in generating articulate and surprising artwork.
 Follow best practices such as beginning with 'A [photo of, drawing of, ...] {subject} ...', using objective words that are unambiguous to visualize.
 Write a minimum of 20-30 words prompt and up to the size of the input.
 Provide output a single image generation prompt and nothing else.`;
@@ -19,9 +19,19 @@ export async function imaginePromptFromTextOrThrow(messageText: string, contextR
   const llmId = getDomainModelIdOrThrow(['fastUtil'], false, false, 'imagine-prompt-from-text');
 
   // truncate the messageText to full words and up to 1000 characters
-  const lastSpace = messageText.slice(0, 1000).lastIndexOf(' ');
-  messageText = messageText.slice(0, lastSpace > 0 ? lastSpace : 1000);
-  if (!/[.!?]$/.test(messageText)) messageText += '.';
+  if (messageText.length > 1000) {
+    const truncated = messageText.slice(0, 1000);
+    const lastSpace = truncated.lastIndexOf(' ');
+    if (lastSpace > 0) {
+      messageText = truncated.slice(0, lastSpace);
+    } else {
+      messageText = truncated;
+    }
+  }
+
+  // ensure we end with a punctuation
+  if (!/[.!?]$/.test(messageText))
+    messageText += '.';
 
   return (await aixChatGenerateText_Simple(
     llmId,
