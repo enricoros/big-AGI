@@ -112,7 +112,7 @@ export function createDMessageTextContent(role: DMessageRole, text: string): DMe
 }
 
 export function createDMessagePlaceholderIncomplete(role: DMessageRole, placeholderText: string): DMessage {
-  const placeholderFragment = createPlaceholderVoidFragment(placeholderText);
+  const placeholderFragment = createPlaceholderVoidFragment(placeholderText, undefined);
   const message = createDMessageFromFragments(role, [placeholderFragment]);
   message.pendingIncomplete = true;
   return message;
