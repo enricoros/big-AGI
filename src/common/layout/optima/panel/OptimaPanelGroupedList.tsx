@@ -32,12 +32,12 @@ const headerSx: SxProps = {
   borderTop: '1px solid',
   borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
 
-  // mimix ListItem
+  // mimics ListItem
   px: 'var(--ListItem-paddingX, 0.75rem)',
   py: 'var(--ListItem-paddingY, 0.25rem)',
   minBlockSize: 'var(--ListItem-minHeight, 2.25rem)',
 
-  // layour
+  // layout
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
