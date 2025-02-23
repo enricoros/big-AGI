@@ -46,7 +46,7 @@ export function T2ISettings() {
       <FormChipControl
         title='Text-to-Image'
         description='Active Service'
-        tooltip='Select the service to use for text-to-image generation.'
+        // tooltip='Select the service to use for text-to-image generation.'
         disabled={!mayWork}
         options={providerOptions}
         value={activeProviderId ?? undefined} onChange={setActiveProviderId}
