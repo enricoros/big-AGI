@@ -68,6 +68,7 @@ import { ButtonAttachScreenCaptureMemo } from './buttons/ButtonAttachScreenCaptu
 import { ButtonAttachWebMemo } from './buttons/ButtonAttachWeb';
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
 import { ButtonCallMemo } from './buttons/ButtonCall';
+import { ButtonGroupDrawRepeat } from './buttons/ButtonGroupDrawRepeat';
 import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
@@ -115,6 +116,7 @@ export function Composer(props: {
 
   // state
   const [composeText, debouncedText, setComposeText] = useDebouncer('', 300, 1200, true);
+  const [drawRepeat, setDrawRepeat] = React.useState(1);
   const [micContinuation, setMicContinuation] = React.useState(false);
   const [speechInterimResult, setSpeechInterimResult] = React.useState<SpeechResult | null>(null);
   const [sendStarted, setSendStarted] = React.useState(false);
@@ -210,6 +212,8 @@ export function Composer(props: {
   const noConversation = !targetConversationId;
   const showChatAttachments = chatExecuteModeCanAttach(chatExecuteMode);
 
+  const composerTextSuffix = chatExecuteMode === 'generate-image' && isDesktop && drawRepeat > 1 ? ` x${drawRepeat}` : '';
+
   const micIsRunning = !!speechInterimResult;
   // more mic way below, as we use complex hooks
 
@@ -298,7 +302,7 @@ export function Composer(props: {
     // prepare the fragments: content (if any) and attachments (if allowed, and any)
     const fragments: (DMessageContentFragment | DMessageAttachmentFragment)[] = [];
     if (composerText)
-      fragments.push(createTextContentFragment(composerText));
+      fragments.push(createTextContentFragment(composerText + composerTextSuffix));
 
     const canAttach = chatExecuteModeCanAttach(_chatExecuteMode);
     if (canAttach) {
@@ -319,7 +323,7 @@ export function Composer(props: {
     if (enqueued)
       _handleClearText();
     return enqueued;
-  }, [attachmentsTakeAllFragments, confirmProceedIfAttachmentsNotSupported, _handleClearText, inReferenceTo, onAction, targetConversationId]);
+  }, [attachmentsTakeAllFragments, composerTextSuffix, confirmProceedIfAttachmentsNotSupported, _handleClearText, inReferenceTo, onAction, targetConversationId]);
 
   const handleSendAction = React.useCallback(async (chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     setSendStarted(true);
@@ -1059,6 +1063,9 @@ export function Composer(props: {
                 )}
 
               </Box>
+
+              {/* [desktop] Draw mode N buttons */}
+              {isDesktop && isDraw && <ButtonGroupDrawRepeat drawRepeat={drawRepeat} setDrawRepeat={setDrawRepeat} />}
 
               {/* [desktop] Multicast switch (under the Chat button) */}
               {isDesktop && props.isMulticast !== null && <ButtonMultiChatMemo multiChat={props.isMulticast} onSetMultiChat={props.setIsMulticast} />}
