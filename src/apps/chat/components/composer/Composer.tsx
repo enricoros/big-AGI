@@ -2,10 +2,9 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, Card, Dropdown, Grid, IconButton, Menu, MenuButton, MenuItem, Textarea, Typography } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import PsychologyIcon from '@mui/icons-material/Psychology';
@@ -74,6 +73,7 @@ import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
+import { ComposerTextAreaDrawActions } from './textarea/ComposerTextAreaDrawActions';
 import { StatusBarMemo } from '../StatusBar';
 import { TokenBadgeMemo } from './tokens/TokenBadge';
 import { TokenProgressbarMemo } from './tokens/TokenProgressbar';
@@ -832,7 +832,7 @@ export function Composer(props: {
                     variant='outlined'
                     color={isDraw ? 'warning' : isReAct ? 'success' : undefined}
                     autoFocus
-                    minRows={isMobile ? 4 : agiAttachmentPrompts.hasData ? 3 : showChatInReferenceTo ? 4 : 5}
+                    minRows={isMobile ? 4 : isDraw ? 4 : agiAttachmentPrompts.hasData ? 3 : showChatInReferenceTo ? 4 : 5}
                     maxRows={isMobile ? 8 : 10}
                     placeholder={textPlaceholder}
                     value={composeText}
@@ -841,8 +841,12 @@ export function Composer(props: {
                     onPasteCapture={handleAttachCtrlV}
                     // onFocusCapture={handleFocusModeOn}
                     // onBlurCapture={handleFocusModeOff}
-                    endDecorator={
-                      <ComposerTextAreaActions
+                    endDecorator={isDraw
+                      ? <ComposerTextAreaDrawActions
+                        composerText={composeText}
+                        onReplaceText={setComposeText}
+                      />
+                      : <ComposerTextAreaActions
                         agiAttachmentPrompts={agiAttachmentPrompts}
                         inReferenceTo={inReferenceTo}
                         onAppendAndSend={handleAppendTextAndSend}
@@ -1027,11 +1031,12 @@ export function Composer(props: {
                   {/*</Tooltip>}*/}
 
                   {/* [Draw] Imagine */}
-                  {isDraw && !!composeText && <Tooltip title='Generate an image prompt'>
-                    <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>
-                      <AutoAwesomeIcon />
-                    </IconButton>
-                  </Tooltip>}
+                  {/* NOTE: disabled: as we have prompt enhancement in the TextArea (Draw Mode) already */}
+                  {/*{isDraw && !!composeText && <Tooltip title='Generate an image prompt'>*/}
+                  {/*  <IconButton variant='outlined' disabled={noConversation || noLLM} onClick={handleTextImagineClicked}>*/}
+                  {/*    <AutoAwesomeIcon />*/}
+                  {/*  </IconButton>*/}
+                  {/*</Tooltip>}*/}
 
                   {/* Mode expander */}
                   <IconButton
