@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormControl, Switch } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -50,6 +51,7 @@ export function AppChatSettingsAI() {
 
   const labsDevMode = useLabsDevMode();
 
+  const showModelIcons = false; // useUIComplexityMode() === 'extra';
 
   // callbacks
 
@@ -67,8 +69,8 @@ export function AppChatSettingsAI() {
 
     <FormControlDomainModel
       domainId='codeApply'
-      title={<><CodeIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Coding Model</>}
-      description='Best for code'
+      title={!showModelIcons ? 'Coding model' : <><CodeIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Coding model</>}
+      description='Code tasks'
       tooltip={<>
         Smart <b>code editing</b> model (must support Tool Calls) with great conding skills and not too slow. Used for:
         <ul>
@@ -82,8 +84,8 @@ export function AppChatSettingsAI() {
 
     <FormControlDomainModel
       domainId='fastUtil'
-      title='Utility model'
-      description='Fast, see info'
+      title={!showModelIcons ? 'Utility model' : <><EditRoundedIcon color='primary' sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Utility model</>}
+      description='Fast, misc. tasks'
       tooltip={<>
         Lightweight model (must support Tool Calls) used for &quot;fast&quot;, low-cost operations, such as:
         <ul>
