@@ -68,7 +68,10 @@ export function EnhancedRenderCode(props: {
 
   const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    event.stopPropagation();
+
+    // NOTE: disabled because a click here won't close other menus (won't trigger other component's ClickAwayListeners)
+    // event.stopPropagation();
+
     setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
   }, []);
 
@@ -147,7 +150,7 @@ export function EnhancedRenderCode(props: {
       <IconButton
         size='sm'
         onClick={handleToggleContextMenu}
-        onContextMenu={handleToggleContextMenu}
+        // onContextMenu={handleToggleContextMenu} // NOTE: disabled because onContextMenu prevents */ClickAwayListeners
         sx={{ mr: -0.5 }}
       >
         <MoreVertIcon />
