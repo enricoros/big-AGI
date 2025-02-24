@@ -406,8 +406,10 @@ function _prettyAnthropicModelName(modelId: string): string | null {
   if (claudeIndex === -1) return null;
 
   const subStr = modelId.slice(claudeIndex);
-  const is35 = subStr.includes('-3-5-');
-  const version = is35 ? '3.5' : '3';
+  const version =
+    subStr.includes('-3-7-') ? '3.7'
+      : subStr.includes('-3-5-') ? '3.5'
+        : '3';
 
   if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
   if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;
