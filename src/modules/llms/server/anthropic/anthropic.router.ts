@@ -9,7 +9,7 @@ import { fixupHost } from '~/common/util/urlUtils';
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 
-import { hardcodedAnthropicModels } from './anthropic.models';
+import { hardcodedAnthropicModels, hardcodedAnthropicVariants } from './anthropic.models';
 
 
 // configuration and defaults
@@ -160,22 +160,38 @@ export const llmAnthropicRouter = createTRPCRouter({
       const { data: availableModels } = AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
 
       // cast the models to the common schema
-      const models = availableModels.map((model): ModelDescriptionSchema => {
+      const models = availableModels.reduce((acc, model) => {
 
-        // use an hardcoded model definition if available
+        // find the model description
         const hardcodedModel = hardcodedAnthropicModels.find(m => m.id === model.id);
-        if (hardcodedModel && !hardcodedModel.created && model.created_at)
-          hardcodedModel.created = roundTime(model.created_at);
-        if (hardcodedModel)
-          return hardcodedModel;
+        if (hardcodedModel) {
 
-        // for day-0 support of new models, create a placeholder model using sensible defaults
-        const novelModel = _createPlaceholderModel(model);
-        console.log('[DEV] anthropic.router: new model found, please configure it:', novelModel.id);
-        return novelModel;
-      });
+          // update creation date
+          if (!hardcodedModel.created && model.created_at)
+            hardcodedModel.created = roundTime(model.created_at);
 
-      // developers warning for obsoleted models
+          // add the base model
+          acc.push(hardcodedModel);
+
+          // add a thinking variant, if defined
+          if (hardcodedAnthropicVariants[model.id])
+            acc.push({
+              ...hardcodedModel,
+              ...hardcodedAnthropicVariants[model.id],
+            });
+
+        } else {
+
+          // for day-0 support of new models, create a placeholder model using sensible defaults
+          const novelModel = _createPlaceholderModel(model);
+          console.log('[DEV] anthropic.router: new model found, please configure it:', novelModel.id);
+          acc.push(novelModel);
+
+        }
+        return acc;
+      }, [] as ModelDescriptionSchema[]);
+
+      // developers warning for obsoleted models (we have them, but they are not in the API response anymore)
       const apiModelIds = new Set(availableModels.map(m => m.id));
       const additionalModels = hardcodedAnthropicModels.filter(m => !apiModelIds.has(m.id));
       if (additionalModels.length > 0)

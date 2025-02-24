@@ -3,6 +3,21 @@ import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vi
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 
+export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescriptionSchema> } = {
+
+  // Changes to the thinking variant (same model ID) for the Claude 3.7 Sonnet model
+  'claude-3-7-sonnet-20250219': {
+    idVariant: 'thinking',
+    label: 'Claude 3.7 Sonnet (Thinking)',
+    description: 'Claude 3.7 with extended thinking mode enabled for complex reasoning',
+    parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
+    maxCompletionTokens: 65536, // Extended thinking mode - note that the 'anthropic-beta: output-128k-2025-02-19' header would point to a 128k instead
+    benchmark: { cbaElo: 1283 + 1 },
+  },
+
+} as const;
+
+
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
 
   // Claude 3.7 models
@@ -11,11 +26,11 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     label: 'Claude 3.7 Sonnet', // 🌟
     description: 'Highest level of intelligence and capability with toggleable extended thinking',
     contextWindow: 200000,
-    maxCompletionTokens: 64000, // Extended thinking mode - note that the 'anthropic-beta: output-128k-2025-02-19' header would point to a 128k instead
+    maxCompletionTokens: 8192,
     trainingDataCutoff: 'Oct 2024',
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching],
     chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
-    benchmark: { cbaElo: 1283 + 1 /* temporary to be preferred/on top */ },
+    benchmark: { cbaElo: 1283 + 2 /* temporary to be preferred/on top */ },
   },
 
   // Claude 3.5 models
