@@ -75,6 +75,10 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
   };
 }
 
+function roundTime(date: string) {
+  return Math.round(new Date(date).getTime() / 1000);
+}
+
 
 // Input Schemas
 
@@ -110,6 +114,8 @@ export const llmAnthropicRouter = createTRPCRouter({
 
         // use an hardcoded model definition if available
         const hardcodedModel = hardcodedAnthropicModels.find(m => m.id === model.id);
+        if (hardcodedModel && !hardcodedModel.created && model.created_at)
+          hardcodedModel.created = roundTime(model.created_at);
         if (hardcodedModel)
           return hardcodedModel;
 

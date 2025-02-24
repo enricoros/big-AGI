@@ -3,15 +3,12 @@ import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vi
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 
-const roundTime = (date: string) => Math.round(new Date(date).getTime() / 1000);
-
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
 
   // Claude 3.7 models
   {
     id: 'claude-3-7-sonnet-20250219', // Active | Guaranteed Until: February 2026
     label: 'Claude 3.7 Sonnet', // 🌟
-    created: roundTime('2025-02-19'),
     description: 'Highest level of intelligence and capability with toggleable extended thinking',
     contextWindow: 200000,
     maxCompletionTokens: 64000, // Extended thinking mode - note that the 'anthropic-beta: output-128k-2025-02-19' header would point to a 128k instead
@@ -24,8 +21,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   // Claude 3.5 models
   {
     id: 'claude-3-5-sonnet-20241022', // Active | Guaranteed Until: October 2025
-    label: 'Claude 3.5 Sonnet v2',
-    created: roundTime('2024-10-22'),
+    label: 'Claude 3.5 Sonnet',
     description: 'High level of intelligence and capability',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
@@ -36,8 +32,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   },
   {
     id: 'claude-3-5-sonnet-20240620', // Active | Guaranteed Until: June 2025
-    label: 'Claude 3.5 Sonnet',
-    created: roundTime('2024-06-20'),
+    label: 'Claude 3.5 Sonnet (previous)',
     description: 'Previous version of Claude 3.5 Sonnet',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
@@ -50,7 +45,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   {
     id: 'claude-3-5-haiku-20241022', // Active | Guaranteed Until: October 2025
     label: 'Claude 3.5 Haiku',
-    created: roundTime('2024-10-22'),
     description: 'Intelligence at speed',
     contextWindow: 200000,
     maxCompletionTokens: 8192,
@@ -64,7 +58,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   {
     id: 'claude-3-opus-20240229', // Active | Guaranteed Until: March 2025
     label: 'Claude 3 Opus',
-    created: roundTime('2024-02-29'),
     description: 'Powerful model for complex tasks',
     contextWindow: 200000,
     maxCompletionTokens: 4096,
@@ -77,7 +70,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     id: 'claude-3-haiku-20240307', // Active | Guaranteed Until: March 2025
     hidden: true, // close to the guaranteed date
     label: 'Claude 3 Haiku',
-    created: roundTime('2024-03-07'),
     description: 'Quick and accurate targeted performance',
     contextWindow: 200000,
     maxCompletionTokens: 4096,
@@ -91,7 +83,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   {
     id: 'claude-3-sonnet-20240229', // Deprecated | Deprecated: January 21, 2025 | Retired: N/A
     label: 'Claude 3 Sonnet',
-    created: roundTime('2024-02-29'),
     description: 'Balance of intelligence and speed. Deprecated on 2025-01-21.',
     contextWindow: 200000,
     maxCompletionTokens: 4096,
@@ -105,7 +96,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   {
     id: 'claude-2.1', // Deprecated | Deprecated: January 21, 2025 | Retired: N/A
     label: 'Claude 2.1',
-    created: roundTime('2023-11-21'),
     description: 'Updated version of Claude 2 with improved accuracy. Deprecated on 2025-01-21.',
     contextWindow: 200000,
     maxCompletionTokens: 4096,
@@ -119,7 +109,6 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
   {
     id: 'claude-2.0', // Deprecated | Deprecated: January 21, 2025 | Retired: N/A
     label: 'Claude 2',
-    created: roundTime('2023-07-11'),
     description: 'Predecessor to Claude 3, offering strong all-round performance. Deprecated on 2025-01-21.',
     contextWindow: 100000,
     maxCompletionTokens: 4096,
