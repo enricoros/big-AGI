@@ -196,7 +196,7 @@ export function BeamView(props: {
       />
 
 
-      {/* Rays Grid */}
+      {/* Rays Grid - BeamRay[] > <ChatMessage /> */}
       <BeamRayGrid
         beamStore={props.beamStore}
         isMobile={props.isMobile}
@@ -223,7 +223,7 @@ export function BeamView(props: {
         raysReady={raysReady}
       />
 
-      {/* Fusion Grid */}
+      {/* Fusion Grid - Fusion[] > <ChatMessage /> */}
       <BeamFusionGrid
         beamStore={props.beamStore}
         canGather={canGather}
