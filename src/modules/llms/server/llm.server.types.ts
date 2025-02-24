@@ -84,6 +84,7 @@ const ModelParameterSpec_schema = z.object({
 
 export const ModelDescription_schema = z.object({
   id: z.string(),
+  idVariant: z.string().optional(),
   label: z.string(),
   created: z.number().optional(),
   updated: z.number().optional(),
