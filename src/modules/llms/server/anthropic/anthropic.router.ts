@@ -12,26 +12,76 @@ import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server
 import { hardcodedAnthropicModels } from './anthropic.models';
 
 
-// Default hosts
-const DEFAULT_API_VERSION_HEADERS = {
-  'anthropic-version': '2023-06-01',
-  // Betas:
-  // - messages-2023-12-15: to use the Messages API [now default]
-  // - max-tokens-3-5-sonnet-2024-07-15
-  //
-  // - prompt-caching-2024-07-31: to use the prompt caching feature; adds to any API invocation:
-  //   - message_start.message.usage.cache_creation_input_tokens: number
-  //   - message_start.message.usage.cache_read_input_tokens: number
-  'anthropic-beta': 'computer-use-2024-10-22,prompt-caching-2024-07-31,max-tokens-3-5-sonnet-2024-07-15,output-128k-2025-02-19',
-};
+// configuration and defaults
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
 const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
+
+const DEFAULT_ANTHROPIC_HEADERS = {
+  'anthropic-version': '2023-06-01',
+  // 'anthropic-beta': [].join(','),
+} as const;
+
+const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
+  // NOTE: disabled for now, as we don't have tested side-effects for this feature yet
+  // 'token-efficient-tools-2025-02-19', // https://docs.anthropic.com/en/docs/build-with-claude/tool-use/token-efficient-tool-use
+
+  /**
+   * to use the prompt caching feature; adds to any API invocation:
+   *  - message_start.message.usage.cache_creation_input_tokens: number
+   *  - message_start.message.usage.cache_read_input_tokens: number
+   */
+  'prompt-caching-2024-07-31',
+
+  // now default
+  // 'messages-2023-12-15'
+] as const;
+
+const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
+  'claude-3-7-sonnet-20250219': [
+
+    /** enables long output for the 3.7 Sonnet model */
+    'output-128k-2025-02-19',
+
+    /** computer Tools for Sonnet 3.7 [computer_20250124, text_editor_20250124, bash_20250124] */
+    'computer-use-2025-01-24',
+
+  ] as const,
+  'claude-3-5-sonnet-20241022': [
+
+    /** computer Tools for Sonnet 3.5 v2 [computer_20241022, text_editor_20241022, bash_20241022] */
+    'computer-use-2024-10-22',
+
+  ] as const,
+  'claude-3-5-sonnet-20240620': [
+
+    /** to use the 8192 tokens limit for the FIRST 3.5 Sonnet model */
+    'max-tokens-3-5-sonnet-2024-07-15',
+
+  ] as const,
+} as const;
+
+function _anthropicHeaders(modelId?: string): HeadersInit {
+
+  // accumulate the beta features
+  const betaFeatures = [...DEFAULT_ANTHROPIC_BETA_FEATURES];
+  if (modelId) {
+    // string search (.includes) within the keys, to be more resilient to modelId changes/prefixing
+    for (const [key, value] of Object.entries(PER_MODEL_BETA_FEATURES))
+      if (key.includes(modelId))
+        betaFeatures.push(...value);
+  }
+
+  return {
+    ...DEFAULT_ANTHROPIC_HEADERS,
+    'anthropic-beta': betaFeatures.join(','),
+  };
+}
 
 
 // Mappers
 
-async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
-  const { headers, url } = anthropicAccess(access, apiPath);
+async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, antModelIdForBetaFeatures: undefined | string, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
+  const { headers, url } = anthropicAccess(access, antModelIdForBetaFeatures, apiPath);
   return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic' });
 }
 
@@ -40,7 +90,7 @@ async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessS
 //   return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: 'Anthropic' });
 // }
 
-export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+export function anthropicAccess(access: AnthropicAccessSchema, antModelIdForBetaFeatures: undefined | string, apiPath: string): { headers: HeadersInit, url: string } {
   // API key
   const anthropicKey = access.anthropicKey || env.ANTHROPIC_API_KEY || '';
 
@@ -67,7 +117,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      ...DEFAULT_API_VERSION_HEADERS,
+      ..._anthropicHeaders(antModelIdForBetaFeatures),
       'X-API-Key': anthropicKey,
       ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
     },
@@ -106,7 +156,7 @@ export const llmAnthropicRouter = createTRPCRouter({
     .query(async ({ input: { access } }) => {
 
       // get the models
-      const wireModels = await anthropicGETOrThrow(access, '/v1/models?limit=1000');
+      const wireModels = await anthropicGETOrThrow(access, undefined, '/v1/models?limit=1000');
       const { data: availableModels } = AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
 
       // cast the models to the common schema
