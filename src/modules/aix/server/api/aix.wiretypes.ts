@@ -562,6 +562,8 @@ export namespace AixWire_Particles {
 
   export type PartParticleOp =
     | { p: 'tr_', _t: string, weak?: 'tag' } // reasoning text, incremental; could be a 'weak' detection, e.g. heuristic from '<think>' rather than API-provided
+    | { p: 'trs', signature: string } // reasoning signature
+    | { p: 'trr_', _data: string } // reasoning raw (or redacted) data
     // | { p: 'ii', mimeType: string, i_b64?: string /* never undefined */ }
     // | { p: '_ii', i_b64: string }
     // | { p: 'di', type: string, ref: string, l1Title: string, i_text?: string /* never undefined */ }
