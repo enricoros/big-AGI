@@ -195,6 +195,10 @@ export function isVoidFragment(fragment: DMessageFragment) {
   return fragment.ft === 'void';
 }
 
+export function isVoidThinkingFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment & { part: DVoidModelAuxPart } {
+  return fragment.ft === 'void' && fragment.part.pt === 'ma' && fragment.part.aType === 'reasoning';
+}
+
 
 export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'doc';

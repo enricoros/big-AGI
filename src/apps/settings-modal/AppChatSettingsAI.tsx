@@ -8,11 +8,26 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { useLabsDevMode } from '~/common/state/store-ux-labs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
+
+
+const _keepThinkingBlocksOptions: FormSelectOption<'all' | 'last-only'>[] = [
+  {
+    value: 'all',
+    label: 'All Messages',
+    description: 'Keep all blocks',
+  },
+  {
+    value: 'last-only',
+    label: 'Last Message Only',
+    description: 'Only keep last',
+  },
+] as const;
 
 
 function FormControlDomainModel(props: {
@@ -47,6 +62,7 @@ export function AppChatSettingsAI() {
     autoSuggestHTMLUI, setAutoSuggestHTMLUI,
     // autoSuggestQuestions, setAutoSuggestQuestions,
     autoTitleChat, setAutoTitleChat,
+    chatKeepLastThinkingOnly, setChatKeepLastThinkingOnly,
   } = useChatAutoAI();
 
   const labsDevMode = useLabsDevMode();
@@ -107,6 +123,14 @@ export function AppChatSettingsAI() {
       />
     )}
 
+    <FormSelectControl
+      title='Reasoning blocks'
+      tooltip='Controls how AI thinking/reasoning blocks are kept in your chat history. Keeping only in the last message (default) reduces clutter.'
+      options={_keepThinkingBlocksOptions}
+      value={chatKeepLastThinkingOnly ? 'last-only' : 'all'}
+      onChange={(value) => setChatKeepLastThinkingOnly(value === 'last-only')}
+      selectSx={{ minWidth: 140 }}
+    />
 
     <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
 
