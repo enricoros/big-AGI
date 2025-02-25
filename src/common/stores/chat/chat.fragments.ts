@@ -157,7 +157,7 @@ export type DVoidModelAuxPart = {
   aText: string,
   // [Anthropic] attributes, if present, they imply "Extended Thinking" object(s)
   textSignature?: string,
-  redactedData?: string[],
+  redactedData?: readonly string[],
 };
 
 type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up', /* 2025-02-23: added for non-pure-text placeholders */ };

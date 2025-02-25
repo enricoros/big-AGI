@@ -7,7 +7,7 @@ import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
-import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_ToolMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart } from '../server/api/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_ToolMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart, AixParts_ModelAuxPart } from '../server/api/aix.wiretypes';
 
 // TODO: remove console messages to zero, or replace with throws or something
 
@@ -198,7 +198,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             //             which may be instrumental for the model to execute tools-result follow-up actions/text.
             const isAntModelAux = aFragment.part.textSignature || aFragment.part.redactedData?.length;
             if (isAntModelAux)
-              modelMessage.parts.push(aFragment.part);
+              modelMessage.parts.push(aFragment.part as AixParts_ModelAuxPart /* NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here*/);
             break;
 
           case 'doc':
