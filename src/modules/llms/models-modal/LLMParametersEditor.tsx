@@ -31,10 +31,13 @@ export function LLMParametersEditor(props: {
   parameters: undefined | DModelParameterValues,
   onChangeParameter: (parameterValue: DModelParameterValues) => void,
   onRemoveParameter: (parameterId: DModelParameterId) => void,
+
+  // rendering options
+  simplified?: boolean,
 }) {
 
   // derived input
-  const { maxOutputTokens, parameterSpecs, baselineParameters, parameters, onChangeParameter, onRemoveParameter } = props;
+  const { maxOutputTokens, parameterSpecs, baselineParameters, parameters, onChangeParameter, onRemoveParameter, simplified } = props;
 
   // external state
   const allParameters = getAllModelParameterValues(baselineParameters, parameters);
@@ -99,20 +102,21 @@ export function LLMParametersEditor(props: {
           </IconButton>
         </Tooltip>
       }
-    />})
+    />}
 
-    {(llmResponseTokens !== null && maxOutputTokens !== null) ? (
+    {llmResponseTokens === null || maxOutputTokens === null ? (
+      <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
+    ) : !props.simplified && (
       <Box sx={{ mr: 1 }}>
         <FormSliderControl
           title='Output Tokens' ariaLabel='Model Max Tokens'
+          description='Max Size'
           min={256} max={maxOutputTokens} step={256} defaultValue={1024}
           valueLabelDisplay={parameters?.llmResponseTokens !== undefined ? 'on' : 'auto'}
           value={llmResponseTokens}
           onChange={value => onChangeParameter({ llmResponseTokens: value })}
         />
       </Box>
-    ) : (
-      <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
     )}
 
     {paramSpecAntThinkingBudget && (
