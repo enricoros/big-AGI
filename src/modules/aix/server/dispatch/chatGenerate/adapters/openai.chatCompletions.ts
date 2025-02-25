@@ -252,10 +252,11 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
         break;
 
       case 'meta_cache_control':
-        // ignore this hint - openai doesn't support this yet
+        // ignore this breakpoint hint - Anthropic only
         break;
 
       default:
+        const _exhaustiveCheck: never = part;
         throw new Error(`Unsupported part type in System message: ${(part as any).pt}`);
     }
   });
@@ -316,7 +317,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             case 'meta_cache_control':
-              // ignore this hint - openai doesn't support this yet
+              // ignore this breakpoint hint - Anthropic only
               break;
 
             case 'meta_in_reference_to':
@@ -327,6 +328,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             default:
+              const _exhaustiveCheck: never = part;
               throw new Error(`Unsupported part type in User message: ${(part as any).pt}`);
           }
         }
@@ -377,6 +379,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
                   toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, 'execute_code' /* suboptimal */, invocation.code || '');
                   break;
                 default:
+                  const _exhaustiveCheck: never = invocation;
                   throw new Error(`Unsupported tool call type in Model message: ${(part as any).pt}`);
               }
 
@@ -390,11 +393,16 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
                 chatMessages.push({ role: 'assistant', content: null, tool_calls: [toolCallPart] });
               break;
 
+            case 'ma':
+              // ignore this thinking block - Anthropic only
+              break;
+
             case 'meta_cache_control':
-              // ignore this hint - openai doesn't support this yet
+              // ignore this breakpoint hint - Anthropic only
               break;
 
             default:
+              const _exhaustiveCheck: never = part;
               throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
           }
 
@@ -413,7 +421,12 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
                 throw new Error(`Unsupported tool response type in Tool message: ${(part as any).pt}`);
               break;
 
+            case 'meta_cache_control':
+              // ignore this breakpoint hint - Anthropic only
+              break;
+
             default:
+              const _exhaustiveCheck: never = part;
               throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
           }
         }

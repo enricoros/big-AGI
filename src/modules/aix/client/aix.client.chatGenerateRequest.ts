@@ -2,7 +2,7 @@ import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageFragment, DMessageImageRefPart, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isTextContentFragment, isToolResponseFunctionCallPart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isTextContentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { LLMImageResizeMode, resizeBase64ImageIfNeeded } from '~/common/util/imageUtils';
 
@@ -151,6 +151,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           default:
+            const _exhaustiveCheck: never = uFragment.part;
             console.warn('aixCGR_FromDMessages: unexpected User fragment part type', (uFragment.part as any).pt);
         }
         return uMsg;
@@ -179,7 +180,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
       for (const aFragment of m.fragments) {
 
-        if (!isContentOrAttachmentFragment(aFragment) || aFragment.part.pt === '_pt_sentinel')
+        if ((!isContentOrAttachmentFragment(aFragment) && !isVoidThinkingFragment(aFragment)) || aFragment.part.pt === '_pt_sentinel')
           continue;
 
         switch (aFragment.part.pt) {
@@ -189,6 +190,15 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             // Key place where the Aix Zod inferred types are compared to the Typescript defined DMessagePart* types
             // - in case of error, check that the types in `chat.fragments.ts` and `aix.wiretypes.ts` are in sync
             modelMessage.parts.push(aFragment.part);
+            break;
+
+          case 'ma':
+            // https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#why-thinking-blocks-must-be-preserved
+            // [Anthropic] special case: despite being Void, we send the DVoidModelAuxPart which has signed Thinking blocks and Redacted data,
+            //             which may be instrumental for the model to execute tools-result follow-up actions/text.
+            const isAntModelAux = aFragment.part.textSignature || aFragment.part.redactedData?.length;
+            if (isAntModelAux)
+              modelMessage.parts.push(aFragment.part);
             break;
 
           case 'doc':
@@ -230,6 +240,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           default:
+            const _exhaustiveCheck: never = aFragment.part;
             console.warn('aixCGR_FromDMessages: unexpected Assistant fragment part', aFragment.part);
             break;
         }
