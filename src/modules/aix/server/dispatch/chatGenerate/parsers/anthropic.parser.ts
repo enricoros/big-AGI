@@ -106,12 +106,26 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             case 'text':
               pt.appendText(content_block.text);
               break;
+
             case 'tool_use':
               // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
               if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
                 content_block.input = null;
               pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
               break;
+
+            case 'thinking':
+              // TODO: we should transmit the Thinking text, and if there's a signature, we know it's complete and we should transmit that as-is
+              pt.appendReasoningText(content_block.thinking);
+              if (content_block.signature)
+                pt.appendReasoningText(content_block.signature); // TEMP DEBUG: show the signature
+              break;
+
+            case 'redacted_thinking':
+              // TODO: this is just a STUB impl
+              pt.appendReasoningText(content_block.data); // TEMP DEBUG: show the redacted data
+              break;
+
             default:
               throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
           }
@@ -141,6 +155,22 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 pt.appendFunctionCallInvocationArgs(responseMessage.content[index].id, delta.partial_json);
               } else
                 throw new Error('Unexpected input_json_delta');
+              break;
+
+            case 'thinking_delta':
+              if (responseMessage.content[index].type === 'thinking') {
+                responseMessage.content[index].thinking += delta.thinking;
+                pt.appendReasoningText(delta.thinking);
+              } else
+                throw new Error('Unexpected thinking delta');
+              break;
+
+            case 'signature_delta':
+              if (responseMessage.content[index].type === 'thinking') {
+                responseMessage.content[index].signature = delta.signature;
+                // TODO: transmit the signature; note that the 'delta' shall be a complete signature
+              } else
+                throw new Error('Unexpected signature delta');
               break;
 
             default:
@@ -233,6 +263,16 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
       switch (contentBlock.type) {
+        case 'thinking':
+          pt.appendReasoningText(contentBlock.thinking);
+          if (contentBlock.signature) {
+            // TODO ... transmit the signature
+          }
+          break;
+        case 'redacted_thinking':
+          // NOTE: we shall have a full contentBlock.data, and that's it, we need to save it opaquely
+          // TODO: transmit this complete opaque data
+          break;
         case 'text':
           pt.appendText(contentBlock.text);
           break;

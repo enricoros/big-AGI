@@ -159,6 +159,8 @@ export namespace AnthropicWire_Messages {
   export const ContentBlockOutput_schema = z.discriminatedUnion('type', [
     AnthropicWire_Blocks.TextBlock_schema,
     AnthropicWire_Blocks.ToolUseBlock_schema,
+    AnthropicWire_Blocks.ThinkingBlock_schema,
+    AnthropicWire_Blocks.RedactedThinkingBlock_schema,
   ]);
 
 }
@@ -429,6 +431,14 @@ export namespace AnthropicWire_API_Message_Create {
       z.object({
         type: z.literal('input_json_delta'),
         partial_json: z.string(),
+      }),
+      z.object({
+        type: z.literal('thinking_delta'),
+        thinking: z.string(),
+      }),
+      z.object({
+        type: z.literal('signature_delta'),
+        signature: z.string(),
       }),
     ]),
   });
