@@ -21,7 +21,13 @@ export interface IParticleTransmitter {
   appendText(textChunk: string): void;
 
   /** Appends reasoning text, creating a part if missing [throttled] */
-  appendReasoningText(textChunk: string): void;
+  appendReasoningText(textChunk: string, weak?: 'tag'): void;
+
+  /** Sets a reasoning signature, associated with the current reasoning text */
+  setReasoningSignature(signature: string): void;
+
+  /** Adds a raw (redacted) reasoning data parcel */
+  addReasoningRedactedData(data: string): void;
 
   /** Appends test, with automatic heuristics for Particle splitting [throttled] */
   appendAutoText_weak(textChunk: string): void;
