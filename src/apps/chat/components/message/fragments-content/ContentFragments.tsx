@@ -119,6 +119,8 @@ export function ContentFragments(props: {
                 fragmentId={fId}
                 auxType={part.aType}
                 auxText={part.aText}
+                auxHasSignature={part.textSignature !== undefined}
+                auxRedactedDataCount={part.redactedData?.length ?? 0}
                 zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
                 onFragmentReplace={props.onFragmentReplace}
