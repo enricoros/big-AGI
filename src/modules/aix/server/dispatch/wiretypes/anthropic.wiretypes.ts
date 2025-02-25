@@ -27,7 +27,8 @@ export namespace AnthropicWire_Blocks {
 
   export const TextBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('text'),
-    text: z.string(),
+    text: z.string(), // length: 1+
+    // citations: z.any().optional(), // 2025-02-24: first seen here, not adding it yet - 3 kinds of this block - TODO: define
   });
 
   export const ImageBlock_schema = _CommonBlock_schema.extend({
@@ -42,7 +43,7 @@ export namespace AnthropicWire_Blocks {
   export const ToolUseBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_use'),
     id: z.string(),
-    name: z.string(),
+    name: z.string(), // length: 1-64
     input: z.any(), // NOTE: formally an 'object', not any, probably relaxed for parsing
   });
 
@@ -52,6 +53,33 @@ export namespace AnthropicWire_Blocks {
     // NOTE: could be a string too, but we force it to be an array for a better implementation
     content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(),
     is_error: z.boolean().optional(), // default: false
+  });
+
+  export const DocumentBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('document'),
+    title: z.string().nullable().optional(), // length: 1-500
+    context: z.string().nullable().optional(), // length: 1+
+    citations: z.object({ enabled: z.boolean() }).optional(),
+    source: z.discriminatedUnion('type', [
+      // Base64PDFSource
+      z.object({
+        type: z.literal('base64'),
+        media_type: z.enum(['application/pdf']),
+        data: z.string(),
+      }),
+      // PlainTextSource
+      z.object({
+        type: z.literal('text'),
+        media_type: z.enum(['text/plain']),
+        data: z.string(),
+      }),
+      // ContentBlockSource
+      z.object({
+        type: z.literal('content'),
+        // NOTE: could be a string too, but we force it to be an array for a better implementation
+        content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(),
+      }),
+    ]),
   });
 
   export function TextBlock(text: string): z.infer<typeof TextBlock_schema> {
@@ -87,6 +115,7 @@ export namespace AnthropicWire_Messages {
     AnthropicWire_Blocks.ImageBlock_schema,
     AnthropicWire_Blocks.ToolUseBlock_schema,
     AnthropicWire_Blocks.ToolResultBlock_schema,
+    AnthropicWire_Blocks.DocumentBlock_schema,
   ]);
 
   export const MessageInput_schema = z.object({
@@ -134,7 +163,7 @@ export namespace AnthropicWire_Tools {
     input_schema: z.object({
       type: z.literal('object'),
       properties: z.record(z.unknown()).nullable(),
-      required: z.array(z.string()).optional(),
+      required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
     }).and(z.record(z.unknown())),
   });
 
