@@ -203,7 +203,7 @@ export function Telephone(props: {
 
   useEffect(() => {
     return () => synth.cancel()
-  }, [])
+  }, [synth])
 
   // [E] persona streaming response - upon new user message
   React.useEffect(() => {
