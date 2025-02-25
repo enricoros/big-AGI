@@ -151,7 +151,14 @@ export type DMessageToolResponsePart = {
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 
-type DVoidModelAuxPart = { pt: 'ma', aType: 'reasoning' | string, aText: string };
+export type DVoidModelAuxPart = {
+  pt: 'ma',
+  aType: 'reasoning', // note, we don't specialize to 'ant-thinking' here, as we can infer it from the presence of textSignature or redactedData
+  aText: string,
+  // [Anthropic] attributes, if present, they imply "Extended Thinking" object(s)
+  textSignature?: string,
+  redactedData?: readonly string[] | string[],
+};
 
 type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up', /* 2025-02-23: added for non-pure-text placeholders */ };
 
@@ -292,8 +299,8 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
 
 /// Void Fragments - Creation & Duplication
 
-export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string): DMessageVoidFragment {
-  return _createVoidFragment(_create_ModelAux_Part(aType, aText));
+export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string, textSignature?: string, redactedData?: string[]): DMessageVoidFragment {
+  return _createVoidFragment(_create_ModelAux_Part(aType, aText, textSignature, redactedData));
 }
 
 export function createPlaceholderVoidFragment(placeholderText: string, placeholderType?: DVoidPlaceholderPart['pType']): DMessageVoidFragment {
@@ -372,8 +379,12 @@ function _create_CodeExecutionResponse_Part(id: string, error: boolean | string,
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
-function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string): DVoidModelAuxPart {
-  return { pt: 'ma', aType, aText };
+function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string, textSignature?: string, redactedData?: Readonly<string[]>): DVoidModelAuxPart {
+  return {
+    pt: 'ma', aType, aText,
+    ...(textSignature !== undefined ? { textSignature } : undefined),
+    ...(redactedData ? { redactedData: Array.from(redactedData) /* creates a mutable copy of the array */ } : undefined),
+  };
 }
 
 function _create_Placeholder_Part(placeholderText: string, pType?: DVoidPlaceholderPart['pType']): DVoidPlaceholderPart {
@@ -397,7 +408,7 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
       return _create_ImageRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
 
     case 'ma':
-      return _create_ModelAux_Part(part.aType, part.aText) as TPart;
+      return _create_ModelAux_Part(part.aType, part.aText, part.textSignature, part.redactedData) as TPart;
 
     case 'ph':
       return _create_Placeholder_Part(part.pText, part.pType) as TPart;
