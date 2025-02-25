@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, Button, Switch, Typography } from '@mui/joy';
+import { Box, Button, Switch, Tooltip, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -13,8 +13,8 @@ import { enhancedCodePanelTitleTooltipSx, RenderCodePanelFrame } from '~/modules
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
-import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageDocPart, DMessageFragmentId, DVMimeType, isDocPart, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { useContextWorkspaceId } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
@@ -23,19 +23,34 @@ import { buttonIconForFragment, DocSelColor } from './DocAttachmentFragmentButto
 import { useLiveFileSync } from './livefile-sync/useLiveFileSync';
 
 
-function inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
-  if (!isDocPart(attachmentFragment.part))
-    return false;
-  // just use the mime of the doc part
-  return attachmentFragment.part.vdt === DVMimeType.VndAgiCode;
-}
+// configuration
+const FALLBACK_NO_TITLE = 'Untitled Attachment';
 
 
 const _styles = {
   button: {
     minWidth: 100,
   } as const,
+  titleDisabled: {
+    opacity: 0.5,
+  } as const,
+  titleEditable: {
+    cursor: 'pointer',
+    '&:hover': { textDecoration: 'underline' } as const,
+  } as const,
+  titleTextArea: {
+    minWidth: 200,
+    flexGrow: 1,
+  } as const,
 } as const;
+
+
+function _inferInitialViewAsCode(attachmentFragment: DMessageAttachmentFragment) {
+  if (!isDocPart(attachmentFragment.part))
+    return false;
+  // just use the mime of the doc part
+  return attachmentFragment.part.vdt === DVMimeType.VndAgiCode;
+}
 
 
 export function DocAttachmentFragment(props: {
@@ -53,7 +68,10 @@ export function DocAttachmentFragment(props: {
 }) {
 
   // state
-  const [viewAsCode, setViewAsCode] = React.useState(() => inferInitialViewAsCode(props.fragment));
+  const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+  const [viewAsCode, setViewAsCode] = React.useState(() => _inferInitialViewAsCode(props.fragment));
 
   // external state
   const workspaceId = useContextWorkspaceId();
@@ -61,8 +79,6 @@ export function DocAttachmentFragment(props: {
 
   // derived state
   const { editedText, fragment, onFragmentDelete, onFragmentReplace } = props;
-  const [isDeleteArmed, setIsDeleteArmed] = React.useState(false);
-  const [isEditing, setIsEditing] = React.useState(false);
 
 
   const fragmentId = fragment.fId;
@@ -78,10 +94,10 @@ export function DocAttachmentFragment(props: {
   // hooks
 
   const handleReplaceDocFragmentText = React.useCallback((newText: string) => {
-    // replacement fragment (same fId)
-    const newFragment = updateFragmentWithEditedText(fragment, newText);
+    if (!onFragmentReplace) return;
 
-    // if not replaced, ignore the change
+    // replacement fragment (same fId), and stop if not replaced
+    const newFragment = updateFragmentWithEditedText(fragment, newText);
     if (!newFragment) return;
 
     // Note: this reuses the same fragment ID, which makes the screen not flash (otherwise the whole editor would disappear as the ID does not exist anymore)
@@ -91,6 +107,28 @@ export function DocAttachmentFragment(props: {
   const handleReplaceFragmentLiveFileId = React.useCallback((liveFileId: LiveFileId) => {
     onFragmentReplace(fragmentId, { ...fragment, liveFileId: liveFileId });
   }, [fragment, fragmentId, onFragmentReplace]);
+
+
+  const handleTitleEditBegin = React.useCallback(() => {
+    if (!onFragmentReplace) return;
+    setIsEditing(false);
+    setIsEditingTitle(true);
+  }, [onFragmentReplace]);
+
+  const handleTitleEditCancel = React.useCallback(() => {
+    setIsEditingTitle(false);
+  }, []);
+
+  const handleTitleEditSave = React.useCallback((newTitle: string) => {
+    setIsEditingTitle(false);
+    if (!newTitle.trim() || !onFragmentReplace) return;
+
+    // retitle the fragment, without changing Id
+    const newDocPart: DMessageDocPart = { ...fragmentDocPart, l1Title: newTitle, version: (fragmentDocPart?.version ?? 1) + 1 };
+    const newFragment: DMessageAttachmentFragment = { ...fragment, title: newTitle, part: newDocPart };
+
+    onFragmentReplace(fragment.fId, newFragment);
+  }, [fragment, fragmentDocPart, onFragmentReplace]);
 
 
   // LiveFile sync
@@ -137,6 +175,7 @@ export function DocAttachmentFragment(props: {
     if (editedText.length > 0) {
       handleReplaceDocFragmentText(editedText);
       setIsEditing(false);
+      setIsEditingTitle(false); // just in case
     } else {
       // if the user deleted all text, let's remove the part
       handleFragmentDelete();
@@ -146,6 +185,7 @@ export function DocAttachmentFragment(props: {
   const handleToggleEdit = React.useCallback(() => {
     // reset other states when entering Edit
     if (!isEditing) {
+      setIsEditingTitle(false); // cancel title edit
       setIsDeleteArmed(false);
       // setIsLiveFileArmed(false);
       // resetLiveFileState();
@@ -163,6 +203,11 @@ export function DocAttachmentFragment(props: {
 
 
   // memoed components
+
+  const viewAsLabel =
+    !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
+      : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
+        : '';
 
   const headerTooltipContents = React.useMemo(() => (
     <Box sx={enhancedCodePanelTitleTooltipSx}>
@@ -182,48 +227,57 @@ export function DocAttachmentFragment(props: {
       <div>{fragmentId}</div>
       {!!fragment.caption && <div>Att. Caption</div>}
       {!!fragment.caption && <div>{fragment.caption}</div>}
+      <div>view as code</div>
+      <Switch
+        size='sm'
+        variant='solid'
+        color='neutral'
+        checked={viewAsCode}
+        onChange={handleToggleViewAsCode}
+        endDecorator={viewAsLabel}
+      />
     </Box>
-  ), [fragment.caption, fragment.title, fragmentDocPart, fragmentId]);
+  ), [fragment.caption, fragment.title, fragmentDocPart, fragmentId, handleToggleViewAsCode, viewAsCode, viewAsLabel]);
 
 
   const headerRow = React.useMemo(() => {
     const TitleIcon = buttonIconForFragment(fragmentDocPart);
 
-    const titleEndText =
-      !viewAsCode ? (fragmentDocPart.vdt ? 'text' : '(unknown)')
-        : (fragmentDocPart.data.mimeType && fragmentDocPart.data.mimeType !== fragmentDocPart.vdt) ? fragmentDocPart.data.mimeType || ''
-          : '';
+    const displayTitle = fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref || FALLBACK_NO_TITLE;
 
     return <>
-      <TooltipOutlined color='neutral' placement='top-start' slowEnter title={headerTooltipContents}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+
+        <Tooltip arrow variant='outlined' color='neutral' placement='top-start' title={headerTooltipContents}>
           {TitleIcon && <TitleIcon />}
-          <Typography level='title-sm'>
-            {fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref}
+        </Tooltip>
+
+        {(!isEditingTitle || isEditing) ? (
+          <Typography
+            level='title-sm'
+            onClick={isEditing ? undefined : onFragmentReplace ? handleTitleEditBegin : undefined}
+            sx={isEditing ? _styles.titleDisabled : onFragmentReplace ? _styles.titleEditable : undefined}
+            className='agi-ellipsize'
+          >
+            {displayTitle}
           </Typography>
-        </Box>
-      </TooltipOutlined>
+        ) : (
+          <InlineTextarea
+            initialText={displayTitle}
+            placeholder='Document title'
+            onEdit={handleTitleEditSave}
+            onCancel={handleTitleEditCancel}
+            sx={_styles.titleTextArea}
+          />
+        )}
+
+      </Box>
 
       {/* Live File Control button */}
       {!isEditing && liveFileControlButton}
 
-      {/* Text / Code render switch (auto-detected) */}
-      {!props.zenMode && (
-        <Switch
-          size='sm'
-          variant='solid'
-          color='neutral'
-          checked={viewAsCode}
-          onChange={handleToggleViewAsCode}
-          startDecorator={
-            <Typography level='body-xs'>
-              {titleEndText}
-            </Typography>
-          }
-        />
-      )}
     </>;
-  }, [fragmentDocPart, handleToggleViewAsCode, headerTooltipContents, isEditing, liveFileControlButton, props.zenMode, viewAsCode]);
+  }, [fragmentDocPart, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditSave, headerTooltipContents, isEditing, isEditingTitle, liveFileControlButton, onFragmentReplace]);
 
 
   const toolbarRow = React.useMemo(() => (
