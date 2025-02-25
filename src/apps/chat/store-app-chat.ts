@@ -63,12 +63,15 @@ interface AppChatStore {
   showSystemMessages: boolean;
   setShowSystemMessages: (showSystemMessages: boolean) => void;
 
+  // Voice chat settings
+  voiceInjectPrompt: boolean;
+  setVoiceInjectPrompt: (voiceInjectPrompt: boolean) => void;
+
   // other chat-specific configuration
 
   notificationEnabledModelIds: DLLMId[];
   setNotificationEnabledForModel: (modelId: DLLMId, enabled: boolean) => void;
   isNotificationEnabledForModel: (modelId: DLLMId) => boolean;
-
 }
 
 
@@ -111,9 +114,6 @@ const useAppChatStore = create<AppChatStore>()(persist(
     filterHasStars: false,
     toggleFilterHasStars: () => _set(({ filterHasStars }) => ({ filterHasStars: !filterHasStars })),
 
-    micTimeoutMs: 2000,
-    setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
-
     // new default on 2024-11-18: disable icons by default, too confusing
     showPersonaIcons2: false,
     toggleShowPersonaIcons: () => _set(({ showPersonaIcons2 }) => ({ showPersonaIcons2: !showPersonaIcons2 })),
@@ -126,6 +126,13 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     showSystemMessages: false,
     setShowSystemMessages: (showSystemMessages: boolean) => _set({ showSystemMessages }),
+
+    // Voice chat settings
+    micTimeoutMs: 2000,
+    setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
+
+    voiceInjectPrompt: true,
+    setVoiceInjectPrompt: (voiceInjectPrompt: boolean) => _set({ voiceInjectPrompt }),
 
     // Other chat-specific configuration
 
@@ -141,7 +148,7 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
   }), {
     name: 'app-app-chat',
-    version: 1,
+    version: 2,
 
     onRehydrateStorage: () => (state) => {
       if (!state) return;
@@ -198,6 +205,9 @@ export const useChatMicTimeoutMsValue = (): number =>
 
 export const useChatMicTimeoutMs = (): [number, (micTimeoutMs: number) => void] =>
   useAppChatStore(useShallow(state => [state.micTimeoutMs, state.setMicTimeoutMs]));
+
+export const useVoiceInjectPrompt = (): [boolean, (voiceInjectPrompt: boolean) => void] =>
+  useAppChatStore(useShallow(state => [state.voiceInjectPrompt, state.setVoiceInjectPrompt]))
 
 export function useChatDrawerFilters() {
   return useAppChatStore(useShallow(state => ({

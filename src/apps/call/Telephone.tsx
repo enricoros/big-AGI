@@ -38,6 +38,8 @@ import { CallButton } from './components/CallButton';
 import { CallMessage } from './components/CallMessage';
 import { CallStatus } from './components/CallStatus';
 import { useAppCallStore } from './state/store-app-call';
+import { useVoiceInjectPrompt } from '../chat/store-app-chat';
+import { useEffect } from 'react';
 
 
 function CallMenu(props: {
@@ -88,11 +90,17 @@ function CallMenu(props: {
   </OptimaPanelGroupedList>;
 }
 
-
 export function Telephone(props: {
   callIntent: AppCallIntent,
   backToContacts: () => void,
 }) {
+  const synth = window.speechSynthesis;
+
+  // // Fix speech synthesis bug
+  // useEffect(() => {
+  //   const id = setInterval(() => synth.resume(), 1000);
+  //   return () => clearInterval(id);
+  // }, [synth])
 
   // state
   const [avatarClickCount, setAvatarClickCount] = React.useState<number>(0);// const [micMuted, setMicMuted] = React.useState(false);
@@ -191,6 +199,12 @@ export function Telephone(props: {
     return () => clearInterval(interval);
   }, [isConnected, personaCallStarters, personaVoiceId]);
 
+  const [voiceInjectPrompt] = useVoiceInjectPrompt();
+
+  useEffect(() => {
+    return () => synth.cancel()
+  }, [])
+
   // [E] persona streaming response - upon new user message
   React.useEffect(() => {
     // only act when we have a new user message
@@ -227,19 +241,34 @@ export function Telephone(props: {
     // bail if no llm selected
     if (!modelId) return;
 
+    let callGenerationInputHistory: DMessage[];
+    let systemInstruction: DMessage | null = null;
 
     // Call Message Generation Prompt
-    const callSystemInstruction = createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.');
-    const reMessagesRemapSysToUsr = remapMessagesSysToUsr(reMessages);
-    const callGenerationInputHistory: DMessage[] = [
-      // Chat messages, including the system prompt which is casted to a user message
-      // TODO: when upgrading to dynamic personas, we need to inject the persona message instead - not rely on reMessages, as messages[0] !== 'system'
-      ...(reMessagesRemapSysToUsr ? reMessagesRemapSysToUsr : [createDMessageTextContent('user', personaSystemMessage)]),
-      // Call system prompt 2, to indicate the call has started
-      createDMessageTextContent('user', '**You are now on the phone call related to the chat above**.\nRespect your personality and answer with short, friendly and accurate thoughtful brief lines.'),
-      // Call history
-      ...callMessages,
-    ];
+    if (voiceInjectPrompt) {
+      systemInstruction = createDMessageTextContent('system', 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.');
+      const reMessagesRemapSysToUsr = remapMessagesSysToUsr(reMessages);
+       callGenerationInputHistory = [
+        // Chat messages, including the system prompt which is casted to a user message
+        // TODO: when upgrading to dynamic personas, we need to inject the persona message instead - not rely on reMessages, as messages[0] !== 'system'
+        ...(reMessagesRemapSysToUsr ? reMessagesRemapSysToUsr : [createDMessageTextContent('user', personaSystemMessage)]),
+        // Call system prompt 2, to indicate the call has started
+        createDMessageTextContent('user', '**You are now on the phone call related to the chat above**.\nRespect your personality and answer with short, friendly and accurate thoughtful brief lines.'),
+        // Call history
+        ...callMessages,
+      ];
+    } else {
+      callGenerationInputHistory =
+        reMessages?.filter((msg) => {
+          if (msg.role === 'system') {
+            systemInstruction = msg;
+            return false;
+          }
+          return true;
+        }) ?? [];
+
+      callGenerationInputHistory.push(...callMessages)
+    }
 
 
     // perform completion
@@ -249,7 +278,7 @@ export function Telephone(props: {
 
     aixChatGenerateContent_DMessage_FromConversation(
       modelId,
-      callSystemInstruction,
+      systemInstruction,
       callGenerationInputHistory,
       'call',
       callMessages[0].id,
@@ -267,8 +296,32 @@ export function Telephone(props: {
       setCallMessages(messages => [...messages, fullMessage]); // [state] append assistant:call_response
 
       // fire/forget
-      if (status.outcome === 'success' && finalText?.length >= 1)
-        void elevenLabsSpeakText(finalText, personaVoiceId, true, true);
+      if (status.outcome === 'success' && finalText?.length >= 1) {
+        if (false) {
+          void elevenLabsSpeakText(finalText, personaVoiceId, true, true);
+        } else {
+          synth.cancel()
+
+          const myTimer = () => {
+            synth.pause()
+            synth.resume()
+            setTimeout(myTimer, 10000)
+          }
+
+          const myTimeout = setTimeout(myTimer, 10000)
+
+          const utterance = new SpeechSynthesisUtterance(finalText);
+          utterance.voice = synth.getVoices().find(voice => voice.name === 'Google UK English Female') ?? synth.getVoices()[0];
+          utterance.lang = 'en-GB';
+          utterance.rate = 1;
+          utterance.pitch = 1;
+          utterance.volume = 1.0;
+
+          utterance.onend = () => clearTimeout(myTimeout)
+
+          synth.speak(utterance);
+        }
+      }
 
     }).catch((err: DOMException) => {
       if (err?.name !== 'AbortError') {
@@ -284,7 +337,7 @@ export function Telephone(props: {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, modelId, personaVoiceId, personaSystemMessage, reMessages]);
+  }, [isConnected, callMessages, modelId, personaVoiceId, personaSystemMessage, reMessages, voiceInjectPrompt]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && recognitionState.hasSpeech;
