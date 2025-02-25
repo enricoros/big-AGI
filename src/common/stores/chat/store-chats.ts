@@ -14,7 +14,7 @@ import { workspaceActions } from '~/common/stores/workspace/store-client-workspa
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
-import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
+import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
@@ -41,6 +41,7 @@ export interface ChatActions {
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
   historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
+  historyKeepLastThinkingOnly: (cId: DConversationId) => void;
   historyView: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
@@ -242,6 +243,47 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
             updated: Date.now(),
             _abortController: null,
+          };
+        }),
+
+      historyKeepLastThinkingOnly: (conversationId: DConversationId) =>
+        _get()._editConversation(conversationId, ({ messages: _currentMessages }) => {
+          let madeChanges = false;
+          const updatedMessages = [..._currentMessages];
+          let foundLastAssistant = false;
+
+          // reverse iterate
+          for (let i = updatedMessages.length - 1; i >= 0; i--) {
+            const message = updatedMessages[i];
+
+            // skip non-assistant messages
+            if (message.role !== 'assistant') continue;
+
+            // skip the last assistant message
+            if (!foundLastAssistant) {
+              foundLastAssistant = true;
+              continue;
+            }
+
+            // skip if doesn't have thinking blocks
+            const hasThinkingBlocks = message.fragments.some(isVoidThinkingFragment);
+            if (!hasThinkingBlocks) continue;
+
+            // Filter out thinking blocks
+            updatedMessages[i] = {
+              ...message,
+              fragments: message.fragments.filter(fragment => !isVoidThinkingFragment(fragment)),
+            };
+            madeChanges = true;
+          }
+
+          if (!madeChanges) return {};
+
+          return {
+            messages: updatedMessages,
+            // No need to update the following as void fragments don't contribute
+            // tokenCount: updateMessagesTokenCounts(updatedMessages, true, 'historyKeepLastThinkingOnly'),
+            // updated: Date.now(),
           };
         }),
 
