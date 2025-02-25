@@ -125,13 +125,13 @@ export namespace AnthropicWire_Blocks {
   //   // ...
   // }
 
-  // export function ThinkingBlock(thinking: string, signature: string): z.infer<typeof ThinkingBlock_schema> {
-  //   return { type: 'thinking', thinking, signature };
-  // }
+  export function ThinkingBlock(thinking: string, signature: string): z.infer<typeof ThinkingBlock_schema> {
+    return { type: 'thinking', thinking, signature };
+  }
 
-  // export function RedactedThinkingBlock(data: string): z.infer<typeof RedactedThinkingBlock_schema> {
-  //   return { type: 'redacted_thinking', data };
-  // }
+  export function RedactedThinkingBlock(data: string): z.infer<typeof RedactedThinkingBlock_schema> {
+    return { type: 'redacted_thinking', data };
+  }
 
   export function blockSetCacheControl(block: z.infer<typeof _CommonBlock_schema>, cacheControl: z.infer<typeof _CacheControl_schema>['type']): void {
     block.cache_control = { type: cacheControl };

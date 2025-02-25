@@ -28,10 +28,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
           break;
 
         case 'meta_cache_control':
-          // ignore - we implement caching in the Anthropic way for now
+          // ignore this breakpoint hint - Anthropic only
           break;
 
         default:
+          const _exhaustiveCheck: never = part;
           throw new Error(`Unsupported part type in System message: ${(part as any).pt}`);
       }
       return acc;
@@ -130,8 +131,12 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(_toApproximateGeminiDocPart(part));
           break;
 
+        case 'ma':
+          // ignore this thinking block - Anthropic only
+          break;
+
         case 'meta_cache_control':
-          // ignore - we implement caching in the Anthropic way for now
+          // ignore this breakpoint hint - Anthropic only
           break;
 
         case 'meta_in_reference_to':
@@ -167,6 +172,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
               parts.push(GeminiWire_ContentParts.ExecutableCodePart('PYTHON', invocation.code));
               break;
             default:
+              const _exhaustiveCheck: never = invocation;
               throw new Error(`Unsupported tool call type in message: ${(part as any).call.type}`);
           }
           break;
@@ -200,11 +206,13 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
               parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));
               break;
             default:
+              const _exhaustiveCheck: never = part.response;
               throw new Error(`Unsupported tool response type in message: ${(part as any).response.type}`);
           }
           break;
 
         default:
+          const _exhaustiveCheck: never = part;
           throw new Error(`Unsupported part type in Chat message: ${(part as any).pt}`);
       }
     }

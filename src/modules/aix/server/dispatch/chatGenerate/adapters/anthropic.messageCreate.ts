@@ -209,9 +209,19 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
                 toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, part.invocation.code);
                 break;
               default:
+                const _exhaustiveCheck: never = part.invocation;
                 throw new Error(`Unsupported tool call type in Model message: ${(part.invocation as any).type}`);
             }
             yield { role: 'assistant', content: toolUseBlock };
+            break;
+
+          case 'ma':
+            if (!part.aText && !part.textSignature && !part.redactedData)
+              throw new Error('Extended Thinking data is missing');
+            if (part.aText && part.textSignature)
+              yield { role: 'assistant', content: AnthropicWire_Blocks.ThinkingBlock(part.aText, part.textSignature) };
+            for (const redactedData of part.redactedData || [])
+              yield { role: 'assistant', content: AnthropicWire_Blocks.RedactedThinkingBlock(redactedData) };
             break;
 
           case 'meta_cache_control':
@@ -219,6 +229,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           default:
+            const _exhaustiveCheck: never = part;
             throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
         }
       }
@@ -244,7 +255,12 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             }
             break;
 
+          case 'meta_cache_control':
+            // ignored in tools
+            break;
+
           default:
+            const _exhaustiveCheck: never = part;
             throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
         }
       }
