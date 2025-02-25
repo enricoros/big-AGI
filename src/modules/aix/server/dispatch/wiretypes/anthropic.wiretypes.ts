@@ -82,6 +82,17 @@ export namespace AnthropicWire_Blocks {
     ]),
   });
 
+  export const ThinkingBlock_schema = z.object({
+    type: z.literal('thinking'),
+    thinking: z.string(),
+    signature: z.string(),
+  });
+
+  export const RedactedThinkingBlock_schema = z.object({
+    type: z.literal('redacted_thinking'),
+    data: z.string(),
+  });
+
   export function TextBlock(text: string): z.infer<typeof TextBlock_schema> {
     return { type: 'text', text };
   }
@@ -136,6 +147,8 @@ export namespace AnthropicWire_Messages {
     AnthropicWire_Blocks.ToolUseBlock_schema,
     AnthropicWire_Blocks.ToolResultBlock_schema,
     AnthropicWire_Blocks.DocumentBlock_schema,
+    AnthropicWire_Blocks.ThinkingBlock_schema,
+    AnthropicWire_Blocks.RedactedThinkingBlock_schema,
   ]);
 
   export const MessageInput_schema = z.object({
