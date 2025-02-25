@@ -387,7 +387,7 @@ function _create_Sentinel_Part(): _SentinelPart {
 function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
     case 'doc':
-      const newDocVersion = Number(part.version || 1); // we don't increase the version on duplication (not sure we should?)
+      const newDocVersion = Number(part.version ?? 1); // we don't increase the version on duplication (not sure we should?)
       return _create_Doc_Part(part.vdt, _duplicate_InlineData(part.data), part.ref, part.l1Title, newDocVersion, part.meta ? { ...part.meta } : undefined) as TPart;
 
     case 'error':
@@ -582,7 +582,7 @@ export function updateFragmentWithEditedText(
         part.vdt,
         newDataInline,
         part.ref,
-        Number(part.version || 1) + 1, // Increment version as this has been edited - note: we could have used ?? to be more correct, but || is safer
+        Number(part.version ?? 1) + 1, // Increment version as this has been edited - note: we could have used ?? to be more correct, but || is safer
         part.meta,
         liveFileId,
       );
