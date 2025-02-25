@@ -127,6 +127,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               break;
 
             default:
+              const _exhaustiveCheck: never = content_block;
               throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
           }
         } else
@@ -174,6 +175,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               break;
 
             default:
+              const _exhaustiveCheck: never = delta;
               throw new Error(`Unexpected content block delta type: ${(delta as any).type}`);
           }
         } else
@@ -258,7 +260,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     if (model)
       pt.setModelName(model);
 
-    // -> Content Blocks
+    // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
@@ -269,19 +271,24 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
             // TODO ... transmit the signature
           }
           break;
+
         case 'redacted_thinking':
           // NOTE: we shall have a full contentBlock.data, and that's it, we need to save it opaquely
           // TODO: transmit this complete opaque data
           break;
+
         case 'text':
           pt.appendText(contentBlock.text);
           break;
+
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
           pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
           pt.endMessagePart();
           break;
+
         default:
+          const _exhaustiveCheck: never = contentBlock;
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
       }
     }
