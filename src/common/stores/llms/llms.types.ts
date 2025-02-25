@@ -94,21 +94,25 @@ export const LLM_IF_HOTFIX_Sys0ToUsr0: DModelInterfaceV1 = 'hotfix-sys0-to-usr0'
 // TODO: just remove this, and move to a capabilities array (I/O/...)
 // FIXME: keep this in sync with the client side on llms.types.ts
 export const LLMS_ALL_INTERFACES = [
-  LLM_IF_OAI_Chat,
-  LLM_IF_OAI_Fn,
-  LLM_IF_OAI_Json,
-  LLM_IF_OAI_Vision,
-  LLM_IF_OAI_Reasoning,
-  LLM_IF_OAI_Complete,
-  LLM_IF_ANT_PromptCaching,
-  LLM_IF_OAI_PromptCaching,
-  LLM_IF_OAI_Realtime,
-  LLM_IF_OAI_NeedsAudio,
-  LLM_IF_GEM_CodeExecution,
-  LLM_IF_HOTFIX_NoStream,
-  LLM_IF_HOTFIX_NoTemperature,
-  LLM_IF_HOTFIX_StripImages,
-  LLM_IF_HOTFIX_Sys0ToUsr0,
+  // Declare common capabilities
+  LLM_IF_OAI_Chat,            // MUST SUPPORT - chat interface
+  LLM_IF_OAI_Fn,              // IMPORTANT - support for function calls
+  LLM_IF_OAI_Json,            // not used for now: structured outputs
+  LLM_IF_OAI_Vision,          // GREAT TO HAVE - image inputs
+  LLM_IF_OAI_Reasoning,       // COSMETIC ONLY - may show a 'brain' icon in supported screens
+  // Vendor-specific capabilities
+  LLM_IF_ANT_PromptCaching,   // [Anthropic] model supports anthropic-specific caching
+  LLM_IF_GEM_CodeExecution,   // [Gemini] Tool: code execution
+  LLM_IF_OAI_PromptCaching,   // [OpenAI] model supports OpenAI prompt caching
+  LLM_IF_OAI_Realtime,        // [OpenAI] realtime API support - unused
+  // Hotfixes to patch specific model quirks
+  LLM_IF_HOTFIX_NoStream,     // disable streaming (e.g., o1-preview(old))
+  LLM_IF_HOTFIX_NoTemperature,// disable temperature parameter (e.g., deepseek-r1)
+  LLM_IF_HOTFIX_StripImages,  // remove images from input (e.g. o3-mini-2025-01-31)
+  LLM_IF_HOTFIX_Sys0ToUsr0,   // downgrade system to user messages for this model (e.g. o1-mini-2024-09-12)
+  // old/unused
+  LLM_IF_OAI_Complete,        // UNUSED - older text completion, pre-chats
+  LLM_IF_OAI_NeedsAudio,      // audio input processing
 ] as const;
 
 // Future changes?
