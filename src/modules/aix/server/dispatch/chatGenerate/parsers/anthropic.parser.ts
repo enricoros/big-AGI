@@ -115,15 +115,12 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               break;
 
             case 'thinking':
-              // TODO: we should transmit the Thinking text, and if there's a signature, we know it's complete and we should transmit that as-is
               pt.appendReasoningText(content_block.thinking);
-              if (content_block.signature)
-                pt.appendReasoningText(content_block.signature); // TEMP DEBUG: show the signature
+              pt.setReasoningSignature(content_block.signature);
               break;
 
             case 'redacted_thinking':
-              // TODO: this is just a STUB impl
-              pt.appendReasoningText(content_block.data); // TEMP DEBUG: show the redacted data
+              pt.addReasoningRedactedData(content_block.data);
               break;
 
             default:
@@ -169,10 +166,12 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             case 'signature_delta':
               if (responseMessage.content[index].type === 'thinking') {
                 responseMessage.content[index].signature = delta.signature;
-                // TODO: transmit the signature; note that the 'delta' shall be a complete signature
+                pt.setReasoningSignature(delta.signature);
               } else
                 throw new Error('Unexpected signature delta');
               break;
+
+            // note: redacted_thinking doesn't have deltas, only start (with payload) and stop
 
             default:
               const _exhaustiveCheck: never = delta;
@@ -267,14 +266,11 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       switch (contentBlock.type) {
         case 'thinking':
           pt.appendReasoningText(contentBlock.thinking);
-          if (contentBlock.signature) {
-            // TODO ... transmit the signature
-          }
+          contentBlock.signature && pt.setReasoningSignature(contentBlock.signature);
           break;
 
         case 'redacted_thinking':
-          // NOTE: we shall have a full contentBlock.data, and that's it, we need to save it opaquely
-          // TODO: transmit this complete opaque data
+          pt.addReasoningRedactedData(contentBlock.data);
           break;
 
         case 'text':
