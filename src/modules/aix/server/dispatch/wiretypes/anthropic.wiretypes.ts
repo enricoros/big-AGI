@@ -102,6 +102,26 @@ export namespace AnthropicWire_Blocks {
     return { type: 'tool_result', tool_use_id, content: content?.length ? content : undefined, is_error };
   }
 
+  // export function DocumentBase64PDFSourceBlock(mediaType: 'application/pdf', base64: string): z.infer<typeof DocumentBlock_schema> {
+  //   // ...
+  // }
+
+  // export function DocumentPlainTextSourceBlock(mediaType: 'text/plain', text: string): z.infer<typeof DocumentBlock_schema> {
+  //   // ...
+  // }
+
+  // export function DocumentContentBlockSourceBlock(content: z.infer<typeof DocumentBlock_schema>['source']['content']): z.infer<typeof DocumentBlock_schema> {
+  //   // ...
+  // }
+
+  // export function ThinkingBlock(thinking: string, signature: string): z.infer<typeof ThinkingBlock_schema> {
+  //   return { type: 'thinking', thinking, signature };
+  // }
+
+  // export function RedactedThinkingBlock(data: string): z.infer<typeof RedactedThinkingBlock_schema> {
+  //   return { type: 'redacted_thinking', data };
+  // }
+
   export function blockSetCacheControl(block: z.infer<typeof _CommonBlock_schema>, cacheControl: z.infer<typeof _CacheControl_schema>['type']): void {
     block.cache_control = { type: cacheControl };
   }
@@ -278,6 +298,18 @@ export namespace AnthropicWire_API_Message_Create {
      */
     stream: z.boolean().optional(),
 
+    /**
+     * When enabled, responses include thinking content blocks showing Claude's thinking process before the final answer.
+     */
+    thinking: z.union([
+      // Requires a minimum budget of 1,024 tokens and counts towards your max_tokens limit.
+      z.object({
+        type: z.literal('enabled'),
+        budget_tokens: z.number().int(),
+      }),
+      // having this for completeness, but seems like it's not needed / can be omitted
+      z.object({ type: z.literal('disabled') }),
+    ]).optional(),
 
     /**
      * Defaults to 1.0. Ranges from 0.0 to 1.0. Use temperature closer to 0.0 for analytical / multiple choice, and closer to 1.0 for creative and generative tasks.

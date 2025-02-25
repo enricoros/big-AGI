@@ -57,9 +57,13 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     for (const antPart of _generateAnthropicMessagesContentBlocks(aixMessage)) {
       // apply cache_control to the current head block of the current message
       if ('set_cache_control' in antPart) {
-        if (currentMessage && currentMessage.content.length)
-          AnthropicWire_Blocks.blockSetCacheControl(currentMessage.content[currentMessage.content.length - 1], 'ephemeral');
-        else
+        if (currentMessage && currentMessage.content.length) {
+          const lastBlock = currentMessage.content[currentMessage.content.length - 1];
+          if (lastBlock.type !== 'thinking' && lastBlock.type !== 'redacted_thinking')
+            AnthropicWire_Blocks.blockSetCacheControl(lastBlock, 'ephemeral');
+          else
+            console.warn('Anthropic: cache_control on a thinking block - not allowed');
+        } else
           console.warn('Anthropic: cache_control without a message to attach to');
         continue;
       }
@@ -96,7 +100,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
     // metadata: { user_id: ... }
     // stop_sequences: undefined,
     stream: streaming,
-    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
+    ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
     // top_k: undefined,
     // top_p: undefined,
   };
@@ -104,6 +108,17 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   // Top-P instead of temperature
   if (model.topP !== undefined) {
     payload.top_p = model.topP;
+    delete payload.temperature;
+  }
+
+  // [Anthropic] Thinking Budget
+  if (model.vndAntThinkingBudget !== undefined) {
+    payload.thinking = model.vndAntThinkingBudget !== null ? {
+      type: 'enabled',
+      budget_tokens: model.vndAntThinkingBudget,
+    } : {
+      type: 'disabled',
+    };
     delete payload.temperature;
   }
 
