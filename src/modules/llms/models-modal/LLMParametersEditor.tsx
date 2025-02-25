@@ -73,13 +73,14 @@ export function LLMParametersEditor(props: {
   const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
   const paramSpecRestoreMarkdown = parameterSpecs?.find(p => p.paramId === 'llmVndOaiRestoreMarkdown') as DModelParameterSpec<'llmVndOaiRestoreMarkdown'> | undefined;
 
+  const hideTemperature = !!paramSpecAntThinkingBudget;
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
   const llmVndAntThinkingNull = llmVndAntThinkingBudget === null;
 
   return <>
 
-    <FormSliderControl
+    {!hideTemperature && <FormSliderControl
       title='Temperature' ariaLabel='Model Temperature'
       description={llmTemperature === null ? 'Unsupported' : llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
       disabled={props.parameterOmitTemperature}
@@ -98,7 +99,7 @@ export function LLMParametersEditor(props: {
           </IconButton>
         </Tooltip>
       }
-    />
+    />})
 
     {(llmResponseTokens !== null && maxOutputTokens !== null) ? (
       <Box sx={{ mr: 1 }}>
