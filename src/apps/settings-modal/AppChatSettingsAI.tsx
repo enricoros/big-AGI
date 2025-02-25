@@ -111,18 +111,19 @@ export function AppChatSettingsAI() {
     <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto Chat Title'
+      <FormLabelStart title='Chat Auto-Title'
                       description={autoTitleChat ? 'Auto' : 'Manual only'}
-                      tooltip='[Utility model]  Automatically generates relevant titles for new chat conversations.' />
+                      tooltip='[Utility model]  Automatically generates relevant titles for new chat conversations.'
+                      tooltipWarning={!autoTitleChat} />
       <Switch checked={autoTitleChat} onChange={handleAutoSetChatTitleChange}
               endDecorator={autoTitleChat ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto Attachment Prompts'
+      <FormLabelStart title='Attachment Prompts'
                       description={autoSuggestAttachmentPrompts ? 'Guess Actions' : 'Off'}
-                      tooltip='[Utility model]  Suggests actions/prompts when attachments are added to the conversation.' />
+                      tooltip={!autoSuggestAttachmentPrompts ? undefined : '[Utility model]  Suggests actions/prompts when attachments are added to the conversation.'} />
       <Switch checked={autoSuggestAttachmentPrompts} onChange={handleAutoSuggestAttachmentPromptsChange}
               endDecorator={autoSuggestAttachmentPrompts ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
@@ -134,7 +135,7 @@ export function AppChatSettingsAI() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Generative Diagrams'
                       description={autoSuggestDiagrams ? 'Add Diagrams' : 'Off'}
-                      tooltip='[Coding model]  Automatically creates visual diagrams and flowcharts when the AI detects that a response would be clearer with a visual representation.' />
+                      tooltip={!autoSuggestDiagrams ? undefined : '[Coding model]  Automatically creates visual diagrams and flowcharts when the AI detects that a response would be clearer with a visual representation.'} />
       <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
               endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
