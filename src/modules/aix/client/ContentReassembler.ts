@@ -1,5 +1,5 @@
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
@@ -158,7 +158,7 @@ export class ContentReassembler {
     // append to existing ModelAuxVoidFragment if possible
     const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
     if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
-      const appendedPart = { ...currentFragment.part, aText: (currentFragment.part.aText || '') + _t };
+      const appendedPart = { ...currentFragment.part, aText: (currentFragment.part.aText || '') + _t } satisfies DVoidModelAuxPart;
       this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: appendedPart };
       return;
     }
@@ -173,7 +173,7 @@ export class ContentReassembler {
     // set to existing ModelAuxVoidFragment if possible
     const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
     if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
-      const setPart = { ...currentFragment.part, signature };
+      const setPart = { ...currentFragment.part, textSignature: signature } satisfies DVoidModelAuxPart;
       this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: setPart };
       return;
     }
@@ -188,7 +188,7 @@ export class ContentReassembler {
     // add to existing ModelAuxVoidFragment if possible
     const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
     if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
-      const appendedPart = { ...currentFragment.part, redactedData: [...(currentFragment.part.redactedData || []), _data] };
+      const appendedPart = { ...currentFragment.part, redactedData: [...(currentFragment.part.redactedData || []), _data] } satisfies DVoidModelAuxPart;
       this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: appendedPart };
       return;
     }
