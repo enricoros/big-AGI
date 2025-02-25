@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { FormControl, Switch } from '@mui/joy';
+import { FormControl, ListDivider, Switch } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -108,6 +108,8 @@ export function AppChatSettingsAI() {
     )}
 
 
+    <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Auto Chat Title'
                       description={autoTitleChat ? 'Auto' : 'Manual only'}
@@ -125,6 +127,9 @@ export function AppChatSettingsAI() {
               endDecorator={autoSuggestAttachmentPrompts ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
+
+
+    <ListDivider inset='gutter'>Auto-augment Messages</ListDivider>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Generative Diagrams'
