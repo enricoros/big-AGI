@@ -39,12 +39,12 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
   const advanced = useToggleableBoolean(false);
 
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
   const { geminiKey, geminiHost, minSafetyLevel } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const needsUserKey = !serviceHasCloudTenantConfig;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
   const showKeyError = !!geminiKey && !serviceSetupValid;

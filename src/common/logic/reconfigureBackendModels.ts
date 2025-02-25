@@ -44,7 +44,7 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   // add the backend services
   if (remoteServices)
     findAllModelVendors()
-      .filter(vendor => vendor.hasBackendCapKey && backendCaps[vendor.hasBackendCapKey])
+      .filter(vendor => vendor.hasServerConfigKey && backendCaps[vendor.hasServerConfigKey])
       .forEach(remoteVendor => {
 
         // find the first service for this vendor
@@ -95,6 +95,8 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
   } else {
     // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
     llmsStoreActions().autoReassignDomainModel('primaryChat', true, true);
+    llmsStoreActions().autoReassignDomainModel('codeApply', true, false);
+    llmsStoreActions().autoReassignDomainModel('fastUtil', true, false);
   }
 
   // end configuration

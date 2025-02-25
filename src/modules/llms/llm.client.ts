@@ -1,6 +1,4 @@
-import { sendGAEvent } from '@next/third-parties/google';
-
-import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
@@ -53,9 +51,12 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   const llmResponseTokensRatio = d.maxCompletionTokens ? 1 : 1 / 4;
   const llmResponseTokens = maxOutputTokens ? Math.round(maxOutputTokens * llmResponseTokensRatio) : null;
 
-  // create the object
+  // DLLM is a fundamental type in our application
   const dllm: DLLM = {
-    id: `${service.id}-${d.id}`,
+
+    // this id is Big-AGI specific, not the vendor's
+    id: !d.idVariant ? `${service.id}-${d.id}`
+      : `${service.id}-${d.id}-${d.idVariant}`,
 
     // editable properties
     label: d.label,
@@ -75,7 +76,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
     // parameters system (spec and initial values)
     parameterSpecs: d.parameterSpecs?.length ? d.parameterSpecs : [],
     initialParameters: {
-      llmRef: d.id,
+      llmRef: d.id, // this is the vendor model id
       llmTemperature: d.interfaces.includes(LLM_IF_HOTFIX_NoTemperature) ? null : FALLBACK_LLM_PARAM_TEMPERATURE,
       llmResponseTokens: llmResponseTokens,
     },
@@ -91,7 +92,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   };
 
   // set other params from spec
-  if (d.parameterSpecs)
+  if (d.parameterSpecs?.length)
     applyModelParameterInitialValues(d.parameterSpecs.map(p => p.paramId), dllm.initialParameters, false);
 
   // set the pricing

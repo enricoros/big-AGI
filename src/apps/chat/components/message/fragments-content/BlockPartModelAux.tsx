@@ -15,6 +15,8 @@ import { useOverlayComponents } from '~/common/layout/overlays/useOverlayCompone
 
 // configuration
 // const REASONING_COLOR = '#ca74b8'; // '#f22a85' (folder-aligned), '#ca74b8' (emoji-aligned)
+const ANTHROPIC_REDACTED_EXPLAINER = //  https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#example-streaming-with-redacted-thinking
+  'Some of Claude\'s internal reasoning has been automatically encrypted for safety reasons. This doesn\'t affect the quality of responses.';
 
 
 const _styles = {
@@ -75,6 +77,8 @@ export function BlockPartModelAux(props: {
   fragmentId: DMessageFragmentId,
   auxType: 'reasoning' | string,
   auxText: string,
+  auxHasSignature: boolean,
+  auxRedactedDataCount: number,
   zenMode: boolean,
   contentScaling: ContentScaling,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
@@ -141,7 +145,7 @@ export function BlockPartModelAux(props: {
         Show {typeText}
       </Chip>
 
-      {expanded && showInline && (
+      {expanded && showInline && !!props.auxText && (
         <Chip
           color='success'
           variant='soft'
@@ -161,7 +165,10 @@ export function BlockPartModelAux(props: {
 
       {!neverExpanded && (
         <Typography sx={textSx}>
-          {props.auxText}
+          <span>
+            {props.auxText}
+            {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
+          </span>
         </Typography>
       )}
 

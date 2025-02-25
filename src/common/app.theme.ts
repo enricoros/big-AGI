@@ -190,6 +190,8 @@ interface ContentScalingOptions {
   // ChatDrawer
   chatDrawerItemSx: { '--ListItem-minHeight': string, fontSize: string };
   chatDrawerItemFolderSx: { '--ListItem-minHeight': string, fontSize: string };
+  // OptimaPanelGroup
+  optimaPanelGroupSize: 'sm' | 'md';
 }
 
 export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
@@ -203,6 +205,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     fragmentButtonFontSize: 'xs',
     chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },          // 36px
     chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },     // 40px
+    optimaPanelGroupSize: 'sm',
   },
   sm: {
     blockCodeFontSize: '0.75rem',
@@ -214,6 +217,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     fragmentButtonFontSize: 'sm',
     chatDrawerItemSx: { '--ListItem-minHeight': '2.25rem', fontSize: 'sm' },
     chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'sm' },
+    optimaPanelGroupSize: 'sm',
   },
   md: {
     blockCodeFontSize: '0.875rem',
@@ -225,6 +229,7 @@ export const themeScalingMap: Record<ContentScaling, ContentScalingOptions> = {
     fragmentButtonFontSize: 'sm',
     chatDrawerItemSx: { '--ListItem-minHeight': '2.5rem', fontSize: 'md' },           // 40px
     chatDrawerItemFolderSx: { '--ListItem-minHeight': '2.75rem', fontSize: 'md' },    // 44px
+    optimaPanelGroupSize: 'md',
   },
   // lg: {
   //   chatDrawerFoldersLineHeight: '3rem',

@@ -200,6 +200,26 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this._queueParticleS();
   }
 
+  /** Sets a reasoning signature, associated with the current reasoning text */
+  setReasoningSignature(signature: string): void {
+    this.endMessagePart();
+    this.currentPart = {
+      p: 'trs',
+      signature,
+    };
+    this._queueParticleS();
+  }
+
+  /** Adds a raw (redacted) reasoning data parcel */
+  addReasoningRedactedData(data: string): void {
+    this.endMessagePart();
+    this.currentPart = {
+      p: 'trr_',
+      _data: data,
+    };
+    this._queueParticleS();
+  }
+
   /**
    * Support function to extract potential reasoning text in between <think> and </think> tags,
    * if and only if it's the very first text in the whole session.

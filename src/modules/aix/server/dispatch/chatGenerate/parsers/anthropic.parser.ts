@@ -106,13 +106,25 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             case 'text':
               pt.appendText(content_block.text);
               break;
+
             case 'tool_use':
               // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
               if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
                 content_block.input = null;
               pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
               break;
+
+            case 'thinking':
+              pt.appendReasoningText(content_block.thinking);
+              pt.setReasoningSignature(content_block.signature);
+              break;
+
+            case 'redacted_thinking':
+              pt.addReasoningRedactedData(content_block.data);
+              break;
+
             default:
+              const _exhaustiveCheck: never = content_block;
               throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
           }
         } else
@@ -143,7 +155,26 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
                 throw new Error('Unexpected input_json_delta');
               break;
 
+            case 'thinking_delta':
+              if (responseMessage.content[index].type === 'thinking') {
+                responseMessage.content[index].thinking += delta.thinking;
+                pt.appendReasoningText(delta.thinking);
+              } else
+                throw new Error('Unexpected thinking delta');
+              break;
+
+            case 'signature_delta':
+              if (responseMessage.content[index].type === 'thinking') {
+                responseMessage.content[index].signature = delta.signature;
+                pt.setReasoningSignature(delta.signature);
+              } else
+                throw new Error('Unexpected signature delta');
+              break;
+
+            // note: redacted_thinking doesn't have deltas, only start (with payload) and stop
+
             default:
+              const _exhaustiveCheck: never = delta;
               throw new Error(`Unexpected content block delta type: ${(delta as any).type}`);
           }
         } else
@@ -228,20 +259,32 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     if (model)
       pt.setModelName(model);
 
-    // -> Content Blocks
+    // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
       switch (contentBlock.type) {
+        case 'thinking':
+          pt.appendReasoningText(contentBlock.thinking);
+          contentBlock.signature && pt.setReasoningSignature(contentBlock.signature);
+          break;
+
+        case 'redacted_thinking':
+          pt.addReasoningRedactedData(contentBlock.data);
+          break;
+
         case 'text':
           pt.appendText(contentBlock.text);
           break;
+
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
           pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
           pt.endMessagePart();
           break;
+
         default:
+          const _exhaustiveCheck: never = contentBlock;
           throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
       }
     }

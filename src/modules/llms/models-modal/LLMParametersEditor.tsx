@@ -1,9 +1,10 @@
 import * as React from 'react';
 
 import { Box, IconButton, Tooltip } from '@mui/joy';
+import ClearIcon from '@mui/icons-material/Clear';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
-import { DModelParameterId, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterValues, FALLBACK_LLM_PARAM_RESPONSE_TOKENS, FALLBACK_LLM_PARAM_TEMPERATURE, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -41,6 +42,7 @@ export function LLMParametersEditor(props: {
   // derived state
   const llmTemperature: number | null = allParameters.llmTemperature === undefined ? FALLBACK_LLM_PARAM_TEMPERATURE : allParameters.llmTemperature;
   const llmResponseTokens = allParameters.llmResponseTokens ?? FALLBACK_LLM_PARAM_RESPONSE_TOKENS;
+  const llmVndAntThinkingBudget = allParameters.llmVndAntThinkingBudget;
   const llmVndGeminiShowThoughts = allParameters.llmVndGeminiShowThoughts;
   const llmVndOaiReasoningEffort = allParameters.llmVndOaiReasoningEffort;
   const llmVndOaiRestoreMarkdown = !!allParameters.llmVndOaiRestoreMarkdown;
@@ -62,16 +64,23 @@ export function LLMParametersEditor(props: {
   }, [onChangeParameter, overheat, tempAboveOne]);
 
 
-  // optional params specs
+  // optional parameters definitions
+  const { llmVndAntThinkingBudget: defAntTB } = DModelParameterRegistry;
+
+  // optional params specs - a spec is a definition of a parameter, and whether it's required or hidden, for a particular model
+  const paramSpecAntThinkingBudget = parameterSpecs?.find(p => p.paramId === 'llmVndAntThinkingBudget') as DModelParameterSpec<'llmVndAntThinkingBudget'> | undefined;
   const paramSpecGeminiShowThoughts = parameterSpecs?.find(p => p.paramId === 'llmVndGeminiShowThoughts') as DModelParameterSpec<'llmVndGeminiShowThoughts'> | undefined;
   const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
   const paramSpecRestoreMarkdown = parameterSpecs?.find(p => p.paramId === 'llmVndOaiRestoreMarkdown') as DModelParameterSpec<'llmVndOaiRestoreMarkdown'> | undefined;
 
+  const hideTemperature = !!paramSpecAntThinkingBudget;
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
+
+  const llmVndAntThinkingNull = llmVndAntThinkingBudget === null;
 
   return <>
 
-    <FormSliderControl
+    {!hideTemperature && <FormSliderControl
       title='Temperature' ariaLabel='Model Temperature'
       description={llmTemperature === null ? 'Unsupported' : llmTemperature < 0.33 ? 'More strict' : llmTemperature > 1 ? 'Extra hot ♨️' : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'}
       disabled={props.parameterOmitTemperature}
@@ -80,7 +89,7 @@ export function LLMParametersEditor(props: {
       value={llmTemperature}
       onChange={value => onChangeParameter({ llmTemperature: value })}
       endAdornment={
-        <Tooltip title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
+        <Tooltip arrow disableInteractive title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
           <IconButton
             disabled={!showOverheatButton}
             variant={overheat ? 'soft' : 'plain'} color={overheat ? 'danger' : 'neutral'}
@@ -90,7 +99,7 @@ export function LLMParametersEditor(props: {
           </IconButton>
         </Tooltip>
       }
-    />
+    />})
 
     {(llmResponseTokens !== null && maxOutputTokens !== null) ? (
       <Box sx={{ mr: 1 }}>
@@ -104,6 +113,32 @@ export function LLMParametersEditor(props: {
       </Box>
     ) : (
       <InlineError error='Max Output Tokens: Token computations are disabled because this model does not declare the context window size.' />
+    )}
+
+    {paramSpecAntThinkingBudget && (
+      <FormSliderControl
+        title='Thinking Budget' ariaLabel='Anthropic Extended Thinking Token Budget'
+        description='Tokens'
+        min={defAntTB.range[0]} max={defAntTB.range[1]} step={1024}
+        valueLabelDisplay={llmVndAntThinkingNull ? 'off' : 'on'}
+        value={llmVndAntThinkingBudget ?? 0}
+        disabled={llmVndAntThinkingNull}
+        onChange={value => onChangeParameter({ llmVndAntThinkingBudget: value })}
+        endAdornment={
+          <Tooltip arrow disableInteractive title={llmVndAntThinkingNull ? 'Enable Thinking' : 'Disable Thinking'}>
+            <IconButton
+              variant={llmVndAntThinkingNull ? 'solid' : 'outlined'}
+              onClick={() => llmVndAntThinkingNull
+                ? onRemoveParameter('llmVndAntThinkingBudget')
+                : onChangeParameter({ llmVndAntThinkingBudget: null })
+              }
+              sx={{ ml: 2 }}
+            >
+              <ClearIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
     )}
 
     {paramSpecGeminiShowThoughts && (

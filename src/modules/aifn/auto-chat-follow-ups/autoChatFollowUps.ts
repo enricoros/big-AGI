@@ -8,7 +8,7 @@ import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createPlaceholderVoidFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -140,9 +140,9 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (!conversation || conversation.messages.length < 2) return;
 
   // require a valid fast model (only)
-  let llmId;
+  let codeLlmId;
   try {
-    llmId = getLLMIdOrThrow(['fast'], true, false, 'chat-followups');
+    codeLlmId = getDomainModelIdOrThrow(['codeApply'], true, false, 'chat-followups');
   } catch (error) {
     return console.log(`autoSuggestions: ${error}`);
   }
@@ -188,7 +188,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
 
     // Strict call to a function
     aixChatGenerateContent_DMessage(
-      llmId,
+      codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(diagramsTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-diagram', conversationId),
       false,
@@ -239,7 +239,7 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
 
     // Strict call to a function
     aixChatGenerateContent_DMessage(
-      llmId,
+      codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(uiTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-htmlui', conversationId),
       false,

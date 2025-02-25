@@ -345,6 +345,16 @@ export function prettyShortChatModelName(model: string | undefined): string {
   }
   // [LocalAI?]
   if (model.endsWith('.bin')) return model.slice(0, -4);
+  // [Alibaba]
+  if (model.startsWith('alibaba-qwen-') || model.startsWith('qwen-')) {
+    return model
+      .replace('alibaba-', ' ')
+      .replace('qwen', 'Qwen')
+      .replace('max', 'Max')
+      .replace('plus', 'Plus')
+      .replace('turbo', 'Turbo')
+      .replaceAll('-', ' ');
+  }
   // [Anthropic]
   const prettyAnthropic = _prettyAnthropicModelName(model);
   if (prettyAnthropic) return prettyAnthropic;
@@ -382,6 +392,12 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (model.includes('grok-beta')) return 'Grok Beta';
     if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
   }
+  // [FireworksAI]
+  if (model.includes('accounts/')) {
+    const index = model.indexOf('accounts/');
+    const subStr = model.slice(index + 9);
+    return subStr.replaceAll('/models/', ' · ').replaceAll(/[_-]/g, ' ');
+  }
   return model;
 }
 
@@ -390,8 +406,10 @@ function _prettyAnthropicModelName(modelId: string): string | null {
   if (claudeIndex === -1) return null;
 
   const subStr = modelId.slice(claudeIndex);
-  const is35 = subStr.includes('-3-5-');
-  const version = is35 ? '3.5' : '3';
+  const version =
+    subStr.includes('-3-7-') ? '3.7'
+      : subStr.includes('-3-5-') ? '3.5'
+        : '3';
 
   if (subStr.includes(`-opus`)) return `Claude ${version} Opus`;
   if (subStr.includes(`-sonnet`)) return `Claude ${version} Sonnet`;

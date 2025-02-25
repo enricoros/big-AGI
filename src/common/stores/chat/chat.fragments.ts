@@ -151,9 +151,16 @@ export type DMessageToolResponsePart = {
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 
-type DVoidModelAuxPart = { pt: 'ma', aType: 'reasoning' | string, aText: string };
+export type DVoidModelAuxPart = {
+  pt: 'ma',
+  aType: 'reasoning', // note, we don't specialize to 'ant-thinking' here, as we can infer it from the presence of textSignature or redactedData
+  aText: string,
+  // [Anthropic] attributes, if present, they imply "Extended Thinking" object(s)
+  textSignature?: string,
+  redactedData?: readonly string[],
+};
 
-type DVoidPlaceholderPart = { pt: 'ph', pText: string };
+type DVoidPlaceholderPart = { pt: 'ph', pText: string, pType?: 'chat-gen-follow-up', /* 2025-02-23: added for non-pure-text placeholders */ };
 
 type _SentinelPart = { pt: '_pt_sentinel' };
 
@@ -193,6 +200,10 @@ export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
 
 export function isVoidFragment(fragment: DMessageFragment) {
   return fragment.ft === 'void';
+}
+
+export function isVoidThinkingFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment & { part: DVoidModelAuxPart } {
+  return fragment.ft === 'void' && fragment.part.pt === 'ma' && fragment.part.aType === 'reasoning';
 }
 
 
@@ -288,12 +299,12 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
 
 /// Void Fragments - Creation & Duplication
 
-export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string): DMessageVoidFragment {
-  return _createVoidFragment(_create_ModelAux_Part(aType, aText));
+export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string, textSignature?: string, redactedData?: string[]): DMessageVoidFragment {
+  return _createVoidFragment(_create_ModelAux_Part(aType, aText, textSignature, redactedData));
 }
 
-export function createPlaceholderVoidFragment(placeholderText: string): DMessageVoidFragment {
-  return _createVoidFragment(_create_Placeholder_Part(placeholderText));
+export function createPlaceholderVoidFragment(placeholderText: string, placeholderType?: DVoidPlaceholderPart['pType']): DMessageVoidFragment {
+  return _createVoidFragment(_create_Placeholder_Part(placeholderText, placeholderType));
 }
 
 function _createVoidFragment(part: DMessageVoidFragment['part']): DMessageVoidFragment {
@@ -368,12 +379,16 @@ function _create_CodeExecutionResponse_Part(id: string, error: boolean | string,
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
-function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string): DVoidModelAuxPart {
-  return { pt: 'ma', aType, aText };
+function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string, textSignature?: string, redactedData?: Readonly<string[]>): DVoidModelAuxPart {
+  return {
+    pt: 'ma', aType, aText,
+    ...(textSignature !== undefined ? { textSignature } : undefined),
+    ...(redactedData ? { redactedData: Array.from(redactedData) /* creates a mutable copy of the array */ } : undefined),
+  };
 }
 
-function _create_Placeholder_Part(placeholderText: string): DVoidPlaceholderPart {
-  return { pt: 'ph', pText: placeholderText };
+function _create_Placeholder_Part(placeholderText: string, pType?: DVoidPlaceholderPart['pType']): DVoidPlaceholderPart {
+  return { pt: 'ph', pText: placeholderText, ...(pType ? { pType } : undefined) };
 }
 
 function _create_Sentinel_Part(): _SentinelPart {
@@ -383,7 +398,7 @@ function _create_Sentinel_Part(): _SentinelPart {
 function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment)['part']>(part: TPart): TPart {
   switch (part.pt) {
     case 'doc':
-      const newDocVersion = Number(part.version || 1); // we don't increase the version on duplication (not sure we should?)
+      const newDocVersion = Number(part.version ?? 1); // we don't increase the version on duplication (not sure we should?)
       return _create_Doc_Part(part.vdt, _duplicate_InlineData(part.data), part.ref, part.l1Title, newDocVersion, part.meta ? { ...part.meta } : undefined) as TPart;
 
     case 'error':
@@ -393,10 +408,10 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
       return _create_ImageRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
 
     case 'ma':
-      return _create_ModelAux_Part(part.aType, part.aText) as TPart;
+      return _create_ModelAux_Part(part.aType, part.aText, part.textSignature, part.redactedData) as TPart;
 
     case 'ph':
-      return _create_Placeholder_Part(part.pText) as TPart;
+      return _create_Placeholder_Part(part.pText, part.pType) as TPart;
 
     case 'text':
       return _create_Text_Part(part.text) as TPart;
@@ -578,7 +593,7 @@ export function updateFragmentWithEditedText(
         part.vdt,
         newDataInline,
         part.ref,
-        Number(part.version || 1) + 1, // Increment version as this has been edited - note: we could have used ?? to be more correct, but || is safer
+        Number(part.version ?? 1) + 1, // Increment version as this has been edited - note: we could have used ?? to be more correct, but || is safer
         part.meta,
         liveFileId,
       );

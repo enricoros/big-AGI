@@ -6,7 +6,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 
 // import { isMacUser } from '~/common/util/pwaUtils';
-import type { ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { ShortcutKey, ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
@@ -162,18 +162,34 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
   // external state
   const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
   const shortcuts = useGlobalShortcutsStore(useShallow(state => {
+    // get visible shortcuts
     let visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+
+    // filter by highest level if levels are present
     const maxLevel = Math.max(...visibleShortcuts.map(s => s.level ?? 0));
     if (maxLevel > 0)
       visibleShortcuts = visibleShortcuts.filter(s => s.level === maxLevel);
+
     visibleShortcuts.sort((a, b) => {
-      // if they don't have a 'shift', they are sorted first
-      if (a.shift !== b.shift)
-        return a.shift ? 1 : -1;
-      // (Hack) If the description is 'Beam', it goes last
-      if (a.description === 'Beam Edit')
-        return 1;
-      // alphabetical for the rest
+      // 1. First by level
+      if ((a.level ?? 0) !== (b.level ?? 0))
+        return (b.level ?? 0) - (a.level ?? 0);
+
+      // 2. Then by modifiers presence (no modifiers first)
+      const aModifiers = (a.ctrl ? 1 : 0) + (a.shift ? 1 : 0);
+      const bModifiers = (b.ctrl ? 1 : 0) + (b.shift ? 1 : 0);
+      if (aModifiers !== bModifiers)
+        return aModifiers - bModifiers;
+
+      // 3a. Special case for ShortcutKey.Esc, at the beginning
+      if (a.key === ShortcutKey.Esc) return -1;
+      if (b.key === ShortcutKey.Esc) return 1;
+
+      // 3. Special case for 'Beam Edit'
+      if (a.description === 'Beam Edit') return 1;
+      if (b.description === 'Beam Edit') return -1;
+
+      // 4. Finally alphabetically by key
       return a.key.localeCompare(b.key);
     });
     return visibleShortcuts;

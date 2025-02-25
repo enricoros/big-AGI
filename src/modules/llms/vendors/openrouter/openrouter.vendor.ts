@@ -35,7 +35,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
-  hasBackendCapKey: 'hasLlmOpenRouter',
+  hasServerConfigKey: 'hasLlmOpenRouter',
 
   // components
   Icon: OpenRouterIcon,

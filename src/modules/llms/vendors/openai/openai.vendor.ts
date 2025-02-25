@@ -23,7 +23,7 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
   displayRank: 10,
   location: 'cloud',
   instanceLimit: 5,
-  hasBackendCapKey: 'hasLlmOpenAI',
+  hasServerConfigKey: 'hasLlmOpenAI',
 
   // components
   Icon: OpenAIIcon,

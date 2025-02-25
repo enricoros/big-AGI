@@ -2,6 +2,8 @@ import { Box, IconButton, styled } from '@mui/joy';
 
 import { animationColorBeamScatterINV } from '~/common/util/animUtils';
 
+import { OPTIMA_NAV_RADIUS } from '../optima.config';
+
 
 export const DesktopNavGroupBox = styled(Box)({
   // flex column
@@ -77,15 +79,18 @@ export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
   // pane open: show a connected half
   [`&.${navItemClasses.paneOpen}`]: {
     // squircle animation
-    borderStartStartRadius: 'calc(var(--IconButton-size) / 4)',
-    borderEndStartRadius: 'calc(var(--IconButton-size) / 4)',
+    borderStartStartRadius: `var(--joy-radius-${OPTIMA_NAV_RADIUS})`,
+    borderEndStartRadius: `var(--joy-radius-${OPTIMA_NAV_RADIUS})`,
+    // borderStartStartRadius: 'calc(var(--IconButton-size) / 4)',
+    // borderEndStartRadius: 'calc(var(--IconButton-size) / 4)',
     borderStartEndRadius: 0,
     borderEndEndRadius: 0,
     marginLeft: 'calc(2 * var(--MarginX))',
     paddingRight: 'calc(2 * var(--MarginX))',
   },
   [`&.${navItemClasses.paneOpen}:hover`]: {
-    borderRadius: 'var(--joy-radius-md, 0.5rem)',
+    borderRadius: `var(--joy-radius-${OPTIMA_NAV_RADIUS})`,
+    // borderRadius: 'var(--joy-radius-md, 0.5rem)',
     marginLeft: 0,
     paddingRight: 0,
   },

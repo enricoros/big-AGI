@@ -28,9 +28,11 @@ function ModelsSetupButton() {
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
+      minWidth: 150,
     }}
   >
-    Models
+    {/*Admin Models*/}
+    AI Models
   </Button>;
 }
 
@@ -65,7 +67,7 @@ export function AppChatSettingsUI() {
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='AI Models'
-                      description='Setup' />
+                      description='Configure' />
       <ModelsSetupButton />
     </FormControl>
 

@@ -350,28 +350,27 @@ export function getChatLLMId(): DLLMId | null {
 }
 
 
-export function getLLMIdOrThrow(order: ('chat' | 'fast')[], supportsFunctionCallTool: boolean, supportsImageInput: boolean, useCaseLabel: string): DLLMId {
-
-  for (const preference of order) {
-    const llmId = preference === 'chat'
-      ? getDomainModelConfiguration('primaryChat', true, true)?.modelId
-      : getDomainModelConfiguration('fastUtil', true, true)?.modelId;
-    // we don't have one of those assigned, skip
-    if (!llmId)
-      continue;
+export function getDomainModelIdOrThrow(tryDomains: DModelDomainId[], requireFunctionCallTools: boolean, requireImageInput: boolean, useCaseLabel: string): DLLMId {
+  for (const domain of tryDomains) {
+    const isLastTry = domain === tryDomains[tryDomains.length - 1];
+    const llmId = getDomainModelConfiguration(domain, true, true)?.modelId;
+    if (!llmId) continue;
     try {
       const llm = findLLMOrThrow(llmId);
-      if (supportsFunctionCallTool && !llm.interfaces.includes(LLM_IF_OAI_Fn))
-        continue;
-      if (supportsImageInput && !llm.interfaces.includes(LLM_IF_OAI_Vision))
-        continue;
+      if (requireFunctionCallTools && !llm.interfaces.includes(LLM_IF_OAI_Fn)) {
+        if (isLastTry) console.log(`[llm selection] Accepting ${llmId} for '${useCaseLabel}' despite missing function call tools.`);
+        else continue;
+      }
+      if (requireImageInput && !llm.interfaces.includes(LLM_IF_OAI_Vision)) {
+        if (isLastTry) console.log(`[llm selection] Accepting ${llmId} for '${useCaseLabel}' despite missing image input.`);
+        else continue;
+      }
       return llmId;
     } catch (error) {
       // Try next or fall back to the error
     }
   }
-
-  throw new Error(`No model available for '${useCaseLabel}'. Pease select a ${order.join(' or ')} model that supports${supportsFunctionCallTool ? ' function calls' : ' text input'}${supportsImageInput ? ' and image input' : ''} in the Model Configuration.`);
+  throw new Error(`No model available for '${useCaseLabel}'. Pease select a '${tryDomains[0]}' model that supports${requireFunctionCallTools ? ' function calls' : ' text input'}${requireImageInput ? ' and image input' : ''} in App Preferences > Chat AI.`);
 }
 
 

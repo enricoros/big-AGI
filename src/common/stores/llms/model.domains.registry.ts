@@ -1,5 +1,5 @@
 import type { DModelDomainId } from './model.domains.types';
-import type { DModelInterfaceV1 } from './llms.types';
+import { DModelInterfaceV1, LLM_IF_OAI_Fn } from './llms.types';
 
 
 type ModelDomainSpec = {
@@ -8,6 +8,11 @@ type ModelDomainSpec = {
   confTooltip: string;
   description: string;
   recommended?: string;
+  /**
+   * If non-empty, this domain demands that the assigned LLM
+   * must have *all* the listed interfaces. If no LLM matches,
+   * we'll fallback to ignoring the filter.
+   */
   requiredInterfaces?: DModelInterfaceV1[];
   autoStrategy: 'topVendorTopLlm' | 'topVendorLowestCost';
   fallbackDomain?: DModelDomainId;
@@ -31,7 +36,7 @@ export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
     confTooltip: 'Model for applying code changes and other code-related complex operations. E.g. Sonnet 3.5',
     description: 'Code changes editor and applicator',
     recommended: 'Sonnet 3.5',
-    requiredInterfaces: [],
+    requiredInterfaces: [LLM_IF_OAI_Fn],
     autoStrategy: 'topVendorTopLlm',
     fallbackDomain: 'fastUtil',
   },
@@ -41,7 +46,7 @@ export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
     confTooltip: 'Use this Model for "fast" features, such as Auto-Title, Summarize, etc.',
     description: 'Quick response model for simple tasks',
     autoStrategy: 'topVendorLowestCost',
-    requiredInterfaces: [], // shall be [LLM_IF_OAI_Fn], but we don't inforce for now
+    requiredInterfaces: [LLM_IF_OAI_Fn], // NOTE: we do enforce this already, although this may not be correctly set for all vendors
   },
 };
 

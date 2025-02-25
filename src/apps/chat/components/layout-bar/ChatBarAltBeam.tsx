@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, IconButton, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 import { BeamStoreApi, useBeamStore } from '~/modules/beam/store-beam.hooks';
 
@@ -89,7 +89,7 @@ export function ChatBarAltBeam(props: {
         {!props.isMobile && (
           <GoodTooltip variantOutlined title={<Box sx={{ p: 1 }}>Maximize</Box>}>
             <IconButton size='sm' onClick={handleMaximizeBeam}>
-              <FullscreenRoundedIcon />
+              <OpenInFullIcon sx={{ fontSize: 'md' }} />
             </IconButton>
           </GoodTooltip>
         )}

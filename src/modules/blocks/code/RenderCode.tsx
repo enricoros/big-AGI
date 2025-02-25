@@ -7,11 +7,11 @@ import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
-import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
+import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
@@ -249,10 +249,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
         {/* NOTE: this 'div' is only here to avoid some sort of collapse of the RenderCodeSyntax,
             which box disappears for some reason and the parent flex layout ends up lining up
-            chars in a non-proper way */}
-        <Box>
+            chars in a non-proper way.
+            Since this damages the 'fullscreen' operation, we restore it somehow.
+        */}
+        <Box sx={!isFullscreen ? undefined : { flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
-          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} />
+          {renderHTML ? <RenderCodeHtmlIFrame htmlCode={code} isFullscreen={isFullscreen} />
             : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
               : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                 : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
@@ -310,7 +312,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
               {/* Fullscreen */}
               <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : !renderSyntaxHighlight ? 'Fullscreen' : 'Present'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
-                <FullscreenRoundedIcon />
+                <ZoomOutMapIcon sx={{ fontSize: 'xl' }} />
               </OverlayButton>
 
               {/* Soft Wrap toggle */}

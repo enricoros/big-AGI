@@ -27,7 +27,8 @@ export namespace AnthropicWire_Blocks {
 
   export const TextBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('text'),
-    text: z.string(),
+    text: z.string(), // length: 1+
+    // citations: z.any().optional(), // 2025-02-24: first seen here, not adding it yet - 3 kinds of this block - TODO: define
   });
 
   export const ImageBlock_schema = _CommonBlock_schema.extend({
@@ -42,7 +43,7 @@ export namespace AnthropicWire_Blocks {
   export const ToolUseBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_use'),
     id: z.string(),
-    name: z.string(),
+    name: z.string(), // length: 1-64
     input: z.any(), // NOTE: formally an 'object', not any, probably relaxed for parsing
   });
 
@@ -52,6 +53,44 @@ export namespace AnthropicWire_Blocks {
     // NOTE: could be a string too, but we force it to be an array for a better implementation
     content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(),
     is_error: z.boolean().optional(), // default: false
+  });
+
+  export const DocumentBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('document'),
+    title: z.string().nullable().optional(), // length: 1-500
+    context: z.string().nullable().optional(), // length: 1+
+    citations: z.object({ enabled: z.boolean() }).optional(),
+    source: z.discriminatedUnion('type', [
+      // Base64PDFSource
+      z.object({
+        type: z.literal('base64'),
+        media_type: z.enum(['application/pdf']),
+        data: z.string(),
+      }),
+      // PlainTextSource
+      z.object({
+        type: z.literal('text'),
+        media_type: z.enum(['text/plain']),
+        data: z.string(),
+      }),
+      // ContentBlockSource
+      z.object({
+        type: z.literal('content'),
+        // NOTE: could be a string too, but we force it to be an array for a better implementation
+        content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(),
+      }),
+    ]),
+  });
+
+  export const ThinkingBlock_schema = z.object({
+    type: z.literal('thinking'),
+    thinking: z.string(),
+    signature: z.string(),
+  });
+
+  export const RedactedThinkingBlock_schema = z.object({
+    type: z.literal('redacted_thinking'),
+    data: z.string(),
   });
 
   export function TextBlock(text: string): z.infer<typeof TextBlock_schema> {
@@ -74,6 +113,26 @@ export namespace AnthropicWire_Blocks {
     return { type: 'tool_result', tool_use_id, content: content?.length ? content : undefined, is_error };
   }
 
+  // export function DocumentBase64PDFSourceBlock(mediaType: 'application/pdf', base64: string): z.infer<typeof DocumentBlock_schema> {
+  //   // ...
+  // }
+
+  // export function DocumentPlainTextSourceBlock(mediaType: 'text/plain', text: string): z.infer<typeof DocumentBlock_schema> {
+  //   // ...
+  // }
+
+  // export function DocumentContentBlockSourceBlock(content: z.infer<typeof DocumentBlock_schema>['source']['content']): z.infer<typeof DocumentBlock_schema> {
+  //   // ...
+  // }
+
+  export function ThinkingBlock(thinking: string, signature: string): z.infer<typeof ThinkingBlock_schema> {
+    return { type: 'thinking', thinking, signature };
+  }
+
+  export function RedactedThinkingBlock(data: string): z.infer<typeof RedactedThinkingBlock_schema> {
+    return { type: 'redacted_thinking', data };
+  }
+
   export function blockSetCacheControl(block: z.infer<typeof _CommonBlock_schema>, cacheControl: z.infer<typeof _CacheControl_schema>['type']): void {
     block.cache_control = { type: cacheControl };
   }
@@ -87,6 +146,9 @@ export namespace AnthropicWire_Messages {
     AnthropicWire_Blocks.ImageBlock_schema,
     AnthropicWire_Blocks.ToolUseBlock_schema,
     AnthropicWire_Blocks.ToolResultBlock_schema,
+    AnthropicWire_Blocks.DocumentBlock_schema,
+    AnthropicWire_Blocks.ThinkingBlock_schema,
+    AnthropicWire_Blocks.RedactedThinkingBlock_schema,
   ]);
 
   export const MessageInput_schema = z.object({
@@ -97,6 +159,8 @@ export namespace AnthropicWire_Messages {
   export const ContentBlockOutput_schema = z.discriminatedUnion('type', [
     AnthropicWire_Blocks.TextBlock_schema,
     AnthropicWire_Blocks.ToolUseBlock_schema,
+    AnthropicWire_Blocks.ThinkingBlock_schema,
+    AnthropicWire_Blocks.RedactedThinkingBlock_schema,
   ]);
 
 }
@@ -134,7 +198,7 @@ export namespace AnthropicWire_Tools {
     input_schema: z.object({
       type: z.literal('object'),
       properties: z.record(z.unknown()).nullable(),
-      required: z.array(z.string()).optional(),
+      required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
     }).and(z.record(z.unknown())),
   });
 
@@ -249,6 +313,18 @@ export namespace AnthropicWire_API_Message_Create {
      */
     stream: z.boolean().optional(),
 
+    /**
+     * When enabled, responses include thinking content blocks showing Claude's thinking process before the final answer.
+     */
+    thinking: z.union([
+      // Requires a minimum budget of 1,024 tokens and counts towards your max_tokens limit.
+      z.object({
+        type: z.literal('enabled'),
+        budget_tokens: z.number().int(),
+      }),
+      // having this for completeness, but seems like it's not needed / can be omitted
+      z.object({ type: z.literal('disabled') }),
+    ]).optional(),
 
     /**
      * Defaults to 1.0. Ranges from 0.0 to 1.0. Use temperature closer to 0.0 for analytical / multiple choice, and closer to 1.0 for creative and generative tasks.
@@ -355,6 +431,14 @@ export namespace AnthropicWire_API_Message_Create {
       z.object({
         type: z.literal('input_json_delta'),
         partial_json: z.string(),
+      }),
+      z.object({
+        type: z.literal('thinking_delta'),
+        thinking: z.string(),
+      }),
+      z.object({
+        type: z.literal('signature_delta'),
+        signature: z.string(),
       }),
     ]),
   });

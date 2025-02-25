@@ -6,7 +6,7 @@ import { Divider, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem, Toolt
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
 import { checkDivider, checkVisibileIcon, NavItemApp, navItems } from '~/common/app.nav';
 import { themeZIndexDesktopNav } from '~/common/app.theme';
 import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
@@ -14,7 +14,7 @@ import { useHasLLMs } from '~/common/stores/llms/llms.hooks';
 import { BringTheLove } from './BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
-import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModelsModalsState } from '../useOptima';
+import { optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaModals } from '../useOptima';
 
 
 const desktopNavBarSx: SxProps = {
@@ -36,7 +36,9 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
 
   // external state
   const isDrawerOpen = useOptimaDrawerOpen();
-  const { showModels, showPreferences } = useOptimaModelsModalsState();
+  const { showModels, showPreferences } = useOptimaModals();
+
+  // derived state
   const noLLMs = !useHasLLMs();
 
 
@@ -53,7 +55,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
     const visibleApps: NavItemApp[] = [];
     const overflowApps: NavItemApp[] = [];
 
-    navItems.apps.forEach((app, index) => {
+    navItems.apps.forEach((app) => {
       if (checkVisibileIcon(app, false, props.currentApp)) {
         if (!crossedDivider || app === props.currentApp)
           visibleApps.push(app);
@@ -180,7 +182,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
             onPointerDown={logoButtonTogglesPane ? optimaToggleDrawer : undefined}
             className={navItemClasses.typeMenu}
           >
-            {logoButtonTogglesPane ? <MenuIcon /> : <AgiSquircleIcon inverted sx={{ color: 'white' }} />}
+            {logoButtonTogglesPane ? <MenuIcon /> : <BigAgiSquircleIcon inverted sx={{ color: 'white' }} />}
           </DesktopNavIcon>
         </Tooltip>
       </InvertedBarCornerItem>
@@ -190,6 +192,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       </DesktopNavGroupBox>
 
       <DesktopNavGroupBox sx={bottomGroupSx}>
+        {/*<UserNavIcon />*/}
         {navExtLinkItems}
         {navModalItems}
       </DesktopNavGroupBox>

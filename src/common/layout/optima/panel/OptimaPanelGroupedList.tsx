@@ -1,14 +1,13 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Checkbox, ListItem } from '@mui/joy';
+import { Box, Checkbox, MenuList } from '@mui/joy';
 
-import { overlayButtonsActiveSx } from '~/modules/blocks/OverlayButton';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
+import { themeScalingMap } from '~/common/app.theme';
+import { useUIContentScaling } from '~/common/state/store-ui';
 
-
-// configuration
-export const OPTIMA_PANEL_GROUPS_SPACING = 2.5;
+import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 
 
 const gutterSx: SxProps = {
@@ -28,9 +27,7 @@ export function OptimaPanelGroupGutter(props: { children?: React.ReactNode }) {
 }
 
 
-const groupSx: SxProps = {
-  // py: 'var(--ListDivider-gap)',
-};
+// Header
 
 const headerSx: SxProps = {
   // style
@@ -38,7 +35,17 @@ const headerSx: SxProps = {
   borderBottom: '1px solid',
   borderTop: '1px solid',
   borderColor: 'rgba(var(--joy-palette-neutral-mainChannel) / 0.1)',
-  // mb: 'var(--ListDivider-gap)',
+
+  // mimics ListItem
+  px: 'var(--ListItem-paddingX, 0.75rem)',
+  py: 'var(--ListItem-paddingY, 0.25rem)',
+  minBlockSize: 'var(--ListItem-minHeight, 2.25rem)',
+
+  // layout
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 1,
 
   // '--A': 'var(--joy-palette-background-level1)',
   // '--B': 'var(--joy-palette-background-popup)',
@@ -56,32 +63,29 @@ const headerSx: SxProps = {
   },
 };
 
-const headerRowSx: SxProps = {
-  flex: 1,
-
-  // layout
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: 1,
-
-  // if there's a button, highlight it on hover
-  '&:hover > button': overlayButtonsActiveSx,
-};
-
 const headerTitleSx: SxProps = {
   color: 'text.tertiary',
   fontSize: 'sm',
   fontWeight: 'lg',
 };
 
-const contentsSx: SxProps = {
-  py: 'var(--ListDivider-gap)',
+
+// List containing the items
+
+const groupListSx: SxProps = {
+  border: 'none',
+  borderRadius: 0,
+  background: 'transparent',
+  flexGrow: 0,
+  mb: OPTIMA_PANEL_GROUPS_SPACING,
+  // fontSize: '0.9375rem', // 15px (14 too small, 16 too big?)
+  // py: 0,
+  // py: 'var(--ListDivider-gap)',
 };
 
 
-export function OptimaPanelGroup(props: {
-  title: string;
+export function OptimaPanelGroupedList(props: {
+  title?: string;
   endDecorator?: React.ReactNode;
   children?: React.ReactNode;
   persistentCollapsibleId?: string;
@@ -91,6 +95,9 @@ export function OptimaPanelGroup(props: {
   // state
   // TODO: persist by id
   const [_expanded, setExpanded] = React.useState(props.startExpanded === true);
+
+  // external state
+  const contentScaling = useUIContentScaling();
 
   // derived state
   const isCollapsible = !!props.persistentCollapsibleId;
@@ -102,33 +109,29 @@ export function OptimaPanelGroup(props: {
     setExpanded(expanded => !expanded);
   }, []);
 
-  const endDecorator = React.useMemo(() => {
-    if (isCollapsible)
-      return <Checkbox size='md' color='neutral' checked={isExpanded} />;
-    return props.endDecorator;
-  }, [isCollapsible, isExpanded, props.endDecorator]);
-
 
   return (
-    <Box sx={groupSx}>
+    <Box>
+
       {/* Header */}
-      {(!!props.title || !!props.endDecorator) && (
-        <ListItem
+      {(!!props.title || isCollapsible) && (
+        <Box
           onClick={isCollapsible ? toggleExpanded : undefined}
           role={isCollapsible ? 'button' : undefined}
           sx={headerSx}
         >
-          <Box sx={headerRowSx}>
-            <Box sx={headerTitleSx}>{props.title}</Box>
-            {endDecorator}
-          </Box>
-        </ListItem>
+          <Box sx={headerTitleSx}>{props.title}</Box>
+          {isCollapsible && <Checkbox size='md' variant='outlined' color='neutral' checked={isExpanded} />}
+        </Box>
       )}
 
-      {/* Items  */}
-      <ExpanderControlledBox expanded={isExpanded} sx={contentsSx}>
-        {props.children}
+      {/* Collapsible Items  */}
+      <ExpanderControlledBox expanded={isExpanded}>
+        <MenuList size={themeScalingMap[contentScaling]?.optimaPanelGroupSize} sx={groupListSx}>
+          {props.children}
+        </MenuList>
       </ExpanderControlledBox>
+
     </Box>
   );
 }

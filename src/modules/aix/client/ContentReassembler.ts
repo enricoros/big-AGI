@@ -1,5 +1,5 @@
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment, } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
@@ -51,6 +51,12 @@ export class ContentReassembler {
           case 'tr_':
             this.onAppendReasoningText(op);
             break;
+          case 'trs':
+            this.onSetReasoningSignature(op);
+            break;
+          case 'trr_':
+            this.onAddRedactedDataParcel(op);
+            break;
           case 'fci':
             this.onStartFunctionCallInvocation(op);
             break;
@@ -64,6 +70,7 @@ export class ContentReassembler {
             this.onAddCodeExecutionResponse(op);
             break;
           default:
+            const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected PartParticleOp: ${JSON.stringify(op)}`);
         }
         break;
@@ -88,11 +95,13 @@ export class ContentReassembler {
             this.onModelName(op);
             break;
           default:
+            const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
         }
         break;
 
       default:
+        const _exhaustiveCheck: never = op;
         this._appendReassemblyDevError(`unexpected particle: ${JSON.stringify(op)}`);
     }
 
@@ -142,14 +151,15 @@ export class ContentReassembler {
 
   }
 
-  private onAppendReasoningText({ _t }: Extract<AixWire_Particles.PartParticleOp, { p: 'tr_' }>): void {
+  private onAppendReasoningText({ _t /*, weak*/ }: Extract<AixWire_Particles.PartParticleOp, { p: 'tr_' }>): void {
     // Break text accumulation
     this.currentTextFragmentIndex = null;
 
-    // add to existing ModelAuxVoidFragment if possible
+    // append to existing ModelAuxVoidFragment if possible
     const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
     if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
-      currentFragment.part.aText += _t;
+      const appendedPart = { ...currentFragment.part, aText: (currentFragment.part.aText || '') + _t } satisfies DVoidModelAuxPart;
+      this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: appendedPart };
       return;
     }
 
@@ -157,6 +167,37 @@ export class ContentReassembler {
     const fragment = createModelAuxVoidFragment('reasoning', _t);
     this.accumulator.fragments.push(fragment);
   }
+
+  private onSetReasoningSignature({ signature }: Extract<AixWire_Particles.PartParticleOp, { p: 'trs' }>): void {
+
+    // set to existing ModelAuxVoidFragment if possible
+    const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
+      const setPart = { ...currentFragment.part, textSignature: signature } satisfies DVoidModelAuxPart;
+      this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: setPart };
+      return;
+    }
+
+    // if for some reason there's no ModelAuxVoidFragment, create one
+    const fragment = createModelAuxVoidFragment('reasoning', '', signature);
+    this.accumulator.fragments.push(fragment);
+  }
+
+  private onAddRedactedDataParcel({ _data }: Extract<AixWire_Particles.PartParticleOp, { p: 'trr_' }>): void {
+
+    // add to existing ModelAuxVoidFragment if possible
+    const currentFragment = this.accumulator.fragments[this.accumulator.fragments.length - 1];
+    if (currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
+      const appendedPart = { ...currentFragment.part, redactedData: [...(currentFragment.part.redactedData || []), _data] } satisfies DVoidModelAuxPart;
+      this.accumulator.fragments[this.accumulator.fragments.length - 1] = { ...currentFragment, part: appendedPart };
+      return;
+    }
+
+    // create a new ModelAuxVoidFragment for redacted thinking
+    const fragment = createModelAuxVoidFragment('reasoning', '', undefined, [_data]);
+    this.accumulator.fragments.push(fragment);
+  }
+
 
   private onStartFunctionCallInvocation(fci: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }>): void {
     // Break text accumulation

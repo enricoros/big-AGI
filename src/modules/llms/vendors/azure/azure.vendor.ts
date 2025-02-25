@@ -34,11 +34,11 @@ interface DAzureServiceSettings {
  */
 export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessSchema> = {
   id: 'azure',
-  name: 'Azure',
+  name: 'Azure OpenAI',
   displayRank: 30,
   location: 'cloud',
   instanceLimit: 2,
-  hasBackendCapKey: 'hasLlmAzureOpenAI',
+  hasServerConfigKey: 'hasLlmAzureOpenAI',
 
   // components
   Icon: AzureIcon,

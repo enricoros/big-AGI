@@ -13,21 +13,8 @@ import { Box, Chip } from '@mui/joy';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
+import { CustomARenderer } from './CustomARenderer';
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
-
-
-// LinkRenderer adds a target="_blank" to all links
-
-interface LinkRendererProps {
-  node?: any; // an optional field we want to not pass to the <a/> element
-  children: React.ReactNode;
-}
-
-const LinkRenderer = ({ children, node, ...props }: LinkRendererProps) => (
-  <a {...props} target='_blank' rel='noopener'>
-    {children}
-  </a>
-);
 
 
 // DelRenderer adds a strikethrough to the text
@@ -209,7 +196,7 @@ function generateMarkdownTableFromData(tableData: any[]): string {
 // shared components for the markdown renderer
 
 const reactMarkdownComponents = {
-  a: LinkRenderer, // override the link renderer to add target="_blank"
+  a: CustomARenderer, // override the link renderer to add target="_blank"
   del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
   mark: MarkRenderer, // renders the <mark> tag (==highlight==)
   table: TableRenderer, // override the table renderer to show the download CSV links and Copy Markdown button
@@ -235,8 +222,14 @@ const rehypePluginsStable: UnifiedPluggable[] = [
  */
 const preprocessMarkdown = (markdownText: string) => markdownText
   // Replace LaTeX delimiters with $$...$$
-  .replace(/\s\\\((.*?)\\\)/gs, (_match, p1) => ` $$${p1}$$`) // Replace inline LaTeX delimiters \( and \) with $$
-  .replace(/\s\\\[(.*?)\\]/gs, (_match, p1) => ` $$${p1}$$`) // Replace block LaTeX delimiters \[ and \] with $$
+  // Replace inline LaTeX delimiters \( and \) with $$
+  .replace(/(\s*)\\\((.*?)\\\)/gs, (_match, leadingSpace, mathContent) =>
+    `${leadingSpace}$$${mathContent}$$`
+  )
+  // Replace block LaTeX delimiters \[ and \] with $$
+  .replace(/(\s*)\\\[(.*?)\\]/gs, (_match, leadingSpace, mathContent) =>
+    `${leadingSpace}$$${mathContent}$$`
+  )
   // Replace <mark>...</mark> with ==...==, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
   .replace(/<mark>([\s\S]*?)<\/mark>/g, (_match, p1) => wrapWithMarkdownSyntax(p1, '=='))
   // Replace <del>...</del> with ~~...~~, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))

@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
-import { FormRadioControl, FormRadioOption } from '~/common/components/forms/FormRadioControl';
+import { FormChipControl } from '~/common/components/forms/FormChipControl';
+import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
 
@@ -42,10 +43,10 @@ export function T2ISettings() {
 
     ) : (
 
-      <FormRadioControl
+      <FormChipControl
         title='Text-to-Image'
         description='Active Service'
-        tooltip='Select the service to use for text-to-image generation.'
+        // tooltip='Select the service to use for text-to-image generation.'
         disabled={!mayWork}
         options={providerOptions}
         value={activeProviderId ?? undefined} onChange={setActiveProviderId}

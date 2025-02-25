@@ -2,13 +2,10 @@ import * as React from 'react';
 
 import { SvgIcon, SvgIconProps } from '@mui/joy';
 
-import { Brand } from '~/common/app.config';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
-
-export function AgiSquircleIcon(props: { inverted?: boolean, altColor?: string } & SvgIconProps) {
+export function BigAgiSquircleIcon(props: { inverted?: boolean, altColor?: string } & SvgIconProps) {
   const { inverted, altColor, ...rest } = props;
   return <SvgIcon
-    titleAccess={`${capitalizeFirstLetter(Brand.Title.Base)} logo mark`}
+    titleAccess='logo mark'
     viewBox='0 0 6.3500006 6.3499996' width='24' height='24'
     stroke='none' strokeWidth={0.691986} strokeLinecap='round' strokeLinejoin='round'
     {...rest}

@@ -76,6 +76,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
+            NEXT_PUBLIC_BUILD_HASH=${{ github.sha }}
+            NEXT_PUBLIC_BUILD_REF_NAME=${{ github.ref_name }}
           # Enable build cache (future)
           #cache-from: type=gha
           #cache-to: type=gha,mode=max

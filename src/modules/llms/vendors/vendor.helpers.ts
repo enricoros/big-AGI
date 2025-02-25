@@ -28,6 +28,6 @@ export function findServiceAccessOrThrow<TServiceSettings extends object = {}, T
 
 export function vendorHasBackendCap<TServiceSettings extends Record<string, any> = {}, TAccess = unknown>(vendor: IModelVendor<TServiceSettings, TAccess>) {
   const backendCaps = getBackendCapabilities();
-  return vendor.hasBackendCapFn ? vendor.hasBackendCapFn(backendCaps)
-    : vendor.hasBackendCapKey ? !!backendCaps[vendor.hasBackendCapKey] : false;
+  return vendor.hasServerConfigFn ? vendor.hasServerConfigFn(backendCaps)
+    : vendor.hasServerConfigKey ? !!backendCaps[vendor.hasServerConfigKey] : false;
 }

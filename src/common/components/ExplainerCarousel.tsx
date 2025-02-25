@@ -1,5 +1,4 @@
 import React from 'react';
-import { sendGAEvent } from '@next/third-parties/google';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Step, stepClasses, StepIndicator, stepIndicatorClasses, Stepper, Typography } from '@mui/joy';
@@ -10,11 +9,11 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
-import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationTextShadowLimey } from '~/common/util/animUtils';
-import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/state/store-ui';
 
@@ -199,7 +198,7 @@ export function ExplainerCarousel(props: {
           whiteSpace: 'balance',
         }}>
         {activeStep?.titlePrefix}{' '}
-        {!!activeStep?.titleSquircle && <AgiSquircleIcon inverted sx={{ color: 'white', fontSize: isMobile ? '1.55rem' : '2.04rem', borderRadius: 'md' }} />}
+        {!!activeStep?.titleSquircle && <BigAgiSquircleIcon inverted sx={{ color: 'white', fontSize: isMobile ? '1.55rem' : '2.04rem', borderRadius: 'md' }} />}
         {!!activeStep?.titleSquircle && '-'}
         {!!activeStep?.titleSpark && <Box component='span' sx={{
           fontWeight: 'lg',

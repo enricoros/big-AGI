@@ -19,7 +19,7 @@ export const ModelVendorOpenPipe: IModelVendor<DOpenPipeServiceSettings, OpenAIA
   displayRank: 42,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmOpenPipe',
+  hasServerConfigKey: 'hasLlmOpenPipe',
 
   // components
   Icon: OpenPipeIcon,

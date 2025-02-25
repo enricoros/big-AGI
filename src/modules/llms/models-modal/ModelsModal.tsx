@@ -5,7 +5,7 @@ import { Box, Button, Divider } from '@mui/joy';
 import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { optimaActions, optimaOpenModels, useOptimaModelsModalsState } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaOpenModels, useOptimaModals } from '~/common/layout/optima/useOptima';
 import { runWhenIdle } from '~/common/util/pwaUtils';
 import { useHasLLMs, useModelsServices } from '~/common/stores/llms/llms.hooks';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -116,19 +116,20 @@ function ModelsConfiguratorModal(props: {
           <AppBreadcrumbs.Leaf>Setup <b>AI Models</b></AppBreadcrumbs.Leaf>
         </AppBreadcrumbs>
       ) : (
-        <>Configure <b>AI Models</b></>
-        // <AppBreadcrumbs size='md' rootTitle='AI Models'>
-        //   <Box sx={{ display: 'flex', gap: 1 }}>
-        //     {!hasLLMs ? <AppBreadcrumbs.Leaf>Setup</AppBreadcrumbs.Leaf> : <>
-        //       <Chip size='lg' variant={isTabSetup ? 'solid' : 'outlined'} color='neutral' onClick={isTabSetup ? undefined : handleToggleDefaults} sx={{}}>
-        //         Setup
-        //       </Chip>
-        //       <Chip size='lg' variant={isTabDefaults ? 'solid' : 'outlined'} color='neutral' onClick={isTabDefaults ? undefined : handleToggleDefaults} sx={{}}>
-        //         Defaults
-        //       </Chip>
-        //     </>}
-        //   </Box>
-        // </AppBreadcrumbs>
+        // <>Configure <b>AI Models</b></>
+        <AppBreadcrumbs size='md' rootTitle='Configure'>
+          <AppBreadcrumbs.Leaf><b>AI Models</b></AppBreadcrumbs.Leaf>
+          {/*<Box sx={{ display: 'flex', gap: 1 }}>*/}
+          {/*  {!hasLLMs ? <AppBreadcrumbs.Leaf>Setup</AppBreadcrumbs.Leaf> : <>*/}
+          {/*    <Chip size='lg' variant={isTabSetup ? 'solid' : 'outlined'} color='neutral' onClick={isTabSetup ? undefined : handleToggleDefaults} sx={{}}>*/}
+          {/*      Setup*/}
+          {/*    </Chip>*/}
+          {/*    <Chip size='lg' variant={isTabDefaults ? 'solid' : 'outlined'} color='neutral' onClick={isTabDefaults ? undefined : handleToggleDefaults} sx={{}}>*/}
+          {/*      Defaults*/}
+          {/*    </Chip>*/}
+          {/*  </>}*/}
+          {/*</Box>*/}
+        </AppBreadcrumbs>
       )}
       open onClose={optimaActions().closeModels}
       darkBottomClose={!isTabWizard}
@@ -191,7 +192,7 @@ function ModelsConfiguratorModal(props: {
 export function ModelsModal(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
-  const { showModels, showModelOptions } = useOptimaModelsModalsState();
+  const { showModels, showModelOptions } = useOptimaModals();
   const { modelsServices, confServiceId, setConfServiceId } = useModelsServices();
 
 

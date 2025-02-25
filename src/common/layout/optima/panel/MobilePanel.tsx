@@ -5,28 +5,17 @@ import { Box, Drawer } from '@mui/joy';
 import type { NavItemApp } from '~/common/app.nav';
 
 import { MobileNavItems } from '../nav/MobileNavItems';
+import { MobilePreferencesListItem } from './MobilePreferencesListItem';
+import { OPTIMA_DRAWER_MOBILE_RADIUS, OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
+import { OptimaPanelGroupedList } from './OptimaPanelGroupedList';
+import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
-import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
-
-function MobilePanelContentPortal() {
-  const panelPortalRef = useOptimaPortalOutRef('optima-portal-panel', 'MobilePanel');
-  return (
-    <Box
-      ref={panelPortalRef}
-      sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    />
-  );
-}
 
 export function MobilePanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
   // external state
-  const isPanelOpen = useOptimaPanelOpen();
+  const { panelShownAsPanel } = useOptimaPanelOpen(true, props.currentApp);
 
   // NOTE on `disableEnforceFocus` (Joy UI): see MobileDrawer
   return (
@@ -35,7 +24,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       component={props.component}
       disableEnforceFocus
       anchor='right'
-      open={isPanelOpen}
+      open={panelShownAsPanel}
       onClose={optimaClosePanel}
       sx={{
         '--Drawer-horizontalSize': 'clamp(var(--AGI-Panel-width), 30%, 100%)',
@@ -55,16 +44,33 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
           sx: {
             // style: round the right drawer corners
             // backgroundColor: 'transparent',
-            borderTopLeftRadius: 'var(--AGI-Optima-Radius)',
-            borderBottomLeftRadius: 'var(--AGI-Optima-Radius)',
+            borderTopLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+            borderBottomLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
           },
         },
       }}
     >
 
-      <MobilePanelContentPortal />
+      {/* Preferences */}
+      <Box sx={{
+        // mb: OPTIMA_PANEL_GROUPS_SPACING,
+        // make the [Account, Preferences, Portal] stack scrollable
+        height: '100%',
+        overflowY: 'auto',
+      }}>
 
-      {/*<ListDivider sx={{ mb: 0 }} />*/}
+        <Box sx={{ py: 0.25, mb: OPTIMA_PANEL_GROUPS_SPACING }}>
+          <OptimaPanelGroupedList>
+            <MobilePreferencesListItem />
+          </OptimaPanelGroupedList>
+        </Box>
+
+        {/* [Mobile] Panel within the Drawer */}
+        <PanelContentPortal />
+
+      </Box>
+
+      {/* [Mobile] Nav Items */}
       <MobileNavItems currentApp={props.currentApp} />
 
     </Drawer>

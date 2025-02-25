@@ -16,6 +16,7 @@ import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optima';
+import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -27,8 +28,9 @@ import { VoiceSettings } from './VoiceSettings';
 
 
 // configuration
-const COLOR_TAB_LIST = 'primary';
 const TAB_RADIUS = 'md';
+const COLOR_TAB_LIST = 'primary';
+const COLOR_TOPIC_ICON = 'primary';
 
 
 // styled <AccordionGroup variant='plain'> into a Topics component
@@ -81,17 +83,20 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
           color='primary'
           variant={expanded ? 'plain' : 'soft'}
           indicator={<AddIcon />}
+          slotProps={!expanded ? undefined : {
+            button: { sx: { backgroundColor: 'rgba(var(--joy-palette-primary-lightChannel) / 0.2)' } },
+          }}
         >
           {!!props.icon && (
             <Avatar
-              color={COLOR_TAB_LIST}
+              color={COLOR_TOPIC_ICON}
               variant={expanded ? 'plain' /* was: soft */ : 'plain'}
               // size='sm'
             >
               {props.icon}
             </Avatar>
           )}
-          <ListItemContent sx={{ color: `${COLOR_TAB_LIST}.softColor` }}>
+          <ListItemContent sx={{ color: `${COLOR_TOPIC_ICON}.softColor` }}>
             {props.title}
           </ListItemContent>
         </AccordionSummary>
@@ -134,6 +139,7 @@ const _styles = {
     backgroundColor: `${COLOR_TAB_LIST}.softHoverBg`,
     mb: 2,
     p: 0.5,
+    // borderRadius: '2rem',
     borderRadius: TAB_RADIUS,
     fontSize: 'md',
     fontWeight: 'md',
@@ -142,19 +148,22 @@ const _styles = {
   } as const,
 
   tabsListTab: {
+    // borderRadius: '2rem',
     borderRadius: 'sm',
     flex: 1,
     p: 0,
     '&[aria-selected="true"]': {
       // color: 'primary.plainColor',
       bgcolor: 'background.popup',
-      boxShadow: 'sm',
+      // color: `${COLOR_TAB_LIST}.solidColor`,
+      // bgcolor: `${COLOR_TAB_LIST}.solidBg`,
+      boxShadow: 'xs',
       fontWeight: 'lg',
       zIndex: 1,
     } as const,
-    '&:hover': {
-      backgroundColor: 'background.level1',
-    } as const,
+    // '&:hover': {
+    //   backgroundColor: 'background.level1',
+    // } as const,
   } as const,
 
   tabPanel: {
@@ -193,7 +202,12 @@ export function SettingsModal(props: {
 
   return (
     <GoodModal
-      title='Preferences' strongerTitle
+      // title='Preferences' strongerTitle
+      title={
+        <AppBreadcrumbs size='md' rootTitle='App'>
+          <AppBreadcrumbs.Leaf><b>Preferences</b></AppBreadcrumbs.Leaf>
+        </AppBreadcrumbs>
+      }
       open={props.open} onClose={props.onClose}
       startButton={isMobile ? undefined : (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -215,13 +229,14 @@ export function SettingsModal(props: {
         sx={_styles.tabs}
       >
         <TabList
+          size='sm'
           disableUnderline
           sx={_styles.tabsList}
         >
-          <Tab disableIndicator value='chat' sx={_styles.tabsListTab}>Chat</Tab>
-          <Tab disableIndicator value='voice' sx={_styles.tabsListTab}>Voice</Tab>
-          <Tab disableIndicator value='draw' sx={_styles.tabsListTab}>Draw</Tab>
-          <Tab disableIndicator value='tools' sx={_styles.tabsListTab}>Tools</Tab>
+          <Tab value='chat' disableIndicator sx={_styles.tabsListTab}>Chat</Tab>
+          <Tab value='voice' disableIndicator sx={_styles.tabsListTab}>Voice</Tab>
+          <Tab value='draw' disableIndicator sx={_styles.tabsListTab}>Draw</Tab>
+          <Tab value='tools' disableIndicator sx={_styles.tabsListTab}>Tools</Tab>
         </TabList>
 
         <TabPanel value='chat' variant='outlined' sx={_styles.tabPanel}>
@@ -268,10 +283,10 @@ export function SettingsModal(props: {
 
         <TabPanel value='tools' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
-            <Topic icon={<LanguageRoundedIcon />} title='Web Browser'>
+            <Topic icon={<LanguageRoundedIcon />} title='Browse Web Pages'>
               <BrowseSettings />
             </Topic>
-            <Topic icon={<SearchIcon />} title='Web Search - Google API' startCollapsed>
+            <Topic icon={<SearchIcon />} title='Web Search · Google API' startCollapsed>
               <GoogleSearchSettings />
             </Topic>
             {/*<Topic icon='🛠' title='Other tools...' />*/}

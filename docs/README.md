@@ -17,6 +17,7 @@ How to set up AI models and features in big-AGI.
 
 - **Cloud AI Services**:
   - Easy API key configuration:
+    [Alibaba](https://bailian.console.alibabacloud.com/?apiKey=1#/api-key),
     [Anthropic](https://console.anthropic.com/settings/keys),
     [Deepseek](https://platform.deepseek.com/api_keys),
     [Google Gemini](https://aistudio.google.com/app/apikey),
@@ -28,6 +29,7 @@ How to set up AI models and features in big-AGI.
     [TogetherAI](https://api.together.xyz/settings/api-keys),
     [xAI](http://x.ai/api)
   - **[Azure OpenAI](config-azure-openai.md)** guide
+  - **FireworksAI** ([API keys](https://fireworks.ai/account/api-keys), via custom OpenAI endpoint: https://api.fireworks.ai/inference)
   - **[OpenRouter](config-openrouter.md)** guide
 
 

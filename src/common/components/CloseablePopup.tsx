@@ -44,12 +44,14 @@ export function CloseablePopup(props: {
   children?: React.ReactNode,
 }) {
 
-  const handleClose = (event: MouseEvent | TouchEvent | React.KeyboardEvent) => {
-    event.stopPropagation();
-    props.onClose();
-  };
+  const { onClose } = props;
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleClose = React.useCallback((event: MouseEvent | TouchEvent | React.KeyboardEvent) => {
+    event.stopPropagation();
+    onClose();
+  }, [onClose]);
+
+  const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
       handleClose(event);
     } else if (event.key === 'Escape') {
@@ -57,7 +59,7 @@ export function CloseablePopup(props: {
         props.anchorEl?.focus();
       handleClose(event);
     }
-  };
+  }, [handleClose, props.anchorEl]);
 
 
   // memos

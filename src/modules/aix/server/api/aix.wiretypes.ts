@@ -19,6 +19,7 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 // Export types
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
+export type AixParts_ModelAuxPart = z.infer<typeof AixWire_Parts.ModelAuxPart_schema>;
 export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
 export type AixParts_MetaInReferenceToPart = z.infer<typeof AixWire_Parts.MetaInReferenceToPart_schema>;
 
@@ -199,6 +200,16 @@ export namespace AixWire_Parts {
     // _environment: z.enum(['upstream', 'server', 'client']).optional(),
   });
 
+  // Model Auxiliary Part (for thinking blocks)
+
+  export const ModelAuxPart_schema = z.object({
+    pt: z.literal('ma'),
+    aType: z.literal('reasoning'),
+    aText: z.string(),
+    textSignature: z.string().optional(),
+    redactedData: z.array(z.string()).optional(),
+  });
+
   // Metas
 
   export const MetaCacheControl_schema = z.object({
@@ -248,6 +259,7 @@ export namespace AixWire_Content {
       AixWire_Parts.TextPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.ToolInvocationPart_schema,
+      AixWire_Parts.ModelAuxPart_schema,
       AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
@@ -379,6 +391,7 @@ export namespace AixWire_API {
       .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
     maxTokens: z.number().min(1).optional(),
     topP: z.number().min(0).max(1).optional(),
+    vndAntThinkingBudget: z.number().nullable().optional(),
     vndGeminiShowThoughts: z.boolean().optional(),
     vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
@@ -549,10 +562,12 @@ export namespace AixWire_Particles {
 
   export type PartParticleOp =
     | { p: 'tr_', _t: string, weak?: 'tag' } // reasoning text, incremental; could be a 'weak' detection, e.g. heuristic from '<think>' rather than API-provided
-  // | { p: 'ii', mimeType: string, i_b64?: string /* never undefined */ }
-  // | { p: '_ii', i_b64: string }
-  // | { p: 'di', type: string, ref: string, l1Title: string, i_text?: string /* never undefined */ }
-  // | { p: '_di', i_text: string }
+    | { p: 'trs', signature: string } // reasoning signature
+    | { p: 'trr_', _data: string } // reasoning raw (or redacted) data
+    // | { p: 'ii', mimeType: string, i_b64?: string /* never undefined */ }
+    // | { p: '_ii', i_b64: string }
+    // | { p: 'di', type: string, ref: string, l1Title: string, i_text?: string /* never undefined */ }
+    // | { p: '_di', i_text: string }
     | { p: 'fci', id: string, name: string, i_args?: string /* never undefined */ }
     | { p: '_fci', _args: string }
     | { p: 'cei', id: string, language: string, code: string, author: 'gemini_auto_inline' }

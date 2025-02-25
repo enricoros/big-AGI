@@ -18,7 +18,7 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
   displayRank: 20,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmPerplexity',
+  hasServerConfigKey: 'hasLlmPerplexity',
 
   // components
   Icon: PerplexityIcon,

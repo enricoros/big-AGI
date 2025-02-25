@@ -4,13 +4,13 @@ import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
 import { SettingsModal } from '../../../apps/settings-modal/SettingsModal';
 import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
-import { optimaActions, optimaOpenPreferences, useOptimaModalsState } from './useOptima';
+import { optimaActions, optimaOpenPreferences, useOptimaModals } from './useOptima';
 
 
 export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
-  const { showKeyboardShortcuts, showPreferences, preferencesTab } = useOptimaModalsState();
+  const { preferencesTab, showKeyboardShortcuts, showPreferences } = useOptimaModals();
 
   // derived state
   const { closeKeyboardShortcuts, closePreferences, openKeyboardShortcuts } = optimaActions();

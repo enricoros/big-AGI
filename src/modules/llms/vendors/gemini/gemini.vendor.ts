@@ -31,7 +31,7 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   displayRank: 14,
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmGemini',
+  hasServerConfigKey: 'hasLlmGemini',
 
   // components
   Icon: GeminiIcon,

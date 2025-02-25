@@ -28,8 +28,7 @@ function generateLlmEnvConfigHash(env: Record<string, unknown>): string {
     .sort();                              // ignore order
   const hashInputs = [
     Release.Monotonics.Aix.toString(),  // triggers at every change (large downstream effect, know what you are doing)
-    Release.TenantId.toString(),          // triggers when branch changes
-    Release.App.pl.toString(),          // triggers when app changes
+    Release.TenantSlug.toString(),          // triggers when branch changes
     ...envAPIKeys,                      // triggers when env keys change
   ];
   return sdbmHash(hashInputs.join(';'));
@@ -49,6 +48,7 @@ export const backendRouter = createTRPCRouter({
     .query(async ({ ctx: _unused }): Promise<BackendCapabilities> => {
       return {
         // llms
+        hasLlmAlibaba: !!env.ALIBABA_API_KEY || !!env.ALIBABA_API_HOST,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
         hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
