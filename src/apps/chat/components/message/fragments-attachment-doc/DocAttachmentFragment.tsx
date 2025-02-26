@@ -87,8 +87,10 @@ export function DocAttachmentFragment(props: {
   if (!isDocPart(fragmentDocPart))
     throw new Error('Unexpected part type: ' + fragmentDocPart.pt);
 
-  const fragmentTitle = fragmentDocPart.l1Title || fragment.caption;
+  const fragmentTitle = fragmentDocPart.l1Title || fragment.caption; // what's this for?
   const reverseToolbar = props.messageRole === 'assistant';
+
+  const displayTitle = fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref || FALLBACK_NO_TITLE;
 
 
   // hooks
@@ -121,14 +123,14 @@ export function DocAttachmentFragment(props: {
 
   const handleTitleEditSave = React.useCallback((newTitle: string) => {
     setIsEditingTitle(false);
-    if (!newTitle.trim() || !onFragmentReplace) return;
+    if (!newTitle.trim() || newTitle === displayTitle || !onFragmentReplace) return;
 
     // retitle the fragment, without changing Id
     const newDocPart: DMessageDocPart = { ...fragmentDocPart, l1Title: newTitle, version: (fragmentDocPart?.version ?? 1) + 1 };
     const newFragment: DMessageAttachmentFragment = { ...fragment, title: newTitle, part: newDocPart };
 
     onFragmentReplace(fragment.fId, newFragment);
-  }, [fragment, fragmentDocPart, onFragmentReplace]);
+  }, [displayTitle, fragment, fragmentDocPart, onFragmentReplace]);
 
 
   // LiveFile sync
@@ -243,10 +245,8 @@ export function DocAttachmentFragment(props: {
   const headerRow = React.useMemo(() => {
     const TitleIcon = buttonIconForFragment(fragmentDocPart);
 
-    const displayTitle = fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref || FALLBACK_NO_TITLE;
-
     return <>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
 
         <Tooltip arrow variant='outlined' color='neutral' placement='top-start' title={headerTooltipContents}>
           {TitleIcon && <TitleIcon />}
@@ -277,7 +277,7 @@ export function DocAttachmentFragment(props: {
       {!isEditing && liveFileControlButton}
 
     </>;
-  }, [fragmentDocPart, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditSave, headerTooltipContents, isEditing, isEditingTitle, liveFileControlButton, onFragmentReplace]);
+  }, [displayTitle, fragmentDocPart, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditSave, headerTooltipContents, isEditing, isEditingTitle, liveFileControlButton, onFragmentReplace]);
 
 
   const toolbarRow = React.useMemo(() => (!onFragmentDelete && !onFragmentReplace) ? null : (
