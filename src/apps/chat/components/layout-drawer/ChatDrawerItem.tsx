@@ -325,7 +325,16 @@ function ChatDrawerItem(props: {
           opacity: 1, // fade in buttons when hovering, but by default wash them out a bit
         },
         ...(isIncognito && {
-          filter: 'brightness(0.5) contrast(0.5)',
+          backgroundColor: 'background.level2',
+          backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
+          // border: 'none',
+          // border: '1px dashed',
+          borderColor: 'background.level3',
+          // purple icon to further indicate incognito mode
+          '& .MuiListItemDecorator-root': {
+            color: '#9C27B0',
+          },
+          // filter: 'brightness(0.5) contrast(0.5)',
         }),
       }}
     >
