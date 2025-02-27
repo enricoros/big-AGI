@@ -9,8 +9,8 @@ export function useDebouncer<TValue = string | number>(
   const [immediateValue, setImmediateValue] = React.useState<TValue>(initialValue);
   const [debouncedValue, setDebouncedValue] = React.useState<TValue>(initialValue);
   const valueRef = React.useRef(initialValue);
-  const debounceTimeoutRef = React.useRef<number>();
-  const deadlineTimeoutRef = React.useRef<number>();
+  const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+  const deadlineTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const clearDebounceTimeout = React.useCallback(() => {
     if (debounceTimeoutRef.current) {
@@ -41,11 +41,11 @@ export function useDebouncer<TValue = string | number>(
     };
 
     // Set the debounce timeout
-    debounceTimeoutRef.current = window.setTimeout(handler, delayMs);
+    debounceTimeoutRef.current = setTimeout(handler, delayMs);
 
     // Set the deadline timeout if it hasn't been set already
     if (typeof deadlineMs === 'number' && deadlineMs > delayMs && deadlineTimeoutRef.current === undefined)
-      deadlineTimeoutRef.current = window.setTimeout(handler, deadlineMs);
+      deadlineTimeoutRef.current = setTimeout(handler, deadlineMs);
 
   }, [clearDebounceTimeout, immediate, delayMs, deadlineMs, clearDeadlineTimeout]);
 

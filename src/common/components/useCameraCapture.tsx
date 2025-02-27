@@ -27,7 +27,7 @@ export function useCameraCapture() {
   const [zoomControl, setZoomControl] = React.useState<React.ReactNode>(null);
   const [info, setInfo] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null); // null because the <video> unmount will set this to null
 
 
   // stop the video stream
@@ -150,7 +150,7 @@ const sliderContainerSx: SxProps = {
 };
 
 
-async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefObject<HTMLVideoElement>) {
+async function _startVideo(selectedDevice: MediaDeviceInfo, videoRef: React.RefObject<HTMLVideoElement | null>) {
 
   if (!selectedDevice || !navigator.mediaDevices?.getUserMedia)
     throw new Error('Browser has no camera access');
