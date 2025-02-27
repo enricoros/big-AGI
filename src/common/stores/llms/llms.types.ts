@@ -96,9 +96,9 @@ export const LLM_IF_HOTFIX_Sys0ToUsr0: DModelInterfaceV1 = 'hotfix-sys0-to-usr0'
 export const LLMS_ALL_INTERFACES = [
   // Declare common capabilities
   LLM_IF_OAI_Chat,            // MUST SUPPORT - chat interface
+  LLM_IF_OAI_Vision,          // GREAT TO HAVE - image inputs
   LLM_IF_OAI_Fn,              // IMPORTANT - support for function calls
   LLM_IF_OAI_Json,            // not used for now: structured outputs
-  LLM_IF_OAI_Vision,          // GREAT TO HAVE - image inputs
   LLM_IF_OAI_Reasoning,       // COSMETIC ONLY - may show a 'brain' icon in supported screens
   // Vendor-specific capabilities
   LLM_IF_ANT_PromptCaching,   // [Anthropic] model supports anthropic-specific caching
