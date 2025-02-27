@@ -631,14 +631,20 @@ export function AppChat() {
               // for anchoring the scroll button in place
               position: 'relative',
               ...(isMultiPane ? {
+                marginBottom: '1px', // compensates for the -1px in `composerOpenSx` for the Composer offset
                 borderRadius: '0.375rem',
-                border: `2px solid ${_paneIsFocused
+                borderStyle: 'solid',
+                borderColor: _paneIsFocused
                   ? ((willMulticast || !isMultiConversationId) ? theme.palette.primary.solidBg : theme.palette.primary.solidBg)
-                  : ((willMulticast || !isMultiConversationId) ? theme.palette.primary.softActiveBg : theme.palette.background.level1)}`,
+                  : ((willMulticast || !isMultiConversationId) ? theme.palette.primary.softActiveBg : theme.palette.background.level1),
+                borderWidth: '2px',
+                // borderBottomWidth: '3px',
                 // DISABLED on 2024-03-13, it gets in the way quite a lot
                 // filter: (!willMulticast && !_paneIsFocused)
                 //   ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
                 //   : undefined,
+                // 2025-02-27: didn't try, here's another version
+                // filter: _paneIsFocused ? 'none' : 'brightness(0.94) saturate(0.9)',
               } : {
                 // NOTE: this is a workaround for the 'stuck-after-collapse-close' issue. We will collapse the 'other' pane, which
                 // will get it removed (onCollapse), and somehow this pane will be stuck with a pointerEvents: 'none' style, which de-facto
