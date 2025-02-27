@@ -33,7 +33,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   const activeProviderId = useTextToImageStore(state => state.activeProviderId);
   const setActiveProviderId = useTextToImageStore.getState().setActiveProviderId;
 
-  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>();
+  const stableLlmsModelServices = React.useRef<T2ILlmsModelServices[]>(undefined);
   const llmsModelServices = useModelsStore(({ llms, sources }) => {
     const next = getLlmsModelServices(llms, sources);
     const prev = stableLlmsModelServices.current;

@@ -102,7 +102,7 @@ export function useChatDrawerRenderItems(
   }, []);
 
 
-  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>();
+  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>(undefined);
 
   return useChatStore(({ conversations }) => {
 
