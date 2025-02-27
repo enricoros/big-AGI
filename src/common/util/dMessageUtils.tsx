@@ -331,6 +331,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
   if (model.includes('gpt-4')) {
     if (model.includes('gpt-4o-mini')) return 'GPT-4o mini';
     if (model.includes('gpt-4o')) return 'GPT-4o';
+    if (model.includes('gpt-4.5')) return 'GPT-4.5';
     if (model.includes('gpt-4-0125-preview')
       || model.includes('gpt-4-1106-preview')
       || model.includes('gpt-4-turbo')
