@@ -551,7 +551,13 @@ async function _aixChatGenerateContent_LL(
     fragments: [],
     /* rest start as undefined (missing in reality) */
   };
-  const debugDispatchRequest = getLabsDevMode() && aixContext.name === 'conversation'; // [DEV] Debugging the conversation request (only)
+
+  /**
+   * DEBUG note: early we were filtering (aixContext.name === 'conversation'), but with the new debugger we don't
+   * - 'sudo' mode is enabled by the UX Labs, and activates debug
+   * - every request thereafter both sends back the Aix server-side dispatch packet, and appends all the particles received by the client side
+   */
+  const debugDispatchRequest = getLabsDevMode();
   const debugContext = !debugDispatchRequest ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
   const contentReassembler = new ContentReassembler(accumulator_LL, debugContext);
 
