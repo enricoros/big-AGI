@@ -11,7 +11,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SettingsSuggestOutlinedIcon from '@mui/icons-material/SettingsSuggestOutlined';
 
-import { devMode_AixLastDispatchRequest } from '~/modules/aix/client/ContentReassembler';
+import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CodiconSplitHorizontal } from '~/common/components/icons/CodiconSplitHorizontal';
@@ -104,41 +104,10 @@ export function ChatPane(props: {
 
   // [DEV MODE]
 
-  const [devModeDialog, setDevModeDialog] = React.useState<React.ReactNode | null>(null);
+  const [aixLastDispatchDialog, setAixLastDispatchDialog] = React.useState<React.ReactNode | null>(null);
 
   const handleAixShowLastRequest = React.useCallback(() => {
-    setDevModeDialog((
-      <GoodModal
-        open={true}
-        dividers
-        onClose={() => setDevModeDialog(null)}
-        title='Aix: Last Dispach Request Body'
-        sx={{ minWidth: '80vw', maxWidth: undefined, overflow: 'hidden' }}
-      >
-        {devMode_AixLastDispatchRequest ? (
-          <Box sx={{
-            m: 'calc(-1 * var(--Card-padding))',
-            p: 'calc(0.5 * var(--Card-padding))',
-            fontSize: 'sm',
-            display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 2, rowGap: 1,
-            overflow: 'auto',
-          }}>
-            <div>Url</div>
-            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.url}</div>
-            <div>Headers</div>
-            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.headers}</div>
-            <div>Body</div>
-            <div style={{ whiteSpace: 'break-spaces' }}>{devMode_AixLastDispatchRequest.body}</div>
-            {devMode_AixLastDispatchRequest.particles.map(((particleString, idx) => (
-              <React.Fragment key={idx}>
-                <div>Particle {idx + 1}</div>
-                <div style={{ whiteSpace: 'break-spaces' }}>{particleString}</div>
-              </React.Fragment>
-            )))}
-          </Box>
-        ) : 'Contents will be shown after the next request.'}
-      </GoodModal>
-    ));
+    setAixLastDispatchDialog(<AixDebuggerDialog onClose={() => setAixLastDispatchDialog(null)} />);
   }, []);
 
 
@@ -230,7 +199,7 @@ export function ChatPane(props: {
     )}
 
     {/* [DEV MODE] Show any dialog, if present */}
-    {devModeDialog}
+    {aixLastDispatchDialog}
 
   </>;
 }
