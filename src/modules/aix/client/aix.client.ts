@@ -31,9 +31,14 @@ export function aixCreateChatGenerateContext(name: AixAPI_Context_ChatGenerate['
 export function aixCreateModelFromLLMOptions(
   llmInterfaces: DLLM['interfaces'],
   llmOptions: DModelParameterValues,
-  llmOptionsOverride: Omit<DModelParameterValues, 'llmRef'> | undefined,
+  _llmOptionsOverride: Omit<DModelParameterValues, 'llmRef'> | undefined,
   debugLlmId: string,
 ): AixAPI_Model {
+
+  // make sure llmRef is removed, if present in the override - excess of caution here
+  const llmOptionsOverride = _llmOptionsOverride ? { ..._llmOptionsOverride } : undefined;
+  if (llmOptionsOverride)
+    delete (llmOptionsOverride as { llmRef?: any }).llmRef;
 
   // destructure input with the overrides
   const {
