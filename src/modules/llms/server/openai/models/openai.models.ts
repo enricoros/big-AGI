@@ -653,7 +653,7 @@ const _manualOrderingIdPrefixes = [
   'o1-mini-',
   // GPT-4.5
   'gpt-4.5-20',
-  'gpt-4.5-preview-',
+  'gpt-4.5-preview',
   // Preferred models
   'gpt-4o-20',
   'gpt-4o-mini-',
