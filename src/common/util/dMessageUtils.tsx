@@ -252,7 +252,7 @@ export function useMessageAvatarLabel(
 
 function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode: UIComplexityMode): React.ReactNode {
   if (!metrics) return null;
-  const showSpeed = uiComplexityMode !== 'minimal' && (metrics?.dtStart !== undefined || metrics?.vTOutInner !== undefined);
+  const showSpeed = uiComplexityMode !== 'minimal' && ((metrics?.dtStart !== undefined && uiComplexityMode === 'extra') || metrics?.vTOutInner !== undefined);
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
   return <Box sx={tooltipMetricsGridSx}>
 
@@ -270,7 +270,7 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode:
     {/* Timings */}
     {showSpeed && <div>Speed:</div>}
     {showSpeed && <div>
-      {!!metrics.vTOutInner && <><b>{(Math.round(metrics.vTOutInner * 10) / 10).toLocaleString() || ''}</b> tok/s</>}
+      {!!metrics.vTOutInner && <>~<b>{(Math.round(metrics.vTOutInner * 10) / 10).toLocaleString() || ''}</b> tok/s</>}
       {uiComplexityMode === 'extra' && metrics?.dtStart && (<span style={{ opacity: 0.5 }}>
         {metrics.vTOutInner !== undefined && ' · '}
         <span>{(Math.round(metrics.dtStart / 100) / 10).toLocaleString() || ''}</span>s wait
