@@ -552,7 +552,8 @@ async function _aixChatGenerateContent_LL(
     /* rest start as undefined (missing in reality) */
   };
   const debugDispatchRequest = getLabsDevMode() && aixContext.name === 'conversation'; // [DEV] Debugging the conversation request (only)
-  const contentReassembler = new ContentReassembler(accumulator_LL, debugDispatchRequest);
+  const debugContext = !debugDispatchRequest ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
+  const contentReassembler = new ContentReassembler(accumulator_LL, debugContext);
 
   // Initialize throttler if throttling is enabled
   const throttler = (onReassemblyUpdate && throttleParallelThreads)

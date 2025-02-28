@@ -3,15 +3,14 @@ import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionRes
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
+import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
+import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticle, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
+
 import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
-
-
-// hackey?: global to be accessed by the UI
-export let devMode_AixLastDispatchRequest: { url: string, headers: string, body: string, particles: string[] } | null = null;
 
 
 /**
@@ -20,14 +19,13 @@ export let devMode_AixLastDispatchRequest: { url: string, headers: string, body:
 export class ContentReassembler {
 
   private currentTextFragmentIndex: number | null = null;
-  private readonly dispatchRequest: typeof devMode_AixLastDispatchRequest = null;
+  private readonly debuggerFrameId: AixFrameId | null = null;
 
-  constructor(readonly accumulator: AixChatGenerateContent_LL, debugDispatchRequest: boolean) {
-    // [DEV] Debugging the request, last-write-wins for the global (displayed in the UI)
-    if (debugDispatchRequest) {
-      this.dispatchRequest = { url: '', headers: '', body: '', particles: [] };
-      devMode_AixLastDispatchRequest = this.dispatchRequest;
-    }
+  constructor(readonly accumulator: AixChatGenerateContent_LL, enableDebugContext?: AixClientDebugger.Context) {
+
+    // [SUDO] Debugging the request, last-write-wins for the global (displayed in the UI)
+    this.debuggerFrameId = !enableDebugContext ? null : aixClientDebugger_init(enableDebugContext);
+
   }
 
   // reset(): void {
@@ -78,9 +76,9 @@ export class ContentReassembler {
       // ChatControlOp
       case 'cg' in op:
         switch (op.cg) {
-          case '_debugRequest':
-            if (this.dispatchRequest)
-              Object.assign(this.dispatchRequest, op.request);
+          case '_debugDispatchRequest':
+            if (this.debuggerFrameId)
+              aixClientDebugger_setRequest(this.debuggerFrameId, op.dispatchRequest);
             break;
           case 'end':
             this.onCGEnd(op);
@@ -105,9 +103,9 @@ export class ContentReassembler {
         this._appendReassemblyDevError(`unexpected particle: ${JSON.stringify(op)}`);
     }
 
-    // [DEV] Debugging
-    if (this.dispatchRequest && (!('cg' in op) || op.cg !== '_debugRequest'))
-      this.dispatchRequest.particles.push((debugIsAborted ? '!(A)! ' : '') + JSON.stringify(op));
+    // [DEV] Debugging, skipping the header particle
+    if (this.debuggerFrameId && !('cg' in op && op.cg === '_debugDispatchRequest'))
+      aixClientDebugger_recordParticle(this.debuggerFrameId, op, debugIsAborted);
   }
 
   reassembleClientAbort(): void {
@@ -128,6 +126,10 @@ export class ContentReassembler {
     // Perform all the latest operations
     const hasAborted = !!this.accumulator.genTokenStopReason;
     metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
+
+    // [SUDO] Debugging, finalize the frame
+    if (this.debuggerFrameId)
+      aixClientDebugger_completeFrame(this.debuggerFrameId);
 
   }
 
