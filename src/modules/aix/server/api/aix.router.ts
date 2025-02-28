@@ -54,7 +54,7 @@ export const aixRouter = createTRPCRouter({
       try {
 
         // [DEV] Debugging the request without requiring a server restart
-        if (input.connectionOptions?.debugDispatchRequestbody) {
+        if (input.connectionOptions?.debugDispatchRequest) {
           chatGenerateTx.addDebugRequestInDev(dispatch.request.url, dispatch.request.headers, dispatch.request.body);
           yield* chatGenerateTx.emitParticles();
         }
