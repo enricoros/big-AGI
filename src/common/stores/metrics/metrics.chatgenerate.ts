@@ -2,7 +2,7 @@ import { DPricingChatGenerate, getLlmCostForTokens, isModelPricingFree } from '~
 
 
 // configuration
-const METRICS_APPROXIMATE_DT_INNER_THRESHOLD = 50; // ms
+const METRICS_APPROXIMATE_DT_INNER_THRESHOLD = 200; // ms
 
 
 /**
@@ -100,8 +100,13 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
     }
 
     // inner velocity approximation (if not reported by the API, approximate to first -> last event)
-    if (!metrics.vTOutInner && metrics.dtInner !== undefined && metrics.dtInner > 0)
-      metrics.vTOutInner = Math.round(100 * metrics.TOut / (metrics.dtInner / 1000)) / 100;
+    if (!metrics.vTOutInner && metrics.dtInner !== undefined && metrics.dtInner > 0) {
+
+      // for OpenAI reasoning models, we needto remove the reasoning tokens from the total, as they were not counted
+      const TOutReceived = metrics.TOut - (metrics.TOutR || 0);
+
+      metrics.vTOutInner = Math.round(100 * TOutReceived / (metrics.dtInner / 1000)) / 100;
+    }
 
     // outer velocity (end-to-end)
     metrics.vTOutAll = Math.round(100 * metrics.TOut / (metrics.dtAll / 1000)) / 100;
