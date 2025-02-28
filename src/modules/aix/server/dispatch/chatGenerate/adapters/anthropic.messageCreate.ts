@@ -90,8 +90,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
 
   // Construct the request payload
   const payload: TRequest = {
-    max_tokens: model.maxTokens !== undefined ? model.maxTokens
-      : (model.id.includes('3-5-sonnet') ? 8192 : 4096), // see `max-tokens-3-5-sonnet-2024-07-15`, and [2024-10-22] max from https://docs.anthropic.com/en/docs/about-claude/models
+    max_tokens: model.maxTokens !== undefined ? model.maxTokens : 8192,
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
@@ -115,7 +114,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   if (model.vndAntThinkingBudget !== undefined) {
     payload.thinking = model.vndAntThinkingBudget !== null ? {
       type: 'enabled',
-      budget_tokens: model.vndAntThinkingBudget,
+      budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
     } : {
       type: 'disabled',
     };
