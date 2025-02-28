@@ -551,8 +551,8 @@ async function _aixChatGenerateContent_LL(
     fragments: [],
     /* rest start as undefined (missing in reality) */
   };
-  const debugDispatchRequestbody = getLabsDevMode() && aixContext.name === 'conversation'; // [DEV] Debugging the conversation request (only)
-  const contentReassembler = new ContentReassembler(accumulator_LL, debugDispatchRequestbody);
+  const debugDispatchRequest = getLabsDevMode() && aixContext.name === 'conversation'; // [DEV] Debugging the conversation request (only)
+  const contentReassembler = new ContentReassembler(accumulator_LL, debugDispatchRequest);
 
   // Initialize throttler if throttling is enabled
   const throttler = (onReassemblyUpdate && throttleParallelThreads)
@@ -568,9 +568,9 @@ async function _aixChatGenerateContent_LL(
       chatGenerate: aixChatGenerate,
       context: aixContext,
       streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
-      ...(debugDispatchRequestbody && {
+      ...(debugDispatchRequest && {
         connectionOptions: {
-          debugDispatchRequestbody: true, // [DEV] Debugging the request without requiring a server restart
+          debugDispatchRequest: true, // [DEV] Debugging the request without requiring a server restart
         },
       }),
     }, {

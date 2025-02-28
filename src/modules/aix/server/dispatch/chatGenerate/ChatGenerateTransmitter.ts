@@ -130,9 +130,9 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     // [security] only emit in development, as it may contain sensitive information
     if (process.env.NODE_ENV !== 'development') return;
     this.transmissionQueue.push({
-      cg: '_debugRequest',
+      cg: '_debugDispatchRequest',
       security: 'dev-env',
-      request: {
+      dispatchRequest: {
         url,
         headers: JSON.stringify(headers, null, 2),
         body: JSON.stringify(body, null, 2),
