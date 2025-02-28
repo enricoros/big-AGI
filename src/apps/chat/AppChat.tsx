@@ -40,6 +40,7 @@ import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
+import { useUIComplexityIsMinimal } from '~/common/state/store-ui';
 import { useUXLabsStore } from '~/common/state/store-ux-labs';
 
 import { ChatPane } from './components/layout-pane/ChatPane';
@@ -50,6 +51,7 @@ import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
+import { PaneTitleOverlay } from './components/layout-pane/PaneTitleOverlay';
 import { usePanesManager } from './components/panes/store-panes-manager';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -125,6 +127,8 @@ export function AppChat() {
 
   const isMobile = useIsMobile();
   const isTallScreen = useIsTallScreen();
+
+  const isZenMode = useUIComplexityIsMinimal();
 
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
@@ -658,6 +662,13 @@ export function AppChat() {
               })),
             }}
           >
+
+            {isMultiPane && !isZenMode && (
+              <PaneTitleOverlay
+                conversationId={_paneConversationId}
+                isFocused={_paneIsFocused}
+              />
+            )}
 
             <ScrollToBottom
               bootToBottom
