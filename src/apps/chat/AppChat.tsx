@@ -51,7 +51,7 @@ import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatMessageList } from './components/ChatMessageList';
 import { Composer } from './components/composer/Composer';
-import { PaneTitleOverlay } from './components/layout-pane/PaneTitleOverlay';
+import { PaneTitleOverlay } from './components/PaneTitleOverlay';
 import { usePanesManager } from './components/panes/store-panes-manager';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
