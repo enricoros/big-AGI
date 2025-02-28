@@ -1,0 +1,29 @@
+import { AixClientDebugger, AixFrameId, useAixClientDebuggerStore } from './memstore-aix-client-debugger';
+
+
+export function aixClientDebugger_init(contextInfo: AixClientDebugger.Context): AixFrameId {
+  return useAixClientDebuggerStore.getState().createFrame(contextInfo);
+}
+
+export function aixClientDebugger_setRequest(
+  frameId: AixFrameId,
+  request: { url: string, headers: string, body: string },
+): void {
+  useAixClientDebuggerStore.getState().setRequest(frameId, {
+    url: request.url,
+    headers: request.headers,
+    body: request.body,
+  });
+}
+
+export function aixClientDebugger_recordParticle(frameId: AixFrameId, particleContent: Record<string, any>, isAborted = false): void {
+  useAixClientDebuggerStore.getState().addParticle(frameId, {
+    timestamp: Date.now(),
+    content: particleContent,
+    ...(isAborted && { isAborted }),
+  });
+}
+
+export function aixClientDebugger_completeFrame(frameId: number): void {
+  useAixClientDebuggerStore.getState().completeFrame(frameId);
+}
