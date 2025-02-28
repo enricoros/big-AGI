@@ -149,3 +149,8 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
   }),
 
 }));
+
+
+export function aixClientDebuggerActions() {
+  return useAixClientDebuggerStore.getState() as AixClientDebuggerActions;
+}
