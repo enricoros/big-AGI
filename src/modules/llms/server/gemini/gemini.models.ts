@@ -327,48 +327,10 @@ const _knownGeminiModels: ({
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     description: 'LearnLM is an experimental task-specific model aligned with learning science principles.',
+    chatPrice: geminiExpPricingFree,
     // hidden: true,
     // _delete: true,
   },
-
-
-  // Generation 1.0
-
-  // Gemini 1.0 Pro Models (Deprecated)
-  {
-    id: 'models/gemini-1.0-pro-latest',
-    // symLink: 'models/gemini-1.0-pro-001',
-    chatPrice: gemini10ProPricing,
-    interfaces: [LLM_IF_OAI_Chat],
-    deprecated: '2025-02-15',
-    // _delete: true, // kept for reference, but doc states deprecation on 2025-02-15
-  },
-  {
-    id: 'models/gemini-1.0-pro-001',
-    labelOverride: 'Gemini 1.0 Pro', // remove the 'Tuning'
-    chatPrice: gemini10ProPricing,
-    interfaces: [LLM_IF_OAI_Chat],
-    benchmark: { cbaElo: 1131 },
-    deprecated: '2025-02-15',
-  },
-  {
-    id: 'models/gemini-1.0-pro',
-    symLink: 'models/gemini-1.0-pro-001',
-    chatPrice: gemini10ProPricing,
-    interfaces: [LLM_IF_OAI_Chat],
-    deprecated: '2025-02-15',
-    hidden: true,
-  },
-  {
-    id: 'models/gemini-pro',
-    symLink: 'models/gemini-1.0-pro',
-    chatPrice: gemini10ProPricing,
-    interfaces: [LLM_IF_OAI_Chat],
-    benchmark: { cbaElo: 1110 },
-    deprecated: '2025-02-15',
-    _delete: true, // confusing old model name
-  },
-
 
   // Gemini 1.0 Pro Vision Model
   {
@@ -384,6 +346,24 @@ const _knownGeminiModels: ({
     _delete: true, // confusing
   },
 ];
+
+
+// Add to your code where you process the API response
+export function geminiDevCheckForSuperfluosModels_DEV(apiModelIds: string[]): void {
+
+  if (DEV_DEBUG_GEMINI_MODELS) {
+
+    // editorial model ids
+    const expectedModelIds = _knownGeminiModels.map(model => model.id);
+
+    // find editorial models which aren't present in the API response anymore
+    const missingModels = expectedModelIds.filter(id => !apiModelIds.includes(id));
+    if (missingModels.length > 0)
+      console.warn(`Gemini: superfluous model definitions: [ ${missingModels.join(', ')} ]`);
+
+  }
+
+}
 
 
 export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model): boolean {
@@ -425,6 +405,7 @@ export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
   // sort by label descending
   return b.label.localeCompare(a.label);
 }
+
 
 export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models_List.Model): ModelDescriptionSchema | null {
   const { description, displayName, name: modelId, supportedGenerationMethods } = geminiModel;
