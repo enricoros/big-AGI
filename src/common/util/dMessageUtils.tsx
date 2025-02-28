@@ -231,7 +231,7 @@ export function useMessageAvatarLabel(
     const modelId = generator.aix?.mId ?? null;
     const vendorId = generator.aix?.vId ?? null;
     const VendorIcon = (vendorId && complexity !== 'minimal') ? findModelVendor(vendorId)?.Icon : null;
-    const metrics = generator.metrics ? _prettyMetrics(generator.metrics) : null;
+    const metrics = generator.metrics ? _prettyMetrics(generator.metrics, complexity !== 'minimal') : null;
     const stopReason = generator.tokenStopReason ? _prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
 
     // aix tooltip: more details
@@ -250,10 +250,13 @@ export function useMessageAvatarLabel(
   }, [complexity, created, generator, pendingIncomplete, updated]);
 }
 
-function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode {
+function _prettyMetrics(metrics: DMessageGenerator['metrics'], includeTimings: boolean): React.ReactNode {
   if (!metrics) return null;
+  const hasTimings = includeTimings && (metrics?.dtStart !== undefined || metrics?.vTOutInner !== undefined);
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
   return <Box sx={tooltipMetricsGridSx}>
+
+    {/* Tokens */}
     {metrics?.TIn !== undefined && <div>Tokens:</div>}
     {metrics?.TIn !== undefined && <div>
       {' '}<b>{metrics.TIn?.toLocaleString() || ''}</b> in
@@ -263,6 +266,18 @@ function _prettyMetrics(metrics: DMessageGenerator['metrics']): React.ReactNode 
       {metrics.TOutR !== undefined && <> (<b>{metrics.TOutR?.toLocaleString() || ''}</b> for reasoning)</>}
       {/*{metrics.TOutA !== undefined && <> (<b>{metrics.TOutA?.toLocaleString() || ''}</b> for audio)</>}*/}
     </div>}
+
+    {/* Timings */}
+    {hasTimings && <div>Speed:</div>}
+    {hasTimings && <div>
+      {!!metrics.vTOutInner && <><b>{(Math.round(metrics.vTOutInner * 10) / 10).toLocaleString() || ''}</b> tok/s</>}
+      {metrics?.dtStart && (<span style={{ opacity: 0.5 }}>
+        {metrics.vTOutInner !== undefined && ' · '}
+        <span>{(Math.round(metrics.dtStart / 100) / 10).toLocaleString() || ''}</span>s wait
+      </span>)}
+    </div>}
+
+    {/* Costs */}
     {metrics?.$c !== undefined && <div>Costs:</div>}
     {metrics?.$c !== undefined && <div>
       <b>{formatModelsCost(metrics.$c / 100)}</b>
