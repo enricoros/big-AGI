@@ -665,6 +665,7 @@ export function AppChat() {
 
             {isMultiPane && !isZenMode && (
               <PaneTitleOverlay
+                paneIdx={idx}
                 conversationId={_paneConversationId}
                 isFocused={_paneIsFocused}
               />
