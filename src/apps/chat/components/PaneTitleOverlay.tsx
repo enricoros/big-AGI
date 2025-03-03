@@ -41,7 +41,13 @@ const _styles = {
   toolButton: {
     '--IconButton-size': '1.5rem',
     backgroundColor: 'transparent',
+    opacity: 0.5,
+    transition: 'opacity 0.1s',
+    '&:hover': {
+      opacity: 1,
+    },
   } as const,
+  toolIcon: {} as const,
   toolIconLg: {
     fontSize: 'lg',
   } as const,
@@ -108,7 +114,7 @@ export function PaneTitleOverlay(props: {
       {/* Close Others*/}
       {/*<TooltipOutlined title='Close Other Tabs'>*/}
       {!editingTitle && <IconButton title='Close Other Tabs' size='sm' color={color} variant={variantP} onClick={handleCloseOthers} sx={_styles.toolButton}>
-        <OpenInFullIcon />
+        <OpenInFullIcon sx={_styles.toolIcon} />
       </IconButton>}
       {/*</TooltipOutlined>*/}
 
@@ -133,7 +139,7 @@ export function PaneTitleOverlay(props: {
         </Box>
       ) : !!props.conversationId && (
         <IconButton title='Edit Chat Title' size='sm' color={color} variant={variantP} onClick={handleTitleEditBegin} sx={_styles.toolButton}>
-          <EditRoundedIcon />
+          <EditRoundedIcon sx={_styles.toolIcon} />
         </IconButton>
       )}
 
