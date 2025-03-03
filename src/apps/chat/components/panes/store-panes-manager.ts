@@ -50,8 +50,9 @@ interface AppChatPanesActions {
   navigateHistoryInFocusedPane: (direction: 'back' | 'forward') => boolean;
   duplicateFocusedPane: (/*paneIndex: number*/) => void;
   insertEmptyAfterFocusedPane: (reuseEmpty: boolean) => void;
-  removeOtherPanes: () => void;
+  removeNonFocusedPanes: () => void;
   removePane: (paneIndex: number) => void;
+  removeOtherPanes: (keepPaneIndex: number) => void;
   setFocusedPaneIndex: (paneIndex: number) => void;
   _onConversationsChanged: (conversationIds: DConversationId[]) => void;
 
@@ -250,7 +251,7 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         };
       }),
 
-    removeOtherPanes: () =>
+    removeNonFocusedPanes: () =>
       _set(state => {
         const { chatPanes, chatPaneFocusIndex } = state;
         if (chatPanes.length < 2)
@@ -275,6 +276,21 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         return {
           chatPanes: newPanes,
           chatPaneFocusIndex: newPanes.length ? 0 : null,
+        };
+      }),
+
+    removeOtherPanes: (keepPaneIdx: number) =>
+      _set(state => {
+        const { chatPanes } = state;
+        if (keepPaneIdx < 0 || keepPaneIdx >= chatPanes.length || chatPanes.length <= 1 /* if only one pane, no need to do anything */)
+          return state;
+
+        const newPanes = [chatPanes[keepPaneIdx]];
+
+        // focus the only remaining pane
+        return {
+          chatPanes: newPanes,
+          chatPaneFocusIndex: 0,
         };
       }),
 
