@@ -11,6 +11,7 @@ try {
   // final fallback
   buildHash = '2-dev';
 }
+// The following are used by/available to Release.buildInfo(...)
 process.env.NEXT_PUBLIC_BUILD_HASH = (buildHash || '').slice(0, 10);
 process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + await readFile(new URL('./package.json', import.meta.url))).version;
 process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();

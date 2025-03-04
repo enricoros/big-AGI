@@ -79,11 +79,12 @@ export function OptionalPostHogAnalytics() {
     });
 
     // add deployment context - see `next.config.mjs`
+    const fBuild = Release.buildInfo('frontend');
     posthog.register({
       app_tenant: Release.TenantSlug,
-      app_build_hash: process.env.NEXT_PUBLIC_BUILD_HASH || 'unknown',
-      app_pkg_version: process.env.NEXT_PUBLIC_BUILD_PKGVER || 'unknown',
-      app_deployment_type: process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE || 'unknown',
+      app_build_hash: fBuild.gitSha || 'unknown',
+      app_pkg_version: fBuild.pkgVersion || 'unknown',
+      app_deployment_type: fBuild.deploymentType || 'unknown',
     });
 
     _isPostHogInitialized = true;
