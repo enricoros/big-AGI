@@ -27,7 +27,7 @@ buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
 
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
   ...buildType && {
@@ -68,6 +68,25 @@ let nextConfig = {
     }
 
     return config;
+  },
+
+  // Optional Analytics > PostHog
+  skipTrailingSlashRedirect: true, // required to support PostHog trailing slash API requests
+  async rewrites() {
+    return [
+      {
+        source: '/a/ph/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/a/ph/:path*',
+        destination: 'https://us.i.posthog.com/:path*',
+      },
+      {
+        source: '/a/ph/decide',
+        destination: 'https://us.i.posthog.com/decide',
+      },
+    ];
   },
 
   // Note: disabled to check whether the project becomes slower with this
