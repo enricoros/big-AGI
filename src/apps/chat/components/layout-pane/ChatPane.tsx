@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Option, Select, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
@@ -52,7 +52,7 @@ export function ChatPane(props: {
 }): React.ReactNode {
 
   // external state
-  const { canAddPane, isMultiPane, removeOtherPanes } = usePaneDuplicateOrClose();
+  const { canAddPane, isMultiPane } = usePaneDuplicateOrClose();
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
   const labsDevMode = useLabsDevMode();
 
@@ -75,10 +75,10 @@ export function ChatPane(props: {
 
   const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
     if (isMultiPane)
-      removeOtherPanes();
+      panesManagerActions().removeNonFocusedPanes();
     else
       handleIncreaseMultiPane(undefined);
-  }, [handleIncreaseMultiPane, isMultiPane, removeOtherPanes]);
+  }, [handleIncreaseMultiPane, isMultiPane]);
 
 
   // Actions
