@@ -2,13 +2,20 @@ import * as React from 'react';
 
 import { Box, IconButton, Sheet } from '@mui/joy';
 import ClearIcon from '@mui/icons-material/Clear';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useConversationTitle } from '~/common/stores/chat/hooks/useConversationTitle';
+
 import { panesManagerActions } from './panes/store-panes-manager';
+
+
+// configuration
+const ENABLE_DELETE = false;
 
 
 const _styles = {
@@ -58,6 +65,7 @@ export function PaneTitleOverlay(props: {
   paneIdx: number,
   conversationId: DConversationId | null,
   isFocused: boolean,
+  onConversationDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
 }) {
 
   // state
@@ -94,6 +102,17 @@ export function PaneTitleOverlay(props: {
   const handleTitleEditEnd = React.useCallback(() => {
     setEditingTitle(false);
   }, []);
+
+
+  // delete handlers
+
+  const { onConversationDelete } = props;
+
+  const handleDeleteClicked = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (props.conversationId)
+      onConversationDelete([props.conversationId], event.shiftKey);
+  }, [onConversationDelete, props.conversationId]);
 
 
   // don't render if not focused
@@ -141,6 +160,15 @@ export function PaneTitleOverlay(props: {
         <IconButton title='Edit Chat Title' size='sm' color={color} variant={variantP} onClick={handleTitleEditBegin} sx={_styles.toolButton}>
           <EditRoundedIcon sx={_styles.toolIcon} />
         </IconButton>
+      )}
+
+      {/* Delete This */}
+      {ENABLE_DELETE && hasTitle && !!props.conversationId && (
+        <TooltipOutlined title='Delete Chat (Shift+Click to bypass confirmation)'>
+          <IconButton size='sm' variant={variantP} onClick={handleDeleteClicked} sx={_styles.toolButton}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </TooltipOutlined>
       )}
 
       {/* Close This */}
