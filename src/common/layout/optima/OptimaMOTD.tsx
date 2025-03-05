@@ -4,11 +4,14 @@ import { Box, IconButton, Sheet, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { Release } from '~/common/app.release';
+import { frontendHashString } from '~/common/util/textUtils';
 import { themeZIndexPageBar } from '~/common/app.theme';
+import { uiSetDismissed, useUIIsDismissed } from '~/common/state/store-ui';
 
 
 // configuration
 const MOTD_COLOR = 'primary';
+const MOTD_PREFIX = 'motd-';
 
 
 // toggles the component
@@ -17,30 +20,34 @@ export const optimaHasMOTD = !!process.env.NEXT_PUBLIC_MOTD;
 
 /**
  * Message of the day. If set, displays a message on this deployment.
- * The message can be closed temporarily, but will display again at the next refresh.
+ * The message can be permanently dismissed.
  */
 export function OptimaMOTD() {
 
-  // state
-  const [dismissed, setDismissed] = React.useState(false);
-
-
   // expand special variables in the MOTD
-  const processedMotd = React.useMemo(() => {
+  const { message, hash } = React.useMemo(() => {
     const rawMOTD = process.env.NEXT_PUBLIC_MOTD;
-    if (!rawMOTD?.trim()) return null;
+    if (!rawMOTD?.trim()) return { message: null, hash: null };
 
     const buildInfo = Release.buildInfo('frontend');
-    return rawMOTD
+    const message = rawMOTD
       .replace(/{{app_build_hash}}/g, buildInfo.gitSha || '')
       .replace(/{{app_build_pkgver}}/g, buildInfo.pkgVersion || '')
       .replace(/{{app_build_time}}/g, new Date(buildInfo.timestamp || '').toLocaleDateString())
       .replace(/{{app_deployment_type}}/g, buildInfo.deploymentType || '');
+
+    return {
+      message,
+      hash: frontendHashString(message),
+    };
   }, []);
 
 
+  // external state
+  const dismissed = useUIIsDismissed(!hash ? null : MOTD_PREFIX + hash);
+
   // skip if no MOTD
-  if (!processedMotd || dismissed)
+  if (!message || dismissed === true)
     return null;
 
   return (
@@ -51,6 +58,7 @@ export function OptimaMOTD() {
       sx={{ zIndex: themeZIndexPageBar }}
     >
       <Typography
+        component='div'
         level='title-sm'
         variant='soft'
         color={MOTD_COLOR}
@@ -59,7 +67,7 @@ export function OptimaMOTD() {
             size='sm'
             variant='soft'
             color={MOTD_COLOR}
-            onClick={() => setDismissed(true)}
+            onClick={() => uiSetDismissed(MOTD_PREFIX + hash)}
             sx={{ ml: 'auto' }}
           >
             <CloseRoundedIcon />
@@ -75,7 +83,7 @@ export function OptimaMOTD() {
         }}
       >
         <Box sx={{ px: 1 }}>
-          {processedMotd}
+          {message}
         </Box>
       </Typography>
     </Sheet>
