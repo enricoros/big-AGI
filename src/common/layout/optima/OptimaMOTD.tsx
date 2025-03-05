@@ -82,7 +82,7 @@ export function OptimaMOTD() {
           justifyContent: 'space-between',
         }}
       >
-        <Box sx={{ px: 1 }}>
+        <Box sx={{ p: 1, lineHeight: 'xl' }}>
           {message}
         </Box>
       </Typography>
