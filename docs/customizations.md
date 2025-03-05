@@ -41,7 +41,7 @@ you can for instance set the build command to:
 mv vercel_PRODUCTION.json vercel.json; next build
 ```
 
-### Change the Personas
+### Change the Personas (v1.x only)
 
 Edit the `src/data.ts` file to customize personas. This file houses the default personas. You can add, remove, or modify these to meet your project's needs.
 
@@ -54,6 +54,21 @@ Adapt the UI to match your project's aesthetic, incorporate new features, or exc
 - [ ] Adjust `src/common/app.theme.ts` for theme changes: colors, spacing, button appearance, animations, etc
 - [ ] Modify `src/common/app.config.tsx` to alter the application's name
 - [ ] Update `src/common/app.nav.tsx` to revise the navigation bar
+
+### Add a Message of the Day
+
+You can display a temporary announcement banner at the top of the app using the `NEXT_PUBLIC_MOTD` environment variable.
+
+- Set this variable in your deployment environment
+- The message supports template variables:
+  - `{{app_build_hash}}`: Current git commit hash
+  - `{{app_build_pkgver}}`: Package version
+  - `{{app_build_time}}`: Build timestamp as date
+  - `{{app_deployment_type}}`: Deployment type (local, docker, vercel, etc.)
+- Users can dismiss the message (until next page refresh)
+- Use it for version announcements, maintenance notices, or feature highlights
+
+Example: `NEXT_PUBLIC_MOTD=🚀 New features available in {{app_build_pkgver}}! Try the improved Beam.`
 
 ## Testing & Deployment
 
