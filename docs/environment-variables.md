@@ -64,8 +64,10 @@ HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 
 
-# Frontend variables
+# Frontend variables 
+NEXT_PUBLIC_MOTD=
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
+NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_PLANTUML_SERVER_URL=
 ```
 
@@ -146,10 +148,12 @@ Enable the app to Talk, Draw, and Google things up.
 
 The value of these variables are passed to the frontend (Web UI) - make sure they do not contain secrets.
 
-| Variable                          | Description                                                                              |
-|:----------------------------------|:-----------------------------------------------------------------------------------------|
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md)) |
-| `NEXT_PUBLIC_PLANTUML_SERVER_URL` | The URL of the PlantUML server, used for rendering UML diagrams. (code in RederCode.tsx) |
+| Variable                          | Description                                                                                                                                                                                                                                     |
+|:----------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `NEXT_PUBLIC_MOTD`                | Message of the Day - displays a dismissible banner at the top of the app (see [customizations](customizations.md) for the template variables). Example: 🔔 Welcome to our deployment! Version {{app_build_pkgver}} built on {{app_build_time}}. |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | (optional) The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                             |
+| `NEXT_PUBLIC_POSTHOG_KEY`         | (optional) Key for PostHog analytics. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                                             |
+| `NEXT_PUBLIC_PLANTUML_SERVER_URL` | The URL of the PlantUML server, used for rendering UML diagrams. Allows using custom local servers.                                                                                                                                             |
 
 > Important: these variables must be set at build time, which is required by Next.js to pass them to the frontend.
 > This is in contrast to the backend variables, which can be set when starting the local server/container.
