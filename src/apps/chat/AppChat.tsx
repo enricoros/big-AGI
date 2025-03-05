@@ -668,6 +668,7 @@ export function AppChat() {
                 paneIdx={idx}
                 conversationId={_paneConversationId}
                 isFocused={_paneIsFocused}
+                onConversationDelete={handleDeleteConversations}
               />
             )}
 
