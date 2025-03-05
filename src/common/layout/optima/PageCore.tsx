@@ -8,6 +8,7 @@ import type { NavItemApp } from '~/common/app.nav';
 
 // import { MobileNav } from './MobileNav';
 import { OptimaBar } from '~/common/layout/optima/bar/OptimaBar';
+import { optimaHasMOTD, OptimaMOTD } from '~/common/layout/optima/OptimaMOTD';
 
 
 const pageCoreSx: SxProps = {
@@ -36,6 +37,9 @@ export const PageCore = (props: {
     component={props.component}
     sx={pageCoreSx}
   >
+
+    {/* Optional deployment MOTD */}
+    {optimaHasMOTD && <OptimaMOTD />}
 
     {/* Responsive page bar (pluggable App Center Items and App Menu) */}
     <OptimaBar
