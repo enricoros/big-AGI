@@ -14,6 +14,7 @@ export function InlineTextarea(props: {
   placeholder?: string,
   decolor?: boolean,
   invertedColors?: boolean,
+  centerText?: boolean,
   minRows?: number,
   onEdit: (text: string) => void,
   onCancel?: () => void,
@@ -57,6 +58,9 @@ export function InlineTextarea(props: {
       slotProps={{
         textarea: {
           enterKeyHint: enterIsNewline ? 'enter' : 'done',
+          ...(props.centerText && {
+            sx: { textAlign: 'center' },
+          }),
         },
       }}
       sx={props.sx}
