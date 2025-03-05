@@ -640,7 +640,7 @@ export function AppChat() {
                 borderStyle: 'solid',
                 borderColor: _paneIsFocused
                   ? ((willMulticast || !isMultiConversationId) ? theme.palette.primary.solidBg : theme.palette.primary.solidBg)
-                  : ((willMulticast || !isMultiConversationId) ? theme.palette.primary.softActiveBg : theme.palette.background.level1),
+                  : ((willMulticast || !isMultiConversationId) ? theme.palette.primary.softActiveBg : theme.palette.divider),
                 borderWidth: '2px',
                 // borderBottomWidth: '3px',
                 // DISABLED on 2024-03-13, it gets in the way quite a lot
