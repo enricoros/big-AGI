@@ -1,4 +1,5 @@
 import * as React from 'react';
+import TimeAgo from 'react-timeago';
 
 import { Box, IconButton, Sheet, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -25,20 +26,21 @@ export const optimaHasMOTD = !!process.env.NEXT_PUBLIC_MOTD;
 export function OptimaMOTD() {
 
   // expand special variables in the MOTD
-  const { message, hash } = React.useMemo(() => {
+  const { message, hash, buildTimestamp } = React.useMemo(() => {
     const rawMOTD = process.env.NEXT_PUBLIC_MOTD;
-    if (!rawMOTD?.trim()) return { message: null, hash: null };
+    if (!rawMOTD?.trim()) return { message: null, hash: null, buildTimestamp: null };
 
     const buildInfo = Release.buildInfo('frontend');
     const message = rawMOTD
       .replace(/{{app_build_hash}}/g, buildInfo.gitSha || '')
       .replace(/{{app_build_pkgver}}/g, buildInfo.pkgVersion || '')
-      .replace(/{{app_build_time}}/g, new Date(buildInfo.timestamp || '').toLocaleDateString())
+      // .replace(/{{app_build_time}}/g, new Date(buildInfo.timestamp || '').toLocaleDateString()) // we don't do this anymore, as we handle it with TimeAgo.
       .replace(/{{app_deployment_type}}/g, buildInfo.deploymentType || '');
 
     return {
       message,
       hash: frontendHashString(message),
+      buildTimestamp: buildInfo.timestamp || '',
     };
   }, []);
 
@@ -49,6 +51,18 @@ export function OptimaMOTD() {
   // skip if no MOTD
   if (!message || dismissed === true)
     return null;
+
+
+  /**
+   * Special render function to split '{{app_build_time}}' and insert a TimeAgo component.
+   */
+  function renderMessageWithTimeAgo(message: string) {
+    if (message.includes('{{app_build_time}}')) {
+      const parts = message.split('{{app_build_time}}');
+      return <>{parts[0]}{buildTimestamp && <TimeAgo date={buildTimestamp} />}{parts[1]}</>;
+    }
+    return message;
+  }
 
   return (
     <Sheet
@@ -83,7 +97,7 @@ export function OptimaMOTD() {
         }}
       >
         <Box sx={{ p: 1, lineHeight: 'xl' }}>
-          {message}
+          {renderMessageWithTimeAgo(message)}
         </Box>
       </Typography>
     </Sheet>
