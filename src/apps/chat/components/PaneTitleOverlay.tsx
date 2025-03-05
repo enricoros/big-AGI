@@ -8,7 +8,7 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { useConversationTitle } from '~/common/stores/chat/hooks/useConversationTitle';
-import { chatPanesActions } from './panes/store-panes-manager';
+import { panesManagerActions } from './panes/store-panes-manager';
 
 
 const _styles = {
@@ -72,11 +72,11 @@ export function PaneTitleOverlay(props: {
   // close tabs handlers
 
   const handleCloseThis = React.useCallback(() => {
-    chatPanesActions().removePane(props.paneIdx);
+    panesManagerActions().removePane(props.paneIdx);
   }, [props.paneIdx]);
 
   const handleCloseOthers = React.useCallback(() => {
-    chatPanesActions().removeOtherPanes(props.paneIdx);
+    panesManagerActions().removeOtherPanes(props.paneIdx);
   }, [props.paneIdx]);
 
 
