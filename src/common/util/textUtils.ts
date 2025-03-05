@@ -111,3 +111,17 @@ export function textIsSingleEmoji(text: string): boolean {
   const segments = Array.from(segmenter.segment(text));
   return segments.length === 1;
 }
+
+
+/**
+ * Simple hash generation for a string - used in the Frontend! For backend see `sdbmHash` in `backend.router.ts`.
+ */
+export function frontendHashString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return 'h-' + hash.toString(16);
+}
