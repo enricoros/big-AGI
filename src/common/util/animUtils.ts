@@ -180,6 +180,16 @@ export const animationBackgroundCameraFlash = keyframes`
     }`;*/
 
 
+// Opactiy
+
+export const animationOpacityFadeIn = keyframes`
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }`;
+
 // Transform
 
 export const animationEnterBelow = keyframes`
