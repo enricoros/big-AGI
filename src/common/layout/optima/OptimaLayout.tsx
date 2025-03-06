@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 import { PanelGroup } from 'react-resizable-panels';
 
+import { GlobalDragOverlay } from '~/common/components/dnd-dt/GlobalDragOverlay';
 import { Is } from '~/common/util/pwaUtils';
 import { checkVisibleNav, navItems } from '~/common/app.nav';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -95,7 +96,7 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     </PanelGroup>
 
     {/* Global Window Overlay */}
-    {/*<GlobalDragOverlay />*/}
+    {Is.Desktop && <GlobalDragOverlay />}
 
     {/* Overlay Modals */}
     <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
