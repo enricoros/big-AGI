@@ -89,6 +89,64 @@ export function extractUrlsFromText(text: string): string[] {
   return text.match(urlRegex) || [];
 }
 
+
+// added for future in-app routing
+// export namespace SearchParams {
+//
+//   /** Checks if a search parameter exists */
+//   export function hasParam(key: string): boolean {
+//     return _parse().has(key);
+//   }
+//
+//   /** Gets a search parameter by key */
+//   export function getParam(key: string, defaultValue = ''): string {
+//     const value = _parse().get(key);
+//     return value !== null ? value : defaultValue;
+//   }
+//
+//   /** Updates or adds a search parameter */
+//   export function updateParam(key: string, value: string): void {
+//     const searchParams = _parse();
+//     searchParams.set(key, value);
+//     _update(searchParams);
+//   }
+//
+//   /** Removes a search parameter */
+//   export function removeParam(key: string): void {
+//     const searchParams = _parse();
+//     searchParams.delete(key);
+//     _update(searchParams);
+//   }
+//
+//
+//   function _parse(): URLSearchParams {
+//     if (!isBrowser) return new URLSearchParams();
+//
+//     try {
+//       return new URL(window.location.href).searchParams;
+//     } catch (error) {
+//       console.error('[DEV] SearchParams: error parsing URL:', error);
+//       return new URLSearchParams();
+//     }
+//   }
+//
+//   /** Updates the URL with the provided search parameters */
+//   function _update(searchParams: URLSearchParams): void {
+//     if (!isBrowser) return;
+//
+//     try {
+//       window.history.replaceState(
+//         {},
+//         '',
+//         `${window.location.pathname}?${searchParams.toString()}`,
+//       );
+//     } catch (error) {
+//       console.error('[DEV] SearchParams: error updating URL:', error);
+//     }
+//   }
+// }
+
+
 /**
  * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance)
  */
