@@ -164,6 +164,7 @@ export const themeZIndexDesktopDrawer = 26;
 export const themeZIndexDesktopPanel = 27;
 export const themeZIndexDesktopNav = 30;
 export const themeZIndexChatBubble = 50;
+export const themeZIndexDragOverlay = 60;
 export const themeZIndexOverMobileDrawer = 1301;
 
 

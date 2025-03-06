@@ -94,6 +94,9 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
     </PanelGroup>
 
+    {/* Global Window Overlay */}
+    {/*<GlobalDragOverlay />*/}
+
     {/* Overlay Modals */}
     <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
 
