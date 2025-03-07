@@ -94,7 +94,7 @@ export function AppNews() {
           <Button
             variant='solid' color='primary' size='lg'
             component={Link} href={ROUTE_INDEX} noLinkStyle
-            endDecorator='✨'
+            // endDecorator='✨'
             sx={{
               boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
               minWidth: 180,

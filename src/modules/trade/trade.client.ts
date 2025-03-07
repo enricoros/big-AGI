@@ -198,7 +198,8 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     let text = messageFragmentsReduceText(message.fragments);
     switch (message.role) {
       case 'system':
-        senderName = '✨ System message';
+        // senderName = '✨ System message';
+        senderName = 'System message';
         text = `*${text}*`;
         break;
       case 'assistant':

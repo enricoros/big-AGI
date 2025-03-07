@@ -147,7 +147,7 @@ export const NewsItems: NewsItem[] = [
   {
     versionCode: '1.12',
     versionName: 'AGI Hotline',
-    versionMoji: '✨🗣️',
+    // versionMoji: '✨🗣️',
     versionDate: new Date('2024-01-26T12:30:00Z'),
     versionCoverImage: coverV112,
     items: [
