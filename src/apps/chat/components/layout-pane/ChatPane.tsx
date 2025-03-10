@@ -21,7 +21,7 @@ import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSpl
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
-import { useLabsDevMode } from '~/common/state/store-ux-labs';
+import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
 import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';

@@ -7,7 +7,7 @@ import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
-import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+import { getUXLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
 import type { RootStoreSlice } from '../store-beam_vanilla';

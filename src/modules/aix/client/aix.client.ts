@@ -7,7 +7,7 @@ import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatG
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
-import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/state/store-ux-labs';
+import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/stores/store-ux-labs';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 

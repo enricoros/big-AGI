@@ -45,8 +45,8 @@ import { useChatComposerOverlayStore } from '~/common/chat-overlay/store-perchat
 import { useComposerStartupText, useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
 import { useDebouncer } from '~/common/components/useDebouncer';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
-import { useUICounter, useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import type { ActileItem } from './actile/ActileProvider';
 import { providerAttachmentLabels } from './actile/providerAttachmentLabels';

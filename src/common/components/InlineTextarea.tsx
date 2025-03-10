@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Textarea } from '@mui/joy';
 
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 /**
  * TODO: P3: use Buttons when possible instead of the Blur action. Should add them to the bottom? See `ContentPartTextEdit` for a newer impl.

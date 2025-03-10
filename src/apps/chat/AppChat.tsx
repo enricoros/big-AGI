@@ -40,8 +40,8 @@ import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
-import { useUIComplexityIsMinimal } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { ChatPane } from './components/layout-pane/ChatPane';
 import { ChatBarAltBeam } from './components/layout-bar/ChatBarAltBeam';

@@ -8,7 +8,7 @@ import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/u
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { useUICounter } from '~/common/state/store-ui';
+import { useUICounter } from '~/common/stores/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
 import { BeamFusionGrid } from './gather/BeamFusionGrid';

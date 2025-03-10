@@ -15,7 +15,7 @@ import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx, StyledOverlayButton } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';

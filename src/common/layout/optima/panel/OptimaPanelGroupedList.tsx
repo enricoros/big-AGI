@@ -5,7 +5,7 @@ import { Box, Checkbox, MenuList } from '@mui/joy';
 
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { themeScalingMap } from '~/common/app.theme';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 
