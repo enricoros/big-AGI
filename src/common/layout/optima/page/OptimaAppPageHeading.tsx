@@ -34,6 +34,7 @@ export function OptimaAppPageHeading(props: {
   startDecorator?: React.ReactNode;
   endDecorator?: React.ReactNode;
   noDivider?: boolean;
+  noMarginBottom?: boolean;
   onClick?: (event: React.MouseEvent) => void;
 }) {
 
@@ -41,7 +42,7 @@ export function OptimaAppPageHeading(props: {
   const isMobile = useIsMobile();
 
   return (
-    <Box mb={2.25} onClick={props.onClick}>
+    <Box mb={props.noMarginBottom ? undefined : 2.25} onClick={props.onClick}>
       {!!props.title && <Typography level={isMobile ? 'h3' : 'h2'} startDecorator={props.startDecorator} endDecorator={props.endDecorator} sx={_styles.title}>
         {props.title}
       </Typography>}
