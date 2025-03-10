@@ -73,7 +73,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       // [YouTube] user is attaching a link to a video: try to download this as a transcript rather than a webpage
       const asYoutubeVideoId = extractYoutubeVideoIDFromURL(source.refUrl);
       if (asYoutubeVideoId) {
-        const videoData = await youTubeGetVideoData(asYoutubeVideoId).catch(() => null);
+        const videoData = await youTubeGetVideoData(asYoutubeVideoId).catch(console.warn);
         if (videoData?.videoTitle && videoData?.transcript) {
           edit({
             label: videoData.videoTitle,
