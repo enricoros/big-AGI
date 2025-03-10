@@ -8,7 +8,7 @@ import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { isPwa } from '~/common/util/pwaUtils';
 import { optimaOpenModels } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';

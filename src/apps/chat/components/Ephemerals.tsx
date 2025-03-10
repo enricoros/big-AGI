@@ -13,7 +13,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 import type { DEphemeral } from '~/common/chat-overlay/store-perchat-ephemerals_slice';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { adjustContentScaling, ContentScaling, lineHeightChatTextMd } from '~/common/app.theme';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 
 // State Pane

@@ -7,7 +7,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Release } from '~/common/app.release';
 import { frontendHashString } from '~/common/util/textUtils';
 import { themeZIndexPageBar } from '~/common/app.theme';
-import { uiSetDismissed, useUIIsDismissed } from '~/common/state/store-ui';
+import { uiSetDismissed, useUIIsDismissed } from '~/common/stores/store-ui';
 
 
 // configuration

@@ -45,8 +45,8 @@ import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvata
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { BlockOpContinue } from './BlockOpContinue';
 import { ContentFragments } from './fragments-content/ContentFragments';

@@ -4,7 +4,7 @@ import TimeAgo from 'react-timeago';
 import { Typography } from '@mui/joy';
 
 import { Link } from '~/common/components/Link';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { PersonaPromptCard } from './Creator';
 import { useSimplePersona } from '../store-app-personas';

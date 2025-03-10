@@ -13,7 +13,7 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { isLiveFileSupported } from '~/common/livefile/store-live-file';
 import { reverseLookupMdTitle, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { getCodeCollapseManager } from './codeCollapseManager';
 

@@ -9,7 +9,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getIsMobile } from '~/common/components/useMatchMedia';
-import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+import { getUXLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';

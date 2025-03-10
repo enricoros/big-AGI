@@ -15,7 +15,7 @@ import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/u
 import { animationTextShadowLimey } from '~/common/util/animUtils';
 import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 
 // configuration

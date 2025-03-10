@@ -5,7 +5,7 @@ import { Box, List, Sheet, styled } from '@mui/joy';
 
 import { NavItemApp } from '~/common/app.nav';
 import { themeScalingMap, themeZIndexDesktopPanel } from '~/common/app.theme';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';

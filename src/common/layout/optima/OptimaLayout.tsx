@@ -7,7 +7,7 @@ import { Is } from '~/common/util/pwaUtils';
 import { checkVisibleNav, navItems } from '~/common/app.nav';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { DesktopDrawer } from './drawer/DesktopDrawer';
 import { DesktopNav } from './nav/DesktopNav';

@@ -15,7 +15,7 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Is } from '~/common/util/pwaUtils';
 import { Link } from '~/common/components/Link';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 
 // uncomment for more settings

@@ -20,7 +20,7 @@ import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDo
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { showImageDataURLInNewTab } from '~/common/util/imageUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { AttachmentDraftId } from '~/common/attachment-drafts/attachment.types';
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';

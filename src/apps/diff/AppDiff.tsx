@@ -12,7 +12,7 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { countWords } from '~/common/util/textUtils';
 import { themeScalingMap } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { AppSmallContainer } from '../AppSmallContainer';
 

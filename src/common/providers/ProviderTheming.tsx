@@ -4,7 +4,7 @@ import { CacheProvider, EmotionCache } from '@emotion/react';
 import { CssBaseline, CssVarsProvider } from '@mui/joy';
 
 import { createAppTheme, createEmotionCache } from '~/common/app.theme';
-import { useUIComplexityIsMinimal } from '~/common/state/store-ui';
+import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
 
 
 // Client-side cache, shared for the whole session of the user in the browser.

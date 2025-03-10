@@ -23,7 +23,7 @@ import { navigateToPersonas } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { usePurposeStore } from './store-purposes';
 

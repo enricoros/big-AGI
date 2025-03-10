@@ -5,7 +5,7 @@ import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 
 // configuration

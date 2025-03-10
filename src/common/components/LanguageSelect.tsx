@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Option, Select } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 
 // languages are defined as a JSON file

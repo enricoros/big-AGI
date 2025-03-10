@@ -4,7 +4,7 @@ import { Box, MenuItem, Radio, Typography } from '@mui/joy';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { KeyStroke, platformAwareKeystrokes } from '~/common/components/KeyStroke';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { ChatExecuteMode } from './execute-mode.types';
 import { ExecuteModeItems } from './execute-mode.items';

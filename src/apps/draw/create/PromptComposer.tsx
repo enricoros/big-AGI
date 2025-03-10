@@ -17,7 +17,7 @@ import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imagineProm
 import { agiUuid } from '~/common/util/idUtils';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { lineHeightTextareaMd } from '~/common/app.theme';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ButtonPromptFromIdea } from './ButtonPromptFromIdea';
 import { useDrawIdeas } from './useDrawIdeas';

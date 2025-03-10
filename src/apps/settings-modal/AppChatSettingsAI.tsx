@@ -10,7 +10,7 @@ import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
-import { useLabsDevMode } from '~/common/state/store-ux-labs';
+import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import { useChatAutoAI } from '../chat/store-app-chat';

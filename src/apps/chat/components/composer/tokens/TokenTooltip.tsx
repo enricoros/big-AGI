@@ -6,7 +6,7 @@ import { Box, ColorPaletteProp, Tooltip } from '@mui/joy';
 import { DPricingChatGenerate, getLlmCostForTokens } from '~/common/stores/llms/llms.pricing';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { formatModelsCost } from '~/common/util/costUtils';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 
 export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: number, historyTokens?: number, responseMaxTokens?: number, chatPricing?: DPricingChatGenerate): {
