@@ -39,6 +39,17 @@ Storing data in your browser means:
 - Anyone using your browser can see your chats and keys
 - Running your own server needs technical skills
 
+### Local Device Identifier
+
+Big-AGI generates a _device identifier_ that combines timestamp and random components, stored only on your device. This identifier:
+
+- Is used only for the **optional sync functionality** between your devices (not yet ready)
+- Helps maintain data consistency when using Big-AGI across multiple devices
+- Remains completely local unless you explicitly enable sync
+- Is not used for tracking, analytics, or telemetry
+- Can be deleted anytime by clearing local storage
+- Is fully transparent - see the implementation in `src/common/stores/store-client.ts`
+
 ## How Data Flows
 
 AI interactions in Big-AGI, such as chats, AI titles, text to speech, browsing, flow through three components:
