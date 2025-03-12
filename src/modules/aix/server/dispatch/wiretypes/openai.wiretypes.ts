@@ -327,6 +327,25 @@ export namespace OpenAIWire_API_Chat_Completions {
         }),
       }),
     ]).optional(),
+    web_search_options: z.object({
+      /**
+       * High level guidance for the amount of context window space to use for the search. One of low, medium, or high. medium is the default.
+       */
+      search_context_size: z.enum(['low', 'medium', 'high']).optional(),
+      /**
+       * Approximate location parameters for the search.
+       */
+      user_location: z.object({
+        type: z.literal('approximate'),
+        approximate: z.object({
+          city: z.string().optional(),      // free text for the city of the user, e.g. 'San Francisco'
+          country: z.string().optional(),   // two-letter ISO country code of the user, e.g. 'US'
+          region: z.string().optional(),    // free text, e.g. 'California'
+          timezone: z.string().optional(),  // IANA timezone of the user, e.g. 'America/Los_Angeles'
+        }),
+      }).nullable().optional(),
+    }).optional(),
+
     seed: z.number().int().optional(),
     stop: z.array(z.string()).optional(), // Up to 4 sequences where the API will stop generating further tokens.
     user: z.string().optional(),

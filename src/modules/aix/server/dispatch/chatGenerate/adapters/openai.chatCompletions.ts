@@ -100,8 +100,22 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
   }
+  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
   if (model.vndOaiRestoreMarkdown) {
     _fixVndOaiRestoreMarkdown_Inline(payload);
+  }
+  // [OpenAI] Vendor-specific web search context and/or geolocation
+  if (model.vndOaiWebSearchContext || model.userGeolocation) {
+    payload.web_search_options = {};
+    if (model.vndOaiWebSearchContext)
+      payload.web_search_options.search_context_size = model.vndOaiWebSearchContext;
+    if (model.userGeolocation)
+      payload.web_search_options.user_location = {
+        type: 'approximate',
+        approximate: {
+          ...model.userGeolocation,
+        },
+      };
   }
 
   if (hotFixOpenAIOFamily)
