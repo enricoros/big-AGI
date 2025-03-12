@@ -134,7 +134,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1377 },
   },
 
-  // GPT-4o Search Preview
+  // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
     idPrefix: 'gpt-4o-search-preview',
     label: 'GPT-4o Search Preview 🌐',
@@ -242,7 +242,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true,
   },
 
-  // GPT-4o Search Preview
+  // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
   {
     idPrefix: 'gpt-4o-mini-search-preview',
     label: 'GPT-4o Mini Search Preview 🌐',
@@ -744,19 +744,24 @@ const _manualOrderingIdPrefixes = [
   // Reasoning models
   'o3-20',
   'o3-mini-',
+  'o3-',
   'o1-20',
   'o1-preview-',
   'o1-mini-',
+  'o1-',
   // GPT-4.5
   'gpt-4.5-20',
   'gpt-4.5-preview',
+  'gpt-4.5-',
   // Preferred models
+  'gpt-4o-20',
   'gpt-4o-search-20',
   'gpt-4o-search-preview',
-  'gpt-4o-20',
+  'gpt-4o-mini-20',
   'gpt-4o-mini-search-20',
   'gpt-4o-mini-search-preview',
-  'gpt-4o-mini-',
+  'gpt-4o-mini',
+  'gpt-4o-',
   // ChatGPT models
   'chatgpt-',
   // ...rest
