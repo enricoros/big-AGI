@@ -2,7 +2,7 @@ import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
-import { LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 
 // dev options
@@ -290,15 +290,7 @@ const _knownGeminiModels: ({
   },
 
 
-  // LearnLM Experimental Model
-  {
-    id: 'models/learnlm-1.5-pro-experimental',
-    isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: geminiExpPricingFree,
-    // hidden: true,
-    // _delete: true,
-  },
+  /// Generation 1.0
 
   // Gemini 1.0 Pro Vision Model
   {
@@ -313,6 +305,29 @@ const _knownGeminiModels: ({
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // Text and Images
     _delete: true, // confusing
   },
+
+
+  /// Experimental
+
+  // LearnLM Experimental Model
+  {
+    id: 'models/learnlm-1.5-pro-experimental',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
+    chatPrice: geminiExpPricingFree,
+    // hidden: true,
+    // _delete: true,
+  },
+
+  {
+    id: 'models/gemma-3-27b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_HOTFIX_Sys0ToUsr0 /* Developer instruction is not enabled for models/gemma-3-27b-it */ ],
+    // chatPrice: geminiExpPricingFree,
+    // hidden: true,
+    // _delete: true,
+  },
+
 ];
 
 
@@ -354,24 +369,35 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-1.5-flash-8b',
   'models/gemini-1.0-pro',
   'models/gemini-pro',
+  'models/gemma',
+  'models/learnlm',
 ] as const;
 
 export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+  // links to the bottom
+  const aIsLink = a.label.startsWith('🔗');
+  const bIsLink = b.label.startsWith('🔗');
+  if (aIsLink && !bIsLink) return 1;
+  if (!aIsLink && bIsLink) return -1;
+
   // hidden to the bottom, then names descending
   // if (a.hidden && !b.hidden) return 1;
   // if (!a.hidden && b.hidden) return -1;
+
   // models beginning with 'gemini-' to the top
-  const aGemini = a.label.startsWith('Gemini');
-  const bGemini = b.label.startsWith('Gemini');
-  if (aGemini && !bGemini) return -1;
-  if (!aGemini && bGemini) return 1;
+  // const aGemini = a.label.startsWith('Gemini');
+  // const bGemini = b.label.startsWith('Gemini');
+  // if (aGemini && !bGemini) return -1;
+  // if (!aGemini && bGemini) return 1;
+
   // sort by sortOrderIdPrefix
-  const aPrefix = _sortOderIdPrefix.find(p => a.id.startsWith(p));
-  const bPrefix = _sortOderIdPrefix.find(p => b.id.startsWith(p));
-  if (aPrefix && bPrefix) {
-    if (aPrefix < bPrefix) return 1;
-    if (aPrefix > bPrefix) return -1;
+  const aSortIdx = _sortOderIdPrefix.findIndex(p => a.id.startsWith(p));
+  const bSortIdx = _sortOderIdPrefix.findIndex(p => b.id.startsWith(p));
+  if (aSortIdx !== -1 && bSortIdx !== -1) {
+    if (aSortIdx < bSortIdx) return -1;
+    if (aSortIdx > bSortIdx) return 1;
   }
+
   // sort by label descending
   return b.label.localeCompare(a.label);
 }

@@ -547,7 +547,7 @@ export namespace GeminiWire_API_Models_List {
     // baseModelId: z.string(),    // [Gemini]: documented as required, but not present! The name of the base model, pass this to the generation request.
     version: z.string(),
     displayName: z.string(),    // Human readable
-    description: z.string(),
+    description: z.string().optional(),
     inputTokenLimit: z.number(),
     outputTokenLimit: z.number(),
     supportedGenerationMethods: z.array(z.union([Methods_enum, z.string()])), // relaxed with z.union to not break on expansion
