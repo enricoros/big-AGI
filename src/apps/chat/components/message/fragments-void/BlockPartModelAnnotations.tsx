@@ -15,29 +15,29 @@ import { urlExtractDomain, urlPrettyHref } from '~/common/util/urlUtils';
 
 
 // configuration
-const MAX_ICONS = 10;
+const MAX_ICONS = 6;
 const COLOR = 'neutral';
 
 
 const styles = {
 
   iconRowButton: {
-    minHeight: '2.5rem',
+    minHeight: '2.25rem',
     gap: 0.5,
     px: 1.5,
     border: 'none',
     transition: 'transform 0.14s ease',
-    '&:hover': { transform: 'translateY(-1px)' } as const,
+    // '&:hover': { transform: 'translateY(-1px)' } as const,
   } as const,
 
   citationsList: {
+    mt: 1,
+    p: 0, // remove the list default padding
     boxShadow: `inset 1px 1px 3px -3px var(--joy-palette-${COLOR}-solidBg)`,
     borderRadius: 'sm',
     border: '1px solid',
     borderColor: `${COLOR}.outlinedBorder`,
     backgroundColor: `rgb(var(--joy-palette-${COLOR}-lightChannel) / 10%)`,
-    mt: 1,
-    overflow: 'hidden',
   } as const,
 
   citationItem: {
@@ -55,7 +55,7 @@ const styles = {
   } as const,
 
   citationNumber: {
-    minWidth: 26,
+    minWidth: 22,
     textAlign: 'end',
     // color: 'text.tertiary',
     // fontWeight: 'lg',
@@ -69,8 +69,7 @@ const styles = {
   } as const,
 
   lineContent: {
-    display: 'flex',
-    flexDirection: 'column',
+    display: 'grid',
     overflow: 'hidden',
   } as const,
 
@@ -110,7 +109,7 @@ export function BlockPartModelAnnotations(props: {
       {/* Row of favicons */}
       <Button
         size='sm'
-        variant={expanded ? 'soft' : 'plain'}
+        variant={expanded ? 'plain' : 'plain'}
         color={COLOR}
         fullWidth
         aria-expanded={expanded}
@@ -129,7 +128,7 @@ export function BlockPartModelAnnotations(props: {
         ))}
 
         {/* +X symbol */}
-        {moreIcons >= 1 && '+' + moreIcons}
+        {(moreIcons >= 1 && !expanded) && '+' + moreIcons}
 
         {/* Expand/Collapse button */}
         <ExpandMoreIcon
@@ -162,13 +161,13 @@ export function BlockPartModelAnnotations(props: {
                   </Box>
 
                   <Box sx={styles.line}>
-                    {expanded && <AvatarDomainFavicon url={citation.url} size={32} iconRes={64} />}
+                    <AvatarDomainFavicon url={!expanded ? '' : citation.url} size={32} iconRes={64} />
                     <Box sx={styles.lineContent}>
                       <Box className='agi-ellipsize'>
                         {citation.title || domain}
                       </Box>
                       <Box sx={styles.lineLink} className='agi-ellipsize'>
-                        {urlPrettyHref(citation.url)}
+                        {urlPrettyHref(citation.url, true, true)}
                       </Box>
                     </Box>
                   </Box>

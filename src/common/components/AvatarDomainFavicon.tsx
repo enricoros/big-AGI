@@ -12,12 +12,12 @@ export function AvatarDomainFavicon(props: {
   noHover?: boolean;
   noShadow?: boolean;
 }) {
-  const { url, size = 16, iconRes = 32, noHover, noShadow } = props;
+  const { url, size = 16, iconRes = 32, noShadow } = props;
 
-  const domain = urlExtractDomain(url);
+  const domain = !url ? '' : urlExtractDomain(url);
 
-  // using Google's favicon service, with
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=${iconRes}`;
+  // using Google's favicon service
+  const faviconUrl = !domain?.length ? undefined : `https://www.google.com/s2/favicons?domain=${domain}&sz=${iconRes}`;
 
   return (
     <Avatar
@@ -42,7 +42,7 @@ export function AvatarDomainFavicon(props: {
       }}
       src={faviconUrl}
     >
-      {(domain || '?').charAt(0).toUpperCase()}
+      {(domain || '').charAt(0).toUpperCase()}
     </Avatar>
   );
 }

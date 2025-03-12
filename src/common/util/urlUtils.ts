@@ -41,10 +41,13 @@ export function urlExtractDomain(url: string): string {
 /**
  * Simplifies a URL to its origin and path (removes query and hash)
  */
-export function urlPrettyHref(href: string): string {
+export function urlPrettyHref(href: string, removeHttps: boolean, removeTrailingSlash: boolean): string {
   try {
     const url = new URL(href);
-    return decodeURIComponent(url.origin + url.pathname);
+    let cleaner = decodeURIComponent(url.origin + url.pathname);
+    if (removeHttps) cleaner = cleaner.replace(/^https?:\/\//, '');
+    if (removeTrailingSlash) cleaner = cleaner.replace(/\/$/, '');
+    return cleaner;
   } catch {
     return href;
   }
