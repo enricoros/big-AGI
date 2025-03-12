@@ -7,6 +7,7 @@ import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DVoidWebCitation } from '~/common/stores/chat/chat.fragments';
+import type { Immutable } from '~/common/types/immutable.types';
 import { AvatarDomainFavicon } from '~/common/components/AvatarDomainFavicon';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -84,7 +85,7 @@ const styles = {
 
 export function BlockPartModelAnnotations(props: {
   itemsName?: string;
-  annotations: DVoidWebCitation[];
+  annotations: Immutable<DVoidWebCitation[]>;
   contentScaling: ContentScaling;
 }) {
 
