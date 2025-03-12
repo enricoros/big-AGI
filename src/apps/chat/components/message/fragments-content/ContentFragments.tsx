@@ -112,7 +112,11 @@ export function ContentFragments(props: {
       if (isVoidFragment(fragment)) {
         const { fId, part } = fragment;
         switch (part.pt) {
-          case 'ma': {
+          case 'annotations':
+            // TODO: render
+            return null;
+
+          case 'ma':
             return (
               <BlockPartModelAux
                 key={fId}
@@ -126,9 +130,8 @@ export function ContentFragments(props: {
                 onFragmentReplace={props.onFragmentReplace}
               />
             );
-          }
 
-          case 'ph': {
+          case 'ph':
             return (
               <BlockPartPlaceholder
                 key={fId}
@@ -139,14 +142,17 @@ export function ContentFragments(props: {
                 showAsDataStreamViz={showDataStreamViz}
               />
             );
-          }
 
           case '_pt_sentinel':
+            return null;
+
           default:
+            // noinspection JSUnusedLocalSymbols
+            const _exhaustiveVoidFragmentCheck: never = part;
             return (
               <ScaledTextBlockRenderer
                 key={fId}
-                text={`Unknown Void Fragment: ${part.pt}`}
+                text={`Unknown Void Fragment: ${(part as any)?.pt}`}
                 contentScaling={props.contentScaling}
                 textRenderVariant='text'
                 showAsDanger
@@ -271,11 +277,15 @@ export function ContentFragments(props: {
           );
 
         case '_pt_sentinel':
+          return null;
+
         default:
+          // noinspection JSUnusedLocalSymbols
+          const _exhaustiveContentFragmentCheck: never = part;
           return (
             <ScaledTextBlockRenderer
               key={fId}
-              text={`Unknown Content Fragment: ${part.pt}`}
+              text={`Unknown Content Fragment: ${(part as any)?.pt}`}
               contentScaling={props.contentScaling}
               textRenderVariant='text'
               showAsDanger
