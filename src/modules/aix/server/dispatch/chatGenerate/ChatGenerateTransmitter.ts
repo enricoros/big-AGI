@@ -349,6 +349,20 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     });
   }
 
+  /** Creates a CE result part, flushing the previous one if needed, and completes it */
+  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string) {
+    this.endMessagePart();
+    this.transmissionQueue.push({
+      p: 'urlc',
+      title,
+      url,
+      ...(citationNumber !== undefined ? { num: citationNumber } : {}),
+      ...(startIndex !== undefined ? { from: startIndex } : {}),
+      ...(endIndex !== undefined ? { to: endIndex } : {}),
+      ...(textSnippet ? { text: textSnippet } : {}),
+    } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>);
+  }
+
   /** Communicates the model name to the client */
   setModelName(modelName: string) {
     this.transmissionQueue.push({
