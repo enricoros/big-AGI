@@ -99,6 +99,25 @@ export const DModelParameterRegistry = {
     initialValue: true,
   } as const,
 
+  llmVndOaiWebSearchContext: {
+    label: 'Search Context Size',
+    type: 'enum' as const,
+    description: 'Amount of context retrieved from the web',
+    values: ['low', 'medium', 'high'] as const,
+    requiredFallback: 'medium',
+  } as const,
+
+  llmVndOaiWebSearchGeolocation: {
+    // NOTE: for now this is a booolean to enable/disable using client-side geolocation, but
+    // in the future we could have it a more complex object. Note that the payload that comes
+    // back if of type AixAPI_Model.userGeolocation, which is the AIX Wire format for the
+    // location payload.
+    label: 'Add User Location (Geolocation API)',
+    type: 'boolean' as const,
+    description: 'Approximate location for search results',
+    initialValue: false,
+  } as const,
+
 } as const;
 
 
