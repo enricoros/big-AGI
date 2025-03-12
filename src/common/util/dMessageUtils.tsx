@@ -338,18 +338,28 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [OpenAI]
   if (model.endsWith('-o1')) return 'o1';
   if (model.includes('o1-')) {
-    if (model.includes('o1-mini')) return 'o1 Mini';
+    if (model.includes('o1-mini')) return 'o1 mini';
     if (model.includes('o1-preview')) return 'o1 Preview';
     return 'o1';
   }
   if (model.includes('o3-')) {
-    if (model.includes('o3-mini')) return 'o3 Mini';
+    if (model.includes('o3-mini')) return 'o3 mini';
     return 'o3';
   }
   if (model.includes('chatgpt-4o-latest')) return 'ChatGPT 4o';
   if (model.includes('gpt-4')) {
-    if (model.includes('gpt-4o-mini')) return 'GPT-4o mini';
-    if (model.includes('gpt-4o')) return 'GPT-4o';
+    if (model.includes('gpt-4o-mini')) {
+      if (model.includes('gpt-4o-mini-audio')) return 'GPT-4o mini Audio';
+      if (model.includes('gpt-4o-mini-realtime')) return 'GPT-4o mini Realtime';
+      if (model.includes('gpt-4o-mini-search')) return 'GPT-4o mini Search';
+      return 'GPT-4o mini';
+    }
+    if (model.includes('gpt-4o')) {
+      if (model.includes('gpt-4o-audio')) return 'GPT-4o Audio';
+      if (model.includes('gpt-4o-realtime')) return 'GPT-4o Realtime';
+      if (model.includes('gpt-4o-search')) return 'GPT-4o Search';
+      return 'GPT-4o';
+    }
     if (model.includes('gpt-4.5')) return 'GPT-4.5';
     if (model.includes('gpt-4-0125-preview')
       || model.includes('gpt-4-1106-preview')
@@ -404,6 +414,11 @@ export function prettyShortChatModelName(model: string | undefined): string {
   // [Ollama]
   if (model.includes(':'))
     return model.replace(':latest', '').replaceAll(':', ' ');
+  // [Perplexity]
+  if (model.includes('sonar-')) {
+    // capitalize each component of the name, e.g. 'sonar-pro' -> 'Sonar Pro'
+    return model.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  }
   // [xAI]
   if (model.includes('grok-')) {
     if (model.includes('grok-3')) return 'Grok 3';
