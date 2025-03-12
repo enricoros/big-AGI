@@ -1,5 +1,5 @@
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
@@ -20,6 +20,8 @@ export class ContentReassembler {
 
   private currentTextFragmentIndex: number | null = null;
   private readonly debuggerFrameId: AixFrameId | null = null;
+
+  // private pendingAnnotations: DVoidWebCitation[] = []; // we implemented this as a single fragment per message instead
 
   constructor(readonly accumulator: AixChatGenerateContent_LL, enableDebugContext?: AixClientDebugger.Context) {
 
@@ -66,6 +68,9 @@ export class ContentReassembler {
             break;
           case 'cer':
             this.onAddCodeExecutionResponse(op);
+            break;
+          case 'urlc':
+            this.onAddUrlCitation(op);
             break;
           default:
             const _exhaustiveCheck: never = op;
@@ -238,6 +243,42 @@ export class ContentReassembler {
   private onAddCodeExecutionResponse(cer: Extract<AixWire_Particles.PartParticleOp, { p: 'cer' }>): void {
     this.accumulator.fragments.push(create_CodeExecutionResponse_ContentFragment(cer.id, cer.error, cer.result, cer.executor, cer.environment));
     this.currentTextFragmentIndex = null;
+  }
+
+  private onAddUrlCitation(urlc: Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>): void {
+
+    const { title, url, num: refNumber, from: startIndex, to: endIndex, text: textSnippet } = urlc;
+
+    // reuse existing annotations - single fragment per message
+    const existingFragment = this.accumulator.fragments.find(isVoidAnnotationsFragment);
+    if (existingFragment) {
+
+      // coalesce ranges if there are citations at the same URL
+      const sameUrlCitation = existingFragment.part.annotations.find(({ type, url: existingUrl }) => type === 'citation' && url === existingUrl);
+      if (!sameUrlCitation) {
+        existingFragment.part.annotations.push(
+          createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet),
+        );
+      } else {
+        if (startIndex !== undefined && endIndex !== undefined) {
+          sameUrlCitation.ranges.push({
+            startIndex,
+            endIndex,
+            ...(textSnippet ? { textSnippet } : {}),
+          });
+        }
+      }
+
+    } else {
+
+      // create the *only* annotations fragment in the message
+      const newCitation = createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet);
+      this.accumulator.fragments.push(createAnnotationsVoidFragment([newCitation]));
+
+    }
+
+    // Important: Don't reset currentTextFragmentIndex to allow text to continue
+    // This ensures we don't interrupt the text flow
   }
 
 
