@@ -50,6 +50,8 @@ export interface IParticleTransmitter {
   /** Creates a CE result part, flushing the previous one if needed, and completes it */
   addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: 'upstream'): void;
 
+  /** Adds a URL citation part */
+  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string): void;
 
   // Non-parts data //
 
