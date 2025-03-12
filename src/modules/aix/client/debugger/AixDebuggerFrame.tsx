@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Box, Card, Chip, Typography } from '@mui/joy';
 
+import { ChipToggleButton } from '~/common/components/ChipToggleButton';
+
 import type { AixClientDebugger } from './memstore-aix-client-debugger';
 
 
@@ -48,6 +50,13 @@ export function AixDebuggerFrame(props: {
   frame: AixClientDebugger.Frame;
 }) {
 
+  // state
+  const [showParticles, setShowParticles] = React.useState(false); // hide by default (heavy)
+
+  const handleToggleShowParticles = React.useCallback(() => {
+    setShowParticles(on => !on);
+  }, []);
+
   const { frame } = props;
 
   return (
@@ -90,11 +99,18 @@ export function AixDebuggerFrame(props: {
       </Card>
 
       {/* Particles List */}
-      <Typography level='title-md' mb={-2}>
-        Particles {frame.particles.length > 0 && `(${frame.particles.length})`}
-        {!frame.isComplete && ' • Streaming...'}
-      </Typography>
-      <Card variant='soft' sx={_styles.requestCard}>
+      <Box mb={showParticles ? -2 : undefined} sx={_styles.particleNorminal}>
+        <Typography level='title-md'>
+          Particles {frame.particles.length > 0 && `(${frame.particles.length})`}
+          {!frame.isComplete && ' • Streaming...'}
+        </Typography>
+        <ChipToggleButton
+          text='show particles'
+          active={showParticles}
+          onClick={handleToggleShowParticles}
+        />
+      </Box>
+      {showParticles && <Card variant='soft' sx={_styles.requestCard}>
 
         {/* Zero state */}
         {!frame.particles.length && (
@@ -128,7 +144,7 @@ export function AixDebuggerFrame(props: {
           );
         })}
 
-      </Card>
+      </Card>}
     </Box>
   );
 }
