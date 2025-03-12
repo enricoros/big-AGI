@@ -155,7 +155,7 @@ type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 
 type DVoidModelAnnotationsPart = {
   pt: 'annotations',
-  annotations: DVoidWebCitation[],
+  annotations: readonly DVoidWebCitation[],
 };
 
 export type DVoidWebCitation = {
@@ -163,7 +163,7 @@ export type DVoidWebCitation = {
   url: string,
   title: string,
   refNumber?: number,
-  ranges: { startIndex: number, endIndex: number, textSnippet?: string }[],
+  ranges: readonly { startIndex: number, endIndex: number, textSnippet?: string }[],
 };
 
 

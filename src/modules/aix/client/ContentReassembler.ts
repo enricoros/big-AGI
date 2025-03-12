@@ -256,16 +256,16 @@ export class ContentReassembler {
       // coalesce ranges if there are citations at the same URL
       const sameUrlCitation = existingFragment.part.annotations.find(({ type, url: existingUrl }) => type === 'citation' && url === existingUrl);
       if (!sameUrlCitation) {
-        existingFragment.part.annotations.push(
+        existingFragment.part.annotations = [
+          ...existingFragment.part.annotations,
           createDVoidWebCitation(url, title, refNumber, startIndex, endIndex, textSnippet),
-        );
+        ];
       } else {
         if (startIndex !== undefined && endIndex !== undefined) {
-          sameUrlCitation.ranges.push({
-            startIndex,
-            endIndex,
-            ...(textSnippet ? { textSnippet } : {}),
-          });
+          sameUrlCitation.ranges = [
+            ...sameUrlCitation.ranges,
+            { startIndex, endIndex, ...(textSnippet ? { textSnippet } : {}) },
+          ];
         }
       }
 
