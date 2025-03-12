@@ -78,6 +78,8 @@ const ModelParameterSpec_schema = z.object({
     'llmVndGeminiShowThoughts',
     'llmVndOaiReasoningEffort',
     'llmVndOaiRestoreMarkdown',
+    'llmVndOaiWebSearchContext',
+    'llmVndOaiWebSearchGeolocation',
   ]),
   required: z.boolean().optional(),
   hidden: z.boolean().optional(),
