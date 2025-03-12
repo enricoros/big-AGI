@@ -76,7 +76,7 @@ export type DModelInterfaceV1 =
 // FIXME: keep this in sync with the server side on modules/llms/server/llm.server.types.ts
 export const LLM_IF_OAI_Chat: DModelInterfaceV1 = 'oai-chat';
 export const LLM_IF_OAI_Fn: DModelInterfaceV1 = 'oai-chat-fn';
-export const LLM_IF_OAI_Json: DModelInterfaceV1 = 'oai-chat-json';
+export const LLM_IF_OAI_Json: DModelInterfaceV1 = 'oai-chat-json'; // for Structured Outputs (or JSON mode at worst)
 // export const LLM_IF_OAI_JsonSchema: ... future?
 export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
 export const LLM_IF_OAI_Reasoning: DModelInterfaceV1 = 'oai-chat-reasoning';
