@@ -27,7 +27,11 @@ const editLayoutSx: SxProps = {
 
 const startLayoutSx: SxProps = {
   ...editLayoutSx,
-  justifyContent: 'flex-start',
+
+  // NOTE: we used to have 'flex-start' here, but it was causing the Annotation fragment to not be able to
+  // stretch to the full with of this 'void fragments' container.
+  // So now we don't have 'flex-start' anymore, and we may expect issues with other Fragment kinds?
+  // justifyContent: 'flex-start',
 };
 
 const endLayoutSx: SxProps = {
