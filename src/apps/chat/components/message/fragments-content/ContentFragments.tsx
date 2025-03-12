@@ -13,6 +13,7 @@ import { BlockEdit_TextFragment } from './BlockEdit_TextFragment';
 import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
 import { BlockPartImageRef } from './BlockPartImageRef';
+import { BlockPartModelAnnotations } from './BlockPartModelAnnotations';
 import { BlockPartModelAux } from './BlockPartModelAux';
 import { BlockPartPlaceholder } from './BlockPartPlaceholder';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
@@ -113,8 +114,13 @@ export function ContentFragments(props: {
         const { fId, part } = fragment;
         switch (part.pt) {
           case 'annotations':
-            // TODO: render
-            return null;
+            return (
+              <BlockPartModelAnnotations
+                key={fId}
+                annotations={part.annotations}
+                contentScaling={props.contentScaling}
+              />
+            );
 
           case 'ma':
             return (
