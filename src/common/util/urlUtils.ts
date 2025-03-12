@@ -28,6 +28,30 @@ export function getOriginUrl(): string {
 
 
 /**
+ * Returns the domain of a website
+ * */
+export function urlExtractDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Simplifies a URL to its origin and path (removes query and hash)
+ */
+export function urlPrettyHref(href: string): string {
+  try {
+    const url = new URL(href);
+    return decodeURIComponent(url.origin + url.pathname);
+  } catch {
+    return href;
+  }
+}
+
+
+/**
  * If the string is a valid URL, return it. Otherwise, return null.
  */
 export function asValidURL(textString: string | null, relaxProtocol: boolean = false /*, strictMode: boolean = false*/): string | null {
