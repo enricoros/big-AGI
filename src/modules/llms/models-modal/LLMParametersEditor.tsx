@@ -9,6 +9,7 @@ import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { InlineError } from '~/common/components/InlineError';
+import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
 
 const _UNSPECIFIED = '_UNSPECIFIED' as const;
@@ -16,6 +17,12 @@ const _reasoningEffortOptions = [
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,
   { value: 'low', label: 'Low', description: 'Quick, concise responses' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
+] as const;
+const _webSearchContextOptions = [
+  { value: 'high', label: 'High', description: 'Largest, highest cost, slower' } as const,
+  { value: 'medium', label: 'Medium', description: 'Balanced context, cost, and speed' } as const,
+  { value: 'low', label: 'Low', description: 'Smallest, cheapest, fastest' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Default value (unset)' } as const,
 ] as const;
 
@@ -49,6 +56,8 @@ export function LLMParametersEditor(props: {
   const llmVndGeminiShowThoughts = allParameters.llmVndGeminiShowThoughts;
   const llmVndOaiReasoningEffort = allParameters.llmVndOaiReasoningEffort;
   const llmVndOaiRestoreMarkdown = !!allParameters.llmVndOaiRestoreMarkdown;
+  const llmVndOaiWebSearchContext = allParameters.llmVndOaiWebSearchContext;
+  const llmVndOaiWebSearchGeolocation = allParameters.llmVndOaiWebSearchGeolocation;
   const tempAboveOne = llmTemperature !== null && llmTemperature > 1;
 
   // more state (here because the initial state depends on props)
@@ -75,6 +84,8 @@ export function LLMParametersEditor(props: {
   const paramSpecGeminiShowThoughts = parameterSpecs?.find(p => p.paramId === 'llmVndGeminiShowThoughts') as DModelParameterSpec<'llmVndGeminiShowThoughts'> | undefined;
   const paramSpecReasoningEffort = parameterSpecs?.find(p => p.paramId === 'llmVndOaiReasoningEffort') as DModelParameterSpec<'llmVndOaiReasoningEffort'> | undefined;
   const paramSpecRestoreMarkdown = parameterSpecs?.find(p => p.paramId === 'llmVndOaiRestoreMarkdown') as DModelParameterSpec<'llmVndOaiRestoreMarkdown'> | undefined;
+  const paramSpecWebSearchContext = parameterSpecs?.find(p => p.paramId === 'llmVndOaiWebSearchContext') as DModelParameterSpec<'llmVndOaiWebSearchContext'> | undefined;
+  const paramSpecWebSearchGeolocation = parameterSpecs?.find(p => p.paramId === 'llmVndOaiWebSearchGeolocation') as DModelParameterSpec<'llmVndOaiWebSearchGeolocation'> | undefined;
 
   const hideTemperature = !!paramSpecAntThinkingBudget;
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
@@ -180,6 +191,40 @@ export function LLMParametersEditor(props: {
             onRemoveParameter('llmVndOaiRestoreMarkdown');
           else
             onChangeParameter({ llmVndOaiRestoreMarkdown: true });
+        }}
+      />
+    )}
+
+    {paramSpecWebSearchContext && (
+      <FormSelectControl
+        title='Search Context Size'
+        tooltip='Controls how much context is retrieved from the web'
+        value={llmVndOaiWebSearchContext ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value)
+            onRemoveParameter('llmVndOaiWebSearchContext');
+          else
+            onChangeParameter({ llmVndOaiWebSearchContext: value });
+        }}
+        options={_webSearchContextOptions}
+      />
+    )}
+
+    {paramSpecWebSearchGeolocation && (
+      <FormSwitchControl
+        title='Add User Location'
+        description='Use approximate location for better search results'
+        tooltip='When enabled, uses browser geolocation API to provide approximate location data to improve search results relevance'
+        checked={!!llmVndOaiWebSearchGeolocation}
+        onChange={checked => {
+          if (!checked)
+            onRemoveParameter('llmVndOaiWebSearchGeolocation');
+          else {
+            webGeolocationRequest().then((locationOrNull) => {
+              if (locationOrNull)
+                onChangeParameter({ llmVndOaiWebSearchGeolocation: true });
+            });
+          }
         }}
       />
     )}

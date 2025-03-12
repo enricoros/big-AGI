@@ -10,6 +10,7 @@ import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsDevMode, getLabsDevNoStreaming } from '~/common/stores/store-ux-labs';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
+import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request } from '../server/api/aix.wiretypes';
@@ -43,7 +44,9 @@ export function aixCreateModelFromLLMOptions(
   // destructure input with the overrides
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP,
-    llmVndAntThinkingBudget, llmVndGeminiShowThoughts, llmVndOaiReasoningEffort, llmVndOaiRestoreMarkdown,
+    llmVndAntThinkingBudget,
+    llmVndGeminiShowThoughts,
+    llmVndOaiReasoningEffort, llmVndOaiRestoreMarkdown, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation,
   } = {
     ...llmOptions,
     ...llmOptionsOverride,
@@ -60,6 +63,21 @@ export function aixCreateModelFromLLMOptions(
   // Client-side late stage model HotFixes
   const hotfixOmitTemperature = llmInterfaces.includes(LLM_IF_HOTFIX_NoTemperature);
 
+  // User Geolocation
+  let userGeolocation: AixAPI_Model['userGeolocation'] | undefined;
+  if (llmVndOaiWebSearchGeolocation) {
+    const webGeolocation = webGeolocationCached();
+    if (webGeolocation) {
+      userGeolocation = {
+        ...(webGeolocation.city ? { city: webGeolocation.city } : {}),
+        ...(webGeolocation.country ? { country: webGeolocation.country } : {}),
+        ...(webGeolocation.region ? { region: webGeolocation.region } : {}),
+        timezone: webGeolocation.timezone,
+      };
+    } else
+      console.log(`[DEV] AIX: Geolocation is requested for model ${debugLlmId}, but it's not available.`);
+  }
+
   return {
     id: llmRef,
     ...(hotfixOmitTemperature ? { temperature: null } : llmTemperature !== undefined ? { temperature: llmTemperature } : {}),
@@ -69,6 +87,8 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndGeminiShowThoughts ? { vndGeminiShowThoughts: llmVndGeminiShowThoughts } : {}),
     ...(llmVndOaiReasoningEffort ? { vndOaiReasoningEffort: llmVndOaiReasoningEffort } : {}),
     ...(llmVndOaiRestoreMarkdown ? { vndOaiRestoreMarkdown: llmVndOaiRestoreMarkdown } : {}),
+    ...(llmVndOaiWebSearchContext ? { vndOaiWebSearchContext: llmVndOaiWebSearchContext } : {}),
+    ...(userGeolocation ? { userGeolocation } : {}),
   };
 }
 
