@@ -35,6 +35,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
   let hasBegun = false;
   let hasWarned = false;
   let timeToFirstEvent: number | undefined;
+  let progressiveCitationNumber = 1;
   // NOTE: could compute rate (tok/s) from the first textful event to the last (to ignore the prefill time)
 
   // Supporting structure to accumulate the assistant message
@@ -195,6 +196,22 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
       } // .choices.tool_calls[]
 
+      // [OpenAI, 2025-03-11] delta: Annotations[].url_citation
+      if (delta.annotations !== undefined) {
+
+        if (Array.isArray(delta.annotations)) {
+          for (const { type: annotationType, url_citation: urlCitation } of delta.annotations) {
+            if (annotationType !== 'url_citation')
+              throw new Error(`unexpected annotation type: ${annotationType}`);
+            pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined);
+          }
+        } else {
+          // we don't abort for this issue - for our users
+          console.log('AIX: OpenAI-dispatch: unexpected annotations:', delta.annotations);
+        }
+
+      }
+
       // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
       if (finish_reason) {
         const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
@@ -216,6 +233,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
 export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
+  let progressiveCitationNumber = 1;
 
   return function(pt: IParticleTransmitter, eventData: string) {
 
@@ -284,6 +302,22 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
       if (tokenStopReason !== null)
         pt.setTokenStopReason(tokenStopReason);
+
+      // [OpenAI, 2025-03-11] message: Annotations[].url_citation
+      if (message.annotations !== undefined) {
+
+        if (Array.isArray(message.annotations)) {
+          for (const { type: annotationType, url_citation: urlCitation } of message.annotations) {
+            if (annotationType !== 'url_citation')
+              throw new Error(`unexpected annotation type: ${annotationType}`);
+            pt.appendUrlCitation(urlCitation.title, urlCitation.url, undefined, urlCitation.start_index, urlCitation.end_index, undefined);
+          }
+        } else {
+          // we don't abort for this issue
+          console.log('AIX: OpenAI-dispatch-NS unexpected annotations:', message.annotations);
+        }
+
+      }
 
     } // .choices[]
 

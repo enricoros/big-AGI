@@ -89,6 +89,18 @@ export namespace OpenAIWire_ContentParts {
     PredictedFunctionCall_schema,
   ]);
 
+  /// Annotation - Output - maybe not even content parts
+
+  export const OpenAI_AnnotationObject_schema = z.object({
+    type: z.literal('url_citation'),
+    url_citation: z.object({
+      start_index: z.number().optional(),
+      end_index: z.number().optional(),
+      title: z.string(),
+      url: z.string(),
+    }),
+  });
+
 }
 
 export namespace OpenAIWire_Messages {
@@ -116,7 +128,7 @@ export namespace OpenAIWire_Messages {
     // name: _optionalParticipantName,
   });
 
-  const AssistantMessage_schema = z.object({
+  export const AssistantMessage_schema = z.object({
     role: z.literal('assistant'),
     /**
      * The contents of the assistant message. Required unless tool_calls or function_call is specified.
@@ -144,27 +156,9 @@ export namespace OpenAIWire_Messages {
     audio: z.object({
       id: z.string(),
     }).nullable().optional(),
-    // name: _optionalParticipantName,
-  });
 
-  export const AssistantMessage_NS_schema = AssistantMessage_schema.extend({
-    //
-    // IMPORTANT - this message *extends* the AssistantMessage_schema, to inherit all fields while performing any other change
-    //
-
-    // .optional: when parsing a non-streaming message with just a FC, the content can be missing
-    content: z.string().nullable().optional(),
-
-    /**
-     * [OpenAI, 2024-10-17] Audio output (non-streaming only)
-     * If the audio output modality is requested, this object contains data about the audio response from the model
-     */
-    audio: z.object({
-      id: z.string(),
-      data: z.string(), // Base64 encoded audio data
-      expires_at: z.number(), // Unix timestamp
-      transcript: z.string().optional(),
-    }).nullable().optional(),
+    // function_call: // ignored, as it's deprecated
+    // name: _optionalParticipantName, // omitted by choice: generally unsupported
   });
 
   const ToolMessage_schema = z.object({
@@ -411,12 +405,46 @@ export namespace OpenAIWire_API_Chat_Completions {
     prompt_cache_miss_tokens: z.number().optional(),
   }).nullable();
 
+  /**
+   * NOTE: this is effectively the OUTPUT message (from the Chat Completion output object).
+   * - 2025-03-11: the docs show that 'role' is not mandated to be 'assistant' anymore and could be different
+   */
+  const ChoiceMessage_NS_schema = OpenAIWire_Messages.AssistantMessage_schema.extend({
+    //
+    // IMPORTANT - this message *extends* the AssistantMessage_schema, to inherit all fields while performing any other change
+    //
+
+    // .string, instead of .assistant -- but we keep it strict for now, for parser correctness
+    // role: z.string(),
+
+    // .optional: when parsing a non-streaming message with just a FC, the content can be missing
+    content: z.string().nullable().optional(),
+
+    /**
+     * [OpenAI, 2025-03-11] Annotations
+     * This is a full assistant message, which is parsed by the non-streaming parser.
+     */
+    annotations: z.array(OpenAIWire_ContentParts.OpenAI_AnnotationObject_schema).nullable().optional(),
+
+    /**
+     * [OpenAI, 2024-10-17] Audio output (non-streaming only)
+     * If the audio output modality is requested, this object contains data about the audio response from the model
+     */
+    audio: z.object({
+      id: z.string(),
+      data: z.string(), // Base64 encoded audio data
+      expires_at: z.number(), // Unix timestamp
+      transcript: z.string().optional(),
+    }).nullable().optional(),
+
+  });
+
   const Choice_NS_schema = z.object({
     index: z.number(),
 
     // NOTE: the OpenAI api does not force role: 'assistant', it's only induced
     // We recycle the assistant message response here, with either content or tool_calls
-    message: OpenAIWire_Messages.AssistantMessage_NS_schema,
+    message: ChoiceMessage_NS_schema,
 
     finish_reason: z.union([FinishReason_Enum, z.string()])
       .nullable(),
@@ -507,6 +535,11 @@ export namespace OpenAIWire_API_Chat_Completions {
     tool_calls: z.array(ChunkDeltaToolCalls_schema).optional()
       .nullable(), // [TogetherAI] added .nullable(), see https://github.com/togethercomputer/together-python/issues/160
     refusal: z.string().nullable().optional(), // [OpenAI, 2024-10-01] refusal message
+    /**
+     * [OpenAI, 2025-03-11] Annotations
+     * not documented yet in the API guide; shall improve this once defined
+     */
+    annotations: z.array(OpenAIWire_ContentParts.OpenAI_AnnotationObject_schema).optional(),
   });
 
   const ChunkChoice_schema = z.object({
