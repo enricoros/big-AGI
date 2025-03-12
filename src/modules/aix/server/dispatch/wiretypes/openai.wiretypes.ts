@@ -473,6 +473,9 @@ export namespace OpenAIWire_API_Chat_Completions {
     // undocumented messages that are not part of the official schema, but can be found when the server sends and error
     error: z.any().optional(),
     warning: z.unknown().optional(),
+
+    // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
+    citations: z.array(z.any()).optional(),
   });
 
   /// Streaming Response
@@ -597,6 +600,9 @@ export namespace OpenAIWire_API_Chat_Completions {
       }).optional(),
       queue_length: z.number().optional(),
     }).optional(),
+
+    // [Perplexity] String array of citations, the first element is the first reference, i.e. '[1]'.
+    citations: z.array(z.any()).optional(),
   });
 
 }
