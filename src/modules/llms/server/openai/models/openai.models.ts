@@ -244,36 +244,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
     hidden: true,
   },
 
-  // GPT-4o Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
-  {
-    idPrefix: 'gpt-4o-mini-search-preview',
-    label: 'GPT-4o Mini Search Preview 🌐',
-    description: 'Fast, affordable small model for web search. Currently points to gpt-4o-mini-search-preview-2025-03-11.',
-    symLink: 'gpt-4o-mini-search-preview-2025-03-11',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
-    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
-    chatPrice: { input: 0.15, output: 0.6 },
-    isPreview: true,
-  },
-  {
-    // isLatest: true, // preview doesn't get highlighted
-    idPrefix: 'gpt-4o-mini-search-preview-2025-03-11',
-    label: 'GPT-4o Mini Search Preview (2025-03-11) 🌐',
-    description: 'Latest snapshot of the GPT-4o Mini model optimized for web search capabilities.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    trainingDataCutoff: 'Sep 30, 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
-    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
-    chatPrice: { input: 0.15, output: 0.6 },
-    isPreview: true,
-  },
-
 
   // GPT-4o mini
   {
@@ -352,6 +322,36 @@ export const _knownOpenAIChatModels: ManualMappings = [
     chatPrice: { input: 0.6, cache: { cType: 'oai-ac', read: 0.3 }, output: 2.4 },
     isPreview: true,
     hidden: true,
+  },
+
+  // GPT-4o Mini Search Preview: When using Chat Completions, the model always retrieves information from the web before responding to your query.
+  {
+    idPrefix: 'gpt-4o-mini-search-preview',
+    label: 'GPT-4o Mini Search Preview 🌐',
+    description: 'Fast, affordable small model for web search. Currently points to gpt-4o-mini-search-preview-2025-03-11.',
+    symLink: 'gpt-4o-mini-search-preview-2025-03-11',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Sep 30, 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
+    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
+    chatPrice: { input: 0.15, output: 0.6 },
+    isPreview: true,
+  },
+  {
+    // isLatest: true, // preview doesn't get highlighted
+    idPrefix: 'gpt-4o-mini-search-preview-2025-03-11',
+    label: 'GPT-4o Mini Search Preview (2025-03-11) 🌐',
+    description: 'Latest snapshot of the GPT-4o Mini model optimized for web search capabilities.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    trainingDataCutoff: 'Sep 30, 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
+    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
+    chatPrice: { input: 0.15, output: 0.6 },
+    isPreview: true,
   },
 
 
