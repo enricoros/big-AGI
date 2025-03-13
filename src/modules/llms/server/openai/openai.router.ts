@@ -96,7 +96,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [Azure]: use an older 'deployments' API to enumerate the models, and a modified OpenAI id to description mapping
       if (access.dialect === 'azure') {
-        const azureModels = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
+        const azureModels = await openaiGETOrThrow(access, `/openai/deployments?api-version=2025-02-01-preview`);
 
         const wireAzureListDeploymentsSchema = z.object({
           data: z.array(z.object({
@@ -114,7 +114,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         // only take 'gpt' models
         models = azureWireModels
-          .filter(m => m.model.includes('gpt'))
+          .filter(m => m.model.includes('gpt') || m.model === 'o1')
           .map((model): ModelDescriptionSchema => {
             const { id: deploymentRef, model: openAIModelId } = model;
             const { id: _deleted, label, ...rest } = azureModelToModelDescription(deploymentRef, openAIModelId, model.created_at, model.updated_at);
@@ -391,7 +391,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       if (apiPath.startsWith('/v1/')) {
         if (!modelRefId)
           throw new Error('Azure OpenAI API needs a deployment id');
-        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2023-07-01-preview`;
+        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2025-02-01-preview`;
       } else if (apiPath.startsWith('/openai/deployments'))
         url += apiPath;
       else

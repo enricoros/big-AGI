@@ -66,6 +66,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (hotFixAlternateUserAssistantRoles)
     chatMessages = _fixAlternateUserAssistantRoles(chatMessages);
 
+  if (model.id === 'o1' || model.id.startsWith('o1-'))
+    model.temperature = null; // NOTE: o1 models don't support temperature, so we set it to null
+
 
   // Construct the request payload
   let payload: TRequest = {
@@ -74,7 +77,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     tools: chatGenerate.tools && _toOpenAITools(chatGenerate.tools),
     tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy),
     parallel_tool_calls: undefined,
-    max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
+    max_completion_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
     ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
     top_p: undefined,
     n: hotFixOnlySupportN1 ? undefined : 0, // NOTE: we choose to not support this at the API level - most downstram ecosystem supports 1 only, which is the default
