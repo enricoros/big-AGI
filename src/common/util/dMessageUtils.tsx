@@ -192,8 +192,18 @@ export function useMessageAvatarLabel(
   messageParts: Pick<DMessage, 'generator' | 'pendingIncomplete' | 'created' | 'updated'> | undefined,
   complexity: UIComplexityMode,
 ): { label: React.ReactNode; tooltip: React.ReactNode } {
+
   // we do this for performance reasons, to only limit re-renders to these parts of the message
   const { generator, pendingIncomplete, created, updated } = messageParts || {};
+
+  // OPTIMIZATION - THIS COULD BACKFIRE - THE ICON MAY NOT BE UPDATED AS OFTEN AS WE NEED
+  // -> we will only trigger updates on: updated, pendingIncomplete changes, name changes
+  // generator will change at every step (due to some structuredClone in AIX); we choose to 'lag' behind it and
+  // refresh this when other variables change
+  const laggedGeneratorRef = React.useRef<DMessageGenerator | undefined>(undefined);
+  laggedGeneratorRef.current = generator;
+  const generatorName = generator?.name ?? '';
+
   return React.useMemo(() => {
     if (created === undefined) {
       return {
@@ -201,6 +211,7 @@ export function useMessageAvatarLabel(
         tooltip: null,
       };
     }
+    const generator = laggedGeneratorRef.current;
     if (!generator) {
       return {
         label: 'unk-model',
@@ -209,7 +220,7 @@ export function useMessageAvatarLabel(
     }
 
     // incomplete: just the name
-    const prettyName = prettyShortChatModelName(generator.name);
+    const prettyName = prettyShortChatModelName(generatorName);
     if (pendingIncomplete)
       return {
         label: prettyName,
@@ -247,7 +258,7 @@ export function useMessageAvatarLabel(
         </Box>
       ),
     };
-  }, [complexity, created, generator, pendingIncomplete, updated]);
+  }, [complexity, created, generatorName, pendingIncomplete, updated]);
 }
 
 function _prettyMetrics(metrics: DMessageGenerator['metrics'], uiComplexityMode: UIComplexityMode): React.ReactNode {
