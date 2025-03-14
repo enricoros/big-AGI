@@ -220,7 +220,7 @@ export function Composer(props: {
 
   // tokens derived state
 
-  const tokensComposerTextDebounced = useTextTokenCount(composeText, props.chatLLM, 300, 1200);
+  const tokensComposerTextDebounced = useTextTokenCount(composeText, props.chatLLM, 800, 1600);
   let tokensComposer = (tokensComposerTextDebounced ?? 0) + (llmAttachmentDraftsCollection.llmTokenCountApprox || 0);
   if (props.chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(props.chatLLM);
