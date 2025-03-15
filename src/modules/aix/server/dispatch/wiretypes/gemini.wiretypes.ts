@@ -569,6 +569,10 @@ export namespace GeminiWire_API_Generate_Content {
      * Note: seems to be present on all packets now, so we're commending the .optional()
      */
     usageMetadata: UsageMetadata_schema, // .optional()
+    /**
+     * The real model version used to generate the response (what we got, not what we asked for).
+     */
+    modelVersion: z.string(),
   });
 
 }
