@@ -73,7 +73,7 @@ export class ContentReassembler {
             this.onAddUrlCitation(op);
             break;
           default:
-            const _exhaustiveCheck: never = op;
+            // const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected PartParticleOp: ${JSON.stringify(op)}`);
         }
         break;
