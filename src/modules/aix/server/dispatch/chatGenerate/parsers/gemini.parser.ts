@@ -33,6 +33,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let sentActualModelName = false;
   let timeToFirstEvent: number;
   let skipComputingTotalsOnce = isStreaming;
+  let groundingIndexNumber = 0;
 
   // this can throw, it's caught by the caller
   return function(pt: IParticleTransmitter, eventData: string): void {
@@ -130,8 +131,17 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       }
 
       // -> Candidates[0] -> Grounding Metadata
-      if (candidate0.groundingMetadata) {
-        // TODO
+      if (candidate0.groundingMetadata?.groundingChunks?.length) {
+        /**
+         * TODO: improve parsing of grounding metadata, including:
+         * - annotations and ranges .groundingSupports
+         * - sort chunks by their overal confidence in the .groundingSupports?
+         * - follow up Google Search queries (.webSearchQueries)
+         * - include the 'renderedContent' from .searchEntryPoint
+         */
+        for (const { web } of candidate0.groundingMetadata.groundingChunks) {
+          pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined);
+        }
       }
 
       // -> Candidates[0] -> Token Stop Reason

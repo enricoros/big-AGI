@@ -263,11 +263,33 @@ export namespace GeminiWire_ToolDeclarations {
       properties: z.record(z.any()).optional(),
       required: z.array(z.string()).optional(),
     }).optional(),
+    /**
+     * JSON Schema output format (per-function). Reflects the Open API 3.03 Response Object.
+     * The Schema defines the type used for the response value of the function.
+     */
+    response: z.record(z.any()).optional(),
+  });
+
+  const GoogleSearch_schema = z.object({
+    // Empty object in the API definition
+  });
+
+  // 2025-03-14: Gemini has de-facto phased out GoogleSearchRetrieval, there's no more
+  const GoogleSearchRetrieval_schema = z.object({
+    dynamicRetrievalConfig: z.object({
+      /** The mode of the predictor to be used in dynamic retrieval. */
+      mode: z.enum(['MODE_UNSPECIFIED', 'MODE_DYNAMIC']),
+      /** The threshold to be used in dynamic retrieval. If not set, a system default value is used. */
+      dynamicThreshold: z.number().optional(),
+    }).optional(),
   });
 
   export const Tool_schema = z.object({
     codeExecution: CodeExecution_schema.optional(),
     functionDeclarations: z.array(FunctionDeclaration_schema).optional(),
+    googleSearch: GoogleSearch_schema.optional(),
+    // 2025-03-14: disabled as it's gone for all models
+    googleSearchRetrieval: GoogleSearchRetrieval_schema.optional(),
   });
 
   export const ToolConfig_schema = z.object({
@@ -413,8 +435,8 @@ export namespace GeminiWire_API_Generate_Content {
       prebuiltVoiceConfig: z.object({
         /** The name of the preset voice to use. */
         voiceName: z.string(),
-      }),
-    }),
+      }).optional(),
+    }).optional(),
   });
 
   const GenerationConfig_schema = z.object({
@@ -613,7 +635,9 @@ export namespace GeminiWire_API_Generate_Content {
     /**
      * Grounding metadata for the candidate.
      * This field is populated for GenerateContent calls.
-     * ONLY for GenerateContent calls with grounding enabled.
+     * ONLY for GenerateContent calls with grounding enabled:
+     * - tools = [{googleSearch: {}}], or
+     * - tools = [{googleSearchRetrieval: {}}]
      */
     groundingMetadata: GroundingMetadata_schema.optional(),
 
