@@ -84,6 +84,15 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
               pt.appendText(mPart.text || '');
             break;
 
+          // <- InlineDataPart
+          case 'inlineData' in mPart:
+            // [Gemini, 2025-03-14] Experimental Image generation: Response
+            if (mPart.inlineData.mimeType.startsWith('image/'))
+              pt.appendImageInline(mPart.inlineData.mimeType, mPart.inlineData.data, 'Gemini Generated Image');
+            else
+              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null);
+            break;
+
           // <- FunctionCallPart
           case 'functionCall' in mPart:
             pt.startFunctionCallInvocation(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args ?? null);
@@ -114,6 +123,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             break;
 
           default:
+            // noinspection JSUnusedLocalSymbols
+            const _exhaustiveCheck: never = mPart;
             throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
         }
       }

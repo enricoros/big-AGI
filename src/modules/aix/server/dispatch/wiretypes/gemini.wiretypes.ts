@@ -166,6 +166,7 @@ export namespace GeminiWire_ContentParts {
 
   export const ModelContentPart_schema = z.union([
     TextPart_schema,
+    InlineDataPart_schema,
     FunctionCallPart_schema,
     ExecutableCodePart_schema,
     CodeExecutionResultPart_schema,
