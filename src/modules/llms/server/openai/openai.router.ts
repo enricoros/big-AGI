@@ -391,7 +391,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       if (apiPath.startsWith('/v1/')) {
         if (!modelRefId)
           throw new Error('Azure OpenAI API needs a deployment id');
-        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2023-07-01-preview`;
+        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2025-02-01-preview`;
       } else if (apiPath.startsWith('/openai/deployments'))
         url += apiPath;
       else
