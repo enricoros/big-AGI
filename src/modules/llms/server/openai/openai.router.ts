@@ -15,12 +15,13 @@ import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWi
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
-import { azureModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
+import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './models/azure.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
 import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
+import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
@@ -96,36 +97,12 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [Azure]: use an older 'deployments' API to enumerate the models, and a modified OpenAI id to description mapping
       if (access.dialect === 'azure') {
-        const azureModels = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
-
-        const wireAzureListDeploymentsSchema = z.object({
-          data: z.array(z.object({
-            model: z.string(), // the OpenAI model id
-            owner: z.enum(['organization-owner']),
-            id: z.string(), // the deployment name
-            status: z.string(), // relaxed from z.enum(['succeeded']) for #744
-            created_at: z.number(),
-            updated_at: z.number(),
-            object: z.literal('deployment'),
-          })),
-          object: z.literal('list'),
-        });
-        const azureWireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
-
-        // only take 'gpt' models
-        models = azureWireModels
-          .filter(m => m.model.includes('gpt'))
-          .map((model): ModelDescriptionSchema => {
-            const { id: deploymentRef, model: openAIModelId } = model;
-            const { id: _deleted, label, ...rest } = azureModelToModelDescription(deploymentRef, openAIModelId, model.created_at, model.updated_at);
-            // unhide all models
-            delete rest.hidden;
-            return {
-              id: deploymentRef,
-              label: `${label} (${deploymentRef})`,
-              ...rest,
-            };
-          });
+        const azureOpenAIDeploymentsResponse = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
+        const azureOpenAIDeployments = azureParseFromDeploymentsAPI(azureOpenAIDeploymentsResponse);
+        models = azureOpenAIDeployments
+          .filter(azureDeploymentFilter)
+          .map(azureDeploymentToModelDescription)
+          .sort(openAISortModels);
         return { models };
       }
 

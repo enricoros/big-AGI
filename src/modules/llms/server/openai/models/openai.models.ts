@@ -6,7 +6,7 @@ import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
 
 
-// [Azure] / [OpenAI]
+// [OpenAI] Known Chat Models
 // https://platform.openai.com/docs/models
 export const _knownOpenAIChatModels: ManualMappings = [
 
@@ -669,7 +669,7 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
-  // Azure variants - because someone forgot the dot
+  // [Azure] variants: Azure names these differently compared to OpenAI (no dots) - also: obsolete
   {
     idPrefix: 'gpt-35-turbo-16k',
     label: '3.5-Turbo 16k',
@@ -828,13 +828,4 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
   //   return aCount - bCount;
   // }
   // return bId.localeCompare(aId);
-}
-
-
-// [Azure]
-
-export function azureModelToModelDescription(azureDeploymentRef: string, openAIModelIdBase: string, modelCreated: number, modelUpdated?: number): ModelDescriptionSchema {
-  // if the deployment name mataches an OpenAI model prefix, use that
-  const known = _knownOpenAIChatModels.find(base => azureDeploymentRef == base.idPrefix);
-  return fromManualMapping(_knownOpenAIChatModels, known ? azureDeploymentRef : openAIModelIdBase, modelCreated, modelUpdated, undefined, true);
 }
