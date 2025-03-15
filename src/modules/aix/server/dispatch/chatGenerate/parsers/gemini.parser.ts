@@ -22,10 +22,10 @@ import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wirety
  *
  *  Note that non-streaming calls will contain a complete sequence of complete parts.
  */
-export function createGeminiGenerateContentResponseParser(modelId: string, isStreaming: boolean): ChatGenerateParseFunction {
+export function createGeminiGenerateContentResponseParser(requestedModelName: string, isStreaming: boolean): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
-  const modelName = modelId.replace('models/', '');
-  let hasBegun = false;
+  let sentRequestedModelName = false;
+  let sentActualModelName = false;
   let timeToFirstEvent: number;
   let skipComputingTotalsOnce = isStreaming;
 
@@ -36,14 +36,18 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
     if (timeToFirstEvent === undefined)
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
-    // -> Model
-    if (!hasBegun) {
-      hasBegun = true;
-      pt.setModelName(modelName);
-    }
-
     // Throws on malformed event data
     const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+
+    // -> Model
+    if (generationChunk.modelVersion && !sentActualModelName) {
+      pt.setModelName(generationChunk.modelVersion);
+      sentActualModelName = true;
+    }
+    if (!sentActualModelName && !sentRequestedModelName) {
+      pt.setModelName(requestedModelName);
+      sentRequestedModelName = true;
+    }
 
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
