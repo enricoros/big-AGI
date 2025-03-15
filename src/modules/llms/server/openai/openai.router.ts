@@ -344,8 +344,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
   switch (access.dialect) {
 
     case 'alibaba':
-      const alibabaOaiKey = access.oaiKey || env.ALIBABA_API_KEY || '';
+      let alibabaOaiKey = access.oaiKey || env.ALIBABA_API_KEY || '';
       const alibabaOaiHost = fixupHost(access.oaiHost || env.ALIBABA_API_HOST || DEFAULT_ALIBABA_HOST, apiPath);
+
+      // multi-key with random selection
+      if (alibabaOaiKey.includes(',')) {
+        const multiKeys = alibabaOaiKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        alibabaOaiKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!alibabaOaiKey || !alibabaOaiHost)
         throw new Error('Missing Alibaba API Key. Add it on the UI or server side (your deployment).');
 
@@ -385,8 +395,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'deepseek':
       // https://platform.deepseek.com/api-docs/
-      const deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
+      let deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
       const deepseekHost = fixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
+
+      // multi-key with random selection
+      if (deepseekKey.includes(',')) {
+        const multiKeys = deepseekKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        deepseekKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!deepseekKey || !deepseekHost)
         throw new Error('Missing Deepseek API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -452,8 +472,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'groq':
-      const groqKey = access.oaiKey || env.GROQ_API_KEY || '';
+      let groqKey = access.oaiKey || env.GROQ_API_KEY || '';
       const groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
+
+      // multi-key with random selection
+      if (groqKey.includes(',')) {
+        const multiKeys = groqKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        groqKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!groqKey)
         throw new Error('Missing Groq API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -481,8 +511,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'mistral':
       // https://docs.mistral.ai/platform/client
-      const mistralKey = access.oaiKey || env.MISTRAL_API_KEY || '';
+      let mistralKey = access.oaiKey || env.MISTRAL_API_KEY || '';
       const mistralHost = fixupHost(access.oaiHost || DEFAULT_MISTRAL_HOST, apiPath);
+
+      // multi-key with random selection
+      if (mistralKey.includes(',')) {
+        const multiKeys = mistralKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        mistralKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       return {
         headers: {
           'Content-Type': 'application/json',
@@ -535,8 +575,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'perplexity':
-      const perplexityKey = access.oaiKey || env.PERPLEXITY_API_KEY || '';
+      let perplexityKey = access.oaiKey || env.PERPLEXITY_API_KEY || '';
       const perplexityHost = fixupHost(access.oaiHost || DEFAULT_PERPLEXITY_HOST, apiPath);
+
+      // multi-key with random selection
+      if (perplexityKey.includes(',')) {
+        const multiKeys = perplexityKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        perplexityKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!perplexityKey || !perplexityHost)
         throw new Error('Missing Perplexity API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -554,8 +604,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'togetherai':
-      const togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
+      let togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
       const togetherHost = fixupHost(access.oaiHost || DEFAULT_TOGETHERAI_HOST, apiPath);
+
+      // multi-key with random selection
+      if (togetherKey.includes(',')) {
+        const multiKeys = togetherKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        togetherKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!togetherKey || !togetherHost)
         throw new Error('Missing TogetherAI API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -570,7 +630,17 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'xai':
-      const xaiKey = access.oaiKey || env.XAI_API_KEY || '';
+      let xaiKey = access.oaiKey || env.XAI_API_KEY || '';
+
+      // multi-key with random selection
+      if (xaiKey.includes(',')) {
+        const multiKeys = xaiKey
+          .split(',')
+          .map(key => key.trim())
+          .filter(Boolean);
+        xaiKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
+      }
+
       if (!xaiKey)
         throw new Error('Missing xAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
       return {
