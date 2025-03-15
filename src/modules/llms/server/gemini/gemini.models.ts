@@ -150,6 +150,16 @@ const _knownGeminiModels: ({
     isPreview: true,
   },
 
+  // 2.0 Experimental - Flash Image Generation
+  {
+    id: 'models/gemini-2.0-flash-exp-image-generation',
+    // labelOverride: 'Gemini 2.0 Flash Native Image Generation',
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_CodeExecution, LLM_IF_HOTFIX_Sys0ToUsr0],
+    parameterSpecs: [],
+    isPreview: true,
+  },
+
   // 2.0 Flash
   {
     id: 'models/gemini-2.0-flash-001',
