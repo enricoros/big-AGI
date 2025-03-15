@@ -317,6 +317,7 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
     { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: threshold },
     { category: 'HARM_CATEGORY_HARASSMENT', threshold: threshold },
     { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: threshold },
+    { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: threshold },
   ];
 }
 
