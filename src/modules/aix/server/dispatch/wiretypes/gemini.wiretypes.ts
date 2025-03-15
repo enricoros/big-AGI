@@ -346,11 +346,12 @@ export namespace GeminiWire_Safety {
   /// Blocking
 
   const BlockReason_enum = z.enum([
-    'BLOCK_REASON_UNSPECIFIED',
-    'SAFETY',
-    'OTHER',
-    'BLOCKLIST',
-    'PROHIBITED_CONTENT',
+    'BLOCK_REASON_UNSPECIFIED', // unused
+    'SAFETY',                   // inspect safetyRatings to see the category that blocked
+    'OTHER',                    // unknown reason
+    'BLOCKLIST',                // terms are included in the terminology blocklist
+    'PROHIBITED_CONTENT',       // prohibited content
+    'IMAGE_SAFETY',             // unsafe image generation content
   ]);
 
   export const PromptFeedback_schema = z.object({
@@ -372,8 +373,9 @@ export namespace GeminiWire_API_Generate_Content {
   /// Request
 
   const responseMimeType_enum = z.enum([
-    'text/plain', // default
-    'application/json', // JSON mode
+    'text/plain',       // default
+    'application/json', // JSON mode (JSON response in the response candidates)
+    'text/x.enum',      // ENUM as a string response in the response candidates
   ]);
 
   const GenerationConfig_schema = z.object({
@@ -401,11 +403,11 @@ export namespace GeminiWire_API_Generate_Content {
       includeThoughts: z.boolean().optional(),
     }).optional(),
 
-    // Added on 2025-01-10 - commented out for now
-    // presencePenalty: z.number().optional(),
-    // frequencyPenalty: z.number().optional(),
-    // responseLogprobs: z.boolean().optional(),
-    // logprobs: z.number().int().optional(),
+    // Added on 2025-01-10 - not used yet but added
+    presencePenalty: z.number().optional(),     // A positive penalty incresases the vocabulary of the response
+    frequencyPenalty: z.number().optional(),    // A positive penalty incresases the vocabulary of the response
+    responseLogprobs: z.boolean().optional(),   // if true, exports the logprobs
+    logprobs: z.number().int().optional(),      // number of top logprobs to return
   });
 
   export type Request = z.infer<typeof Request_schema>;
@@ -419,7 +421,7 @@ export namespace GeminiWire_API_Generate_Content {
     safetySettings: z.array(GeminiWire_Safety.SafetySetting_schema).optional(),
     systemInstruction: GeminiWire_Messages.SystemInstruction_schema.optional(),
     generationConfig: GenerationConfig_schema.optional(),
-    // cachedContent: z.string().optional(),
+    cachedContent: z.string().optional(),
   });
 
   // Response
@@ -448,6 +450,47 @@ export namespace GeminiWire_API_Generate_Content {
         license: z.string().optional(),     // License for the GitHub project that is attributed as a source for segment.
       }),
     ),
+  });
+
+  const GroundingAttribution_schema = z.object({
+    sourceId: z.object({
+      groundingPassage: z.object({
+        passageId: z.string(),
+        partIndex: z.number().int(),
+      }),
+      semanticRetrieverChunk: z.object({
+        source: z.string(), // Name of the source matching the request's SemanticRetrieverConfig.source. Example: corpora/123
+        chunk: z.string(),  // Name of the Chunk containing the attributed text. Example: corpora/123/documents/abc/chunks/xyz
+      }),
+    }),
+    content: GeminiWire_Messages.ModelContent_schema,
+  });
+
+  const GroundingMetadata_schema = z.object({
+    groundingChunks: z.array(/*z.union([*/z.object({
+      web: z.object({
+        uri: z.string(),
+        title: z.string(),
+      }),
+    })).optional(),
+    groundingSupports: z.array(z.object({
+      groundingChunkIndices: z.array(z.number().int()), // citations associated with the claim
+      confidenceScores: z.array(z.number()),            // 0..1
+      segment: z.object({
+        partIndex: z.number().int().optional(),
+        startIndex: z.number().int().optional(),
+        endIndex: z.number().int(),
+        text: z.string(),
+      }),
+    })).optional(),
+    webSearchQueries: z.array(z.string()).optional(),
+    searchEntryPoint: z.object({
+      renderedContent: z.string().optional(),   // Web content snippet that can be embedded in a web page or an app webview.
+      sdkBlob: z.string().optional(),           // Base64 encoded JSON representing array of <search term, search url> tuple.
+    }).optional(),
+    retrievalMetadata: z.object({
+      googleSearchDynamicRetrievalScore: z.number().optional(), //  Score indicating how likely information from google search could help answer the prompt
+    }).optional(),
   });
 
   const Candidate_schema = z.object({
@@ -492,7 +535,21 @@ export namespace GeminiWire_API_Generate_Content {
      * - NOTE: not present(!), probably replaced by the ^usageMetadata field
      */
     tokenCount: z.number().optional(),
-    // groundingAttributions: z.array(...).optional(), // This field is populated for GenerateAnswer calls.
+
+    /**
+     * Attribution information for sources that contributed to a grounded answer.
+     */
+    groundingAttributions: z.array(GroundingAttribution_schema).optional(),
+
+    /**
+     * Grounding metadata for the candidate.
+     * This field is populated for GenerateContent calls.
+     */
+    groundingMetadata: GroundingMetadata_schema.optional(),
+
+    // 2024-10-31: we choose to ignore the following (we do not use or support logProbs)
+    // avgLogprobs: z.number().optional(),
+    // logprobsResult: LogprobsResult_schema.optional(),
   });
 
   const UsageMetadata_schema = z.object({
@@ -524,7 +581,7 @@ export namespace GeminiWire_API_Models_List {
 
   export const getPath = '/v1beta/models?pageSize=1000';
 
-  const Methods_enum = z.enum([
+  export const Methods_enum = z.enum([
     'bidiGenerateContent', // appeared on 2024-12, see https://github.com/enricoros/big-AGI/issues/700
     'countMessageTokens',
     'countTextTokens',
