@@ -48,6 +48,15 @@ export namespace GeminiWire_ContentParts {
     'text/rtf',
   ]);
 
+  export const ContentPartModality_enum = z.enum([
+    'MODALITY_UNSPECIFIED',
+    'TEXT', // plain text
+    'IMAGE',
+    'VIDEO',
+    'AUDIO',
+    'DOCUMENT', // e.g. PDF
+  ]);
+
   /// Content parts - Input
 
   export const TextPart_schema = z.object({
@@ -291,16 +300,18 @@ export namespace GeminiWire_ToolDeclarations {
 
 export namespace GeminiWire_Safety {
 
-  /// Rating
+  /// Safety Rating
 
   export const HarmCategory_enum = z.enum([
     'HARM_CATEGORY_UNSPECIFIED',
+    // PaLM-only classifications:
     'HARM_CATEGORY_DEROGATORY',
     'HARM_CATEGORY_TOXICITY',
     'HARM_CATEGORY_VIOLENCE',
     'HARM_CATEGORY_SEXUAL',
     'HARM_CATEGORY_MEDICAL',
     'HARM_CATEGORY_DANGEROUS',
+    // Gemini classifications:
     'HARM_CATEGORY_HARASSMENT',
     'HARM_CATEGORY_HATE_SPEECH',
     'HARM_CATEGORY_SEXUALLY_EXPLICIT',
@@ -328,18 +339,19 @@ export namespace GeminiWire_Safety {
   export type HarmBlockThreshold = z.infer<typeof HarmBlockThreshold_enum>;
   export const HarmBlockThreshold_enum = z.enum([
     'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
-    'BLOCK_LOW_AND_ABOVE',
-    'BLOCK_MEDIUM_AND_ABOVE',
-    'BLOCK_ONLY_HIGH', // Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
-    'BLOCK_NONE', // All content will be allowed.
+    'BLOCK_LOW_AND_ABOVE',      // allows NEGLIGIBLE
+    'BLOCK_MEDIUM_AND_ABOVE',   // allows NEGLIGIBLE, LOW
+    'BLOCK_ONLY_HIGH',          // allows NEGLIGIBLE, LOW, MEDIUM
+    'BLOCK_NONE',               // allows all
     /**
      * 2025-01-10: see bug #720 and https://discuss.ai.google.dev/t/flash-2-0-doesnt-respect-block-none-on-all-harm-categories/59352/1
      */
-    'OFF', // Turn off the safety filter.
+    'OFF', // turns off the safety filter.
   ]);
 
   export const SafetySetting_schema = z.object({
     category: HarmCategory_enum,
+    /** Block at and beyond a specified harm probability. */
     threshold: HarmBlockThreshold_enum,
   });
 
@@ -355,7 +367,9 @@ export namespace GeminiWire_Safety {
   ]);
 
   export const PromptFeedback_schema = z.object({
+    /** Optional. If set, the prompt was blocked and no candidates are returned. */
     blockReason: BlockReason_enum.optional(),
+    /** At most one rating per category. */
     safetyRatings: z.array(SafetyRating_schema),
   });
 
@@ -552,12 +566,40 @@ export namespace GeminiWire_API_Generate_Content {
     // logprobsResult: LogprobsResult_schema.optional(),
   });
 
-  const UsageMetadata_schema = z.object({
-    promptTokenCount: z.number(),
-    candidatesTokenCount: z.number().optional(), // .optional: in case the first message is 'RECITATION' there could be no output token count
-    // totalTokenCount: z.number(),
-    // cachedContentTokenCount: z.number().optional(), // Not supported for now, hence disabled
+
+  const ModalityTokenCount_schema = z.object({
+    modality: GeminiWire_ContentParts.ContentPartModality_enum,
+    tokenCount: z.number(),
   });
+
+  const UsageMetadata_schema = z.object({
+    // effective prompt size, including tokens in the cached content
+    promptTokenCount: z.number(),
+
+    // (usually there: missing on first packets, or 'RECITATION' answers) total tokens across all the generated candidates
+    candidatesTokenCount: z.number().optional(),
+
+    // (never missing, but optional for future safety) total tokens across all the generated candidates
+    // if candidatesTokenCount is missing, this is = promptTokenCount
+    totalTokenCount: z.number().optional(),
+
+    // Input parts
+    // (optional: only if caching) tokens in the cached part of the prompt (the cached content)
+    cachedContentTokenCount: z.number().optional(),
+    // (optional: only if tool usage) tokens in tool-use prompt(s)
+    toolUsePromptTokenCount: z.number().optional(),
+
+    // Output parts
+    // (optional: only for thinking models - and not in all packets) tokens of thoughts for thinking models
+    thoughtsTokenCount: z.number().optional(),
+
+    // Modality breakdowns - mostly commented out because we don't want to spend energy parsing them for now (we don't use them)
+    promptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    // cacheTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    // candidatesTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+    // toolUsePromptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
+  });
+
 
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
@@ -569,9 +611,7 @@ export namespace GeminiWire_API_Generate_Content {
      * Note: seems to be present on all packets now, so we're commending the .optional()
      */
     usageMetadata: UsageMetadata_schema, // .optional()
-    /**
-     * The real model version used to generate the response (what we got, not what we asked for).
-     */
+    /** Real model version used to generate the response (what we got, not what we asked for). */
     modelVersion: z.string(),
   });
 
