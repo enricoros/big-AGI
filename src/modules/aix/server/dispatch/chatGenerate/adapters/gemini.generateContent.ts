@@ -80,7 +80,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
       includeThoughts: true,
     };
 
-  // Experimental Image generation models
+  // [Gemini, 2025-03-14] Experimental Image generation: Request
   if (hotFixImageGenerationModels1) {
     payload.generationConfig!.responseModalities = ['TEXT', 'IMAGE'];
     // 2025-03-14: both APIs v1alpha and v1beta do not support specifying the resolution
