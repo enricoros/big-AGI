@@ -101,7 +101,7 @@ export namespace GeminiWire_ContentParts {
   const FileDataPart_schema = z.object({
     fileData: z.object({
       mimeType: z.union([z.string(), ianaStandardMimeType_schema]).optional(),
-      uri: z.string(),
+      fileUri: z.string(),
     }),
   });
 
