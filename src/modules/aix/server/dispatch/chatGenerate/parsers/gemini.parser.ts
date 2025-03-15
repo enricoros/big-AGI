@@ -5,6 +5,11 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
+
+// configuration
+const ENABLE_RECITATIONS_AS_CITATIONS = false;
+
+
 /**
  * Gemini Completions -  Messages Architecture
  *
@@ -65,7 +70,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       if (candidate0.index !== undefined && candidate0.index !== 0)
         throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
-      // see the message architecture
+      // -> Candidates[0] -> Content
       for (const mPart of (candidate0.content?.parts || [])) {
         switch (true) {
 
@@ -112,7 +117,19 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         }
       }
 
-      // -> Token Stop Reason
+      // -> Candidates[0] -> Safety Ratings
+      // only parsed when the finish reason is 'SAFETY'
+
+      // -> Candidates[0] -> Citation Metadata
+      // this is automated recitation detection by the API, not explicit grounding - very weak signal - as websites appear to be poor quality
+      if (ENABLE_RECITATIONS_AS_CITATIONS && candidate0.citationMetadata?.citationSources?.length) {
+        for (let { startIndex, endIndex, uri /*, license*/ } of candidate0.citationMetadata.citationSources) {
+          // TODO: have a particle/part flag to state the purpose of a citation? (e.g. 'recitation' is weaker than 'grounding')
+          pt.appendUrlCitation('', uri || '', undefined, startIndex, endIndex, undefined);
+        }
+      }
+
+      // -> Candidates[0] -> Token Stop Reason
       if (candidate0.finishReason) {
         switch (candidate0.finishReason) {
           case 'STOP':
