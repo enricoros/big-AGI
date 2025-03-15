@@ -45,9 +45,11 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       };
 
     case 'gemini':
+      // const hotFixImageGenerationModels2 = model.id.includes('image-generation');
+      const useV1Alpha = !!model.vndGeminiShowThoughts /* || hotFixImageGenerationModels2 */;
       return {
         request: {
-          ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath, !!model.vndGeminiShowThoughts),
+          ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath, useV1Alpha),
           body: aixToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
         demuxerFormat: streaming ? 'sse' : null,

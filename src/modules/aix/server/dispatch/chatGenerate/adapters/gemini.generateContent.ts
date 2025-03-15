@@ -11,6 +11,9 @@ const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
+  // FIXME: this is a weak and hacky way to detect the image generation models - TODO: declare this as a param? with Resolution too?
+  const hotFixImageGenerationModels1 = model.id.includes('image-generation');
+
   // Note: the streaming setting is ignored as it only belongs in the path
 
   // System Instructions
@@ -76,6 +79,13 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.thinkingConfig = {
       includeThoughts: true,
     };
+
+  // Experimental Image generation models
+  if (hotFixImageGenerationModels1) {
+    payload.generationConfig!.responseModalities = ['TEXT', 'IMAGE'];
+    // 2025-03-14: both APIs v1alpha and v1beta do not support specifying the resolution
+    // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
+  }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
