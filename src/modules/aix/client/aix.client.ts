@@ -18,7 +18,7 @@ import type { AixAPI_Access, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPICh
 
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
 import { ContentReassembler } from './ContentReassembler';
-import { ThrottleFunctionCall } from './ThrottleFunctionCall';
+import { withDecimator } from './withDecimator';
 
 
 // configuration
@@ -554,7 +554,7 @@ export interface AixChatGenerateContent_LL {
  * The output is an accumulator object with the fragments, and the generator
  * pieces (metrics, model name, token stop reason)
  *
- * @param onReassemblyUpdate updated with the same accumulator at every step, and at the end (with isDone=true)
+ * @param onGenerateContentUpdate updated with the same accumulator at every step, and at the end (with isDone=true)
  * @returns the final accumulator object
  *
  */
@@ -568,8 +568,8 @@ async function _aixChatGenerateContent_LL(
   // others
   abortSignal: AbortSignal,
   throttleParallelThreads: number | undefined,
-  // optional streaming callback
-  onReassemblyUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => MaybePromise<void>,
+  // optional streaming callback: not fired until the first piece of content
+  onGenerateContentUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => MaybePromise<void>,
 ): Promise<AixChatGenerateContent_LL> {
 
   // Aix Low-Level Chat Generation Accumulator
@@ -577,6 +577,9 @@ async function _aixChatGenerateContent_LL(
     fragments: [],
     /* rest start as undefined (missing in reality) */
   };
+
+  const doPartialUpdate = !onGenerateContentUpdate ? undefined
+    : withDecimator(throttleParallelThreads ?? 0, async () => await onGenerateContentUpdate(accumulator_LL, false));
 
   /**
    * DEBUG note: early we were filtering (aixContext.name === 'conversation'), but with the new debugger we don't
@@ -586,11 +589,6 @@ async function _aixChatGenerateContent_LL(
   const debugDispatchRequest = getLabsDevMode();
   const debugContext = !debugDispatchRequest ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
   const contentReassembler = new ContentReassembler(accumulator_LL, debugContext);
-
-  // Initialize throttler if throttling is enabled
-  const throttler = (onReassemblyUpdate && throttleParallelThreads)
-    ? new ThrottleFunctionCall(throttleParallelThreads)
-    : null;
 
   try {
 
@@ -613,12 +611,13 @@ async function _aixChatGenerateContent_LL(
     // reassemble the particles
     for await (const particle of particles) {
       contentReassembler.reassembleParticle(particle, abortSignal.aborted);
-      if (onReassemblyUpdate && accumulator_LL.fragments.length /* we want the first update to have actual content */) {
-        if (throttler)
-          throttler.decimate(() => onReassemblyUpdate(accumulator_LL, false));
-        else
-          onReassemblyUpdate(accumulator_LL, false);
-      }
+      /**
+       * We want the first update to have actual content.
+       * However note that we won't be sending out the model name very fast this way,
+       * but it's probably what we want because of the ParticleIndicators (VFX!)
+       */
+      if (doPartialUpdate && accumulator_LL.fragments.length)
+        void doPartialUpdate(); // fire-and-forget, for now
     }
 
   } catch (error: any) {
@@ -645,7 +644,7 @@ async function _aixChatGenerateContent_LL(
   contentReassembler.reassembleFinalize();
 
   // final update (could ignore and take the final accumulator)
-  await onReassemblyUpdate?.(accumulator_LL, true /* Last message, done */);
+  await onGenerateContentUpdate?.(accumulator_LL, true /* Last message, done */);
 
   // return the final accumulated message
   return accumulator_LL;
