@@ -1,6 +1,9 @@
+import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
+
 import type { MaybePromise } from '~/common/types/useful.types';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { getImageDimensions } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
@@ -212,11 +215,15 @@ export class ContentReassembler {
           case 'cer':
             this.onAddCodeExecutionResponse(op);
             break;
+          case 'ii':
+            await this.onAppendInlineImage(op);
+            break;
           case 'urlc':
             this.onAddUrlCitation(op);
             break;
           default:
-            // const _exhaustiveCheck: never = op;
+            // noinspection JSUnusedLocalSymbols
+            const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected PartParticleOp: ${JSON.stringify(op)}`);
         }
         break;
@@ -359,6 +366,66 @@ export class ContentReassembler {
   private onAddCodeExecutionResponse(cer: Extract<AixWire_Particles.PartParticleOp, { p: 'cer' }>): void {
     this.accumulator.fragments.push(create_CodeExecutionResponse_ContentFragment(cer.id, cer.error, cer.result, cer.executor, cer.environment));
     this.currentTextFragmentIndex = null;
+  }
+
+  private async onAppendInlineImage(particle: Extract<AixWire_Particles.PartParticleOp, { p: 'ii' }>): Promise<void> {
+
+    // Break text accumulation, as we have a full image part in the middle
+    this.currentTextFragmentIndex = null;
+
+    const { mimeType, i_b64: base64Data, label } = particle;
+    const safeLabel = label || 'Generated Image';
+
+    try {
+
+      // find out the dimensions (frontend)
+      const dimensions = await getImageDimensions(`data:${mimeType};base64,${base64Data}`).catch(() => null);
+      const safeWidth = dimensions?.width || 0;
+      const safeHeight = dimensions?.height || 0;
+
+      // add the image to the DBlobs DB
+      const dblobAssetId = await addDBImageAsset('global', 'app-chat', {
+        label: safeLabel,
+        data: {
+          mimeType: mimeType as any,
+          base64: base64Data,
+        },
+        origin: {
+          ot: 'generated',
+          source: 'ai-text-to-image',
+          generatorName: '', // ?
+          prompt: '', // ?
+          parameters: {}, // ?
+          generatedAt: new Date().toISOString(),
+        },
+        metadata: {
+          width: safeWidth,
+          height: safeHeight,
+          // description: '',
+        },
+      });
+
+      // create DMessage a data reference {} for the image
+      const bytesSizeApprox = Math.ceil((base64Data.length * 3) / 4);
+      const imageAssetDataRef = createDMessageDataRefDBlob(
+        dblobAssetId,
+        particle.mimeType,
+        bytesSizeApprox,
+      );
+
+      // create the DMessageContentFragment - not attachment! as this comes from the assistant - so this is akin to the t2i-generated images
+      const imageContentFragment = createImageContentFragment(
+        imageAssetDataRef,
+        safeLabel,
+        safeWidth,
+        safeHeight,
+      );
+
+      this.accumulator.fragments.push(imageContentFragment);
+
+    } catch (error: any) {
+      console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, mimeType, size: base64Data.length });
+    }
   }
 
   private onAddUrlCitation(urlc: Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>): void {
