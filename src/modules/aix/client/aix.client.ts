@@ -1,6 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
+import type { MaybePromise } from '~/common/types/useful.types';
 import { DLLM, DLLMId, LLM_IF_HOTFIX_NoTemperature } from '~/common/stores/llms/llms.types';
 import { apiStream } from '~/common/util/trpc.client';
 import { DMetricsChatGenerate_Lg, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -130,7 +131,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
   aixContextRef: AixAPI_Context_ChatGenerate['ref'],
   // others
   clientOptions: AixClientOptions,
-  onStreamingUpdate: (update: AixChatGenerateContent_DMessage, isDone: boolean) => void,
+  onStreamingUpdate: (update: AixChatGenerateContent_DMessage, isDone: boolean) => MaybePromise<void>,
 ): Promise<StreamMessageStatus> {
 
   let errorMessage: string | undefined;
@@ -158,9 +159,9 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       aixCreateChatGenerateContext(aixContextName, aixContextRef),
       true,
       clientOptions,
-      (update: AixChatGenerateContent_DMessage, isDone: boolean) => {
+      async (update: AixChatGenerateContent_DMessage, isDone: boolean) => {
         lastDMessage = update;
-        onStreamingUpdate(lastDMessage, isDone);
+        await onStreamingUpdate(lastDMessage, isDone);
       },
     );
 
@@ -224,7 +225,7 @@ export async function aixChatGenerateText_Simple(
   // optional options
   clientOptions?: Partial<AixClientOptions>, // this makes the abortController optional
   // optional callback for streaming
-  onTextStreamUpdate?: (text: string, isDone: boolean, generator: DMessageGenerator) => void,
+  onTextStreamUpdate?: (text: string, isDone: boolean, generator: DMessageGenerator) => MaybePromise<void>,
 ): Promise<string> {
 
   // Aix Access
@@ -269,7 +270,7 @@ export async function aixChatGenerateText_Simple(
   };
 
   // NO streaming initial notification - only notified past the first real characters
-  // onTextStreamUpdate?.(dText.text, false);
+  // await onTextStreamUpdate?.(dText.text, false);
 
   // apply any vendor-specific rate limit
   await llmVendor.rateLimitChatGenerate?.(llm, llmServiceSettings);
@@ -289,10 +290,10 @@ export async function aixChatGenerateText_Simple(
     aixStreaming,
     abortSignal,
     clientOptions?.throttleParallelThreads ?? 0,
-    !aixStreaming ? undefined : (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
+    !aixStreaming ? undefined : async (ll: AixChatGenerateContent_LL, _isDone: boolean /* we want to issue this, in case the next action is an exception */) => {
       _llToText(ll, state);
       if (onTextStreamUpdate && state.text !== null)
-        onTextStreamUpdate(state.text, false, state.generator);
+        await onTextStreamUpdate(state.text, false, state.generator);
     },
   );
 
@@ -320,7 +321,7 @@ export async function aixChatGenerateText_Simple(
     throw new Error('AIX: Error in response: ' + errorMessage);
 
   // final update
-  onTextStreamUpdate?.(state.text, true, state.generator);
+  await onTextStreamUpdate?.(state.text, true, state.generator);
 
   return state.text;
 }
@@ -398,7 +399,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   aixStreaming: boolean,
   // others
   clientOptions: AixClientOptions,
-  onStreamingUpdate?: (update: AixChatGenerateContent_DMessage, isDone: boolean) => void,
+  onStreamingUpdate?: (update: AixChatGenerateContent_DMessage, isDone: boolean) => MaybePromise<void>,
 ): Promise<AixChatGenerateContent_DMessage> {
 
   // Aix Access
@@ -439,7 +440,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   };
 
   // streaming initial notification, for UI updates
-  onStreamingUpdate?.(dMessage, false);
+  await onStreamingUpdate?.(dMessage, false);
 
   // apply any vendor-specific rate limit
   await llmVendor.rateLimitChatGenerate?.(llm, llmServiceSettings);
@@ -453,11 +454,11 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
 
   // Aix Low-Level Chat Generation
   const llAccumulator = await _aixChatGenerateContent_LL(aixAccess, aixModel, aixChatGenerate, aixContext, aixStreaming, clientOptions.abortSignal, clientOptions.throttleParallelThreads ?? 0,
-    (ll: AixChatGenerateContent_LL, isDone: boolean) => {
+    async (ll: AixChatGenerateContent_LL, isDone: boolean) => {
       if (isDone) return; // optimization, as there aren't branches between here and the final update below
       if (onStreamingUpdate) {
         _llToDMessage(ll, dMessage);
-        onStreamingUpdate(dMessage, false);
+        await onStreamingUpdate(dMessage, false);
       }
     },
   );
@@ -470,7 +471,7 @@ export async function aixChatGenerateContent_DMessage<TServiceSettings extends o
   _updateGeneratorCostsInPlace(dMessage.generator, llm, `aix_chatgenerate_content-${aixContext.name}`);
 
   // final update (could ignore and take the dMessage)
-  onStreamingUpdate?.(dMessage, true);
+  await onStreamingUpdate?.(dMessage, true);
 
   return dMessage;
 }
@@ -568,7 +569,7 @@ async function _aixChatGenerateContent_LL(
   abortSignal: AbortSignal,
   throttleParallelThreads: number | undefined,
   // optional streaming callback
-  onReassemblyUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => void,
+  onReassemblyUpdate?: (accumulator: AixChatGenerateContent_LL, isDone: boolean) => MaybePromise<void>,
 ): Promise<AixChatGenerateContent_LL> {
 
   // Aix Low-Level Chat Generation Accumulator
@@ -644,7 +645,7 @@ async function _aixChatGenerateContent_LL(
   contentReassembler.reassembleFinalize();
 
   // final update (could ignore and take the final accumulator)
-  onReassemblyUpdate?.(accumulator_LL, true /* Last message, done */);
+  await onReassemblyUpdate?.(accumulator_LL, true /* Last message, done */);
 
   // return the final accumulated message
   return accumulator_LL;
