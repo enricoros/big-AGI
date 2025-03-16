@@ -8,6 +8,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { DMessageContentFragment, DMessageFragmentId, DMessageVoidFragment, isPlaceholderPart } from '~/common/stores/chat/chat.fragments';
+import { Release } from '~/common/app.release';
 
 import { BlockPartModelAux } from './BlockPartModelAux';
 import { BlockPartPlaceholder } from './BlockPartPlaceholder';
@@ -61,7 +62,8 @@ export function VoidFragments(props: {
 }) {
 
   const showDataStreamViz =
-    props.uiComplexityMode !== 'minimal'
+    !Release.Features.LIGHTER_ANIMATIONS
+    && props.uiComplexityMode !== 'minimal'
     && props.voidFragments.length === 1 && props.nonVoidFragmentsCount === 0
     && isPlaceholderPart(props.voidFragments[0].part);
 
