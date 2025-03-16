@@ -108,6 +108,8 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
   // if the user has marked messages for exclusion, we skip them
   messageSequenceWithoutSystem = messageSequenceWithoutSystem.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
 
+  const lastAssistantMessageIndex = messageSequenceWithoutSystem.findLastIndex(m => m.role === 'assistant');
+
   // reduce history
   // NOTE: we used to have a "systemMessage" here, but we're moving to a more strict API with separate processing of it;
   //       - as such we now 'throw' if a system message is found (on dev mode, and just warn in production).
@@ -215,7 +217,12 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
           case 'image_ref':
             // TODO: rescale shall be dependent on the LLM here - and be careful with the high-res options, as they can
             //  be really space consuming. how to choose between high and low? global option?
-            const resizeMode: LLMImageResizeMode = 'openai-low-res';
+            /**
+             * FIXME for GEMINI IMAGE GENERATION
+             * For now we upload ONLY THE LAST IMAGE as full quality, while all others are resized before transmission.
+             */
+            const isLastAssistantMessage = _index === lastAssistantMessageIndex;
+            const resizeMode = isLastAssistantMessage ? false : 'openai-low-res';
             modelMessage.parts.push(await _convertImageRefToInlineImageOrThrow(aFragment.part, resizeMode));
             break;
 
