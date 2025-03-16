@@ -88,7 +88,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'inlineData' in mPart:
             // [Gemini, 2025-03-14] Experimental Image generation: Response
             if (mPart.inlineData.mimeType.startsWith('image/'))
-              pt.appendImageInline(mPart.inlineData.mimeType, mPart.inlineData.data, 'Gemini Generated Image');
+              pt.appendImageInline(mPart.inlineData.mimeType, mPart.inlineData.data, 'Gemini Generated Image', 'Gemini', '');
             else
               pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null);
             break;
