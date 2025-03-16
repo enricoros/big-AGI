@@ -118,7 +118,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 }
 
 function rayScatterStop(ray: BRay): BRay {
-  ray.genAbortController?.abort();
+  ray.genAbortController?.abort('Beam Stopped');
   return {
     ...ray,
     ...(ray.status === 'scattering' ? { status: 'stopped' } : {}),
