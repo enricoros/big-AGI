@@ -115,7 +115,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         messages,
         'ai-diagram', messageId,
         { abortSignal: stepAbortController.signal },
-        (text) => !!text && setDiagramCode(diagramCode = text.trim()),
+        (text) => {
+          !!text && setDiagramCode(diagramCode = text.trim());
+        },
       );
     } catch (error: any) {
       setDiagramCode(null);
