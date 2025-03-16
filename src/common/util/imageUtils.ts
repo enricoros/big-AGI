@@ -54,6 +54,8 @@ export async function getImageDimensions(base64DataUrl: string): Promise<{ width
 export async function convertBase64Image(base64DataUrl: string, destMimeType: string /*= 'image/webp'*/, destQuality: number /*= 0.90*/): Promise<{
   mimeType: string,
   base64: string,
+  width: number,
+  height: number,
 }> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -75,6 +77,8 @@ export async function convertBase64Image(base64DataUrl: string, destMimeType: st
         resolve({
           mimeType: actualMimeType,
           base64: base64Data,
+          width: image.width,
+          height: image.height,
         });
       } catch (error) {
         console.warn(`imageUtils: failed to convert image to ${destMimeType}.`, { error });

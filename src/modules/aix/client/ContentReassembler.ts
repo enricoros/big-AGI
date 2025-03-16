@@ -1,9 +1,10 @@
 import { addDBImageAsset } from '~/modules/dblobs/dblobs.images';
 
 import type { MaybePromise } from '~/common/types/useful.types';
+import { DEFAULT_ADRAFT_IMAGE_MIMETYPE } from '~/common/attachment-drafts/attachment.pipeline';
+import { convertBase64Image, getImageDimensions } from '~/common/util/imageUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createImageContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
-import { getImageDimensions } from '~/common/util/imageUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
@@ -16,6 +17,8 @@ import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
+const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or JPEG to save IndexedDB space
+const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
 const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
 
@@ -373,15 +376,36 @@ export class ContentReassembler {
     // Break text accumulation, as we have a full image part in the middle
     this.currentTextFragmentIndex = null;
 
-    const { mimeType, i_b64: base64Data, label } = particle;
+    let { mimeType, i_b64: base64Data, label, generator, prompt } = particle;
     const safeLabel = label || 'Generated Image';
 
     try {
 
+      let safeWidth;
+      let safeHeight;
+
+      // TODO: re-evaluate conversion-before-storage (quality is 0.98 and WebP is really optimized, but still, this is not the 'original' data)
+      // PNG -> conversion to WebP or JPEG to save IndexedDB space - will
+      if (GENERATED_IMAGES_CONVERT_TO_COMPRESSED && mimeType === 'image/png') {
+        const preSize = base64Data.length;
+        const convertedData = await convertBase64Image(`data:${mimeType};base64,${base64Data}`, DEFAULT_ADRAFT_IMAGE_MIMETYPE, GENERATED_IMAGES_COMPRESSION_QUALITY).catch(() => null);
+        if (convertedData) {
+          mimeType = convertedData.mimeType;
+          base64Data = convertedData.base64;
+          safeWidth = convertedData.width || 0;
+          safeHeight = convertedData.height || 0;
+        }
+        const postSize = base64Data.length;
+        const sizeDiffPerc = preSize ? Math.round(((postSize - preSize) / preSize) * 100) : 0;
+        console.warn(`[image-pipeline] stored generated PNG as ${mimeType} (quality:${GENERATED_IMAGES_COMPRESSION_QUALITY}, ${sizeDiffPerc}% reduction, ${preSize?.toLocaleString()} -> ${postSize?.toLocaleString()})`);
+      }
+
       // find out the dimensions (frontend)
-      const dimensions = await getImageDimensions(`data:${mimeType};base64,${base64Data}`).catch(() => null);
-      const safeWidth = dimensions?.width || 0;
-      const safeHeight = dimensions?.height || 0;
+      if (!safeWidth || !safeHeight) {
+        const dimensions = await getImageDimensions(`data:${mimeType};base64,${base64Data}`).catch(() => null);
+        safeWidth = dimensions?.width || 0;
+        safeHeight = dimensions?.height || 0;
+      }
 
       // add the image to the DBlobs DB
       const dblobAssetId = await addDBImageAsset('global', 'app-chat', {
@@ -393,8 +417,8 @@ export class ContentReassembler {
         origin: {
           ot: 'generated',
           source: 'ai-text-to-image',
-          generatorName: '', // ?
-          prompt: '', // ?
+          generatorName: generator ?? '',
+          prompt: prompt ?? '',
           parameters: {}, // ?
           generatedAt: new Date().toISOString(),
         },
