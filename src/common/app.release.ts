@@ -24,6 +24,7 @@ export const Release = {
     // ...
     BACKEND_REVALIDATE_INTERVAL: 6 * 60 * 60 * 1000, // 6 hours
     // DISABLE_PRECISE_TOKENIZER: false, // future optimization: disables the correct tokenizer fully or over a certain input size (e.g. 1k)
+    LIGHTER_ANIMATIONS: false, // optimization: disables some animations for performance
   },
 
   // this is here to trigger revalidation of data, e.g. models refresh
