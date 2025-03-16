@@ -16,7 +16,7 @@ export function aixClientDebugger_setRequest(
   });
 }
 
-export function aixClientDebugger_recordParticle(frameId: AixFrameId, particleContent: Record<string, any>, isAborted = false): void {
+export function aixClientDebugger_recordParticleReceived(frameId: AixFrameId, particleContent: Record<string, any>, isAborted = false): void {
   useAixClientDebuggerStore.getState().addParticle(frameId, {
     timestamp: Date.now(),
     content: particleContent,

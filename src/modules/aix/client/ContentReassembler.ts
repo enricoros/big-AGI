@@ -1,10 +1,11 @@
-import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
+import type { MaybePromise } from '~/common/types/useful.types';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
 import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
-import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticle, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
+import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
 
 import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
@@ -18,26 +19,153 @@ const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
  */
 export class ContentReassembler {
 
+  // constructor
+  private readonly debuggerFrameId: AixFrameId | null;
+
+  // processing mechanics
+  private readonly wireParticlesBacklog: AixWire_Particles.ChatGenerateOp[] = [];
+  private isProcessing = false;
+  private processingPromise = Promise.resolve();
+  private hadErrorInWireReassembly = false;
+
+  // reassembly state (plus the ext. accumulator)
   private currentTextFragmentIndex: number | null = null;
-  private readonly debuggerFrameId: AixFrameId | null = null;
 
-  // private pendingAnnotations: DVoidWebCitation[] = []; // we implemented this as a single fragment per message instead
 
-  constructor(readonly accumulator: AixChatGenerateContent_LL, enableDebugContext?: AixClientDebugger.Context) {
+  constructor(
+    private readonly accumulator: AixChatGenerateContent_LL,
+    private readonly onAccumulatorUpdated?: () => MaybePromise<void>,
+    enableDebugContext?: AixClientDebugger.Context,
+    private readonly wireAbortSignal?: AbortSignal,
+  ) {
 
     // [SUDO] Debugging the request, last-write-wins for the global (displayed in the UI)
     this.debuggerFrameId = !enableDebugContext ? null : aixClientDebugger_init(enableDebugContext);
 
   }
 
-  // reset(): void {
-  //   this.accumulator. ... = [];
-  //   this.currentTextFragmentIndex = null;
-  // }
 
-  reassembleParticle(op: AixWire_Particles.ChatGenerateOp, debugIsAborted: boolean): void {
+  // PUBLIC: wire queueing and processing
+
+  enqueueWireParticle(op: AixWire_Particles.ChatGenerateOp): void {
+    if (this.#wireIsAborted) {
+      // console.log('Dropped particle due to abort:', op);
+      return;
+    }
+
+    this.wireParticlesBacklog.push(op);
+
+    // -> debugger, if active (ans skip the header particle)
+    if (this.debuggerFrameId && !('cg' in op && op.cg === '_debugDispatchRequest'))
+      aixClientDebugger_recordParticleReceived(this.debuggerFrameId, op, this.#wireIsAborted);
+
+    this.#continueWireBacklogProcessing();
+  }
+
+  async waitForWireComplete(): Promise<void> {
+    return this.processingPromise;
+  }
+
+
+  finalizeAccumulator(): void {
+
+    // Perform all the latest operations
+    const hasAborted = !!this.accumulator.genTokenStopReason;
+    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
+
+    // [SUDO] Debugging, finalize the frame
+    if (this.debuggerFrameId)
+      aixClientDebugger_completeFrame(this.debuggerFrameId);
+
+  }
+
+
+  async setClientAborted(): Promise<void> {
     if (DEBUG_PARTICLES)
-      console.log('-> aix.p:', op);
+      console.log('-> aix.p: abort-client');
+
+    // NOTE: this doens't go to the debugger anymore - as we only publish external particles to the debugger
+    await this.#reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' });
+  }
+
+  async setClientExcepted(errorAsText: string): Promise<void> {
+    if (DEBUG_PARTICLES)
+      console.log('-> aix.p: issue:', errorAsText);
+
+    this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
+
+    // NOTE: this doens't go to the debugger anymore - as we only publish external particles to the debugger
+    await this.#reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' });
+  }
+
+
+  // processing - internal
+
+  #continueWireBacklogProcessing(): void {
+    // require work
+    if (this.isProcessing || !this.#hasBacklog) return;
+    // require not external abort
+    if (this.#wireIsAborted) return;
+    // require not former processing errors
+    if (this.hadErrorInWireReassembly) return;
+
+    this.isProcessing = true;
+
+    // schedule processing as a promise chain
+    // Key insight: the .then modifies the processingPromise in place, so we can chain it
+    this.processingPromise = this.processingPromise.then(() => this.#processWireBacklog());
+
+    // NOTE: we let errors propagate to the caller, as here we're too down deep to handle them
+    // .catch((error) => console.error('ContentReassembler: processing error', error));
+  }
+
+  async #processWireBacklog(): Promise<void> {
+    // try...finally does not stop the error propagation (grat because we handle errors in the caller)
+    // but allows this to continue processing the backlog
+    try {
+
+      while (this.#hasBacklog && !this.#wireIsAborted) {
+
+        // worker function, may be sync or async
+        const particle = this.wireParticlesBacklog.shift()!;
+        await this.#reassembleParticle(particle);
+
+        // signal all updates
+        await this.onAccumulatorUpdated?.();
+
+      }
+
+    } catch (error) {
+
+      // mark that we've encountered an error to prevent further scheduling
+      console.log('[DEV] rare particle reassembly error:', { error });
+      this.hadErrorInWireReassembly = true;
+      this.wireParticlesBacklog.length = 0; // empty the backlog
+
+      // te-throw to propagate to outer catch blocks
+      throw error;
+
+    } finally {
+
+      // continue processing in case there's more to do
+      this.isProcessing = false;
+      this.#continueWireBacklogProcessing();
+
+    }
+  }
+
+  get #hasBacklog(): boolean {
+    return this.wireParticlesBacklog.length > 0;
+  }
+
+  get #wireIsAborted(): boolean {
+    return !!this.wireAbortSignal?.aborted;
+  }
+
+
+  /// Particle Reassembly ///
+
+  async #reassembleParticle(op: AixWire_Particles.ChatGenerateOp): Promise<void> {
     switch (true) {
 
       // TextParticleOp
@@ -98,44 +226,17 @@ export class ContentReassembler {
             this.onModelName(op);
             break;
           default:
+            // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
             this._appendReassemblyDevError(`unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
         }
         break;
 
       default:
+        // noinspection JSUnusedLocalSymbols
         const _exhaustiveCheck: never = op;
         this._appendReassemblyDevError(`unexpected particle: ${JSON.stringify(op)}`);
     }
-
-    // [DEV] Debugging, skipping the header particle
-    if (this.debuggerFrameId && !('cg' in op && op.cg === '_debugDispatchRequest'))
-      aixClientDebugger_recordParticle(this.debuggerFrameId, op, debugIsAborted);
-  }
-
-  reassembleClientAbort(): void {
-    if (DEBUG_PARTICLES)
-      console.log('-> aix.p: abort-client');
-    this.reassembleParticle({ cg: 'end', reason: 'abort-client', tokenStopReason: 'client-abort-signal' }, true);
-  }
-
-  reassembleClientException(errorAsText: string): void {
-    if (DEBUG_PARTICLES)
-      console.log('-> aix.p: issue:', errorAsText);
-    this.onCGIssue({ cg: 'issue', issueId: 'client-read', issueText: errorAsText });
-    this.reassembleParticle({ cg: 'end', reason: 'issue-rpc', tokenStopReason: 'cg-issue' }, false);
-  }
-
-  reassembleFinalize(): void {
-
-    // Perform all the latest operations
-    const hasAborted = !!this.accumulator.genTokenStopReason;
-    metricsFinishChatGenerateLg(this.accumulator.genMetricsLg, hasAborted);
-
-    // [SUDO] Debugging, finalize the frame
-    if (this.debuggerFrameId)
-      aixClientDebugger_completeFrame(this.debuggerFrameId);
-
   }
 
 
@@ -317,6 +418,8 @@ export class ContentReassembler {
 
       // unexpected
       default:
+        // noinspection JSUnusedLocalSymbols
+        const _exhaustiveCheck: never = tokenStopReason;
         this._appendReassemblyDevError(`Unexpected token stop reason: ${tokenStopReason}`);
         break;
     }

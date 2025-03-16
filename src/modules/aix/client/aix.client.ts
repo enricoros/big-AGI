@@ -578,8 +578,17 @@ async function _aixChatGenerateContent_LL(
     /* rest start as undefined (missing in reality) */
   };
 
-  const doPartialUpdate = !onGenerateContentUpdate ? undefined
-    : withDecimator(throttleParallelThreads ?? 0, async () => await onGenerateContentUpdate(accumulator_LL, false));
+  const sendContentUpdate = !onGenerateContentUpdate ? undefined : withDecimator(throttleParallelThreads ?? 0, async () => {
+    /**
+     * We want the first update to have actual content.
+     * However note that we won't be sending out the model name very fast this way,
+     * but it's probably what we want because of the ParticleIndicators (VFX!)
+     */
+    if (!accumulator_LL.fragments.length)
+      return;
+
+    await onGenerateContentUpdate(accumulator_LL, false);
+  });
 
   /**
    * DEBUG note: early we were filtering (aixContext.name === 'conversation'), but with the new debugger we don't
@@ -588,7 +597,20 @@ async function _aixChatGenerateContent_LL(
    */
   const debugDispatchRequest = getLabsDevMode();
   const debugContext = !debugDispatchRequest ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
-  const contentReassembler = new ContentReassembler(accumulator_LL, debugContext);
+
+  /**
+   * Particles Reassembler.
+   * - uses this accumulator
+   * - calls a partial update callback with built-in decimation
+   * - optional. forwards particles to the debugger
+   * - abort will interrupt the fetch, and also the reassembly (for pieces coming still down the wire)
+   */
+  const reassembler = new ContentReassembler(
+    accumulator_LL,
+    sendContentUpdate,
+    debugContext,
+    abortSignal,
+  );
 
   try {
 
@@ -608,17 +630,18 @@ async function _aixChatGenerateContent_LL(
       signal: abortSignal,
     });
 
-    // reassemble the particles
-    for await (const particle of particles) {
-      contentReassembler.reassembleParticle(particle, abortSignal.aborted);
-      /**
-       * We want the first update to have actual content.
-       * However note that we won't be sending out the model name very fast this way,
-       * but it's probably what we want because of the ParticleIndicators (VFX!)
-       */
-      if (doPartialUpdate && accumulator_LL.fragments.length)
-        void doPartialUpdate(); // fire-and-forget, for now
-    }
+    /**
+     * Reassemble the particles by enqueueing them as they come in.
+     * Processing is done asynchronously and in batches.
+     *
+     * Workaround: we cannot use Asyncs insie the 'for...await' loop, as we'd get
+     * a 'closed connection' exception thrown when looping and a slow operation.
+     */
+    for await (const particle of particles)
+      reassembler.enqueueWireParticle(particle);
+
+    // synchronize any pending async tasks
+    await reassembler.waitForWireComplete();
 
   } catch (error: any) {
 
@@ -629,19 +652,19 @@ async function _aixChatGenerateContent_LL(
       if (isUserAbort !== isErrorAbort)
         if (AIX_CLIENT_DEV_ASSERTS)
           console.error(`[DEV] Aix streaming AbortError mismatch (${isUserAbort}, ${isErrorAbort})`, { error: error });
-      contentReassembler.reassembleClientAbort();
+      await reassembler.setClientAborted().catch(console.error /* never */);
     } else {
       if (AIX_CLIENT_DEV_ASSERTS)
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!accumulator_LL.fragments.length;
       const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error').replace('[TRPCClientError]', '');
-      contentReassembler.reassembleClientException(`An unexpected error occurred: ${errorText} Please retry.`);
+      await reassembler.setClientExcepted(`An unexpected error occurred: ${errorText} Please retry.`).catch(console.error /* never */);
     }
 
   }
 
   // and we're done
-  contentReassembler.reassembleFinalize();
+  reassembler.finalizeAccumulator();
 
   // final update (could ignore and take the final accumulator)
   await onGenerateContentUpdate?.(accumulator_LL, true /* Last message, done */);
