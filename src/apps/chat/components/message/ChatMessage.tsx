@@ -40,6 +40,7 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
+import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
@@ -665,7 +666,7 @@ export function ChatMessage(props: {
             {/* Assistant (llm/function) name */}
             {fromAssistant && !zenMode && (
               <TooltipOutlined asLargePane enableInteractive title={messageAvatarTooltip} placement='bottom-start'>
-                <Typography level='body-xs' sx={messagePendingIncomplete ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
+                <Typography level='body-xs' sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
                   {messageAvatarLabel}
                 </Typography>
               </TooltipOutlined>
