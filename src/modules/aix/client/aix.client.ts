@@ -654,6 +654,7 @@ async function _aixChatGenerateContent_LL(
           console.error(`[DEV] Aix streaming AbortError mismatch (${isUserAbort}, ${isErrorAbort})`, { error: error });
       await reassembler.setClientAborted().catch(console.error /* never */);
     } else {
+      // NOTE: this code path has also been almost replicated on `ContentReassembler.#processWireBacklog.catch() {...}`
       if (AIX_CLIENT_DEV_ASSERTS)
         console.error('[DEV] Aix streaming Error:', error);
       const showAsBold = !!accumulator_LL.fragments.length;

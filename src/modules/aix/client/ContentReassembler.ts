@@ -1,6 +1,7 @@
 import type { MaybePromise } from '~/common/types/useful.types';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
+import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
@@ -137,13 +138,25 @@ export class ContentReassembler {
 
     } catch (error) {
 
+      // ERROR CATCHING - LIKE the _aixChatGenerateContent_LL which doesn't intercept this somehow
+      // NEW METHOD: shows Error Fragments on both Reassembly and Callbacks errors
+      //
+      // - we don't stop processing anymore, as the source may still be pumping particles
+      // - we insert an error fragment showing what happened - akin to how _aixChatGenerateContent_LL would do it
+      //
+      const showAsBold = !!this.accumulator.fragments.length;
+      const errorText = (presentErrorToHumans(error, showAsBold, true) || 'Unknown error');
+      this._appendReassemblyDevError(`An unexpected issue occurred: ${errorText} Please retry.`, true);
+      await this.onAccumulatorUpdated?.()?.catch(console.error);
+
+      // FORMER METHOD - the THROW wasn't caught by the caller
+
       // mark that we've encountered an error to prevent further scheduling
-      console.log('[DEV] rare particle reassembly error:', { error });
-      this.hadErrorInWireReassembly = true;
-      this.wireParticlesBacklog.length = 0; // empty the backlog
+      // this.hadErrorInWireReassembly = true;
+      // this.wireParticlesBacklog.length = 0; // empty the backlog
 
       // te-throw to propagate to outer catch blocks
-      throw error;
+      // throw error;
 
     } finally {
 
@@ -453,8 +466,8 @@ export class ContentReassembler {
 
   // utility
 
-  private _appendReassemblyDevError(errorText: string): void {
-    this.accumulator.fragments.push(createErrorContentFragment('ContentReassembler: ' + errorText));
+  private _appendReassemblyDevError(errorText: string, omitPrefix?: boolean): void {
+    this.accumulator.fragments.push(createErrorContentFragment((omitPrefix ? '' : 'AIX Content Reassembler: ') + errorText));
     this.currentTextFragmentIndex = null;
   }
 
