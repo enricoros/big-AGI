@@ -1,5 +1,6 @@
 import type { MaybePromise } from '~/common/types/useful.types';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDVoidWebCitation, createErrorContentFragment, createModelAuxVoidFragment, createTextContentFragment, DVoidModelAuxPart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
@@ -12,6 +13,7 @@ import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
 
 // configuration
+const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
 
 
@@ -467,6 +469,12 @@ export class ContentReassembler {
   // utility
 
   private _appendReassemblyDevError(errorText: string, omitPrefix?: boolean): void {
+    if (ELLIPSIZE_DEV_ISSUE_MESSAGES) {
+      const excess = errorText.length - ELLIPSIZE_DEV_ISSUE_MESSAGES;
+      const truncationMessage = `\n\n ... (truncated ${excess?.toLocaleString()} characters) ... \n\n`;
+      if (excess > 0)
+        errorText = ellipsizeMiddle(errorText, ELLIPSIZE_DEV_ISSUE_MESSAGES - truncationMessage.length, truncationMessage);
+    }
     this.accumulator.fragments.push(createErrorContentFragment((omitPrefix ? '' : 'AIX Content Reassembler: ') + errorText));
     this.currentTextFragmentIndex = null;
   }
