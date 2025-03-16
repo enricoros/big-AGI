@@ -1,6 +1,6 @@
 import { getImageAsset } from '~/modules/dblobs/dblobs.images';
 
-import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
+import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageFragment, DMessageImageRefPart, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isTextContentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
@@ -336,6 +336,10 @@ export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interf
 
   let workaroundsCount = 0;
 
+  // Apply the remove-sys0 hot fix - at the time of doing it, Gemini Image Generation does not use the system instructions
+  if (llmInterfaces.includes(LLM_IF_HOTFIX_StripSys0))
+    workaroundsCount += clientHotFixGenerateRequest_StripSys0(aixChatGenerate);
+
   // Apply the cast-sys0-to-usr0 hot fix (e.g. o1-preview); however this is a late-stage emergency hotfix as we expect the caller to be aware of this logic
   if (llmInterfaces.includes(LLM_IF_HOTFIX_Sys0ToUsr0))
     workaroundsCount += clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate);
@@ -351,38 +355,6 @@ export function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['interf
     console.warn(`[DEV] Working around '${modelName}' model limitations: client-side applied ${workaroundsCount} workarounds`);
 
   return { shallDisableStreaming, workaroundsCount };
-
-}
-
-
-/**
- * Hot fix for handling system messages in models that do not support them, such as `o1-preview`.
- * -> Converts System to User messages for compatibility.
- *
- * Notes for the o1-2024-12-17 model:
- * - we don't cast the system to user, as the aix dispatcher is casting the 'system' message to 'developer'
- */
-function clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate: AixAPIChatGenerate_Request): number {
-
-  // Convert the main system message if it exists
-  if (!aixChatGenerate.systemMessage)
-    return 0;
-
-  // Convert system message to user message
-  const systemAsUser: AixMessages_UserMessage = {
-    role: 'user',
-    parts: aixChatGenerate.systemMessage.parts,
-  };
-
-  // Insert the converted system message at the beginning of the chat sequence (recreating the array to not alter the original)
-  aixChatGenerate.chatSequence = [...aixChatGenerate.chatSequence];
-  aixChatGenerate.chatSequence.unshift(systemAsUser);
-
-  // Remove the original system message
-  aixChatGenerate.systemMessage = null;
-
-  // Log the workaround applied
-  return 1;
 
 }
 
@@ -415,5 +387,48 @@ function clientHotFixGenerateRequest_StripImages(aixChatGenerate: AixAPIChatGene
 
   // Log the number of workarounds applied
   return workaroundsCount;
+
+}
+
+/**
+ * Hot fix for models that don't want the system message - e.g. Gemini Image Generation (although this may change)
+ */
+function clientHotFixGenerateRequest_StripSys0(aixChatGenerate: AixAPIChatGenerate_Request): number {
+
+  const workaroundsCount = aixChatGenerate.systemMessage?.parts?.length ? 1 : 0;
+  aixChatGenerate.systemMessage = null;
+  return workaroundsCount;
+
+}
+
+
+/**
+ * Hot fix for handling system messages in models that do not support them, such as `o1-preview`.
+ * -> Converts System to User messages for compatibility.
+ *
+ * Notes for the o1-2024-12-17 model:
+ * - we don't cast the system to user, as the aix dispatcher is casting the 'system' message to 'developer'
+ */
+function clientHotFixGenerateRequest_Sys0ToUsr0(aixChatGenerate: AixAPIChatGenerate_Request): number {
+
+  // Convert the main system message if it exists
+  if (!aixChatGenerate.systemMessage)
+    return 0;
+
+  // Convert system message to user message
+  const systemAsUser: AixMessages_UserMessage = {
+    role: 'user',
+    parts: aixChatGenerate.systemMessage.parts,
+  };
+
+  // Insert the converted system message at the beginning of the chat sequence (recreating the array to not alter the original)
+  aixChatGenerate.chatSequence = [...aixChatGenerate.chatSequence];
+  aixChatGenerate.chatSequence.unshift(systemAsUser);
+
+  // Remove the original system message
+  aixChatGenerate.systemMessage = null;
+
+  // Log the workaround applied
+  return 1;
 
 }
