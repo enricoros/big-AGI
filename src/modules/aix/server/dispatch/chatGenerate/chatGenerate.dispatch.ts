@@ -40,7 +40,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ...anthropicAccess(access, model.id, '/v1/messages'),
           body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
-        demuxerFormat: streaming ? 'sse' : null,
+        demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
 
@@ -52,7 +52,8 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath, useV1Alpha),
           body: aixToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
-        demuxerFormat: streaming ? 'sse' : null,
+        // we verified that 'fast-sse' works well with Gemini
+        demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: createGeminiGenerateContentResponseParser(model.id.replace('models/', ''), streaming),
       };
 
@@ -71,7 +72,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           body: aixToOpenAIChatCompletions('openai', model, chatGenerate, access.ollamaJson, streaming),
         },
         // demuxerFormat: streaming ? 'json-nl' : null,
-        demuxerFormat: streaming ? 'sse' : null,
+        demuxerFormat: streaming ? 'fast-sse' : null,
         // chatGenerateParse: createDispatchParserOllama(),
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
@@ -94,7 +95,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           body: aixToOpenAIChatCompletions(access.dialect, model, chatGenerate, false, streaming),
         },
-        demuxerFormat: streaming ? 'sse' : null,
+        demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
   }

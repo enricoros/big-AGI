@@ -14,7 +14,7 @@ import type { AixDemuxers } from './stream.demuxers';
  *
  * Note that we only use the 'feed' function and not 'reset', as we recreate the object per-call.
  */
-export function _createEventSourceDemuxer(): AixDemuxers.StreamDemuxer {
+export function createEventSourceDemuxer(): AixDemuxers.StreamDemuxer {
   let buffer: AixDemuxers.DemuxedEvent[] = [];
   const parser = createEventsourceParser({
     onEvent: (event: EventSourceMessage) => {
