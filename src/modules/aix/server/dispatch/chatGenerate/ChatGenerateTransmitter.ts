@@ -2,6 +2,7 @@ import { SERVER_DEBUG_WIRE } from '~/server/wire';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
+import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.router';
 
 import type { IParticleTransmitter } from './IParticleTransmitter';
 
@@ -127,14 +128,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   addDebugRequestInDev(url: string, headers: HeadersInit, body: object) {
-    // [security] only emit in development, as it may contain sensitive information
-    if (process.env.NODE_ENV !== 'development') return;
     this.transmissionQueue.push({
       cg: '_debugDispatchRequest',
       security: 'dev-env',
       dispatchRequest: {
-        url,
-        headers: JSON.stringify(headers, null, 2),
+        url: url,
+        headers: !AIX_SECURITY_ONLY_IN_DEV_BUILDS ? '(hidden sensitive data)' : JSON.stringify(headers, null, 2),
         body: JSON.stringify(body, null, 2),
       },
     });

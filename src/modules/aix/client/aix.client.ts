@@ -595,8 +595,8 @@ async function _aixChatGenerateContent_LL(
    * - 'sudo' mode is enabled by the UX Labs, and activates debug
    * - every request thereafter both sends back the Aix server-side dispatch packet, and appends all the particles received by the client side
    */
-  const debugDispatchRequest = getLabsDevMode();
-  const debugContext = !debugDispatchRequest ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
+  const requestServerDebugging = getLabsDevMode();
+  const debugContext = !requestServerDebugging ? undefined : { contextName: aixContext.name, contextRef: aixContext.ref };
 
   /**
    * Particles Reassembler.
@@ -624,7 +624,7 @@ async function _aixChatGenerateContent_LL(
       /**
        * Debugging/Profiling is only active when the "Debug Mode" is on.
        */
-      ...(debugDispatchRequest && {
+      ...(requestServerDebugging && {
         connectionOptions: {
           /**
            * Request a round-trip of the upstream AIX dispatch request.
@@ -632,10 +632,10 @@ async function _aixChatGenerateContent_LL(
            */
           debugDispatchRequest: true,
           /**
-           * [DEV] Request profiling data for a successful call (only streaming for now).
-           * Active when Both: "Debug Mode" is on, and it's a "Dev Build" of the app.
+           * Request profiling data for a successful call (only streaming for now).
+           * Note: the server-side won't enable profiling on non-production builds.
            */
-          debugProfilePerformance: process.env.NODE_ENV === 'development',
+          debugProfilePerformance: true,
         },
       }),
     }, {

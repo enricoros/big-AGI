@@ -1,4 +1,5 @@
 import { createParser as createEventsourceParser, type EventSourceMessage, ParseError } from 'eventsource-parser';
+import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '~/modules/aix/server/api/aix.router';
 
 /**
  * The format of the stream: 'sse' or 'json-nl'
@@ -55,7 +56,7 @@ function _createEventSourceDemuxer(): StreamDemuxer {
       console.warn(`stream.demuxers: parser error (${error.type}):`, error.field, error.value, error.line);
     },
     onComment: (comment: string) => {
-      if (process.env.NODE_ENV === 'development')
+      if (AIX_SECURITY_ONLY_IN_DEV_BUILDS)
         console.log('[DEV] stream.demuxers: parser comment (safe to ignore):', comment);
     },
   });
