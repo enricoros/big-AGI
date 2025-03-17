@@ -11,7 +11,7 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
 
 import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
-import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
+import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
 
 import { AixChatGenerateContent_LL, DEBUG_PARTICLES } from './aix.client';
 
@@ -243,6 +243,8 @@ export class ContentReassembler {
               aixClientDebugger_setRequest(this.debuggerFrameId, op.dispatchRequest);
             break;
           case '_debugProfiler':
+            if (this.debuggerFrameId)
+              aixClientDebugger_setProfilerMeasurements(this.debuggerFrameId, op.measurements);
             // Profiling particles will come in if the app is in "Debug Mode" + it's a Development build!
             // Additionally to show them on the console (rather than just in the debugger) set the
             // constant to `true`.

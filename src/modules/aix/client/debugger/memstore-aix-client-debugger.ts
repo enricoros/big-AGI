@@ -23,10 +23,14 @@ export namespace AixClientDebugger {
     headers: string;
     body: string;
     isComplete: boolean;
+    // upstream profiler measurements
+    profilerMeasurements?: Measurements;
     // NOTE: in the future we could debug the raw SSE streams.. not now
     // aix response particles
     particles: Particle[];
   }
+
+  export type Measurements = Record<string, string | number>[];
 
   export interface Particle {
     timestamp: number;
@@ -74,6 +78,7 @@ interface AixClientDebuggerActions {
   // frames
   createFrame: (initialContext: AixClientDebugger.Context) => AixFrameId;
   setRequest: (fId: AixFrameId, updates: Pick<AixClientDebugger.Frame, 'url' | 'headers' | 'body'>) => void;
+  setProfilerMeasurements: (fId: AixFrameId, measurements: AixClientDebugger.Measurements) => void;
   addParticle: (fId: AixFrameId, particle: AixClientDebugger.Particle, isAborted?: boolean) => void;
   completeFrame: (fId: AixFrameId) => void;
 
@@ -112,6 +117,14 @@ export const useAixClientDebuggerStore = create<AixClientDebuggerStore>((_set) =
       frames: state.frames.map(frame => frame.id !== fId ? frame : {
         ...frame,
         ...requestData,
+      }),
+    })),
+
+  setProfilerMeasurements: (fId, measurements) =>
+    _set(state => ({
+      frames: state.frames.map(frame => frame.id !== fId ? frame : {
+        ...frame,
+        profilerMeasurements: measurements,
       }),
     })),
 
