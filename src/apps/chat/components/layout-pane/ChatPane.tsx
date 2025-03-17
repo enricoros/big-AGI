@@ -152,6 +152,19 @@ export function ChatPane(props: {
         Branch
       </MenuItem>
 
+      <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
+        <ListItemDecorator><RestartAltIcon /></ListItemDecorator>
+        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+          Restart
+          {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
+        </Box>
+      </MenuItem>
+
+      <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
+        <ListItemDecorator><CompressIcon /></ListItemDecorator>
+        Minify
+      </MenuItem>
+
       <MenuItem
         disabled={props.disableItems}
         color={props.isMessageSelectionMode ? 'warning' : 'neutral'}
@@ -163,18 +176,6 @@ export function ChatPane(props: {
         Cleanup
       </MenuItem>
 
-      <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
-        <ListItemDecorator><CompressIcon /></ListItemDecorator>
-        Minify
-      </MenuItem>
-
-      <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
-        <ListItemDecorator><RestartAltIcon /></ListItemDecorator>
-        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-          Restart
-          {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
-        </Box>
-      </MenuItem>
     </OptimaPanelGroupedList>
 
     {/* ... how do we name this? ... */}
