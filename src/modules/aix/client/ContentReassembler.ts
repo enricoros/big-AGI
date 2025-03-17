@@ -197,6 +197,9 @@ export class ContentReassembler {
       // PartParticleOp
       case 'p' in op:
         switch (op.p) {
+          case '❤':
+            // ignore the heartbeats
+            break;
           case 'tr_':
             this.onAppendReasoningText(op);
             break;
