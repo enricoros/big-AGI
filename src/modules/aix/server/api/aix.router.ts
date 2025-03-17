@@ -13,7 +13,7 @@ import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
 
 
 // configuration
-const DEBUG_LOG_PROFILER = false; // capture and log performance (server-side flag, it can also tbe set by the client to return the profiling data)
+const DEBUG_LOG_PROFILER_ON_SERVER = false; // capture and log performance (server-side flag, it can also tbe set by the client to return the profiling data)
 
 
 export const aixRouter = createTRPCRouter({
@@ -46,7 +46,7 @@ export const aixRouter = createTRPCRouter({
 
 
       // Profiler, if requested by the caller
-      const _profiler = !(DEBUG_LOG_PROFILER || input.connectionOptions?.debugDispatchRequest) ? null
+      const _profiler = !(DEBUG_LOG_PROFILER_ON_SERVER || input.connectionOptions?.debugDispatchRequest) ? null
         : new PerformanceProfiler();
 
       const _profilerCompleted = !_profiler ? null : () => {
@@ -55,7 +55,7 @@ export const aixRouter = createTRPCRouter({
           chatGenerateTx.addDebugProfilererData(_profiler?.getResultsData());
 
         // print on the console, only if we have the server-side conf flag
-        if (DEBUG_LOG_PROFILER)
+        if (DEBUG_LOG_PROFILER_ON_SERVER)
           performanceProfilerLog('AIX Router Performance', _profiler?.getResultsData());
 
         // clear the profiler for the next call, for resident lambdas (the profiling framework is global)

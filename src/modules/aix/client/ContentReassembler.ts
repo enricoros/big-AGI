@@ -21,6 +21,7 @@ const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or 
 const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
 const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096;
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = true;
+const DEBUG_LOG_PROFILER_ON_CLIENT = false; // print Profiling particles when they come in, otherwise ignore them
 
 
 /**
@@ -242,9 +243,13 @@ export class ContentReassembler {
               aixClientDebugger_setRequest(this.debuggerFrameId, op.dispatchRequest);
             break;
           case '_debugProfiler':
-            // only show this to developers in the console
-            console.warn('[AIX] chatGenerate profiler measurements:');
-            console.table(op.measurements);
+            // Profiling particles will come in if the app is in "Debug Mode" + it's a Development build!
+            // Additionally to show them on the console (rather than just in the debugger) set the
+            // constant to `true`.
+            if (DEBUG_LOG_PROFILER_ON_CLIENT) {
+              console.warn('[AIX] chatGenerate profiler measurements:');
+              console.table(op.measurements);
+            }
             break;
           case 'end':
             this.onCGEnd(op);
