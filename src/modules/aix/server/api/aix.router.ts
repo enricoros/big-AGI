@@ -46,7 +46,7 @@ export const aixRouter = createTRPCRouter({
 
 
       // Profiler, if requested by the caller
-      const _profiler = !(DEBUG_LOG_PROFILER_ON_SERVER || input.connectionOptions?.debugDispatchRequest) ? null
+      const _profiler = !(DEBUG_LOG_PROFILER_ON_SERVER || input.connectionOptions?.debugProfilePerformance) ? null
         : new PerformanceProfiler();
 
       const _profilerCompleted = !_profiler ? null : () => {
