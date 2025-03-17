@@ -1,4 +1,3 @@
-import { createEventSourceDemuxer } from './stream.demuxer.sse';
 import { createFastEventSourceDemuxer } from './stream.demuxer.fastsse';
 
 
@@ -7,10 +6,9 @@ export namespace AixDemuxers {
   /**
    * The format of the stream: 'sse' or 'json-nl'
    * - 'fast-sse' is our own parser, optimized for performance. to be preferred when possible over 'sse' (check for full compatibility with the upstream)
-   * - 'sse' is the default format, and is used by all vendors except Ollama
    * - 'json-nl' is used by Ollama
    */
-  export type StreamDemuxerFormat = 'fast-sse' | 'sse' | 'json-nl' | null;
+  export type StreamDemuxerFormat = 'fast-sse' | 'json-nl' | null;
 
 
   /**
@@ -21,8 +19,6 @@ export namespace AixDemuxers {
     switch (format) {
       case 'fast-sse':
         return createFastEventSourceDemuxer();
-      case 'sse':
-        return createEventSourceDemuxer();
       case 'json-nl':
         return _createJsonNlDemuxer();
       case null:
