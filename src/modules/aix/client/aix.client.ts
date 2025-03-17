@@ -621,9 +621,21 @@ async function _aixChatGenerateContent_LL(
       chatGenerate: aixChatGenerate,
       context: aixContext,
       streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
+      /**
+       * Debugging/Profiling is only active when the "Debug Mode" is on.
+       */
       ...(debugDispatchRequest && {
         connectionOptions: {
-          debugDispatchRequest: true, // [DEV] Debugging the request without requiring a server restart
+          /**
+           * Request a round-trip of the upstream AIX dispatch request.
+           * Note: the server-side will only send the Body of the call on production builds, while headers will be shown on "Dev Builds".
+           */
+          debugDispatchRequest: true,
+          /**
+           * [DEV] Request profiling data for a successful call (only streaming for now).
+           * Active when Both: "Debug Mode" is on, and it's a "Dev Build" of the app.
+           */
+          debugProfilePerformance: process.env.NODE_ENV === 'development',
         },
       }),
     }, {

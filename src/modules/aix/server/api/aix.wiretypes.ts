@@ -449,6 +449,7 @@ export namespace AixWire_API {
 
   export const ConnectionOptions_schema = z.object({
     debugDispatchRequest: z.boolean().optional(),
+    debugProfilePerformance: z.boolean().optional(),
     throttlePartTransmitter: z.number().optional(), // in ms
     // retry: z.number().optional(),
     // retryDelay: z.number().optional(),
@@ -513,7 +514,8 @@ export namespace AixWire_Particles {
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
-    | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string } }; // may generalize this in the future
+    | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string } } // may generalize this in the future
+    | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
   export type CGEndReason =     // the reason for the end of the chat generation
     | 'abort-client'            // user aborted before the end of stream
