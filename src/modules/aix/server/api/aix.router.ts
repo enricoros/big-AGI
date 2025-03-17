@@ -6,14 +6,20 @@ import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
-import { PerformanceProfiler, performanceProfilerLog } from '../dispatch/PerformanceProfiler';
+import { PerformanceProfiler } from '../dispatch/PerformanceProfiler';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
 import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
 
 
-// configuration
-const DEBUG_LOG_PROFILER_ON_SERVER = false; // capture and log performance (server-side flag, it can also tbe set by the client to return the profiling data)
+/**
+ * Security - only allow certain operations in development builds (i.e. not in any production builds by default):
+ *  1. dispatch Headers: hide sensitive data such as keys
+ *  2. Performance profiling: visible in the AIX debugger when requested on development builds
+ *  3. 'DEV_URL: ...' in error messages to show the problematic upstream URL
+ *  4. onComment on SSE streams
+ */
+export const AIX_SECURITY_ONLY_IN_DEV_BUILDS = process.env.NODE_ENV === 'development';
 
 
 export const aixRouter = createTRPCRouter({
@@ -46,17 +52,16 @@ export const aixRouter = createTRPCRouter({
 
 
       // Profiler, if requested by the caller
-      const _profiler = !(DEBUG_LOG_PROFILER_ON_SERVER || input.connectionOptions?.debugProfilePerformance) ? null
-        : new PerformanceProfiler();
+      const _profiler = (input.connectionOptions?.debugProfilePerformance && AIX_SECURITY_ONLY_IN_DEV_BUILDS)
+        ? new PerformanceProfiler() : null;
 
       const _profilerCompleted = !_profiler ? null : () => {
         // append to the response, if requested by the client
         if (input.connectionOptions?.debugProfilePerformance)
           chatGenerateTx.addDebugProfilererData(_profiler?.getResultsData());
 
-        // print on the console, only if we have the server-side conf flag
-        if (DEBUG_LOG_PROFILER_ON_SERVER)
-          performanceProfilerLog('AIX Router Performance', _profiler?.getResultsData());
+        // [DEV] uncomment this line to see the profiler table in the server-side console
+        // performanceProfilerLog('AIX Router Performance', _profiler?.getResultsData());
 
         // clear the profiler for the next call, for resident lambdas (the profiling framework is global)
         _profiler?.clearMeasurements();
@@ -106,7 +111,7 @@ export const aixRouter = createTRPCRouter({
 
         // Handle AI Service connection error
         const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-        const extraDevMessage = process.env.NODE_ENV === 'development' ? ` - [DEV_URL: ${dispatch.request.url}]` : '';
+        const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${dispatch.request.url}]` : '';
 
         const showOnConsoleForNonCustomServers = access.dialect !== 'openai' || !access.oaiHost;
         chatGenerateTx.setRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, showOnConsoleForNonCustomServers);
