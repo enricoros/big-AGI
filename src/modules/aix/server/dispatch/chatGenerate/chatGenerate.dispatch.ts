@@ -4,7 +4,7 @@ import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
-import type { StreamDemuxerFormat } from '../stream.demuxers';
+import type { AixDemuxers } from '../stream.demuxers';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
@@ -29,7 +29,7 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
  */
 export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
-  demuxerFormat: StreamDemuxerFormat;
+  demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
 } {
 

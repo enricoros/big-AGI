@@ -4,11 +4,11 @@ import { createEmptyReadableStream, createServerDebugWireEvents, safeErrorString
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
+import { AixDemuxers } from '../dispatch/stream.demuxers';
 import { AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
 import { PerformanceProfiler } from '../dispatch/PerformanceProfiler';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
-import { createStreamDemuxer } from '../dispatch/stream.demuxers';
 import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
 
 
@@ -150,7 +150,7 @@ export const aixRouter = createTRPCRouter({
       // STREAM the response to the client
       const dispatchReader = (dispatchResponse.body || createEmptyReadableStream()).getReader();
       const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> “ ” (U+FFFD) */ });
-      const dispatchDemuxer = createStreamDemuxer(dispatch.demuxerFormat);
+      const dispatchDemuxer = AixDemuxers.createStreamDemuxer(dispatch.demuxerFormat);
       const dispatchParser = dispatch.chatGenerateParse;
 
       // Data pump: AI Service -- (dispatch) --> Server -- (intake) --> Client
