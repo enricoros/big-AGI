@@ -241,6 +241,11 @@ export class ContentReassembler {
             if (this.debuggerFrameId)
               aixClientDebugger_setRequest(this.debuggerFrameId, op.dispatchRequest);
             break;
+          case '_debugProfiler':
+            // only show this to developers in the console
+            console.warn('[AIX] chatGenerate profiler measurements:');
+            console.table(op.measurements);
+            break;
           case 'end':
             this.onCGEnd(op);
             break;

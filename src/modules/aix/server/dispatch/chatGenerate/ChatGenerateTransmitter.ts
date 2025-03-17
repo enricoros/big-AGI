@@ -140,6 +140,13 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     });
   }
 
+  addDebugProfilererData(measurements: Record<string, string | number>[]) {
+    this.transmissionQueue.push({
+      cg: '_debugProfiler',
+      measurements,
+    });
+  }
+
 
   /// IPartTransmitter
 

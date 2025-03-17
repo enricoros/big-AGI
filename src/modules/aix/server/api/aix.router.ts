@@ -6,9 +6,14 @@ import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
+import { PerformanceProfiler, performanceProfilerLog } from '../dispatch/PerformanceProfiler';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
 import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
+
+
+// configuration
+const DEBUG_LOG_PROFILER = false; // capture and log performance (server-side flag, it can also tbe set by the client to return the profiling data)
 
 
 export const aixRouter = createTRPCRouter({
@@ -40,6 +45,24 @@ export const aixRouter = createTRPCRouter({
       const chatGenerateTx = new ChatGenerateTransmitter(prettyDialect, connectionOptions?.throttlePartTransmitter);
 
 
+      // Profiler, if requested by the caller
+      const _profiler = !(DEBUG_LOG_PROFILER || input.connectionOptions?.debugDispatchRequest) ? null
+        : new PerformanceProfiler();
+
+      const _profilerCompleted = !_profiler ? null : () => {
+        // append to the response, if requested by the client
+        if (input.connectionOptions?.debugProfilePerformance)
+          chatGenerateTx.addDebugProfilererData(_profiler?.getResultsData());
+
+        // print on the console, only if we have the server-side conf flag
+        if (DEBUG_LOG_PROFILER)
+          performanceProfilerLog('AIX Router Performance', _profiler?.getResultsData());
+
+        // clear the profiler for the next call, for resident lambdas (the profiling framework is global)
+        _profiler?.clearMeasurements();
+      };
+
+
       // Prepare the dispatch requests
       let dispatch: ReturnType<typeof createChatGenerateDispatch>;
       try {
@@ -61,6 +84,7 @@ export const aixRouter = createTRPCRouter({
         }
 
         // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthriopic requests (>25s on Vercel)
+        _profiler?.measureStart('connect');
         dispatchResponse = yield* heartbeatsWhileAwaiting(fetchResponseOrTRPCThrow({
           url: dispatch.request.url,
           method: 'POST',
@@ -70,6 +94,7 @@ export const aixRouter = createTRPCRouter({
           name: `Aix.${prettyDialect}`,
           throwWithoutName: true,
         }));
+        _profiler?.measureEnd('connect');
 
       } catch (error: any) {
         // Handle expected dispatch abortion while the first fetch hasn't even completed
@@ -96,7 +121,9 @@ export const aixRouter = createTRPCRouter({
         let dispatchBody: string | undefined = undefined;
         try {
           // Read the full response body with heartbeats
+          _profiler?.measureStart('read-full');
           dispatchBody = yield* heartbeatsWhileAwaiting(dispatchResponse.text());
+          _profiler?.measureEnd('read-full');
           serverDebugIncomingPackets?.onMessage(dispatchBody);
 
           // Parse the response in full
@@ -109,6 +136,7 @@ export const aixRouter = createTRPCRouter({
           else
             chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\nInput data: ${dispatchBody}.\nPlease open a support ticket on GitHub.`, true);
         }
+        _profilerCompleted?.();
         yield* chatGenerateTx.flushParticles();
         return; // exit
       }
@@ -126,7 +154,9 @@ export const aixRouter = createTRPCRouter({
         // Read AI Service chunk
         let dispatchChunk: string;
         try {
+          _profiler?.measureStart('read');
           const { done, value } = yield* heartbeatsWhileAwaiting(dispatchReader.read());
+          _profiler?.measureEnd('read');
 
           // Handle normal dispatch stream closure (no more data, AI Service closed the stream)
           if (done) {
@@ -135,7 +165,9 @@ export const aixRouter = createTRPCRouter({
           }
 
           // Decode the chunk - does Not throw (see the constructor for why)
+          _profiler?.measureStart('decode');
           dispatchChunk = dispatchDecoder.decode(value, { stream: true });
+          _profiler?.measureEnd('decode');
         } catch (error: any) {
           // Handle expected dispatch stream abortion - nothing to do, as the intake is already closed
           if (error && error?.name === 'ResponseAborted') {
@@ -150,7 +182,11 @@ export const aixRouter = createTRPCRouter({
 
 
         // Demux the chunk into 0 or more events
-        for (const demuxedItem of dispatchDemuxer.demux(dispatchChunk)) {
+        _profiler?.measureStart('demux');
+        const demuxedEvents = dispatchDemuxer.demux(dispatchChunk);
+        _profiler?.measureEnd('demux');
+
+        for (const demuxedItem of demuxedEvents) {
           serverDebugIncomingPackets?.onMessage(demuxedItem);
 
           // ignore events post termination
@@ -171,7 +207,9 @@ export const aixRouter = createTRPCRouter({
           }
 
           try {
+            _profiler?.measureStart('parse');
             dispatchParser(chatGenerateTx, demuxedItem.data, demuxedItem.name);
+            _profiler?.measureEnd('parse');
             if (!chatGenerateTx.isEnded)
               yield* chatGenerateTx.emitParticles();
           } catch (error: any) {
@@ -182,6 +220,8 @@ export const aixRouter = createTRPCRouter({
         }
 
       } while (!chatGenerateTx.isEnded);
+
+      _profilerCompleted?.();
 
       // Flush everything that's left; if we're here we have encountered a clean end condition,
       // or an error that has already been queued up for this last flush
