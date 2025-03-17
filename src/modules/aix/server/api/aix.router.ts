@@ -6,13 +6,9 @@ import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { AixWire_API, AixWire_API_ChatContentGenerate, AixWire_Particles } from './aix.wiretypes';
 import { ChatGenerateTransmitter } from '../dispatch/chatGenerate/ChatGenerateTransmitter';
-import { awaitWithHeartbeats } from '../dispatch/awaitWithHeartbeats';
 import { createChatGenerateDispatch } from '../dispatch/chatGenerate/chatGenerate.dispatch';
 import { createStreamDemuxer } from '../dispatch/stream.demuxers';
-
-
-// configuration
-const HEARTBEAT_TIMEOUT_MS = 10_000;
+import { heartbeatsWhileAwaiting } from '../dispatch/heartbeatsWhileAwaiting';
 
 
 export const aixRouter = createTRPCRouter({
@@ -65,7 +61,7 @@ export const aixRouter = createTRPCRouter({
         }
 
         // Blocking fetch with heartbeats - combats timeouts, for instance with long Anthriopic requests (>25s on Vercel)
-        dispatchResponse = yield* awaitWithHeartbeats(fetchResponseOrTRPCThrow({
+        dispatchResponse = yield* heartbeatsWhileAwaiting(fetchResponseOrTRPCThrow({
           url: dispatch.request.url,
           method: 'POST',
           headers: dispatch.request.headers,
@@ -73,7 +69,7 @@ export const aixRouter = createTRPCRouter({
           signal: intakeAbortSignal,
           name: `Aix.${prettyDialect}`,
           throwWithoutName: true,
-        }), HEARTBEAT_TIMEOUT_MS);
+        }));
 
       } catch (error: any) {
         // Handle expected dispatch abortion while the first fetch hasn't even completed
@@ -100,7 +96,7 @@ export const aixRouter = createTRPCRouter({
         let dispatchBody: string | undefined = undefined;
         try {
           // Read the full response body with heartbeats
-          dispatchBody = yield* awaitWithHeartbeats(dispatchResponse.text(), HEARTBEAT_TIMEOUT_MS);
+          dispatchBody = yield* heartbeatsWhileAwaiting(dispatchResponse.text());
           serverDebugIncomingPackets?.onMessage(dispatchBody);
 
           // Parse the response in full
@@ -130,7 +126,7 @@ export const aixRouter = createTRPCRouter({
         // Read AI Service chunk
         let dispatchChunk: string;
         try {
-          const { done, value } = yield* awaitWithHeartbeats(dispatchReader.read(), HEARTBEAT_TIMEOUT_MS);
+          const { done, value } = yield* heartbeatsWhileAwaiting(dispatchReader.read());
 
           // Handle normal dispatch stream closure (no more data, AI Service closed the stream)
           if (done) {

@@ -1,3 +1,7 @@
+// configuration
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+
 /**
  * Awaits a promise while sending ❤
  *
@@ -9,7 +13,7 @@
  * @param timeoutMs Time in ms between heartbeats (if 0, no heartbeats)
  * @returns The same result as awaiting the promise
  */
-export async function* awaitWithHeartbeats<TOut>(operationPromise: Promise<TOut>, timeoutMs: number) {
+export async function* heartbeatsWhileAwaiting<TOut>(operationPromise: Promise<TOut>, timeoutMs: number = DEFAULT_TIMEOUT_MS) {
   if (!timeoutMs) return await operationPromise;
 
   // holds the outcome in either state
