@@ -66,8 +66,12 @@ class _EdgePerformanceFallback {
  * Retuns the performance API, or a lightweight fallback when it's not available.
  */
 function _getPerformanceAPI(): typeof performance | _EdgePerformanceFallback {
-  if (typeof performance !== 'undefined' && typeof performance.mark === 'function' && typeof performance.measure === 'function')
-    return performance;
+
+  // FIXME: we are forcing the fallback for now, as the performance API would conflict with Beam
+  //        as 'marks' are global and would conflict between chats.
+  // if (typeof performance !== 'undefined' && typeof performance.mark === 'function' && typeof performance.measure === 'function')
+  //   return performance;
+
   return new _EdgePerformanceFallback();
 }
 
