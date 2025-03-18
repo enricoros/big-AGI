@@ -18,7 +18,8 @@ export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentS
         : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
     backgroundColor:
       codeRenderVariant === 'plain' ? 'background.surface'
-        : fromAssistant ? 'neutral.plainHoverBg' : 'primary.plainActiveBg', // could use plainActiveBg to increase the background contrast in dark mode (#631), but it's really too bright in that case
+        : fromAssistant ? 'background.level1' // was 'neutral.plainHoverBg', turned to background.level1 to improve the dark mode contrast while keeping light the same
+          : 'primary.plainActiveBg', // could use plainActiveBg to increase the background contrast in dark mode (#631), but it's really too bright in that case
     boxShadow:
       codeRenderVariant === 'plain' ? undefined
         : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
