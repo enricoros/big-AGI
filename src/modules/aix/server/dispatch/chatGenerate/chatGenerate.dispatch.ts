@@ -4,7 +4,7 @@ import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.router';
 import { openAIAccess } from '~/modules/llms/server/openai/openai.router';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '../../api/aix.wiretypes';
-import type { StreamDemuxerFormat } from '../stream.demuxers';
+import type { AixDemuxers } from '../stream.demuxers';
 
 import { GeminiWire_API_Generate_Content } from '../wiretypes/gemini.wiretypes';
 
@@ -29,7 +29,7 @@ export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, 
  */
 export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): {
   request: { url: string, headers: HeadersInit, body: object },
-  demuxerFormat: StreamDemuxerFormat;
+  demuxerFormat: AixDemuxers.StreamDemuxerFormat;
   chatGenerateParse: ChatGenerateParseFunction;
 } {
 
@@ -40,18 +40,21 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ...anthropicAccess(access, model.id, '/v1/messages'),
           body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
         },
-        demuxerFormat: streaming ? 'sse' : null,
+        demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
       };
 
     case 'gemini':
+      // const hotFixImageGenerationModels2 = model.id.includes('image-generation');
+      const useV1Alpha = !!model.vndGeminiShowThoughts /* || hotFixImageGenerationModels2 */;
       return {
         request: {
-          ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath, !!model.vndGeminiShowThoughts),
+          ...geminiAccess(access, model.id, streaming ? GeminiWire_API_Generate_Content.streamingPostPath : GeminiWire_API_Generate_Content.postPath, useV1Alpha),
           body: aixToGeminiGenerateContent(model, chatGenerate, access.minSafetyLevel, false, streaming),
         },
-        demuxerFormat: streaming ? 'sse' : null,
-        chatGenerateParse: createGeminiGenerateContentResponseParser(model.id, streaming),
+        // we verified that 'fast-sse' works well with Gemini
+        demuxerFormat: streaming ? 'fast-sse' : null,
+        chatGenerateParse: createGeminiGenerateContentResponseParser(model.id.replace('models/', ''), streaming),
       };
 
     /**
@@ -69,7 +72,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           body: aixToOpenAIChatCompletions('openai', model, chatGenerate, access.ollamaJson, streaming),
         },
         // demuxerFormat: streaming ? 'json-nl' : null,
-        demuxerFormat: streaming ? 'sse' : null,
+        demuxerFormat: streaming ? 'fast-sse' : null,
         // chatGenerateParse: createDispatchParserOllama(),
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
@@ -92,7 +95,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
           ...openAIAccess(access, model.id, '/v1/chat/completions'),
           body: aixToOpenAIChatCompletions(access.dialect, model, chatGenerate, false, streaming),
         },
-        demuxerFormat: streaming ? 'sse' : null,
+        demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
       };
   }

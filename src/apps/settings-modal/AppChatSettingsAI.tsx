@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { FormControl, Switch } from '@mui/joy';
+import { FormControl, ListDivider, Switch } from '@mui/joy';
 import CodeIcon from '@mui/icons-material/Code';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -8,11 +8,26 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
-import { useLabsDevMode } from '~/common/state/store-ux-labs';
+import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import { useChatAutoAI } from '../chat/store-app-chat';
+
+
+const _keepThinkingBlocksOptions: FormSelectOption<'all' | 'last-only'>[] = [
+  {
+    value: 'all',
+    label: 'All Messages',
+    description: 'Keep all blocks',
+  },
+  {
+    value: 'last-only',
+    label: 'Last Message Only',
+    description: 'Only keep last',
+  },
+] as const;
 
 
 function FormControlDomainModel(props: {
@@ -47,6 +62,7 @@ export function AppChatSettingsAI() {
     autoSuggestHTMLUI, setAutoSuggestHTMLUI,
     // autoSuggestQuestions, setAutoSuggestQuestions,
     autoTitleChat, setAutoTitleChat,
+    chatKeepLastThinkingOnly, setChatKeepLastThinkingOnly,
   } = useChatAutoAI();
 
   const labsDevMode = useLabsDevMode();
@@ -107,29 +123,43 @@ export function AppChatSettingsAI() {
       />
     )}
 
+    <FormSelectControl
+      title='Reasoning blocks'
+      tooltip='Controls how AI thinking/reasoning blocks are kept in your chat history. Keeping only in the last message (default) reduces clutter.'
+      options={_keepThinkingBlocksOptions}
+      value={chatKeepLastThinkingOnly ? 'last-only' : 'all'}
+      onChange={(value) => setChatKeepLastThinkingOnly(value === 'last-only')}
+      selectSx={{ minWidth: 140 }}
+    />
+
+    <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto Chat Title'
+      <FormLabelStart title='Chat Auto-Title'
                       description={autoTitleChat ? 'Auto' : 'Manual only'}
-                      tooltip='[Utility model]  Automatically generates relevant titles for new chat conversations.' />
+                      tooltip='[Utility model]  Automatically generates relevant titles for new chat conversations.'
+                      tooltipWarning={!autoTitleChat} />
       <Switch checked={autoTitleChat} onChange={handleAutoSetChatTitleChange}
               endDecorator={autoTitleChat ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
-      <FormLabelStart title='Auto Attachment Prompts'
+      <FormLabelStart title='Attachment Prompts'
                       description={autoSuggestAttachmentPrompts ? 'Guess Actions' : 'Off'}
-                      tooltip='[Utility model]  Suggests actions/prompts when attachments are added to the conversation.' />
+                      tooltip={!autoSuggestAttachmentPrompts ? undefined : '[Utility model]  Suggests actions/prompts when attachments are added to the conversation.'} />
       <Switch checked={autoSuggestAttachmentPrompts} onChange={handleAutoSuggestAttachmentPromptsChange}
               endDecorator={autoSuggestAttachmentPrompts ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
     </FormControl>
 
+
+    <ListDivider inset='gutter'>Auto-augment Messages</ListDivider>
+
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Generative Diagrams'
                       description={autoSuggestDiagrams ? 'Add Diagrams' : 'Off'}
-                      tooltip='[Coding model]  Automatically creates visual diagrams and flowcharts when the AI detects that a response would be clearer with a visual representation.' />
+                      tooltip={!autoSuggestDiagrams ? undefined : '[Coding model]  Automatically creates visual diagrams and flowcharts when the AI detects that a response would be clearer with a visual representation.'} />
       <Switch checked={autoSuggestDiagrams} onChange={handleAutoSuggestDiagramsChange}
               endDecorator={autoSuggestDiagrams ? 'On' : 'Off'}
               slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />

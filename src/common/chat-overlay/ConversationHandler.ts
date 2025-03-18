@@ -220,6 +220,10 @@ export class ConversationHandler {
     return _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
   }
 
+  historyKeepLastThinkingOnly(): void {
+    return _chatStoreActions.historyKeepLastThinkingOnly(this.conversationId);
+  }
+
   title(): string | undefined {
     return _chatStoreActions.title(this.conversationId);
   }

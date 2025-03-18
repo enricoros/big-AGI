@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Is, isBrowser } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { CapabilityBrowserSpeechRecognition } from '../useCapabilities';
 

@@ -118,9 +118,9 @@ export function ChatMessageList(props: {
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory, props.chatLLMSupportsImages]);
 
-  const handleMessageContinue = React.useCallback(async (_messageId: DMessageId /* Ignored for now */) => {
+  const handleMessageContinue = React.useCallback(async (_messageId: DMessageId /* Ignored for now */, continueText: null | string) => {
     if (conversationId && conversationHandler) {
-      conversationHandler.messageAppend(createDMessageTextContent('user', 'Continue')); // [chat] append user:Continue
+      conversationHandler.messageAppend(createDMessageTextContent('user', continueText || 'Continue')); // [chat] append user:Continue (or custom text, likely from an 'option')
       await onConversationExecuteHistory(conversationId);
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory]);

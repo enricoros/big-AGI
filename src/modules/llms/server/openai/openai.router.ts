@@ -15,12 +15,13 @@ import { OpenAIWire_API_Images_Generations, OpenAIWire_API_Models_List, OpenAIWi
 
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { alibabaModelSort, alibabaModelToModelDescription } from './models/alibaba.models';
-import { azureModelToModelDescription, openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
+import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './models/azure.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './models/deepseek.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription } from './models/groq.models';
 import { lmStudioModelToModelDescription, localAIModelSortFn, localAIModelToModelDescription } from './models/models.data';
 import { mistralModelsSort, mistralModelToModelDescription } from './models/mistral.models';
+import { openAIModelFilter, openAIModelToModelDescription, openAISortModels } from './models/openai.models';
 import { openPipeModelDescriptions, openPipeModelSort, openPipeModelToModelDescriptions } from './models/openpipe.models';
 import { openRouterModelFamilySortFn, openRouterModelToModelDescription } from './models/openrouter.models';
 import { perplexityAIModelDescriptions, perplexityAIModelSort } from './models/perplexity.models';
@@ -96,36 +97,12 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // [Azure]: use an older 'deployments' API to enumerate the models, and a modified OpenAI id to description mapping
       if (access.dialect === 'azure') {
-        const azureModels = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
-
-        const wireAzureListDeploymentsSchema = z.object({
-          data: z.array(z.object({
-            model: z.string(), // the OpenAI model id
-            owner: z.enum(['organization-owner']),
-            id: z.string(), // the deployment name
-            status: z.string(), // relaxed from z.enum(['succeeded']) for #744
-            created_at: z.number(),
-            updated_at: z.number(),
-            object: z.literal('deployment'),
-          })),
-          object: z.literal('list'),
-        });
-        const azureWireModels = wireAzureListDeploymentsSchema.parse(azureModels).data;
-
-        // only take 'gpt' models
-        models = azureWireModels
-          .filter(m => m.model.includes('gpt'))
-          .map((model): ModelDescriptionSchema => {
-            const { id: deploymentRef, model: openAIModelId } = model;
-            const { id: _deleted, label, ...rest } = azureModelToModelDescription(deploymentRef, openAIModelId, model.created_at, model.updated_at);
-            // unhide all models
-            delete rest.hidden;
-            return {
-              id: deploymentRef,
-              label: `${label} (${deploymentRef})`,
-              ...rest,
-            };
-          });
+        const azureOpenAIDeploymentsResponse = await openaiGETOrThrow(access, `/openai/deployments?api-version=2023-03-15-preview`);
+        const azureOpenAIDeployments = azureParseFromDeploymentsAPI(azureOpenAIDeploymentsResponse);
+        models = azureOpenAIDeployments
+          .filter(azureDeploymentFilter)
+          .map(azureDeploymentToModelDescription)
+          .sort(openAISortModels);
         return { models };
       }
 
@@ -363,12 +340,36 @@ const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
 const DEFAULT_TOGETHERAI_HOST = 'https://api.together.xyz';
 const DEFAULT_XAI_HOST = 'https://api.x.ai';
 
+/**
+ * Get a random key from a comma-separated list of API keys
+ * @param multiKeyString Comma-separated string of API keys
+ * @returns A randomly selected single API key
+ */
+function getRandomKeyFromMultiKey(multiKeyString: string): string {
+  if (!multiKeyString.includes(','))
+    return multiKeyString;
+  
+  const multiKeys = multiKeyString
+    .split(',')
+    .map(key => key.trim())
+    .filter(Boolean);
+  
+  if (!multiKeys.length)
+    return '';
+    
+  return multiKeys[Math.floor(Math.random() * multiKeys.length)];
+}
+
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
   switch (access.dialect) {
 
     case 'alibaba':
-      const alibabaOaiKey = access.oaiKey || env.ALIBABA_API_KEY || '';
+      let alibabaOaiKey = access.oaiKey || env.ALIBABA_API_KEY || '';
       const alibabaOaiHost = fixupHost(access.oaiHost || env.ALIBABA_API_HOST || DEFAULT_ALIBABA_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      alibabaOaiKey = getRandomKeyFromMultiKey(alibabaOaiKey);
+
       if (!alibabaOaiKey || !alibabaOaiHost)
         throw new Error('Missing Alibaba API Key. Add it on the UI or server side (your deployment).');
 
@@ -391,7 +392,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       if (apiPath.startsWith('/v1/')) {
         if (!modelRefId)
           throw new Error('Azure OpenAI API needs a deployment id');
-        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2023-07-01-preview`;
+        url += `/openai/deployments/${modelRefId}/${apiPath.replace('/v1/', '')}?api-version=2025-02-01-preview`;
       } else if (apiPath.startsWith('/openai/deployments'))
         url += apiPath;
       else
@@ -408,8 +409,12 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'deepseek':
       // https://platform.deepseek.com/api-docs/
-      const deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
+      let deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
       const deepseekHost = fixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      deepseekKey = getRandomKeyFromMultiKey(deepseekKey);
+
       if (!deepseekKey || !deepseekHost)
         throw new Error('Missing Deepseek API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -475,8 +480,12 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'groq':
-      const groqKey = access.oaiKey || env.GROQ_API_KEY || '';
+      let groqKey = access.oaiKey || env.GROQ_API_KEY || '';
       const groqHost = fixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      groqKey = getRandomKeyFromMultiKey(groqKey);
+
       if (!groqKey)
         throw new Error('Missing Groq API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -504,8 +513,12 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'mistral':
       // https://docs.mistral.ai/platform/client
-      const mistralKey = access.oaiKey || env.MISTRAL_API_KEY || '';
+      let mistralKey = access.oaiKey || env.MISTRAL_API_KEY || '';
       const mistralHost = fixupHost(access.oaiHost || DEFAULT_MISTRAL_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      mistralKey = getRandomKeyFromMultiKey(mistralKey);
+
       return {
         headers: {
           'Content-Type': 'application/json',
@@ -535,14 +548,8 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       let orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
       const orHost = fixupHost(access.oaiHost || DEFAULT_OPENROUTER_HOST, apiPath);
 
-      // multi-key with random selection
-      if (orKey.includes(',')) {
-        const multiKeys = orKey
-          .split(',')
-          .map(key => key.trim())
-          .filter(Boolean);
-        orKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
-      }
+      // Use function to select a random key if multiple keys are provided
+      orKey = getRandomKeyFromMultiKey(orKey);
 
       if (!orKey || !orHost)
         throw new Error('Missing OpenRouter API Key or Host. Add it on the UI or server side (your deployment).');
@@ -558,8 +565,12 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'perplexity':
-      const perplexityKey = access.oaiKey || env.PERPLEXITY_API_KEY || '';
+      let perplexityKey = access.oaiKey || env.PERPLEXITY_API_KEY || '';
       const perplexityHost = fixupHost(access.oaiHost || DEFAULT_PERPLEXITY_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      perplexityKey = getRandomKeyFromMultiKey(perplexityKey);
+
       if (!perplexityKey || !perplexityHost)
         throw new Error('Missing Perplexity API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -577,8 +588,12 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'togetherai':
-      const togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
+      let togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
       const togetherHost = fixupHost(access.oaiHost || DEFAULT_TOGETHERAI_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      togetherKey = getRandomKeyFromMultiKey(togetherKey);
+
       if (!togetherKey || !togetherHost)
         throw new Error('Missing TogetherAI API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).');
 
@@ -593,7 +608,11 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
 
     case 'xai':
-      const xaiKey = access.oaiKey || env.XAI_API_KEY || '';
+      let xaiKey = access.oaiKey || env.XAI_API_KEY || '';
+
+      // Use function to select a random key if multiple keys are provided
+      xaiKey = getRandomKeyFromMultiKey(xaiKey);
+
       if (!xaiKey)
         throw new Error('Missing xAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
       return {

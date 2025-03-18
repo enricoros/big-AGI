@@ -5,7 +5,7 @@ import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { CapabilityElevenLabsSpeechSynthesis } from '~/common/components/useCapabilities';
 import { apiStream } from '~/common/util/trpc.client';
 import { base64ToArrayBuffer } from '~/common/util/urlUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { getElevenLabsData, useElevenLabsData } from './store-module-elevenlabs';
 

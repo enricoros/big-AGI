@@ -35,6 +35,9 @@ interface AppChatStore {
   autoVndAntBreakpoints: boolean;
   setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => void;
 
+  chatKeepLastThinkingOnly: boolean,
+  setChatKeepLastThinkingOnly: (chatKeepLastThinkingOnly: boolean) => void;
+
   // chat UI
 
   clearFilters: () => void;
@@ -100,6 +103,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     autoVndAntBreakpoints: true, // 2024-08-24: on as it saves user's money
     setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => _set({ autoVndAntBreakpoints }),
+
+    chatKeepLastThinkingOnly: true,
+    setChatKeepLastThinkingOnly: (chatKeepLastThinkingOnly: boolean) => _set({ chatKeepLastThinkingOnly }),
 
     // Chat UI
 
@@ -175,6 +181,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   autoSuggestQuestions: state.autoSuggestQuestions,
   autoTitleChat: state.autoTitleChat,
   autoVndAntBreakpoints: state.autoVndAntBreakpoints,
+  chatKeepLastThinkingOnly: state.chatKeepLastThinkingOnly,
   setAutoSpeak: state.setAutoSpeak,
   setAutoSuggestAttachmentPrompts: state.setAutoSuggestAttachmentPrompts,
   setAutoSuggestDiagrams: state.setAutoSuggestDiagrams,
@@ -182,6 +189,7 @@ export const useChatAutoAI = () => useAppChatStore(useShallow(state => ({
   setAutoSuggestQuestions: state.setAutoSuggestQuestions,
   setAutoTitleChat: state.setAutoTitleChat,
   setAutoVndAntBreakpoints: state.setAutoVndAntBreakpoints,
+  setChatKeepLastThinkingOnly: state.setChatKeepLastThinkingOnly,
 })));
 
 export const getChatAutoAI = (): {
@@ -192,6 +200,7 @@ export const getChatAutoAI = (): {
   autoSuggestQuestions: boolean,
   autoTitleChat: boolean,
   autoVndAntBreakpoints: boolean,
+  chatKeepLastThinkingOnly: boolean,
 } => useAppChatStore.getState();
 
 export const useChatAutoSuggestHTMLUI = (): boolean =>

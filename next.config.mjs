@@ -11,6 +11,7 @@ try {
   // final fallback
   buildHash = '2-dev';
 }
+// The following are used by/available to Release.buildInfo(...)
 process.env.NEXT_PUBLIC_BUILD_HASH = (buildHash || '').slice(0, 10);
 process.env.NEXT_PUBLIC_BUILD_PKGVER = JSON.parse('' + await readFile(new URL('./package.json', import.meta.url))).version;
 process.env.NEXT_PUBLIC_BUILD_TIMESTAMP = new Date().toISOString();
@@ -68,6 +69,25 @@ let nextConfig = {
     }
 
     return config;
+  },
+
+  // Optional Analytics > PostHog
+  skipTrailingSlashRedirect: true, // required to support PostHog trailing slash API requests
+  async rewrites() {
+    return [
+      {
+        source: '/a/ph/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/a/ph/:path*',
+        destination: 'https://us.i.posthog.com/:path*',
+      },
+      {
+        source: '/a/ph/decide',
+        destination: 'https://us.i.posthog.com/decide',
+      },
+    ];
   },
 
   // Note: disabled to check whether the project becomes slower with this

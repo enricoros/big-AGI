@@ -4,17 +4,22 @@ import { BlocksTextarea } from '~/modules/blocks/BlocksContainers';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { Is } from '~/common/util/pwaUtils';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 
 // configuration
 
 /**
  * Note: this will disable the galobal 'shift+enter' shortcut (and the status message) for this component as well.
- * - #760. set to 'undefined' to follow the user preference
+ * - #760. Edit Mode not respecting Enter to Send
+ * - #770. inconsistent return / shift + return
+ * - #771. PR which was not merged (overly complex regex)
+ * set to 'undefined' to follow the user preference
+ * set to 'true' to force 'enter' to be a newline, which is best for mobile devices where 'shift+enter' is not possible
  */
-const FORCE_ENTER_IS_NEWLINE = true;
+const FORCE_ENTER_IS_NEWLINE = !Is.Desktop ? true : undefined;
 
 
 const _textAreaSlotPropsEnter = {

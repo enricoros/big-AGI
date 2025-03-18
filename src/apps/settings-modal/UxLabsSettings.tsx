@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { FormControl, Typography } from '@mui/joy';
+import { FormControl, Switch, Typography } from '@mui/joy';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CodeIcon from '@mui/icons-material/Code';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -15,7 +15,7 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Is } from '~/common/util/pwaUtils';
 import { Link } from '~/common/components/Link';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 
 // uncomment for more settings
@@ -63,10 +63,23 @@ export function UxLabsSettings() {
       checked={labsEnhanceCodeBlocks} onChange={setLabsEnhanceCodeBlocks}
     />
 
-    <FormSwitchControl
-      title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Performance</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
-      checked={labsHighPerformance} onChange={setLabsHighPerformance}
-    />
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
+      <FormLabelStart
+        title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Unlock Refresh</>}
+        description={labsHighPerformance ? 'Unlocked' : 'Default'}
+        tooltipWarning={labsHighPerformance}
+        tooltip={<>
+          Unlocks the maximum UI refresh rate for Chats and Beams, and will draw every single token as they come in.
+          <hr />
+          THIS MAY CAUSE HIGH CPU USAGE, BATTERY DRAIN, AND STUTTERING WITH FAST MODELS.
+          <hr />
+          Default: OFF
+        </>}
+      />
+      <Switch checked={labsHighPerformance} onChange={event => setLabsHighPerformance(event.target.checked)}
+              endDecorator={labsHighPerformance ? 'On' : 'Off'}
+              slotProps={{ endDecorator: { sx: { minWidth: 26 } } }} />
+    </FormControl>
 
     {DEV_MODE_SETTINGS && <FormSwitchControl
       title={<><TitleIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Chat Title</>} description={labsChatBarAlt === 'title' ? 'Show Title' : 'Show Models'}

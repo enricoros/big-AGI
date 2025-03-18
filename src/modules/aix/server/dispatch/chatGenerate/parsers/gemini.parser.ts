@@ -5,6 +5,11 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
 
+
+// configuration
+const ENABLE_RECITATIONS_AS_CITATIONS = false;
+
+
 /**
  * Gemini Completions -  Messages Architecture
  *
@@ -22,12 +27,13 @@ import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wirety
  *
  *  Note that non-streaming calls will contain a complete sequence of complete parts.
  */
-export function createGeminiGenerateContentResponseParser(modelId: string, isStreaming: boolean): ChatGenerateParseFunction {
+export function createGeminiGenerateContentResponseParser(requestedModelName: string, isStreaming: boolean): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
-  const modelName = modelId.replace('models/', '');
-  let hasBegun = false;
+  let sentRequestedModelName = false;
+  let sentActualModelName = false;
   let timeToFirstEvent: number;
   let skipComputingTotalsOnce = isStreaming;
+  let groundingIndexNumber = 0;
 
   // this can throw, it's caught by the caller
   return function(pt: IParticleTransmitter, eventData: string): void {
@@ -36,14 +42,18 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
     if (timeToFirstEvent === undefined)
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
-    // -> Model
-    if (!hasBegun) {
-      hasBegun = true;
-      pt.setModelName(modelName);
-    }
-
     // Throws on malformed event data
     const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+
+    // -> Model
+    if (generationChunk.modelVersion && !sentActualModelName) {
+      pt.setModelName(generationChunk.modelVersion);
+      sentActualModelName = true;
+    }
+    if (!sentActualModelName && !sentRequestedModelName) {
+      pt.setModelName(requestedModelName);
+      sentRequestedModelName = true;
+    }
 
     // -> Prompt Safety Blocking
     if (generationChunk.promptFeedback?.blockReason) {
@@ -61,7 +71,7 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
       if (candidate0.index !== undefined && candidate0.index !== 0)
         throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
-      // see the message architecture
+      // -> Candidates[0] -> Content
       for (const mPart of (candidate0.content?.parts || [])) {
         switch (true) {
 
@@ -72,6 +82,15 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
               pt.appendReasoningText(mPart.text || '');
             else
               pt.appendText(mPart.text || '');
+            break;
+
+          // <- InlineDataPart
+          case 'inlineData' in mPart:
+            // [Gemini, 2025-03-14] Experimental Image generation: Response
+            if (mPart.inlineData.mimeType.startsWith('image/'))
+              pt.appendImageInline(mPart.inlineData.mimeType, mPart.inlineData.data, 'Gemini Generated Image', 'Gemini', '');
+            else
+              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null);
             break;
 
           // <- FunctionCallPart
@@ -104,11 +123,39 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
             break;
 
           default:
+            // noinspection JSUnusedLocalSymbols
+            const _exhaustiveCheck: never = mPart;
             throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
         }
       }
 
-      // -> Token Stop Reason
+      // -> Candidates[0] -> Safety Ratings
+      // only parsed when the finish reason is 'SAFETY'
+
+      // -> Candidates[0] -> Citation Metadata
+      // this is automated recitation detection by the API, not explicit grounding - very weak signal - as websites appear to be poor quality
+      if (ENABLE_RECITATIONS_AS_CITATIONS && candidate0.citationMetadata?.citationSources?.length) {
+        for (let { startIndex, endIndex, uri /*, license*/ } of candidate0.citationMetadata.citationSources) {
+          // TODO: have a particle/part flag to state the purpose of a citation? (e.g. 'recitation' is weaker than 'grounding')
+          pt.appendUrlCitation('', uri || '', undefined, startIndex, endIndex, undefined);
+        }
+      }
+
+      // -> Candidates[0] -> Grounding Metadata
+      if (candidate0.groundingMetadata?.groundingChunks?.length) {
+        /**
+         * TODO: improve parsing of grounding metadata, including:
+         * - annotations and ranges .groundingSupports
+         * - sort chunks by their overal confidence in the .groundingSupports?
+         * - follow up Google Search queries (.webSearchQueries)
+         * - include the 'renderedContent' from .searchEntryPoint
+         */
+        for (const { web } of candidate0.groundingMetadata.groundingChunks) {
+          pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined);
+        }
+      }
+
+      // -> Candidates[0] -> Token Stop Reason
       if (candidate0.finishReason) {
         switch (candidate0.finishReason) {
           case 'STOP':
@@ -153,6 +200,10 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
           case 'MALFORMED_FUNCTION_CALL':
             pt.setTokenStopReason('cg-issue');
             return pt.setDialectTerminatingIssue(`Generation stopped due to the function call generated by the model being invalid`, null);
+
+          case 'IMAGE_SAFETY':
+            pt.setTokenStopReason('filter-content');
+            return pt.setDialectTerminatingIssue(`Generation stopped due the generated images contain safety violations`, null);
 
           default:
             throw new Error(`unexpected empty generation (finish reason: ${candidate0?.finishReason})`);

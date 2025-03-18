@@ -11,6 +11,9 @@ const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
+  // FIXME: this is a weak and hacky way to detect the image generation models - TODO: declare this as a param? with Resolution too?
+  const hotFixImageGenerationModels1 = model.id.includes('image-generation');
+
   // Note: the streaming setting is ignored as it only belongs in the path
 
   // System Instructions
@@ -28,10 +31,11 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
           break;
 
         case 'meta_cache_control':
-          // ignore - we implement caching in the Anthropic way for now
+          // ignore this breakpoint hint - Anthropic only
           break;
 
         default:
+          const _exhaustiveCheck: never = part;
           throw new Error(`Unsupported part type in System message: ${(part as any).pt}`);
       }
       return acc;
@@ -58,7 +62,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
       responseSchema: undefined, // (default, optional) NOTE: for JSON output, we'd take the schema here
       candidateCount: undefined, // (default, optional)
       maxOutputTokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
-      ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined, } : {}),
+      ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
       topP: undefined, // (default, optional)
       topK: undefined, // (default, optional)
     },
@@ -75,6 +79,19 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.thinkingConfig = {
       includeThoughts: true,
     };
+
+  // [Gemini, 2025-03-14] Experimental Image generation: Request
+  if (hotFixImageGenerationModels1) {
+    payload.generationConfig!.responseModalities = ['TEXT', 'IMAGE'];
+    // 2025-03-14: both APIs v1alpha and v1beta do not support specifying the resolution
+    // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
+  }
+
+  // TODO: Google Search Grounding: for the models that support it, it shall be declared and runtime toggleable
+  // it then becomes just a metter of:
+  // - payload.tools = [...payload.tools, { googleSearch: {} }]; -- for most models
+  // - emitting the missing particles, parsing, rendering
+  // - working around the limitations and idiosyncrasies of the Search API
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
@@ -130,8 +147,12 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(_toApproximateGeminiDocPart(part));
           break;
 
+        case 'ma':
+          // ignore this thinking block - Anthropic only
+          break;
+
         case 'meta_cache_control':
-          // ignore - we implement caching in the Anthropic way for now
+          // ignore this breakpoint hint - Anthropic only
           break;
 
         case 'meta_in_reference_to':
@@ -167,6 +188,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
               parts.push(GeminiWire_ContentParts.ExecutableCodePart('PYTHON', invocation.code));
               break;
             default:
+              const _exhaustiveCheck: never = invocation;
               throw new Error(`Unsupported tool call type in message: ${(part as any).call.type}`);
           }
           break;
@@ -200,11 +222,13 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
               parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));
               break;
             default:
+              const _exhaustiveCheck: never = part.response;
               throw new Error(`Unsupported tool response type in message: ${(part as any).response.type}`);
           }
           break;
 
         default:
+          const _exhaustiveCheck: never = part;
           throw new Error(`Unsupported part type in Chat message: ${(part as any).pt}`);
       }
     }
@@ -299,6 +323,7 @@ function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold
     { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: threshold },
     { category: 'HARM_CATEGORY_HARASSMENT', threshold: threshold },
     { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: threshold },
+    { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: threshold },
   ];
 }
 

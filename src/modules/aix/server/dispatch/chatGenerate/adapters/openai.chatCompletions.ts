@@ -44,7 +44,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [OpenAI] - o1 models
   // - o1 models don't support system messages, we could hotfix this here once and for all, but we want to transfer the responsibility to the UI for better messaging to the user
   // - o1 models also use the new 'max_completion_tokens' rather than 'max_tokens', breaking API compatibility, so we have to address it here
-  const hotFixOpenAIOFamily = openAIDialect === 'openai' && (
+  const hotFixOpenAIOFamily = (openAIDialect === 'openai' || openAIDialect === 'azure') && (
     model.id === 'o1' || model.id.startsWith('o1-') ||
     model.id === 'o3' || model.id.startsWith('o3-')
   );
@@ -100,8 +100,22 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningEffort) {
     payload.reasoning_effort = model.vndOaiReasoningEffort;
   }
+  // [OpenAI] Vendor-specific restore markdown, for newer o1 models
   if (model.vndOaiRestoreMarkdown) {
     _fixVndOaiRestoreMarkdown_Inline(payload);
+  }
+  // [OpenAI] Vendor-specific web search context and/or geolocation
+  if (model.vndOaiWebSearchContext || model.userGeolocation) {
+    payload.web_search_options = {};
+    if (model.vndOaiWebSearchContext)
+      payload.web_search_options.search_context_size = model.vndOaiWebSearchContext;
+    if (model.userGeolocation)
+      payload.web_search_options.user_location = {
+        type: 'approximate',
+        approximate: {
+          ...model.userGeolocation,
+        },
+      };
   }
 
   if (hotFixOpenAIOFamily)
@@ -252,10 +266,11 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
         break;
 
       case 'meta_cache_control':
-        // ignore this hint - openai doesn't support this yet
+        // ignore this breakpoint hint - Anthropic only
         break;
 
       default:
+        const _exhaustiveCheck: never = part;
         throw new Error(`Unsupported part type in System message: ${(part as any).pt}`);
     }
   });
@@ -316,7 +331,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             case 'meta_cache_control':
-              // ignore this hint - openai doesn't support this yet
+              // ignore this breakpoint hint - Anthropic only
               break;
 
             case 'meta_in_reference_to':
@@ -327,6 +342,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
               break;
 
             default:
+              const _exhaustiveCheck: never = part;
               throw new Error(`Unsupported part type in User message: ${(part as any).pt}`);
           }
         }
@@ -377,6 +393,7 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
                   toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, 'execute_code' /* suboptimal */, invocation.code || '');
                   break;
                 default:
+                  const _exhaustiveCheck: never = invocation;
                   throw new Error(`Unsupported tool call type in Model message: ${(part as any).pt}`);
               }
 
@@ -390,11 +407,16 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
                 chatMessages.push({ role: 'assistant', content: null, tool_calls: [toolCallPart] });
               break;
 
+            case 'ma':
+              // ignore this thinking block - Anthropic only
+              break;
+
             case 'meta_cache_control':
-              // ignore this hint - openai doesn't support this yet
+              // ignore this breakpoint hint - Anthropic only
               break;
 
             default:
+              const _exhaustiveCheck: never = part;
               throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
           }
 
@@ -413,7 +435,12 @@ function _toOpenAIMessages(systemMessage: AixMessages_SystemMessage | null, chat
                 throw new Error(`Unsupported tool response type in Tool message: ${(part as any).pt}`);
               break;
 
+            case 'meta_cache_control':
+              // ignore this breakpoint hint - Anthropic only
+              break;
+
             default:
+              const _exhaustiveCheck: never = part;
               throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
           }
         }

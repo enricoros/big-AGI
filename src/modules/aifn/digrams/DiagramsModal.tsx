@@ -21,7 +21,7 @@ import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import { bigDiagramPrompt, DiagramLanguage, diagramLanguages, DiagramType, diagramTypes } from './diagrams.data';
 
@@ -115,7 +115,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
         messages,
         'ai-diagram', messageId,
         { abortSignal: stepAbortController.signal },
-        (text) => !!text && setDiagramCode(diagramCode = text.trim()),
+        (text) => {
+          !!text && setDiagramCode(diagramCode = text.trim());
+        },
       );
     } catch (error: any) {
       setDiagramCode(null);

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { SvgIcon } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 
-import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
+import { useDragDropDataTransfer } from '~/common/components/dnd-dt/useDragDropDataTransfer';
 
 
 export function useComposerDragDrop(

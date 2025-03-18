@@ -9,7 +9,6 @@ import PlusOneRoundedIcon from '@mui/icons-material/PlusOneRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { animationColorBeamScatter } from '~/common/util/animUtils';
 
 import type { BeamStoreApi } from '../store-beam.hooks';
 import { BEAM_BTN_SX, SCATTER_COLOR, SCATTER_RAY_PRESETS } from '../beam.config';
@@ -40,6 +39,24 @@ const desktopScatterPaneSx: SxProps = {
   position: 'sticky',
   top: 0,
 };
+
+const _styles = {
+
+  icon: {
+    fontSize: '1rem',
+    mr: 0.625,
+  } as const,
+
+  iconActive: {
+    fontSize: '1rem',
+    mr: 0.625,
+    // NOTE: no reason to animate the color here, it's just a waste of power...
+    // animation: `${animationColorBeamScatter} 2s linear infinite`,
+    // ...and so we just fallback to the first color of the animation
+    color: 'rgb(85, 140, 47)',
+  } as const,
+
+} as const;
 
 
 export function BeamScatterPane(props: {
@@ -73,8 +90,9 @@ export function BeamScatterPane(props: {
           // sx={{ my: 0.25 }}
         >
           {props.startBusy
-            ? <AutoAwesomeIcon sx={{ fontSize: '1rem', mr: 0.625, animation: `${animationColorBeamScatter} 2s linear infinite` }} />
-            : <AutoAwesomeOutlinedIcon sx={{ fontSize: '1rem', mr: 0.625 }} />}Beam
+            ? <AutoAwesomeIcon sx={_styles.iconActive} />
+            : <AutoAwesomeOutlinedIcon sx={_styles.icon} />}
+          Beam
         </Typography>
         <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
           Explore different replies

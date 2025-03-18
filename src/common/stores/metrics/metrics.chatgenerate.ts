@@ -1,12 +1,19 @@
 import { DPricingChatGenerate, getLlmCostForTokens, isModelPricingFree } from '~/common/stores/llms/llms.pricing';
 
+
+// configuration
+const METRICS_APPROXIMATE_DT_INNER_THRESHOLD = 200; // ms
+const METRICS_APPROXIMATE_VT_TOKENS_THRESHOLD = 40; // tokens
+
+
 /**
  * This is a stored type - IMPORTANT: do not break.
  * - stored by DMessage > DMessageGenerator
  */
 export type DMetricsChatGenerate_Md =
   Omit<MetricsChatGenerateTokens, 'T'> &
-  MetricsChatGenerateCost_Md;
+  MetricsChatGenerateCost_Md &
+  Pick<MetricsChatGenerateTime, 'dtStart' | 'vTOutInner'>; // 2025-02-27: added the inner velocity, which wasn't stored before
 
 /**
  * In particular this is used 'as' AixWire_Particles.CGSelectMetrics
@@ -27,7 +34,7 @@ type MetricsChatGenerateTokens = {
   TOutR?: number,       // Portion of TOut that was used for reasoning (e.g. not for output)
   // TOutA?: number,    // Portion of TOut that was used for Audio
 
-  // If set, indicates unreliability or stop reason
+  // If set, indicates unreliability or Stop Reason (sR)
   TsR?:
     | 'pending'         // still being generated (could be stuck in this state if data got corrupted)
     | 'aborted'         // aborted or failed (interrupted generation, out of tokens, connection error, etc)
@@ -78,9 +85,65 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
   if (!metrics.T)
     metrics.T = (metrics.TIn || 0) + (metrics.TOut || 0) + (metrics.TCacheRead || 0) + (metrics.TCacheWrite || 0);
 
-  // calculate the outer Token velocity
-  if (metrics.TOut !== undefined && metrics.dtAll !== undefined && metrics.dtAll > 0)
+  // calculate the Token velocities
+  if (metrics.TOut !== undefined && metrics.dtAll !== undefined && metrics.dtAll > 0) {
+
+    // inner time approximation (dtStart -> dtAll)
+    if (!metrics.dtInner && metrics.dtStart !== undefined && metrics.dtStart > 0) {
+      /**
+       * Only use the approximate inner duration if it's greater than a threshold. this is to prevent
+       * This is to prevent first -> last event timing (a poor substitute for the actual inner duration)
+       * to be too short to be meaningful.
+       */
+      const dtInnerApprox = metrics.dtAll - metrics.dtStart;
+      if (dtInnerApprox >= METRICS_APPROXIMATE_DT_INNER_THRESHOLD)
+        metrics.dtInner = dtInnerApprox;
+    }
+
+    // inner velocity approximation (if not reported by the API, approximate to first -> last event)
+    if (!metrics.vTOutInner && metrics.dtInner !== undefined && metrics.dtInner > 0) {
+
+      // for OpenAI reasoning models, we needto remove the reasoning tokens from the total, as they were not counted
+      const TOutReceived = metrics.TOut - (metrics.TOutR || 0);
+
+      if (TOutReceived >= METRICS_APPROXIMATE_VT_TOKENS_THRESHOLD)
+        metrics.vTOutInner = Math.round(100 * TOutReceived / (metrics.dtInner / 1000)) / 100;
+    }
+
+    // outer velocity (end-to-end)
     metrics.vTOutAll = Math.round(100 * metrics.TOut / (metrics.dtAll / 1000)) / 100;
+
+  }
+}
+
+
+// ChatGenerate extraction for DMessage's smaller metrics
+
+export function metricsChatGenerateLgToMd(metrics: DMetricsChatGenerate_Lg): DMetricsChatGenerate_Md {
+  const allOptionalKeys: (keyof DMetricsChatGenerate_Md)[] = [
+    '$c', '$cdCache', '$code', // select costs
+    'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', // select token counts
+    'dtStart', 'vTOutInner', // select token timings/velocities
+    'TsR', // stop reason
+  ] as const;
+  const extracted: DMetricsChatGenerate_Md = {};
+
+  for (const key of allOptionalKeys) {
+
+    // [OpenAI] we also ignore a TOutR of 0, as networks without reasoning return it. keeping it would be misleading as 'didn't reason but I could have', while it's 'can't reason'
+    if (key === 'TOutR' && metrics.TOutR === 0)
+      continue;
+
+    // [OpenAI] we also ignore a TOutA of 0 (no audio in this output)
+    // if (key === 'TOutA' && metrics.TOutA === 0)
+    //   continue;
+
+    if (metrics[key] !== undefined) {
+      extracted[key] = metrics[key] as any;
+    }
+  }
+
+  return extracted;
 }
 
 
@@ -181,29 +244,4 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
     $cdCache,
     ...(isPartialMessage && { $code: 'partial-msg' }),
   };
-}
-
-
-// ChatGenerate extraction for DMessage's smaller metrics
-
-export function metricsChatGenerateLgToMd(metrics: DMetricsChatGenerate_Lg): DMetricsChatGenerate_Md {
-  const keys: (keyof DMetricsChatGenerate_Md)[] = ['$c', '$cdCache', '$code', 'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', /*TOutA,*/ 'TsR'] as const;
-  const extracted: DMetricsChatGenerate_Md = {};
-
-  for (const key of keys) {
-
-    // [OpenAI] we also ignore a TOutR of 0, as networks without reasoning return it. keeping it would be misleading as 'didn't reason but I could have', while it's 'can't reason'
-    if (key === 'TOutR' && metrics.TOutR === 0)
-      continue;
-
-    // [OpenAI] we also ignore a TOutA of 0 (no audio in this output)
-    // if (key === 'TOutA' && metrics.TOutA === 0)
-    //   continue;
-
-    if (metrics[key] !== undefined) {
-      extracted[key] = metrics[key] as any;
-    }
-  }
-
-  return extracted;
 }

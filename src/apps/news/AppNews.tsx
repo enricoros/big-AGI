@@ -1,10 +1,11 @@
 import * as React from 'react';
 import NextImage from 'next/image';
 import TimeAgo from 'react-timeago';
-
-import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Typography } from '@mui/joy';
+import { AspectRatio, Box, Button, Card, CardContent, CardOverflow, Container, Grid, Sheet, Typography } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
+
+import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 
 import { Brand } from '~/common/app.config';
 import { Link } from '~/common/components/Link';
@@ -15,7 +16,6 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
-import { bigAgi2NewsCallout } from './bigAgi2.data';
 
 
 // number of news items to show by default, before the expander
@@ -56,6 +56,42 @@ export const newsRoadmapCallout =
     </CardContent>
   </Card>;
 
+export function BuildInfoCard(props: { noMargin?: boolean }) {
+  return (
+    <Card variant='solid' color='neutral' invertedColors sx={props.noMargin ? undefined : { mb: 3 }}>
+      <Typography level='title-md' sx={{ my: -1 }}>
+        Development Build Information
+      </Typography>
+      <BuildInfoSheet />
+    </Card>
+  );
+}
+
+function BuildInfoSheet() {
+  const backendBuild = React.useMemo(() => getBackendCapabilities().build, []);
+  const frontendBuild = React.useMemo(() => Release.buildInfo('frontend'), []);
+  return (
+    <Sheet variant='soft' invertedColors sx={{
+      fontSize: 'xs',
+      // fontFamily: 'code',
+      color: 'text.secondary',
+      backgroundColor: 'background.popup',
+      // border: '1px solid',
+      // borderColor: 'divider',
+      borderRadius: 'sm',
+      // boxShadow: 'inset 1px 1px 4px -2px rgba(0,0,0,0.1)',
+      p: 1,
+      mb: -1,
+      mx: -1,
+    }}>
+      PL: <strong>{Release.TenantSlug}</strong> · package {backendBuild?.pkgVersion} ({Release.Monotonics.NewsVersion}).<br />
+      Frontend: {frontendBuild.gitSha} - deployed {frontendBuild.timestamp ? <strong><TimeAgo date={frontendBuild.timestamp} /></strong> : 'unknown'}, and
+      backend {backendBuild?.gitSha}{backendBuild?.timestamp === frontendBuild.timestamp ? '.' : backendBuild?.timestamp ? <TimeAgo date={backendBuild?.timestamp!} /> : 'unknown.'}<br />
+      Ships with -modal/-model: {Object.entries(Release.TechLevels).map(([name, version], idx, arr) => <><strong>{name}</strong> v{version}{idx < arr.length - 1 ? ', ' : ''}</>)}.<br />
+      Ships with intelligent functions: {Release.AiFunctions.map((name, idx, arr) => <><i>{name}</i>{idx < arr.length - 1 ? ', ' : ''}</>)}.
+    </Sheet>
+  );
+}
 
 export function AppNews() {
   // state
@@ -94,7 +130,7 @@ export function AppNews() {
           <Button
             variant='solid' color='primary' size='lg'
             component={Link} href={ROUTE_INDEX} noLinkStyle
-            endDecorator='✨'
+            // endDecorator='✨'
             sx={{
               boxShadow: '0 8px 24px -4px rgb(var(--joy-palette-primary-mainChannel) / 20%)',
               minWidth: 180,
@@ -114,12 +150,15 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
+              {/* Inject the Build Info Sheet */}
+              {idx === 0 && <BuildInfoCard />}
+
               {/* Inject the Big-AGI 2.0 item here*/}
-              {idx === 0 && (
-                <Box sx={{ mb: 3 }}>
-                  {bigAgi2NewsCallout}
-                </Box>
-              )}
+              {/*{idx === 1 && (*/}
+              {/*  <Box sx={{ mb: 3 }}>*/}
+              {/*    {bigAgi2NewsCallout}*/}
+              {/*  </Box>*/}
+              {/*)}*/}
 
               {/* Inject the Beam item here*/}
               {idx === 2 && (
@@ -164,6 +203,8 @@ export function AppNews() {
                       ))}
                     </ul>
                   )}
+
+                  {/*{idx === 0 && <BuildInfoSheet />}*/}
 
                 </CardContent>
 

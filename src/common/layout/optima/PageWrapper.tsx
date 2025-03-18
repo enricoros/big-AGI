@@ -4,7 +4,7 @@ import { Box, Container } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 import { isPwa } from '~/common/util/pwaUtils';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { PageCore } from './PageCore';
 import { useOptimaDrawerOpen, useOptimaPanelOpen } from './useOptima';

@@ -90,8 +90,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
 
   // Construct the request payload
   const payload: TRequest = {
-    max_tokens: model.maxTokens !== undefined ? model.maxTokens
-      : (model.id.includes('3-5-sonnet') ? 8192 : 4096), // see `max-tokens-3-5-sonnet-2024-07-15`, and [2024-10-22] max from https://docs.anthropic.com/en/docs/about-claude/models
+    max_tokens: model.maxTokens !== undefined ? model.maxTokens : 8192,
     model: model.id,
     system: systemMessage,
     messages: chatMessages,
@@ -115,7 +114,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, chatGenerate: A
   if (model.vndAntThinkingBudget !== undefined) {
     payload.thinking = model.vndAntThinkingBudget !== null ? {
       type: 'enabled',
-      budget_tokens: model.vndAntThinkingBudget,
+      budget_tokens: model.vndAntThinkingBudget < payload.max_tokens ? model.vndAntThinkingBudget : payload.max_tokens - 1,
     } : {
       type: 'disabled',
     };
@@ -209,9 +208,19 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
                 toolUseBlock = AnthropicWire_Blocks.ToolUseBlock(part.id, 'execute_code' /* suboptimal */, part.invocation.code);
                 break;
               default:
+                const _exhaustiveCheck: never = part.invocation;
                 throw new Error(`Unsupported tool call type in Model message: ${(part.invocation as any).type}`);
             }
             yield { role: 'assistant', content: toolUseBlock };
+            break;
+
+          case 'ma':
+            if (!part.aText && !part.textSignature && !part.redactedData)
+              throw new Error('Extended Thinking data is missing');
+            if (part.aText && part.textSignature)
+              yield { role: 'assistant', content: AnthropicWire_Blocks.ThinkingBlock(part.aText, part.textSignature) };
+            for (const redactedData of part.redactedData || [])
+              yield { role: 'assistant', content: AnthropicWire_Blocks.RedactedThinkingBlock(redactedData) };
             break;
 
           case 'meta_cache_control':
@@ -219,6 +228,7 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           default:
+            const _exhaustiveCheck: never = part;
             throw new Error(`Unsupported part type in Model message: ${(part as any).pt}`);
         }
       }
@@ -244,7 +254,12 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             }
             break;
 
+          case 'meta_cache_control':
+            // ignored in tools
+            break;
+
           default:
+            const _exhaustiveCheck: never = part;
             throw new Error(`Unsupported part type in Tool message: ${(part as any).pt}`);
         }
       }

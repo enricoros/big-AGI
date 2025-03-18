@@ -2,11 +2,12 @@ import * as React from 'react';
 
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isModelAuxPart, isPlaceholderPart, isVoidFragment, } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isVoidFragment } from '../chat.fragments';
 
 
 interface FragmentBuckets {
-  contentOrVoidFragments: (DMessageContentFragment | DMessageVoidFragment)[];
+  voidFragments: DMessageVoidFragment[];
+  contentFragments: DMessageContentFragment[];
   imageAttachments: DMessageAttachmentFragment[];
   nonImageAttachments: DMessageAttachmentFragment[];
 }
@@ -17,37 +18,39 @@ interface FragmentBuckets {
 export function useFragmentBuckets(messageFragments: DMessageFragment[]): FragmentBuckets {
 
   // Refs to store the last stable value for each bucket
-  const contentOrVoidFragmentsRef = React.useRef<(DMessageContentFragment | DMessageVoidFragment)[]>([]);
+  const voidFragmentsRef = React.useRef<DMessageVoidFragment[]>([]);
+  const contentFragmentsRef = React.useRef<DMessageContentFragment[]>([]);
   const imageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
   const nonImageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
 
   // Use useMemo to recalculate buckets only when messageFragments changes
   return React.useMemo(() => {
 
-    const contentOrVoidFragments: (DMessageContentFragment | DMessageVoidFragment)[] = [];
+    const voidFragments: DMessageVoidFragment[] = [];
+    const contentFragments: DMessageContentFragment[] = [];
     const imageAttachments: DMessageAttachmentFragment[] = [];
     const nonImageAttachments: DMessageAttachmentFragment[] = [];
 
     messageFragments.forEach(fragment => {
       if (isContentFragment(fragment))
-        contentOrVoidFragments.push(fragment);
+        contentFragments.push(fragment);
       else if (isAttachmentFragment(fragment)) {
         if (isImageRefPart(fragment.part))
           imageAttachments.push(fragment);
         else
           nonImageAttachments.push(fragment);
       } else if (isVoidFragment(fragment)) {
-        if (isModelAuxPart(fragment.part) || isPlaceholderPart(fragment.part))
-          contentOrVoidFragments.push(fragment);
-        else
-          console.warn('[DEV] Unexpected void fragment:', fragment);
+        voidFragments.push(fragment);
       } else
         console.warn('[DEV] Unexpected fragment type:', fragment.ft);
     });
 
     // For each bucket, return the new value if it's different, otherwise return the stable ref
-    if (!shallowEquals(contentOrVoidFragments, contentOrVoidFragmentsRef.current))
-      contentOrVoidFragmentsRef.current = contentOrVoidFragments;
+    if (!shallowEquals(voidFragments, voidFragmentsRef.current))
+      voidFragmentsRef.current = voidFragments;
+
+    if (!shallowEquals(contentFragments, contentFragmentsRef.current))
+      contentFragmentsRef.current = contentFragments;
 
     if (!shallowEquals(imageAttachments, imageAttachmentsRef.current))
       imageAttachmentsRef.current = imageAttachments;
@@ -56,7 +59,8 @@ export function useFragmentBuckets(messageFragments: DMessageFragment[]): Fragme
       nonImageAttachmentsRef.current = nonImageAttachments;
 
     return {
-      contentOrVoidFragments: contentOrVoidFragmentsRef.current,
+      voidFragments: voidFragmentsRef.current,
+      contentFragments: contentFragmentsRef.current,
       imageAttachments: imageAttachmentsRef.current,
       nonImageAttachments: nonImageAttachmentsRef.current,
     };
