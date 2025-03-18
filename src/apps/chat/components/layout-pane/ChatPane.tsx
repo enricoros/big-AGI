@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { Box, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
+import { Box, Checkbox, IconButton, ListItem, ListItemButton, ListItemDecorator, MenuItem, Switch, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
-import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined';
 import CleaningServicesOutlinedIcon from '@mui/icons-material/CleaningServicesOutlined';
 import CompressIcon from '@mui/icons-material/Compress';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -19,7 +18,6 @@ import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconS
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { GoodModal } from '~/common/components/modals/GoodModal';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
@@ -172,7 +170,7 @@ export function ChatPane(props: {
         onClick={handleToggleMessageSelectionMode}
         sx={props.isMessageSelectionMode ? { fontWeight: 'lg' } : {}}
       >
-        <ListItemDecorator>{!props.isMessageSelectionMode ? <CleaningServicesOutlinedIcon /> : <CheckBoxOutlinedIcon />}</ListItemDecorator>
+        <ListItemDecorator>{!props.isMessageSelectionMode ? <CleaningServicesOutlinedIcon /> : <Checkbox size='md' color='warning' variant='plain' checked />}</ListItemDecorator>
         Cleanup
       </MenuItem>
 
