@@ -247,7 +247,7 @@ export function PersonaSelector(props: {
       maxWidth: 'md',
       minWidth: `${2 + 1 + tileSize * 2}rem`, // accomodate at least 2 columns (scroll-x in case)
       mx: 'auto',
-      minHeight: '60svh',
+      minHeight: '90%', // was 60svh - looked too big on desktop stacked
       display: 'grid',
       px: { xs: 0.5, sm: 1, md: 2 },
       py: 2,
