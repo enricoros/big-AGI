@@ -660,6 +660,7 @@ export function AppChat() {
               }),
               ...((_paneIsIncognito && {
                 backgroundColor: theme.palette.background.level3,
+                backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
               })),
             }}
           >
