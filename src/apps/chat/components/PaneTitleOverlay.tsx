@@ -39,6 +39,10 @@ const _styles = {
     alignItems: 'center',
     gap: 1,
   } as const,
+  titleBarIncognito: {
+    backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px)',
+    backgroundColor: 'neutral.solidBg',
+  } as const,
   title: {
     flex: 1,
     overflow: 'hidden',
@@ -65,6 +69,7 @@ export function PaneTitleOverlay(props: {
   paneIdx: number,
   conversationId: DConversationId | null,
   isFocused: boolean,
+  isIncognito: boolean,
   onConversationDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
 }) {
 
@@ -128,7 +133,7 @@ export function PaneTitleOverlay(props: {
     <Sheet
       color={color}
       variant={variantO}
-      sx={_styles.tileBar}
+      sx={!props.isIncognito ? _styles.tileBar : { ..._styles.tileBar, ..._styles.titleBarIncognito }}
     >
       {/* Close Others*/}
       {/*<TooltipOutlined title='Close Other Tabs'>*/}
