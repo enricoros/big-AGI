@@ -670,6 +670,7 @@ export function AppChat() {
                 paneIdx={idx}
                 conversationId={_paneConversationId}
                 isFocused={_paneIsFocused}
+                isIncognito={_paneIsIncognito}
                 onConversationDelete={handleDeleteConversations}
               />
             )}
