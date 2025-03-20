@@ -99,7 +99,7 @@ export function BeamFusionGrid(props: {
     <Box sx={{
       ...(props.isMobile ? fusionGridMobileSx : fusionGridDesktopSx),
       ...(isEmpty ? {
-        backgroundColor: 'neutral.solidBg',
+        backgroundColor: isDarkMode ? 'neutral.900' : 'neutral.solidBg',
       } : {
         backgroundColor: isDarkMode ? 'success.900' : '#F2FFFA', // f8fff8 was good, too close to the gree hue
         pt: 'var(--Pad)',
@@ -121,7 +121,7 @@ export function BeamFusionGrid(props: {
         <BeamCard
           className={isEmpty ? beamCardClasses.smashTop : undefined}
           sx={{
-            backgroundColor: props.canGather ? `${GATHER_COLOR}.softBg` : undefined,
+            backgroundColor: props.canGather ? `${GATHER_COLOR}.softBg` : isDarkMode ? 'neutral.700' : undefined,
             // boxShadow: `0px 6px 16px -12px rgb(var(--joy-palette-${props.canGather ? GATHER_COLOR : 'neutral'}-darkChannel) / 40%)`,
             mb: 'auto',
           }}
