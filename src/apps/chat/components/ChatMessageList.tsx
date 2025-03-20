@@ -282,6 +282,10 @@ export function ChatMessageList(props: {
     p: 0,
     ...props.sx,
 
+    // we added these after removing the minSize={20} (%) from the containing panel.
+    minWidth: '18rem',
+    // minHeight: '180px', // not need for this, as it's already an overflow scrolling container, so one can reduce it to a pixel
+
     // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
     // marginBottom: '-1px',
 
