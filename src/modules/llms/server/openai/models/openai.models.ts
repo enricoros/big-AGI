@@ -1,6 +1,6 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
-import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Complete, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_NeedsAudio, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Realtime, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMappings } from './models.data';
@@ -42,9 +42,157 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
+  /// Reasoning models
+
+  // o3-mini
+  {
+    idPrefix: 'o3-mini',
+    label: 'o3 Mini',
+    description: 'Points to the most recent o3-mini snapshot: o3-mini-2025-01-31',
+    symLink: 'o3-mini-2025-01-31',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
+    benchmark: { cbaElo: 1307 },
+  },
+  {
+    isLatest: true,
+    idPrefix: 'o3-mini-2025-01-31',
+    label: 'o3 Mini (2025-01-31)',
+    description: 'Latest o3-mini model snapshot. High intelligence at the same cost and latency targets of o1-mini. Excels at science, math, and coding tasks.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
+    benchmark: { cbaElo: 1307 },
+  },
+
+  // o1-pro - (v1/responses API - UNSUPPORTED YET) 💎💰
+  {
+    idPrefix: 'o1-pro',
+    label: 'o1 Pro',
+    description: 'Version of o1 with more compute for better responses. Points to o1-pro-2025-03-19.',
+    symLink: 'o1-pro-2025-03-19',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Sep 30, 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoStream],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    chatPrice: { input: 150, output: 600 },
+  },
+  {
+    hidden: true, // unsuported yet
+    // isLatest: true,
+    idPrefix: 'o1-pro-2025-03-19',
+    label: 'o1 Pro (2025-03-19)',
+    description: 'A version of o1 with more compute for better responses. Provides consistently better answers for complex tasks.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Sep 30, 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoStream],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    chatPrice: { input: 150, output: 600 },
+  },
+
+  // o1
+  {
+    idPrefix: 'o1',
+    label: 'o1',
+    description: 'Points to the most recent snapshot of the o1 model: o1-2024-12-17',
+    symLink: 'o1-2024-12-17',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1352 },
+  },
+  {
+    idPrefix: 'o1-2024-12-17',
+    label: 'o1 (2024-12-17)',
+    description: 'Latest o1 model.',
+    contextWindow: 200000,
+    maxCompletionTokens: 100000,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1352 },
+  },
+
+  // o1-preview
+  {
+    idPrefix: 'o1-preview',
+    label: 'o1 Preview',
+    description: 'Points to the most recent snapshot of the o1 preview model: o1-preview-2024-09-12',
+    symLink: 'o1-preview-2024-09-12',
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 32768,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1335 },
+    isPreview: true,
+    hidden: true,
+  },
+  {
+    idPrefix: 'o1-preview-2024-09-12',
+    label: 'o1 Preview (2024-09-12)', // ⏱️
+    description: 'Latest o1 preview model snapshot. This model takes longer to run and does not support streaming. New reasoning model for complex tasks that require broad general knowledge.',
+    contextWindow: 128000,
+    maxCompletionTokens: 32768,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
+    benchmark: { cbaElo: 1335 },
+    isPreview: true,
+    hidden: true,
+  },
+
+  // o1-mini
+  {
+    idPrefix: 'o1-mini',
+    label: 'o1 Mini',
+    description: 'Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
+    symLink: 'o1-mini-2024-09-12',
+    hidden: true,
+    // copied from symlinked
+    contextWindow: 128000,
+    maxCompletionTokens: 65536,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
+    benchmark: { cbaElo: 1304 },
+  },
+  {
+    idPrefix: 'o1-mini-2024-09-12',
+    label: 'o1 Mini (2024-09-12)', // ⏱️
+    description: 'Latest o1-mini model snapshot. Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
+    contextWindow: 128000,
+    maxCompletionTokens: 65536,
+    trainingDataCutoff: 'Oct 2023',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
+    benchmark: { cbaElo: 1304 },
+  },
+
+
   /// `v1/chat/completions` Models
 
-  // GPT-4.5
+  // GPT-4.5-Preview
   {
     idPrefix: 'gpt-4.5-preview',
     label: 'GPT-4.5 Preview',
@@ -355,123 +503,6 @@ export const _knownOpenAIChatModels: ManualMappings = [
   },
 
 
-  // o3-mini
-  {
-    idPrefix: 'o3-mini',
-    label: 'o3 Mini',
-    description: 'Points to the most recent o3-mini snapshot: o3-mini-2025-01-31',
-    symLink: 'o3-mini-2025-01-31',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
-    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
-    benchmark: { cbaElo: 1307 },
-  },
-  {
-    isLatest: true,
-    idPrefix: 'o3-mini-2025-01-31',
-    label: 'o3 Mini (2025-01-31)',
-    description: 'Latest o3-mini model snapshot. High intelligence at the same cost and latency targets of o1-mini. Excels at science, math, and coding tasks.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
-    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
-    benchmark: { cbaElo: 1307 },
-  },
-
-  // o1
-  {
-    idPrefix: 'o1',
-    label: 'o1',
-    description: 'Points to the most recent snapshot of the o1 model: o1-2024-12-17',
-    symLink: 'o1-2024-12-17',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
-    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1352 },
-  },
-  {
-    idPrefix: 'o1-2024-12-17',
-    label: 'o1 (2024-12-17)',
-    description: 'Latest o1 model.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }, { paramId: 'llmVndOaiRestoreMarkdown' }],
-    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1352 },
-  },
-
-  // o1-preview
-  {
-    idPrefix: 'o1-preview',
-    label: 'o1 Preview',
-    description: 'Points to the most recent snapshot of the o1 preview model: o1-preview-2024-09-12',
-    symLink: 'o1-preview-2024-09-12',
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 32768,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
-    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1335 },
-    isPreview: true,
-    hidden: true,
-  },
-  {
-    idPrefix: 'o1-preview-2024-09-12',
-    label: 'o1 Preview (2024-09-12)', // ⏱️
-    description: 'Latest o1 preview model snapshot. This model takes longer to run and does not support streaming. New reasoning model for complex tasks that require broad general knowledge.',
-    contextWindow: 128000,
-    maxCompletionTokens: 32768,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
-    chatPrice: { input: 15, cache: { cType: 'oai-ac', read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1335 },
-    isPreview: true,
-    hidden: true,
-  },
-
-  // o1-mini
-  {
-    idPrefix: 'o1-mini',
-    label: 'o1 Mini',
-    description: 'Points to the most recent o1-mini snapshot: o1-mini-2024-09-12',
-    symLink: 'o1-mini-2024-09-12',
-    hidden: true,
-    // copied from symlinked
-    contextWindow: 128000,
-    maxCompletionTokens: 65536,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
-    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
-    benchmark: { cbaElo: 1304 },
-  },
-  {
-    idPrefix: 'o1-mini-2024-09-12',
-    label: 'o1 Mini (2024-09-12)', // ⏱️
-    description: 'Latest o1-mini model snapshot. Fast, cost-efficient reasoning model tailored to coding, math, and science use cases.',
-    contextWindow: 128000,
-    maxCompletionTokens: 65536,
-    trainingDataCutoff: 'Oct 2023',
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
-    chatPrice: { input: 1.1, cache: { cType: 'oai-ac', read: 0.55 }, output: 4.4 },
-    benchmark: { cbaElo: 1304 },
-  },
-
-
   // GPT-4 Turbo
   {
     idPrefix: 'gpt-4-turbo',
@@ -749,6 +780,8 @@ const _manualOrderingIdPrefixes = [
   'o3-20',
   'o3-mini-',
   'o3-',
+  'o1-pro-20',
+  'o1-pro',
   'o1-20',
   'o1-preview-',
   'o1-mini-',
