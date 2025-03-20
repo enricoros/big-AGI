@@ -51,13 +51,13 @@ export function RenderWordsDiff(props: { wordsDiff: WordsDiff; sx?: SxProps; }) 
         display: 'block',
         ...props.sx,
         '.added': {
-          backgroundColor: 'success.softHoverBg',
+          backgroundColor: 'success.softActiveBg',
           color: 'success.softColor',
           paddingY: '0.125rem',
           borderRadius: '0.125rem',
         },
         '.removed': {
-          backgroundColor: 'danger.softBg',
+          backgroundColor: 'danger.softActiveBg',
           color: 'danger.plainColor',
           paddingY: '0.125rem',
           borderRadius: '0.125rem',
