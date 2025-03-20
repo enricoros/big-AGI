@@ -92,6 +92,7 @@
     "cross-env": "^7.0.3",
     "eslint": "^9.22.0",
     "eslint-config-next": "~15.1.7",
+    "eslint-import-resolver-typescript": "~3.8.7",
     "prettier": "^3.5.3",
     "prisma": "~5.22.0",
     "typescript": "^5.8.2"
