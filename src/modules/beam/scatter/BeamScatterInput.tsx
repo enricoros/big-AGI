@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Typography } from '@mui/joy';
+import { Box, Typography, useTheme } from '@mui/joy';
 
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
@@ -27,6 +27,12 @@ const userMessageWrapperSx: SxProps = {
 const userMessageWrapperINVSx: SxProps = {
   ...userMessageWrapperSx,
   backgroundColor: 'neutral.solidBg',
+  pt: 0,
+};
+
+const userMessageWrapperDarkINVSx: SxProps = {
+  ...userMessageWrapperSx,
+  backgroundColor: 'neutral.800',
   pt: 0,
 };
 
@@ -58,6 +64,7 @@ export function BeamScatterInput(props: {
   // const [showHistoryMessage, setShowHistoryMessage] = React.useState(true);
 
   // external state
+  const isDarkMode = useTheme().palette.mode === 'dark';
   const scatterShowPrevMessages = useModuleBeamStore(state => state.scatterShowPrevMessages);
 
   // derived state
@@ -87,7 +94,7 @@ export function BeamScatterInput(props: {
     return null;
 
   return (
-    <Box sx={BEAM_INVERT_BACKGROUND ? userMessageWrapperINVSx : userMessageWrapperSx}>
+    <Box sx={!BEAM_INVERT_BACKGROUND ? userMessageWrapperSx : isDarkMode ? userMessageWrapperDarkINVSx : userMessageWrapperINVSx}>
       <ChatMessageMemo
         message={lastHistoryMessage}
         fitScreen={props.isMobile}

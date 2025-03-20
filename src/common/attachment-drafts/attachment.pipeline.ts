@@ -267,8 +267,8 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
 
       // p3: Html
       if (textOriginHtml) {
-        converters.push({ id: 'rich-text', name: 'HTML' });
         converters.push({ id: 'rich-text-cleaner', name: 'Clean HTML' });
+        converters.push({ id: 'rich-text', name: 'HTML · Heavy' });
       }
       break;
 
