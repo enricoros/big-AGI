@@ -52,6 +52,7 @@ const GuessedMimeLookupTable: Record<string, GuessedMimeInfo> = {
   'text/x-scala': { ext: ['scala'], dt: 'code' },
   'text/x-kotlin': { ext: ['kt'], dt: 'code' },
   'text/x-swift': { ext: ['swift', 'swiftui'], dt: 'code' },
+  'text/x-sql': { ext: ['sql', 'ddl', 'dml'], dt: 'code' },
 
   // Document formats
   'application/pdf': { ext: ['pdf'], dt: 'doc-pdf' },
@@ -111,6 +112,7 @@ const MdTitleToMimeLookupTable: Record<string, GuessedMimeType> = {
   'json': 'application/json',
   'html': 'text/html',
   'htm': 'text/html',
+  'sql': 'text/x-sql',
   'css': 'text/css',
   'md': 'text/markdown',
   'markdown': 'text/markdown',
@@ -203,7 +205,7 @@ export function mimeTypeIsPlainText(mimeType: string): boolean {
 // Anthropic: https://docs.anthropic.com/en/docs/vision
 //  - Supported Image formats:
 //    - image/jpeg, image/png, image/gif, and image/webp
-//    - If image’s long edge is more than 1568 pixels, or your image is more than ~1600 tokens, it will first be scaled down
+//    - If image's long edge is more than 1568 pixels, or your image is more than ~1600 tokens, it will first be scaled down
 //      - Max Image Size per Aspect ratio: 1:1 1092x1092 px, 3:4 951x1268 px, 2:3 896x1344 px, 9:16 819x1456 px, 1:2 784x1568 px
 //    - Max size is 5MB/image on the API
 //    - Up to 20 images in a single request (note, request, not message)
