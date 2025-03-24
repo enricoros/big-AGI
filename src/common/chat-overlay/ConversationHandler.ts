@@ -5,6 +5,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { SystemPurposes } from '../../data';
 
 import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
+import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -38,6 +39,12 @@ export class ConversationHandler {
   constructor(private readonly conversationId: DConversationId) {
     this.beamStore = createBeamVanillaStore();
     this.overlayStore = createPerChatVanillaStore();
+
+    // track the open status of beams - this is meant to be an accelerator for the UI
+    this.beamStore.subscribe((state, prevState) => {
+      if (state.isOpen === prevState.isOpen) return;
+      useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, state.isOpen);
+    });
   }
 
 

@@ -20,6 +20,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { ANIM_BUSY_TYPING } from '~/common/util/dMessageUtils';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -64,6 +65,7 @@ export interface ChatNavigationItemData {
   containsImageAssets: boolean;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;
+  hasBeamOpen: boolean;
   messageCount: number;
   beingGenerated: boolean;
   systemPurposeId: SystemPurposeId;
@@ -106,6 +108,7 @@ function ChatDrawerItem(props: {
     containsDocAttachments,
     containsImageAssets,
     folder,
+    hasBeamOpen,
     messageCount,
     beingGenerated,
     systemPurposeId,
@@ -210,7 +213,9 @@ function ChatDrawerItem(props: {
     {/* Symbol, if globally enabled */}
     {(props.showSymbols || isIncognito) && (
       <ListItemDecorator>
-        {isIncognito ? (
+        {hasBeamOpen ? (
+          <ChatBeamIcon sx={{ fontSize: 'xl' }} />
+        ) : isIncognito ? (
           <VisibilityOffIcon sx={{ fontSize: 'xl' }} />
         ) : (beingGenerated && props.showSymbols === 'gif') ? (
           <Avatar
@@ -286,7 +291,7 @@ function ChatDrawerItem(props: {
       </Box>
     ) : null}
 
-  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
+  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, hasBeamOpen, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
