@@ -88,10 +88,22 @@ const _knownGeminiModels: ({
   _delete?: boolean, // some gemini models are not acknowledged by Google Docs anymore, and leaving them in the list will confuse users
 } & Pick<ModelDescriptionSchema, 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'>)[] = [
 
+  /// Generation 2.5
+
+  // 2.5 Pro Experimental
+  {
+    id: 'models/gemini-2.5-pro-exp-03-25',
+    isPreview: true,
+    chatPrice: geminiExpPricingFree,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    benchmark: { cbaElo: 1443 },
+  },
+
   /// Generation 2.0
 
   // 2.0 Experimental - Pro
   {
+    hidden: true, // showing the 2.5 instead
     id: 'models/gemini-2.0-pro-exp-02-05', // Base model: Gemini 2.0 Pro
     isPreview: true,
     chatPrice: geminiExpPricingFree,
@@ -376,7 +388,9 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 const _sortOderIdPrefix: string[] = [
   'models/gemini-exp',
+  'models/gemini-2.5-pro',
   'models/gemini-2.0-pro',
+  'models/gemini-2.0-flash-exp-image-generation',
   'models/gemini-2.0-flash-thinking',
   'models/gemini-2.0-flash-0',
   'models/gemini-2.0-flash',
