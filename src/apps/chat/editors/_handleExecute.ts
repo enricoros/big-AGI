@@ -92,7 +92,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       if (!isTextContentFragment(firstFragment))
         return false;
       const reactPrompt = firstFragment.part.text;
-      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(reactPrompt)), true);
+      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
       return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId, lastMessage.id);
 
     default:
