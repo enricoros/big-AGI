@@ -134,29 +134,34 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       if (!delta)
         throw new Error(`server response missing content (finish_reason: ${finish_reason})`);
 
-      // delta: Text
-      if (typeof delta.content === 'string') {
-
-        accumulator.content = (accumulator.content || '') + delta.content;
-        pt.appendAutoText_weak(delta.content);
-
-      }
       // delta: Reasoning Content [Deepseek, 2025-01-20]
-      else if (typeof delta.reasoning_content === 'string') {
+      let deltaHasReasoning = false;
+      if (typeof delta.reasoning_content === 'string') {
 
-        // Note: not using the accumulator as it's a relic of the past probably
         pt.appendReasoningText(delta.reasoning_content);
+        deltaHasReasoning = true;
 
       }
       // delta: Reasoning [OpenRouter, 2025-01-24]
       else if (typeof delta.reasoning === 'string') {
 
-        // Note: not using the accumulator as it's a relic of the past probably
         pt.appendReasoningText(delta.reasoning);
+        deltaHasReasoning = true;
 
       }
-      else if (delta.content !== undefined && delta.content !== null)
-        throw new Error(`unexpected delta content type: ${typeof delta.content}`);
+
+      // delta: Text
+      if (typeof delta.content === 'string' &&
+        (!deltaHasReasoning || delta.content) // suppress if reasoning and empty
+      ) {
+
+        accumulator.content = (accumulator.content || '') + delta.content;
+        pt.appendAutoText_weak(delta.content);
+
+      }
+      // 2025-03-26: we don't have the full concurrency combinations of content/reasoning/reasoning_content yet
+      // if (delta.content !== undefined && delta.content !== null)
+      //   throw new Error(`unexpected delta content type: ${typeof delta.content}`);
 
       // delta: Tool Calls
       for (const deltaToolCall of (delta.tool_calls || [])) {
