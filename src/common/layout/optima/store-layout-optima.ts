@@ -20,6 +20,7 @@ interface OptimaState {
 
   // modals
   showKeyboardShortcuts: boolean;
+  showLogger: boolean;
   showModelOptions: DLLMId | false;
   showModels: boolean;
   showPreferences: boolean;
@@ -51,6 +52,7 @@ const initialState: OptimaState = {
 
   // modals that can overlay anything
   showKeyboardShortcuts: false,
+  showLogger: false,
   showModelOptions: false,
   showModels: false,
   showPreferences: false,
@@ -75,6 +77,9 @@ export interface OptimaActions {
 
   closeKeyboardShortcuts: () => void;
   openKeyboardShortcuts: () => void;
+
+  closeLogger: () => void;
+  openLogger: () => void;
 
   closeModelOptions: () => void;
   openModelOptions: (id: DLLMId) => void;
@@ -113,6 +118,9 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
 
   closeKeyboardShortcuts: () => _set({ showKeyboardShortcuts: false }),
   openKeyboardShortcuts: () => _set({ showKeyboardShortcuts: true }),
+
+  closeLogger: () => _set({ showLogger: false }),
+  openLogger: () => _set({ showLogger: true }),
 
   closeModelOptions: () => _set({ showModelOptions: false }),
   openModelOptions: (id: DLLMId) => _set({ showModelOptions: id }),

@@ -80,6 +80,7 @@ export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
 export function useOptimaModals() {
   return useLayoutOptimaStore(useShallow(state => ({
     showKeyboardShortcuts: state.showKeyboardShortcuts,
+    showLogger: state.showLogger,
     showModelOptions: state.showModelOptions,
     showModels: state.showModels,
     showPreferences: state.showPreferences,

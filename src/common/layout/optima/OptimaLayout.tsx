@@ -58,6 +58,7 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     // Preferences & Model dialogs
     { key: ',', ctrl: true, action: optimaOpenPreferences },
     { key: 'm', ctrl: true, shift: true, action: optimaOpenModels },
+    { key: 'g', ctrl: true, shift: true, action: optimaActions().openLogger },
     // Font Scale
     { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
     { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
