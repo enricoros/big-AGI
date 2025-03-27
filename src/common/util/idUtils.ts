@@ -16,6 +16,7 @@ type UidScope =
   | 'dblob-asset'
   | 'draw-prompt'
   | 'livefile-item'
+  | 'logger'
   | 'persona-creator-chain'
   | 'persona-simple'
   | 'processing-queue-task'
