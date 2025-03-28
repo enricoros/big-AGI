@@ -92,6 +92,8 @@ export function DocAttachmentFragment(props: {
 
   const displayTitle = fragmentDocPart.meta?.srcFileName || fragmentDocPart.l1Title || fragmentDocPart.ref || FALLBACK_NO_TITLE;
 
+  const showDeleteInstead = typeof editedText === 'string' && editedText.length === 0 && !!onFragmentDelete;
+
 
   // hooks
 
@@ -332,19 +334,19 @@ export function DocAttachmentFragment(props: {
           {isEditing && (
             <Button
               variant='solid'
-              color='success'
+              color={!showDeleteInstead ? 'success' : 'danger'}
               onClick={handleEditApply}
               size='sm'
-              startDecorator={<CheckRoundedIcon />}
+              startDecorator={!showDeleteInstead ? <CheckRoundedIcon /> : <DeleteForeverIcon />}
               sx={_styles.button}
             >
-              Save
+              {!showDeleteInstead ? 'Save' : 'Delete'}
             </Button>
           )}
         </Box>
       )}
     </Box>
-  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, reverseToolbar]);
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, reverseToolbar, showDeleteInstead]);
 
 
   return (
