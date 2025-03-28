@@ -37,7 +37,7 @@ function ButtonAttachNew(props: {
         onClick={props.onAttachNew}
         sx={buttonAttachSx.desktop}
       >
-        New
+        Note
       </Button>
     </Tooltip>
   );
