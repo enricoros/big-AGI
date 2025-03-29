@@ -29,7 +29,7 @@ const geminiModelSchema = z.object({
   name: z.string(),
   version: z.string(),
   displayName: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   inputTokenLimit: z.number().int().min(1),
   outputTokenLimit: z.number().int().min(1),
   supportedGenerationMethods: z.array(z.union([Methods_enum, z.string()])), // relaxed with z.union to not break on expansion
