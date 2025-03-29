@@ -8,7 +8,7 @@ import { createTRPCRouter, publicProcedure } from '~/server/api/trpc.server';
 import { fetchJsonOrTRPCError } from '~/server/api/trpc.router.fetchers';
 
 import { fixupHost } from '~/common/util/urlUtils';
-import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema } from '../llm.server.types';
+import { llmsChatGenerateOutputSchema, llmsGenerateContextSchema, llmsListModelsOutputSchema, type ModelDescriptionSchema } from '../llm.server.types';
 
 import { OpenAIHistorySchema, openAIHistorySchema, OpenAIModelSchema, openAIModelSchema } from '../openai/openai.router';
 
@@ -148,9 +148,10 @@ export const llmGeminiRouter = createTRPCRouter({
       //       as the List API already all the info on all the models
 
       // map to our output schema
-      const models = detailedModels
+      const models = (detailedModels
         .filter(geminiFilterModels)
         .map(geminiModel => geminiModelToModelDescription(geminiModel))
+        .filter(model => !!model) as ModelDescriptionSchema[])
         .sort(geminiSortModels);
 
       return {
