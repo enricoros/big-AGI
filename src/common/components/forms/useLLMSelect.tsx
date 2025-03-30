@@ -115,7 +115,7 @@ export function useLLMSelect(
         >
           {(!noIcons && !!vendor?.Icon) && (
             <ListItemDecorator>
-              <vendor.Icon />
+              {llm.userStarred ? '⭐ ' : <vendor.Icon />}
             </ListItemDecorator>
           )}
           {/*<Tooltip title={llm.description}>*/}

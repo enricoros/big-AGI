@@ -3,6 +3,8 @@ import TimeAgo from 'react-timeago';
 
 import { Box, Button, ButtonGroup, Divider, FormControl, Input, Switch, Tooltip, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import StarIcon from '@mui/icons-material/Star';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
@@ -79,6 +81,8 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
 
   const handleLlmVisibilityToggle = () => updateLLM(llm.id, { hidden: !llm.hidden });
 
+  const handleLlmStarredToggle = () => updateLLM(llm.id, { userStarred: !llm.userStarred });
+
   const handleLlmDelete = () => {
     removeLLM(llm.id);
     props.onClose();
@@ -122,6 +126,16 @@ export function LLMOptionsModal(props: { id: DLLMId, onClose: () => void }) {
             );
           })}
         </ButtonGroup>
+      </FormControl>
+
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+        <FormLabelStart title='Starred' sx={{ minWidth: 80 }} />
+        <Tooltip title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
+          <Switch checked={!!llm.userStarred} onChange={handleLlmStarredToggle}
+                  endDecorator={llm.userStarred ? <StarIcon sx={{ color: '#fad857' }} /> : <StarBorderIcon />}
+                  slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
+          />
+        </Tooltip>
       </FormControl>
 
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
