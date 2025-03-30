@@ -84,6 +84,7 @@ function LLMDropdown(props: {
       // add the model item
       llmItems[llm.id] = {
         title: llm.label,
+        ...(llm.userStarred ? { symbol: '⭐' } : {}),
         // icon: llm.id.startsWith('some vendor') ? <VendorIcon /> : undefined,
       };
     }

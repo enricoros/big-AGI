@@ -47,6 +47,7 @@ export interface DLLM {
   // user edited properties - if not undefined/missing, they override the others
   userLabel?: string;
   userHidden?: boolean;
+  userStarred?: boolean;
   userParameters?: DModelParameterValues; // user has set these parameters
 }
 

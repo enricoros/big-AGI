@@ -34,12 +34,14 @@ function ModelItem(props: {
   chipChat: boolean,
   chipCode: boolean,
   chipFast: boolean,
+  isMobile: boolean,
   onModelClicked: (llmId: DLLMId) => void,
   onModelSetHidden: (llmId: DLLMId, hidden: boolean) => void,
+  onModelSetStarred: (llmId: DLLMId, starred: boolean) => void,
 }) {
 
   // derived
-  const { llm, onModelClicked, onModelSetHidden } = props;
+  const { llm, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
 
   const handleLLMConfigure = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
@@ -60,9 +62,14 @@ function ModelItem(props: {
     onModelSetHidden(llm.id, false);
   }, [llm.id, onModelSetHidden]);
 
+  // const handleLLMToggleStar = React.useCallback((event: React.MouseEvent) => {
+  //   event.stopPropagation();
+  //   onModelSetStarred(llm.id, !llm.userStarred);
+  // }, [llm.id, llm.userStarred, onModelSetStarred]);
+
 
   // label will be of the form "Model Name (Date)" - here we extract the date
-  const label = llm.label;
+  // const label = llm.label;
   // const dateMatch = _label.match(/^(.*?)\s*\(([^)]+)\)$/);
   // const labelWithoutDate = dateMatch ? dateMatch[1].trim() : _label;
   // const labelDate = dateMatch ? dateMatch[2] : '';
@@ -123,7 +130,7 @@ function ModelItem(props: {
             color: llm.hidden ? 'neutral.plainDisabledColor' : 'text.primary',
             wordBreak: 'break-all',
           }}>
-            {label}
+            {(/*props.isMobile &&*/ llm.userStarred) ? `⭐ ${llm.label}` : llm.label}
             {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: llm.hidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
           </Box>
         </GoodTooltip>
@@ -146,11 +153,17 @@ function ModelItem(props: {
 
         {/* Action Buttons */}
 
-        <GoodTooltip title={llm.hidden ? 'Hidden' : 'Shown in Chat'}>
+        {/*{!props.isMobile && <GoodTooltip title={llm.userStarred ? 'Unstar' : 'Star this model'}>*/}
+        {/*  <IconButton size='sm' onClick={handleLLMToggleStar} sx={absorbListPadding}>*/}
+        {/*    {llm.userStarred ? <StarIcon sx={{ color: '#fad857' }} /> : <StarBorderIcon sx={{ opacity: 0.5, fontSize: 'md' }} />}*/}
+        {/*  </IconButton>*/}
+        {/*</GoodTooltip>}*/}
+
+        {!props.isMobile && <GoodTooltip title={llm.hidden ? 'Hidden' : 'Shown in Chat'}>
           <IconButton aria-label={llm.hidden ? 'Unhide' : 'Hide in Chat'} size='sm' onClick={llm.hidden ? handleLLMUnhide : handleLLMHide} sx={absorbListPadding}>
             {llm.hidden ? <VisibilityOffOutlinedIcon sx={{ opacity: 0.5, fontSize: 'md' }} /> : <VisibilityOutlinedIcon />}
           </IconButton>
-        </GoodTooltip>
+        </GoodTooltip>}
 
         <GoodTooltip title='Options'>
           <IconButton aria-label='Configure LLM' size='sm' sx={absorbListPadding} onClick={handleLLMConfigure}>
@@ -180,6 +193,7 @@ export function ModelsList(props: {
 
   const handleModelSetHidden = React.useCallback((llmId: DLLMId, hidden: boolean) => llmsStoreActions().updateLLM(llmId, { hidden }), []);
 
+  const handleModelSetStarred = React.useCallback((llmId: DLLMId, starred: boolean) => llmsStoreActions().updateLLM(llmId, { userStarred: starred }), []);
 
   const modelItems: React.ReactNode[] = React.useMemo(() => {
 
@@ -223,14 +237,16 @@ export function ModelsList(props: {
           chipChat={llm.id === primaryChatLlmId}
           chipCode={false /* do not show the CODE chip for now, to not confuse users llm.id === codeApplyLlmId*/}
           chipFast={llm.id === fastUtilLlmId}
+          isMobile={isMobile}
           onModelClicked={handleModelClicked}
           onModelSetHidden={handleModelSetHidden}
+          onModelSetStarred={handleModelSetStarred}
         />,
       );
     }
 
     return items;
-  }, [domainAssignments, handleModelClicked, handleModelSetHidden, llms, props.filterServiceId]);
+  }, [domainAssignments, handleModelClicked, handleModelSetHidden, handleModelSetStarred, isMobile, llms, props.filterServiceId]);
 
   return (
     <List size={!isMobile ? undefined : 'sm'} variant='outlined' sx={props.sx}>
