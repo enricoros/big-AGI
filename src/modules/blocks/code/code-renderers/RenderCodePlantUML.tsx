@@ -5,6 +5,7 @@ import { Box, Typography } from '@mui/joy';
 
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
+import { encodeWithCompressionStream } from './plantuml.utils';
 import { patchSvgString } from './RenderCodeSVG';
 import * as React from 'react';
 
@@ -56,11 +57,8 @@ async function _fetchPlantUmlSvg(plantUmlCode: string): Promise<string | null> {
   // fetch the PlantUML SVG
   let text: string = '';
   try {
-    // Dynamically import the PlantUML encoder - it's a large library that slows down app loading
-    const { encode: plantUmlEncode } = await import('plantuml-encoder');
-
     // retrieve and manually adapt the SVG, to remove the background
-    const encodedPlantUML: string = plantUmlEncode(plantUmlCode);
+    const encodedPlantUML: string = await encodeWithCompressionStream(plantUmlCode);
     const response = await frontendSideFetch(`${plantUmlServerUrl}${encodedPlantUML}`);
     text = await response.text();
   } catch (error) {
