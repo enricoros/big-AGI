@@ -74,8 +74,8 @@ interface DBlobAssetData<M extends DBlobMimeType> {
   base64: string; // Base64 encoded content (not a data URL)
   // NOTE: the data url will be "data:${mimeType};base64,${base64}"
   // size?: number; // Size in bytes (optional)
-  altMimeType?: DBlobMimeType; // Alternative MIME type for the input (optional)
-  altData?: string; // Alternative data for the input (optional)
+  // altMimeType?: DBlobMimeType; // Alternative MIME type for the input (optional)
+  // altData?: string; // Alternative data for the input (optional)
 }
 
 export enum DBlobMimeType {
@@ -98,7 +98,7 @@ interface UserOrigin {
   fileName?: string;
   // fileSize?: number; // Size of the uploaded file (optional)
   // fileType?: string; // Type of the uploaded file (optional)
-  attachmentMessageId?: string; // ID of the message that the attachment is associated with (optional)
+  // attachmentMessageId?: string; // ID of the message that the attachment is associated with (optional)
 }
 
 interface GeneratedOrigin {
