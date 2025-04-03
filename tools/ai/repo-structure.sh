@@ -58,6 +58,7 @@ fi
 generate_structure() {
   # Use XML-like tags instead of markdown code fences
   echo '<context name="directoryStructure" description="Below is a snapshot of this project root file structure (git ls-files) at the start of the conversation. This snapshot will NOT update during the conversation.">'
+  echo ""
 
   # Create a temporary file for the file list
   TMP_FILE=$(mktemp)
