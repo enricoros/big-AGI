@@ -47,6 +47,7 @@
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
     "diff": "^7.0.0",
+    "eventemitter3": "^5.0.1",
     "idb-keyval": "^6.2.1",
     "mammoth": "^1.9.0",
     "nanoid": "^5.1.5",
