@@ -9,7 +9,7 @@ import { appEvents } from './events.bus';
 export type { EventPayload, EventDomains, EventDomainName, EventName, EventData, EventListener, EventUnsubscribe } from './events.types';
 
 // re-export event bus
-export { appEvents, DomainEventHelper } from './events.bus';
+export { appEvents, DomainEventHelper, EventBus } from './events.bus';
 
 // re-export live event state
 export type { LiveEventStateData } from './events.stateful';
