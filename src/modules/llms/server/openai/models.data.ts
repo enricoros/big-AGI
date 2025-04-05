@@ -742,10 +742,14 @@ export function openRouterModelFamilySortFn(a: { id: string }, b: { id: string }
   return aPrefixIndex !== -1 ? -1 : 1;
 }
 
-export function openRouterModelToModelDescription(wireModel: object): ModelDescriptionSchema {
+export function openRouterModelToModelDescription(wireModel: object): ModelDescriptionSchema | null {
 
   // parse the model
-  const model = wireOpenrouterModelsListOutputSchema.parse(wireModel);
+  const { data: model, error } = wireOpenrouterModelsListOutputSchema.safeParse(wireModel);
+  if (error) {
+    console.warn(`openrouterModelToModelDescription: Failed to parse model: ${error}`);
+    return null;
+  }
 
   // parse pricing
   const pricing: ModelDescriptionSchema['pricing'] = {
