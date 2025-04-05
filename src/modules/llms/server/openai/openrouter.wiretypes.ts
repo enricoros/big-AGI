@@ -5,16 +5,20 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
+  // NOTE: for 'openrouter/auto', this is:  {
+  //   "prompt": "-1",
+  //   "completion": "-1"
+  // }
   pricing: z.object({
     prompt: z.string(),
     completion: z.string(),
-    image: z.string(),
-    request: z.string(),
+    image: z.string().optional(),
+    request: z.string().optional(),
   }),
   context_length: z.number(),
   architecture: z.object({
-    modality: z.string(), // z.enum(['text', 'multimodal']),
-    tokenizer: z.string(), // e.g. 'Mistral'
+    modality: z.string(), // z.enum(['text', 'multimodal', 'text+image->text]),
+    tokenizer: z.string(), // e.g. 'Mistral', 'Claude'
     instruct_type: z.string().nullable(),
   }),
   top_provider: z.object({
