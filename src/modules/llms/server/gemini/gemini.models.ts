@@ -37,44 +37,58 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
    - Latest stable     version  gemini-1.0-pro  <model>-<generation>-<variation>
    - Stable versions   gemini-1.0-pro-001       <model>-<generation>-<variation>-<version>
 
-   Gemini capabilities chart (updated 2024-10-01):
+   Gemini capabilities chart (updated 2025-04-05):
    - [table stakes] System instructions
    - JSON Mode, with optional JSON Schema [NOTE: JSON Schema is poorly supported?]
    - Adjustable Safety Settings
    - Caching
    - Tuning
-   - [good] Function calling, with configuration
-   - [great] Code execution
+   - Function calling, with configuration
+   - Code execution
+   - Thinking / Reasoning
 */
 
 // Experimental Gemini models are Free of charge
-const geminiExpPricingFree: ModelDescriptionSchema['chatPrice'] = {
+const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
   input: 'free', output: 'free',
 };
 
+
+// Pricing based on https://ai.google.dev/pricing (Apr 5, 2025)
+
+const gemini25ProPreviewPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
+  output: [{ upTo: 200000, price: 10.00 }, { upTo: null, price: 15.00 }],
+};
+
 const gemini20FlashPricing: ModelDescriptionSchema['chatPrice'] = {
-  input: 0.10, // inputAudio: 0.70,
+  input: 0.10, // text/image/video; audio is $0.70 but we don't differentiate yet
   output: 0.40,
+  // Caching coming April 15, 2025
 };
 
 const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.075,
   output: 0.30,
+  // Caching coming April 15, 2025
 };
 
 const gemini15FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 0.075 }, { upTo: null, price: 0.15 }],
   output: [{ upTo: 128000, price: 0.30 }, { upTo: null, price: 0.60 }],
+  // Caching available
 };
 
 const gemini15Flash8BPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 0.0375 }, { upTo: null, price: 0.075 }],
   output: [{ upTo: 128000, price: 0.15 }, { upTo: null, price: 0.30 }],
+  // Caching available
 };
 
 const gemini15ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 128000, price: 1.25 }, { upTo: null, price: 2.50 }],
   output: [{ upTo: 128000, price: 5.00 }, { upTo: null, price: 10.00 }],
+  // Caching available
 };
 
 
@@ -90,23 +104,33 @@ const _knownGeminiModels: ({
 
   /// Generation 2.5
 
-  // 2.5 Pro Experimental
+  // 2.5 Pro Preview (Paid Tier)
+  {
+    id: 'models/gemini-2.5-pro-preview-03-25',
+    isPreview: true,
+    chatPrice: gemini25ProPreviewPricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
+    benchmark: { cbaElo: 1440 },
+  },
+  // 2.5 Pro Experimental (Free Tier)
   {
     id: 'models/gemini-2.5-pro-exp-03-25',
     isPreview: true,
-    chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
+    // parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }], // Gemini doesn't show thoughts anymore
     benchmark: { cbaElo: 1443 },
   },
 
   /// Generation 2.0
 
-  // 2.0 Experimental - Pro
+  // 2.0 Pro Experimental (Superseded by 2.5 Pro Preview/Exp)
   {
-    hidden: true, // showing the 2.5 instead
+    hidden: true, // superseded by 'models/gemini-2.5-pro-preview-03-25', but not fully removed yet
     id: 'models/gemini-2.0-pro-exp-02-05', // Base model: Gemini 2.0 Pro
     isPreview: true,
-    chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1380 },
   },
@@ -116,7 +140,7 @@ const _knownGeminiModels: ({
     symLink: 'models/gemini-2.0-pro-exp-02-05',
     // copied from symlink
     isPreview: true,
-    chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1380 },
   },
@@ -125,27 +149,27 @@ const _knownGeminiModels: ({
     id: 'models/gemini-exp-1206',
     labelOverride: 'Gemini 2.0 Pro Experimental 1206',
     isPreview: true,
-    chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1373 },
   },
 
-  // 2.0 Experimental - Flash Thinking
+  // 2.0 Flash Thinking Experimental
   {
-    hidden: true, // only keeping the latest
-    id: 'models/gemini-2.0-flash-thinking-exp', // alias to the latest Flash Thinking model
-    labelOverride: 'Gemini 2.0 Flash Thinking Experimental',
-    symLink: 'models/gemini-2.0-flash-thinking-exp-01-21',
-    // copied from symlink
-    chatPrice: geminiExpPricingFree,
+    id: 'models/gemini-2.0-flash-thinking-exp-01-21',
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1385 },
     isPreview: true,
   },
   {
-    id: 'models/gemini-2.0-flash-thinking-exp-01-21',
-    chatPrice: geminiExpPricingFree,
+    hidden: true, // show the symlinked instead
+    id: 'models/gemini-2.0-flash-thinking-exp',
+    labelOverride: 'Gemini 2.0 Flash Thinking Experimental',
+    symLink: 'models/gemini-2.0-flash-thinking-exp-01-21',
+    // copied from symlink
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1385 },
@@ -155,18 +179,18 @@ const _knownGeminiModels: ({
     hidden: true, // replaced by gemini-2.0-flash-thinking-exp-01-21 - 2025-02-27: seems still different on the API, hence no deletion yet
     id: 'models/gemini-2.0-flash-thinking-exp-1219',
     labelOverride: 'Gemini 2.0 Flash Thinking Experimental 12-19',
-    chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution],
     parameterSpecs: [{ paramId: 'llmVndGeminiShowThoughts' }],
     benchmark: { cbaElo: 1363 },
     isPreview: true,
   },
 
-  // 2.0 Experimental - Flash Image Generation
+  // 2.0 Flash Image Generation Experimental
   {
     id: 'models/gemini-2.0-flash-exp-image-generation',
     // labelOverride: 'Gemini 2.0 Flash Native Image Generation',
-    chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     interfaces: [
       LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_CodeExecution,
       LLM_IF_HOTFIX_StripSys0, // This first Gemini Image Generation model does not support the developer instruction
@@ -257,6 +281,7 @@ const _knownGeminiModels: ({
     hidden: true,
   },
   {
+    _delete: true, // Tuning seems supported by base model now
     id: 'models/gemini-1.5-flash-001-tuning', // supports model tuning
     chatPrice: gemini15FlashPricing,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution /* Tuning ... */],
@@ -332,27 +357,46 @@ const _knownGeminiModels: ({
   },
 
 
-  /// Experimental
+  /// Other Experimental Models
+
+  // Gemma 3 Experimental Models - note: we apply workarounds:
+  // - LLM_IF_HOTFIX_StripImages, because: "Image input modality is not enabled for models/gemma-3-27b-it"
+  // - LLM_IF_HOTFIX_Sys0ToUsr0, because: "Developer instruction is not enabled for models/gemma-3-27b-it"
+  {
+    id: 'models/gemma-3-27b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree, // Pricing page indicates free tier only
+    // hidden: true, // Keep visible if it's a distinct offering
+  },
+  {
+    hidden: true, // keep larger model
+    id: 'models/gemma-3-12b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree,
+  },
+  {
+    hidden: true, // keep larger model
+    id: 'models/gemma-3-4b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree,
+  },
+  {
+    hidden: true, // keep larger model
+    id: 'models/gemma-3-1b-it',
+    isPreview: true,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    chatPrice: geminiExpFree,
+  },
 
   // LearnLM Experimental Model
   {
     id: 'models/learnlm-1.5-pro-experimental',
     isPreview: true,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: geminiExpPricingFree,
-    // hidden: true,
-    // _delete: true,
-  },
-
-  {
-    id: 'models/gemma-3-27b-it',
-    isPreview: true,
-    interfaces: [
-      LLM_IF_OAI_Chat,
-      LLM_IF_HOTFIX_StripImages, /* "Image input modality is not enabled for models/gemma-3-27b-it" */
-      LLM_IF_HOTFIX_Sys0ToUsr0, /* "Developer instruction is not enabled for models/gemma-3-27b-it" */
-    ],
-    // chatPrice: geminiExpPricingFree,
+    chatPrice: geminiExpFree,
     // hidden: true,
     // _delete: true,
   },
@@ -361,7 +405,7 @@ const _knownGeminiModels: ({
 
 
 // Add to your code where you process the API response
-export function geminiDevCheckForSuperfluosModels_DEV(apiModelIds: string[]): void {
+export function geminiDevCheckForSuperfluousModels_DEV(apiModelIds: string[]): void {
 
   if (DEV_DEBUG_GEMINI_MODELS) {
 
@@ -388,6 +432,8 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 const _sortOderIdPrefix: string[] = [
   'models/gemini-exp',
+  'models/gemini-2.5-pro-preview',
+  'models/gemini-2.5-pro-exp',
   'models/gemini-2.5-pro',
   'models/gemini-2.0-pro',
   'models/gemini-2.0-flash-exp-image-generation',
@@ -400,6 +446,9 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-1.5-flash-8b',
   'models/gemini-1.0-pro',
   'models/gemini-pro',
+  'models/gemma-3-27b',
+  'models/gemma-3-12b',
+  'models/gemma-3-4b',
   'models/gemma',
   'models/learnlm',
 ] as const;
