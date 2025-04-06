@@ -645,22 +645,23 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
     setErrorMessage(null);
     try {
       // 1. Auto-backup current state (best effort)
-      try {
-        const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
-        await saveFlashObjectOrThrow(
-          'auto-before-restore',
-          true, // auto-backup with streaming
-          false, // auto-backup without images
-          `Big-AGI-auto-pre-flash-${dateStr}.json`,
-        );
-        logger.info('Created auto-backup before restore');
-      } catch (error: any) {
-        if (error?.name === 'AbortError')
-          logger.warn('Auto-backup before restore dismissed by the user');
-        else
-          logger.warn('Auto-backup before restore failed:', error);
-        // non-fatal, proceed with restore
-      }
+      // NOTE: disabled: more confusing/harmful than useful
+      // try {
+      //   const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
+      //   await saveFlashObjectOrThrow(
+      //     'auto-before-restore',
+      //     true, // auto-backup with streaming
+      //     false, // auto-backup without images
+      //     `Big-AGI-auto-pre-flash-${dateStr}.json`,
+      //   );
+      //   logger.info('Created auto-backup before restore');
+      // } catch (error: any) {
+      //   if (error?.name === 'AbortError')
+      //     logger.warn('Auto-backup before restore dismissed by the user');
+      //   else
+      //     logger.warn('Auto-backup before restore failed:', error);
+      //   // non-fatal, proceed with restore
+      // }
 
       // 2. Restore data (localStorage first, then IndexedDB)
       await restoreLocalStorage(backupDataForRestore.storage.localStorage);
@@ -739,9 +740,9 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
         This will <Typography fontWeight='lg' color='danger'>replace all current application data</Typography> with the content from the selected flash file.&nbsp;
         <Typography fontWeight='lg' color='danger'>WARNING: This is a destructive operation that may break the app.</Typography>
       </Typography>
-      <Typography fontWeight='md'>
-        An automatic backup of your current data will be attempted before proceeding.
-      </Typography>
+      {/*<Typography fontWeight='md'>*/}
+      {/*  An automatic backup of your current data will be attempted before proceeding.*/}
+      {/*</Typography>*/}
       {backupDataForRestore?.metadata && (
         <Box sx={{ mt: 1, p: 1.5, bgcolor: 'background.level1', borderRadius: 'sm', border: '1px solid', borderColor: 'neutral.outlinedBorder', fontSize: 'sm' }}>
           <Box fontWeight='md' mb={1}>Flash File Details:</Box>
@@ -821,6 +822,7 @@ export function FlashBackup(props: {
       loading={isProcessing}
       endDecorator={backupState === 'success' ? <DoneIcon /> : backupState === 'error' ? <ErrorIcon /> : <DownloadIcon />}
       onClick={handleFullBackup}
+      onDoubleClick={console.log}
       sx={{
         boxShadow: 'md',
         backgroundColor: 'background.popup',
