@@ -4,6 +4,13 @@ import { Button, IconButton, useColorScheme } from '@mui/joy';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 
+export const darkModeToggleButtonSx = {
+  boxShadow: 'sm',
+  backgroundColor: 'background.surface',
+  '&:hover': {
+    backgroundColor: 'background.popup',
+  },
+} as const;
 
 export function DarkModeToggleButton(props: { hasText?: boolean }) {
 
@@ -17,15 +24,10 @@ export function DarkModeToggleButton(props: { hasText?: boolean }) {
 
   return props.hasText ? (
     <Button
-      size='sm'
       variant='soft'
       color='neutral'
       onClick={handleToggleDarkMode}
-      sx={{
-        ml: 'auto',
-        boxShadow: 'xs',
-        backgroundColor: 'background.surface',
-      }}
+      sx={darkModeToggleButtonSx}
       startDecorator={colorMode !== 'dark' ? <DarkModeIcon color='primary' /> : <LightModeIcon />}
     >
       {colorMode === 'dark' ? 'Light Mode' : 'Dark Mode'}
