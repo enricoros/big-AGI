@@ -40,9 +40,9 @@ export function LogEntryDetails(props: {
 
 
   return (
-    <Card variant='outlined'>
+    <Card variant='outlined' sx={{ backgroundColor: 'background.popup' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography level='title-lg'>{entry.message}</Typography>
+        <Typography level='title-md'>{entry.message}</Typography>
         <Button
           size='sm'
           variant='plain'
@@ -57,26 +57,27 @@ export function LogEntryDetails(props: {
       <Divider />
 
       {/* Log Info */}
-      <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: 1 }}>
-        <Typography fontWeight='bold'>Level:</Typography>
+      <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: 1, fontSize: 'sm' }}>
+        <Box fontWeight='bold'>Level:</Box>
         <div>{entry.level}</div>
-        <Typography fontWeight='bold'>Source:</Typography>
+        <Box fontWeight='bold'>Source:</Box>
         <div>{entry.source}</div>
-        <Typography fontWeight='bold'>Time:</Typography>
-        <div>{_formatTime(entry.timestamp)}</div>
+        <Box fontWeight='bold'>Time:</Box>
+        <div style={{ gridColumn: 'span 2' }}>{_formatTime(entry.timestamp)}</div>
       </Box>
 
       {/* Log Details */}
       {entry.details && (
         <Card
-          variant='soft'
+          variant='outlined'
           sx={{
-            fontFamily: 'monospace',
-            fontSize: 'sm',
+            fontFamily: 'code',
+            fontSize: 'xs',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-all',
             maxHeight: '300px',
             overflow: 'auto',
+            p: 1,
           }}
         >
           {typeof entry.details === 'string'
