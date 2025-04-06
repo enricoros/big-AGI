@@ -19,6 +19,7 @@ interface OptimaState {
   panelIsOpen: boolean;
 
   // modals
+  showAIXDebugger: boolean;
   showKeyboardShortcuts: boolean;
   showLogger: boolean;
   showModelOptions: DLLMId | false;
@@ -51,6 +52,7 @@ const initialState: OptimaState = {
   panelIsOpen: false,
 
   // modals that can overlay anything
+  showAIXDebugger: false,
   showKeyboardShortcuts: false,
   showLogger: false,
   showModelOptions: false,
@@ -74,6 +76,9 @@ export interface OptimaActions {
   closePanel: () => void;
   openPanel: () => void;
   togglePanel: () => void;
+
+  closeAIXDebugger: () => void;
+  openAIXDebugger: () => void;
 
   closeKeyboardShortcuts: () => void;
   openKeyboardShortcuts: () => void;
@@ -115,6 +120,9 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
   },
   openPanel: () => _set({ panelIsOpen: true, lastPanelOpenTime: Date.now() }),
   togglePanel: () => _get().panelIsOpen ? _get().closePanel() : _get().openPanel(),
+
+  closeAIXDebugger: () => _set({ showAIXDebugger: false }),
+  openAIXDebugger: () => _set({ showAIXDebugger: true }),
 
   closeKeyboardShortcuts: () => _set({ showKeyboardShortcuts: false }),
   openKeyboardShortcuts: () => _set({ showKeyboardShortcuts: true }),

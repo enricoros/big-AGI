@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
 import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
 import { SettingsModal } from '../../../apps/settings-modal/SettingsModal';
 import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
@@ -12,10 +13,10 @@ import { optimaActions, optimaOpenPreferences, useOptimaModals } from './useOpti
 export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
-  const { preferencesTab, showKeyboardShortcuts, showLogger, showPreferences } = useOptimaModals();
+  const { preferencesTab, showAIXDebugger, showKeyboardShortcuts, showLogger, showPreferences } = useOptimaModals();
 
   // derived state
-  const { closeKeyboardShortcuts, closeLogger, closePreferences, openKeyboardShortcuts } = optimaActions();
+  const { closeAIXDebugger, closeKeyboardShortcuts, closeLogger, closePreferences, openKeyboardShortcuts } = optimaActions();
 
   return <>
 
@@ -33,6 +34,9 @@ export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
     {/* Logger */}
     {showLogger && <LogViewerDialog onClose={closeLogger} />}
+
+    {/* AIX Debugger Dialog */}
+    {showAIXDebugger && <AixDebuggerDialog onClose={closeAIXDebugger} />}
 
     {/* Overlay Shortcuts */}
     {showKeyboardShortcuts && (
