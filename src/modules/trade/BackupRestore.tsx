@@ -10,8 +10,9 @@ import ErrorIcon from '@mui/icons-material/Error';
 import RestoreIcon from '@mui/icons-material/Restore';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { Is } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
-import { logger } from '~/common/logger';
+import { createModuleLogger } from '~/common/logger';
 
 
 // configuration
@@ -49,6 +50,8 @@ interface DFlashSchema {
 
 // -- Utility Functions --
 
+const logger = createModuleLogger('client', 'flash');
+
 function _getErrorText(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
@@ -74,11 +77,11 @@ async function getAllLocalStorageKeyValues(): Promise<Record<string, any>> {
           }
         }
       } catch (error) {
-        console.error(`backup-restore: Error reading localStorage key "${key}":`, error);
+        console.error(`Error reading localStorage key "${key}":`, error);
       }
     }
   } catch (error) {
-    console.error('backup-restore: Error accessing localStorage:', error);
+    console.error('Error accessing localStorage:', error);
     // return what we have
   }
   return data;
@@ -96,11 +99,11 @@ async function getAllIndexedDBData(ignoreExclusions: boolean): Promise<Record<st
       try {
         data[dbName] = await getIndexedDBContent(dbName);
       } catch (error) {
-        console.error(`backup-restore: Error getting content for IndexedDB "${dbName}":`, error);
+        console.error(`Error getting content for IndexedDB "${dbName}":`, error);
       }
     }
   } catch (error) {
-    console.error('backup-restore: Error processing IndexedDB databases:', error);
+    console.error('Error processing IndexedDB databases:', error);
     // return what we have
   }
   return data;
@@ -135,7 +138,7 @@ async function listIndexedDBDatabaseNames(): Promise<string[]> {
 
     return existingDbs;
   } catch (error) {
-    console.error('backup-restore: Error listing IndexedDB databases:', error);
+    logger.error('Error listing IndexedDB databases:', error);
     return [];
   }
 }
@@ -187,14 +190,14 @@ function getIndexedDBContent(dbName: string): Promise<Record<string, { key: any;
           transactionError = true;
           const target = event.target as IDBTransaction;
           const errorMsg = target.error ? target.error.message : 'Unknown error';
-          logger.error(`backup-restore: transaction error in "${dbName}": ${errorMsg}`);
+          logger.error(`transaction error in "${dbName}": ${errorMsg}`);
           // Don't reject - we'll resolve with partial data at completion
         };
 
         transaction.oncomplete = () => {
           db.close();
           if (transactionError)
-            logger.warn(`backup-restore: transaction for "${dbName}" completed with some errors. Data may be incomplete.`);
+            logger.warn(`transaction for "${dbName}" completed with some errors. Data may be incomplete.`);
           resolve(dbData);
         };
 
@@ -218,13 +221,13 @@ function getIndexedDBContent(dbName: string): Promise<Record<string, { key: any;
                 try {
                   cursor.continue();
                 } catch (error) {
-                  logger.error(`backup-restore: Error continuing cursor for store "${storeName}":`, error);
+                  logger.error(`Error continuing cursor for store "${storeName}":`, error);
                   // Can't continue but we have some data
                 }
               }
             };
           } catch (error) {
-            logger.error(`backup-restore: Error processing store "${storeName}":`, error);
+            logger.error(`Error processing store "${storeName}":`, error);
             // Continue with other stores
           }
         });
@@ -247,7 +250,7 @@ async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
         const value = data[key];
         localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
       } catch (error) {
-        console.error(`Error restoring localStorage key "${key}":`, error);
+        logger.error(`Error restoring localStorage key "${key}":`, error);
       }
     }
   } catch (error) {
@@ -259,7 +262,6 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
   // process each database in sequence
   for (const dbName in allDbData) {
     try {
-      console.log(`Starting restore for database: ${dbName}`);
       const dbStoresData = allDbData[dbName] as Record<string, { key: any; value: any }[]>;
 
       await new Promise<void>((resolve, reject) => {
@@ -279,7 +281,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
               .filter(name => existingStoreNames.includes(name));
 
             if (storesToRestore.length === 0) {
-              console.log(`No matching stores found in ${dbName}, skipping`);
+              logger.warn(`No matching stores found in ${dbName}, skipping`);
               db.close();
               resolve();
               return;
@@ -294,16 +296,16 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                 transactionFailed = true;
                 const target = event.target as IDBTransaction;
                 const errorMsg = target.error ? target.error.message : 'Unknown error';
-                console.error(`Transaction error during restore of "${dbName}": ${errorMsg}`);
+                logger.error(`Transaction error during restore of "${dbName}": ${errorMsg}`);
                 // Don't reject - we'll resolve at completion
               };
 
               transaction.oncomplete = () => {
                 db.close();
                 if (transactionFailed) {
-                  console.warn(`Transaction for "${dbName}" completed with some errors. Restore may be incomplete.`);
+                  logger.warn(`Transaction for "${dbName}" completed with some errors. Restore may be incomplete.`);
                 } else {
-                  console.log(`Successfully restored database: ${dbName}`);
+                  logger.info(`Successfully restored database: ${dbName}`);
                 }
                 resolve();
               };
@@ -320,7 +322,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                 // 1. Clear the store
                 const clearRequest = store.clear();
                 clearRequest.onsuccess = () => {
-                  console.log(`Cleared store "${storeName}" in "${dbName}"`);
+                  // logger.debug(`Cleared store "${storeName}" in "${dbName}"`);
 
                   // 2. Add all items back
                   let itemsProcessed = 0;
@@ -338,7 +340,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                       request.onsuccess = () => {
                         itemsProcessed++;
                         if (itemsProcessed === items.length) {
-                          console.log(`Restored ${items.length} items to store "${storeName}"`);
+                          // logger.debug(`Restored ${items.length} items to store "${storeName}"`);
                           completedStores++;
 
                           // Process next store
@@ -347,13 +349,13 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                       };
 
                       request.onerror = (event) => {
-                        console.error(`Error adding item to "${storeName}" in "${dbName}" (Key: ${
+                        logger.error(`Error adding item to "${storeName}" in "${dbName}" (Key: ${
                           typeof item.key === 'object' ? JSON.stringify(item.key) : item.key
                         }): ${(event.target as IDBRequest).error?.message || 'Unknown error'}`);
 
                         itemsProcessed++;
                         if (itemsProcessed === items.length) {
-                          console.log(`Restored ${items.length} items to store "${storeName}" with some errors`);
+                          // logger.debug(`Restored ${items.length} items to store "${storeName}" with some errors`);
                           completedStores++;
 
                           // Process next store
@@ -361,7 +363,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                         }
                       };
                     } catch (error) {
-                      console.error(`Error processing item in "${storeName}": ${_getErrorText(error)}`);
+                      logger.error(`Error processing item in "${storeName}": ${_getErrorText(error)}`);
                       itemsProcessed++;
                       if (itemsProcessed === items.length) {
                         processNextStore(storeIndex + 1);
@@ -371,14 +373,14 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
 
                   // Handle empty store case
                   if (items.length === 0) {
-                    console.log(`No items to restore for store "${storeName}"`);
+                    logger.warn(`No items to restore for store "${storeName}"`);
                     completedStores++;
                     processNextStore(storeIndex + 1);
                   }
                 };
 
                 clearRequest.onerror = (event) => {
-                  console.error(`Error clearing store "${storeName}": ${(event.target as IDBRequest).error?.message || 'Unknown error'}`);
+                  logger.error(`Error clearing store "${storeName}": ${(event.target as IDBRequest).error?.message || 'Unknown error'}`);
                   // Try to continue anyway
                   completedStores++;
                   processNextStore(storeIndex + 1);
@@ -394,7 +396,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
           };
 
           openRequest.onblocked = () => {
-            console.warn(`Open request for "${dbName}" is blocked, but continuing anyway`);
+            logger.warn(`Open request for "${dbName}" is blocked, but continuing anyway`);
             // Let onsuccess or onerror handle it
           };
         } catch (error) {
@@ -402,9 +404,9 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
         }
       });
 
-      console.log(`Completed restore process for: ${dbName}`);
+      // logger.log(`Completed restore process for: ${dbName}`);
     } catch (error) {
-      console.error(`Error restoring database "${dbName}": ${_getErrorText(error)}`);
+      logger.error(`Error restoring database "${dbName}": ${_getErrorText(error)}`);
       // Continue with other databases even if one fails
     }
   }
@@ -431,9 +433,31 @@ function isValidBackup(data: any): data is DFlashSchema {
 /**
  * Creates a backup object and optionally saves it to a file
  */
-async function createBackupAndSaveToOrThrow(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, saveToFileName?: string): Promise<DFlashSchema> {
+async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, saveToFileName: string) {
 
-  const flashObject: DFlashSchema = {
+  // run after the file picker has confirmed a file
+  const flashBlobPromise = new Promise<Blob>(async (resolve) => {
+    // create the backup object (heavy operation)
+    const flashObject = await createFlashObject(backupType, ignoreExclusions);
+
+    // WARNING: on Mobile, the JSON serialization could fail silently - we disable pretty-print to conserve space
+    const flashString = !Is.Desktop ? JSON.stringify(flashObject)
+      : JSON.stringify(flashObject, null, 2);
+
+    logger.info(`Expected flash file size: ${flashString.length.toLocaleString()} bytes`);
+
+    resolve(new Blob([flashString], { type: 'application/json' }));
+  });
+
+  await fileSave(flashBlobPromise, {
+    fileName: saveToFileName,
+    extensions: ['.json'],
+    description: 'Big-AGI V2 Flash File',
+  });
+}
+
+async function createFlashObject(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean): Promise<DFlashSchema> {
+  return {
     _t: 'agi.flash-backup',
     _v: BACKUP_FORMAT_VERSION_NUMBER,
     metadata: {
@@ -447,17 +471,6 @@ async function createBackupAndSaveToOrThrow(backupType: 'full' | 'auto-before-re
       indexedDB: await getAllIndexedDBData(ignoreExclusions),
     },
   };
-
-  if (saveToFileName) {
-    const backupBlob = new Blob([JSON.stringify(flashObject, null, 2)], { type: 'application/json' });
-    await fileSave(backupBlob, {
-      fileName: saveToFileName,
-      extensions: ['.json'],
-      description: 'Big-AGI V2 Flash File',
-    });
-  }
-
-  return flashObject;
 }
 
 
@@ -521,7 +534,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       setBackupDataForRestore(data);
       setRestoreState('confirm');
     } catch (error: any) {
-      console.error('Restore preparation failed:', error);
+      logger.error('Restore preparation failed:', error);
       setRestoreState('error');
       setErrorMessage(`Restore failed: ${_getErrorText(error)}`);
     }
@@ -535,18 +548,21 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       // 1. Auto-backup current state (best effort)
       try {
         const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
-        await createBackupAndSaveToOrThrow('auto-before-restore', false, `Big-AGI-auto-pre-flash-${dateStr}.agi.json`);
-        logger.info('backup-restore: Created auto-backup before restore');
-      } catch (error) {
-        logger.warn('backup-restore: Auto-backup before restore failed:', error);
+        await saveFlashObjectOrThrow('auto-before-restore', false, `Big-AGI-auto-pre-flash-${dateStr}.agi.json`);
+        logger.info('Created auto-backup before restore');
+      } catch (error: any) {
+        if (error?.name === 'AbortError')
+          logger.warn('Auto-backup before restore dismissed by the user');
+        else
+          logger.warn('Auto-backup before restore failed:', error);
         // non-fatal, proceed with restore
       }
 
       // 2. Restore data (localStorage first, then IndexedDB)
       await restoreLocalStorage(backupDataForRestore.storage.localStorage);
-      logger.info('backup-restore: localStorage restore complete');
+      logger.info('localStorage restore complete');
       await restoreIndexedDB(backupDataForRestore.storage.indexedDB);
-      logger.info('backup-restore: indexedDB restore complete');
+      logger.info('indexedDB restore complete');
       setRestoreState('success');
 
       // 3. Alert and reload
@@ -668,14 +684,14 @@ export function FlashBackup(props: {
     try {
       onStartedBackup?.();
       const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
-      await createBackupAndSaveToOrThrow('full', event.shiftKey, `Big-AGI-flash${event.shiftKey ? '+images' : ''}-${dateStr}.agi.json`);
+      await saveFlashObjectOrThrow('full', event.shiftKey, `Big-AGI-flash${event.shiftKey ? '+images' : ''}-${dateStr}.agi.json`);
       setBackupState('success');
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         // the user has closed the file picker, most likely - do nothing
         setBackupState('idle');
       } else {
-        logger.error(`backup-restore: Backup failed:`, error);
+        logger.error(`Backup failed:`, error);
         setBackupState('error');
         setErrorMessage(`Backup failed: ${_getErrorText(error)}`);
       }
@@ -685,7 +701,7 @@ export function FlashBackup(props: {
 
   return <>
 
-    <Typography level='body-sm' mt={5}>
+    <Typography level='body-sm' mt={{ xs: 3, md: 5 }}>
       Save <strong>all settings and chats</strong>:
     </Typography>
     <Button
@@ -705,7 +721,12 @@ export function FlashBackup(props: {
       {backupState === 'success' ? 'Backup Saved' : backupState === 'error' ? 'Backup Failed' : isProcessing ? 'Backing Up...' : 'Export All'}
     </Button>
     {!errorMessage && <Typography level='body-xs'>
-      Shift + Click to include images
+      <Box component='span' sx={{ display: { xs: 'none', md: 'block' } }}>
+        Shift + Click to include images
+      </Box>
+      <Box component='span' sx={{ display: { xs: 'block', md: 'none' } }}>
+        Excludes image binary data
+      </Box>
     </Typography>}
 
     {errorMessage && (
