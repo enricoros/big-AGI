@@ -107,14 +107,15 @@ export function AixDebuggerDialog(props: {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
           {!frames.length && <>
             <Typography level='title-lg'>
-              No API requests recorded yet
+              No AIX API requests recorded yet
             </Typography>
-            <Typography sx={{ mt: 1 }}>
-              Make a request with the AI to see it here
+            <Typography level='body-sm' sx={{ mt: 2, maxWidth: 468 }}>
+              Ensure AIX debugging is active (Settings -&gt; Labs -&gt; Developer Mode)
+              and you are running your own localhost:3000 installation.
             </Typography>
           </>}
-          {!activeFrame && (
-            <Typography>
+          {!activeFrame && !!frames.length && (
+            <Typography level='body-sm'>
               Select a request to view details
             </Typography>
           )}
