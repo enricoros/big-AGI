@@ -19,6 +19,7 @@ import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVert
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
+import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useLabsDevMode } from '~/common/stores/store-ux-labs';
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
@@ -98,15 +99,6 @@ export function ChatPane(props: {
   };
 
   const handleToggleSystemMessages = () => setShowSystemMessages(!showSystemMessages);
-
-
-  // [DEV MODE]
-
-  const [aixLastDispatchDialog, setAixLastDispatchDialog] = React.useState<React.ReactNode | null>(null);
-
-  const handleAixShowLastRequest = React.useCallback(() => {
-    setAixLastDispatchDialog(<AixDebuggerDialog onClose={() => setAixLastDispatchDialog(null)} />);
-  }, []);
 
 
   return <>
@@ -190,15 +182,12 @@ export function ChatPane(props: {
     {/* [DEV] Development */}
     {labsDevMode && (
       <OptimaPanelGroupedList title='[Developers]'>
-        <MenuItem onClick={handleAixShowLastRequest}>
+        <MenuItem onClick={optimaActions().openAIXDebugger}>
           <ListItemDecorator><EngineeringIcon /></ListItemDecorator>
           AIX: Show Last Request...
         </MenuItem>
       </OptimaPanelGroupedList>
     )}
-
-    {/* [DEV MODE] Show any dialog, if present */}
-    {aixLastDispatchDialog}
 
   </>;
 }
