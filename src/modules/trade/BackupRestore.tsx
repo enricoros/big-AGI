@@ -32,6 +32,7 @@ const INCLUDED_IDB_KEYS: { [dbName: string]: { [storeName: string]: string[]; };
 
 
 // Flashing Backup Schema
+// NOTE: ABSOLUTELY NOT CHANGE WITHOUT CHANGING THE saveFlashObjectOrThrow_Streaming TOO (!)
 interface DFlashSchema {
   _t: 'agi.flash-backup';
   _v: number;
@@ -433,7 +434,11 @@ function isValidBackup(data: any): data is DFlashSchema {
 /**
  * Creates a backup object and optionally saves it to a file
  */
-async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, saveToFileName: string) {
+async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore', forceStreaming: boolean, ignoreExclusions: boolean, saveToFileName: string) {
+
+  // for mobile, try a different implementation, with streaming creation, to hopefully avoid truncation
+  if (forceStreaming || !Is.Desktop)
+    return saveFlashObjectOrThrow_Streaming(backupType, ignoreExclusions, saveToFileName);
 
   // run after the file picker has confirmed a file
   const flashBlobPromise = new Promise<Blob>(async (resolve) => {
@@ -450,6 +455,90 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
   });
 
   await fileSave(flashBlobPromise, {
+    fileName: saveToFileName,
+    extensions: ['.json'],
+    description: 'Big-AGI V2 Flash File',
+  });
+}
+
+async function saveFlashObjectOrThrow_Streaming(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, saveToFileName: string) {
+
+  // on mobile, stringify without spaces
+  const spacesForMobile = Is.Desktop ? 2 : undefined;
+
+  // create JSON in chunks without ever holding the entire string in memory
+  const encoder = new TextEncoder();
+
+  // create a streaming response - this is the key to avoiding truncation
+  const response = new Response(
+    new ReadableStream({
+      async start(controller) {
+        try {
+          // start the JSON object
+          controller.enqueue(encoder.encode('{\n'));
+          controller.enqueue(encoder.encode(`  "_t": "agi.flash-backup",\n`));
+          controller.enqueue(encoder.encode(`  "_v": ${BACKUP_FORMAT_VERSION_NUMBER},\n`));
+          controller.enqueue(encoder.encode(`  "metadata": ${JSON.stringify({
+            version: BACKUP_FORMAT_VERSION,
+            timestamp: new Date().toISOString(),
+            application: 'Big-AGI',
+            backupType,
+          }, null, spacesForMobile).replace(/^/gm, '  ')},\n`));
+
+          // stream storage section
+          controller.enqueue(encoder.encode('  "storage": {\n'));
+
+          // add localStorage (usually smaller)
+          const localStorage = await getAllLocalStorageKeyValues();
+          controller.enqueue(encoder.encode('    "localStorage": '));
+          controller.enqueue(encoder.encode(JSON.stringify(localStorage, null, spacesForMobile).replace(/^/gm, '    ')));
+          controller.enqueue(encoder.encode(',\n'));
+
+          // add indexedDB with manual chunking for large objects
+          controller.enqueue(encoder.encode('    "indexedDB": {\n'));
+
+          const indexedDB = await getAllIndexedDBData(ignoreExclusions);
+          const dbNames = Object.keys(indexedDB);
+          for (let i = 0; i < dbNames.length; i++) {
+            const dbName = dbNames[i];
+            const isLast = i === dbNames.length - 1;
+
+            controller.enqueue(encoder.encode(`      "${dbName}": `));
+
+            // clean nulls and control characters
+            const sanitized = JSON.stringify(indexedDB[dbName], (_key, value) => {
+              if (typeof value === 'string')
+                return value.replace(/\u0000/g, '');
+              return value;
+            }, spacesForMobile).replace(/^/gm, '      ');
+
+            controller.enqueue(encoder.encode(sanitized));
+            controller.enqueue(encoder.encode(isLast ? '\n' : ',\n'));
+          }
+
+          // close all objects
+          controller.enqueue(encoder.encode('    }\n'));
+          controller.enqueue(encoder.encode('  }\n'));
+          controller.enqueue(encoder.encode('}\n'));
+
+          controller.close();
+        } catch (error) {
+          console.error('Error creating stream:', error);
+          controller.error(error);
+        }
+      },
+    }),
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="${saveToFileName}"`,
+      },
+    },
+  );
+
+  // the fileSave implementation will use the body.pipeTo(writable) code path
+  // which is perfect for large files as it streams directly to disk
+  await fileSave(response, {
     fileName: saveToFileName,
     extensions: ['.json'],
     description: 'Big-AGI V2 Flash File',
@@ -548,7 +637,12 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       // 1. Auto-backup current state (best effort)
       try {
         const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
-        await saveFlashObjectOrThrow('auto-before-restore', false, `Big-AGI-auto-pre-flash-${dateStr}.agi.json`);
+        await saveFlashObjectOrThrow(
+          'auto-before-restore',
+          true, // auto-backup with streaming
+          false, // auto-backup without images
+          `Big-AGI-auto-pre-flash-${dateStr}.agi.json`,
+        );
         logger.info('Created auto-backup before restore');
       } catch (error: any) {
         if (error?.name === 'AbortError')
@@ -684,7 +778,12 @@ export function FlashBackup(props: {
     try {
       onStartedBackup?.();
       const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
-      await saveFlashObjectOrThrow('full', event.shiftKey, `Big-AGI-flash${event.shiftKey ? '+images' : ''}-${dateStr}.agi.json`);
+      await saveFlashObjectOrThrow(
+        'full',
+        !event.ctrlKey, // control disabled streaming-save - default: streaming
+        event.shiftKey, // shift adds images - default: no images
+        `Big-AGI-flash${event.shiftKey ? '+images' : ''}${event.ctrlKey ? 'no_streaming' : ''}-${dateStr}.agi.json`,
+      );
       setBackupState('success');
     } catch (error: any) {
       if (error?.name === 'AbortError') {
