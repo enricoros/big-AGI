@@ -90,7 +90,9 @@ export const useLoggerStore = create<LoggerState & LoggerActions>()(
         // console output in DEV mode
         if (DEBUG_NEW_LOG) {
           const consoleMethod = {
-            debug: console.log /* upping this, because otherwise no output */, info: console.info, warn: console.warn,
+            DEV: console.warn, // messages for developers - they represent unexpected behaviors which should be addressed
+            debug: console.log, // upping this, because otherwise no output
+            info: console.info, warn: console.warn,
             error: console.error, critical: console.error,
           }[newEntry.level] || console.log;
           consoleMethod(`[${newEntry.source || 'client'}] ${newEntry.message}`, newEntry.details || '', newEntry.actions ? '(Actionable)' : '');

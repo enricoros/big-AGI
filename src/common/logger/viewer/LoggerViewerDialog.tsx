@@ -37,6 +37,7 @@ function _getLogLevelIcon(level: LogLevel) {
 
 function _getLogLevelColor(level: LogLevel): ColorPaletteProp {
   return ({
+    'DEV': 'warning',
     'debug': 'neutral',
     'info': 'primary',
     'warn': 'warning',

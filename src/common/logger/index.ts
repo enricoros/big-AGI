@@ -9,4 +9,5 @@ export { setupClientUncaughtErrorsLogging } from './interceptors/logger.unhandle
 export { logger } from './logger.client';
 
 // re-export the module logger factory
+export type { ClientLogger } from './logger.types';
 export { createModuleLogger } from './logger.factory';
