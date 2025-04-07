@@ -5,7 +5,7 @@
 export interface ClientLogger {
 
   // Logging methods (by level)
-
+  DEV: (message: string, details?: any, source?: LogSource, options?: LogOptions) => LogEntryId;
   debug: (message: string, details?: any, source?: LogSource, options?: LogOptions) => LogEntryId;
   info: (message: string, details?: any, source?: LogSource, options?: LogOptions) => LogEntryId;
   warn: (message: string, details?: any, source?: LogSource, options?: LogOptions) => LogEntryId;
@@ -28,6 +28,7 @@ export interface ClientLogger {
 }
 
 export type LogLevel =
+  | 'DEV'
   | 'debug'
   | 'info'
   | 'warn'

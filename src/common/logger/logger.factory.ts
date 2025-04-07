@@ -16,6 +16,9 @@ export function createModuleLogger(source: LogSource | string, eventPrefix: stri
     : (message: string): string => message;
 
   return {
+    DEV: (message: string, details?: any, _overrideSource?: LogSource, options?: LogOptions) =>
+      logger.DEV(prefixMessage('[DEV] ' + message), details, source as LogSource, options),
+
     debug: (message: string, details?: any, _overrideSource?: LogSource, options?: LogOptions) =>
       logger.debug(prefixMessage(message), details, source as LogSource, options),
 

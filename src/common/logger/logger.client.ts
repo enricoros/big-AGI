@@ -9,6 +9,9 @@ class LoggerImplementation implements ClientLogger {
 
   // Level to method mapping
 
+  DEV = (message: string, details?: any, source?: LogSource, options?: LogOptions): string =>
+    this.#log('DEV', message, details, source, options);
+
   debug = (message: string, details?: any, source?: LogSource, options?: LogOptions): string =>
     this.#log('debug', message, details, source, options);
 
