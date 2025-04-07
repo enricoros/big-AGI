@@ -8,7 +8,7 @@ import ClearAllIcon from '@mui/icons-material/ClearAll';
 import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import WarningIcon from '@mui/icons-material/Warning';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
 
@@ -25,7 +25,7 @@ function _getLogLevelIcon(level: LogLevel) {
     case 'info':
       return <InfoIcon fontSize='small' color='info' />;
     case 'warn':
-      return <WarningIcon fontSize='small' color='warning' />;
+      return <WarningRoundedIcon fontSize='small' color='warning' />;
     case 'error':
       return <ErrorIcon fontSize='small' color='error' />;
     case 'critical':
