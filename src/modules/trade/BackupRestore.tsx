@@ -3,11 +3,12 @@
 import * as React from 'react';
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, Divider, Sheet, Typography } from '@mui/joy';
+import { Box, Button, Divider, FormControl, FormLabel, Sheet, Switch, Typography } from '@mui/joy';
 import DownloadIcon from '@mui/icons-material/Download';
 import DoneIcon from '@mui/icons-material/Done';
 import ErrorIcon from '@mui/icons-material/Error';
 import RestoreIcon from '@mui/icons-material/Restore';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { Is } from '~/common/util/pwaUtils';
@@ -444,6 +445,7 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
       .then((flashString) => {
         logger.info(`Expected flash file size: ${flashString.length.toLocaleString()} bytes`);
         downloadBlob(new Blob([flashString], { type: 'application/json' }), saveToFileName);
+        return undefined;
       });
 
   // for mobile, try a different implementation, with streaming creation, to hopefully avoid truncation
@@ -464,7 +466,7 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
     resolve(new Blob([flashString], { type: 'application/json' }));
   });
 
-  await fileSave(flashBlobPromise, {
+  return await fileSave(flashBlobPromise, {
     description: BACKUP_FILE_FORMAT,
     extensions: ['.agi.json', '.json'],
     fileName: saveToFileName,
@@ -774,6 +776,7 @@ export function FlashBackup(props: {
 }) {
 
   // state
+  const [includeImages, setIncludeImages] = React.useState(false);
   const [backupState, setBackupState] = React.useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
@@ -789,13 +792,13 @@ export function FlashBackup(props: {
     try {
       onStartedBackup?.();
       const dateStr = new Date().toISOString().split('.')[0].replace('T', '-');
-      await saveFlashObjectOrThrow(
+      const success = await saveFlashObjectOrThrow(
         'full',
         event.ctrlKey, // control forces a traditional browser download - default: fileSave
-        event.shiftKey, // shift adds images - default: no images
-        `Big-AGI-flash${event.shiftKey ? '+images' : ''}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
+        includeImages,
+        `Big-AGI-flash${includeImages ? '+images' : ''}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
       );
-      setBackupState('success');
+      setBackupState(success ? 'success' : 'idle');
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         // the user has closed the file picker, most likely - do nothing
@@ -806,12 +809,12 @@ export function FlashBackup(props: {
         setErrorMessage(`Backup failed: ${_getErrorText(error)}`);
       }
     }
-  }, [onStartedBackup]);
+  }, [includeImages, onStartedBackup]);
 
 
   return <>
 
-    <Typography level='body-sm' mt={{ xs: 3, md: 5 }}>
+    <Typography level='body-sm' mt={3}>
       Save <strong>all settings and chats</strong>:
     </Typography>
     <Button
@@ -831,14 +834,15 @@ export function FlashBackup(props: {
     >
       {backupState === 'success' ? 'Backup Saved' : backupState === 'error' ? 'Backup Failed' : isProcessing ? 'Backing Up...' : 'Export All'}
     </Button>
-    {!errorMessage && <Typography level='body-xs'>
-      <Box component='span' sx={{ display: { xs: 'none', md: 'block' } }}>
-        Shift + Click to include images
-      </Box>
-      <Box component='span' sx={{ display: { xs: 'block', md: 'none' } }}>
-        Excludes image binary data
-      </Box>
-    </Typography>}
+    {!errorMessage && <>
+      <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', ml: 2, mr: 1.25, mt: 0.25 }}>
+        <FormLabel sx={{ fontWeight: 'md' }}>Include Binary Images</FormLabel>
+        <Switch size='sm' color={includeImages ? 'danger' : undefined} checked={includeImages} onChange={(event) => setIncludeImages(event.target.checked)} />
+      </FormControl>
+      {includeImages && <Typography level='body-xs' color='danger' ml={2} endDecorator={<WarningRoundedIcon />}>
+        Files too large may get corrupted.
+      </Typography>}
+    </>}
 
     {errorMessage && (
       <Sheet variant='soft' color='danger' sx={{ px: 1.5, py: 1, borderRadius: 'sm', display: 'grid', gap: 1 }}>
