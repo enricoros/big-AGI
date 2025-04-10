@@ -394,7 +394,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [OpenAI o1, 2024-09-12] breaks down the completion tokens into components
     completion_tokens_details: z.object({
-      reasoning_tokens: z.number(),
+      reasoning_tokens: z.number().optional(), // [Discord, 2024-04-10] reported missing
+      // text_tokens: z.number().optional(), // [Discord, 2024-04-10] revealed as present on custom OpenAI endpoint - not using it here yet
       audio_tokens: z.number().optional(), // [OpenAI, 2024-10-01] audio tokens used in the completion (charged at a different rate)
       accepted_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
       rejected_prediction_tokens: z.number().optional(), // [OpenAI, 2024-11-05] Predicted Outputs
