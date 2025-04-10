@@ -457,8 +457,13 @@ export function ChatMessage(props: {
 
   // Bubble
 
-  const closeBubble = React.useCallback((anchorEl?: HTMLElement) => {
-    window.getSelection()?.removeAllRanges?.();
+  const closeBubble = React.useCallback((anchorEl?: HTMLElement, options?: { clearSelection?: boolean }) => {
+    // NOTE - we used to have this always on, which would remove the highlighted text, but it's fired too much and in particular
+    // it was corrupting the extension of text selection (http://github.com/enricoros/big-AGI/issues/788)
+    //
+    // However the likely expected user behavior here is to keep the selection, hence by default we don't clear it
+    if (options?.clearSelection)
+      window.getSelection()?.removeAllRanges?.();
     try {
       const anchor = anchorEl || bubbleAnchor;
       anchor && document.body.removeChild(anchor);
@@ -509,6 +514,11 @@ export function ChatMessage(props: {
     setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
   }, [closeBubble]);
 
+  const handleBubbleClickAway = React.useCallback((event: MouseEvent | TouchEvent /* DOM, not React */) => {
+    if (!event.shiftKey)
+      closeBubble();
+  }, [closeBubble]);
+
 
   // Blocks renderer
 
@@ -522,6 +532,10 @@ export function ChatMessage(props: {
   }, [doubleClickToEdit, handleOpsEditToggle, props.onMessageFragmentReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
+    // https://github.com/enricoros/big-AGI/issues/788
+    // If shift is pressed, it's a selection extension attempt. Let the browser handle it.
+    if (event.shiftKey)
+      return;
     handleOpenBubble(event.nativeEvent);
   }, [handleOpenBubble]);
 
@@ -997,7 +1011,7 @@ export function ChatMessage(props: {
         <Popper placement='top-start' open={true} anchorEl={bubbleAnchor} slotProps={{
           root: { style: { zIndex: themeZIndexChatBubble } },
         }}>
-          <ClickAwayListener onClickAway={() => closeBubble()}>
+          <ClickAwayListener onClickAway={handleBubbleClickAway}>
             <ButtonGroup
               variant='plain'
               sx={{
