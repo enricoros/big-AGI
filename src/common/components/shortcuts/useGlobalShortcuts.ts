@@ -8,6 +8,7 @@ import { ensureGlobalShortcutHandler } from './globalShortcutsHandler';
 
 
 export const ShortcutKey = {
+  Backspace: 'Backspace',
   Enter: 'Enter',
   Esc: 'Escape',
   Left: 'ArrowLeft',
