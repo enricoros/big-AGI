@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, Button, Card, Chip, CircularProgress, Divider, Stack, Typography } from '@mui/joy';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { logger } from '~/common/logger';
@@ -48,7 +48,7 @@ export function LogEntryDetails(props: {
           variant='plain'
           color='neutral'
           onClick={props.onCloseDetails}
-          startDecorator={<CloseIcon />}
+          startDecorator={<CloseRoundedIcon />}
         >
           Close
         </Button>
