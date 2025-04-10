@@ -83,6 +83,15 @@ export function ChatBarAltBeam(props: {
   return (
     <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, alignItems: 'center' }}>
 
+      {/* [desktop] maximize button, or a disabled spacer  */}
+      {!props.isMobile && (
+        <GoodTooltip variantOutlined title={<Box sx={{ p: 1 }}>Maximize Beam</Box>}>
+          <IconButton size='sm' onClick={handleMaximizeBeam}>
+            <OpenInFullIcon sx={{ fontSize: 'md' }} />
+          </IconButton>
+        </GoodTooltip>
+      )}
+
       {/* Title & Status */}
       <Typography level='title-md'>
         <Box
@@ -98,24 +107,11 @@ export function ChatBarAltBeam(props: {
       </Typography>
 
       {/* Right Close Icon */}
-      <Box sx={{ display: 'flex' }}>
-
-        {/* [desktop] maximize button, or a disabled spacer  */}
-        {!props.isMobile && (
-          <GoodTooltip variantOutlined title={<Box sx={{ p: 1 }}>Maximize</Box>}>
-            <IconButton size='sm' onClick={handleMaximizeBeam}>
-              <OpenInFullIcon sx={{ fontSize: 'md' }} />
-            </IconButton>
-          </GoodTooltip>
-        )}
-
-        <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke variant='outlined' combo='Esc' /></Box>}>
-          <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </GoodTooltip>
-
-      </Box>
+      <GoodTooltip variantOutlined title={<Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>Back to Chat <KeyStroke variant='outlined' combo='Esc' /></Box>}>
+        <IconButton aria-label='Close' size='sm' onClick={handleCloseBeam}>
+          <CloseRoundedIcon />
+        </IconButton>
+      </GoodTooltip>
 
 
       {/* Confirmation Modal */}
