@@ -34,7 +34,6 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
-import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DMessage, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
@@ -475,7 +474,7 @@ export function ChatMessage(props: {
   }, [bubbleAnchor]);
 
   // restore blocksRendererRef
-  const handleOpenBubble = React.useCallback((_event: MouseEvent) => {
+  const handleOpenBubble = React.useCallback((event?: MouseEvent | null) => {
     // check for selection
     const selection = window.getSelection();
     if (!selection || selection.rangeCount <= 0) return;
@@ -496,7 +495,10 @@ export function ChatMessage(props: {
     const anchorEl = document.createElement('div');
     anchorEl.style.position = 'fixed';
     anchorEl.style.left = `${firstRect.left + window.scrollX}px`;
-    anchorEl.style.top = `${firstRect.top + window.scrollY}px`;
+    anchorEl.style.top = !props.isMobile ? `${firstRect.top + window.scrollY}px` : `${firstRect.top + window.scrollY - 45}px`;
+    if (props.isMobile)
+      anchorEl.style.zIndex = '99999';  // Higher z-index to compete with native UI
+
     document.body.appendChild(anchorEl);
     anchorEl.setAttribute('role', 'dialog');
 
@@ -504,7 +506,7 @@ export function ChatMessage(props: {
     const closeOnUnselect = () => {
       const selection = window.getSelection();
       if (!selection || selection.toString().trim() === '') {
-        closeBubble(anchorEl);
+        closeBubble(anchorEl, { clearSelection: false });
         document.removeEventListener('selectionchange', closeOnUnselect);
       }
     };
@@ -512,7 +514,7 @@ export function ChatMessage(props: {
 
     setBubbleAnchor(anchorEl);
     setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
-  }, [closeBubble]);
+  }, [closeBubble, props.isMobile]);
 
   const handleBubbleClickAway = React.useCallback((event: MouseEvent | TouchEvent /* DOM, not React */) => {
     if (!event.shiftKey)
@@ -537,6 +539,17 @@ export function ChatMessage(props: {
     if (event.shiftKey)
       return;
     handleOpenBubble(event.nativeEvent);
+  }, [handleOpenBubble]);
+
+  const handleBlocksTouchEnd = React.useCallback((event: React.TouchEvent) => {
+    if (event.shiftKey) return; // just to match the flow
+
+    // on mobile, allow for text-selection events to process, then open
+    setTimeout(() => {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length >= BUBBLE_MIN_TEXT_LENGTH)
+        handleOpenBubble(null);
+    }, 300);
   }, [handleOpenBubble]);
 
 
@@ -633,6 +646,7 @@ export function ChatMessage(props: {
       role='chat-message'
       tabIndex={-1 /* for shortcuts navigation */}
       onMouseUp={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksMouseUp : undefined}
+      onTouchEnd={(ENABLE_BUBBLE && !fromSystem /*&& !isAssistantError*/) ? handleBlocksTouchEnd : undefined}
       sx={listItemSx}
       // className={messagePendingIncomplete ? 'agi-border-4' /* CSS Effect while in progress */ : undefined}
     >
