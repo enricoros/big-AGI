@@ -97,6 +97,21 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
 
     // xAI model description
     const modelDescription = fromManualMapping(_knownXAIChatModels, xm.id, xm.created, undefined, unknownModelFallback);
+
+    // quick validation for non-text modalities
+    const knownInputModalities = ['text', 'image'];
+    const knownOutputModalities = ['text'];
+    const nonTextInput = xm.input_modalities?.filter(m => !knownInputModalities.includes(m)) || [];
+    const nonTextOutput = xm.output_modalities?.filter(m => !knownOutputModalities.includes(m)) || [];
+    if (nonTextInput.length > 0 || nonTextOutput.length > 0) {
+      console.warn(`[xAI Model Check] Model '${xm.id}' has non-text modalities. Input: [${nonTextInput.join(', ')}], Output: [${nonTextOutput.join(', ')}]`);
+      modelDescription.label += ' 🧩';
+      let modalityDetails = '';
+      if (nonTextInput.length > 0) modalityDetails += ` Input: ${nonTextInput.join(', ')}.`;
+      if (nonTextOutput.length > 0) modalityDetails += ` Output: ${nonTextOutput.join(', ')}.`;
+      modelDescription.description += ` Supports additional modalities.${modalityDetails}`;
+    }
+
     acc.push(modelDescription);
 
     // NOTE: disabled, as this is not useful
@@ -151,6 +166,10 @@ export const wireXAIModelSchema = z.object({
   prompt_text_token_price: z.number().optional(),
   prompt_image_token_price: z.number().optional(),
   completion_text_token_price: z.number().optional(),
+  cached_prompt_text_token_price: z.number().optional(),
+
+  // System information
+  fingerprint: z.string().optional(),
 
   // Aliases for models
   aliases: z.array(z.string()).optional(),
