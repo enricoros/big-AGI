@@ -721,6 +721,7 @@ export namespace GeminiWire_API_Models_List {
     'generateMessage',
     'generateText',
     'predict', // appeared on 2025-02-09, for `models/imagen-3.0-generate-002`
+    'predictLongRunning', // appeared on 2025-04-10, for `models/veo-2.0-generate-001`
   ]);
 
   export type Model = z.infer<typeof Model_schema>;
