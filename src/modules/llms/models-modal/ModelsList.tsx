@@ -47,13 +47,21 @@ const styles = {
     wordBreak: 'break-all',
     color: 'neutral.plainDisabledColor',
   } as const,
-  chip: {
+  chipPreferred: {
     // boxShadow: 'sm',
   } as const,
   chipFree: {
     // boxShadow: 'sm',
     boxShadow: 'md',
   } as const,
+  chipBrain: {
+    // boxShadow: 'sm',
+    boxShadow: 'md',
+  } as const,
+  // styleNameChip: {
+  //   marginLeft: '0.5rem',
+  //   fontSize: '0.75rem',
+  // } as const,
 } as const;
 
 
@@ -74,6 +82,7 @@ function ModelItem(props: {
   const { llm, onModelClicked, onModelSetHidden /*, onModelSetStarred*/ } = props;
 
   const seemsFree = !!llm.pricing?.chat?._isFree;
+  const isNotSymlink = !llm.label.startsWith('🔗');
 
 
   const handleLLMConfigure = React.useCallback((event: React.MouseEvent) => {
@@ -160,12 +169,11 @@ function ModelItem(props: {
           <Box sx={llm.hidden ? styles.modelHiddenText : styles.modelText} className='agi-ellipsize'>
             {(/*props.isMobile &&*/ llm.userStarred) ? `⭐ ${llm.label}` : llm.label}
             {/*{labelWithoutDate}{labelDate && <Box component='span' sx={{ typography: 'body-sm',color: llm.hidden ? 'neutral.plainDisabledColor' : undefined  }}> · ({labelDate})</Box>}*/}
+            {/*{llm.interfaces.includes(LLM_IF_OAI_Reasoning) && <span style={styles.styleNameChip}>🧠</span>}*/}
           </Box>
         </GoodTooltip>
 
-        {seemsFree && !llm.label.startsWith('🔗') && <Chip size='sm' color='success' variant='plain' sx={styles.chipFree}>free</Chip>}
-
-        {/* Chips */}
+        {/* Preferred Chips */}
         {SHOW_LLM_INTERFACES ? (chipsComponentsMemo && (
           <Box sx={{
             mr: 2,
@@ -176,10 +184,15 @@ function ModelItem(props: {
             {chipsComponentsMemo}
           </Box>
         )) : <>
-          {props.chipChat && <Chip size='sm' variant='outlined' sx={styles.chip}>chat</Chip>}
-          {props.chipCode && <Chip size='sm' variant='outlined' sx={styles.chip}>code</Chip>}
-          {props.chipFast && <Chip size='sm' variant='outlined' sx={styles.chip}>fast</Chip>}
+          {props.chipChat && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>chat</Chip>}
+          {props.chipCode && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>code</Chip>}
+          {props.chipFast && <Chip size='sm' variant='solid' sx={styles.chipPreferred}>util</Chip>}
         </>}
+
+        {/* Features Chips */}
+        {llm.interfaces.includes(LLM_IF_OAI_Reasoning) && isNotSymlink && <Chip size='sm' variant='plain' sx={styles.chipBrain}>🧠</Chip>}
+        {seemsFree && isNotSymlink && <Chip size='sm' color='success' variant='plain' sx={styles.chipFree}>free</Chip>}
+
 
         {/* Action Buttons */}
 
