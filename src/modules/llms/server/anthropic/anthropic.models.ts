@@ -1,4 +1,4 @@
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
@@ -12,6 +12,7 @@ export const hardcodedAnthropicVariants: { [modelId: string]: Partial<ModelDescr
     description: 'Claude 3.7 with extended thinking mode enabled for complex reasoning',
     parameterSpecs: [{ paramId: 'llmVndAntThinkingBudget', required: true, hidden: false }],
     maxCompletionTokens: 65536, // Extended thinking mode - note that the 'anthropic-beta: output-128k-2025-02-19' header would point to a 128k instead
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Reasoning],
     benchmark: { cbaElo: 1283 + 1 },
   },
 
