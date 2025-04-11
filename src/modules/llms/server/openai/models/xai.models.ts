@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 import { fromManualMapping, ManualMapping, ManualMappings } from './models.data';
@@ -10,30 +10,87 @@ import { openAIAccess, OpenAIAccessSchema } from '../openai.router';
 
 
 // Known xAI Models - Manual Mappings
-// List on: https://console.x.ai/team/_TEAM_ID_/models
+// List on: https://docs.x.ai/docs/models?cluster=us-east-1
 const _knownXAIChatModels: ManualMappings = [
+
+  // Grok 3
+  {
+    isPreview: true,
+    idPrefix: 'grok-3-beta',
+    label: 'Grok 3', // (Beta)
+    description: 'xAI flagship model that excels at enterprise use cases like data extraction, coding, and text summarization. Possesses deep domain knowledge in finance, healthcare, law, and science.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    trainingDataCutoff: 'Nov 2024', // November 17, 2024
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 3, output: 15 },
+  },
+  {
+    isPreview: true,
+    idPrefix: 'grok-3-fast-beta',
+    label: 'Grok 3 Fast', // (Beta)
+    description: 'Faster version of the xAI flagship model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    trainingDataCutoff: 'Nov 2024', // November 17, 2024
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
+    chatPrice: { input: 5, output: 25 },
+  },
+  {
+    isPreview: true,
+    idPrefix: 'grok-3-mini-beta',
+    label: 'Grok 3 Mini', // (Beta)
+    description: 'A lightweight model that thinks before responding. Fast, smart, and great for logic-based tasks that do not require deep domain knowledge. The raw thinking traces are accessible.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    trainingDataCutoff: 'Nov 2024', // November 17, 2024
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 0.3, output: 0.5 },
+  },
+  {
+    isPreview: true,
+    idPrefix: 'grok-3-mini-fast-beta',
+    label: 'Grok 3 Mini Fast', // (Beta)
+    description: 'Faster version of the Grok 3 Mini model with identical response quality but significantly reduced latency. Ideal for latency-sensitive applications.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    trainingDataCutoff: 'Nov 2024', // November 17, 2024
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort' }],
+    chatPrice: { input: 0.6, output: 4 },
+  },
 
   // Grok 2
   {
     idPrefix: 'grok-2-vision-1212',
-    label: `Grok 2 Vision (1212)`,
+    label: 'Grok 2 Vision (1212)',
     description: 'xAI model grok-2-vision-1212 with image and text input capabilities. Supports text generation with a 32,768 token context window.',
     contextWindow: 32768,
     maxCompletionTokens: undefined,
     trainingDataCutoff: 'Jul 2024', // July 17, 2024
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
   },
   {
+    hidden: true, // IMAGE model - does not chat (!) - is actually not returned by the list endpoint, but we have it anyway for our records
+    idPrefix: 'grok-2-image-1212',
+    label: 'Grok 2 Image (1212)',
+    description: 'xAI model for image generation. Each generated image costs $0.07.',
+    contextWindow: 131072,
+    maxCompletionTokens: undefined,
+    interfaces: [],
+  },
+  {
     idPrefix: 'grok-2-1212',
-    label: `Grok 2 (1212)`,
+    label: 'Grok 2 (1212)',
     description: 'xAI model grok-2-1212 with text input capabilities. Supports text generation with a 131,072 token context window.',
     contextWindow: 131072,
     maxCompletionTokens: undefined,
     trainingDataCutoff: 'Jul 2024', // July 17, 2024
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
     chatPrice: { input: 2, output: 10 },
     // Fuzzy matched with "grok-2-2024-08-13" (1288) => wrong, but still we need a fallback
     benchmark: { cbaElo: 1288 },
@@ -43,7 +100,7 @@ const _knownXAIChatModels: ManualMappings = [
   {
     isLegacy: true,
     idPrefix: 'grok-vision-beta',
-    label: `Grok Vision Beta`,
+    label: 'Grok Vision Beta',
     description: 'xAI model grok-vision-beta with image and text input capabilities. Supports text generation with an 8,192 token context window.',
     contextWindow: 8192,
     maxCompletionTokens: undefined,
@@ -79,7 +136,7 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
     // Fallback for unknown models
     const unknownModelFallback: ManualMapping = {
       idPrefix: xm.id,
-      label: `${xm.id}${xm.version ? ' ' + xm.version : ''}`,
+      label: _xaiFormatNewModelLabel(xm.id),
       description: `xAI model ${xm.id}`,
       contextWindow: 16384,
       interfaces: [
@@ -135,16 +192,44 @@ export async function xaiModelDescriptions(access: OpenAIAccessSchema): Promise<
 }
 
 // manual sort order
-const _xaiLabelStartsWithOrder = ['Grok 3', 'Grok 2', 'Grok'];
+const _xaiIdStartsWithOrder = [
+  'grok-3-fast-beta',
+  'grok-3-beta',
+  'grok-3-mini-fast-beta',
+  'grok-3-mini-beta',
+  'grok-2-vision-1212',
+  'grok-2-1212',
+  'grok-vision-beta',
+  'grok-beta',
+];
 
 export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
-  const aStartsWith = _xaiLabelStartsWithOrder.findIndex((prefix) => a.label.startsWith(prefix));
-  const bStartsWith = _xaiLabelStartsWithOrder.findIndex((prefix) => b.label.startsWith(prefix));
+  const aStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => a.id.startsWith(prefix));
+  const bStartsWith = _xaiIdStartsWithOrder.findIndex((prefix) => b.id.startsWith(prefix));
 
   if (aStartsWith !== bStartsWith)
     return aStartsWith - bStartsWith;
 
   return b.label.localeCompare(a.label);
+}
+
+function _xaiFormatNewModelLabel(modelId: string): string {
+  if (!modelId) return 'Unknown Model';
+
+  const parts = modelId.split('-');
+  if (parts.length)
+    parts[0] = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+
+  let hasBeta = false;
+  const cleanedParts = parts.filter(part => {
+    if (part.toLowerCase() === 'beta') {
+      hasBeta = true;
+      return false;
+    }
+    return true;
+  });
+
+  return '[new] ' + cleanedParts.join(' ') + (hasBeta ? ' (beta)' : '');
 }
 
 
