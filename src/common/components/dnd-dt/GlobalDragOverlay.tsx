@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Box } from '@mui/joy';
 
+import { WindowFocusObserver } from '~/common/util/windowUtils';
 import { animationOpacityFadeIn } from '~/common/util/animUtils';
 import { themeZIndexDragOverlay } from '~/common/app.theme';
 
@@ -11,6 +12,7 @@ import { useGlobalDragStore } from './volstore-drag-global';
 
 // configuration
 const DEBUG_DND_GLOBAL_OVERLAY = false;
+const TIMEOUT_DRAG_RESET = 15 * 1000; // avoids getting stuck in drag state
 
 
 const _dragOverlaySx = {
@@ -37,7 +39,37 @@ export function GlobalDragOverlay() {
 
   React.useEffect(() => {
 
+    // counter to stack dragenter/dragleave events
     let dragCounter = 0;
+
+    // window blur event listener - on demand
+    let unsubFromWindowBlur: undefined | (() => void);
+
+
+    // safety procedure to get un-stuck on browser bad dispatches
+    let lastTimeoutId: number | null = null;
+
+    const clearTimerDeadline = () => {
+      if (!lastTimeoutId) return;
+      window.clearTimeout(lastTimeoutId);
+      lastTimeoutId = null;
+    };
+
+
+    const handleDragClear = () => {
+      dragCounter = 0;
+      if (DEBUG_DND_GLOBAL_OVERLAY)
+        console.log('handleDragClear');
+
+      clearTimerDeadline();
+
+      if (unsubFromWindowBlur) {
+        unsubFromWindowBlur();
+        unsubFromWindowBlur = undefined;
+      }
+
+      _setDragState(false);
+    };
 
     const handleDragEnter = (e: DragEvent) => {
       dragCounter = dragCounter < 0 ? 1 : dragCounter + 1;
@@ -48,24 +80,38 @@ export function GlobalDragOverlay() {
       if (e.dataTransfer?.types.includes(EXCLUDE_SELF_TYPE))
         return;
 
+      // move forward the emergency timer deadline
+      clearTimerDeadline();
+      lastTimeoutId = window.setTimeout(() => {
+        if (DEBUG_DND_GLOBAL_OVERLAY)
+          console.log('forceDragReset: emergency reset of drag state');
+        handleDragClear();
+      }, TIMEOUT_DRAG_RESET);
+
+      // begin monitoring window blur
+      if (!unsubFromWindowBlur) {
+        unsubFromWindowBlur = WindowFocusObserver.getInstance().subscribe((focused) => {
+          if (!focused) {
+            if (DEBUG_DND_GLOBAL_OVERLAY)
+              console.log('handleWindowBlur: resetting drag state');
+            handleDragClear();
+          }
+        });
+      }
+
       _setDragState(true, e.dataTransfer || null);
     };
 
     const handleDragLeave = (e: DragEvent) => {
-      dragCounter--;
+      // using max to avoid negative numbers - shouldn't happen but those events tend to be flaky in browsers
+      dragCounter = Math.max(0, dragCounter - 1);
       if (DEBUG_DND_GLOBAL_OVERLAY)
         console.log('handleDragLeave', dragCounter, e.dataTransfer?.types);
 
       if (dragCounter === 0)
-        _setDragState(false);
+        handleDragClear();
     };
 
-    const handleDragClear = () => {
-      dragCounter = 0;
-      if (DEBUG_DND_GLOBAL_OVERLAY)
-        console.log('handleDragClear');
-      _setDragState(false);
-    };
 
     document.addEventListener('dragenter', handleDragEnter);
     document.addEventListener('dragleave', handleDragLeave);
@@ -79,7 +125,7 @@ export function GlobalDragOverlay() {
       document.removeEventListener('drop', handleDragClear);
 
       // ensure state reset when unmounting
-      _setDragState(false);
+      handleDragClear();
     };
   }, []);
 
