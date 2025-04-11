@@ -15,10 +15,11 @@ const geminiChatInterfaces: GeminiWire_API_Models_List.Model['supportedGeneratio
 // unsupported interfaces
 const filterUnallowedNames = ['Legacy'];
 const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = [
-  'generateAnswer',   // e.g. removes "models/aqa"
-  'embedContent',     // e.g. removes "models/embedding-001"
-  'embedText',        // e.g. removes "models/text-embedding-004"
-  'predict',          // e.g. removes "models/imagen-3.0-generate-002" (appeared on 2025-02-09)
+  'generateAnswer',     // e.g. removes "models/aqa"
+  'embedContent',       // e.g. removes "models/embedding-001"
+  'embedText',          // e.g. removes "models/text-embedding-004"
+  'predict',            // e.g. removes "models/imagen-3.0-generate-002" (appeared on 2025-02-09)
+  'predictLongRunning', // e.g. removes "models/veo-2.0-generate-001" (appeared on 2025-04-10)
 ];
 const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   // 2025-02-27: verified, old model is no more
@@ -46,6 +47,8 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
    - Function calling, with configuration
    - Code execution
    - Thinking / Reasoning
+   - Audio generation
+   - Live API
 */
 
 // Experimental Gemini models are Free of charge
@@ -65,6 +68,11 @@ const gemini20FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10, // text/image/video; audio is $0.70 but we don't differentiate yet
   output: 0.40,
   // Caching coming April 15, 2025
+};
+
+const gemini20FlashLivePricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.35, // text; audio/video is $2.10 but we don't differentiate yet
+  output: 1.50, // text; audio is $8.50 but we don't differentiate yet
 };
 
 const gemini20FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
@@ -123,6 +131,7 @@ const _knownGeminiModels: ({
     benchmark: { cbaElo: 1443 },
   },
 
+
   /// Generation 2.0
 
   // 2.0 Pro Experimental (Superseded by 2.5 Pro Preview/Exp)
@@ -152,6 +161,15 @@ const _knownGeminiModels: ({
     chatPrice: geminiExpFree,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
     benchmark: { cbaElo: 1373 },
+  },
+
+  // 2.0 Flash Live
+  {
+    id: 'models/gemini-2.0-flash-live-001',
+    labelOverride: 'Gemini 2.0 Flash Live',
+    chatPrice: gemini20FlashLivePricing,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_Fn, LLM_IF_GEM_CodeExecution],
+    isPreview: true,
   },
 
   // 2.0 Flash Thinking Experimental
@@ -401,6 +419,27 @@ const _knownGeminiModels: ({
     // _delete: true,
   },
 
+
+  /// Media Generation Models - NOTE: THESE ARE FILTERED OUT (!) - but here anyway for reference
+
+  // Imagen 3 - Image Generation
+  {
+    id: 'models/imagen-3.0-generate-002',
+    isPreview: false,
+    // chatPrice: { input: 0.03, output: 0.03 }, // per image pricing
+    interfaces: [], // Not a chat model
+    hidden: true, // Not accessible through the normal chat interface
+  },
+
+  // Veo 2 - Video Generation
+  {
+    id: 'models/veo-2.0-generate-001',
+    isPreview: false,
+    // chatPrice: { input: 0.35, output: 0.35 }, // per second pricing
+    interfaces: [], // Not a chat model
+    hidden: true, // Not accessible through the normal chat interface
+  },
+
 ];
 
 
@@ -439,6 +478,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-2.0-flash-exp-image-generation',
   'models/gemini-2.0-flash-thinking-exp-01-21',
   'models/gemini-2.0-flash-thinking',
+  'models/gemini-2.0-flash-live',
   'models/gemini-2.0-flash-0',
   'models/gemini-2.0-flash',
   'models/gemini-2.0-flash-lite',
@@ -452,6 +492,8 @@ const _sortOderIdPrefix: string[] = [
   'models/gemma-3-4b',
   'models/gemma',
   'models/learnlm',
+  'models/imagen',
+  'models/veo',
 ] as const;
 
 export function geminiSortModels(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
