@@ -437,6 +437,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-2.5-pro',
   'models/gemini-2.0-pro',
   'models/gemini-2.0-flash-exp-image-generation',
+  'models/gemini-2.0-flash-thinking-exp-01-21',
   'models/gemini-2.0-flash-thinking',
   'models/gemini-2.0-flash-0',
   'models/gemini-2.0-flash',
