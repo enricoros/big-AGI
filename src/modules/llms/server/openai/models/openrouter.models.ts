@@ -91,3 +91,23 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     hidden,
   });
 }
+
+/*
+export function openRouterStatTokenizers(openRouterModels: any[]): void {
+  // parse all
+  const tokenizersMap: Record<string, string[]> = {};
+  for (const model of openRouterModels) {
+    const { data, error } = wireOpenrouterModelsListOutputSchema.safeParse(model);
+    if (error) continue;
+    const tokenizer = data.architecture?.tokenizer || 'unknown';
+    if (!tokenizersMap[tokenizer])
+      tokenizersMap[tokenizer] = [];
+    tokenizersMap[tokenizer].push(data.id);
+  }
+  console.log('\n=== Tokenizer Statistics ===');
+  Object.entries(tokenizersMap)
+    .sort(([, modelsA], [, modelsB]) => modelsB.length - modelsA.length)
+    .forEach(([tokenizer, models]) => {
+      console.log(`${tokenizer}: ${models.length} models`);
+    });
+}*/
