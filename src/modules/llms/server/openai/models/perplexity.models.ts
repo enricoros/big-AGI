@@ -23,58 +23,58 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
   {
     id: 'sonar-reasoning-pro',
     label: 'Sonar Reasoning Pro 🌐',
-    description: 'Advanced reasoning model (128k) with 8k max output tokens and search subsystem',
+    description: 'Premier reasoning model powered by DeepSeek R1 with Chain of Thought (CoT), 128k context window and 8k max output tokens',
     contextWindow: 128000,
     maxCompletionTokens: 8000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
     chatPrice: {
       input: 2,
       output: 8,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Note: also has $5 per 1000 searches cost
     },
   },
   {
     id: 'sonar-reasoning',
     label: 'Sonar Reasoning 🌐',
-    description: 'Advanced reasoning model with 128k context window. Based on DeepSeek R1.',
+    description: 'Fast, real-time reasoning model with Chain of Thought (CoT) and 128k context window. Based on DeepSeek R1.',
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
     chatPrice: {
       input: 1,
       output: 5,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Note: also has $5 per 1000 searches cost
     },
   },
   {
     id: 'sonar-pro',
     label: 'Sonar Pro 🌐',
-    description: 'Advanced model with enhanced search capabilities and 200k context window',
+    description: 'Advanced search model with enhanced capabilities and 200k context window, optimized for complex queries',
     contextWindow: 200000,
     maxCompletionTokens: 8000,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: {
       input: 3,
       output: 15,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Note: also has $5 per 1000 searches cost
     },
   },
   {
     id: 'sonar',
     label: 'Sonar 🌐',
-    description: 'Base model with 128k context window',
+    description: 'Lightweight, cost-effective search model with 128k context window for quick, grounded answers',
     contextWindow: 128000,
     maxCompletionTokens: 4000,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: {
       input: 1,
       output: 1,
-      // Note: also has $5 per 1000 searches cost, but our pricing model doesn't support this yet
+      // Note: also has $5 per 1000 searches cost
     },
   },
   {
     id: 'r1-1776',
     label: 'R1-1776',
-    description: 'Offline chat model with 128k context, does not use search subsystem',
+    description: 'Offline chat model with 128k context, post-trained for uncensored, unbiased, and factual information',
     contextWindow: 128000,
     interfaces: [LLM_IF_OAI_Chat],
     chatPrice: {
@@ -127,6 +127,7 @@ const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
 ];
 
 const perplexityAIModelFamilyOrder = [
+  'sonar-deep-research',
   'sonar-reasoning-pro',
   'sonar-reasoning',
   'sonar-pro',
