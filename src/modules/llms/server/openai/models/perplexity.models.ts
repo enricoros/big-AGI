@@ -4,6 +4,21 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms
 
 const _knownPerplexityChatModels: ModelDescriptionSchema[] = [
 
+  // Deep Research Model
+  {
+    id: 'sonar-deep-research',
+    label: 'Sonar Deep Research 🌐',
+    description: 'Expert-level research model conducting exhaustive searches and generating comprehensive reports with 128k context window',
+    contextWindow: 128000,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    chatPrice: {
+      input: 2,
+      output: 8,
+      // reasoning: 3, // Special pricing for reasoning tokens
+      // Note: also has $5 per 1000 searches cost
+    },
+  },
+
   // Current Perplexity Models
   {
     id: 'sonar-reasoning-pro',
